@@ -13,25 +13,28 @@ import { tabSequenceFor } from "@/lib/nav";
 import { connectTabs } from "@/lib/connect-tabs";
 import { getSessionViewer } from "@/lib/session";
 import { unreadCount } from "@/lib/messages";
-import { GroupCircles } from "@/components/community/GroupCircles";
+import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
+import { BubbleField } from "@/components/casing/BubbleField";
 import { StartGroup } from "@/components/community/StartGroup";
 import { GroupJoin } from "@/components/community/GroupJoin";
 import { DecideRequest } from "@/components/community/DecideRequest";
 import { GROUP_OFFER_COPY } from "@/lib/group-membership";
-import "@/components/community/community-page.css";
-import "@/components/community/groups.css";
+import { getSkillAreas } from "@/lib/skill-area-store";
+import { areaFor } from "@/lib/skill-areas";
+
+export const metadata = { title: "Groups · Panameer" };
 
 const VIEWS = [
   { key: "my", label: "My Groups" },
   { key: "discover", label: "Discover" },
   { key: "requests", label: "Requests" },
 ] as const;
+const ROW = "flex flex-wrap items-center justify-between gap-2 border-b border-line py-3";
+const OPEN = "inline-flex min-h-9 items-center border border-ink px-3.5 text-[13px] font-semibold hover:bg-black/[0.04]";
+const TAG = "border px-1.5 text-[10.5px] font-bold tracking-[0.06em]";
 
-export default async function GroupsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ all?: string; view?: string }>;
-}) {
+// Connect › Groups (2026-10-08, mockup A–C): bubble hero, sub-tabs, Needs You + Groups You Run | This Month · Joined · Start a Group.
+export default async function GroupsPage({ searchParams }: { searchParams: Promise<{ all?: string; view?: string; q?: string; area?: string; asked?: string }> }) {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
   const unread = viewer ? await unreadCount(viewer) : 0;
@@ -39,367 +42,207 @@ export default async function GroupsPage({
   const view = VIEWS.some((v) => v.key === sp.view) ? sp.view! : "my";
 
   const home = viewer ? await getGroupsHome(viewer) : null;
-  const discover: DiscoverTrack[] =
-    viewer && view === "discover" ? await getDiscoverGroups(viewer) : [];
-  const requests =
-    viewer && view === "requests"
-      ? await getGroupRequests(viewer)
-      : { incoming: [], mine: [] };
+  const discover: DiscoverTrack[] = viewer && view === "discover" ? await getDiscoverGroups(viewer) : [];
+  const requests = viewer && view === "requests" ? await getGroupRequests(viewer) : { incoming: [], mine: [] };
+  const pendingForMe = viewer && home ? (view === "requests" ? requests.incoming.length : await countPendingForOwner(viewer)) : 0;
 
-  const pendingForMe =
-    viewer && home
-      ? view === "requests"
-        ? requests.incoming.length
-        : await countPendingForOwner(viewer)
-      : 0;
-
-  const showAll = sp.all === "1";
-  const SHOWN = showAll ? Number.MAX_SAFE_INTEGER : 4;
   const run = home?.run ?? [];
   const joined = home?.joined ?? [];
+  const needs = home?.needsYou ?? [];
+  const waitingBy = new Map<string, number>();
+  for (const t of needs) waitingBy.set(t.boardSlug, (waitingBy.get(t.boardSlug) ?? 0) + 1);
+  const firstWaiting = needs[0] ?? null;
+  const shown = sp.all === "1" ? run : run.slice(0, 4);
+  const bubbles = (home?.circles ?? []).map((c) => ({
+    key: c.slug,
+    href: `/connect/groups/${c.slug}`,
+    label: c.title,
+    hover: `${c.title} · ${c.members} ${c.members === 1 ? "member" : "members"} · ${c.posts === 0 ? "no posts yet" : `${c.posts} posted`}${waitingBy.get(c.slug) ? ` · ${waitingBy.get(c.slug)} waiting on you` : ""}`,
+    size: c.members,
+    fill: c.quiet ? null : 1,
+    ring: !!waitingBy.get(c.slug),
+  }));
+  const ago = (d: Date) => {
+    // eslint-disable-next-line react-hooks/purity
+    const h = Math.floor((Date.now() - d.getTime()) / 3_600_000);
+    return h < 1 ? "just now" : h < 24 ? `${h} h ago` : `${Math.floor(h / 24)} d ago`;
+  };
+  const say = !home || home.runCount + home.joinedCount === 0 ? (
+    <>You&apos;re not in a group yet. Start one, or join one from Discover.</>
+  ) : firstWaiting ? (
+    <><b className="text-ink">{firstWaiting.boardTitle}</b> has a question waiting on you.{needs.length > 1 ? ` ${needs.length - 1} more ${needs.length - 1 === 1 ? "waits" : "wait"} after it.` : ""} A group whose first question gets answered keeps talking.</>
+  ) : (
+    <>Your groups are quiet — a group with a first question gets answers, so post a starter question in your busiest path.</>
+  );
 
   return (
     <>
-      {}
-      <PageTabs
-        wrap
-        eyebrow="CONNECT"
-        sequence={tabSequenceFor("/connect")}
-        tabs={connectTabs(viewer, unread)}
-        current="/connect/groups"
-      />
+      <PageTabs wrap eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/connect/groups" />
+      <div className="mx-auto w-full max-w-[1010px]">
+        <AccountHero
+          wide
+          testId="groups-hero"
+          picture={
+            <BubbleField
+              bubbles={bubbles}
+              me="YOU"
+              caption={bubbles.length ? "Bubble size = members · click a bubble to open the group" : "Your groups appear here, one bubble each"}
+              legend={[
+                { label: "active", swatch: "ink" },
+                { label: "quiet", swatch: "quiet" },
+                { label: "waiting on you", swatch: "ring" },
+              ]}
+            />
+          }
+          eyebrow="Your Groups"
+          title="Where Your Learners Ask"
+          kpis={[
+            { value: home?.runCount ?? 0, label: "GROUPS YOU RUN" },
+            { value: home?.questionsWaiting ?? 0, label: "QUESTIONS WAITING" },
+            { value: home?.joinedCount ?? 0, label: "GROUPS YOU JOINED" },
+          ]}
+          paragraph={say}
+          actions={
+            <>
+              {firstWaiting && <Link href={`/connect/groups/thread/${firstWaiting.id}`} className={HERO_BTN}>Answer the Question</Link>}
+              {home?.starterSlug && <Link href={`/connect/groups/${home.starterSlug}`} className={firstWaiting ? HERO_BTN_W : HERO_BTN}>Post a Starter Question</Link>}
+              <Link href="#start-a-group" className={HERO_BTN_W}>Start a Group</Link>
+            </>
+          }
+        />
 
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-5">
-          {}
-          <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
-            Groups
-          </h1>
-        </header>
-
-        {}
-        <section className="pm-hero pm-groups-hero">
-          <div className="pm-hero-stage">
-            <GroupCircles circles={home?.circles ?? []} />
-          </div>
-
-          <div className="pm-hero-side">
-            {}
-            {}
-            <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">
-              Your Groups
-            </p>
-            <h2 className="pm-hero-title">Where Your Learners Ask</h2>
-
-            {}
-            <dl className="pm-groups-figs">
-              <div>
-                <dt>Groups You Run</dt>
-                <dd>{home?.runCount ?? 0}</dd>
-              </div>
-              <div>
-                <dt>Questions Waiting</dt>
-                <dd>{home?.questionsWaiting ?? 0}</dd>
-              </div>
-              <div>
-                <dt>Groups You Joined</dt>
-                <dd>{home?.joinedCount ?? 0}</dd>
-              </div>
-            </dl>
-
-            {}
-            <p className="pm-hero-move">{actionLine(home)}</p>
-
-            <div className="pm-groups-actions">
-              {}
-              {home?.starterSlug && (
-                <Link
-                  href={`/connect/groups/${home.starterSlug}`}
-                  className="pm-hero-cta"
-                >
-                  Post a Starter Question
-                </Link>
-              )}
-              {/* An anchor to the ONE form in the rail — not a second form. */}
-              <Link href="#start-a-group" className="pm-groups-ghost">
-                Start a Group
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* 1b · THE THREE VIEWS — the mockup's own switcher */}
-        <nav aria-label="Groups views" className="pm-groups-views">
+        <nav aria-label="Groups views" className="mt-5 flex gap-1 border-b border-line">
           {VIEWS.map((v) => (
-            <Link
-              key={v.key}
-              href={v.key === "my" ? "?" : `?view=${v.key}`}
-              aria-current={v.key === view ? "page" : undefined}
-              className={v.key === view ? "is-on" : undefined}
-            >
-              {v.label}
-              {/* THE COUNT RIDES THE TAB ONLY WHEN IT IS ABOVE ZERO AND */}
-              {v.key === "requests" && pendingForMe > 0 && (
-                <span className="pm-groups-pill">{pendingForMe}</span>
-              )}
+            <Link key={v.key} href={v.key === "my" ? "/connect/groups" : `/connect/groups?view=${v.key}`} aria-current={v.key === view ? "page" : undefined} className={"-mb-px border-b-2 px-3 py-2 text-[13.5px] font-bold " + (v.key === view ? "border-magenta text-magenta-dark" : "border-transparent text-ink-2 hover:text-ink")}>
+              {v.label}{v.key === "requests" ? ` (${pendingForMe})` : ""}
             </Link>
           ))}
         </nav>
 
         {view === "my" && (
-        <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_280px]">
-          <div className="space-y-6">
-            {/* 2 · NEEDS YOU */}
-            <section className="space-y-3">
-              <h2 className="font-display text-[17px] font-bold">Needs You</h2>
-              {home && home.needsYou.length > 0 ? (
-                <div className="space-y-2">
-                  {home.needsYou.map((t) => (
-                    <Link
-                      key={t.id}
-                      href={`/connect/groups/thread/${t.id}`}
-                      className="block transition-colors hover:border-magenta border-t border-line py-5"
-                    >
-                      <p className="text-[15px] font-bold">{t.title}</p>
-                      <p className="mt-0.5 text-[13px] text-ink-2">
-                        {t.boardTitle}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
+          <div className="grid md:grid-cols-[1.35fr_1fr]">
+            <div className="min-w-0 py-6 md:pr-7">
+              <h2 className="text-[20px] font-bold">Needs You <small className="ml-1 text-[12px] font-medium text-ink-3">questions in groups you run</small></h2>
+              {needs.length === 0 ? (
+                <p className="mt-2 text-[13.5px] text-ink-2">Nothing waiting. Questions from groups you run appear here, oldest first, until you answer them.</p>
               ) : (
-                <p className="text-[14px] leading-relaxed text-ink-2 border-t border-line py-5">
-                  Questions from groups you run will appear here, oldest first,
-                  until you answer them. Nobody has asked anything yet.
-                </p>
+                <ul>
+                  {needs.map((t) => (
+                    <li key={t.id} data-needs-you className={ROW}>
+                      <span className="min-w-0 flex-1">
+                        <b className="block truncate text-[14px]">{t.title}</b>
+                        <span className="block text-[12.5px] text-ink-3">{t.boardTitle} · asked {ago(t.askedAt)}</span>
+                      </span>
+                      <Link href={`/connect/groups/thread/${t.id}`} className="inline-flex min-h-9 items-center bg-ink px-3.5 text-[13px] font-semibold text-surface hover:bg-ink-hover">Answer</Link>
+                    </li>
+                  ))}
+                </ul>
               )}
-            </section>
-
-            {/* ── 3 · GROUPS YOU RUN — quietest first ───────────────────── */}
-            <GroupList
-              heading="Groups You Run"
-              cards={run}
-              shown={SHOWN}
-              empty="You don't run a group yet. Starting one puts you here."
-            />
-
-            {/* The joined list renders only when there is one — an empty */}
-            {joined.length > 0 && (
-              <GroupList
-                heading="Groups You Joined"
-                cards={joined}
-                shown={SHOWN}
-                empty=""
-              />
-            )}
-          </div>
-
-          <aside className="space-y-4">
-            {/* ── 4a · THIS MONTH — three counts, one window ─────────────── */}
-            <div className="border-t border-line py-5">
-              <h3 className="font-display text-[15px] font-bold">This Month</h3>
-              <dl className="pm-groups-month">
-                <div>
-                  <dt>Questions asked</dt>
-                  <dd>{home?.thisMonth.asked ?? 0}</dd>
-                </div>
-                <div>
-                  <dt>You answered</dt>
-                  <dd>{home?.thisMonth.answered ?? 0}</dd>
-                </div>
-                <div>
-                  <dt>New members</dt>
-                  <dd>{home?.thisMonth.newMembers ?? 0}</dd>
-                </div>
+              <h2 className="mt-7 text-[20px] font-bold">Groups You Run <small className="ml-1 text-[12px] font-medium text-ink-3">{run.length} · quietest first</small></h2>
+              {run.length === 0 ? (
+                <p className="mt-2 text-[13.5px] text-ink-2">You don&apos;t run a group yet. Starting one puts you here.</p>
+              ) : (
+                <ul>
+                  {shown.map((c) => <RunRow key={c.slug} c={c} waiting={waitingBy.get(c.slug) ?? 0} />)}
+                </ul>
+              )}
+              {run.length > shown.length && <Link href="/connect/groups?all=1" scroll={false} className="mt-3 inline-flex min-h-9 items-center border border-line px-3.5 text-[13px] font-semibold hover:border-ink">Show All {run.length}</Link>}
+            </div>
+            <aside className="min-w-0 border-t border-line py-6 md:border-l md:border-t-0 md:pl-7">
+              <h2 className="text-[18px] font-bold">This Month</h2>
+              <dl className="mt-2 grid grid-cols-3 gap-2">
+                {[["Questions asked", home?.thisMonth.asked ?? 0], ["You answered", home?.thisMonth.answered ?? 0], ["New members", home?.thisMonth.newMembers ?? 0]].map(([k, v]) => (
+                  <div key={k as string}><dd className="text-[22px] font-medium tabular-nums">{v}</dd><dt className="text-[11px] font-semibold text-ink-3">{k}</dt></div>
+                ))}
               </dl>
-            </div>
-
-            {/* ── 4b · START A GROUP — the one form ──────────────────────── */}
-            <div id="start-a-group" className="border-t border-line py-5">
-              <h3 className="font-display text-[15px] font-bold">Start a Group</h3>
-              <p className="mb-3 mt-1 text-[13px] leading-relaxed text-ink-2">
-                A topic, a region, an alumni group — anyone can start one, and
-                anyone can join it.
-              </p>
-              <StartGroup />
-            </div>
-
-            {/* 4c · PAID GROUPS */}
-            <div className="border-t border-line py-5">
-              <h3 className="font-display text-[15px] font-bold">Paid Groups</h3>
-              <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
-                Not set up yet. Charging for a group needs a way to take payment,
-                and that lives in Shop.
-              </p>
-            </div>
-          </aside>
-        </div>
+              <h2 className="mt-6 border-t border-line pt-5 text-[18px] font-bold">Groups You Joined <small className="ml-1 text-[12px] font-medium text-ink-3">{joined.length}</small></h2>
+              {joined.length === 0 ? (
+                <p className="mt-2 text-[13.5px] text-ink-2">None yet. <Link href="/connect/groups?view=discover" className="font-bold underline">Discover groups</Link>.</p>
+              ) : (
+                <ul>
+                  {joined.map((c) => (
+                    <li key={c.slug} className={ROW}>
+                      <span className="min-w-0 flex-1"><b className="block truncate text-[14px]">{c.title}</b><span className="text-[12.5px] text-ink-3">{c.members} {c.members === 1 ? "member" : "members"}</span></span>
+                      <Link href={`/connect/groups/${c.slug}`} className={OPEN}>Open</Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div id="start-a-group" className="mt-6 scroll-mt-24 border-t border-line pt-5">
+                <h2 className="text-[18px] font-bold">Start a Group</h2>
+                <p className="mb-3 mt-1 text-[13px] text-ink-2">A topic, a region, alumni — any member can start one.</p>
+                <StartGroup />
+              </div>
+            </aside>
+          </div>
         )}
 
-        {/* ── 2 · DISCOVER (`P2-A3-E619` WS-B 1) ───────────────────────────── */}
-        {view === "discover" && <Discover tracks={discover} />}
-
-        {/* ── 3 · REQUESTS (`P2-A3-E619` WS-B 3) ───────────────────────────── */}
-        {view === "requests" && (
-          <Requests incoming={requests.incoming} mine={requests.mine} />
-        )}
+        {view === "discover" && <Discover tracks={discover} q={sp.q ?? ""} area={sp.area ?? ""} asked={sp.asked === "1"} areas={(await getSkillAreas()).filter((a) => !a.hidden)} />}
+        {view === "requests" && <Requests incoming={requests.incoming} mine={requests.mine} />}
       </div>
     </>
   );
 }
 
-/** THE ONE LINE, DERIVED FROM THE COUNTS. NO FABRICATED ENCOURAGEMENT */
-function actionLine(home: Awaited<ReturnType<typeof getGroupsHome>> | null): string {
-  if (!home || home.runCount + home.joinedCount === 0) {
-    // IT NAMES `Discover` AGAIN — BECAUSE DISCOVER NOW EXISTS (WS-B).
-    return "You're not in a group yet. Start one, or join one from Discover.";
-  }
-  if (home.questionsWaiting > 0) {
-    return `${home.questionsWaiting} ${
-      home.questionsWaiting === 1 ? "question is" : "questions are"
-    } waiting on you.`;
-  }
-  const quiet = home.circles.filter((c) => c.quiet).length;
-  if (quiet === home.circles.length) {
-    return `All ${home.circles.length} of your groups are quiet. A starter question is what gets the first one talking.`;
-  }
-  return `${home.circles.length - quiet} of your ${home.circles.length} groups have something posted.`;
-}
-
-/** Two across on desktop, one on a phone — the brief's grid, phone first. */
-function GroupList({
-  heading,
-  cards,
-  shown,
-  empty,
-}: {
-  heading: string;
-  cards: GroupCard[];
-  shown: number;
-  empty: string;
-}) {
+function RunRow({ c, waiting }: { c: GroupCard; waiting: number }) {
   return (
-    <section className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-display text-[17px] font-bold">{heading}</h2>
-        {/* THE SORT IS STATED WHERE IT APPLIES (`decisions_2026-09-23` §3 — */}
-        {cards.length > 1 && (
-          <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-3">
-            Quietest First
-          </p>
-        )}
-      </div>
-
-      {cards.length === 0 ? (
-        <p className="text-[14px] leading-relaxed text-ink-2 border-t border-line py-5">
-          {empty}
-        </p>
-      ) : (
-        <>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {cards.slice(0, shown).map((c) => (
-              <Link
-                key={c.slug}
-                href={`/connect/groups/${c.slug}`}
-                className="pm-groups-card"
-              >
-                <p className="pm-groups-card-t">{c.title}</p>
-                {/* EVERY PART OF THIS LINE IS COUNTED. `no posts yet` is the */}
-                <p className="pm-groups-card-m">
-                  {c.pathBacked ? "Path group" : "Member group"} ·{" "}
-                  <span className="pm-groups-n">{c.members}</span>{" "}
-                  {c.members === 1 ? "member" : "members"} ·{" "}
-                  {c.posts === 0 ? (
-                    "no posts yet"
-                  ) : (
-                    <>
-                      <span className="pm-groups-n">{c.posts}</span>{" "}
-                      {c.posts === 1 ? "post" : "posts"}
-                    </>
-                  )}
-                </p>
-                <span className="pm-groups-card-o">Open →</span>
-              </Link>
-            ))}
-          </div>
-          {cards.length > shown && (
-            <p>
-              <Link
-                href="?all=1"
-                scroll={false}
-                className="text-[13.5px] font-bold text-magenta hover:underline"
-              >
-                Show All {cards.length} Groups →
-              </Link>
-            </p>
-          )}
-        </>
-      )}
-    </section>
+    <li data-run-group={c.slug} className={ROW}>
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-2">
+          <b className="truncate text-[14px]">{c.title}</b>
+          {waiting > 0 ? <span className={TAG + " border-magenta text-magenta-dark"}>{waiting} WAITING</span> : c.posts === 0 ? <span className={TAG + " border-[#C9CDDC] text-ink-3"}>QUIET</span> : null}
+        </span>
+        <span className="block text-[12.5px] text-ink-3">{c.pathBacked ? "Path group" : "Member group"} · {c.members} {c.members === 1 ? "member" : "members"} · {c.posts === 0 ? "no posts yet" : `${c.posts} ${c.posts === 1 ? "post" : "posts"}`}</span>
+      </span>
+      <Link href={`/connect/groups/${c.slug}`} className={OPEN}>Open</Link>
+    </li>
   );
 }
 
-/** DISCOVER WS-B 1) */
-function Discover({ tracks }: { tracks: DiscoverTrack[] }) {
-  if (tracks.length === 0) {
-    return (
-      <p className="mt-6 text-[14px] leading-relaxed text-ink-2 border-t border-line py-5">
-        You&rsquo;re already in every group there is. Starting one is the way to
-        make another.
-      </p>
-    );
-  }
+/** Discover: search, area chips + Has Questions, 3-up cards. */
+function Discover({ tracks, q, area, asked, areas }: { tracks: DiscoverTrack[]; q: string; area: string; asked: boolean; areas: { code: string; label: string }[] }) {
+  const n = q.trim().toLowerCase();
+  const groups = tracks
+    .flatMap((t) => t.groups.map((g) => ({ ...g, track: t.track, area: areaFor(g.title, [t.track]) })))
+    .filter((g) => (!area || g.area === area) && (!asked || g.posts > 0) && (!n || [g.title, g.track].some((x) => x.toLowerCase().includes(n))));
+  const href = (patch: Record<string, string>) => {
+    const u = new URLSearchParams({ view: "discover", ...(q ? { q } : {}), ...(area ? { area } : {}), ...(asked ? { asked: "1" } : {}), ...patch });
+    for (const [k, v] of [...u.entries()]) if (!v) u.delete(k);
+    return `/connect/groups?${u.toString()}`;
+  };
+  const chip = (on: boolean) => "shrink-0 whitespace-nowrap border px-3 py-1.5 text-[13px] font-semibold " + (on ? "border-ink bg-ink text-surface" : "border-line text-ink hover:border-ink");
+  const used = new Set<string | null>(tracks.flatMap((t) => t.groups.map((g) => areaFor(g.title, [t.track]))));
   return (
-    <div className="mt-6 space-y-6">
-      {/* THE VIEW SAYS WHAT IT IS */}
-      <div>
-        <h2 className="font-display text-[17px] font-bold">Groups You Can Join</h2>
-        <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
-          Groups you are not in yet, grouped by the path they belong to.
-        </p>
-      </div>
-      {tracks.map((t) => (
-        <section key={t.track} className="space-y-3">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-display text-[17px] font-bold">{t.track}</h2>
-            {/* `E433` — the count is a figure, so ink. */}
-            <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-3">
-              {t.groups.length} {t.groups.length === 1 ? "group" : "groups"}
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {t.groups.map((g) => (
-              <div key={g.slug} className="pm-groups-card pm-groups-card-static">
-                <Link href={`/connect/groups/${g.slug}`} className="pm-groups-card-t">
-                  {g.title}
-                </Link>
-                <p className="pm-groups-card-m">
-                  <span className="pm-groups-n">{g.members}</span>{" "}
-                  {g.members === 1 ? "member" : "members"} ·{" "}
-                  {g.posts === 0 ? (
-                    "quiet"
-                  ) : (
-                    <>
-                      <span className="pm-groups-n">{g.posts}</span>{" "}
-                      {g.posts === 1 ? "post" : "posts"}
-                    </>
-                  )}
-                </p>
-                <div className="mt-3">
-                  {/* are in, so a Leave control could never apply. */}
-                  <GroupJoin
-                    boardId={g.boardId}
-                    offer={g.offer}
-                    copy={GROUP_OFFER_COPY[g.offer.kind]}
-                    canLeave={false}
-                    pathSlug={g.pathSlug}
-                  />
-                </div>
+    <div className="py-6" data-discover>
+      <form method="get" action="/connect/groups" className="flex flex-wrap gap-2">
+        <input type="hidden" name="view" value="discover" />
+        {area && <input type="hidden" name="area" value={area} />}
+        {asked && <input type="hidden" name="asked" value="1" />}
+        <input name="q" defaultValue={q} placeholder="Search groups…" aria-label="Search groups" className="h-10 min-w-[220px] flex-1 border border-line bg-surface px-3 text-[14px] focus:border-ink focus:outline-none" />
+        <button type="submit" className="inline-flex min-h-[40px] items-center border border-ink bg-ink px-3.5 text-[13px] font-bold text-surface">Search</button>
+      </form>
+      <nav aria-label="Areas" className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
+        <Link href={href({ area: "" })} className={chip(!area)}>All Areas</Link>
+        {areas.filter((a) => used.has(a.code)).map((a) => <Link key={a.code} href={href({ area: a.code })} className={chip(area === a.code)}>{a.label}</Link>)}
+        <Link href={href({ asked: asked ? "" : "1" })} className={chip(asked)}>Has Questions</Link>
+      </nav>
+      {groups.length === 0 ? (
+        <p className="mt-6 text-center text-[14px] text-ink-2">{tracks.length === 0 ? "You're already in every group there is. Starting one is the way to make another." : "No groups match."}</p>
+      ) : (
+        <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {groups.map((g) => (
+            <li key={g.slug} data-discover-group={g.slug} className="flex flex-col border border-line bg-white p-4">
+              <p className="text-[10.5px] font-bold tracking-[0.08em] text-ink-3">{(areas.find((a) => a.code === g.area)?.label ?? g.track).toUpperCase()}</p>
+              <Link href={`/connect/groups/${g.slug}`} className="mt-1.5 text-[15px] font-bold leading-snug hover:underline">{g.title}</Link>
+              <p className="mt-1 text-[12.5px] text-ink-2">{g.pathSlug ? "Path group" : "Member group"} · {g.members} {g.members === 1 ? "member" : "members"} · {g.posts === 0 ? "quiet" : `${g.posts} ${g.posts === 1 ? "question" : "questions"}`}</p>
+              <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
+                <GroupJoin boardId={g.boardId} offer={g.offer} copy={GROUP_OFFER_COPY[g.offer.kind]} canLeave={false} pathSlug={g.pathSlug} />
+                <Link href={`/connect/groups/${g.slug}`} className={OPEN}>Open</Link>
               </div>
-            ))}
-          </div>
-        </section>
-      ))}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
