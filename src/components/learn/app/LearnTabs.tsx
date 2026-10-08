@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export type LearnTab = "my-learning" | "paths" | "courses";
+export type LearnTab = "home" | "my-learning" | "paths" | "courses";
 
 const TAB = "shrink-0 whitespace-nowrap border-b-2 py-[14px] text-[13.5px] font-semibold";
 const IDLE = `${TAB} border-transparent text-ink-2 hover:text-magenta`;
@@ -17,7 +17,7 @@ export function LearnTabs({
   teaches: boolean;
   onLearnHome?: boolean;
 }) {
-  const anchor = (id: string) => (onLearnHome ? `#${id}` : `/learn#${id}`);
+  const anchor = (id: string) => (onLearnHome ? `#${id}` : `/learn/my#${id}`);
 
   return (
     // IT WRAPS. , AND THE ACTIVE TAB IS WHY (brief 9, 53d)
@@ -26,29 +26,11 @@ export function LearnTabs({
         LEARN
       </span>
 
-      {active === "my-learning" ? (
-        <span className={ACTIVE}>My Learning</span>
-      ) : (
-        <Link href="/learn" className={IDLE}>
-          My Learning
-        </Link>
-      )}
-
-      {active === "paths" ? (
-        <span className={ACTIVE}>Learning Paths</span>
-      ) : (
-        <Link href="/learn/paths" className={IDLE}>
-          Learning Paths
-        </Link>
-      )}
-
-      {active === "courses" ? (
-        <span className={ACTIVE}>Courses</span>
-      ) : (
-        <Link href="/learn/courses" className={IDLE}>
-          Courses
-        </Link>
-      )}
+      {/* Home · All Learning Paths · All Courses · My Learning (2026-10-08). */}
+      {active === "home" ? <span className={ACTIVE}>Home</span> : <Link href="/learn" className={IDLE}>Home</Link>}
+      {active === "paths" ? <span className={ACTIVE}>All Learning Paths</span> : <Link href="/learn/paths" className={IDLE}>All Learning Paths</Link>}
+      {active === "courses" ? <span className={ACTIVE}>All Courses</span> : <Link href="/learn/courses" className={IDLE}>All Courses</Link>}
+      {active === "my-learning" ? <span className={ACTIVE}>My Learning</span> : <Link href="/learn/my" className={IDLE}>My Learning</Link>}
 
       <a href={anchor("certificates")} className={IDLE}>
         Certificates
