@@ -530,6 +530,17 @@ export const NOTIFICATION_EVENTS = {
     body: () => "Accept or decline on your Mentors tab.",
     href: () => "/connect/mentors#requests",
   },
+  "follow.received": {
+    event: "follow.received",
+    recipient: "the person followed",
+    category: "community.activity",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `${str(v, "fromName", "Someone")} followed you`,
+    body: () => null,
+    href: () => "/connect/connections?chip=followers",
+  },
   "mentor.request_accepted": {
     event: "mentor.request_accepted",
     recipient: "the person who asked",

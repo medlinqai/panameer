@@ -1,3 +1,5 @@
+import { followState } from "@/lib/follow";
+import { FollowButton } from "@/components/community/FollowButton";
 import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
@@ -24,7 +26,7 @@ async function connectSlot(
   viewer: Awaited<ReturnType<typeof getSessionViewer>>,
   ownerUserId: string | null,
   isOwner: boolean
-): Promise<{ connect?: React.ReactNode; mentor?: React.ReactNode }> {
+): Promise<{ connect?: React.ReactNode; mentor?: React.ReactNode; follow?: React.ReactNode }> {
   if (!viewer || !ownerUserId || isOwner) return {};
 
   const mine = await getMyCommunity(viewer);
@@ -44,9 +46,11 @@ async function connectSlot(
     mentorStatus: following ? ("MENTOR" as const) : mine.mentorRequested.some((f) => f.person?.userId === ownerUserId) ? ("REQUESTED" as const) : null,
     tone: "block" as const,
   };
+  const fs = await followState(viewer.userId, ownerUserId);
   return {
     connect: <ConnectControls {...common} part="colleague" />,
     mentor: <ConnectControls {...common} part="mentor" />,
+    follow: <FollowButton toUserId={ownerUserId} initialFollowing={fs.following} initialCount={fs.followers} />,
   };
 }
 

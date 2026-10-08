@@ -207,6 +207,7 @@ it, because an item with no clearing writer would sit there forever (`E579` one 
 | `group.question_asked` | the group's owner | `Send for Approval` | worklist | ⚠ The same question `countThreadsWaitingOn` counts on the Groups page — one definition. **Cleared by answering.** ⚠⚠ The four general boards are ownerless, so nothing fires |
 | `colleague.invite_received` | the person invited | `Send for Approval` | worklist | **Cleared by accepting OR declining** — both end the wait |
 | `mentor.request_received` | the person asked to mentor | `Send for Approval` | worklist | **Cleared by accepting, declining, or the asker withdrawing.** Emailed. Kept as a request so a payment step can sit before Accept (R2) |
+| `follow.received` | the person followed | `Do It` | in-app | One-way, no approval; one notice per follower (dedupe on the pair). No email |
 | `mentor.request_accepted` | the person who asked | `Do It` | in-app | A decline is silent, like a colleague decline |
 | `colleague.invite_accepted` | the person who invited | `Do It` | in-app | ⚠ A colleague DECLINE is deliberately silent — that is a judgement this product does not deliver, unlike a group decline, where an owner is administering a room |
 | `profile.viewed` | the profile's owner | `Do It` | digest | ⚠⚠ **DIGEST, NOT FEED.** A bell that rings on every glance is the fastest way to get muted — the reason `learn.lesson_completed` is already digest. ⚠ Fires exactly when a view is COUNTED, so the bell and the profile's number cannot disagree |

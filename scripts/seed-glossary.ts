@@ -18,6 +18,8 @@ const EXTRA: Row[] = [
   { term: "Award", category: "Profile", type: "Panameer term", definition: "A credential recognising notable work, from an employer, client, vendor or industry body.", also: null, dont: null, shown: "Public", confirm: null },
   { term: "Membership", category: "Profile", type: "Panameer term", definition: "A credential showing membership of a professional body or association.", also: null, dont: null, shown: "Public", confirm: null },
   { term: "Insurance & Bonding", category: "Profile", type: "Panameer term", definition: "A credential showing cover a member or their company holds — liability insurance, a surety bond and the like.", also: "Insurance; Bonding", dont: null, shown: "Public", confirm: null },
+  { term: "Follow", category: "Learn & Connect", type: "Panameer term", definition: "A one-way link to keep up with someone. No approval, and separate from being colleagues or mentoring — you can follow a colleague too.", also: null, dont: null, shown: "Public", confirm: null },
+  { term: "Follower", category: "Learn & Connect", type: "Panameer term", definition: "Someone who follows you. Your follower count shows on your profile.", also: "Followers", dont: null, shown: "Public", confirm: null },
   { term: "Connect", category: "Learn & Connect", type: "Panameer term", definition: "Panameer's community area: Leaders, Community, Connections, Mentors, Groups and Recommendations.", also: null, dont: null, shown: "Public", confirm: null },
 ];
 const text = (v: ExcelJS.CellValue) => (v == null ? "" : typeof v === "object" && "richText" in v ? v.richText.map((r) => r.text).join("") : typeof v === "object" && "text" in v ? String(v.text) : String(v)).trim();

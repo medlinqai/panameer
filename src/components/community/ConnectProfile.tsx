@@ -71,6 +71,7 @@ export function ConnectProfile({
   messagePermission = null,
   connect,
   mentor,
+  follow,
   previewAsBuyer = false,
 }: {
   p: ProviderProfileView;
@@ -97,6 +98,8 @@ export function ConnectProfile({
   connect?: ReactNode;
   /** THE MENTOR HALF OF `ConnectControls` item 10) */
   mentor?: ReactNode;
+  /** Follow (2026-10-08): one-way, visitor view only. */
+  follow?: ReactNode;
   /** THE BUYER'S VIEW, EVEN WHEN THE OWNER IS LOOKING ( WS-D) */
   previewAsBuyer?: boolean;
 }) {
@@ -536,6 +539,13 @@ export function ConnectProfile({
               </section>
             )}
 
+            {follow && (
+              <section className="mt-7 border-t border-line pt-5" data-follow-section>
+                <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">Follow</h3>
+                {follow}
+              </section>
+            )}
+
             {/* THE REAL CONTROL, NOT A DOOR TO A DIRECTORY item 10) */}
             {mentor && p.openForMentoring && (
               <section className="mt-7 border-t border-line pt-5">
@@ -546,8 +556,8 @@ export function ConnectProfile({
                 {mentor}
                 <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
                   {/* IT SAYS WHAT THE BUTTON DOES. A `MENTOR` row is created `ACCEPTED` */}
-                  This provider is open to mentoring. Following them does not need their
-                  approval, and it does not let either of you message the other.
+                  This provider is open to mentoring. They accept or decline your request;
+                  mentoring is free for now.
                 </p>
               </section>
             )}

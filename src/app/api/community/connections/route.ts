@@ -11,12 +11,15 @@ import {
   requestColleague,
   unfollowMentor,
 } from "@/lib/connections";
+import { followUser, unfollowUser } from "@/lib/follow";
 
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("colleague"), toUserId: z.string().uuid() }),
   z.object({ action: z.literal("mentor"), toUserId: z.string().uuid() }),
   z.object({ action: z.literal("unmentor"), toUserId: z.string().uuid() }),
   z.object({ action: z.literal("mentor_withdraw"), toUserId: z.string().uuid() }),
+  z.object({ action: z.literal("follow"), toUserId: z.string().uuid() }),
+  z.object({ action: z.literal("unfollow"), toUserId: z.string().uuid() }),
   z.object({ action: z.literal("mentor_accept"), connectionId: z.string().uuid() }),
   z.object({ action: z.literal("mentor_decline"), connectionId: z.string().uuid() }),
   z.object({ action: z.literal("accept"), connectionId: z.string().uuid() }),
@@ -47,6 +50,16 @@ export async function POST(req: Request) {
         const row = await followMentor(viewer, b.toUserId);
         return NextResponse.json({ ok: true, status: row.status === "ACCEPTED" ? "MENTOR" : "REQUESTED" });
       }
+      case "follow":
+        try {
+          await followUser(viewer, b.toUserId);
+        } catch (e) {
+          return NextResponse.json({ error: (e as Error).message }, { status: 400 });
+        }
+        return NextResponse.json({ ok: true, status: "FOLLOWING" });
+      case "unfollow":
+        await unfollowUser(viewer, b.toUserId);
+        return NextResponse.json({ ok: true, status: null });
       case "mentor_withdraw":
         await withdrawMentor(viewer, b.toUserId);
         return NextResponse.json({ ok: true, status: null });

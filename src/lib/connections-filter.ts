@@ -55,6 +55,7 @@ async function loadPeople(viewer: Viewer, scope: "connections" | "members" = "co
     if (e.kind === "COLLEAGUE" && e.status === "ACCEPTED") r.rel.add("colleague");
     if (e.kind === "COLLEAGUE" && e.status === "PENDING") r.rel.add(e.to_user_id === me ? "invin" : "invout");
     if (e.kind === "MENTOR" && e.status === "ACCEPTED") r.rel.add(e.from_user_id === me ? "mentor" : "mentee");
+    if (e.kind === "FOLLOW" && e.status === "ACCEPTED") r.rel.add(e.from_user_id === me ? "following" : "follower");
     if (r.rel.has("colleague") || r.rel.has("mentor") || r.rel.has("mentee")) r.rel.add("connected");
     relOf.set(other, r);
   }
@@ -194,6 +195,8 @@ const chipMatch = (p: Person, chip: string) =>
   : chip === "worked" ? p.rel.has("connected") && p.how.has("worked")
   : chip === "samecompany" ? p.rel.has("connected") && p.how.has("samecompany")
   : chip === "learn" ? p.rel.has("connected") && p.how.has("course")
+  : chip === "following" ? p.rel.has("following")
+  : chip === "followers" ? p.rel.has("follower")
   : p.rel.has("connected");
 
 function panelMatch(p: Person, f: ConnFilters) {

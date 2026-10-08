@@ -5537,6 +5537,8 @@ model Message {
 enum ConnectionKind {
   COLLEAGUE
   MENTOR
+  /// One-way, no approval (2026-10-08): created ACCEPTED; R1 = list + count only.
+  FOLLOW
 }
 
 enum ConnectionStatus {
