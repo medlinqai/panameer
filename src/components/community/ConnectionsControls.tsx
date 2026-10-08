@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CHIPS, LABELS, filtersToQuery, type ConnFilters } from "@/lib/connections-query";
+import { CHIPS, LABELS, MEMBER_CHIPS, filtersToQuery, type ConnFilters } from "@/lib/connections-query";
 import { SkillTreePicker, type PickerTree } from "@/components/console/SkillTreePicker";
 
 // Connections: search, quick chips with counts, applied chips, Save as view, and the All Filters panel. Filters live in the URL.
@@ -16,12 +16,17 @@ type Props = {
   tree: PickerTree;
   /** Saved Views ▾ at the end of the chip row. */
   views?: { id: string; name: string; query: string; count: number }[];
+  /** "members" = the Community tab: people you're not connected to (own chips, Location/Company/Role menus). */
+  scope?: "connections" | "members";
+  options?: { locations: string[]; companies: string[] };
 };
 
 const href = (q: string) => (q ? `?${q}` : "?");
 const BTN = "inline-flex min-h-[40px] items-center border px-3.5 text-[13px] font-bold";
 
-export function ConnectionsControls({ f, total, chipCounts, invites, applied, tree, views }: Props) {
+export function ConnectionsControls({ f, total, chipCounts, invites, applied, tree, views, scope = "connections", options }: Props) {
+  const members = scope === "members";
+  const chips: readonly { key: string; label: string }[] = members ? MEMBER_CHIPS : CHIPS;
   const router = useRouter();
   const [q, setQ] = useState(f.q);
   const [panel, setPanel] = useState(false);
@@ -42,9 +47,11 @@ export function ConnectionsControls({ f, total, chipCounts, invites, applied, tr
 
   return (
     <div data-connections-controls>
-      <p className="text-[13px] text-ink-2">
-        Your People · <b className="text-ink">{total}</b> connections
-      </p>
+      {!members && (
+        <p className="text-[13px] text-ink-2">
+          Your People · <b className="text-ink">{total}</b> connections
+        </p>
+      )}
       <form
         className="mt-2 flex flex-wrap gap-2"
         onSubmit={(e) => {
@@ -52,17 +59,12 @@ export function ConnectionsControls({ f, total, chipCounts, invites, applied, tr
           router.push(href(filtersToQuery({ ...f, q })));
         }}
       >
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, company, skill…" aria-label="Search your connections" className="h-10 min-w-[200px] flex-1 border border-line bg-surface px-3 text-[14px] focus:border-ink focus:outline-none" />
-        <button type="button" data-all-filters onClick={() => setPanel(true)} className={`${BTN} border-ink`}>
-          All Filters{panelCount ? ` (${panelCount})` : ""}
-        </button>
-        <Link href="/invite-colleague" className={`${BTN} border-ink bg-ink text-surface`}>
-          Invite
-        </Link>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={members ? "Search name, role, skill or company…" : "Search name, company, skill…"} aria-label={members ? "Search people on Panameer" : "Search your connections"} className="h-10 min-w-[200px] flex-1 border border-line bg-surface px-3 text-[14px] focus:border-ink focus:outline-none" />
+        <button type="submit" className={`${BTN} border-ink bg-ink text-surface`}>Search</button>
       </form>
 
       <nav aria-label="Quick filters" className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
-        {CHIPS.map((c) => {
+        {chips.map((c) => {
           const on = f.chip === c.key;
           return (
             <Link
@@ -76,8 +78,19 @@ export function ConnectionsControls({ f, total, chipCounts, invites, applied, tr
             </Link>
           );
         })}
+        {members && options && (
+          <>
+            <ChoiceMenu label="Location" value={f.loc} choices={options.locations} onPick={(v) => router.push(href(filtersToQuery({ ...f, loc: v })))} />
+            <ChoiceMenu label="Company" value={f.co} choices={options.companies} onPick={(v) => router.push(href(filtersToQuery({ ...f, co: v })))} />
+            <ChoiceMenu label="Role" value={f.roles[0] ?? ""} choices={["func", "tech", "techfunc", "pm"]} labelOf={(v) => LABELS[v] ?? v} onPick={(v) => router.push(href(filtersToQuery({ ...f, roles: v ? [v] : [] })))} />
+          </>
+        )}
+        <button type="button" data-all-filters onClick={() => setPanel(true)} className="shrink-0 whitespace-nowrap border border-ink px-3 py-1.5 text-[13px] font-semibold">
+          All Filters{panelCount ? ` (${panelCount})` : ""}
+        </button>
         {views && <SavedViewsMenu views={views} />}
       </nav>
+      {members && <p data-count className="mt-2 text-[13px] text-ink-2"><b className="text-ink">{total}</b> {total === 1 ? "person" : "people"} · sorted by best match</p>}
 
       {applied.length > 0 && (
         <div data-applied className="mt-3 flex flex-wrap items-center gap-1.5 text-[12.5px]">
@@ -101,7 +114,7 @@ export function ConnectionsControls({ f, total, chipCounts, invites, applied, tr
         </div>
       )}
 
-      {panel && <FiltersPanel f={f} tree={tree} onClose={() => setPanel(false)} />}
+      {panel && <FiltersPanel f={f} tree={tree} scope={scope} onClose={() => setPanel(false)} />}
     </div>
   );
 }
@@ -159,7 +172,28 @@ export function SavedViews({ views }: { views: { id: string; name: string; query
   );
 }
 
-function FiltersPanel({ f, tree, onClose }: { f: ConnFilters; tree: PickerTree; onClose: () => void }) {
+/** A ▾ menu in the chip row (Location / Company / Role) that sets one URL filter. */
+function ChoiceMenu({ label, value, choices, onPick, labelOf = (v) => v }: { label: string; value: string; choices: string[]; onPick: (v: string) => void; labelOf?: (v: string) => string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative shrink-0">
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className={"whitespace-nowrap border px-3 py-1.5 text-[13px] font-semibold " + (value ? "border-ink bg-ink text-surface" : "border-line hover:border-ink")}>
+        {value ? `${label}: ${labelOf(value)}` : label} ▾
+      </button>
+      {open && (
+        <span className="absolute left-0 z-20 mt-1 block max-h-[280px] w-[240px] overflow-y-auto border border-ink bg-surface p-1 shadow-lg">
+          {value && <button type="button" onClick={() => { setOpen(false); onPick(""); }} className="block w-full px-2 py-1.5 text-left text-[13px] font-semibold text-magenta-dark">Any {label.toLowerCase()}</button>}
+          {choices.length === 0 && <span className="block px-2 py-1.5 text-[12.5px] text-ink-3">Nothing to pick yet.</span>}
+          {choices.map((c) => (
+            <button key={c} type="button" onClick={() => { setOpen(false); onPick(c); }} className={"block w-full px-2 py-1.5 text-left text-[13px] hover:bg-bg-soft " + (c === value ? "font-bold" : "")}>{labelOf(c)}</button>
+          ))}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function FiltersPanel({ f, tree, scope = "connections", onClose }: { f: ConnFilters; tree: PickerTree; scope?: "connections" | "members"; onClose: () => void }) {
   const router = useRouter();
   const [d, setD] = useState<ConnFilters>({ ...f, chip: "all" });
   const [count, setCount] = useState<number | null>(null);
@@ -167,7 +201,7 @@ function FiltersPanel({ f, tree, onClose }: { f: ConnFilters; tree: PickerTree; 
   useEffect(() => {
     let live = true;
     const t = setTimeout(() => {
-      fetch(`/api/connect/count?${query}`)
+      fetch(`/api/connect/count?${query}${scope === "members" ? "&scope=members" : ""}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((b) => live && setCount(b?.count ?? null))
         .catch(() => {});
@@ -176,7 +210,7 @@ function FiltersPanel({ f, tree, onClose }: { f: ConnFilters; tree: PickerTree; 
       live = false;
       clearTimeout(t);
     };
-  }, [query]);
+  }, [query, scope]);
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", k);

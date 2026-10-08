@@ -13,6 +13,8 @@ export type ConnFilters = {
   loc: string;
   trust: string[];
   act: string[];
+  /** Community (members scope): current company contains. */
+  co: string;
 };
 
 const list = (v: string | undefined) => (v ? v.split(",").filter(Boolean) : []);
@@ -33,6 +35,7 @@ export function parseFilters(sp: Record<string, string | undefined>): ConnFilter
     loc: (sp.loc ?? "").trim(),
     trust: list(sp.trust),
     act: list(sp.act),
+    co: (sp.co ?? "").trim(),
   };
 }
 
@@ -54,6 +57,14 @@ export const CHIPS = [
   { key: "samecompany", label: "Same Company" },
   { key: "learn", label: "From Learn" },
   { key: "invites", label: "Invites" },
+] as const;
+
+/** Community tab (people you're not connected to yet). */
+export const MEMBER_CHIPS = [
+  { key: "all", label: "Everyone" },
+  { key: "second", label: "2nd connections" },
+  { key: "shared", label: "Shared skills" },
+  { key: "mentoring", label: "Open to mentoring" },
 ] as const;
 
 export const LABELS: Record<string, string> = {

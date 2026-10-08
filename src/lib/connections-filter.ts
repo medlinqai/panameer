@@ -5,8 +5,9 @@ import { formatPlace } from "@/lib/location";
 import { companyChecklist } from "@/lib/your-path";
 
 // Connect › Connections filters (2026-10-06): everything server-side, over the viewer's own connections only.
-import { CHIPS, LABELS, parseFilters, filtersToQuery, type ConnFilters } from "@/lib/connections-query";
-export { CHIPS, LABELS, parseFilters, filtersToQuery, type ConnFilters };
+import { CHIPS, LABELS, MEMBER_CHIPS, parseFilters, filtersToQuery, type ConnFilters } from "@/lib/connections-query";
+import { memberVisibleWhere } from "@/lib/access";
+export { CHIPS, LABELS, MEMBER_CHIPS, parseFilters, filtersToQuery, type ConnFilters };
 
 type Person = {
   userId: string;
@@ -32,13 +33,15 @@ type Person = {
   rate: number | null;
   trust: Set<string>;
   act: Set<string>;
+  mentoring: boolean;
 };
 
 const ROLE_KEYS: Record<string, string> = { APPLICATION_SPECIFIC: "func", TECHNOLOGY_SPECIFIC: "tech", PROJECT_SPECIFIC: "pm" };
 const DAY = 86_400_000;
 
-/** Every person the viewer is connected to (or has a pending invite with), with what each filter needs. */
-async function loadPeople(viewer: Viewer): Promise<Person[]> {
+/** Every person the viewer is connected to (or has a pending invite with) — or, for "members", every published
+ *  member they are NOT connected to (pending requests kept, marked) — with what each filter needs. */
+async function loadPeople(viewer: Viewer, scope: "connections" | "members" = "connections"): Promise<Person[]> {
   const me = viewer.userId;
   const edges = await prisma.connection.findMany({
     where: { OR: [{ from_user_id: me }, { to_user_id: me }], status: { in: ["ACCEPTED", "PENDING"] } },
@@ -55,6 +58,27 @@ async function loadPeople(viewer: Viewer): Promise<Person[]> {
     if (r.rel.has("colleague") || r.rel.has("mentor") || r.rel.has("mentee")) r.rel.add("connected");
     relOf.set(other, r);
   }
+  if (scope === "members") {
+    const candidates = await prisma.person.findMany({
+      where: {
+        ...memberVisibleWhere(),
+        user_id: { not: me },
+        OR: [{ providerProfile: { onboarding_completed_at: { not: null }, paused_at: null } }, { requesterProfile: { completed_at: { not: null } } }],
+      },
+      orderBy: { created_at: "desc" },
+      take: 400,
+      select: { user_id: true, created_at: true },
+    });
+    const keep = new Map<string, { rel: Set<string>; id: string; at: Date }>();
+    for (const c of candidates) {
+      if (!c.user_id) continue;
+      const r = relOf.get(c.user_id);
+      if (r?.rel.has("connected")) continue;
+      keep.set(c.user_id, r ?? { rel: new Set<string>(), id: "", at: c.created_at });
+    }
+    relOf.clear();
+    for (const [k, v] of keep) relOf.set(k, v);
+  }
   const ids = [...relOf.keys()];
   if (!ids.length) return [];
   const [people, mine] = await Promise.all([
@@ -68,7 +92,7 @@ async function loadPeople(viewer: Viewer): Promise<Person[]> {
         user: { select: { id: true, last_login: true } },
         providerProfile: {
           select: {
-            id: true, completeness: true, coordinator_person_id: true, onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true, rate_min_cents: true,
+            id: true, completeness: true, coordinator_person_id: true, onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true, rate_min_cents: true, open_for_mentoring: true,
             skills: { select: { skill_id: true, skill: { select: { name: true } } } },
             keywords: true,
             employers: { select: { name: true } },
@@ -156,6 +180,7 @@ async function loadPeople(viewer: Viewer): Promise<Person[]> {
       rate: rates.length ? Math.min(...rates) / 100 : null,
       trust,
       act,
+      mentoring: !!pp?.open_for_mentoring,
     });
   }
   return out;
@@ -185,6 +210,7 @@ function panelMatch(p: Person, f: ConnFilters) {
   if (f.modes.length && !f.modes.some((m) => p.modes.has(m))) return false;
   if ((f.rmin != null || f.rmax != null) && (p.rate == null || (f.rmin != null && p.rate < f.rmin) || (f.rmax != null && p.rate > f.rmax))) return false;
   if (f.loc && !lc(p.location ?? "").includes(lc(f.loc))) return false;
+  if (f.co && !lc(p.company ?? "").includes(lc(f.co))) return false;
   if (f.trust.some((t) => !p.trust.has(t))) return false;
   if (f.act.some((a) => !p.act.has(a))) return false;
   return true;
@@ -234,4 +260,50 @@ export function appliedChips(f: ConnFilters, skillName: (id: string) => string |
   if (f.rmin != null || f.rmax != null) out.push({ label: `Rate $${f.rmin ?? 0}–${f.rmax ?? "∞"}/hr`, query: without({ rmin: null, rmax: null }) });
   if (f.q) out.push({ label: `"${f.q}"`, query: without({ q: "" }) });
   return out;
+}
+
+/** Community tab: published members the viewer is not connected to, best match first. */
+export async function membersView(viewer: Viewer, f: ConnFilters) {
+  const me = viewer.userId;
+  const [all, mine, myEdges] = await Promise.all([
+    loadPeople(viewer, "members"),
+    prisma.person.findUnique({ where: { user_id: me }, select: { providerProfile: { select: { skills: { select: { skill_id: true } } } } } }),
+    prisma.connection.findMany({ where: { status: "ACCEPTED", OR: [{ from_user_id: me }, { to_user_id: me }] }, select: { from_user_id: true, to_user_id: true } }),
+  ]);
+  const mySkills = new Set((mine?.providerProfile?.skills ?? []).map((s) => s.skill_id));
+  const myPeople = [...new Set(myEdges.map((e) => (e.from_user_id === me ? e.to_user_id : e.from_user_id)))];
+  const ids = all.map((p) => p.userId);
+  const second = myPeople.length && ids.length
+    ? await prisma.connection.findMany({ where: { status: "ACCEPTED", OR: [{ from_user_id: { in: myPeople }, to_user_id: { in: ids } }, { to_user_id: { in: myPeople }, from_user_id: { in: ids } }] }, select: { from_user_id: true, to_user_id: true } })
+    : [];
+  const mutual = new Map<string, number>();
+  for (const e of second) {
+    const them = ids.includes(e.to_user_id) && myPeople.includes(e.from_user_id) ? e.to_user_id : e.from_user_id;
+    mutual.set(them, (mutual.get(them) ?? 0) + 1);
+  }
+  const enriched = all.map((p) => {
+    const shared = [...p.skillIds].filter((s) => mySkills.has(s));
+    const m = mutual.get(p.userId) ?? 0;
+    const pending = p.rel.has("invin") || p.rel.has("invout");
+    const whyParts = [
+      shared.length ? `${shared.length} shared skill${shared.length === 1 ? "" : "s"}` : null,
+      m ? `${m} mutual connection${m === 1 ? "" : "s"}` : null,
+      p.mentoring ? "Open to mentoring" : null,
+      p.buySide ? `Buys services${p.location ? ` · ${p.location}` : ""}` : null,
+      p.how.has("samecompany") ? "Same company" : null,
+      p.how.has("course") ? "Same course on Learn" : null,
+    ].filter(Boolean) as string[];
+    const skills = [...shared.map((s) => p.skillNames.get(s)!), ...[...p.skillNames.entries()].filter(([id]) => !mySkills.has(id)).map(([, n]) => n)].slice(0, 3);
+    const score = shared.length * 2 + m * 3 + (p.mentoring ? 1 : 0) + (p.how.has("samecompany") ? 2 : 0) + (p.how.has("course") ? 1 : 0);
+    return { ...p, shared: shared.length, mutual: m, pending, whyLine: whyParts.slice(0, 2).join(" · ") || (p.title ?? "On Panameer"), skills, score };
+  });
+  const panel = enriched.filter((p) => panelMatch(p, f));
+  const chipOf = (p: (typeof enriched)[number], chip: string) => (chip === "second" ? p.mutual > 0 : chip === "shared" ? p.shared > 0 : chip === "mentoring" ? p.mentoring : true);
+  const chipCounts = Object.fromEntries(MEMBER_CHIPS.map((c) => [c.key, panel.filter((p) => chipOf(p, c.key)).length])) as Record<string, number>;
+  const rows = panel.filter((p) => chipOf(p, f.chip)).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+  const options = {
+    locations: [...new Set(all.map((p) => p.location).filter((x): x is string => !!x))].sort().slice(0, 30),
+    companies: [...new Set(all.map((p) => p.company).filter((x): x is string => !!x))].sort().slice(0, 30),
+  };
+  return { rows, chipCounts, total: all.length, options };
 }
