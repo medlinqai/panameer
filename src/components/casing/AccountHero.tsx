@@ -18,6 +18,7 @@ export function AccountHero({
   paragraph,
   actions,
   testId,
+  wide = false,
 }: {
   picture: ReactNode;
   eyebrow: string;
@@ -27,9 +28,11 @@ export function AccountHero({
   paragraph?: ReactNode;
   actions?: ReactNode;
   testId?: string;
+  /** 400px picture column (labelled pictures like the bubble field need the room). */
+  wide?: boolean;
 }) {
   return (
-    <section data-account-hero data-testid={testId} className="grid items-center gap-x-14 gap-y-6 border-b border-line pb-9 md:grid-cols-[340px_1fr]">
+    <section data-account-hero data-testid={testId} className={"grid items-center gap-x-14 gap-y-6 border-b border-line pb-9 " + (wide ? "md:grid-cols-[400px_1fr]" : "md:grid-cols-[340px_1fr]")}>
       <div className="min-w-0">{picture}</div>
       <div className="min-w-0">
         <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">{eyebrow.toUpperCase()}</p>

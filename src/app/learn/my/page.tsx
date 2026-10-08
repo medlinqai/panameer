@@ -5,7 +5,7 @@ import { viewerTeaches } from "@/lib/learn-home";
 import { learnCatalog } from "@/lib/learn-catalog";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
-import { CertificateTiles } from "@/components/learn/CertificateTiles";
+import { BubbleField } from "@/components/casing/BubbleField";
 import { CredentialsBody } from "@/components/profile/CredentialsBody";
 
 export const metadata = { title: "My Learning — Panameer", description: "Your learning record: in progress, completed, certificates and tests." };
@@ -30,17 +30,26 @@ export default async function MyLearningPage() {
   const inProgress = paths.filter((p) => p.mine && !p.certificate && p.mine.done < p.mine.total).sort((a, b) => (lastBy.get(b.id)?.getTime() ?? 0) - (lastBy.get(a.id)?.getTime() ?? 0));
   const completed = paths.filter((p) => p.mine && p.mine.total > 0 && p.mine.done >= p.mine.total);
   const nextCert = [...inProgress].sort((a, b) => b.mine!.done / b.mine!.total - a.mine!.done / a.mine!.total)[0] ?? null;
-  const focus = inProgress[0] ?? null;
   const lessonsDone = watched.length;
-  const minutes = paths.reduce((n, p) => n + p.courses.reduce((m, c) => m + c.lessons.filter((l) => l.done).reduce((x, l) => x + (l.minutes ?? 0), 0), 0), 0);
-  const hours = minutes ? `${Math.round((minutes / 60) * 10) / 10} h` : "0 h";
   const tests = paths.filter((p) => p.test.ready && (p.mine || p.test.used > 0 || p.certificate));
   const toNext = nextCert ? nextCert.mine!.total - nextCert.mine!.done : null;
-  const tiles = [
-    ...certified.map((p) => ({ title: p.title, state: "earned" as const })),
-    ...(nextCert ? [{ title: nextCert.title, state: "next" as const }] : []),
-    ...inProgress.filter((p) => p !== nextCert).map((p) => ({ title: p.title, state: "todo" as const })),
-  ];
+  // One bubble per enrolled path: size = lessons, ink rises with progress, certified = solid ✓, furthest-into = magenta ring.
+  const enrolled = paths.filter((p) => p.mine?.enrolled || p.certificate);
+  const bubbles = enrolled.map((p) => {
+    const done = p.mine?.done ?? 0;
+    const total = p.mine?.total ?? p.lessons;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    return {
+      key: p.id,
+      href: `/learn/${p.slug}`,
+      label: p.title,
+      hover: `${p.title} · ${done} of ${total} lessons · ${p.certificate ? "certified" : `${pct}%`}`,
+      size: p.lessons,
+      fill: p.certificate ? 1 : done > 0 ? done / Math.max(total, 1) : null,
+      check: !!p.certificate,
+      ring: p.id === nextCert?.id,
+    };
+  });
   const row = "flex flex-wrap items-center justify-between gap-2 border-b border-line py-2.5";
   const BTN = "inline-flex min-h-9 items-center border border-ink px-3.5 text-[13px] font-semibold hover:bg-black/[0.04]";
   const BTN_K = "inline-flex min-h-9 items-center bg-ink px-3.5 text-[13px] font-semibold text-surface hover:bg-ink-hover";
@@ -51,20 +60,38 @@ export default async function MyLearningPage() {
       <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-my-learning>
         <AccountHero
           testId="my-learning-hero"
-          picture={<CertificateTiles tiles={tiles} />}
+          wide
+          picture={
+            <BubbleField
+              bubbles={bubbles}
+              me="YOU"
+              caption={bubbles.length ? "Bubble size = lessons in the path" : "Enroll in a learning path and it appears here"}
+              legend={[
+                { label: "certified ✓", swatch: "check" },
+                { label: "in progress", swatch: "half" },
+                { label: "where you are", swatch: "ring" },
+                { label: "not started", swatch: "quiet" },
+              ]}
+            />
+          }
           eyebrow="My Learning"
           title="Your Learning Record"
           kpis={[
+            { value: enrolled.length, label: "ENROLLED" },
             { value: certified.length, label: "CERTIFICATES" },
             { value: inProgress.length, label: "IN PROGRESS" },
             { value: lessonsDone, label: "LESSONS DONE" },
-            { value: hours, label: "WATCHED" },
           ]}
-          paragraph={<>Your certificates show on your profile under Credentials and lift your Search Score.{toNext ? <> You&apos;re <b className="text-ink">{toNext} {toNext === 1 ? "lesson" : "lessons"}</b> from your next one.</> : null}</>}
+          paragraph={
+            <>
+              {nextCert ? <>You&apos;re furthest into <b className="text-ink">{nextCert.title}</b> — {toNext} {toNext === 1 ? "lesson" : "lessons"} from its certificate. </> : null}
+              Certificates show on your profile under <b className="text-ink">Credentials</b>.
+            </>
+          }
           actions={
             <>
-              {focus?.mine?.next ? <Link href={`/learn/${focus.slug}/${focus.mine.next.id}`} className={HERO_BTN}>Continue Lesson {focus.mine.next.index}</Link> : <Link href="/learn/paths" className={HERO_BTN}>Browse Learning Paths</Link>}
-              <Link href="/profile#certifications" className={HERO_BTN_W}>View My Credentials</Link>
+              {nextCert?.mine?.next ? <Link href={`/learn/${nextCert.slug}/${nextCert.mine.next.id}`} className={HERO_BTN}>Continue Lesson {nextCert.mine.next.index}</Link> : <Link href="/learn/paths" className={HERO_BTN}>Browse Learning Paths</Link>}
+              {nextCert?.test.ready && !nextCert.test.passed && <Link href={`/learn/${nextCert.slug}/test`} className={HERO_BTN_W}>Take the Certification Test</Link>}
             </>
           }
         />
