@@ -130,7 +130,7 @@ async function clearInviteWorklist(connectionId: string) {
     .catch(() => {});
 }
 
-/** MENTOR — one click, `ACCEPTED` immediately. */
+/** MENTOR — a request the mentor accepts or declines (2026-10-08). Shaped so a payment step can sit before Accept (R2). */
 export async function followMentor(viewer: Viewer, toUserId: string) {
   const from = await ownUserId(viewer);
   refuseSelf(from, toUserId);
@@ -140,7 +140,7 @@ export async function followMentor(viewer: Viewer, toUserId: string) {
     where: { id: toUserId },
     select: {
       id: true,
-      person: { select: { providerProfile: { select: { open_for_mentoring: true } } } },
+      person: { select: { id: true, providerProfile: { select: { open_for_mentoring: true } } } },
     },
   });
   if (!target) throw new ConnectionError("That person isn't on Panameer", "NOT_A_MEMBER");
@@ -154,18 +154,66 @@ export async function followMentor(viewer: Viewer, toUserId: string) {
       from_user_id_to_user_id_kind: { from_user_id: from, to_user_id: toUserId, kind: "MENTOR" },
     },
   });
-  if (existing) return existing;
+  if (existing && (existing.status === "ACCEPTED" || existing.status === "PENDING")) return existing;
+  // A declined or withdrawn request can be asked again; the same row goes back to PENDING.
+  const row = existing
+    ? await prisma.connection.update({ where: { id: existing.id }, data: { status: "PENDING", responded_at: null, created_at: new Date() } })
+    : await prisma.connection.create({ data: { from_user_id: from, to_user_id: toUserId, kind: "MENTOR", status: "PENDING" } });
 
-  // needed" — and leaving it null would make an ACCEPTED row indistinguishable
-  return prisma.connection.create({
-    data: {
-      from_user_id: from,
-      to_user_id: toUserId,
-      kind: "MENTOR",
-      status: "ACCEPTED",
-      responded_at: new Date(),
-    },
+  const asker = await prisma.person.findFirst({ where: { user_id: from }, select: { first_name: true, last_name: true } });
+  if (target.person?.id) {
+    await notify({
+      event: "mentor.request_received",
+      personId: target.person.id,
+      entityType: "connection",
+      entityId: row.id,
+      dedupeKey: `mentor.request:${row.id}:${row.created_at.getTime()}`,
+      vars: { fromName: [asker?.first_name, asker?.last_name].filter(Boolean).join(" ") || "Someone" },
+    });
+  }
+  return row;
+}
+
+async function clearMentorWorklist(connectionId: string) {
+  await prisma.notification
+    .updateMany({ where: { dedupe_key: { startsWith: `mentor.request:${connectionId}:` }, resolved_at: null }, data: { resolved_at: new Date() } })
+    .catch(() => {});
+}
+
+/** The mentor accepts or declines a request addressed to them. */
+export async function decideMentor(viewer: Viewer, connectionId: string, accept: boolean) {
+  const me = await ownUserId(viewer);
+  const row = await prisma.connection.findFirst({
+    where: { id: connectionId, to_user_id: me, kind: "MENTOR", status: "PENDING" },
+    select: { id: true, from_user_id: true },
   });
+  if (!row) throw new ConnectionError("That request is no longer open", "NOT_FOUND");
+  await prisma.connection.update({ where: { id: row.id }, data: { status: accept ? "ACCEPTED" : "DECLINED", responded_at: new Date() } });
+  await clearMentorWorklist(row.id);
+  if (accept) {
+    const [asker, mentor] = await Promise.all([
+      prisma.person.findFirst({ where: { user_id: row.from_user_id }, select: { id: true } }),
+      prisma.person.findFirst({ where: { user_id: me }, select: { first_name: true, last_name: true } }),
+    ]);
+    if (asker)
+      await notify({
+        event: "mentor.request_accepted",
+        personId: asker.id,
+        entityType: "connection",
+        entityId: row.id,
+        dedupeKey: `mentor.accepted:${row.id}`,
+        vars: { mentorName: [mentor?.first_name, mentor?.last_name].filter(Boolean).join(" ") || "Your mentor" },
+      });
+  }
+}
+
+/** The asker takes a pending mentor request back (kept as WITHDRAWN, like a colleague request). */
+export async function withdrawMentor(viewer: Viewer, toUserId: string) {
+  const row = await prisma.connection.findFirst({ where: { from_user_id: viewer.userId, to_user_id: toUserId, kind: "MENTOR", status: "PENDING" }, select: { id: true } });
+  if (!row) return false;
+  await prisma.connection.update({ where: { id: row.id }, data: { status: "WITHDRAWN" } });
+  await clearMentorWorklist(row.id);
+  return true;
 }
 
 /** Unfollowing DOES delete — a follow is not a claim about the other person */
@@ -296,7 +344,7 @@ function relationFor(me: string, userId: string, rows: ConnectionRow[]) {
     (c) => (c.from_user_id === userId || c.to_user_id === userId) && c.kind === "COLLEAGUE"
   );
   const follows = rows.find(
-    (c) => c.kind === "MENTOR" && c.from_user_id === me && c.to_user_id === userId
+    (c) => c.kind === "MENTOR" && c.from_user_id === me && c.to_user_id === userId && c.status === "ACCEPTED"
   );
   return {
     // THE ROW'S LABEL COMES FROM THE DATA, so it can read "Requested" rather
@@ -423,7 +471,7 @@ export async function getMyCommunity(viewer: Viewer) {
       .map((r) => ({ connectionId: r.id, person: other(r) }))
       .filter((x) => x.person),
     following: rows
-      .filter((r) => r.kind === "MENTOR" && r.from_user_id === me)
+      .filter((r) => r.kind === "MENTOR" && r.status === "ACCEPTED" && r.from_user_id === me)
       .map((r) => ({ connectionId: r.id, person: other(r) }))
       .filter((x) => x.person),
     // DECLINED ROWS ARE COUNTED, NOT LISTED. They are kept forever and they
@@ -431,8 +479,21 @@ export async function getMyCommunity(viewer: Viewer) {
 
     // HOW MANY MEMBERS CONNECTED TO ME AS A MENTOR .
     mentorConnectionCount: rows.filter(
-      (r) => r.kind === "MENTOR" && r.to_user_id === me
+      (r) => r.kind === "MENTOR" && r.status === "ACCEPTED" && r.to_user_id === me
     ).length,
+    /** Mentor requests: mine still waiting, and the ones waiting on me. */
+    mentorRequested: rows
+      .filter((r) => r.kind === "MENTOR" && r.status === "PENDING" && r.from_user_id === me)
+      .map((r) => ({ connectionId: r.id, person: other(r) }))
+      .filter((x) => x.person),
+    mentorRequests: rows
+      .filter((r) => r.kind === "MENTOR" && r.status === "PENDING" && r.to_user_id === me)
+      .map((r) => ({ connectionId: r.id, person: other(r) }))
+      .filter((x) => x.person),
+    mentees: rows
+      .filter((r) => r.kind === "MENTOR" && r.status === "ACCEPTED" && r.to_user_id === me)
+      .map((r) => ({ connectionId: r.id, person: other(r) }))
+      .filter((x) => x.person),
   };
 }
 

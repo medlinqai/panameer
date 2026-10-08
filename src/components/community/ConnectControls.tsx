@@ -13,6 +13,8 @@ type Props = {
   incomingConnectionId?: string | null;
   /** Whether I have already connected to them as a mentor. */
   isMentor?: boolean;
+  /** Mentoring needs approval (2026-10-08): REQUESTED while they decide, MENTOR once accepted. */
+  mentorStatus?: "REQUESTED" | "MENTOR" | null;
   isSelf?: boolean;
   showDecline?: boolean;
   tone?: "magenta" | "outline" | "block";
@@ -34,6 +36,7 @@ export function ConnectControls({
   relation,
   incomingConnectionId = null,
   isMentor = false,
+  mentorStatus,
   isSelf = false,
   showDecline = false,
   tone = "magenta",
@@ -44,7 +47,7 @@ export function ConnectControls({
   const PRIMARY_TONE = block ? BLOCK : tone === "outline" ? OUTLINE : PRIMARY;
   const router = useRouter();
   const [rel, setRel] = useState<Relation>(relation);
-  const [mentor, setMentor] = useState(isMentor);
+  const [mentor, setMentor] = useState<"REQUESTED" | "MENTOR" | null>(mentorStatus !== undefined ? mentorStatus : isMentor ? "MENTOR" : null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +71,8 @@ export function ConnectControls({
         return;
       }
       // THE SERVER'S STATUS WINS OVER THE OPTIMISTIC GUESS. `requestColleague`
-      if (typeof data?.status !== "undefined" && body.action !== "mentor") {
+      if (body.action === "mentor") setMentor(data?.status === "MENTOR" ? "MENTOR" : "REQUESTED");
+      else if (typeof data?.status !== "undefined" && !body.action.startsWith("mentor") && body.action !== "unmentor") {
         setRel(data.status as Relation);
       }
       router.refresh();
@@ -103,9 +107,10 @@ export function ConnectControls({
   };
   const toggleMentor = () => {
     const before = mentor;
+    const action = mentor === "MENTOR" ? "unmentor" : mentor === "REQUESTED" ? "mentor_withdraw" : "mentor";
     return send(
-      { action: mentor ? "unmentor" : "mentor", toUserId },
-      () => setMentor(!before),
+      { action, toUserId },
+      () => setMentor(action === "mentor" ? "REQUESTED" : null),
       () => setMentor(before)
     );
   };
@@ -163,24 +168,35 @@ export function ConnectControls({
         )}
         {/* answering what a connected colleague's card should offer */}
         {/* WHITE WITH AN INK BORDER ON THE PROFILE RAIL ( item 10) — Scott's words for */}
-        {showMentor && (
-          <button
-            type="button"
-            className={block ? BLOCK : mentor ? QUIET : tone === "outline" ? OUTLINE : GHOST}
-            disabled={busy}
-            onClick={toggleMentor}
-          >
-            {mentor ? "Disconnect" : "Request to Mentor"}
+        {showMentor && mentor === null && (
+          <button type="button" data-mentor-state="none" className={block ? BLOCK : tone === "outline" ? OUTLINE : GHOST} disabled={busy} onClick={toggleMentor}>
+            Request to Mentor
           </button>
+        )}
+        {showMentor && mentor === "REQUESTED" && (
+          <span className={block ? "flex w-full flex-col gap-1" : "inline-flex items-center gap-2"}>
+            <button type="button" data-mentor-state="requested" className={block ? BLOCK : tone === "outline" ? OUTLINE : GHOST} disabled>
+              Requested
+            </button>
+            <button type="button" className="text-[12.5px] font-semibold text-ink-2 underline underline-offset-2" disabled={busy} onClick={toggleMentor}>
+              Withdraw
+            </button>
+          </span>
+        )}
+        {showMentor && mentor === "MENTOR" && (
+          <span className={block ? "flex w-full flex-col gap-1" : "inline-flex items-center gap-2"}>
+            <button type="button" data-mentor-state="mentor" className={block ? BLOCK : tone === "outline" ? OUTLINE : GHOST} disabled>
+              Your Mentor ✓
+            </button>
+            <button type="button" className={QUIET} disabled={busy} onClick={toggleMentor}>
+              Disconnect
+            </button>
+          </span>
         )}
       </div>
       {/* PART E — THIS IS A STATUS, NOT A CONTROL. It was */}
       {/* THE STATE, SHOWN ONCE FOLLOWED ( item 10 — Scott's *"It shows state once */}
-      {showMentor && mentor && !busy && (
-        <span className="rounded-full bg-magenta/[0.08] px-2 py-0.5 text-[12px] font-semibold text-ink-2">
-          Mentor
-        </span>
-      )}
+
       {error && <span className="text-[12px] text-red-600">{error}</span>}
     </div>
   );

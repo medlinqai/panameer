@@ -41,6 +41,7 @@ async function connectSlot(
     relation: colleague?.rel ?? null,
     incomingConnectionId: incomingId ?? null,
     isMentor: following,
+    mentorStatus: following ? ("MENTOR" as const) : mine.mentorRequested.some((f) => f.person?.userId === ownerUserId) ? ("REQUESTED" as const) : null,
     tone: "block" as const,
   };
   return {

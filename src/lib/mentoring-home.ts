@@ -19,7 +19,7 @@ export async function getMentoringHome(viewer: Viewer) {
 
   const me = viewer.userId;
   const followerRows = await prisma.connection.findMany({
-    where: { kind: "MENTOR", to_user_id: me },
+    where: { kind: "MENTOR", status: "ACCEPTED", to_user_id: me },
     orderBy: { created_at: "desc" },
     select: { id: true, from_user_id: true, created_at: true },
   });
