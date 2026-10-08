@@ -234,6 +234,8 @@ export type PathInput = {
   coverImage?: string | null;
   introVideoRef?: string | null;
   status?: string;
+  outcome?: string | null;
+  level?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | null;
 };
 
 /** Every write here sets `is_custom: true`. */
@@ -251,6 +253,8 @@ export async function createPath(input: PathInput) {
         expert_person_id: input.expertPersonId || null,
         cover_image: input.coverImage?.trim() || null,
         intro_video_ref: input.introVideoRef?.trim() || null,
+        outcome: input.outcome?.trim() || null,
+        level: input.level ?? null,
         status: (input.status ?? "DRAFT") as never,
         is_custom: true,
       },
@@ -288,6 +292,8 @@ export async function updatePath(id: string, input: PathInput) {
       expert_person_id: input.expertPersonId || null,
       cover_image: input.coverImage?.trim() || null,
       intro_video_ref: input.introVideoRef?.trim() || null,
+      ...(input.outcome !== undefined ? { outcome: input.outcome?.trim() || null } : {}),
+      ...(input.level !== undefined ? { level: input.level } : {}),
       ...(input.status ? { status: input.status as never } : {}),
       is_custom: true,
     },
@@ -351,6 +357,8 @@ export async function getPathTree(id: string) {
       status: true,
       cover_image: true,
       intro_video_ref: true,
+      outcome: true,
+      level: true,
       expert_person_id: true,
       expert: { select: { first_name: true, last_name: true } },
       courses: {
@@ -408,6 +416,8 @@ export async function getPathTree(id: string) {
     status: path.status,
     coverImage: path.cover_image,
     introVideoRef: path.intro_video_ref,
+    outcome: path.outcome,
+    level: path.level,
     expertPersonId: path.expert_person_id,
     expert: name(path.expert),
     courses: path.courses.map((c) => ({

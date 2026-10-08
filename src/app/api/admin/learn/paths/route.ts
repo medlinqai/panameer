@@ -9,6 +9,8 @@ export const PATH_BODY = z.object({
   title: z.string().trim().min(1, "A learning path needs a title."),
   slug: z.string().trim().optional().nullable(),
   summary: z.string().trim().max(2000).optional().nullable(),
+  outcome: z.string().trim().max(200).optional().nullable(),
+  level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]).optional().nullable(),
   audience: z.enum(AUDIENCES),
   group: z.string().trim().max(120).optional().nullable(),
   expertPersonId: z.string().uuid().optional().nullable(),

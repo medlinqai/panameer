@@ -1,0 +1,20 @@
+slug,title,outcome_draft,level_draft
+"end-user-procurement-advanced-procurement","Advanced Procurement","Onboard suppliers and run the supplier portal end to end.",ADVANCED
+"end-user-accounting-basic-payables","Basic Payables","Enter, approve and pay supplier invoices in Payables.",BEGINNER
+"end-user-procurement-basic-procurement","Basic Procurement","Requisition to purchase order to receipt, end to end.",BEGINNER
+"end-user-core-hr-benefits-admin","Benefits Admin","Manage work relationships and compensation for employees.",INTERMEDIATE
+"end-user-procurement-contract-management","Contract Management","Author, approve and manage contracts with the terms library.",INTERMEDIATE
+"end-user-core-hr-core-hr","Core HR","Create and maintain person records in Core HR.",INTERMEDIATE
+"end-user-supply-chain-execution-cost-accounting","Cost Accounting","Understand and review item costs in Cost Accounting.",INTERMEDIATE
+"implementer-procurement-end-to-end-business-processing-buying-channels","End-to-End Business Processing (Buying Channels)","Pick the right buying channel for every purchase.",INTERMEDIATE
+"end-user-erp","ERP","Find your way around Oracle Cloud ERP.",BEGINNER
+"end-user-procurement-how-to-configure","How to Configure","Configure Procurement setups for a live rollout.",ADVANCED
+"implementer-procurement-how-to-deploy-procurement","How to Deploy Procurement","Plan and deploy Procurement for a client.",ADVANCED
+"implementer-implementer-s-journal-how-to-implement","How to Implement","Run an Oracle Cloud implementation from kickoff to go-live.",ADVANCED
+"end-user-implementers","Implementers","The working habits of Oracle Cloud implementers.",INTERMEDIATE
+"end-user-supply-chain-execution-inventory-management","Inventory Management","Receive, move and count stock in Inventory.",INTERMEDIATE
+"end-user-finance-accounting-journals","Journals","Create, post, review and report journals.",INTERMEDIATE
+"oracle-cloud-foundations","Oracle Cloud Foundations","Log in, find your way around and get started in Oracle Cloud.",BEGINNER
+"end-user-payroll-payroll-mgmt","Payroll Mgmt","Run and check a payroll cycle.",INTERMEDIATE
+"end-user-procurement-supplier-integration","Supplier Integration","Connect suppliers to Procurement so orders flow both ways.",INTERMEDIATE
+"end-user-talent-mgmt-talent-mgmt","Talent Mgmt","Run goals, reviews and talent processes.",INTERMEDIATE

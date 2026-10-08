@@ -58,6 +58,8 @@ export type Tree = {
   status: string;
   coverImage: string | null;
   introVideoRef: string | null;
+  outcome: string | null;
+  level: string | null;
   expertPersonId: string | null;
   expert: string | null;
   courses: TreeCourse[];

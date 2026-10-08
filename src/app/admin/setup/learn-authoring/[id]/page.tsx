@@ -97,6 +97,8 @@ export default function AdminLearnPathPage({
                       expertName: data.expert,
                       coverImage: data.coverImage,
                       introVideoRef: data.introVideoRef ?? "",
+                      outcome: data.outcome ?? "",
+                      level: data.level ?? "",
                       status: data.status,
                     })
                   }

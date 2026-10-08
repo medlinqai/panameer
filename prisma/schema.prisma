@@ -3743,6 +3743,9 @@ model LearningPath {
   /// ⚠ **NO INDEX.** 23 rows, and a boolean index over a column that is true
   /// for one of them earns nothing; `@@index([status])` already serves the read.
   is_starter       Boolean            @default(false)
+  /// One-line outcome for the card (2026-10-08); drafts live in scripts/out until Scott edits them.
+  outcome          String?
+  level            PathLevel?
 
   expert      Person?           @relation("LearnExpertPaths", fields: [expert_person_id], references: [id], onDelete: SetNull)
   courses     Course[]
@@ -8180,4 +8183,11 @@ model LearnPathWatch {
   @@unique([user_id, learning_path_id])
   @@index([learning_path_id])
   @@map("learn_path_watches")
+}
+
+/// Learning path level (2026-10-08). Null = not set; the card then hides the level tag.
+enum PathLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
 }

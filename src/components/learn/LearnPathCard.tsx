@@ -27,10 +27,11 @@ export function shortCode(title: string) {
 
 export function LearnPathCard({ p, areaLabel, tag, outcome, level, notify }: { p: CatPath; areaLabel: string | null; tag?: string; outcome?: string | null; level?: string | null; notify?: React.ReactNode }) {
   const [from, to] = TONE[p.area ?? ""] ?? ["#272334", "#4a4658"];
-  const line = outcome || p.summary?.split(/(?<=[.!?])\s/)[0] || null;
+  const line = outcome || p.outcome || p.summary?.split(/(?<=[.!?])\s/)[0] || null;
   const now = Math.max(0, p.learners - p.completed);
   const go = p.mine?.next ? `/learn/${p.slug}/${p.mine.next.id}` : `/learn/${p.slug}`;
-  const label = tag ?? (level ? LEVEL[level] : null);
+  const lv = level ?? p.level;
+  const label = tag ?? (lv ? LEVEL[lv] : null);
   const pct = p.mine && p.mine.total ? Math.round((p.mine.done / p.mine.total) * 100) : 0;
   return (
     <li data-path-card={p.slug} className="group flex flex-col border border-line bg-white transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-12px_rgba(39,35,52,0.35)]">

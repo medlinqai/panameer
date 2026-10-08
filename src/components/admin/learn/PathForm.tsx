@@ -26,6 +26,8 @@ export type PathDraft = {
   coverImage: string | null;
   introVideoRef: string;
   status: string;
+  outcome?: string;
+  level?: string;
 };
 
 export const EMPTY_PATH: PathDraft = {
@@ -99,6 +101,8 @@ export function PathForm({
             coverImage: draft.coverImage,
             introVideoRef: draft.introVideoRef || null,
             status: draft.status,
+            outcome: draft.outcome || null,
+            level: draft.level || null,
           }),
         }
       );
@@ -141,6 +145,19 @@ export function PathForm({
             }}
             placeholder="advanced-procurement"
           />
+        </Field>
+
+        <Field label="Outcome" hint="One line on the card: what a learner can do after this path.">
+          <TextInput value={draft.outcome ?? ""} onChange={(e) => set("outcome", e.target.value)} placeholder="Requisition to purchase order, end to end." />
+        </Field>
+
+        <Field label="Level">
+          <Select value={draft.level ?? ""} onChange={(e) => set("level", e.target.value)}>
+            <option value="">Not set</option>
+            <option value="BEGINNER">Beginner</option>
+            <option value="INTERMEDIATE">Intermediate</option>
+            <option value="ADVANCED">Advanced</option>
+          </Select>
         </Field>
 
         <Field label="Summary" hint="The description shown on the catalog card and the path page.">
