@@ -99,10 +99,9 @@ export function ConnectionsHero({ web, hero, standing, invitations }: { web: Web
     <>Ranking starts once {hero.minScorers} members have a score this month.</>
   );
   return (
-    <section data-connections-hero className="grid items-center gap-x-14 gap-y-6 border-b border-line pb-8 pt-1.5 md:grid-cols-[340px_1fr]">
-      <div className="mx-auto w-full max-w-[340px]">
+    <section data-connections-hero className="grid items-center gap-x-14 gap-y-6 border-b border-line pb-8 pt-1.5 md:grid-cols-[460px_1fr]">
+      <div className="mx-auto w-full max-w-[460px]">
         <CommunityWeb initial={web} />
-        <p className="mt-1.5 text-center text-[11px] text-ink-2">● joined &nbsp; ◌ invited &nbsp; ⋯ reachable</p>
       </div>
       <div>
         <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">{standing ? `LEVEL ${standing.level.number} · ${standing.level.name.toUpperCase()}` : "YOUR COMMUNITY"}</p>
