@@ -116,6 +116,9 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
+      // Beginners merged into Oracle Cloud Foundations (Scott 2026-10-08).
+      { source: "/learn/end-user-beginners", destination: "/learn/oracle-cloud-foundations", permanent: true },
+      { source: "/learn/end-user-beginners/:path*", destination: "/learn/oracle-cloud-foundations", permanent: true },
       { source: "/for-buyers", destination: "/", permanent: true },
       /*
         ⚠⚠ REPOINTED BY THE ROUTE SWAP (`P1-ALL-E017`). This said `/find-work`, which
