@@ -6,6 +6,7 @@ import {
   MessageError,
   listConversations,
   markRead,
+  searchConversations,
   sendMessage,
 } from "@/lib/messages";
 
@@ -18,9 +19,11 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("read"), otherUserId: z.string().uuid() }),
 ]);
 
-export async function GET() {
+export async function GET(req: Request) {
   const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;
+  const q = new URL(req.url).searchParams.get("q");
+  if (q !== null) return NextResponse.json({ matches: await searchConversations(gate, q) });
   const conversations = await listConversations(gate);
   return NextResponse.json({ conversations });
 }

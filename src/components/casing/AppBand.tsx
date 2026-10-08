@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { NotificationBell } from "@/components/casing/NotificationBell";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 //   import { useRef, useState, useSyncExternalStore } from "react";
-import { useRef, useState } from "react";
 import { useMe } from "@/components/MeProvider";
 import { ConfigDrawer } from "@/components/casing/ConfigDrawer";
 import { BottomNav } from "@/components/casing/BottomNav";
@@ -13,20 +11,16 @@ import { AccountMenu } from "@/components/casing/AccountMenu";
 import {
   ACCOUNT_BAND_HREF,
   BAND_CONTROL_HREFS,
-  MESSAGES_BAND_HREF,
-  BELL_BAND_HREF,
   CONFIG_BAND_HREF,
   HOME_BAND_HREF,
 } from "@/lib/nav";
 import { RailIcon } from "@/components/casing/RailIcon";
 import { BAND_LIT, BAND_IDLE, BAND_TILE } from "@/components/casing/band-lit";
-import { MessagesDrawer } from "@/components/casing/MessagesDrawer";
 import {
   navForRoles,
   railPersona,
   ADMIN_NAV,
   ADMIN_HOME,
-  NOTIFICATIONS_NAV,
   bandActiveHref,
 } from "@/lib/nav";
 import "./app-band.css";
@@ -38,10 +32,6 @@ export function AppBand() {
   const { data: session } = useSession();
   const isAdmin = session?.user?.isSystemAdmin === true;
 
-  const unreadCount = me?.notificationsUnread ?? 0;
-
-  const [messagesOpen, setMessagesOpen] = useState(false);
-  const messagesButtonRef = useRef<HTMLButtonElement>(null);
 
   const persona = railPersona(me, isAdmin);
   const consoleLabel =
@@ -152,43 +142,12 @@ export function AppBand() {
 
         {}
         {}
-        <button
-          ref={messagesButtonRef}
-          type="button"
-          onClick={() => setMessagesOpen((v) => !v)}
-          aria-label="Messages"
-          title="Messages"
-          aria-haspopup="dialog"
-          aria-expanded={messagesOpen}
-          className={
-            "grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors " +
-            (messagesOpen || isActive(MESSAGES_BAND_HREF) ? BAND_LIT : BAND_IDLE)
-          }
-        >
-          <MessagesIcon />
-        </button>
-
-        {}
-        <NotificationBell
-          unreadCount={unreadCount}
-          label={NOTIFICATIONS_NAV.label}
-          active={isActive(BELL_BAND_HREF)}
-        >
-          <BellIcon />
-        </NotificationBell>
-
-        {}
-        {}
+        {/* Messages and Notifications moved into the account menu (2026-10-07); the avatar carries one count. */}
         <AccountMenu isAdmin={isAdmin} onDark active={isActive(ACCOUNT_BAND_HREF)} />
       </div>
 
       {}
-      {messagesOpen && (
-        <MessagesDrawer
-          onClose={() => setMessagesOpen(false)}
-          returnFocusRef={messagesButtonRef}
-        />
-      )}
+
     </header>
 
       {}
@@ -247,22 +206,7 @@ function HomeIcon() {
   );
 }
 
-function MessagesIcon() {
-  return (
-    <svg {...S}>
-      <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.9 9.9 0 0 1-2.8-.4L4 21l1.4-4.1A8.1 8.1 0 0 1 4 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 8 8.4Z" />
-    </svg>
-  );
-}
 
-function BellIcon() {
-  return (
-    <svg {...S}>
-      <path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6" />
-      <path d="M13.7 20a2 2 0 0 1-3.4 0" />
-    </svg>
-  );
-}
 
 function BugIcon() {
   return (

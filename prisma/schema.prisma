@@ -5518,6 +5518,9 @@ model Message {
   /// `check:messages` asserts it. A sender-settable read receipt would be a
   /// claim about somebody else's attention.
   read_at      DateTime?
+  /// An image sent with the message (private bucket "message-images"); shown only to the two people.
+  image_path   String?
+  image_type   String?
 
   from User @relation("MessagesSent", fields: [from_user_id], references: [id], onDelete: Cascade)
   to   User @relation("MessagesReceived", fields: [to_user_id], references: [id], onDelete: Cascade)

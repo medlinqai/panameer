@@ -2,17 +2,16 @@ import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { connectTabs } from "@/lib/connect-tabs";
 import { Avatar } from "@/components/Avatar";
 import { Composer } from "@/components/messages/Composer";
+import { ConversationList } from "@/components/messages/ConversationList";
 import {
   MAX_BODY,
   canMessage,
   getConversation,
   listConversations,
   markRead,
+  profileHrefFor,
   unreadCount,
 } from "@/lib/messages";
 
@@ -38,21 +37,16 @@ export default async function MessagesPage({
         canMessage(viewer, withUserId),
         prisma.person.findFirst({
           where: { user_id: withUserId },
-          select: { first_name: true, last_name: true, title: true, photo_url: true },
+          select: { first_name: true, last_name: true, title: true, photo_url: true, providerProfile: { select: { id: true } } },
         }),
       ])
     : [null, null, null];
 
   const otherName = other ? `${other.first_name} ${other.last_name}`.trim() : "This member";
+  const otherHref = profileHrefFor(other?.providerProfile);
 
   return (
     <>
-      {/* E216 — the Community rail flyout's children are this section's tab row now. */}
-      <PageTabs
-        eyebrow="CONNECT" sequence={tabSequenceFor("/connect")}
-        tabs={connectTabs(viewer, unread)}
-        current="/messages"
-      />
       <div className="mx-auto max-w-5xl">
         <header className="mb-4">
           {/* THE UNREAD COUNT LIVES IN THE TITLE LINE  */}
@@ -80,15 +74,9 @@ export default async function MessagesPage({
                 (withUserId ? "hidden md:block" : "")
               }
             >
-              <div className="border-b border-line px-4 py-3">
-                <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">
-                  Conversations
-                </p>
-              </div>
               {conversations.length === 0 ? (
                 <div className="px-4 py-8 text-center">
                   <p className="text-[14px] font-semibold">No conversations yet</p>
-                  {/* THE EMPTY STATE NAMES THE PERMISSION, because "no */}
                   <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
                     You can message the colleagues you have connected with.{" "}
                     <Link href="/community" className="font-semibold text-magenta hover:underline">
@@ -98,43 +86,10 @@ export default async function MessagesPage({
                   </p>
                 </div>
               ) : (
-                <ul>
-                  {conversations.map((c) => {
-                    const active = c.otherUserId === withUserId;
-                    return (
-                      <li key={c.otherUserId}>
-                        <Link
-                          href={`/messages?with=${c.otherUserId}`}
-                          className={
-                            "flex min-h-[44px] items-center gap-3 border-b border-line px-4 py-3 transition-colors " +
-                            (active ? "bg-magenta/[0.06]" : "hover:bg-ink-2/[0.04]")
-                          }
-                        >
-                          <Avatar
-                            firstName={c.name.split(" ")[0] ?? ""}
-                            lastName={c.name.split(" ").slice(1).join(" ")}
-                            photoUrl={c.photoUrl}
-                            size={36}
-                          />
-                          <span className="min-w-0 flex-1">
-                            <span className="flex items-center gap-2">
-                              <span className="truncate text-[14px] font-bold">{c.name}</span>
-                              {/* ZERO RENDERS NOTHING — never a "0" pip. */}
-                              {c.unread > 0 && (
-                                <span className="ml-auto grid h-[18px] min-w-[18px] shrink-0 place-items-center rounded-full bg-magenta px-1 text-[11px] font-bold text-white">
-                                  {c.unread}
-                                </span>
-                              )}
-                            </span>
-                            <span className="mt-0.5 block truncate text-[12.5px] text-ink-2">
-                              {c.lastBody}
-                            </span>
-                          </span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
+                <ConversationList
+                  active={withUserId ?? null}
+                  rows={conversations.map((c) => ({ otherUserId: c.otherUserId, name: c.name, photoUrl: c.photoUrl, lastBody: c.lastBody, lastAt: c.lastAt.toISOString(), unread: c.unread, profileHref: c.profileHref }))}
+                />
               )}
             </aside>
 
@@ -159,9 +114,22 @@ export default async function MessagesPage({
                     >
                       ‹ All
                     </Link>
-                    <p className="text-[14px] font-bold">{otherName}</p>
-                    {other?.title && (
-                      <p className="truncate text-[12.5px] text-ink-2">{other.title}</p>
+                    {otherHref ? (
+                      <Link href={otherHref} data-thread-profile className="flex min-w-0 items-center gap-2.5 hover:underline">
+                        <Avatar firstName={other?.first_name ?? ""} lastName={other?.last_name ?? ""} photoUrl={other?.photo_url ?? null} size={36} />
+                        <span className="min-w-0">
+                          <span className="block truncate text-[14px] font-bold">{otherName}</span>
+                          {other?.title && <span className="block truncate text-[12.5px] text-ink-2">{other.title} · opens profile</span>}
+                        </span>
+                      </Link>
+                    ) : (
+                      <span className="flex min-w-0 items-center gap-2.5">
+                        <Avatar firstName={other?.first_name ?? ""} lastName={other?.last_name ?? ""} photoUrl={other?.photo_url ?? null} size={36} />
+                        <span className="min-w-0">
+                          <span className="block truncate text-[14px] font-bold">{otherName}</span>
+                          {other?.title && <span className="block truncate text-[12.5px] text-ink-2">{other.title}</span>}
+                        </span>
+                      </span>
                     )}
                   </div>
 
@@ -178,14 +146,20 @@ export default async function MessagesPage({
                             key={m.id}
                             className={"flex " + (mine ? "justify-end" : "justify-start")}
                           >
-                            <p
+                            <div
                               className={
                                 "max-w-[80%] whitespace-pre-wrap rounded-brand px-3 py-2 text-[14px] leading-relaxed " +
                                 (mine ? "bg-magenta text-white" : "bg-ink-2/[0.07] text-ink")
                               }
                             >
+                              {m.image_path && (
+                                <a href={`/api/messages/image/${m.id}`} target="_blank" rel="noreferrer" data-message-image className="mb-1 block">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={`/api/messages/image/${m.id}`} alt="Image in message" loading="lazy" className="max-h-[260px] max-w-full rounded-[6px] bg-white object-contain" />
+                                </a>
+                              )}
                               {m.body}
-                            </p>
+                            </div>
                           </div>
                         );
                       })
@@ -203,7 +177,7 @@ export default async function MessagesPage({
                     )}
                     {/* SAID PLAINLY, so a conversation that does not move on */}
                     <p className="mt-2 text-[12px] text-ink-2">
-                      New messages appear when you refresh or come back to this page.
+                      Press Enter to send, Shift+Enter for a new line. New messages appear when you refresh or come back to this page.
                     </p>
                   </div>
                 </>

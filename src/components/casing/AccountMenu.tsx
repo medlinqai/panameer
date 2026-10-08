@@ -84,6 +84,8 @@ export function AccountMenu({
   /* The company the rail chip used to name. See the My Company block below. */
   const company = me?.company;
   const rows = isAdmin ? ADMIN_PERSONA_NAV : PERSONA_NAV;
+  // One count on the avatar: unread messages + notifications that need the person.
+  const attention = (me?.messagesUnread ?? 0) + (me?.notificationsNeedAction ?? 0);
 
   const toggleAvailable = async () => {
     if (available === null) return;
@@ -228,6 +230,7 @@ export function AccountMenu({
               </span>
             )}
           </span>
+          {attention > 0 && <span data-avatar-count className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-magenta px-1 text-[11px] font-bold text-white">{attention > 99 ? "99+" : attention}</span>}
           <span aria-hidden className="pl-1 text-white/45">
             ›
           </span>
@@ -252,12 +255,19 @@ export function AccountMenu({
                 : "hover:bg-black/[0.04]")
           }
         >
-          <Avatar
-            firstName={first}
-            lastName={last}
-            photoUrl={me?.person?.photoUrl}
-            size={32}
-          />
+          <span className="relative">
+            <Avatar
+              firstName={first}
+              lastName={last}
+              photoUrl={me?.person?.photoUrl}
+              size={32}
+            />
+            {attention > 0 && (
+              <span data-avatar-count aria-label={`${attention} need you`} className="absolute -right-2 -top-2 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-magenta px-1 text-[11px] font-bold text-white ring-2 ring-[var(--color-rail,#272334)]">
+                {attention > 99 ? "99+" : attention}
+              </span>
+            )}
+          </span>
         </button>
       )}
 
@@ -339,29 +349,14 @@ export function AccountMenu({
           </div>
 
           <PathMenuBlock onNavigate={close} rowClass={rowClass} />
-          {/* R1: switch the other side on — buy and sell are per work order, not account types. */}
-          {me?.person?.roles && !me.person.roles.isServiceProvider && (
-            <MenuRow href="/join/provider" label="Start Selling" value={null} onClick={close} className={rowClass} />
-          )}
-          {me?.person?.roles && !me.person.roles.isRequester && !me.person.roles.isServiceBuyer && (
-            // One click: turn the buying side on, then straight into the buyer steps (no "no buyer profile yet" page).
-            <button
-              type="button"
-              data-menu-start-buying
-              onClick={async () => {
-                close();
-                const r = await fetch("/api/onboarding/requester/enable", { method: "POST" }).catch(() => null);
-                window.location.assign(r?.ok ? "/join/requester/start" : "/join/requester");
-              }}
-              className={`${rowClass} w-full text-left`}
-            >
-              Start Buying
-            </button>
-          )}
+          {/* Messages and Notifications live here now (2026-10-07); each row shows its own count. */}
+          <CountRow href="/messages" label="Messages" count={me?.messagesUnread ?? 0} onClick={close} className={rowClass} />
+          <CountRow href="/notifications" label="Notifications" count={me?.notificationsUnread ?? 0} onClick={close} className={rowClass} />
+          <div className="border-t border-line" />
           {/* MY COMPANY (E099, and it REVERSES E225) */}
 
           {/* ONE LIST, IN 89f's ORDER WS-A) */}
-          {(company?.isMember && !isAdmin ? [rows[0], COMPANY_PERSONA_ITEM, ...rows.slice(1)] : rows).map((item) => (
+          {(company?.isMember && !isAdmin ? [rows[0], COMPANY_PERSONA_ITEM, ...rows.slice(1)] : rows).map((item, i, all) => (
             <Fragment key={item.href}>
               <MenuRow
                 href={item.href}
@@ -370,9 +365,33 @@ export function AccountMenu({
                 onClick={close}
                 className={rowClass}
               />
+              {/* Start Selling / Start Buying sit after Profile and Company, before Account. */}
+              {i === all.findIndex((x) => x.href !== "/profile" && x.href !== COMPANY_PERSONA_ITEM.href) - 1 && (
+                <>
+                  {/* R1: switch the other side on — buy and sell are per work order, not account types. */}
+                  {me?.person?.roles && !me.person.roles.isServiceProvider && (
+                    <MenuRow href="/join/provider" label="Start Selling" value={null} onClick={close} className={rowClass} />
+                  )}
+                  {me?.person?.roles && !me.person.roles.isRequester && !me.person.roles.isServiceBuyer && (
+                    // One click: turn the buying side on, then straight into the buyer steps (no "no buyer profile yet" page).
+                    <button
+                      type="button"
+                      data-menu-start-buying
+                      onClick={async () => {
+                        close();
+                        const r = await fetch("/api/onboarding/requester/enable", { method: "POST" }).catch(() => null);
+                        window.location.assign(r?.ok ? "/join/requester/start" : "/join/requester");
+                      }}
+                      className={`${rowClass} w-full text-left`}
+                    >
+                      Start Buying
+                    </button>
+                  )}
+                </>
+              )}
             </Fragment>
           ))}
-          {!isAdmin && themeBlock}
+          {!isAdmin && <div className="border-t border-line">{themeBlock}</div>}
           {/* WS-A sheds the band's bug icon at phone width. IT DOES NOT */}
 
           {/* ---- Sign out ----------------------------------------------- */}
@@ -450,3 +469,12 @@ const THEME_OPTIONS: { value: ThemeChoice; label: string; hint?: string }[] = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
 ];
+
+function CountRow({ href, label, count, onClick, className }: { href: string; label: string; count: number; onClick: () => void; className: string }) {
+  return (
+    <Link href={href} role="menuitem" data-menu-item data-menu-count={label.toLowerCase()} onClick={onClick} className={`${className} flex items-center justify-between`}>
+      <span>{label}</span>
+      {count > 0 && <span className="grid h-[20px] min-w-[20px] place-items-center rounded-full bg-magenta px-1.5 text-[11.5px] font-bold text-white">{count > 99 ? "99+" : count}</span>}
+    </Link>
+  );
+}

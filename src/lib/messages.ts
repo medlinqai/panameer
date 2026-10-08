@@ -79,9 +79,9 @@ export class MessageError extends Error {
   }
 }
 
-export async function sendMessage(viewer: Viewer, toUserId: string, body: string) {
+export async function sendMessage(viewer: Viewer, toUserId: string, body: string, image?: { path: string; type: string } | null) {
   const text = body.trim();
-  if (!text) throw new MessageError("Write something first.", "EMPTY");
+  if (!text && !image) throw new MessageError("Write something first.", "EMPTY");
   if (text.length > MAX_BODY)
     throw new MessageError(`Messages are limited to ${MAX_BODY} characters.`, "TOO_LONG");
 
@@ -89,7 +89,7 @@ export async function sendMessage(viewer: Viewer, toUserId: string, body: string
   if (!permission.ok) throw new MessageError(permission.message, permission.reason);
 
   const row = await prisma.message.create({
-    data: { from_user_id: viewer.userId, to_user_id: toUserId, body: text },
+    data: { from_user_id: viewer.userId, to_user_id: toUserId, body: text, image_path: image?.path ?? null, image_type: image?.type ?? null },
     select: { id: true, created_at: true },
   });
 
@@ -124,6 +124,8 @@ export type ConversationSummary = {
   title: string | null;
   lastBody: string;
   lastAt: Date;
+  /** Their profile page: provider profile, or null for a buyer-only person. */
+  profileHref: string | null;
   /** Unread means addressed TO me and unread. My own sent rows never count. */
   unread: number;
 };
@@ -137,6 +139,7 @@ export async function listConversations(viewer: Viewer): Promise<ConversationSum
       from_user_id: true,
       to_user_id: true,
       body: true,
+      image_path: true,
       created_at: true,
       read_at: true,
     },
@@ -153,8 +156,9 @@ export async function listConversations(viewer: Viewer): Promise<ConversationSum
         name: "",
         photoUrl: null,
         title: null,
-        lastBody: m.body,
+        lastBody: m.body || (m.image_path ? "📷 Photo" : ""),
         lastAt: m.created_at,
+        profileHref: null,
         unread: 0,
       };
       byOther.set(otherUserId, entry);
@@ -165,11 +169,12 @@ export async function listConversations(viewer: Viewer): Promise<ConversationSum
   const people = await prisma.person.findMany({
     /* `E821` */
     where: { user_id: { in: [...byOther.keys()] }, ...memberVisibleWhere() },
-    select: { user_id: true, first_name: true, last_name: true, title: true, photo_url: true },
+    select: { user_id: true, first_name: true, last_name: true, title: true, photo_url: true, providerProfile: { select: { id: true } } },
   });
   for (const p of people) {
     const entry = p.user_id ? byOther.get(p.user_id) : undefined;
     if (!entry) continue;
+    entry.profileHref = profileHrefFor(p.providerProfile);
     entry.name = `${p.first_name} ${p.last_name}`.trim();
     entry.title = p.title;
     entry.photoUrl = p.photo_url;
@@ -189,8 +194,23 @@ export async function getConversation(viewer: Viewer, otherUserId: string) {
       ],
     },
     orderBy: { created_at: "asc" },
-    select: { id: true, from_user_id: true, body: true, created_at: true, read_at: true },
+    select: { id: true, from_user_id: true, body: true, created_at: true, read_at: true, image_path: true },
   });
+}
+
+/** A person's profile page: their provider profile, else none (buyers have no public profile route yet). */
+export const profileHrefFor = (pp: { id: string } | null | undefined) => (pp ? `/providers/${pp.id}` : null);
+
+/** The other people in the viewer's conversations whose messages contain `q` (for the list search). */
+export async function searchConversations(viewer: Viewer, q: string): Promise<string[]> {
+  const term = q.trim();
+  if (term.length < 2) return [];
+  const rows = await prisma.message.findMany({
+    where: { body: { contains: term, mode: "insensitive" }, OR: [{ from_user_id: viewer.userId }, { to_user_id: viewer.userId }] },
+    select: { from_user_id: true, to_user_id: true },
+    take: 500,
+  });
+  return [...new Set(rows.map((m) => (m.from_user_id === viewer.userId ? m.to_user_id : m.from_user_id)))];
 }
 
 /** THE RECIPIENT'S ROWS ONLY. The `to_user_id: viewer.userId` clause is the */

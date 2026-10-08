@@ -334,3 +334,35 @@ export async function signedSupportScreenshotUrl(
   }
   return data?.signedUrl ?? null;
 }
+
+/** PRIVATE bucket for images sent in messages; read back through a signed URL after a party check. */
+export const MESSAGE_IMAGE_BUCKET = "message-images";
+
+/** Store a message image (PNG/JPG/WebP, ≤5 MB) under the sender; returns the object path. Creates the bucket on first use. */
+export async function uploadMessageImage(senderUserId: string, file: { type: string; size: number; bytes: ArrayBuffer }): Promise<string> {
+  if (!(ALLOWED_PHOTO_MIME as readonly string[]).includes(file.type)) throw new StorageError("Images must be PNG, JPG or WebP.", "INVALID_TYPE");
+  if (file.size > MAX_PHOTO_BYTES) throw new StorageError("That image is too large (5MB max).", "TOO_LARGE");
+  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const objectPath = `${senderUserId}/${randomUUID()}.${ext}`;
+  const client = getStorageClient();
+  const put = () => client.from(MESSAGE_IMAGE_BUCKET).upload(objectPath, file.bytes, { contentType: file.type, upsert: false });
+  let { error } = await put();
+  if (error && /not.?found/i.test(error.message)) {
+    await client.createBucket(MESSAGE_IMAGE_BUCKET, { public: false, fileSizeLimit: MAX_PHOTO_BYTES, allowedMimeTypes: [...ALLOWED_PHOTO_MIME] });
+    ({ error } = await put());
+  }
+  if (error) {
+    console.error("[storage] message image upload failed:", error);
+    throw new StorageError("Could not store that image.", "UPLOAD_FAILED");
+  }
+  return objectPath;
+}
+
+export async function signedMessageImageUrl(objectPath: string, expiresInSeconds = 300): Promise<string | null> {
+  const { data, error } = await getStorageClient().from(MESSAGE_IMAGE_BUCKET).createSignedUrl(objectPath, expiresInSeconds);
+  if (error) {
+    console.error("[storage] signed message image URL failed:", error);
+    return null;
+  }
+  return data?.signedUrl ?? null;
+}
