@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
+import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
+import { LeadersPodium } from "@/components/community/LeadersPodium";
 import "@/components/community/community-page.css";
 import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
@@ -50,11 +52,26 @@ export default async function LeadersPage({
   const tab = TABS.find((t) => t.key === rawTab) ?? TABS[0];
 
   const unread = await unreadCount(viewer);
-  const [me, board, network] = await Promise.all([
+  const [me, board, network, monthBoard] = await Promise.all([
     growthScore(personId, "month"),
     growthBoard(tab.window),
     tab.key === "network" ? myNetwork(personId) : Promise.resolve([]),
+    tab.window === "month" ? Promise.resolve(null) : growthBoard("month"),
   ]);
+  // The hero is always about this month.
+  const month = monthBoard ?? board;
+  const myRow = month.find((r) => r.personId === personId) ?? null;
+  const myRank = myRow && me.points > 0 ? myRow.rank : null;
+  const leader = month[0];
+  const next = myRank ? month.find((r) => r.rank === myRank - 1) : null;
+  const runnerUp = month.find((r) => r.personId !== personId && r.rank > (myRank ?? 0));
+  const say = !myRank ? (
+    <>No points yet this month — invite a colleague to get on the board.</>
+  ) : myRank === 1 ? (
+    <>You&apos;re <b className="text-ink">#1 this month</b>{runnerUp ? <>, {me.points - runnerUp.points} points ahead of {runnerUp.name}</> : null}. Every colleague who joins from your invite adds <b className="text-ink">{GROWTH_WEIGHTS.JOINED} points</b>.</>
+  ) : (
+    <>You&apos;re <b className="text-ink">#{myRank}</b>, {((next ?? leader)?.points ?? 0) - me.points} points behind {(next ?? leader)?.name}. Every colleague who joins from your invite adds <b className="text-ink">{GROWTH_WEIGHTS.JOINED} points</b>.</>
+  );
   const movement = tab.key === "month" ? await movementFor(board) : null;
   const hrefs = await providerHrefs(board.map((r) => r.personId));
 
@@ -71,12 +88,25 @@ export default async function LeadersPage({
         tabs={connectTabs(viewer, unread)}
         current="/connect/leaders"
       />
-      <div className="mx-auto w-full max-w-3xl">
-        {}
-        <h1 className="mb-1 font-display text-[26px] font-bold tracking-[-0.5px]">
-          Leaders
-        </h1>
-        <p className="mb-5 text-[14px] text-ink-2">Who&apos;s growing Panameer — invitations sent and colleagues who joined.</p>
+      <div className="mx-auto w-full max-w-[1010px]">
+        <AccountHero
+          testId="leaders-hero"
+          picture={<LeadersPodium top={month.slice(0, 3)} viewerId={personId} scorers={month.length} viewerRank={myRank} />}
+          eyebrow="Leaders"
+          title="Who's Growing the Community"
+          kpis={[
+            { value: myRank ? `#${myRank}` : "—", label: "YOUR RANK" },
+            { value: me.points, label: "POINTS THIS MONTH" },
+            { value: me.joined, label: "JOINED FROM YOU" },
+          ]}
+          paragraph={say}
+          actions={
+            <>
+              <Link href="/invite-colleague" className={HERO_BTN}>Invite a Colleague</Link>
+              <Link href="/connect/connections" className={HERO_BTN_W}>See My Connections</Link>
+            </>
+          }
+        />
 
         {/* ── your score ─────────────────────────────────────────────── */}
         <section className="rounded-brand border border-line bg-white px-[18px] py-4">
