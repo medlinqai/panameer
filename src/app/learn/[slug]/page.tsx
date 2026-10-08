@@ -25,6 +25,7 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
   const latest = board ? await prisma.forumThread.findFirst({ where: { board_id: board.id }, orderBy: { created_at: "desc" }, select: { id: true, title: true, reply_count: true, last_post_at: true } }) : null;
   const first = p.courses.flatMap((c) => c.lessons).find((l) => l.playable) ?? null;
   const next = p.mine?.next ?? null;
+  const allWatched = !!p.mine && p.mine.total > 0 && p.mine.done >= p.mine.total;
   const signIn = `/login?callbackUrl=${encodeURIComponent(`/learn/${p.slug}`)}`;
   const startHref = !viewer ? signIn : next ? `/learn/${p.slug}/${next.id}` : first ? `/learn/${p.slug}/${first.id}` : null;
   // eslint-disable-next-line react-hooks/purity
@@ -34,7 +35,7 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
     return days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
   };
   const picture = p.mine ? (
-    <ProgressRing done={p.mine.done} total={p.mine.total} />
+    <ProgressRing done={p.mine.done} total={p.mine.total} title={p.mine.soon ? `${p.mine.soon} more lessons coming soon` : null} />
   ) : p.cover ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={p.cover} alt="" className="mx-auto aspect-[4/3] w-full max-w-[320px] object-cover" />
@@ -62,6 +63,7 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
             paragraph={
               <>
                 {p.summary}
+                {allWatched ? <> <b className="text-ink">Congratulations — you&apos;ve watched every lesson that&apos;s out.</b>{p.mine?.soon ? ` ${p.mine.soon} more are coming soon; they'll show up here.` : ""}{p.test.ready && !p.test.passed ? " Next step: the certification test." : ""}</> : null}
                 {next ? <> Next up: <b className="text-ink">Lesson {next.index} · {next.title}</b>{next.minutes ? ` (${next.minutes} min)` : ""}.</> : null}
                 {!p.playable && <> <b className="text-ink">Coming soon</b> — the lessons below are planned; none has a video yet.</>}
               </>
@@ -69,7 +71,7 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
             actions={
               <>
                 {p.playable && startHref && (
-                  <Link href={startHref} className={HERO_BTN}>{next ? `Continue Lesson ${next.index}` : p.mine && p.mine.done === p.mine.total ? "Review" : "Start"}</Link>
+                  <Link href={startHref} className={allWatched && p.test.ready && !p.test.passed ? HERO_BTN_W : HERO_BTN}>{next ? `Continue Lesson ${next.index}` : allWatched ? "Review" : "Start"}</Link>
                 )}
                 {p.test.ready && !p.test.passed && <Link href={viewer ? `/learn/${p.slug}/test` : signIn} className={HERO_BTN_W}>Take the Certification Test</Link>}
                 {p.certificate?.verifyUrl && <Link href={p.certificate.verifyUrl} className={HERO_BTN_W}>View Certificate</Link>}

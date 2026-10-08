@@ -14,7 +14,8 @@ export type CatPath = {
   teacher: { personId: string; name: string; title: string | null; photoUrl: string | null; profileId: string | null; years: number | null } | null;
   courses: CatCourse[]; lessons: number; minutes: number; playable: boolean;
   learners: number; completed: number;
-  mine: { enrolled: boolean; done: number; total: number; next: (CatLesson & { index: number; courseIndex: number; courseTitle: string }) | null } | null;
+  /** done/total count only lessons that have a video; soon = lessons still without one (Scott 2026-10-08). */
+  mine: { enrolled: boolean; done: number; total: number; soon: number; next: (CatLesson & { index: number; courseIndex: number; courseTitle: string }) | null } | null;
   test: { ready: boolean; questions: number; threshold: number; maxAttempts: number; used: number; passed: boolean; best: number };
   certificate: { id: string; earnedOn: string; score: number | null; verifyUrl: string | null } | null;
   tag: PathTag;
@@ -74,18 +75,20 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
       }));
       const experts = lessons.map((l) => l._expert).filter(Boolean) as string[];
       return {
-        id: c.id, slug: c.slug, title: c.title, summary: c.summary,
+        id: c.id, slug: c.slug, title: lessonTitle(c.title), summary: c.summary,
         lessons: lessons.map(({ _expert, ...l }) => (void _expert, l)),
         minutes: lessons.reduce((n, l) => n + (l.minutes ?? 0), 0),
-        done: lessons.filter((l) => l.done).length,
+        done: lessons.filter((l) => l.done && l.playable).length,
         teacher: experts.sort((a, b) => experts.filter((x) => x === b).length - experts.filter((x) => x === a).length)[0] ?? (p.expert ? nameOf(p.expert) : null),
       };
     });
     const flat = courses.flatMap((c, ci) => c.lessons.map((l) => ({ ...l, courseIndex: ci + 1, courseTitle: c.title })));
     const nDone = flat.filter((l) => l.done).length;
+    const nAvail = flat.filter((l) => l.playable).length;
+    const nDoneAvail = flat.filter((l) => l.done && l.playable).length;
     const nextIdx = flat.findIndex((l) => !l.done && l.playable);
     const mine = userId && (enrolledSet.has(p.id) || nDone > 0)
-      ? { enrolled: enrolledSet.has(p.id), done: nDone, total: flat.length, next: nextIdx >= 0 ? { ...flat[nextIdx], index: nextIdx + 1 } : null }
+      ? { enrolled: enrolledSet.has(p.id), done: nDoneAvail, total: nAvail, soon: flat.length - nAvail, next: nextIdx >= 0 ? { ...flat[nextIdx], index: nextIdx + 1 } : null }
       : null;
     const tally = new Map<string, number>();
     for (const s of p.skills) if (s.skill.area) tally.set(s.skill.area, (tally.get(s.skill.area) ?? 0) + 1);
