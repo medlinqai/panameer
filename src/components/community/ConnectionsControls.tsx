@@ -14,12 +14,14 @@ type Props = {
   invites: { in: number; out: number };
   applied: { label: string; query: string }[];
   tree: PickerTree;
+  /** Saved Views ▾ at the end of the chip row. */
+  views?: { id: string; name: string; query: string; count: number }[];
 };
 
 const href = (q: string) => (q ? `?${q}` : "?");
 const BTN = "inline-flex min-h-[40px] items-center border px-3.5 text-[13px] font-bold";
 
-export function ConnectionsControls({ f, total, chipCounts, invites, applied, tree }: Props) {
+export function ConnectionsControls({ f, total, chipCounts, invites, applied, tree, views }: Props) {
   const router = useRouter();
   const [q, setQ] = useState(f.q);
   const [panel, setPanel] = useState(false);
@@ -74,6 +76,7 @@ export function ConnectionsControls({ f, total, chipCounts, invites, applied, tr
             </Link>
           );
         })}
+        {views && <SavedViewsMenu views={views} />}
       </nav>
 
       {applied.length > 0 && (
@@ -100,6 +103,35 @@ export function ConnectionsControls({ f, total, chipCounts, invites, applied, tr
 
       {panel && <FiltersPanel f={f} tree={tree} onClose={() => setPanel(false)} />}
     </div>
+  );
+}
+
+/** Saved Views ▾ (end of the chip row): click to apply, × to delete. */
+function SavedViewsMenu({ views }: { views: { id: string; name: string; query: string; count: number }[] }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const del = async (id: string) => {
+    await fetch(`/api/connect/views?id=${id}`, { method: "DELETE" }).catch(() => null);
+    router.refresh();
+  };
+  return (
+    <span className="relative ml-auto shrink-0" data-saved-views>
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="whitespace-nowrap border border-line px-3 py-1.5 text-[13px] font-semibold hover:border-ink">
+        Saved Views ▾
+      </button>
+      {open && (
+        <span className="absolute right-0 z-20 mt-1 block w-[260px] border border-ink bg-surface p-2 shadow-lg">
+          {views.length === 0 && <span className="block px-1 py-1 text-[12.5px] text-ink-2">Save any filter set to come back to it.</span>}
+          {views.map((v) => (
+            <span key={v.id} className="flex items-center gap-2 border-b border-line/60 px-1 py-1.5 text-[13.5px] last:border-b-0">
+              <Link href={href(v.query)} onClick={() => setOpen(false)} className="min-w-0 flex-1 truncate font-semibold hover:text-magenta-dark">{v.name}</Link>
+              <span className="text-ink-3">{v.count}</span>
+              <button type="button" onClick={() => del(v.id)} aria-label={`Delete view ${v.name}`} className="px-1 text-ink-3 hover:text-ink">×</button>
+            </span>
+          ))}
+        </span>
+      )}
+    </span>
   );
 }
 
