@@ -34,23 +34,82 @@ const rand = (seed: number) => {
 };
 const clip = (s: string, n = 18) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
-export function BubbleField({ bubbles, me, caption, legend }: { bubbles: Bubble[]; me: string; caption: string; legend: { label: string; swatch: "ink" | "half" | "ring" | "quiet" | "check" }[] }) {
+type Box = { x: number; y: number; w: number; h: number; fixed?: boolean };
+const LABEL_H = 18;
+const labelW = (s: string) => Math.min(18, s.length) * 5.4;
+
+/** Seed on two loose rings, then relax: every bubble is a box (circle + its label) and boxes push apart until none overlap. */
+function layout(rs: number[], labels: string[], seed: number, centre: { r: number; label: string } | null) {
+  const n = rs.length;
+  const off = rand(seed) * Math.PI * 2;
+  const pts: Box[] = [];
+  if (centre) pts.push({ x: CX, y: CY, w: Math.max(2 * centre.r, labelW(centre.label)) + 8, h: 2 * centre.r + LABEL_H, fixed: true });
+  else pts.push({ x: CX, y: CY, w: 56, h: 52, fixed: true }); // the "YOU" disc
+  rs.forEach((r, i) => {
+    const ang = off + i * ((2 * Math.PI) / Math.max(n, 1));
+    const rad = i % 2 ? 122 : 94;
+    pts.push({ x: CX + rad * 1.35 * Math.cos(ang), y: CY + rad * 0.95 * Math.sin(ang), w: Math.max(2 * r, labelW(labels[i])) + 8, h: 2 * r + LABEL_H });
+  });
+  for (let it = 0; it < 800; it++) {
+    let moved = false;
+    for (let i = 0; i < pts.length; i++)
+      for (let j = i + 1; j < pts.length; j++) {
+        const A = pts[i], B = pts[j];
+        const ox = (A.w + B.w) / 2 - Math.abs(A.x - B.x);
+        const oy = (A.h + B.h) / 2 - Math.abs(A.y - B.y);
+        if (ox > 0 && oy > 0) {
+          moved = true;
+          const sx = A.x < B.x ? -1 : 1, sy = A.y < B.y ? -1 : 1;
+          if (ox < oy) {
+            const d = ox / 2 + 0.5;
+            if (!A.fixed) A.x += sx * d * (B.fixed ? 2 : 1);
+            if (!B.fixed) B.x -= sx * d * (A.fixed ? 2 : 1);
+          } else {
+            const d = oy / 2 + 0.5;
+            if (!A.fixed) A.y += sy * d * (B.fixed ? 2 : 1);
+            if (!B.fixed) B.y -= sy * d * (A.fixed ? 2 : 1);
+          }
+        }
+      }
+    for (const P of pts) {
+      if (P.fixed) continue;
+      P.x = Math.max(P.w / 2 + 2, Math.min(W - P.w / 2 - 2, P.x));
+      P.y = Math.max(P.h / 2 + 3, Math.min(H - P.h / 2 - 2, P.y));
+    }
+    if (!moved) break;
+  }
+  let c = 0;
+  for (let i = 0; i < pts.length; i++)
+    for (let j = i + 1; j < pts.length; j++) {
+      const A = pts[i], B = pts[j];
+      if ((A.w + B.w) / 2 - Math.abs(A.x - B.x) > 0.5 && (A.h + B.h) / 2 - Math.abs(A.y - B.y) > 0.5) c++;
+    }
+  return { pts: pts.slice(1), c };
+}
+
+export function BubbleField({ bubbles, me, caption, legend, centre }: { bubbles: Bubble[]; me: string; caption: string; legend: { label: string; swatch: "ink" | "half" | "ring" | "quiet" | "check" }[]; centre?: Bubble & { badge?: string } }) {
   const { cycle, secondsLeft } = useRebuild();
+  const list = bubbles.slice(0, 18);
+  const max = Math.max(...list.map((b) => b.size), centre?.size ?? 1, 1);
+  const min = Math.min(...list.map((b) => b.size), centre?.size ?? 0, 0);
+  const span = max - min || 1;
+  const radius = (size: number) => MIN_R + ((size - min) / span) * (MAX_R - MIN_R);
+  const centreR = centre ? Math.max(radius(centre.size), 30) : 0;
   const placed = useMemo(() => {
-    const max = Math.max(...bubbles.map((b) => b.size), 1);
-    const min = Math.min(...bubbles.map((b) => b.size), 0);
-    const span = max - min || 1;
-    const inner = bubbles.slice(0, 6);
-    const outer = bubbles.slice(6, 16);
-    const ring = (list: Bubble[], radius: number, offset: number) =>
-      list.map((b, i) => {
-        const a = offset + (i / Math.max(list.length, 1)) * Math.PI * 2 + (rand(i + cycle * 7) - 0.5) * 0.35;
-        const rr = radius + (rand(i * 3 + cycle * 11) - 0.5) * 18;
-        const r = MIN_R + ((b.size - min) / span) * (MAX_R - MIN_R);
-        return { ...b, r, x: CX + Math.cos(a) * rr * 1.15, y: CY + Math.sin(a) * rr * 0.92 };
-      });
-    return [...ring(inner, 92, -Math.PI / 2 + rand(cycle) * 0.4), ...ring(outer, 146, -Math.PI / 2.4 + rand(cycle + 5) * 0.4)];
-  }, [bubbles, cycle]);
+    const rs = list.map((b) => radius(b.size));
+    let best: Box[] = [];
+    let bestC = Infinity;
+    for (let at = 0; at < 25 && bestC > 0; at++) {
+      const res = layout(rs, list.map((b) => b.label), cycle * 31 + at, centre ? { r: centreR, label: centre.label } : null);
+      if (res.c < bestC) {
+        best = res.pts;
+        bestC = res.c;
+      }
+    }
+    // Box centre → circle centre (the label sits under the circle).
+    return list.map((b, i) => ({ ...b, r: rs[i], x: best[i].x, y: best[i].y - LABEL_H / 2 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bubbles, cycle, centre?.key]);
 
   return (
     <div data-bubble-field>
@@ -85,8 +144,22 @@ export function BubbleField({ bubbles, me, caption, legend }: { bubbles: Bubble[
             </a>
           );
         })}
-        <circle cx={CX} cy={CY} r={24} fill={INK} />
-        <text x={CX} y={CY + 4} textAnchor="middle" fontSize={10.5} fontWeight={800} letterSpacing={1} fill="#fff">{me}</text>
+        {centre ? (
+          <a href={centre.href} aria-label={centre.hover}>
+            <g transform={`translate(${CX}, ${CY - LABEL_H / 2})`}>
+              <title>{centre.hover}</title>
+              <circle r={centreR} fill={INK} />
+              <circle r={centreR + 5} fill="none" stroke={MAG} strokeWidth={3} />
+              {centre.badge && <text y={4} textAnchor="middle" fontSize={11} fontWeight={800} letterSpacing={1.2} fill="#fff">{centre.badge}</text>}
+              <text y={centreR + 14} textAnchor="middle" fontSize={10} fontWeight={700} fill={INK}>{clip(centre.label, 24)}</text>
+            </g>
+          </a>
+        ) : (
+          <>
+            <circle cx={CX} cy={CY} r={24} fill={INK} />
+            <text x={CX} y={CY + 4} textAnchor="middle" fontSize={10.5} fontWeight={800} letterSpacing={1} fill="#fff">{me}</text>
+          </>
+        )}
       </svg>
       <p className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px] text-ink-2">
         {legend.map((l) => (
