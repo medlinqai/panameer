@@ -180,6 +180,28 @@ export async function getTriageCounts(
 
 export type ActRow = TriageRow & { resolved: boolean };
 
+/** Closes action items whose ask is already done: messages that have been read,
+ *  and "profile hidden" once the profile is visible again. Idempotent. */
+export async function settleStale(personId: string): Promise<void> {
+  const now = new Date();
+  const open = await prisma.notification.findMany({
+    where: { person_id: personId, resolved_at: null, event_key: { in: ["message.received", "profile.visibility_off"] } },
+    select: { id: true, event_key: true, entity_id: true },
+  });
+  if (!open.length) return;
+  const msgIds = open.filter((n) => n.event_key === "message.received" && n.entity_id).map((n) => n.entity_id as string);
+  const read = msgIds.length
+    ? new Set((await prisma.message.findMany({ where: { id: { in: msgIds }, read_at: { not: null } }, select: { id: true } })).map((m) => m.id))
+    : new Set<string>();
+  const visible = open.some((n) => n.event_key === "profile.visibility_off")
+    ? !!(await prisma.providerProfile.findFirst({ where: { person_id: personId, paused_at: null }, select: { id: true } }))
+    : false;
+  const done = open
+    .filter((n) => (n.event_key === "message.received" && n.entity_id && read.has(n.entity_id)) || (n.event_key === "profile.visibility_off" && visible))
+    .map((n) => n.id);
+  if (done.length) await prisma.notification.updateMany({ where: { id: { in: done } }, data: { resolved_at: now, read_at: now } });
+}
+
 export async function getActList(
   personId: string,
   opts: { status?: "open" | "completed" | "any"; q?: string; category?: string } = {}

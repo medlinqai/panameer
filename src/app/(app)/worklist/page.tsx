@@ -2,7 +2,7 @@ import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { findCategory } from "@/lib/notification-categories";
-import { getActList, getActCounts } from "@/lib/worklist";
+import { getActList, getActCounts, settleStale } from "@/lib/worklist";
 import { shortTime } from "@/lib/short-time";
 import "@/components/notifications/triage.css";
 
@@ -35,6 +35,7 @@ export default async function Page({
     | "any";
   const q = sp.q ?? "";
 
+  await settleStale(person.id);
   const [all, counts] = await Promise.all([
     getActList(person.id, { status, q, category: sp.cat }),
     getActCounts(person.id),
@@ -42,12 +43,23 @@ export default async function Page({
 
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
-  const rows =
+  const filtered =
     view === "day"
       ? all.filter((r) => now - r.at.getTime() > 86_400_000)
       : view === "week"
         ? all.filter((r) => now - r.at.getTime() > 7 * 86_400_000)
         : all;
+  // One row per person for messages: "2 new messages from Linus Erley".
+  const rows: (typeof filtered[number] & { n?: number })[] = [];
+  const bySender = new Map<string, number>();
+  for (const r of filtered) {
+    if (r.category === "message.received" && !r.resolved) {
+      const i = bySender.get(r.title);
+      if (i !== undefined) { rows[i].n = (rows[i].n ?? 1) + 1; continue; }
+      bySender.set(r.title, rows.length);
+    }
+    rows.push({ ...r });
+  }
 
   const href = (next: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
@@ -145,7 +157,7 @@ export default async function Page({
                       <span className="pm-wl-status">{r.resolved ? "Completed" : "Open"}</span>
                     </td>
                     <td data-label="Title">
-                      <strong>{r.title}</strong>
+                      <strong>{r.n && r.n > 1 ? r.title.replace(/^New message from /, `${r.n} new messages from `) : r.title}</strong>
                       {r.body && <div className="text-[12.5px] text-ink-2">{r.body}</div>}
                     </td>
                     <td data-label="Queue">{findCategory(r.category)?.label ?? r.category}</td>

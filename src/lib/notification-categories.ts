@@ -44,7 +44,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     lane: "community",
     audience: "both",
     group: "messages",
-    label: "New message from a buyer",
+    label: "New message",
     blurb: "Someone started or replied to a conversation with you.",
     defaults: { inApp: true, email: true, sms: false },
   },

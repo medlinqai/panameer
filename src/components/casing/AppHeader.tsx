@@ -107,11 +107,7 @@ export function AppHeader() {
 
         {/* Bug sits before Notifications per the locked spec's order. Still
             drops below sm — a glyph nobody taps on a phone. */}
-        <span className="hidden sm:contents">
-          <IconLink href="/support/bug" label="Report a bug">
-            <BugIcon />
-          </IconLink>
-        </span>
+        {/* Bug icon removed (Scott 2026-10-07): Report a Problem lives under Support in the avatar menu. */}
 
         {/* THE BADGE SHIPS WITH THE FEED, IN ONE CHANGE (`P1-ALL`, 2026-09-01). */}
         <IconLink
@@ -209,7 +205,7 @@ function BellIcon() {
   );
 }
 
-function BugIcon() {
+export function BugIcon() {
   return (
     <svg {...S}>
       <rect x="8" y="6" width="8" height="14" rx="4" />

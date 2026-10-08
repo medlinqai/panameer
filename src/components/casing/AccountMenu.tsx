@@ -351,7 +351,7 @@ export function AccountMenu({
           <PathMenuBlock onNavigate={close} rowClass={rowClass} />
           {/* Messages and Notifications live here now (2026-10-07); each row shows its own count. */}
           <CountRow href="/messages" label="Messages" count={me?.messagesUnread ?? 0} onClick={close} className={rowClass} />
-          <CountRow href="/notifications" label="Notifications" count={me?.notificationsUnread ?? 0} onClick={close} className={rowClass} />
+          <CountRow href="/notifications" label="Notifications" count={me?.notificationsNeedAction ?? 0} onClick={close} className={rowClass} />
           <div className="border-t border-line" />
           {/* MY COMPANY (E099, and it REVERSES E225) */}
 

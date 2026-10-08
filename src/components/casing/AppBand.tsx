@@ -133,12 +133,7 @@ export function AppBand() {
         )}
 
         {}
-        <span className="hidden md:contents">
-          {}
-          <BandIcon href="/support/bug" label="Report a bug">
-            <BugIcon />
-          </BandIcon>
-        </span>
+        {/* Bug icon removed (2026-10-07): Report a Problem is under Support in the avatar menu. */}
 
         {}
         {}
@@ -208,7 +203,7 @@ function HomeIcon() {
 
 
 
-function BugIcon() {
+export function BugIcon() {
   return (
     <svg {...S}>
       <rect x="8" y="6" width="8" height="14" rx="4" />
