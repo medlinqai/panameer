@@ -89,7 +89,7 @@ export function MyLearning({ data }: { data: MyLearningData }) {
         {continueCard ? (
           <>
             <SectionHead title="Pick Up Where You Left Off">
-              <Link href="/learn/paths?tab=mine" className="ml-auto shrink-0 text-[12px] font-semibold text-magenta hover:underline">
+              <Link href="/learn/my" className="ml-auto shrink-0 text-[12px] font-semibold text-magenta hover:underline">
                 All my paths <span aria-hidden>→</span>
               </Link>
             </SectionHead>
