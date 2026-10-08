@@ -10,6 +10,10 @@ type Row = { term: string; category: string; type: string; definition: string; a
 const EXTRA: Row[] = [
   { term: "Buyer Profile", category: "Profile", type: "Panameer term", definition: "A buyer person's profile: photo, title, company, overview, work history, education, languages and location. No completeness gate — it never blocks posting work.", also: null, dont: null, shown: "Public", confirm: null },
   { term: "Buyer Track Record", category: "Company & payment", type: "Panameer term", definition: "Shown on a buyer company's page, built from real activity: validated, member since, work orders issued and completed, paid on time, average days to pay, industry, size, location and ERP used. A company with no history shows \"New buyer on Panameer\".", also: null, dont: null, shown: "Public", confirm: null },
+  { term: "Leaders", category: "Learn & Connect", type: "Panameer term", definition: "The leaderboard in Connect: members ranked by the colleagues they invited and who joined, this month and all time.", also: "Leaderboard; Grow Your Community", dont: null, shown: "Public", confirm: null },
+  { term: "Community", category: "Learn & Connect", type: "Panameer term", definition: "The people on Panameer you could connect with — members you aren't connected to yet, best match first.", also: null, dont: null, shown: "Public", confirm: null },
+  { term: "Recommendations", category: "Learn & Connect", type: "Panameer term", definition: "Short write-ups from people you've worked with, vouching for you. You ask for one in Connect; it shows on your profile once they write it.", also: "Recommendation; Testimonial", dont: null, shown: "Public", confirm: null },
+  { term: "Connect", category: "Learn & Connect", type: "Panameer term", definition: "Panameer's community area: Leaders, Community, Connections, Mentors, Groups and Recommendations.", also: null, dont: null, shown: "Public", confirm: null },
 ];
 const text = (v: ExcelJS.CellValue) => (v == null ? "" : typeof v === "object" && "richText" in v ? v.richText.map((r) => r.text).join("") : typeof v === "object" && "text" in v ? String(v.text) : String(v)).trim();
 
@@ -26,7 +30,12 @@ const text = (v: ExcelJS.CellValue) => (v == null ? "" : typeof v === "object" &
     if (!c(1) || !c(4)) return;
     rows.push({ term: c(1), category: c(2), type: c(3), definition: c(4), also: c(5) || null, dont: c(6) || null, shown: c(7), confirm: c(8) || null });
   });
-  for (const e of EXTRA) if (!rows.some((r) => termKey(r.term) === termKey(e.term))) rows.push(e);
+  // Extra rows add terms, or replace the sheet's row for the same term.
+  for (const e of EXTRA) {
+    const i = rows.findIndex((r) => termKey(r.term) === termKey(e.term));
+    if (i >= 0) rows[i] = e;
+    else rows.push(e);
+  }
   const existing = new Map((await prisma.glossaryTerm.findMany({ select: { term_key: true } })).map((r) => [r.term_key, true]));
   let created = 0, updated = 0, admin = 0;
   for (const r of rows) {
