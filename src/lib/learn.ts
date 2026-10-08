@@ -123,6 +123,9 @@ export function vimeoEmbedUrl(ref: string | null | undefined): string | null {
   const raw = ref?.trim();
   if (!raw) return null;
   if (/^\d+$/.test(raw)) return `https://player.vimeo.com/video/${raw}`;
+  // "id/hash" (unlisted videos, as stored by the upload scripts) — was returning null, so lessons showed "no video".
+  const ih = /^(\d+)\/([0-9a-z]+)$/i.exec(raw);
+  if (ih) return `https://player.vimeo.com/video/${ih[1]}?h=${ih[2]}`;
   if (/player\.vimeo\.com\/video\/\d+/.test(raw)) {
     return raw.startsWith("http") ? raw : `https://${raw}`;
   }
@@ -130,6 +133,12 @@ export function vimeoEmbedUrl(ref: string | null | undefined): string | null {
   const m = /vimeo\.com\/(?:channels\/[^/]+\/)?(\d+)(?:\/([0-9a-z]+))?/i.exec(raw);
   if (m) {
     return `https://player.vimeo.com/video/${m[1]}${m[2] ? `?h=${m[2]}` : ""}`;
+  }
+  // Any other Vimeo link shape (vimeo.com/manage/videos/123…, ?h=hash): take the id, keep the hash.
+  const id = /(\d{6,})/.exec(raw)?.[1];
+  if (id && (/vimeo/i.test(raw) || /^\d{6,}/.test(raw))) {
+    const h = /[?&]h=([0-9a-z]+)/i.exec(raw)?.[1] ?? new RegExp(`${id}/([0-9a-z]{6,})`, "i").exec(raw)?.[1];
+    return `https://player.vimeo.com/video/${id}${h ? `?h=${h}` : ""}`;
   }
   return null;
 }
