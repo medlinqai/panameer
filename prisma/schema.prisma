@@ -8164,3 +8164,17 @@ enum CredentialKind {
   MEMBERSHIP
   INSURANCE
 }
+
+/// Notify Me (2026-10-08): a member asked to hear when a Coming Soon path first has playable lessons.
+model LearnPathWatch {
+  id               String    @id @default(uuid()) @db.Uuid
+  user_id          String    @db.Uuid
+  learning_path_id String    @db.Uuid
+  created_at       DateTime  @default(now())
+  /// Set when the watcher was told the path opened, so they're told once.
+  notified_at      DateTime?
+
+  @@unique([user_id, learning_path_id])
+  @@index([learning_path_id])
+  @@map("learn_path_watches")
+}
