@@ -493,6 +493,17 @@ export const NOTIFICATION_EVENTS = {
     body: () => "The company's admins decide who joins. You can still use Panameer on your own.",
     href: () => "/company",
   },
+  "group.reply_posted": {
+    event: "group.reply_posted",
+    recipient: "everyone already in the thread (starter + earlier repliers, not the replier)",
+    category: "community.activity",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `${str(v, "fromName", "Someone")} replied in ${str(v, "threadTitle", "a thread")}`,
+    body: (v) => str(v, "groupTitle", "") || null,
+    href: (v) => `/connect/groups/thread/${str(v, "threadId", "")}`,
+  },
   "group.question_asked": {
     event: "group.question_asked",
     recipient: "the group's owner",
@@ -548,7 +559,8 @@ export const NOTIFICATION_EVENTS = {
     category: "community.activity",
     aiMode: "DO_IT",
     visibility: "FEED",
-    requiresAction: false,
+    /* Attention rule (2026-10-08): on the worklist as a Dismiss-type info row. */
+    requiresAction: true,
     title: (v) => `${str(v, "fromName", "Someone")} followed you`,
     body: () => null,
     href: () => "/connect/connections?chip=followers",

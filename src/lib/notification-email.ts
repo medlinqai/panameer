@@ -20,6 +20,8 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "profile.country_unknown",
   "group.join_requested",
   "mentor.request_received",
+  "follow.received",
+  "group.reply_posted",
   "company.join_requested",
   "catalog.review_new",
   "catalog.term_catches_on",

@@ -374,7 +374,7 @@ export async function createPost(
 
   const thread = await prisma.forumThread.findUnique({
     where: { id: input.threadId },
-    select: { id: true, board: { select: { learning_path_id: true } } },
+    select: { id: true, title: true, author_id: true, board: { select: { learning_path_id: true, title: true } } },
   });
   /* SAME GATE, REACHED THROUGH THE THREAD'S BOARD. A reply is a post. */
   if (thread?.board?.learning_path_id) {
@@ -406,6 +406,23 @@ export async function createPost(
   });
 
   await awardForumPost(person.id, post.id);
+
+  // Attention rule (2026-10-08): a reply tells everyone already in the thread — the starter and earlier repliers, not the replier.
+  const earlier = await prisma.forumPost.findMany({ where: { thread_id: thread.id, id: { not: post.id } }, select: { author_id: true }, distinct: ["author_id"] });
+  const who = [...new Set([thread.author_id, ...earlier.map((p) => p.author_id)])].filter((id) => id && id !== person.id);
+  if (who.length) {
+    const me = await prisma.person.findUnique({ where: { id: person.id }, select: { first_name: true, last_name: true } });
+    const fromName = [me?.first_name, me?.last_name].filter(Boolean).join(" ") || "Someone";
+    for (const personId of who)
+      await notify({
+        event: "group.reply_posted",
+        personId,
+        entityType: "forum_post",
+        entityId: post.id,
+        dedupeKey: `group.reply_posted:${post.id}:${personId}`,
+        vars: { fromName, threadTitle: (thread.title ?? "").slice(0, 120), groupTitle: thread.board?.title ?? "", threadId: thread.id },
+      });
+  }
   return post;
 }
 
