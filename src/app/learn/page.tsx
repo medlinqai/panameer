@@ -3,6 +3,7 @@ import { memberOrPublicTwin } from "@/lib/public-twin";
 import { learnHomeData, topLearners, topTeachers } from "@/lib/learn-homepage";
 import { LearnBoards } from "@/components/learn/LearnBoards";
 import { PopularPaths } from "@/components/learn/PopularPaths";
+import { learnCatalog } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
 import { viewerTeaches } from "@/lib/learn-home";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
@@ -21,7 +22,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
   const { area, lb: lbRaw, tb: tbRaw } = await searchParams;
   const lb = lbRaw === "all" ? "all" : "month";
   const tb = tbRaw === "all" ? "all" : "month";
-  const [d, teaches, learners, teachers, areas] = await Promise.all([learnHomeData(viewer.userId, area), viewerTeaches(viewer), topLearners(lb), topTeachers(tb), getSkillAreas()]);
+  const [d, teaches, learners, teachers, areas, catalog] = await Promise.all([learnHomeData(viewer.userId, area), viewerTeaches(viewer), topLearners(lb), topTeachers(tb), getSkillAreas(), learnCatalog(viewer.userId)]);
   const f = d.focus;
   return (
     <>
@@ -83,7 +84,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
           />
         )}
         <LearnBoards learners={learners} teachers={teachers} lb={lb} tb={tb} meUserId={viewer.userId} createHref={viewer.isSystemAdmin ? "/admin/setup/learn-authoring" : "/support/help"} />
-        <PopularPaths cards={d.popular} areas={areas.filter((a) => !a.hidden)} area={area ?? ""} />
+        <PopularPaths cards={d.popular} areas={areas.filter((a) => !a.hidden)} area={area ?? ""} catalog={new Map(catalog.map((p) => [p.id, p]))} />
       </div>
     </>
   );

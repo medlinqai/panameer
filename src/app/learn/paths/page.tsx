@@ -4,7 +4,7 @@ import { viewerTeaches } from "@/lib/learn-home";
 import { learnCatalog, START_AREA, START_AREA_LABEL } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
-import { CatalogPathCard } from "@/components/learn/CatalogPathCard";
+import { LearnPathCard } from "@/components/learn/LearnPathCard";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { BubbleField } from "@/components/casing/BubbleField";
 import { StartHere } from "@/components/learn/StartHere";
@@ -112,7 +112,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
               {!sp.area && g.paths.length > 3 && <Link href={href({ area: g.code })} className="text-[13px] font-bold text-magenta-dark underline underline-offset-4">See all {g.paths.length}</Link>}
             </div>
             <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {(sp.area ? g.paths : g.paths.slice(0, 3)).map((p) => <CatalogPathCard key={p.id} p={p} areaLabel={p.area ? label.get(p.area) ?? null : null} notify={<NotifyMe pathId={p.id} initial={p.watching} signedIn={!!viewer} />} />)}
+              {(sp.area ? g.paths : g.paths.slice(0, 3)).map((p) => <LearnPathCard key={p.id} p={p} areaLabel={p.area ? label.get(p.area) ?? null : null} notify={<NotifyMe pathId={p.id} initial={p.watching} signedIn={!!viewer} />} />)}
             </ul>
           </section>
         ))}
