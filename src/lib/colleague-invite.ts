@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notifications";
 import { sendEmail } from "@/lib/resend";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { colleagueInviteTemplate } from "@/lib/email/templates/colleague-invite";
@@ -213,7 +214,7 @@ export async function creditColleagueInvite(
     const invite = await prisma.colleagueInvite.findFirst({
       where: { invitee_email: normalized, status: "PENDING" },
       orderBy: { created_at: "asc" },
-      select: { id: true },
+      select: { id: true, inviter_person_id: true },
     });
     if (!invite) return null;
 
@@ -226,6 +227,17 @@ export async function creditColleagueInvite(
         accepted_person_id: personId,
       },
     });
+    if (done.count === 1 && invite.inviter_person_id) {
+      const who = await prisma.person.findUnique({ where: { id: personId }, select: { first_name: true, last_name: true } });
+      await notify({
+        event: "invitation.joined",
+        personId: invite.inviter_person_id,
+        entityType: "colleague_invite",
+        entityId: invite.id,
+        dedupeKey: `invitation.joined:${invite.id}`,
+        vars: { fromName: [who?.first_name, who?.last_name].filter(Boolean).join(" ") || "Someone" },
+      }).catch((e) => console.error("[colleague-invite] joined notice failed", e));
+    }
     return done.count === 1 ? invite.id : null;
   } catch (err) {
     /* The member exists; this is bookkeeping. Never rethrow. */

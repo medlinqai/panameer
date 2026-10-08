@@ -210,6 +210,7 @@ it, because an item with no clearing writer would sit there forever (`E579` one 
 | `follow.received` | the person followed | `Do It` | worklist | One-way, no approval; one notice per follower (dedupe on the pair). A Dismiss-type worklist row. Emailed (attention rule, 2026-10-08) |
 | `group.reply_posted` | everyone already in the thread | `Do It` | worklist | Starter + earlier repliers, never the replier. A new question still goes to the group host (`group.question_asked`). Emailed |
 | `mentor.request_accepted` | the person who asked | `Do It` | in-app | A decline is silent, like a colleague decline |
+| `invitation.joined` | the person who sent the invitation | `Do It` | in-app | Split from the accepted-request line: a non-member signed up from your invitation |
 | `colleague.invite_accepted` | the person who invited | `Do It` | in-app | ⚠ A colleague DECLINE is deliberately silent — that is a judgement this product does not deliver, unlike a group decline, where an owner is administering a room |
 | `profile.viewed` | the profile's owner | `Do It` | digest | ⚠⚠ **DIGEST, NOT FEED.** A bell that rings on every glance is the fastest way to get muted — the reason `learn.lesson_completed` is already digest. ⚠ Fires exactly when a view is COUNTED, so the bell and the profile's number cannot disagree |
 

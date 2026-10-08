@@ -30,10 +30,12 @@ export function connectInviteTemplate(i: ConnectInviteInput): { subject: string;
     : "";
   const meta = [i.fromTitle ? escapeHtml(i.fromTitle) : "", companyHtml].filter(Boolean).join(" · ");
   const metaText = [i.fromTitle, i.fromCompany].filter(Boolean).join(" · ");
-  const subject = `${who} wants to connect with you on Panameer`;
+  // A member gets a connection request; "invitation" is only for someone not on Panameer yet (2026-10-08).
+  const ask = i.acceptUrl ? `${who} wants to connect with you on Panameer` : `${who} sent you a connection request on Panameer`;
+  const subject = ask;
   const body = `
     <p style="${P(15)}">${escapeHtml(greeting)}</p>
-    <p style="${P(16, EMAIL_COLORS.ink, "0 0 4px")}"><b>${escapeHtml(who)} wants to connect with you on Panameer.</b></p>
+    <p style="${P(16, EMAIL_COLORS.ink, "0 0 4px")}"><b>${escapeHtml(ask)}.</b></p>
     ${meta ? `<p style="${P(14, EMAIL_COLORS.muted)}">${meta}</p>` : ""}
     ${
       i.note
@@ -56,7 +58,7 @@ export function connectInviteTemplate(i: ConnectInviteInput): { subject: string;
     text: [
       greeting,
       "",
-      `${who} wants to connect with you on Panameer.`,
+      `${ask}.`,
       ...(metaText ? [metaText] : []),
       ...(i.note ? ["", `"${i.note}"`] : []),
       "",
