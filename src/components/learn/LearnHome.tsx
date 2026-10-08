@@ -59,6 +59,8 @@ export function LearnHome({
   const totalLessons = cards.reduce((n, c) => n + c.playable, 0);
   // THE CATALOGUE SENTENCE LIVES HERE , item 3)
   const startablePaths = cards.filter((c) => c.ready).length;
+  const totalCourses = cards.reduce((n, c) => n + c.courses, 0);
+  const totalLessonsAll = cards.reduce((n, c) => n + c.lessons, 0);
   const inProduction = cards.length - startablePaths;
 
   return (
@@ -72,15 +74,13 @@ export function LearnHome({
           headline="Learning Paths"
           lede="Paths across procurement, finance, HR and implementation."
           figures={[
-            { label: "Paths", value: cards.length },
-            { label: "You Can Start", value: startablePaths },
-            { label: "In Production", value: inProduction },
+            { label: "Learning Paths", value: cards.length },
+            { label: "Courses", value: totalCourses },
+            { label: "Lessons", value: totalLessonsAll },
           ]}
           move={
             <>
-              {/* Ruling 30's sentence, moved verbatim in meaning. */}
-              {cards.length} paths — {startablePaths} you can start today,{" "}
-              {inProduction} in production.
+              {startablePaths} learning paths you can start today · {inProduction} in production.
             </>
           }
         />

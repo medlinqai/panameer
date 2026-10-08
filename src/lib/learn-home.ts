@@ -21,6 +21,8 @@ export type LearnCard = {
   ready: boolean;
   testReady: boolean;
   lessons: number;
+  /** Courses in the path (Scott 2026-10-08: header counts paths · courses · lessons). */
+  courses: number;
   playable: number;
   instructors: Instructor[];
   enrolled: boolean;
@@ -108,6 +110,7 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
       ready: pathIsOpenTo(pathHasPlayableLessons(p), enrolled.has(p.id)),
       testReady: p.assessment?.status === "PUBLISHED",
       lessons: lessons.length,
+      courses: p.courses.length,
       playable: lessons.filter(isPlayable).length,
       instructors: resolveInstructors(
         tallyExperts(lessons),
