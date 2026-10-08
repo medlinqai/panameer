@@ -185,7 +185,7 @@ function drawnText(d: WebData): string | null {
   // NOTHING TO SAY ABOUT AN EMPTY PICTURE — the empty state below says it
   if (shown === 0) return null;
   // RENAMED FROM `overflowText` AND NO LONGER RETURNS null WHEN NOTHING IS
-  if (hidden <= 0) return `All ${shown} drawn`;
+  if (hidden <= 0) return null; // Scott 2026-10-08: no "All N drawn"
   // server and in the browser and hydrate mismatched. `en-US` is pinned for the
   const total = (shown + hidden).toLocaleString("en-US");
   // the two states read as the same sentence answering the same question.
