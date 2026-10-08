@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { memberOrPublicTwin } from "@/lib/public-twin";
-import { learnHomeData } from "@/lib/learn-homepage";
+import { learnHomeData, topLearners, topTeachers } from "@/lib/learn-homepage";
+import { LearnBoards } from "@/components/learn/LearnBoards";
 import { viewerTeaches } from "@/lib/learn-home";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
@@ -13,10 +14,12 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 // Learn › Home (2026-10-08): hero for the path you're furthest into, then the boards and the most popular paths.
-export default async function LearnHomePage({ searchParams }: { searchParams: Promise<{ area?: string }> }) {
+export default async function LearnHomePage({ searchParams }: { searchParams: Promise<{ area?: string; lb?: string; tb?: string }> }) {
   const viewer = await memberOrPublicTwin("/learn");
-  const { area } = await searchParams;
-  const [d, teaches] = await Promise.all([learnHomeData(viewer.userId, area), viewerTeaches(viewer)]);
+  const { area, lb: lbRaw, tb: tbRaw } = await searchParams;
+  const lb = lbRaw === "all" ? "all" : "month";
+  const tb = tbRaw === "all" ? "all" : "month";
+  const [d, teaches, learners, teachers] = await Promise.all([learnHomeData(viewer.userId, area), viewerTeaches(viewer), topLearners(lb), topTeachers(tb)]);
   const f = d.focus;
   return (
     <>
@@ -71,6 +74,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
             }
           />
         )}
+        <LearnBoards learners={learners} teachers={teachers} lb={lb} tb={tb} meUserId={viewer.userId} createHref={viewer.isSystemAdmin ? "/admin/setup/learn-authoring" : "/support/help"} />
       </div>
     </>
   );
