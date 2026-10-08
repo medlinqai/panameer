@@ -11,6 +11,7 @@ import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { StatusMark } from "@/components/learn/StatusMark";
 import { LessonStep } from "@/components/learn/LessonStep";
 import { LessonAsk } from "@/components/learn/LessonAsk";
+import { ConnectControls, type Relation } from "@/components/community/ConnectControls";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,17 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   if (!view || !p) notFound();
   const { lesson, instructor } = view;
   const embed = lesson.playable ? vimeoEmbedUrl(lesson.vimeoRef) : null;
+
+  // Connect with the instructor right under the video (Scott 2026-10-08).
+  const tutorUserId = instructor ? (await prisma.person.findUnique({ where: { id: instructor.id }, select: { user_id: true } }))?.user_id ?? null : null;
+  const tutorConn = tutorUserId && tutorUserId !== viewer.userId
+    ? await prisma.connection.findFirst({
+        where: { kind: "COLLEAGUE", status: { in: ["PENDING", "ACCEPTED"] }, OR: [{ from_user_id: viewer.userId, to_user_id: tutorUserId }, { from_user_id: tutorUserId, to_user_id: viewer.userId }] },
+        select: { id: true, status: true, from_user_id: true },
+      })
+    : null;
+  const tutorRelation: Relation = tutorConn ? (tutorConn.status as Relation) : null;
+  const tutorIncoming = tutorConn?.status === "PENDING" && tutorConn.from_user_id === tutorUserId ? tutorConn.id : null;
 
   const flat = p.courses.flatMap((c, ci) => c.lessons.map((l) => ({ ...l, ci, course: c })));
   const i = flat.findIndex((l) => l.id === lessonId);
@@ -93,6 +105,25 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
             <p className="mt-5 text-[11px] font-semibold tracking-[0.12em] text-magenta">LESSON {i + 1} OF {flat.length}{here.minutes ? ` · ${here.minutes} MIN` : ""}</p>
             <h1 className="mb-4 mt-1 text-[26px] font-bold leading-tight sm:text-[30px]">{lesson.title}</h1>
             <LessonStep lessonId={lessonId} prevHref={prev ? `/learn/${p.slug}/${prev.id}` : null} nextHref={nextHref} lastLabel={lastLabel} />
+            {instructor && (
+              <div data-lesson-instructor className="mt-5 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+                {instructor.photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={instructor.photoUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+                ) : null}
+                <div className="min-w-0 flex-1 text-[13.5px]">
+                  <span className="text-ink-2">Taught by </span>
+                  {instructor.profileSlug ? (
+                    <Link href={`/providers/${instructor.profileSlug}`} className="font-bold text-ink underline-offset-4 hover:underline">{instructor.name}</Link>
+                  ) : (
+                    <b>{instructor.name}</b>
+                  )}
+                </div>
+                {tutorUserId && tutorUserId !== viewer.userId && (
+                  <ConnectControls toUserId={tutorUserId} relation={tutorRelation} incomingConnectionId={tutorIncoming} tone="outline" part="colleague" />
+                )}
+              </div>
+            )}
           </div>
           {outline}
         </div>
