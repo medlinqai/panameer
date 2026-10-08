@@ -6,7 +6,7 @@ import { db } from "./_db";
 import { GATE_PROVIDER_EMAIL } from "./_persona";
 
 /**
- * ── ⚠⚠⚠ EVERY FIGURE ON `/community` IS A COUNT, NOT A LITERAL (`P2-A3-E601`)
+ * ── ⚠⚠⚠ EVERY FIGURE ON `/connect/community` IS A COUNT, NOT A LITERAL (`P2-A3-E601`)
  *
  * ⚠ SCOTT, 2026-09-22, WS-A item 4: *"for the Community page, assert that each
  * printed figure matches a direct database count for the signed-in persona, and
@@ -16,7 +16,7 @@ import { GATE_PROVIDER_EMAIL } from "./_persona";
  * ── ⚠⚠ WHY IT EXISTS, AND IT IS NOT THE REASON THE BRIEF GAVE ─────────────
  *
  * ⚠ The brief was written against a screenshot showing `Level 3 · 340 XP · #4`
- * and *"Raj Bhatt just joined from your invite"* on `/community`. ⚠⚠⚠ THE
+ * and *"Raj Bhatt just joined from your invite"* on `/connect/community`. ⚠⚠⚠ THE
  * PREMISE CHECK FOUND NONE OF IT ON THE PAGE — every one of those strings lives
  * in `community_page_2026-09-20.html`, the MOCKUP, and `Raj Bhatt` appears
  * nowhere in `src/` at all. **The screenshot was of the mockup.**
@@ -54,7 +54,7 @@ import { GATE_PROVIDER_EMAIL } from "./_persona";
  * gate convenient. ⚠ A fixture proves the CAPPED case; the live page proves the
  * TRUE case. Neither can do the other's job.
  *
- * ⚠ **NO WRITES.** `/community` is not a profile, so `E598`'s view-row rule does
+ * ⚠ **NO WRITES.** `/connect/community` is not a profile, so `E598`'s view-row rule does
  * not bite — and this gate creates no rows at all, so there is nothing to tear
  * down. ⚠ It reads the SAME persona every other shell gate signs in as.
  */
@@ -74,7 +74,7 @@ const strip = (src: string) =>
 const source = (p: string) => strip(readFileSync(p, "utf8"));
 
 test.describe("E601/WS-A — the Community page's figures", () => {
-  test("⚠⚠⚠ every figure on /community matches a direct database count", async ({ page }) => {
+  test("⚠⚠⚠ every figure on /connect/community matches a direct database count", async ({ page }) => {
     const prisma = db();
     try {
       /* ── the direct counts, computed here and owed nothing by the page ──
@@ -144,7 +144,7 @@ test.describe("E601/WS-A — the Community page's figures", () => {
       ).toBeGreaterThan(0);
 
       await signIn(page);
-      await page.goto("/community");
+      await page.goto("/connect/community");
       await page.waitForSelector(".pm-web-key", { timeout: 30_000 });
 
       const legend = (await page.locator(".pm-web-key").innerText()).replace(/\s+/g, " ").trim();

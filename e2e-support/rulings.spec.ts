@@ -9,7 +9,7 @@ test("rulings — pill magenta, bands pinned in both schemes", async ({ page }) 
 
     /* ── (1) the phone bottom nav's active pill ── */
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/community");
+    await page.goto("/connect/community");
     const pill = page.locator(".pm-bottomnav-link.is-active").first();
     await expect(pill).toHaveCount(1);
     const pillBg = await pill.evaluate((el) => getComputedStyle(el).backgroundColor);

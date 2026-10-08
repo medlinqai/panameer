@@ -336,7 +336,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: false,
     title: () => "You joined the community",
     body: () => null,
-    href: () => "/community",
+    href: () => "/connect/community",
   },
   "message.received": {
     event: "message.received",
@@ -359,7 +359,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: false,
     title: (v) => `New in ${str(v, "containerName", "the community")}`,
     body: () => null,
-    href: () => "/community",
+    href: () => "/connect/community",
   },
   "message.unread": {
     event: "message.unread > N",
@@ -387,7 +387,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: true,
     title: (v) => `${str(v, "askerName", "A member")} asked to join ${str(v, "groupTitle", "your group")}`,
     body: () => "Approve or decline from your Requests.",
-    href: () => "/community/groups?view=requests",
+    href: () => "/connect/groups?view=requests",
   },
   "group.join_approved": {
     event: "group.join_approved",
@@ -398,7 +398,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: false,
     title: (v) => `You're in ${str(v, "groupTitle", "the group")}`,
     body: () => null,
-    href: (v) => `/community/groups/${str(v, "groupSlug", "")}`,
+    href: (v) => `/connect/groups/${str(v, "groupSlug", "")}`,
   },
   // A DECLINE IS TOLD, NOT SWALLOWED. Ruling 34e puts it on the list for the
   "group.join_declined": {
@@ -410,7 +410,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: false,
     title: (v) => `Your request to join ${str(v, "groupTitle", "a group")} wasn't accepted`,
     body: () => "The group's owner decides who joins.",
-    href: () => "/community/groups?view=discover",
+    href: () => "/connect/groups?view=discover",
   },
   // Catalog: a member-entered term reached CATALOG_NOTIFY_MIN_PEOPLE real people (once per term).
   "catalog.term_catches_on": {
@@ -502,7 +502,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: true,
     title: (v) => `A question in ${str(v, "groupTitle", "your group")} has no answer yet`,
     body: (v) => str(v, "threadTitle", "") || null,
-    href: (v) => `/community/groups/thread/${str(v, "threadId", "")}`,
+    href: (v) => `/connect/groups/thread/${str(v, "threadId", "")}`,
   },
 
   // ── Colleagues — writers already live in `lib/connections.ts` ─────────────
@@ -516,7 +516,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: true,
     title: (v) => `${str(v, "fromName", "Someone")} wants to connect as a colleague`,
     body: () => null,
-    href: () => "/community",
+    href: () => "/connect/community",
   },
   "colleague.invite_accepted": {
     event: "colleague.invite_accepted",
@@ -527,7 +527,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: false,
     title: (v) => `${str(v, "fromName", "Someone")} accepted your invitation`,
     body: () => null,
-    href: () => "/community/connections",
+    href: () => "/connect/connections",
   },
 
   // ── The profile ───────────────────────────────────────────────────────────

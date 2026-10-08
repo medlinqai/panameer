@@ -30,7 +30,7 @@ export default async function MyProfilePage() {
     // A buyer-only person gets their Buyer Profile here.
     const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, first_name: true, last_name: true } });
     const buyer = person ? await buyerProfileFor(person.id) : null;
-    if (!buyer || !person) redirect("/community");
+    if (!buyer || !person) redirect("/connect/community");
     return <div className="account-surface"><BuyerProfileEditor initial={buyer} firstName={person.first_name ?? ""} lastName={person.last_name ?? ""} /></div>;
   }
 

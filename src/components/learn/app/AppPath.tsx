@@ -454,7 +454,7 @@ function PathForumPanel({
       )}
       {forum.canOpen ? (
         <Link
-          href={`/community/groups/path-${pathSlug}`}
+          href={`/connect/groups/path-${pathSlug}`}
           className="mt-3.5 inline-flex w-fit items-center gap-2 border border-magenta px-4 py-2 text-[13px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white"
         >
           Open the Group

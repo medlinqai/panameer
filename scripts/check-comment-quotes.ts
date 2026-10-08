@@ -287,7 +287,7 @@ check(
   ── ⚠⚠ THE SHARED STRIPPER, ASSERTED HERE (`P2-J3-E591` WS-B rider) ─────────
 
   ⚠⚠⚠ FIVE MISCOUNTS OF ONE SHAPE, THE FIFTH BEING A **JSX** COMMENT —
-  `AttentionStrip.tsx:224`, a `<Link href="/community">` inside `{​/* … *​/}`,
+  `AttentionStrip.tsx:224`, a `<Link href="/connect/community">` inside `{​/* … *​/}`,
   reported as a live link in `E591` WS-A's own link inventory. ⚠ Scott:
   *"the stripper is the fix."*
 
@@ -298,12 +298,12 @@ check(
 */
 check(
   "STRIPPER: a JSX comment is removed whole, braces and all",
-  stripComments('{/* <Link href="/community" /> */}').trim() === ""
+  stripComments('{/* <Link href="/connect/community" /> */}').trim() === ""
 );
 check(
   "STRIPPER: the exact E591 miscount — a link inside a JSX comment is not live",
-  !stripComments(['{/*', '  <Link href="/community">', "  Community Credits", "*/}"].join("\n"))
-    .includes("/community")
+  !stripComments(['{/*', '  <Link href="/connect/community">', "  Community Credits", "*/}"].join("\n"))
+    .includes("/connect/community")
 );
 check(
   "STRIPPER: a multi-line JSX comment leaves no stray brace behind",
@@ -374,7 +374,7 @@ check(
 );
 check(
   "STRIPPER: blankComments keeps live code on its ORIGINAL line number",
-  blankComments(["{/*", '  <Link href="/community">', "*/}", "const live = 1;"].join("\n"))
+  blankComments(["{/*", '  <Link href="/connect/community">', "*/}", "const live = 1;"].join("\n"))
     .split("\n")[3]
     .includes("const live")
 );

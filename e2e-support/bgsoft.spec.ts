@@ -27,7 +27,7 @@ const PHASE = process.env.BG_PHASE ?? "before";
 */
 const PAGES: [string, string][] = [
   ["profile", "/profile"],
-  ["community", "/community"],
+  ["community", "/connect/community"],
   ["usage", "/usage"],
   ["settings", "/settings/notifications"],
   ["admin-support", "/admin/support"],

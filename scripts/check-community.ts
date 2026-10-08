@@ -255,7 +255,7 @@ check(
 
   ⚠⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`' CASE — THE RULING
   CHANGED, THE CODE DID NOT DRIFT. Scott, 2026-09-19: *"connect is now 'build
-  your profile and connect to other profiles'."* `/community` IS the owner's
+  your profile and connect to other profiles'."* `/connect/community` IS the owner's
   profile now and `(app)/profile/page.tsx` is a REDIRECT to it, so it supplies
   nothing and never can.
 
@@ -264,23 +264,23 @@ check(
 
   ⚠⚠ THE RULE IS UNCHANGED AND IS DELIBERATELY NOT WEAKENED: every surface that
   renders a profile still has to supply the signal. Only the list of which pages
-  those ARE has moved. ⚠ `/community` was ADDED in the same edit that removed
+  those ARE has moved. ⚠ `/connect/community` was ADDED in the same edit that removed
   `/profile` — if it had only been removed, the owner would have silently lost
   the block and this guard would have gone green on the loss it exists to catch.
 */
 /*
-  ── ⚠⚠ `/community` → `/connect` (`P2-J3-E591` WS-A) ────────────────────────
+  ── ⚠⚠ `/connect/community` → `/connect` (`P2-J3-E591` WS-A) ────────────────────────
 
   ⚠ THE RULE IS STILL NOT WEAKENED. `E591` split one route into two: the PROFILE
-  is `/connect`, the PEOPLE are `/community`. ⚠⚠ `/community` NO LONGER RENDERS
+  is `/connect`, the PEOPLE are `/connect/community`. ⚠⚠ `/connect/community` NO LONGER RENDERS
   A PROFILE AT ALL, so asserting it supplies the signal would assert a call that
   should not be there — and leaving it would have failed the gate for the one
   reason that is not a defect.
   ⚠ SUPERSEDED, quoted not deleted (`E164`):
   //   join("src", "app", "(app)", "community", "page.tsx"),
   ⚠⚠ THE SWAP IS DONE IN ONE EDIT, exactly as the paragraph above requires of
-  the `/profile` → `/community` move: `/connect` is ADDED in the same change
-  that removes `/community`, so the owner cannot silently lose the block.
+  the `/profile` → `/connect/community` move: `/connect` is ADDED in the same change
+  that removes `/connect/community`, so the owner cannot silently lose the block.
 */
 /*
   ── ⚠⚠ `/connect` → `/profile` (`P2-A2-E598` WS-B) ─────────────────────────
@@ -290,7 +290,7 @@ check(
   written as "every surface that renders a profile supplies the signal" rather
   than as a list of files.
   ⚠⚠ Scott, 2026-09-21: the profile is an ACCOUNT-MENU destination, so
-  `(app)/profile/page.tsx` renders it and `/connect` redirects to `/community`.
+  `(app)/profile/page.tsx` renders it and `/connect` redirects to `/connect/community`.
   A redirect supplies nothing and never can.
   ⚠ SUPERSEDED, quoted not deleted (`E164`):
   //   join("src", "app", "(app)", "connect", "page.tsx"),
@@ -993,7 +993,7 @@ check(
   !/\block(ed)?\b|\bdisabled\b/i.test(stepDisc),
   "StepDisc names a lock or a disabled state"
 );
-/* ── ⚠⚠ THE MODE `/community` DECLARES (`P2-J3-E557` WS-A) ─────────────────
+/* ── ⚠⚠ THE MODE `/connect/community` DECLARES (`P2-J3-E557` WS-A) ─────────────────
    ⚠ CONNECT IS A ROOM A MEMBER RE-ENTERS, NOT A PATH THEY WALK ONCE, so the row
    carries no numbers. ⚠⚠ THIS ASSERTION IS INVERTED, NOT DELETED — the rule was
    never "this set is suggested", it was "this set declares the mode somebody
@@ -1003,7 +1003,7 @@ check(
    ⚠ Live until `E557`, quoted not deleted:
 
        check(
-         "E378/1 — /community is declared suggested in nav.ts",
+         "E378/1 — /connect/community is declared suggested in nav.ts",
          /"\/community":\s*"suggested"/.test(navLib)
        );
 
@@ -1013,17 +1013,17 @@ check(
        // ⚠ THE MODE IS STILL `suggested`. You never finish checking your
        // messages, so step 1 must never acquire a done state.
        check(
-         "E378/5 — /community is still suggested, not process",
+         "E378/5 — /connect/community is still suggested, not process",
          /"\/community":\s*"suggested"/.test(navLib)
        );
 
    ⚠ TWO ASSERTIONS OF ONE FACT IS NOT TWICE THE PROTECTION — it is two places
    to update and one of them gets missed. */
-/* ⚠ RE-KEYED `/community` → `/connect` (`P2-J3-E591` WS-A). ⚠⚠ THE RULING IS
+/* ⚠ RE-KEYED `/connect/community` → `/connect` (`P2-J3-E591` WS-A). ⚠⚠ THE RULING IS
    UNTOUCHED — Connect is still a room and still declares `none`; only the key
    moved, because the band's Connect entry now lands on `/connect`.
    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   "E557/1 - /community declares `none` …",
+   //   "E557/1 - /connect/community declares `none` …",
    //   /"\/community":\s*"none"/.test(navLib) */
 check(
   "E557/1 — /connect declares `none`, so the row carries no step numbers",
@@ -1229,7 +1229,7 @@ for (const [verb, journey] of [
 
     ⚠⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`' — THE RULING
     CHANGED, THE CODE DID NOT DRIFT. The gate encoded a pairing that was correct
-    while `/community` was Connect's landing; `E591` moved that landing to the
+    while `/connect/community` was Connect's landing; `E591` moved that landing to the
     member's own PROFILE, and Scott named the defect himself: the profile page
     was headed *"My Community"* because one route rendered two pages.
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
@@ -1237,13 +1237,13 @@ for (const [verb, journey] of [
     ⚠⚠ THE RULE ITSELF IS UNWEAKENED AND STILL BITES: the rail still says the
     journey in ONE WORD and the full name still lives on `heading`. Only this
     slot's name changed, and it changed because the route behind it did.
-    ⚠ `My Community` survives as the `<h1>` of `/community`, where it is now
+    ⚠ `My Community` survives as the `<h1>` of `/connect/community`, where it is now
     true — see `(app)/community/page.tsx`.
   */
   /*
     ⚠⚠⚠ `Connect`'s JOURNEY NAME IS `Community` AGAIN (`P2-A2-E598` WS-B) ────
     ⚠ The profile left Connect for the account menu, so the application's home
-    is `/community` and its heading names that. ⚠ SUPERSEDED, quoted not deleted
+    is `/connect/community` and its heading names that. ⚠ SUPERSEDED, quoted not deleted
     (`E164`):
     //   ["Connect", "My Profile"],
     ⚠⚠ THE RULE IS UNWEAKENED AND STILL BITES: the rail says the journey in ONE
@@ -1381,7 +1381,7 @@ check(
 
   ⚠ SUPERSEDED, quoted not deleted (`E164`):
   //   for (const label of ["Colleagues", "Forums", "Mentoring", "Teams"]) {
-  //     check(`E378/5 - /community tab "${label}" ships`, …);
+  //     check(`E378/5 - /connect/community tab "${label}" ships`, …);
   //   }
 
   ⚠⚠ THIS IS `check:rollup`'S CASE — THE RULING CHANGED, THE CODE DID NOT DRIFT.
@@ -1415,8 +1415,8 @@ check(
   ── ⚠⚠⚠ THE ROW BECAME THE SECTIONS. SCOTT, 2026-09-25. ──────────────────
   ⚠ Shown the `community_page_2026-09-20` mockup beside the live page, Scott
   chose **the sections** for this row. ⚠⚠ The reason is a measured defect, not a
-  preference: `/community/colleagues`, `/community/mentors` and
-  `/community/teams` all rendered this strip with **`Community` marked
+  preference: `/connect/connections`, `/connect/mentors` and
+  `/connect/community` all rendered this strip with **`Community` marked
   `aria-current`** — the row told a member they were on Community while they
   were on Colleagues, which is worse than lighting nothing.
   ⚠⚠⚠ **THE COUNT WENT 3 → 6, AND THAT IS A REAL TENSION WORTH NAMING:** Scott
@@ -1445,7 +1445,7 @@ for (const label of CONNECT_TABS) {
   ── ⚠⚠⚠ THIS REGEX WAS CAPTURING THE WRONG BLOCK (`P2-A3-E619` WS-C) ─────
 
   ⚠⚠ `"/connect": [` OCCURS TWICE IN `nav.ts`. The first is
-  `BAND_EXTRA_PREFIXES` — `"/connect": ["/community"],` — **all on one line**,
+  `BAND_EXTRA_PREFIXES` — `"/connect": ["/connect/community"],` — **all on one line**,
   and the old non-greedy match started there and ran on to the next `\n  ],`,
   swallowing the band items and the Learn tab set. ⚠⚠⚠ SO BOTH ASSERTIONS
   BUILT ON IT WERE ABOUT TEXT THAT IS NOT CONNECT'S ROW:
@@ -1481,7 +1481,7 @@ check(
 /* ⚠⚠⚠ AND EVERY SECTION THE ROW NAMES IS A PAGE THAT EXISTS — the assertion
    that makes the new row worth having. A tab pointing at a route with no page
    is the defect the old row had in reverse. */
-for (const href of ["/community", "/community/colleagues", "/community/mentors", "/community/teams", "/community/groups"]) {
+for (const href of ["/connect/community", "/connect/connections", "/connect/mentors", "/connect/community", "/connect/groups"]) {
   check(
     `E593/5 — ⚠⚠ the row's ${href} tab names a real page`,
     connectSet.includes(`href: "${href}"`),
@@ -1503,7 +1503,7 @@ check(
   !/\{ n: \d+, label: "My /.test(navLib) && !/label: "My Community", href: "\/community" \}/.test(navLib)
 );
 check(
-  "E557/2 — the /community set carries no `n:` values",
+  "E557/2 — the /connect/community set carries no `n:` values",
   !/\bn:\s*\d+/.test(
     /"\/community": \[[\s\S]*?\n  \],/.exec(navLib)?.[0]?.replace(/\/\*[\s\S]*?\*\//g, "") ?? "FAIL"
   ),
@@ -1520,7 +1520,7 @@ check(
 );
 for (const href of [
   "/learn", "/create-work", "/find-work", "/shop", "/my-services",
-  "/orders", "/pay", "/payments", "/community", "/community/groups",
+  "/orders", "/pay", "/payments", "/connect/community", "/connect/groups",
   "/connect",
 ]) {
   check(`E378/5 — route ${href} still exists in the nav`, navLib.includes(`"${href}"`));
@@ -1557,7 +1557,7 @@ check(
   COMMUNITY_SURFACE.length > 500,
   `${COMMUNITY_SURFACE.length} chars`
 );
-for (const href of ["/community/colleagues", "/community/mentors", "/community/teams"]) {
+for (const href of ["/connect/connections", "/connect/mentors", "/connect/community"]) {
   check(
     `E593/5 — ⚠⚠ ${href} is LINKED from Community, not merely in the nav`,
     COMMUNITY_SURFACE.includes(`"${href}"`)
@@ -1623,7 +1623,7 @@ check(
 const CONNECT_PAGES = [
   ["community", "page.tsx"], ["community", "colleagues", "page.tsx"],
   ["community", "groups", "page.tsx"], ["community", "mentors", "page.tsx"],
-  /* ⚠⚠⚠ `/community/score` LEFT THIS LIST (`P2-A2-E600` WS-A 1). Scott: *"The
+  /* ⚠⚠⚠ `/connect/score` LEFT THIS LIST (`P2-A2-E600` WS-A 1). Scott: *"The
      Score page stops showing Connect's tab row… It's a profile page now."* It
      draws the PROFILE row through `profileTabs`, so asserting it draws Connect's
      through `connectTabs` fails on a page correctly rendering the other one.
@@ -1636,7 +1636,7 @@ const CONNECT_PAGES = [
     ── ⚠⚠⚠ `connect/page.tsx` LEFT THIS LIST (`P2-A2-E598` WS-B) ─────────────
 
     ⚠ SCOTT, 2026-09-21: *"The Profile tab leaves Connect's row. Connect lands
-    on Community."* `/connect` is a bare `redirect("/community")` now — it draws
+    on Community."* `/connect` is a bare `redirect("/connect/community")` now — it draws
     NO tab row, so asserting it draws one through the filter fails on a page
     that correctly renders nothing.
     ⚠⚠ THIS IS `check:rollup`'S CASE — THE RULING CHANGED, THE CODE DID NOT
@@ -1651,7 +1651,7 @@ const CONNECT_PAGES = [
     than fixed — and its absence is asserted positively below.
   */
   ["messages", "page.tsx"],
-  /* ⚠ `P2-A3-E599` WS-A — `/community/grow` is a Connect page and draws the
+  /* ⚠ `P2-A3-E599` WS-A — `/connect/leaders` is a Connect page and draws the
      row through the same filter. ⚠⚠ ADDED WITH THE PAGE, not after it: this
      list is how the rule *"every Connect page draws the row through
      `connectTabs`"* is enforced, and a page that joins the tree without joining
@@ -1670,7 +1670,7 @@ for (const f of CONNECT_PAGES) {
   ── ⚠⚠⚠ AND THE PAGES THAT DRAW THE **PROFILE** ROW (`P2-A2-E600` WS-F) ─────
 
   ⚠ THE SAME RULE AS THE BLOCK BELOW, APPLIED TO THE MOVE WS-A MADE. WS-A took
-  `/community/score` out of `CONNECT_PAGES` — correctly, and with its `E164`
+  `/connect/score` out of `CONNECT_PAGES` — correctly, and with its `E164`
   quote — because the page stopped drawing Connect's row.
   ⚠⚠ BUT A REMOVAL ON ITS OWN IS AN ABSENCE OF EVIDENCE: the page joined no
   other list, so from WS-A to WS-F NOTHING asserted which row it draws. A page
@@ -1687,7 +1687,7 @@ for (const f of CONNECT_PAGES) {
 const PROFILE_ROW_PAGES = [
   ["profile", "page.tsx"],
   /*
-    THE SCORE PAGE MOVED (`E816`): `/community/score` is a 308 to `/score` now,
+    THE SCORE PAGE MOVED (`E816`): `/connect/score` is a 308 to `/score` now,
     and the page that draws the row lives at the new path. The RULE is unchanged
     — the score belongs to the profile's row, not Connect's — so the assertion
     follows the file rather than being deleted with it (ruling 14).
@@ -1719,7 +1719,7 @@ for (const f of PROFILE_ROW_PAGES) {
 {
   const connectPage = bodies.get(join("src", "app", "(app)", "connect", "page.tsx")) ?? "";
   check(
-    "E598/B — ⚠ /connect draws no tab row: it redirects to /community",
+    "E598/B — ⚠ /connect draws no tab row: it redirects to /connect/community",
     connectPage.length > 0 && /redirect\(\s*["']\/community["']\s*\)/.test(connectPage) &&
       !/connectTabs\(/.test(connectPage),
     connectPage.length === 0 ? "connect/page.tsx not found" : "it still draws a row"
@@ -1813,7 +1813,7 @@ check(
   "it must survive on disk inside a comment"
 );
 check(
-  "E378/6 — the /community page renders no section cards",
+  "E378/6 — the /connect/community page renders no section cards",
   !/sections\.map\(/.test(communityPage)
 );
 /* ⚠ THE PILLS WERE NOT DROPPED — they moved onto the tab. */
@@ -1926,7 +1926,7 @@ check(
    `8f71ac2`.** It looks for a tab whose `href` is `/messages`; the Connect row
    has held no such tab for weeks. Feeding it the live row with `unread = 7`
    produced **zero badges**, while `unreadCount()` kept running on every
-   `/messages` and `/community` page load.
+   `/messages` and `/connect/community` page load.
    ⚠⚠⚠ **A FIGURE WHOSE WRITER IS LIVE AND WHOSE READER IS DEAD DISAPPEARS
    SILENTLY — nothing errors, nothing logs, and the query still costs.**
 

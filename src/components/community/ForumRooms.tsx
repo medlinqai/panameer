@@ -15,7 +15,7 @@ function Room({ r }: { r: RoomView }) {
   return (
     <li>
       <Link
-        href={`/community/groups/${r.slug}`}
+        href={`/connect/groups/${r.slug}`}
         className="flex items-baseline justify-between gap-2 py-1.5 text-[13.5px] hover:text-magenta"
       >
         <span className="font-semibold">{r.title}</span>

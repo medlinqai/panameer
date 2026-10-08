@@ -61,7 +61,7 @@ export function CommunitySignalBlock({
 
       {isOwner && (
         <Link
-          href="/community/groups"
+          href="/connect/groups"
           className="mt-4 inline-block text-[13px] font-semibold text-magenta hover:underline"
         >
           Go to Groups <span aria-hidden>→</span>

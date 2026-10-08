@@ -56,7 +56,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
           <p className="text-[14px] leading-relaxed text-ink-2">
             Nothing is waiting on you.{" "}
             <Link
-              href="/community/connections"
+              href="/connect/connections"
               className="font-semibold text-magenta hover:underline"
             >
               Find people you have worked with
@@ -90,7 +90,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
           <Heading
             seeAll={
               colleagues.length > CAP
-                ? { href: "/community/connections", label: `See all ${colleagues.length}` }
+                ? { href: "/connect/connections", label: `See all ${colleagues.length}` }
                 : undefined
             }
           >
@@ -138,7 +138,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
             A team is a group of providers who take work together, so a buyer
             can hire the group rather than assemble one.{" "}
             <Link
-              href="/community/teams"
+              href="/connect/community"
               className="font-semibold text-magenta hover:underline"
             >
               See how teams work

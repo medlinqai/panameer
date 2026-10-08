@@ -131,7 +131,7 @@ export async function getAttentionCards(input: {
       id: "connections",
       label: "Connection Requests",
       detail: "people want to connect",
-      href: "/community",
+      href: "/connect/community",
       icon: "Users",
     },
     null,

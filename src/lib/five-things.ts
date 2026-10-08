@@ -66,7 +66,7 @@ export async function fiveThings(viewer: Viewer) {
     things.push({ key: "project", icon: "folder", title: "Show your work", line: "Add one past project buyers can see.", chips: [`+${COMPLETENESS_WEIGHTS.soloProjects} Score`], time: "5 min", cta: { label: "Add Project", href: "/profile#projects" } });
 
   const fillers: Thing[] = [
-    { key: "connect", icon: "people", title: "Connect with colleagues", line: "People you've worked with make you easier to trust.", chips: ["Free"], time: "2 min", cta: { label: "Find Colleagues", href: "/community" } },
+    { key: "connect", icon: "people", title: "Connect with colleagues", line: "People you've worked with make you easier to trust.", chips: ["Free"], time: "2 min", cta: { label: "Find Colleagues", href: "/connect/community" } },
     { key: "work", icon: "search", title: "Browse open work", line: "Requests posted by buyers right now.", chips: [], time: "", cta: { label: "Browse Work", href: "/find-work" } },
     pp
       ? { key: "service", icon: "tag", title: "List a service", line: "A fixed-price package buyers can order today.", chips: [], time: "10 min", cta: { label: "List a Service", href: "/my-services" } }
@@ -77,7 +77,7 @@ export async function fiveThings(viewer: Viewer) {
       ...things.filter((t) => t.key === "visible" || t.key === "rank"),
       things.find((t) => t.key === "learn")!,
       fillers[0],
-      { key: "mentor", icon: "people", title: "Find a mentor", line: "Ask someone who's done the work. Free.", chips: ["Free"], time: "", cta: { label: "Find a Mentor", href: "/community/mentors" } } as Thing,
+      { key: "mentor", icon: "people", title: "Find a mentor", line: "Ask someone who's done the work. Free.", chips: ["Free"], time: "", cta: { label: "Find a Mentor", href: "/connect/mentors" } } as Thing,
       fillers[1],
     ].slice(0, 4);
     pre.push({ key: "company", icon: "folder", title: "Add your company", line: "When you're ready to sell. A one-person business is a company too.", chips: [], time: "2 min", cta: { label: "Add Company", href: "/company?join=1#join" } });

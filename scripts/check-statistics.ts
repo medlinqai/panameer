@@ -569,14 +569,14 @@ check(
   ⚠ THE RULE IS UNCHANGED AND IT IS LIVE: *"removing a card can remove a
   capability's only entrance"* (the 2026-09-23 rules, 5). ⚠⚠ What moved is WHERE
   the entrance comes from. The `Profile` tile that carried
-  `href="/community/score"` was removed from `/usage` by lane 1, and this
+  `href="/connect/score"` was removed from `/usage` by lane 1, and this
   assertion went red — **correctly**, because it was looking at the one place
   the door used to be.
 
   ⚠⚠⚠ **THE DOOR DID NOT GO.** `/usage` renders `PageTabs` with `profileTabs()`,
-  and `PAGE_TABS["/profile"]` carries `{ label: "Score", href: "/community/score" }`.
+  and `PAGE_TABS["/profile"]` carries `{ label: "Score", href: "/connect/score" }`.
   ⚠ **MEASURED LIVE, NOT ASSUMED** (`e2e-e744/door.spec.ts`): one
-  `a[href="/community/score"]` on the rendered page, and it is inside
+  `a[href="/connect/score"]` on the rendered page, and it is inside
   `[data-testid="page-tabs"]`.
 
   ⚠⚠ **IT IMPORTS THE TAB TABLE RATHER THAN GREPPING FOR A STRING** — ruling 58:
@@ -592,7 +592,7 @@ check(
 */
 check(
   "19 — ⚠⚠ …and the score page is still reachable from /usage (via the tab row)",
-  (PAGE_TABS["/profile"] ?? []).some((t) => t.href === "/community/score") &&
+  (PAGE_TABS["/profile"] ?? []).some((t) => t.href === "/connect/score") &&
     /<PageTabs/.test(src.page) &&
     /profileTabs\(/.test(src.page),
   "the door survived the figure — it is the Score tab now"

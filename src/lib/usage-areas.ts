@@ -147,7 +147,7 @@ export function usageAreas(u: UsageInput): UsageArea[] {
         { label: "Joined From Invites", figure: u.joinedFromInvites },
       ],
       // gauge at it would cost every click a round trip to reach the same page. The
-      href: "/community",
+      href: "/connect/community",
       go: navLabel("/connect"),
       tip: tipFor(u.colleagues, "colleague", "colleagues"),
       counts: "colleagues",

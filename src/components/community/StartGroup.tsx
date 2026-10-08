@@ -26,7 +26,7 @@ export function StartGroup() {
         return;
       }
       setTitle("");
-      router.push(`/community/groups/${data.slug}`);
+      router.push(`/connect/groups/${data.slug}`);
       router.refresh();
     } catch {
       setError("We couldn't reach the server. Check your connection.");

@@ -151,7 +151,7 @@ export default async function LearningPathPage({
             )}
             {forum.canOpen ? (
               <Link
-                href={`/community/groups/path-${path.slug}`}
+                href={`/connect/groups/path-${path.slug}`}
                 className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
               >
                 Open the group &rarr;

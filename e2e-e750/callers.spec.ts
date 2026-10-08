@@ -3,7 +3,7 @@ import { signIn } from "../e2e-shell/_auth";
 
 /** `E751` — is the PageTabs wrapper always `main`'s first child? The band fix
  * cancels `main`'s padding, so this is the premise that makes that safe. */
-const PATHS = ["/profile", "/usage", "/community", "/community/score", "/payments",
+const PATHS = ["/profile", "/usage", "/connect/community", "/connect/score", "/payments",
   "/my-services", "/company", "/messages", "/account-health", "/settings/notifications"];
 
 test("E751 callers — wrapper position inside main", async ({ page }) => {

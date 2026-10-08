@@ -195,7 +195,7 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
       },
       member
     ),
-    // breadcrumbs to the path when this is set, and to `/community/groups` when
+    // breadcrumbs to the path when this is set, and to `/connect/groups` when
     learningPath: board.learningPath,
     threads: board.threads.map((t) => ({
       id: t.id,

@@ -21,7 +21,7 @@ export default async function ProfileScorePage() {
     where: ownedProviderProfile(viewer),
     select: { id: true },
   });
-  if (!profile) redirect("/community");
+  if (!profile) redirect("/connect/community");
 
   const input = await buildCompletenessInput(profile.id);
   if (!input) redirect("/connect");
@@ -33,7 +33,7 @@ export default async function ProfileScorePage() {
         eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}
-        current="/community/score"
+        current="/connect/score"
       />
       <ProfileScoreView score={computeProfileScore(input)} profileId={profile.id} />
     </div>

@@ -13,7 +13,7 @@ import { signIn } from "../e2e-shell/_auth";
  * (`decisions_2026-09-23.md` §8 rule 12). The screenshot is the ground truth.
  */
 
-const PAGES = ["/profile", "/usage", "/community"];
+const PAGES = ["/profile", "/usage", "/connect/community"];
 const CANVAS = { light: "250,250,250", dark: "11,8,23" };
 const SURFACE = { light: "255,255,255", dark: "23,17,40" };
 

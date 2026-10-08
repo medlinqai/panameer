@@ -7,9 +7,9 @@ import { join } from "node:path";
  * ── ⚠⚠⚠ `E717` — WHICH BAND ITEM IS LIT, ON EVERY ROUTE THAT COULD MOVE ──────────────
  *
  * ⚠ **SCOTT'S SECOND DEFECT IS A PREFIX COLLISION, AND THE RISK IS COLLATERAL:** `Connect`
- * owns `/community`, so `/community/score` lights `Connect` — but so does every other page
- * under `/community`, **and those are real Connect pages whose light must not move.**
- * ⚠⚠ **SO THE GATE IS A CENSUS OF ALL NINE `/community` ROUTES, BEFORE AND AFTER**, written
+ * owns `/connect/community`, so `/connect/score` lights `Connect` — but so does every other page
+ * under `/connect/community`, **and those are real Connect pages whose light must not move.**
+ * ⚠⚠ **SO THE GATE IS A CENSUS OF ALL NINE `/connect/community` ROUTES, BEFORE AND AFTER**, written
  * to disk on the `before` run and compared on the `after` run. ⚠⚠⚠ **A CLAIM THAT "ONLY ONE
  * ROUTE MOVED" IS WORTH NOTHING UNLESS THE OTHER EIGHT WERE MEASURED ON BOTH SIDES.**
  *
@@ -21,19 +21,19 @@ const PHASE = process.env.E717_PHASE ?? "after";
 const OUT = join(process.cwd(), "e2e-e717", "shots");
 const RECORD = join(process.cwd(), "e2e-e717", `census-before.json`);
 
-/** ⚠ Every route under `/community/`, from disk, plus the named pages in the brief. */
+/** ⚠ Every route under `/connect/`, from disk, plus the named pages in the brief. */
 const COMMUNITY_ROUTES = [
-  "/community",
-  "/community/colleagues",
-  "/community/groups",
-  "/community/grow",
-  "/community/mentors",
-  "/community/score",
-  "/community/teams",
+  "/connect/community",
+  "/connect/connections",
+  "/connect/groups",
+  "/connect/leaders",
+  "/connect/mentors",
+  "/connect/score",
+  "/connect/community",
 ];
 const ACCOUNT_ROUTES = ["/profile", "/usage", "/account-health", "/settings", "/company"];
 /** ⚠ The five the brief asks to see the band on. */
-const SHOT_ROUTES = ["/profile", "/community/score", "/usage", "/account-health", "/community"];
+const SHOT_ROUTES = ["/profile", "/connect/score", "/usage", "/account-health", "/connect/community"];
 
 test.beforeAll(() => mkdirSync(OUT, { recursive: true }));
 
@@ -86,7 +86,7 @@ async function readBand(page: import("@playwright/test").Page) {
   });
 }
 
-test(`E717 ${PHASE} — census: which item lights on every /community route`, async ({
+test(`E717 ${PHASE} — census: which item lights on every /connect/community route`, async ({
   browser,
 }) => {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -128,9 +128,9 @@ test(`E717 ${PHASE} — census: which item lights on every /community route`, as
     for (const route of Object.keys(before)) {
       const b = before[route].join(", ");
       const a = (census[route] ?? []).join(", ");
-      if (route === "/community/score") {
-        expect(a, "/community/score should now light the avatar").toContain("Account menu");
-        expect(a, "/community/score still lights Connect").not.toContain("Connect");
+      if (route === "/connect/score") {
+        expect(a, "/connect/score should now light the avatar").toContain("Account menu");
+        expect(a, "/connect/score still lights Connect").not.toContain("Connect");
       } else {
         expect(a, `${route} changed which band item it lights — collateral damage`).toBe(b);
       }

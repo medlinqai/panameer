@@ -7,7 +7,7 @@
  *   `E004`   admin → `/profile`            offered, then refused
  *   `E134`   provider → `/find-work`       offered, then refused
  *   buyer onboarding → `/work/new`         offered, then refused
- *   `E040`/`E044`  buyer → `/stats`, `/account-health`, `/recommendations`
+ *   `E040`/`E044`  buyer → `/stats`, `/account-health`, `/connect/recommendations`
  *   `E046`   buyer → the whole `/settings` tree
  *
  * EVERY ONE IS THE SAME SENTENCE: **a nav offering a route the gate refuses.**
@@ -147,7 +147,7 @@ check(
   settingsNeed === "authenticated",
   `/settings/security resolves to ${settingsNeed}`
 );
-for (const href of ["/usage", "/account-health", "/recommendations"]) {
+for (const href of ["/usage", "/account-health", "/connect/recommendations"]) {
   const need = requirementFor(href);
   check(
     `2 — E040/E044: ${href} is reachable by a buyer`,
@@ -187,7 +187,7 @@ check(
 /*
   ── ⚠⚠⚠ 4 · THE BAND KNOWS WHERE YOU ARE (`P2-A3-E596` WS-A) ──────────────
 
-  ⚠ SCOTT, 2026-09-20, on `/community/score`: the tab row said `CONNECT ·
+  ⚠ SCOTT, 2026-09-20, on `/connect/score`: the tab row said `CONNECT ·
   Profile` and the band lit NOTHING. ⚠⚠ TWO NAVIGATION LAYERS ON ONE PAGE
   DISAGREEING ABOUT WHICH APPLICATION YOU ARE IN.
 
@@ -198,7 +198,7 @@ check(
 
   ⚠⚠ THE ROUTES COME FROM `PAGE_TABS` AT RUNTIME — every key, and every tab
   destination under it. A page added to a tab row later is caught by this gate
-  rather than by Scott. ⚠ A hard-coded list of `/community/*` would have gone
+  rather than by Scott. ⚠ A hard-coded list of `/connect/*` would have gone
   stale the first time somebody added a tab, which is the whole point.
 
   ── ⚠⚠ WHAT IS ASSERTED, AND WHAT DELIBERATELY IS NOT ────────────────────
@@ -225,7 +225,7 @@ const BAND_ITEMS: NavItem[] = [
   been invisible to the very check built to catch navigation layers disagreeing — it would
   have asserted its own copy and passed.
   ⚠ **THE ACCOUNT MENU IS A CANDIDATE HERE TOO**, or the resolution differs from the
-  component's: on `/community/score` the account key outbids `Connect`, and a candidate list
+  component's: on `/connect/score` the account key outbids `Connect`, and a candidate list
   without it would still return `Connect` and hide the fix.
   ⚠⚠ It still returns `NavItem[]` — the account key is not a band ITEM, so a route the avatar
   owns correctly yields **zero band applications**, which is what `BAND_KNOWN_OPEN` records.
@@ -287,11 +287,11 @@ const BAND_KNOWN_OPEN: Readonly<Record<string, { since: string; why: string }>> 
     ⚠ Each carries its own date and prints its age every run, the second
     safeguard: *"a visible age is what stops this becoming a parking lot."*
 
-    ── ⚠⚠⚠ `/community/score` IS NOW LISTED, AND THE REASON IT WAS NOT IS THE FIX (`E717`) ──
+    ── ⚠⚠⚠ `/connect/score` IS NOW LISTED, AND THE REASON IT WAS NOT IS THE FIX (`E717`) ──
 
     ⚠ **SUPERSEDED, quoted not deleted (`E164`):**
-    //   ⚠⚠⚠ `/community/score` IS DELIBERATELY **NOT** LISTED. Measured: it lights
-    //   `Connect`, because it lives under `/community` and `bandPrefixesFor`
+    //   ⚠⚠⚠ `/connect/score` IS DELIBERATELY **NOT** LISTED. Measured: it lights
+    //   `Connect`, because it lives under `/connect/community` and `bandPrefixesFor`
     //   resolves that through Connect. An entry for it would START PASSING and
     //   therefore FAIL — the first of this mechanism's two safeguards, working.
     ⚠⚠ **SCOTT, 2026-09-30, RULED THAT LIGHTING `Connect` THERE IS THE DEFECT:** *"It is the
@@ -320,9 +320,9 @@ const BAND_KNOWN_OPEN: Readonly<Record<string, { since: string; why: string }>> 
     since: "2026-09-22",
     why: "Account standing is between a member and Panameer, not an application in the band.",
   },
-  "/community/score": {
+  "/connect/score": {
     since: "2026-09-30",
-    why: "The Score tab is an ACCOUNT-menu destination that kept a /community URL (P2-A2-E600 WS-A ruled the route does not move). E717 makes the band agree with its tab row: the avatar lights and Connect does not, so it lights no band application by design.",
+    why: "The Score tab is an ACCOUNT-menu destination that kept a /connect/community URL (P2-A2-E600 WS-A ruled the route does not move). E717 makes the band agree with its tab row: the avatar lights and Connect does not, so it lights no band application by design.",
   },
   /* ⚠⚠⚠ `/company` AND `/settings` ARE NO LONGER TAB DESTINATIONS AT ALL
      (`P2-ALL-E687` WS-B, rulings 89a/89b), SO THEIR KNOWN-OPEN ENTRIES DESCRIBE
@@ -629,8 +629,8 @@ check(
 /* ⚠ And the multi-prefix mechanism itself is asserted, so deleting
    `BAND_EXTRA_PREFIXES` cannot quietly satisfy the rule above. */
 check(
-  "4 — Connect owns /community as well as /connect",
-  bandPrefixesFor("/connect").includes("/community"),
+  "4 — Connect owns /connect/community as well as /connect",
+  bandPrefixesFor("/connect").includes("/connect/community"),
   bandPrefixesFor("/connect").join(", ")
 );
 check(
@@ -639,30 +639,30 @@ check(
 );
 
 /*
-  ── ⚠⚠⚠ 4b · THE COLLISION UNDER `/community`, BOTH SIDES (`P2-A2-E717`) ──────
+  ── ⚠⚠⚠ 4b · THE COLLISION UNDER `/connect/community`, BOTH SIDES (`P2-A2-E717`) ──────
 
-  ⚠ **TWO ITEMS CLAIM `/community/score`:** `Connect` through `/community`, and the account
-  menu through `/community/score` itself. ⚠⚠ **THE PREFIX TABLE ALONE CANNOT SAY WHICH WINS**
-  — the assertions above prove Connect still OWNS `/community`, and would pass just as well
+  ⚠ **TWO ITEMS CLAIM `/connect/score`:** `Connect` through `/connect/community`, and the account
+  menu through `/connect/score` itself. ⚠⚠ **THE PREFIX TABLE ALONE CANNOT SAY WHICH WINS**
+  — the assertions above prove Connect still OWNS `/connect/community`, and would pass just as well
   if the band lit Connect on the score page, which is the defect.
   ⚠⚠⚠ **SO THE RESOLUTION IS ASSERTED, NOT THE TABLE.** And both directions are asserted
   (ruling 90): the score page resolves to the AVATAR, **and the sibling routes still resolve
-  to Connect** — a fix that took Connect's light off `/community/colleagues` would satisfy
+  to Connect** — a fix that took Connect's light off `/connect/connections` would satisfy
   the first check alone.
 */
 const BAND_CANDIDATES = [...BAND_ITEMS.map((i) => i.href), ACCOUNT_BAND_HREF];
 check(
-  "4b — /community/score resolves to the ACCOUNT menu, not Connect",
-  bandActiveHref("/community/score", BAND_CANDIDATES) === ACCOUNT_BAND_HREF,
-  String(bandActiveHref("/community/score", BAND_CANDIDATES))
+  "4b — /connect/score resolves to the ACCOUNT menu, not Connect",
+  bandActiveHref("/connect/score", BAND_CANDIDATES) === ACCOUNT_BAND_HREF,
+  String(bandActiveHref("/connect/score", BAND_CANDIDATES))
 );
 for (const sibling of [
-  "/community",
-  "/community/colleagues",
-  "/community/groups",
-  "/community/grow",
-  "/community/mentors",
-  "/community/teams",
+  "/connect/community",
+  "/connect/connections",
+  "/connect/groups",
+  "/connect/leaders",
+  "/connect/mentors",
+  "/connect/community",
 ]) {
   check(
     `4b — ${sibling} still resolves to Connect`,
@@ -674,14 +674,14 @@ for (const sibling of [
    comparison to `<` would still pass every case above by accident of list order. */
 check(
   "4b — the MORE SPECIFIC prefix wins, which is what decides the collision",
-  bandActiveHref("/community/score", ["/connect", ACCOUNT_BAND_HREF]) === ACCOUNT_BAND_HREF &&
-    bandActiveHref("/community/score", [ACCOUNT_BAND_HREF, "/connect"]) === ACCOUNT_BAND_HREF
+  bandActiveHref("/connect/score", ["/connect", ACCOUNT_BAND_HREF]) === ACCOUNT_BAND_HREF &&
+    bandActiveHref("/connect/score", [ACCOUNT_BAND_HREF, "/connect"]) === ACCOUNT_BAND_HREF
 );
 /* ⚠⚠ `E586` — the account key must really own that prefix, or every check above passes on a
    candidate that claims nothing. */
 check(
-  "4b — the account menu actually owns /community/score",
-  bandPrefixesFor(ACCOUNT_BAND_HREF).includes("/community/score"),
+  "4b — the account menu actually owns /connect/score",
+  bandPrefixesFor(ACCOUNT_BAND_HREF).includes("/connect/score"),
   bandPrefixesFor(ACCOUNT_BAND_HREF).join(", ")
 );
 

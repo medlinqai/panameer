@@ -103,7 +103,7 @@ export function StatisticsCards({
               <Card
                 title="Your Network"
                 note={
-                  <Link href="/community/grow" className="font-bold text-magenta hover:underline">
+                  <Link href="/connect/leaders" className="font-bold text-magenta hover:underline">
                     Grow Your Community &rarr;
                   </Link>
                 }
@@ -131,8 +131,8 @@ export function StatisticsCards({
                   credit={creditLine(s)}
                   links={[
                     { label: "Invite a Colleague", href: "/invite-colleague" },
-                    { label: "Grow Your Community", href: "/community/grow" },
-                    { label: "Find a Mentor", href: "/community/mentors" },
+                    { label: "Grow Your Community", href: "/connect/leaders" },
+                    { label: "Find a Mentor", href: "/connect/mentors" },
                   ]}
                 />
               )
@@ -169,7 +169,7 @@ export function StatisticsCards({
                   credit="No lessons finished yet."
                   links={[
                     { label: "Browse Learning Paths", href: "/learn" },
-                    { label: "See Your Score", href: "/community/score" },
+                    { label: "See Your Score", href: "/connect/score" },
                   ]}
                 />
               )
@@ -276,7 +276,7 @@ export function honeyCells(s: Statistics): HoneyCell[] {
       label: "Your Network",
       figure: s.network.colleagues,
       counts: "colleagues",
-      href: "/community",
+      href: "/connect/community",
     },
     {
       key: "learning",

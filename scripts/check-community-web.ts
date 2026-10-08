@@ -143,7 +143,7 @@ check(
   "deterministic" AND IS THE ONE THAT ACTUALLY MATTERED.
 
   ⚠ MEASURED 2026-09-20: the layout WAS deterministic — same inputs, same
-  steps, no randomness — and `/community` still threw a REAL HYDRATION MISMATCH,
+  steps, no randomness — and `/connect/community` still threw a REAL HYDRATION MISMATCH,
   because `Math.sin` is implementation-defined in its last bits and the server
   renders in Node's engine while hydration runs in the browser's. One ULP of
   difference is two different attribute STRINGS.

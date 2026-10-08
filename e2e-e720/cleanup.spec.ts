@@ -186,7 +186,7 @@ test("E720 items 1 · 6 · 12 — the band tile, the section states, the button 
   await page.close();
 });
 
-test("E720 item 2 — /profile and /community/score agree, on two personas", async ({ browser }) => {
+test("E720 item 2 — /profile and /connect/score agree, on two personas", async ({ browser }) => {
   /*
     ⚠⚠⚠ **THE POINT IS AGREEMENT BETWEEN TWO SURFACES, SO BOTH ARE READ FROM THE RENDERED
     PAGE.** Comparing two calls to the same function would prove only that the function is
@@ -210,7 +210,7 @@ test("E720 item 2 — /profile and /community/score agree, on two personas", asy
       };
     });
 
-    await page.goto("/community/score", { waitUntil: "domcontentloaded" });
+    await page.goto("/connect/score", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2200);
     const scorePage = await page.evaluate(() => {
       const body = (document.body.innerText ?? "").replace(/\s+/g, " ");
@@ -223,7 +223,7 @@ test("E720 item 2 — /profile and /community/score agree, on two personas", asy
 
     console.log(`\n══ E720 ITEM 2 · ${email} ══`);
     console.log(`   /profile       open=${profile.open} minutes=${profile.minutes} (ring ${profile.total}) raw="${profile.raw}"`);
-    console.log(`   /community/score open=${scorePage.open} minutes=${scorePage.minutes}`);
+    console.log(`   /connect/score open=${scorePage.open} minutes=${scorePage.minutes}`);
     /* ⚠ A PERSONA WITH NOTHING OUTSTANDING PROVES NOTHING ABOUT AGREEMENT OF COUNTS, so the
        gate says so out loud rather than passing quietly on a vacuous pair (`E586`). */
     if (profile.open === 0) {

@@ -324,7 +324,7 @@ export function ConnectProfile({
             {owner && (
               <div className="mt-4 flex flex-col">
                 {/* ROW 4 — SQUARE, FULL WIDTH, INK. NOT A MAGENTA PILL */}
-                {/* SCOTT, 2026-09-30. The button went to `/community/score`; the */}
+                {/* SCOTT, 2026-09-30. The button went to `/connect/score`; the */}
                 {/* AND THIS ONE TAKES THE INK */}
                 <Link
                   href={`/providers/${p.id}`}
@@ -375,14 +375,14 @@ export function ConnectProfile({
                                 {
                                   // as a second name for the same thing."*
                                   label: "Grow Your Community",
-                                  href: "/community/grow",
+                                  href: "/connect/leaders",
                                   hint: growth
                                     ? `${growth.points} points${growth.rank ? ` · #${growth.rank} this month` : ""}`
                                     : `A colleague who joins is worth ${GROWTH_WEIGHTS.JOINED} points`,
                                 },
                                 { label: "Invite a Colleague", href: "/invite-colleague", hint: "Join = 50 points" },
-                                { label: "Request a Recommendation", href: "/recommendations", hint: null },
-                                { label: "Request a Mentor", href: "/community/mentors", hint: null },
+                                { label: "Request a Recommendation", href: "/connect/recommendations", hint: null },
+                                { label: "Request a Mentor", href: "/connect/mentors", hint: null },
                               ].map((a) => (
                                 <Link
                                   key={a.href}
@@ -466,7 +466,7 @@ export function ConnectProfile({
                   </p>
                 )}
                 <Link
-                  href="/community/groups"
+                  href="/connect/groups"
                   className="mt-2.5 inline-block text-[13px] font-bold text-magenta hover:underline"
                 >
                   Browse Groups
@@ -909,7 +909,7 @@ export function ConnectProfile({
                   No recommendations yet.{" "}
                   {/* OWNER-ONLY — a visitor cannot request recommendations */}
                   <Link
-                    href="/recommendations"
+                    href="/connect/recommendations"
                     className="font-bold text-magenta hover:underline"
                   >
                     Request a Recommendation

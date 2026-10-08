@@ -63,7 +63,7 @@ export function ColleagueRowActions({
             {!buySide && (
               <Link
                 role="menuitem"
-                href={`/community/mentors?ask=${toUserId}`}
+                href={`/connect/mentors?ask=${toUserId}`}
                 className="block px-4 py-2.5 text-left text-[14px] text-ink transition-colors hover:bg-bg-soft"
               >
                 Ask Them to Mentor Me

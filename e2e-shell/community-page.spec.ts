@@ -48,7 +48,7 @@ test.describe("⚠ THE COMMUNITY PAGE — P2-J3-E591 WS-C", () => {
     test(`${label} (${w}px) — two columns, cards, rail, no overflow`, async ({ browser }) => {
       const page = await browser.newPage({ viewport: { width: w, height: 1000 } });
       await signIn(page);
-      await page.goto("/community", { waitUntil: "networkidle" });
+      await page.goto("/connect/community", { waitUntil: "networkidle" });
 
       const cards = page.locator(".pm-cm-card");
       const invited = page.locator(".pm-cm-card-invited");
@@ -97,7 +97,7 @@ test.describe("⚠ THE COMMUNITY PAGE — P2-J3-E591 WS-C", () => {
   test("⚠⚠ no rate reaches the page — DOM or payload", async ({ browser }) => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     await signIn(page);
-    await page.goto("/community", { waitUntil: "networkidle" });
+    await page.goto("/connect/community", { waitUntil: "networkidle" });
 
     const body = await page.locator("body").innerText();
     for (const needle of ["/hr", "per hour", "hourly", "$"]) {
@@ -120,7 +120,7 @@ test.describe("⚠ THE COMMUNITY PAGE — P2-J3-E591 WS-C", () => {
   test("⚠⚠ a joined card opens the profile, with no nested anchor", async ({ browser }) => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     await signIn(page);
-    await page.goto("/community", { waitUntil: "networkidle" });
+    await page.goto("/connect/community", { waitUntil: "networkidle" });
 
     const nested = await page.evaluate(
       () => document.querySelectorAll(".pm-cm-card a a").length
@@ -157,7 +157,7 @@ test.describe("⚠ THE COMMUNITY PAGE — P2-J3-E591 WS-C", () => {
       expect(name.length, `${href} rendered no name`).toBeGreaterThan(1);
     }
     console.log(`E596/WS-G  ${hrefs.length} colleague cards, every link 200 with a name`);
-    await page.goto("/community", { waitUntil: "networkidle" });
+    await page.goto("/connect/community", { waitUntil: "networkidle" });
 
     /* ⚠ An INVITED card opens nothing — there is no profile to open. */
     const invitedLinks = await page.evaluate(
@@ -171,7 +171,7 @@ test.describe("⚠ THE COMMUNITY PAGE — P2-J3-E591 WS-C", () => {
   test("⚠ a missing photo is the silhouette, never initials", async ({ browser }) => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     await signIn(page);
-    await page.goto("/community", { waitUntil: "networkidle" });
+    await page.goto("/connect/community", { waitUntil: "networkidle" });
     const counts = await page.evaluate(() => ({
       sil: document.querySelectorAll(".pm-cm-card .pm-sil, .pm-cm-rail .pm-sil").length,
       faces: document.querySelectorAll(".pm-cm-card .pm-face, .pm-cm-rail .pm-face").length,
@@ -226,7 +226,7 @@ test.describe("⚠ THE COMMUNITY PAGE — P2-J3-E591 WS-C", () => {
     */
     errors.length = 0;
     failed.length = 0;
-    await page.goto("/community", { waitUntil: "networkidle" });
+    await page.goto("/connect/community", { waitUntil: "networkidle" });
 
     if (failed.length) console.log(`E591/WS-C  ⚠ failed requests: ${failed.join(" | ")}`);
     expect(errors, `console errors: ${errors.join(" | ")}`).toEqual([]);
@@ -260,7 +260,7 @@ test.describe("⚠ THE COMMUNITY PAGE — P2-J3-E591 WS-C", () => {
   test("⚠⚠ no completion ring and no completeness figure", async ({ browser }) => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     await signIn(page);
-    await page.goto("/community", { waitUntil: "networkidle" });
+    await page.goto("/connect/community", { waitUntil: "networkidle" });
     await expect(page.getByText("Profile Completion")).toHaveCount(0);
     await expect(page.getByText("of 100")).toHaveCount(0);
     await page.close();

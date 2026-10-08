@@ -54,7 +54,7 @@ test.describe("⚠ THE COMMUNITY WEB — P2-J3-E591 WS-B", () => {
     }) => {
       const page = await browser.newPage({ viewport: { width: w, height: 900 } });
       await signIn(page);
-      await page.goto("/community", { waitUntil: "networkidle" });
+      await page.goto("/connect/community", { waitUntil: "networkidle" });
 
       const svg = page.locator(".pm-web-svg");
       await expect(svg).toHaveCount(1);
@@ -128,7 +128,7 @@ test.describe("⚠ THE COMMUNITY WEB — P2-J3-E591 WS-B", () => {
   test("the accessible name states the counts in words", async ({ browser }) => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await signIn(page);
-    await page.goto("/community", { waitUntil: "networkidle" });
+    await page.goto("/connect/community", { waitUntil: "networkidle" });
     const label = await page.locator(".pm-web-svg").getAttribute("aria-label");
     console.log(`E591/WS-B  accessible name: "${label}"`);
     /* ⚠ A picture of a network is not a network to a screen reader. */
@@ -189,7 +189,7 @@ test.describe("⚠ THE COMMUNITY WEB — P2-J3-E591 WS-B", () => {
     );
 
     await page.clock.install();
-    await page.goto("/community", { waitUntil: "networkidle" });
+    await page.goto("/connect/community", { waitUntil: "networkidle" });
     /* ⚠ Past the 60s interval, so exactly one refresh lands. */
     await page.clock.fastForward("01:05");
     await page.waitForFunction(
@@ -298,7 +298,7 @@ test.describe("⚠ THE COMMUNITY WEB — P2-J3-E591 WS-B", () => {
       r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) })
     );
     await page.clock.install();
-    await page.goto("/community", { waitUntil: "networkidle" });
+    await page.goto("/connect/community", { waitUntil: "networkidle" });
     await page.clock.fastForward("01:05");
     await page.waitForFunction(
       () => document.querySelectorAll(".pm-web-svg .pm-web-reachable").length > 0,
@@ -348,7 +348,7 @@ test.describe("⚠ THE COMMUNITY WEB — P2-J3-E591 WS-B", () => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await signIn(page);
     await page.route("**/api/community/web", (r) => r.abort());
-    await page.goto("/community", { waitUntil: "networkidle" });
+    await page.goto("/connect/community", { waitUntil: "networkidle" });
 
     const positions = async () =>
       page.evaluate(() =>

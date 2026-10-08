@@ -200,7 +200,7 @@ check(
 /*
   ⚠⚠⚠ THIS BLOCK NEARLY SHIPPED MISSING. The WS-C layout replaced
   `ConnectHome`, and with it went the ONLY surface in the app that renders an
-  incoming colleague request — `/community/colleagues` shows the roster, not the
+  incoming colleague request — `/connect/connections` shows the roster, not the
   pending asks. ⚠ `check:connect-walk` caught it. A member could not have
   accepted a request at all.
   ⚠⚠ IT IS ASSERTED HERE, IN SOURCE, BECAUSE IT RENDERS NOTHING AT ZERO: a
@@ -560,7 +560,7 @@ const RAIL_C = code("src", "components", "community", "CommunityRail.tsx");
 for (const [href, where, body] of [
   ["/usage", "the comb's own link", RAIL_L + NAV],
   ["/account-health", "the Account Health card", RAIL_L + NAV],
-  ["/community/teams", "the Community rail", RAIL_C],
+  ["/connect/community", "the Community rail", RAIL_C],
   ["/settings", "the Connect tab row", NAV],
 ] as const) {
   check(`10 — ⚠ ${href} is still reachable, via ${where}`, body.includes(`"${href}"`));

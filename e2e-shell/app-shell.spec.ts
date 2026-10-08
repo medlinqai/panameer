@@ -1310,7 +1310,7 @@ test.describe("⚠ THE BAND'S DECLARED HEIGHT IS ITS REAL HEIGHT — P2-ALL-E587
     test(`rendered height equals --pm-band-h at ${width}px`, async ({ browser }) => {
       const page = await browser.newPage({ viewport: { width, height: 800 } });
       await signIn(page);
-      await page.goto("/community", { waitUntil: "networkidle" });
+      await page.goto("/connect/community", { waitUntil: "networkidle" });
 
       const m = await page.evaluate(() => {
         const band = document.querySelector(".pm-band") as HTMLElement | null;
@@ -1399,7 +1399,7 @@ test.describe("⚠ THE BAND NEVER COVERS A STICKY ASIDE — P2-ALL-E587", () => 
         await signIn(page);
         /*
           ⚠⚠⚠ `/profile`, NOT `/connect` (`P2-A2-E598` WS-B). The owner profile
-          moved to `/profile` and `/connect` now REDIRECTS to `/community`,
+          moved to `/profile` and `/connect` now REDIRECTS to `/connect/community`,
           which has no sticky aside — so this measured NOTHING and said so.
           ⚠ SUPERSEDED, quoted not deleted (`E164`):
           //   await page.goto("/connect", { waitUntil: "networkidle" });
@@ -1419,9 +1419,9 @@ test.describe("⚠ THE BAND NEVER COVERS A STICKY ASIDE — P2-ALL-E587", () => 
            ── ⚠⚠⚠ THE URL MOVED WITH THE RAILS (`P2-J3-E591` WS-A) ───────────
 
            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-           //   await page.goto("/community", { waitUntil: "networkidle" });
+           //   await page.goto("/connect/community", { waitUntil: "networkidle" });
            ⚠⚠ THIS IS NOT A COSMETIC UPDATE. `E591` moved the profile — AND ITS
-           STICKY RAILS — to `/connect`, so `/community` now renders NO sticky
+           STICKY RAILS — to `/connect`, so `/connect/community` now renders NO sticky
            aside at all. ⚠⚠⚠ THE ASSERTION WOULD HAVE PASSED VACUOUSLY: it
            collects `aside` elements whose position is sticky, and an empty set
            has no worst case to fail on. ⚠ That is `E586`'s defect exactly — a
@@ -1458,7 +1458,7 @@ test.describe("⚠ THE BAND NEVER COVERS A STICKY ASIDE — P2-ALL-E587", () => 
                 ⚠⚠ THE DEFECT THIS CATCHES is an aside that IS holding its
                 sticky position and is holding it TOO HIGH — pinned somewhere
                 between the top of the viewport and the bottom of the band,
-                which is exactly what `top: 16px` produced on the `/community`
+                which is exactly what `top: 16px` produced on the `/connect/community`
                 rails before `WS-C` fixed them.
               */
               const onScreen = r.bottom > 0 && r.top < window.innerHeight;
@@ -1483,7 +1483,7 @@ test.describe("⚠ THE BAND NEVER COVERS A STICKY ASIDE — P2-ALL-E587", () => 
                 ⚠ SO PINNED IS NOW WHAT IT SAYS: the aside is sitting AT the
                 `top` it declares. A rail that declares `top: 16px` still pins
                 at 16 and is still caught — which is the defect this exists for
-                (`E587` / the `/community` rails) — while one being pushed past
+                (`E587` / the `/connect/community` rails) — while one being pushed past
                 by a short container is not.
                 ⚠⚠ THIS IS `check:rollup`'S CASE: **the RULE is unchanged**, the
                 measurement of it was wrong.
@@ -1514,7 +1514,7 @@ test.describe("⚠ THE BAND NEVER COVERS A STICKY ASIDE — P2-ALL-E587", () => 
 
           ⚠⚠ WITHOUT THIS THE TEST ABOVE PASSES ON A PAGE WITH NO STICKY ASIDE
           AT ALL — `covered` is 0 because nothing was looked at. ⚠ `E591` moved
-          the profile's rails off `/community` and would have hollowed this out
+          the profile's rails off `/connect/community` and would have hollowed this out
           in exactly that way, silently, while the gate still read green.
           ⚠ It is `E586`'s rule applied here: A GATE WITH NO INPUTS MUST FAIL.
         */

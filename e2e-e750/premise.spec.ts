@@ -7,7 +7,7 @@ import { signIn } from "../e2e-shell/_auth";
  * by measurement rather than by reading (the brief's own instruction).
  */
 
-const PAGES = ["/profile", "/usage", "/community"];
+const PAGES = ["/profile", "/usage", "/connect/community"];
 
 /** Effective background at a viewport point: walk up until a non-transparent bg. */
 const PROBE = `(x, y) => {

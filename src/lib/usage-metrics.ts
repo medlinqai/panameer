@@ -13,7 +13,7 @@ export type MetricDef = {
 export const AREA_META: Record<AreaKey, { label: string; href: string; go: string }> = {
   profile: { label: "Profile", href: "/profile", go: "Go to Profile" },
   learn: { label: "Learn", href: "/learn", go: "Go to Learn" },
-  connect: { label: "Connect", href: "/community", go: "Go to Connect" },
+  connect: { label: "Connect", href: "/connect/community", go: "Go to Connect" },
   work: { label: "Work", href: "/find-work", go: "Go to Work" },
   shop: { label: "Shop", href: "/shop", go: "Go to Shop" },
   pay: { label: "Pay", href: "/payments", go: "Go to Payments" },

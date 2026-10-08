@@ -66,7 +66,7 @@ async function measure(page: import("@playwright/test").Page) {
     const btnNodes = document.querySelectorAll<HTMLElement>("[data-e715-btn]").length
       ? document.querySelectorAll<HTMLElement>("[data-e715-btn]")
       : document.querySelectorAll<HTMLElement>(
-          ".pm-cp3-rail a[href='/community/score'], .pm-cp3-rail a[href^='/providers/']"
+          ".pm-cp3-rail a[href='/connect/score'], .pm-cp3-rail a[href^='/providers/']"
         );
     const btns = [...btnNodes].map((b) => {
       const s = getComputedStyle(b);

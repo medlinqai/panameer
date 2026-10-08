@@ -25,7 +25,7 @@ import { requireCompleteProvider } from "./_persona";
  *
  * ⚠ ROUTES CONFIRMED AGAINST `PAGE_TABS["/connect"]` IN `nav.ts`, not taken
  * from the brief. ⚠⚠ `Find a Mentor` IS NOT A SIXTH ROUTE — it is a section on
- * `/community/mentors`, which is why it is asserted there.
+ * `/connect/mentors`, which is why it is asserted there.
  *
  * ⚠ THE DUAL-ROLE HALF IS NOT HERE AND CANNOT BE. `test3@panameer.com` is
  * provider-only (measured — see `_auth.ts`), and the seed has no dual-role
@@ -38,10 +38,10 @@ import { requireCompleteProvider } from "./_persona";
   ── ⚠⚠ `home` IS `/connect` NOW (`P2-J3-E591` WS-A) ────────────────────────
 
   ⚠ The route split moved the member's own profile to `/connect` and left the
-  PEOPLE at `/community`. ⚠⚠ `home` HERE MEANS "THE TAB LABELLED Home", which
+  PEOPLE at `/connect/community`. ⚠⚠ `home` HERE MEANS "THE TAB LABELLED Home", which
   followed the profile — so the walk still opens what the first tab opens.
   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   home: "/community",
+  //   home: "/connect/community",
   ⚠ `community` IS A NEW ENTRY, not a rename of `home`: the Community page is a
   real destination with its own tab and it needs its own console-error walk.
 */
@@ -72,11 +72,11 @@ test("⚠⚠⚠ PRECONDITION — the gate persona is a complete, visible provide
 
 const ROUTES = {
   home: "/connect",
-  community: "/community",
-  colleagues: "/community/colleagues",
-  forums: "/community/groups",
-  mentors: "/community/mentors",
-  teams: "/community/teams",
+  community: "/connect/community",
+  colleagues: "/connect/connections",
+  forums: "/connect/groups",
+  mentors: "/connect/mentors",
+  teams: "/connect/community",
 } as const;
 
 let browserRef: Browser;
@@ -151,7 +151,7 @@ for (const [name, path] of Object.entries(ROUTES)) {
   //   expect(labels[0]).toBe("Profile");
   //   expect(labels).toEqual(["Profile", "Community", "Groups", "Service Products", "Settings"]);
 
-  ⚠⚠ THE ROW IS NOW READ ON `/community`, NOT ON `ROUTES.home`. `/connect`
+  ⚠⚠ THE ROW IS NOW READ ON `/connect/community`, NOT ON `ROUTES.home`. `/connect`
   redirects there, so opening `home` still ARRIVES here — but naming the page
   the row actually belongs to is what stops the next route change reading as a
   tab-row failure.
@@ -167,13 +167,13 @@ test("E567/2 — the CONNECT tab row renders, and Profile is NOT in it", async (
   /*
     ── ⚠⚠ ASSERTED BY LABEL, NOT BY HREF PREFIX (`P2-J3-E591` WS-A item 9) ───
 
-    ⚠⚠⚠ THE OLD LOCATOR WAS `a[href^="/community"]` — A PREFIX ON A ROUTE. The
+    ⚠⚠⚠ THE OLD LOCATOR WAS `a[href^="/connect/community"]` — A PREFIX ON A ROUTE. The
     `E591` split moved `Home` to `/connect`, and the tab would have fallen
     straight out of the locator: the test goes GREEN-BY-ABSENCE rather than
     failing, because `.first()` on an empty set with a `hasText` filter finds
     nothing to be visible about. ⚠ It would have reported a working tab row.
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const tabs = page.locator('a[href^="/community"], a[href="/messages"]');
+    //   const tabs = page.locator('a[href^="/connect/community"], a[href="/messages"]');
     //   await expect(tabs.filter({ hasText: "Home" }).first()).toBeVisible();
 
     ⚠⚠ A LOCATOR KEYED TO A ROUTE BREAKS ON EVERY ROUTE CHANGE. This is `E587`'s
@@ -214,26 +214,26 @@ test("E567/2 — the CONNECT tab row renders, and Profile is NOT in it", async (
   //   a guessed container. THE FIRST VERSION DID THE LATTER
   //   (closest("div")?.parentElement) AND FAILED - a layout change it was not
   //   testing would have broken it, which is a test that reports the wrong thing.
-  //   const TAB_HREFS = ["/community", "/community/colleagues", "/community/groups",
-  //     "/community/mentors", "/community/teams", "/messages"];
+  //   const TAB_HREFS = ["/connect/community", "/connect/connections", "/connect/groups",
+  //     "/connect/mentors", "/connect/community", "/messages"];
   //   ... collects those hrefs in DOM order ...
   //   expect(order).toContain("/messages");
   //   expect(order[order.length - 1]).toBe("/messages");
   // });
 */
 test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", async () => {
-  /* ⚠ READ ON `/community`, THE ROW'S OWN PAGE (`P2-A2-E598` WS-B). `home`
+  /* ⚠ READ ON `/connect/community`, THE ROW'S OWN PAGE (`P2-A2-E598` WS-B). `home`
      redirects here, so this arrives in the same place either way. */
   await open(ROUTES.community);
 
   /*
     ⚠ The tabs that remain, in order — the row did not lose anything else.
     ⚠⚠ SIX, NOT FIVE, SINCE `P2-J3-E591` WS-A: `Home` followed the profile to
-    `/connect` and a `Community` tab took over `/community`. ⚠ THE ROW DID NOT
+    `/connect` and a `Community` tab took over `/connect/community`. ⚠ THE ROW DID NOT
     LOSE A TAB — a route that was carrying two pages became two routes.
     ⚠ SUPERSEDED, quoted not deleted (`E164`) — the five as `E560` left them:
-    //   const TAB_HREFS = ["/community", "/community/colleagues",
-    //     "/community/groups", "/community/mentors", "/community/teams"];
+    //   const TAB_HREFS = ["/connect/community", "/connect/connections",
+    //     "/connect/groups", "/connect/mentors", "/connect/community"];
     ⚠⚠ THIS LIST IS DELIBERATELY STILL HREF-BASED, unlike the label assertion in
     `E567/2` above. It is asserting ORDER of DESTINATIONS — which is what the
     hrefs ARE — not the presence of a tab, so a route is the right key here.
@@ -241,9 +241,9 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
   /*
     ⚠⚠ THREE HREFS LEFT THE ROW (`P2-J3-E593` WS-A) AND NOT ONE PAGE DID.
     ⚠ SUPERSEDED (`E164`), described rather than re-listed so this quote cannot
-    be mistaken for the live array: the row was `/connect`, `/community`,
-    `/community/colleagues`, `/community/groups`, `/community/mentors`,
-    `/community/teams`.
+    be mistaken for the live array: the row was `/connect`, `/connect/community`,
+    `/connect/connections`, `/connect/groups`, `/connect/mentors`,
+    `/connect/community`.
     ⚠⚠⚠ COLLEAGUES, MENTORS AND TEAMS ARE SECTIONS OF COMMUNITY NOW. Their
     survival is asserted where it now lives — `check:community`'s `E593/5` block
     checks the Community surface LINKS to all three, in every branch, which is a
@@ -253,10 +253,10 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
     ⚠⚠⚠ `/connect` LEFT THE ROW (`P2-A2-E598` WS-B) — it was the `Profile` tab's
     destination, and the profile is an account-menu surface now.
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const TAB_HREFS = ["/connect", "/community", "/community/groups",
+    //   const TAB_HREFS = ["/connect", "/connect/community", "/connect/groups",
     //     "/my-services", "/settings"];
     ⚠⚠ THE ROUTE ITSELF IS NOT GONE — `/connect` still exists and redirects to
-    `/community`. It simply is not a TAB any more, which is what this list is
+    `/connect/community`. It simply is not a TAB any more, which is what this list is
     about. ⚠ The rule — ORDER of destinations, scoped to the row — is unchanged.
   */
   /*
@@ -265,13 +265,13 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
     Connect."* ⚠ A DUPLICATE LEFT, NOT A PAGE: `/my-services` is still the Sell
     band item's own destination and still linked from `ConnectProfile`'s card,
     so nothing became unreachable — which is the rule this array exists to hold.
-    ⚠⚠ `/community/forums` ALSO BECAME `/community/groups` in the same
+    ⚠⚠ `/connect/groups` ALSO BECAME `/connect/groups` in the same
     workstream (ruling 1, the URL following the word), with the old path 308ing.
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const TAB_HREFS = ["/community", "/community/groups", "/my-services", "/settings"];
+    //   const TAB_HREFS = ["/connect/community", "/connect/groups", "/my-services", "/settings"];
   */
   // E791: the five Connect tabs, in order.
-  const TAB_HREFS = ["/community", "/community/colleagues", "/community/mentors", "/community/teams", "/community/groups"];
+  const TAB_HREFS = ["/connect/community", "/connect/connections", "/connect/mentors", "/connect/community", "/connect/groups"];
   /*
     ── ⚠⚠⚠ SCOPED TO THE TAB ROW, AND `E593` IS WHY ───────────────────────
 
@@ -280,7 +280,7 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
     ⚠⚠ THAT BROKE THE MOMENT A TAB POINTED AT A ROUTE THE BAND ALSO LINKS.
     `E593`'s `Service Products` tab is `/my-services`, and the seller band's
     `Sell` item is the same route — so the band's copy was collected FIRST and
-    the order read `/connect · /my-services · /community · …`.
+    the order read `/connect · /my-services · /connect/community · …`.
     ⚠⚠⚠ THE TEST WAS NEVER MEASURING THE ROW; it was measuring the page and
     getting away with it because no tab had ever shared an href with the band.
     ⚠ `data-testid="page-tabs"` exists since `E591` WS-A for exactly this class
@@ -403,7 +403,7 @@ test("E560/4 — the Messages drawer opens, closes on Escape, and returns focus"
   await open(ROUTES.home);
   /*
     ⚠⚠ THE LANDING PATH IS CAPTURED, NOT NAMED (`P2-A2-E598` WS-B). `ROUTES.home`
-    is `/connect`, which now REDIRECTS to `/community`, so asserting the URL
+    is `/connect`, which now REDIRECTS to `/connect/community`, so asserting the URL
     equals `ROUTES.home` failed on a redirect the drawer had nothing to do with.
     ⚠⚠⚠ THE RULE IS *"the drawer overlays, it does not route"* — a statement
     about CHANGE, not about a particular URL. Comparing the page to ITSELF is
@@ -653,7 +653,7 @@ test("E567/7 — a provider-only viewer sees the PROVIDER set and NOT the recrui
     · `Mentors You Follow`   — renders only when following someone
     · `Turn On`              — the toggle reads `You're open` once opted in
   ⚠ MEASURED, NOT ASSUMED: the first version of this list included
-  `People You May Know` and FAILED on `/community`.
+  `People You May Know` and FAILED on `/connect/community`.
   ⚠⚠ AN ASSERTION THAT NEEDS ROWS IS AN ASSERTION THAT FORCES SEEDING (`E564`),
   and seeding to make a guard pass is how a suite starts being satisfied by fake
   data. ⚠ Those four are still covered by the "originals are gone" test below,
@@ -661,9 +661,9 @@ test("E567/7 — a provider-only viewer sees the PROVIDER set and NOT the recrui
 */
 const TITLE_CASE: { route: string; strings: string[] }[] = [
   /* ⚠⚠ `Waiting on You` IS A `ConnectHome` HEADING, AND `ConnectHome` IS NOW
-     `/community` (`P2-J3-E591` WS-A). ⚠ The string did not change and the rule
+     `/connect/community` (`P2-J3-E591` WS-A). ⚠ The string did not change and the rule
      did not change — the PAGE it renders on did, because `E591` split the
-     profile off `/community`. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     profile off `/connect/community`. ⚠ SUPERSEDED, quoted not deleted (`E164`):
      //   { route: ROUTES.home, strings: ["Waiting on You"] },
      ⚠⚠ THE GATE CAUGHT THIS MOVE BY FAILING, which is the gate working: an
      assertion that had followed `home` blindly would have gone looking for
@@ -733,7 +733,7 @@ test("E568 — the lower-case originals are gone", async () => {
      the old one left — a page could render both. ⚠⚠ ONLY THE STRINGS THIS BRIEF
      CHANGED are listed; nothing here constrains copy it did not touch. */
   const GONE: { route: string; strings: string[] }[] = [
-    /* ⚠ MOVED WITH `ConnectHome` TO `/community` (`E591` WS-A), same reason as
+    /* ⚠ MOVED WITH `ConnectHome` TO `/connect/community` (`E591` WS-A), same reason as
        the `TITLE_CASE` entry above. ⚠ SUPERSEDED, quoted not deleted (`E164`):
        //   { route: ROUTES.home, strings: ["Waiting on you", "People you may know"] }, */
     { route: ROUTES.community, strings: ["Waiting on you", "People you may know"] },

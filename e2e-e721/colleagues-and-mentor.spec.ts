@@ -60,7 +60,7 @@ test("E721 item 1 — the chips follow the search, and strangers appear below th
 }) => {
   const page = await browser.newPage({ viewport: { width: 1280, height: 1200 } });
   await signInAsSeeded(page, VIEWER);
-  await page.goto("/community/colleagues", { waitUntil: "domcontentloaded" });
+  await page.goto("/connect/connections", { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(2200);
 
   const idle = await readState(page);

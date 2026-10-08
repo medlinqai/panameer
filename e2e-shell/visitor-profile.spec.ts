@@ -20,7 +20,7 @@ import { db } from "./_db";
 
 /** ⚠ Resolved from the page, never hardcoded — an id in a spec rots silently. */
 async function firstColleagueProfile(page: Page): Promise<string> {
-  await page.goto("/community", { waitUntil: "networkidle" });
+  await page.goto("/connect/community", { waitUntil: "networkidle" });
   const href = await page.locator(".pm-cm-card .pm-cm-open").first().getAttribute("href");
   expect(href, "no colleague card links to a profile").toBeTruthy();
   return href!;
@@ -276,7 +276,7 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     await signIn(page);
     /* ⚠⚠ THE OWNER'S PAGE IS `/profile` (`P2-A2-E598` WS-B). `/connect` now
-       redirects to `/community`, which is the PEOPLE page and carries none of
+       redirects to `/connect/community`, which is the PEOPLE page and carries none of
        the owner surfaces this asserts — so it reported them "vanished".
        ⚠ SUPERSEDED, quoted not deleted (`E164`):
        //   await page.goto("/connect", { waitUntil: "networkidle" });
@@ -369,7 +369,7 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
         ⚠ **THE RULING CHANGED AGAIN, AND THE NEEDLE IS NOT SIMPLY DROPPED.** `E715` taught
         this list that label two commits ago; `E716` removes the button, because **the Search
         Score block below it is about that page and now carries the door itself** — its
-        small-caps label and its items-left line both link to `/community/score`.
+        small-caps label and its items-left line both link to `/connect/score`.
         ⚠⚠⚠ **REMOVING A NEEDLE WOULD STOP THE GATE FAILING AND STOP IT SAYING ANYTHING**, so
         what replaced it is asserted instead — **as a DOOR, not as a word**, which is the
         shape this file already uses for `/account-health` and `/stats` a few lines below and
@@ -444,13 +444,13 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
     /*
       ── ⚠⚠⚠ AND THE DOOR THE REMOVED BUTTON USED TO BE (`P2-A2-E716`) ───────────────────
 
-      ⚠ **`What's Missing or Incomplete?` WENT TO `/community/score` AND SCOTT REMOVED IT.**
+      ⚠ **`What's Missing or Incomplete?` WENT TO `/connect/score` AND SCOTT REMOVED IT.**
       The Search Score block carries that door now — the small-caps label and the items-left
       line both link there. ⚠⚠ **THIS IS THE ASSERTION THAT WOULD CATCH THE REAL DEFECT:** a
       later edit restyling that block, or dropping the link from the items line at 100%
       complete, would leave the owner with no entrance from their own profile.
       ⚠⚠⚠ **IT IS SCOPED TO THE RAIL, AND THAT IS THE WHOLE ASSERTION.** The first version of
-      this check counted `a[href="/community/score"]` across the PAGE — and **`nav.ts:875`
+      this check counted `a[href="/connect/score"]` across the PAGE — and **`nav.ts:875`
       puts a `Score` tab in the profile's own tab row pointing at exactly that href.** ⚠⚠ So a
       page-wide count is satisfied by the tab row **forever, whatever happens to the rail**:
       an assertion its own mutation cannot fail (rule 11), written while trying to prove a
@@ -460,9 +460,9 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
       added or merged — the mistake this file already records making for `/account-health`.
     */
     expect(
-      // The rail links straight to /score; the tab row uses the /community/score redirect. Either is the door.
-      await page.locator('.pm-cp3-rail a[href="/community/score"], .pm-cp3-rail a[href="/score"]').count(),
-      "the owner lost their door to /community/score — the removed button's destination"
+      // The rail links straight to /score; the tab row uses the /connect/score redirect. Either is the door.
+      await page.locator('.pm-cp3-rail a[href="/connect/score"], .pm-cp3-rail a[href="/score"]').count(),
+      "the owner lost their door to /connect/score — the removed button's destination"
     ).toBeGreaterThan(0);
     /*
       ⚠ AND THE OWNER STILL HAS THEIR OWN RATES CARD — the rule is *"not the
@@ -483,7 +483,7 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     await signIn(page);
     /* ⚠⚠ THE OWNER'S PAGE IS `/profile` (`P2-A2-E598` WS-B). `/connect` now
-       redirects to `/community`, which is the PEOPLE page and carries none of
+       redirects to `/connect/community`, which is the PEOPLE page and carries none of
        the owner surfaces this asserts — so it reported them "vanished".
        ⚠ SUPERSEDED, quoted not deleted (`E164`):
        //   await page.goto("/connect", { waitUntil: "networkidle" });
@@ -504,7 +504,7 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
       ⚠⚠ THE RULING (`E593` WS-C item 16): the SCORE PAGE owns *"what is
       missing"*; an empty SECTION owns *"here is where to get one."*
       ⚠ So the profile may count what is left — the ring's hook does — but must
-      not LIST the missing items. That list belongs to `/community/score`.
+      not LIST the missing items. That list belongs to `/connect/score`.
     */
     const hasEmptyDoor =
       body.includes("earn one in learn") || body.includes("browse learning paths");

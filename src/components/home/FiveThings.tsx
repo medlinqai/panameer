@@ -43,7 +43,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
   const onRoad = !!path && path.steps.length === 9 && path.current < 6;
   const choices = [
     { key: "learn", icon: BookOpen, title: "Learn", line: "Free courses and certification tests.", cta: "Start Learning", href: "/learn" },
-    { key: "connect", icon: Users, title: "Connect", line: "Find colleagues and mentors.", cta: "Find People", href: "/community" },
+    { key: "connect", icon: Users, title: "Connect", line: "Find colleagues and mentors.", cta: "Find People", href: "/connect/community" },
     { key: "services", icon: Search, title: "Sell my services", line: "Browse open work and get invited to propose.", cta: "Browse Work", href: "/find-work", needsCompany: true },
     { key: "products", icon: Tag, title: "Sell service products", line: "List a fixed-price package buyers can order.", cta: "List a Service", href: "/my-services", needsCompany: true },
   ];

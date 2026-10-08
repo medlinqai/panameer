@@ -47,7 +47,7 @@ export default async function MentorsPage({
       {}
       <PageTabs
         wrap
-        eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/community/mentors" />
+        eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/connect/mentors" />
       <div className="mx-auto max-w-5xl space-y-5">
       <header>
         {}

@@ -66,7 +66,7 @@ export default async function GroupsPage({
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
         tabs={connectTabs(viewer, unread)}
-        current="/community/groups"
+        current="/connect/groups"
       />
 
       <div className="mx-auto max-w-5xl">
@@ -114,7 +114,7 @@ export default async function GroupsPage({
               {}
               {home?.starterSlug && (
                 <Link
-                  href={`/community/groups/${home.starterSlug}`}
+                  href={`/connect/groups/${home.starterSlug}`}
                   className="pm-hero-cta"
                 >
                   Post a Starter Question
@@ -157,7 +157,7 @@ export default async function GroupsPage({
                   {home.needsYou.map((t) => (
                     <Link
                       key={t.id}
-                      href={`/community/groups/thread/${t.id}`}
+                      href={`/connect/groups/thread/${t.id}`}
                       className="block transition-colors hover:border-magenta border-t border-line py-5"
                     >
                       <p className="text-[15px] font-bold">{t.title}</p>
@@ -300,7 +300,7 @@ function GroupList({
             {cards.slice(0, shown).map((c) => (
               <Link
                 key={c.slug}
-                href={`/community/groups/${c.slug}`}
+                href={`/connect/groups/${c.slug}`}
                 className="pm-groups-card"
               >
                 <p className="pm-groups-card-t">{c.title}</p>
@@ -370,7 +370,7 @@ function Discover({ tracks }: { tracks: DiscoverTrack[] }) {
           <div className="grid gap-3 sm:grid-cols-2">
             {t.groups.map((g) => (
               <div key={g.slug} className="pm-groups-card pm-groups-card-static">
-                <Link href={`/community/groups/${g.slug}`} className="pm-groups-card-t">
+                <Link href={`/connect/groups/${g.slug}`} className="pm-groups-card-t">
                   {g.title}
                 </Link>
                 <p className="pm-groups-card-m">
@@ -460,7 +460,7 @@ function Requests({
             </p>
             {/* THE DOOR OUT . The mockup carries */}
             <Link
-              href="/community/groups?view=discover"
+              href="/connect/groups?view=discover"
               className="mt-3 inline-block text-[13.5px] font-bold text-magenta hover:underline"
             >
               Discover Groups &rarr;
@@ -475,7 +475,7 @@ function Requests({
               >
                 <div className="min-w-[180px] flex-1">
                   <Link
-                    href={`/community/groups/${r.groupSlug}`}
+                    href={`/connect/groups/${r.groupSlug}`}
                     className="text-[15px] font-bold hover:text-magenta"
                   >
                     {r.groupTitle}

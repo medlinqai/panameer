@@ -45,7 +45,7 @@ export default async function GrowPage({
     where: { user_id: viewer.userId },
     select: { id: true },
   });
-  if (!person) redirect("/community");
+  if (!person) redirect("/connect/community");
   const personId = person.id;
 
   const { tab: rawTab } = await searchParams;
@@ -73,7 +73,7 @@ export default async function GrowPage({
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
         tabs={connectTabs(viewer, unread)}
-        current="/community/grow"
+        current="/connect/leaders"
       />
       <div className="mx-auto w-full max-w-3xl">
         {}
@@ -138,7 +138,7 @@ export default async function GrowPage({
           {TABS.map((t) => (
             <Link
               key={t.key}
-              href={t.key === "month" ? "/community/grow" : `/community/grow?tab=${t.key}`}
+              href={t.key === "month" ? "/connect/leaders" : `/connect/leaders?tab=${t.key}`}
               aria-current={t.key === tab.key ? "page" : undefined}
               className={
                 "-mb-px border-b-2 px-3 py-2 text-[13.5px] font-bold transition-colors " +

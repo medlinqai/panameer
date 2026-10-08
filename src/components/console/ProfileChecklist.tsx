@@ -108,7 +108,7 @@ export function ProfileChecklist({
         {}
         {}
         <Link
-          href="/community/score"
+          href="/connect/score"
           className="inline-block font-display text-[19px] font-bold leading-tight text-magenta hover:underline"
         >
           See Your Profile Score &rarr;

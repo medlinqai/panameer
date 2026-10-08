@@ -162,7 +162,7 @@ test("notifications — a real event reaches the bell, the panel and the list", 
 
     /* ── THE BELL ─────────────────────────────────────────────────────── */
     await signIn(page);
-    await page.goto("/community", { waitUntil: "domcontentloaded" });
+    await page.goto("/connect/community", { waitUntil: "domcontentloaded" });
 
     const bell = page.getByRole("button", { name: "Notifications" });
     await expect(bell, "the bell is not in the band").toBeVisible();
@@ -266,7 +266,7 @@ test("notifications — a real event reaches the bell, the panel and the list", 
       view, exactly as `E619` built it, and `decideJoinRequest` resolves the
       notification as part of recording the decision.
     */
-    await page.goto("/community/groups?view=requests", { waitUntil: "domcontentloaded" });
+    await page.goto("/connect/groups?view=requests", { waitUntil: "domcontentloaded" });
     const row = page.locator(".pm-groups-req", { hasText: TITLE });
     await expect(row, "the owner cannot see the request").toBeVisible();
     await row.getByRole("button", { name: /^Approve/ }).click();
@@ -345,7 +345,7 @@ test("notifications — reading ONE marks only that one", async ({ page }) => {
     expect(before, "two asks should make two unread rows").toBeGreaterThanOrEqual(2);
 
     await signIn(page);
-    await page.goto("/community", { waitUntil: "domcontentloaded" });
+    await page.goto("/connect/community", { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: "Notifications" }).click();
     const panel = page.getByRole("menu", { name: "Notifications" });
     await expect(panel).toBeVisible();

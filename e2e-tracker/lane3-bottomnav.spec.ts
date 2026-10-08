@@ -7,10 +7,10 @@ test("E760 — the bottom nav uses the pinned rail tokens at 390", async ({ page
   for (const scheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     await page.setViewportSize({ width: 390, height: 844 });
-    /* ⚠⚠ `/community` AND NOT `/dashboard`: on `/dashboard` NO bottom-nav link is
+    /* ⚠⚠ `/connect/community` AND NOT `/dashboard`: on `/dashboard` NO bottom-nav link is
        active, so the active-pill assertion never ran — the first version of this
        test passed vacuously on exactly the half that matters. */
-    await page.goto("/community");
+    await page.goto("/connect/community");
     const nav = page.locator(".pm-bottomnav").first();
     await nav.waitFor({ state: "visible", timeout: 20_000 });
 

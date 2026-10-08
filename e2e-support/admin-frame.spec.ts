@@ -58,7 +58,7 @@ test.describe("P2-ALL-E768 — the admin content frame", () => {
       await page.locator('main > div > div.max-w-\\[1200px\\]').count(),
       "admin has the frame"
     ).toBe(1);
-    for (const url of ["/dashboard", "/community"]) {
+    for (const url of ["/dashboard", "/connect/community"]) {
       await page.goto(url, { waitUntil: "domcontentloaded" });
       expect(
         await page.locator('main div.max-w-\\[1200px\\]').count(),

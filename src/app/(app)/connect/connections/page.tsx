@@ -58,7 +58,7 @@ export default async function ConnectionsPage({ searchParams }: { searchParams: 
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
         tabs={connectTabs(viewer, unread)}
-        current="/community/connections"
+        current="/connect/connections"
       />
       <div className="mx-auto max-w-5xl">
         <header className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
@@ -138,7 +138,7 @@ export default async function ConnectionsPage({ searchParams }: { searchParams: 
                 Ask someone you&apos;ve worked with to vouch for you. It shows on your profile once they write it.
               </p>
               <Link
-                href="/recommendations"
+                href="/connect/recommendations"
                 className="mt-3 inline-block border border-ink bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-surface-hover"
               >
                 Request a Recommendation

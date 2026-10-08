@@ -16,7 +16,6 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/usage", requires: "authenticated" },
   { prefix: "/your-path", requires: "authenticated" },
   { prefix: "/account-health", requires: "authenticated" },
-  { prefix: "/recommendations", requires: "authenticated" },
   { prefix: "/worklist", requires: "authenticated" },
   { prefix: "/invite-colleague", requires: "authenticated" },
   { prefix: "/hire", requires: "canHireTalent" },
@@ -31,7 +30,6 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/payments", requires: "authenticated" },
   { prefix: "/finances", requires: "authenticated" },
   { prefix: "/messages", requires: "authenticated" }, // shared buyer ↔ provider
-  { prefix: "/community", requires: "authenticated" },
   { prefix: "/connect", requires: "authenticated" },
   { prefix: "/companies", requires: "authenticated" }, // buyer-safe company pages
   { prefix: "/company", requires: "authenticated" },

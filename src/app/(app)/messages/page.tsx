@@ -79,7 +79,7 @@ export default async function MessagesPage({
                   <p className="text-[14px] font-semibold">No conversations yet</p>
                   <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
                     You can message the colleagues you have connected with.{" "}
-                    <Link href="/community" className="font-semibold text-magenta hover:underline">
+                    <Link href="/connect/community" className="font-semibold text-magenta hover:underline">
                       Find colleagues
                     </Link>
                     .

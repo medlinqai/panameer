@@ -440,7 +440,7 @@ test.describe("⚠⚠⚠ E597 WS-D — every Edit control on the owner's profile
     await signIn(page);
     const offenders: string[] = [];
     let total = 0;
-    for (const route of [PROFILE, "/community/score"]) {
+    for (const route of [PROFILE, "/connect/score"]) {
       await page.goto(route, { waitUntil: "domcontentloaded" });
       await page.waitForSelector("a[href]");
       await page.waitForTimeout(1200);
@@ -464,6 +464,6 @@ test.describe("⚠⚠⚠ E597 WS-D — every Edit control on the owner's profile
       offenders,
       `links still reaching the registration wizard:\n  ${offenders.join("\n  ")}`
     ).toEqual([]);
-    console.log(`E600/WS-F  ${total} links across /profile and /community/score, 0 into /join`);
+    console.log(`E600/WS-F  ${total} links across /profile and /connect/score, 0 into /join`);
   });
 });

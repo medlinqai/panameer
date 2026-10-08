@@ -6,7 +6,7 @@ test("B2 — the colleagues roster carries location, mutuals and a profile link"
   for (const w of [390, 1280]) {
     const page = await browser.newPage({ viewport: { width: w, height: 1200 } });
     await signIn(page);
-    await page.goto("/community/colleagues", { waitUntil: "networkidle" });
+    await page.goto("/connect/connections", { waitUntil: "networkidle" });
     await page.waitForTimeout(500);
     const m = await page.evaluate(() => {
       const rows = [...document.querySelectorAll(".pm-member-row")];

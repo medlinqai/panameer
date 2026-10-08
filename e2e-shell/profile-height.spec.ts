@@ -46,7 +46,7 @@ for (const [label, path] of [
     //   ["/connect (owner)", "/connect"],
     ⚠⚠ THIS IS THE `E586` FAILURE MODE THAT DOES **NOT** ANNOUNCE ITSELF. The
     profile moved to `/profile` and `/connect` began redirecting to
-    `/community` — so this case kept measuring something, kept passing, and
+    `/connect/community` — so this case kept measuring something, kept passing, and
     silently reported COMMUNITY's height under the owner profile's name.
     ⚠⚠⚠ MEASURED: both rows read an identical 3,642px, which is the tell. A
     gate with no inputs fails loudly; a gate pointed at the WRONG inputs does
@@ -55,7 +55,7 @@ for (const [label, path] of [
     and two rows agreeing to the pixel is not a coincidence.
   */
   ["/profile (owner)", "/profile"],
-  ["/community", "/community"],
+  ["/connect/community", "/connect/community"],
   /*
     ⚠⚠ THE VISITOR PAGE IS MEASURED TOO (`E593` WS-C). It renders the SAME
     component as the owner's, so its height is the other half of the same
@@ -69,7 +69,7 @@ for (const [label, path] of [
     await signIn(page);
     let target = path as string;
     if (target === "__visitor__") {
-      await page.goto("/community", { waitUntil: "networkidle" });
+      await page.goto("/connect/community", { waitUntil: "networkidle" });
       const href = await page.locator(".pm-cm-card .pm-cm-open").first().getAttribute("href");
       expect(href, "no colleague card links to a profile").toBeTruthy();
       target = href!;
@@ -125,7 +125,7 @@ for (const [label, path] of [
       //     equivalent of. 2,658px of profile + 1,361px of footer = 4,019px
       //     before the band and crumb, so 3,500 was unreachable by construction.
 
-      ⚠⚠ ONLY THE OWNER'S PROFILE IS HELD TO IT. `/community` and the visitor
+      ⚠⚠ ONLY THE OWNER'S PROFILE IS HELD TO IT. `/connect/community` and the visitor
       page are REPORTED, not gated — they are different pages with different
       jobs, and `E593` added them to answer *"is the phone version heavy"*, not
       to pin them to this brief's number.

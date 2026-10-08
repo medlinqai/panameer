@@ -15,7 +15,7 @@ for (const how of ["mouse", "keyboard", "tap"] as const)
     const ctx = await browser.newContext(how === "tap" ? { viewport: { width: 390, height: 844 }, hasTouch: true } : { viewport: { width: 1440, height: 900 } });
     const page = await ctx.newPage();
     await signIn(page, f!.provider.email);
-    await page.goto("/community/colleagues", { waitUntil: "networkidle" });
+    await page.goto("/connect/connections", { waitUntil: "networkidle" });
     const menu = page.getByRole("button", { name: "Account menu" });
     if (how === "tap") await menu.last().tap();
     else await menu.first().click();

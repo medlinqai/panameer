@@ -66,7 +66,6 @@ export const config = {
     "/profile/:path*",
     "/usage/:path*",
     "/account-health/:path*",
-    "/recommendations/:path*",
     "/worklist/:path*",
     "/worklist",
     // Paired with `route-access.ts`'s entry — the spec parses
@@ -84,8 +83,7 @@ export const config = {
     "/payments/:path*",
     "/finances/:path*",
     "/messages/:path*",
-    "/community/:path*",
-    // WS-A — the member's own profile moved from `/community`
+    // Connect (2026-10-08): every Connect page lives under /connect/.
     "/connect/:path*",
     // Account areas (2026-10-05), paired with route-access.ts.
     "/companies/:path*",

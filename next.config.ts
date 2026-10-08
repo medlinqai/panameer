@@ -84,10 +84,20 @@ const nextConfig: NextConfig = {
     const homeShowsStatus = process.env.HOME_SHOWS_STATUS === "1";
     return [
       // R1: Teams and recruiter-only pages are off (data kept).
-      { source: "/community/teams/:path*", destination: "/community/connections", permanent: true },
+      // Connect (2026-10-08): every Connect page moved under /connect/; old links forward (308).
+      { source: "/community/teams/:path*", destination: "/connect/community", permanent: true },
+      { source: "/community/teams", destination: "/connect/community", permanent: true },
+      { source: "/community/grow", destination: "/connect/leaders", permanent: true },
+      { source: "/community/forums/:path*", destination: "/connect/groups/:path*", permanent: true },
+      { source: "/community/colleagues/:path*", destination: "/connect/connections/:path*", permanent: true },
+      { source: "/community/colleagues", destination: "/connect/connections", permanent: true },
+      { source: "/community", destination: "/connect/community", permanent: true },
+      { source: "/community/:path*", destination: "/connect/:path*", permanent: true },
+      { source: "/recommendations", destination: "/connect/recommendations", permanent: true },
+      { source: "/recommendations/:path*", destination: "/connect/recommendations/:path*", permanent: true },
       { source: "/coordinator/:path*", destination: "/dashboard", permanent: true },
       // C-E003: Colleagues became Connections.
-      { source: "/community/colleagues/:path*", destination: "/community/connections/:path*", permanent: true },
+
       // C-E002: status.panameer.com serves only the status page; everything else 308s to the app.
       {
         source: "/:path((?!status(?:/|$)|api/status/|api/auth/|_next/|brand/|favicon|.*\\.[a-z0-9]+$).+)",
@@ -170,11 +180,7 @@ const nextConfig: NextConfig = {
         correct for a rename Scott has ruled, and is why it is a rename rather
         than a copy.
       */
-      {
-        source: "/community/forums/:path*",
-        destination: "/community/groups/:path*",
-        permanent: true,
-      },
+      // `/community/forums` now forwards straight to /connect/groups (see the Connect block above).
       /*
         ── ⚠⚠⚠ `/stats` → `/usage` (`P2-A1.1-E730` WS-A) ──────────────────────
 

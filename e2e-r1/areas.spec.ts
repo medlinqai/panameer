@@ -49,7 +49,7 @@ for (const w of [1440, 390])
       await expect(page.getByTestId("page-tabs").first().locator('[aria-current="page"]')).toHaveText("Security");
       await page.goto("/support/tickets", { waitUntil: "domcontentloaded" });
       expect(await tabs(page)).toEqual(["Tickets", "Report a Problem", "Help"]);
-      await page.goto("/community/colleagues", { waitUntil: "domcontentloaded" });
+      await page.goto("/connect/connections", { waitUntil: "domcontentloaded" });
       await expect(page.getByRole("link", { name: "Request a Recommendation" })).toBeVisible();
       await expect(page.getByRole("link", { name: "Invite a Colleague" }).first()).toBeVisible();
       await page.screenshot({ path: `e2e-r1/.artifacts/areas-${who}-${w}.png` });

@@ -62,7 +62,7 @@ export async function usageActivity(input: {
       ],
     },
     {
-      key: "connect", title: "Connect", go: "Go to Connect", href: "/community",
+      key: "connect", title: "Connect", go: "Go to Connect", href: "/connect/community",
       metrics: [
         { label: "Invites Sent", value: s.network.invitesSent, goal: 10 },
         { label: "Colleagues", value: colleagues, goal: 25 },

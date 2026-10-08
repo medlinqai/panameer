@@ -193,7 +193,7 @@ async function main() {
      ⚠⚠ THE OLD ASSERTION GUARDED `listBoards()`, WHICH NOTHING CALLED, AND THE
      RULE IT STATED — *"a path board never appears in the general listing"* —
      IS FALSE ON THE LIVE PATH. Measured and RENDERED 2026-09-24 at
-     `/community/groups` as a teacher: **4 path boards listed beside the 4
+     `/connect/groups` as a teacher: **4 path boards listed beside the 4
      general rooms**, each marked `Teach`. ⚠ That is `E591`'s design: the rail
      is *"Your Groups"*.
 

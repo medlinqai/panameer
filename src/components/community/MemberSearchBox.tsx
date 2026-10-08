@@ -16,7 +16,7 @@ export function MemberSearchBox({ initial = "" }: { initial?: string }) {
       const next = new URLSearchParams(params.toString());
       if (nextQ) next.set("q", nextQ);
       else next.delete("q");
-      router.replace(next.toString() ? `/community?${next}` : "/community", {
+      router.replace(next.toString() ? `/connect/community?${next}` : "/connect/community", {
         scroll: false,
       });
     }, 300);

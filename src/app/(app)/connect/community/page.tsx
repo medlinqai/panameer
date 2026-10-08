@@ -31,7 +31,7 @@ export default async function CommunityPage() {
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
         tabs={connectTabs(viewer, unread)}
-        current="/community"
+        current="/connect/community"
       />
       <div className="mx-auto max-w-5xl space-y-5">
         <header>
@@ -87,7 +87,7 @@ async function CommunityBody({ viewer }: { viewer: Viewer }) {
             <h2 className="font-display text-[17px] font-bold">Colleagues</h2>
             {page.colleagues.length > 0 && (
               <Link
-                href="/community/connections"
+                href="/connect/connections"
                 className="text-[13.5px] font-semibold text-magenta hover:underline"
               >
                 See All {page.colleagues.length}

@@ -43,7 +43,7 @@ for (const w of [1440, 390])
     const ctx = await browser.newContext({ viewport: { width: w, height: 900 } });
     const page = await ctx.newPage();
     await signIn(page, f!.people.loner.email);
-    for (const path of ["/community/colleagues", "/community", `/find-work/${wrId}`]) {
+    for (const path of ["/connect/connections", "/connect/community", `/find-work/${wrId}`]) {
       await page.goto(path, { waitUntil: "networkidle" });
       const link = page.locator(`a[data-company-link][href="${href}"]`).first();
       await expect(link, path).toBeVisible();
@@ -54,7 +54,7 @@ for (const w of [1440, 390])
     await expect(page.locator('[data-company-page="buyer"]')).toBeVisible();
     // Visibility off → the name leaves member cards.
     await db().company.update({ where: { id: f!.companyId }, data: { show_on_profiles: false } });
-    await page.goto("/community/colleagues", { waitUntil: "networkidle" });
+    await page.goto("/connect/connections", { waitUntil: "networkidle" });
     await expect(page.getByText(/MyCo Test/)).toHaveCount(0);
     await db().company.update({ where: { id: f!.companyId }, data: { show_on_profiles: true } });
     await ctx.close();

@@ -1,3 +1,4 @@
+import { ROUTES } from "@/lib/routes";
 import type { Me } from "@/lib/types";
 import type { Capability } from "@/lib/access";
 
@@ -38,7 +39,7 @@ export const BAND_CONTROL_HREFS = [
 ] as const;
 
 const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
-  "/connect": ["/community", "/providers", "/companies", "/invite-colleague", "/coordinator"],
+  "/connect": ["/connect/community", "/providers", "/companies", "/invite-colleague", "/coordinator"],
   "/shop": ["/my-services", "/services"],
   "/hire": ["/create-work", "/work-requests", "/search", "/consultations"],
   "/orders": ["/payments", "/pay", "/finances", "/manage-money", "/deliver-work"],
@@ -49,8 +50,7 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
     "/account-health",
     "/settings",
     "/score",
-    "/community/score",
-    "/recommendations",
+    "/connect/score",
     "/support",
     "/reports",
     "/messages",
@@ -154,15 +154,17 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
   ],
   "/profile": [
     { label: "Profile", href: "/profile" },
-    { label: "Score", href: "/community/score" },
+    { label: "Score", href: "/connect/score" },
     { label: "Usage", href: "/usage" },
     { label: "Health", href: "/account-health" },
   ],
   "/connect": [
-    { label: "Community", href: "/community" },
-    { label: "Connections", href: "/community/connections" },
-    { label: "Mentors", href: "/community/mentors" },
-    { label: "Groups", href: "/community/groups", state: "live" },
+    { label: "Leaders", href: ROUTES.connect.leaders },
+    { label: "Community", href: ROUTES.connect.community },
+    { label: "Connections", href: ROUTES.connect.connections },
+    { label: "Mentors", href: ROUTES.connect.mentors },
+    { label: "Groups", href: ROUTES.connect.groups, state: "live" },
+    { label: "Recommendations", href: ROUTES.connect.recommendations },
   ],
 };
 

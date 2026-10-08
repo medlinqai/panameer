@@ -85,7 +85,7 @@ for (const theme of THEMES) {
       await signIn(page);
       for (const [name, url] of [
         ["profile", "/profile"],
-        ["community", "/community"],
+        ["community", "/connect/community"],
         ["learn", "/learn"],
       ] as const) {
         await page.goto(url, { waitUntil: "networkidle" });

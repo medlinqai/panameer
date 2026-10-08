@@ -52,7 +52,7 @@ export async function CommunityRail({
           ))}
           {/* CAPPED AT FIVE WITH A LINK OUT — a recruiter roster can be forty */}
           <p className="pm-cm-count mt-2">
-            <Link href="/community/teams" className="font-semibold text-magenta hover:underline">
+            <Link href="/connect/community" className="font-semibold text-magenta hover:underline">
               {teams.represents.length > 5
                 ? `See All ${teams.represents.length} Members`
                 : "Manage Roster"}
@@ -76,7 +76,7 @@ export async function CommunityRail({
               </div>
             </div>
             <p className="pm-cm-count mt-2">
-              <Link href="/community/teams" className="font-semibold text-magenta hover:underline">
+              <Link href="/connect/community" className="font-semibold text-magenta hover:underline">
                 View Team
               </Link>
             </p>
@@ -85,7 +85,7 @@ export async function CommunityRail({
           /* A GENUINE ZERO, SAID PLAINLY — no promise, no date (ruling 18). */
           <p className="pm-cm-empty">
             You&rsquo;re not on a team.{" "}
-            <Link href="/community/teams" className="font-semibold text-magenta hover:underline">
+            <Link href="/connect/community" className="font-semibold text-magenta hover:underline">
               See How Teams Work
             </Link>
             .
@@ -101,7 +101,7 @@ export async function CommunityRail({
           // ONE LINE AND ONE NEXT STEP — never an empty bordered box, which
           <p className="pm-cm-note">
             You&rsquo;re not following anyone yet.{" "}
-            <Link href="/community/mentors" className="font-semibold text-magenta hover:underline">
+            <Link href="/connect/mentors" className="font-semibold text-magenta hover:underline">
               Browse Mentors
             </Link>
             .
@@ -120,7 +120,7 @@ export async function CommunityRail({
             ))}
             {/* THE LINK IS UNCONDITIONAL NOW WS-A) */}
             <p className="pm-cm-count">
-              <Link href="/community/mentors" className="font-semibold text-magenta hover:underline">
+              <Link href="/connect/mentors" className="font-semibold text-magenta hover:underline">
                 {mine.following.length > 4 ? `See All ${mine.following.length}` : "Browse Mentors"}
               </Link>
             </p>

@@ -7,7 +7,7 @@ test("measure the lead line and the top row at 390", async ({ page }) => {
   await signIn(page);
   for (const [name, url] of [
     ["profile", "/profile"],
-    ["community", "/community"],
+    ["community", "/connect/community"],
     ["hire", "/hire"],
     ["learn", "/learn"],
   ] as const) {

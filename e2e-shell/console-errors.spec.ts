@@ -55,7 +55,7 @@ const WALK_PAGES: readonly string[] = [
   "/connect",
   "/dashboard",
   "/learn",
-  "/community",
+  "/connect/community",
   "/usage",
   "/profile",
 ];

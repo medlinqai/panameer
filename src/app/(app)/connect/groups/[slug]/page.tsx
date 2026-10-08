@@ -30,7 +30,7 @@ export default async function BoardPage({
         {board.learningPath ? (
           <BackLink href={`/learn/${board.learningPath.slug}`} label={board.learningPath.title} />
         ) : (
-          <BackLink href="/community/groups" label="Groups" />
+          <BackLink href="/connect/groups" label="Groups" />
         )}
         <h1 className="mt-2 font-display text-[26px] font-bold tracking-[-0.5px]">
           {board.title}
@@ -72,7 +72,7 @@ export default async function BoardPage({
           {board.threads.map((t) => (
             <li key={t.id}>
               <Link
-                href={`/community/groups/thread/${t.id}`}
+                href={`/connect/groups/thread/${t.id}`}
                 className="group flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-4"
               >
                 {/* NON-ANONYMITY ONLY WORKS IF IT IS VISIBLE */}
