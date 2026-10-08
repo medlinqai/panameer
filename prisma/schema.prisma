@@ -2733,6 +2733,8 @@ model Certification {
   /// provider typed, LEARN is one Panameer issued and can therefore vouch for.
   /// Only the second gets a verify URL.
   issued_from           CredentialSource @default(SELF_REPORTED)
+  /// What kind of credential (2026-10-08): certification, license, award, membership, insurance & bonding.
+  kind                  CredentialKind   @default(CERTIFICATION)
   /// The path this credential was earned against (LEARN rows only).
   learning_path_id      String?          @db.Uuid
   /// The hosted, publicly checkable credential page (`/verify/[id]`), separate
@@ -8150,4 +8152,13 @@ model GlossaryTerm {
   updated_at  DateTime           @updatedAt
 
   @@map("glossary_terms")
+}
+
+/// The kinds a credential can be (2026-10-08). Existing rows are certifications.
+enum CredentialKind {
+  CERTIFICATION
+  LICENSE
+  AWARD
+  MEMBERSHIP
+  INSURANCE
 }
