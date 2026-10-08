@@ -15,7 +15,7 @@ type Props = {
   isMentor?: boolean;
   isSelf?: boolean;
   showDecline?: boolean;
-  tone?: "magenta" | "outline";
+  tone?: "magenta" | "outline" | "block";
   part?: "all" | "colleague" | "mentor";
 };
 
@@ -26,6 +26,8 @@ const GHOST = `${BTN} border border-ink bg-surface text-ink hover:bg-surface-hov
 const QUIET = `${BTN} text-ink-2`;
 // The opt-in face: white, 1px ink border, ink text — the same family as `pm-btn` on the
 const OUTLINE = `${BTN} border border-ink text-ink hover:bg-black/[0.04] disabled:border-line disabled:text-ink-2`;
+// Full-width box, same as the profile rail's Message button (Scott 2026-10-08).
+const BLOCK = "pm-btn transition-colors hover:bg-surface-hover disabled:cursor-default disabled:border-line disabled:bg-line disabled:text-ink-3";
 
 export function ConnectControls({
   toUserId,
@@ -38,7 +40,8 @@ export function ConnectControls({
   part = "all",
 }: Props) {
   // Resolved once, so every primary affordance in this component moves together — a second
-  const PRIMARY_TONE = tone === "outline" ? OUTLINE : PRIMARY;
+  const block = tone === "block";
+  const PRIMARY_TONE = block ? BLOCK : tone === "outline" ? OUTLINE : PRIMARY;
   const router = useRouter();
   const [rel, setRel] = useState<Relation>(relation);
   const [mentor, setMentor] = useState(isMentor);
@@ -112,7 +115,7 @@ export function ConnectControls({
   if (rel === null) {
     colleagueControl = (
       <button type="button" className={PRIMARY_TONE} disabled={busy} onClick={connectColleague}>
-        Connect as Colleague
+        {block ? "Connect" : "Connect as Colleague"}
       </button>
     );
   } else if (rel === "PENDING" && incomingConnectionId) {
@@ -126,6 +129,13 @@ export function ConnectControls({
     colleagueControl = (
       <button type="button" className={PRIMARY_TONE} disabled>
         Requested
+      </button>
+    );
+  } else if (rel === "ACCEPTED" && block) {
+    // Message has its own box above on the profile rail.
+    colleagueControl = (
+      <button type="button" className={PRIMARY_TONE} disabled>
+        Connected
       </button>
     );
   } else if (rel === "ACCEPTED") {
@@ -143,8 +153,8 @@ export function ConnectControls({
   const showMentor = part === "all" || part === "mentor";
 
   return (
-    <div className="flex flex-col items-start gap-1">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className={block ? "flex w-full flex-col gap-1" : "flex flex-col items-start gap-1"}>
+      <div className={block ? "flex w-full flex-col gap-2" : "flex flex-wrap items-center gap-2"}>
         {showColleague && colleagueControl}
         {showColleague && showDecline && incomingConnectionId && rel === "PENDING" && (
           <button type="button" className={GHOST} disabled={busy} onClick={decline}>
@@ -156,7 +166,7 @@ export function ConnectControls({
         {showMentor && (
           <button
             type="button"
-            className={mentor ? QUIET : tone === "outline" ? OUTLINE : GHOST}
+            className={block ? BLOCK : mentor ? QUIET : tone === "outline" ? OUTLINE : GHOST}
             disabled={busy}
             onClick={toggleMentor}
           >

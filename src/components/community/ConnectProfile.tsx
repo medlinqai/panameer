@@ -43,6 +43,7 @@ import {
   locationLines,
 } from "@/components/profile/sections";
 import "./connect-profile.css";
+import { BlurredField } from "@/components/public/masked-ui";
 // THE CLEAN DIRECTION'S OWN PIECES WS-A). `ProfileCard`/`EditLink`
 import {
   CleanSection,
@@ -437,7 +438,7 @@ export function ConnectProfile({
                 </>
               ) : (
                 // NOT VALIDATED SAYS NOTHING BAD. `validation_status` is
-                <b className="text-[14px]">About this provider</b>
+                <b className="text-[14px]">About This Provider</b>
               )}
 
               <TrustRow label="Experience" value={p.experience} />
@@ -578,6 +579,12 @@ export function ConnectProfile({
             ) : (
               <h1 className="text-[30px] font-bold leading-[1.2] tracking-[-0.01em]">
                 {fullName}
+                {p.identityMasked && (
+                  <>
+                    {" "}
+                    <BlurredField label="Surname shared once you engage this provider">Lastname</BlurredField>
+                  </>
+                )}
               </h1>
             )}
             {p.validated && (

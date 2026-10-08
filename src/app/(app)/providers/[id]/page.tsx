@@ -8,6 +8,7 @@ import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getProviderProfileView } from "@/lib/provider-profile-view";
 import { getMyCommunity, mutualColleagueCount } from "@/lib/connections";
 import { ConnectControls } from "@/components/community/ConnectControls";
+import { BackButton } from "@/components/casing/BackButton";
 import { viewerCanHire } from "@/lib/rate-visibility";
 import { getSessionViewer } from "@/lib/session";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
@@ -40,7 +41,7 @@ async function connectSlot(
     relation: colleague?.rel ?? null,
     incomingConnectionId: incomingId ?? null,
     isMentor: following,
-    tone: "outline" as const,
+    tone: "block" as const,
   };
   return {
     connect: <ConnectControls {...common} part="colleague" />,
@@ -135,10 +136,10 @@ export default async function PublicProviderPage({
       {}
       {}
       {}
-      {profile.identityMasked && (
-        <div className="border-b border-line bg-canvas px-4 py-2.5 text-center text-[13.5px] text-ink-2 sm:px-6">
-          Showing <span className="font-semibold text-ink">first name only</span>.
-          Full name and contact details are shared once you engage this provider.
+      {/* Masked surname is blurred in the name itself (Scott 2026-10-08: "blur, don't bar"). */}
+      {!profile.isOwner && (
+        <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">
+          <BackButton fallback="/connect/community" />
         </div>
       )}
 
