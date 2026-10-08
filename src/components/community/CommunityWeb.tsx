@@ -111,7 +111,7 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
             />
           ))}
           {nodes.map((n) => (
-            <Node key={n.key} n={n} face={faceFor(n, data)} />
+            <Node key={n.key} n={n} face={faceFor(n, data)} link={linkFor(n, data)} />
           ))}
 
           {/* The viewer, last, so nothing paints over them. */}
@@ -199,7 +199,23 @@ function faceFor(n: PlacedNode, d: WebData): string | null {
   return null;
 }
 
-function Node({ n, face }: { n: PlacedNode; face: string | null }) {
+/** Joined and reachable circles open that person's profile (Scott 2026-10-08). */
+function linkFor(n: PlacedNode, d: WebData): { href: string; name: string } | null {
+  const p = n.kind === "joined" ? d.joined.find((j) => j.id === n.key) : n.kind === "reachable" ? d.reachable.find((r) => r.id === n.key) : null;
+  return p?.href ? { href: p.href, name: p.name } : null;
+}
+
+function Node({ n, face, link }: { n: PlacedNode; face: string | null; link: { href: string; name: string } | null }) {
+  if (!link) return <NodeShape n={n} face={face} />;
+  return (
+    <a href={link.href} aria-label={link.name} className="pm-web-node-link" style={{ cursor: "pointer" }}>
+      <title>{link.name}</title>
+      <NodeShape n={n} face={face} />
+    </a>
+  );
+}
+
+function NodeShape({ n, face }: { n: PlacedNode; face: string | null }) {
   if (n.kind === "invited") {
     // HOLLOW, DASHED, NO FACE — because an invite holds NAME AND EMAIL ONLY.
     return <circle cx={n.x} cy={n.y} r={n.r} className="pm-web-invited" />;

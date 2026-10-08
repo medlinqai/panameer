@@ -6,13 +6,15 @@ export type WebPerson = {
   id: string;
   name: string;
   photoUrl: string | null;
+  /** Their profile page, when they have one — makes the circle clickable. */
+  href?: string | null;
 };
 
 export type CommunityWeb = {
   me: WebPerson | null;
   joined: WebPerson[];
   invited: { id: string; name: string | null; email: string }[];
-  reachable: { id: string; name: string; photoUrl: string | null; viaId: string }[];
+  reachable: { id: string; name: string; photoUrl: string | null; viaId: string; href?: string | null }[];
   overflow: { joined: number; invited: number; reachable: number };
 };
 
@@ -183,11 +185,17 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
     .filter((r) => keptJoined.has(r.viaId))
     .slice(0, WEB_CAPS.outer);
 
+  const profiles = await prisma.providerProfile.findMany({
+    where: { person_id: { in: [...joined, ...reachable].map((x) => x.id) } },
+    select: { id: true, person_id: true },
+  });
+  const hrefOf = new Map(profiles.map((pp) => [pp.person_id, `/providers/${pp.id}`]));
+
   return {
     ...empty,
-    joined,
+    joined: joined.map((j) => ({ ...j, href: hrefOf.get(j.id) ?? null })),
     invited,
-    reachable,
+    reachable: reachable.map((r) => ({ ...r, href: hrefOf.get(r.id) ?? null })),
     overflow: {
       joined: joinedAll.length - joined.length,
       invited: invitedAll.length - invited.length,
