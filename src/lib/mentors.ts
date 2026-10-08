@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { marketplaceVisibleWhere } from "@/lib/access";
+import { experienceYears } from "@/lib/experience";
 
 export type MentorCard = {
   profileId: string;
@@ -27,20 +28,38 @@ export type MentorCard = {
   currency: string;
   /** Learning paths they teach — real evidence they explain things for a living. */
   teaches: number;
+  /** Years of work, from their work-history spans (null under a year). */
+  years: number | null;
+  skillIds: string[];
 };
 
 // export const MICRO_SESSION_PRICE = "$49.99";
 // export const MICRO_SESSION_MINUTES = 15;
 
 export async function listMentors(
-  opts: { skill?: string; openOnly?: boolean } = {}
+  opts: { skill?: string; openOnly?: boolean; q?: string; area?: string } = {}
 ): Promise<MentorCard[]> {
+  const q = opts.q?.trim();
+  const like = { contains: q ?? "", mode: "insensitive" as const };
   const rows = await prisma.providerProfile.findMany({
     where: {
       ...marketplaceVisibleWhere(),
       ...(opts.openOnly ? { open_for_mentoring: true } : {}),
       ...(opts.skill
         ? { skills: { some: { skill: { name: { contains: opts.skill, mode: "insensitive" } } } } }
+        : {}),
+      ...(opts.area ? { AND: [{ skills: { some: { skill: { area: opts.area } } } }] } : {}),
+      ...(q
+        ? {
+            OR: [
+              { person: { first_name: like } },
+              { person: { last_name: like } },
+              { person: { title: like } },
+              { roleType: { name: like } },
+              { roleType: { display: like } },
+              { skills: { some: { skill: { name: like } } } },
+            ],
+          }
         : {}),
     },
     orderBy: [{ completeness: "desc" }, { updated_at: "desc" }],
@@ -72,8 +91,11 @@ export async function listMentors(
         take: 6,
         select: { skill: { select: { name: true } } },
       },
+      employers: { select: { start_date: true, end_date: true, is_current: true } },
+      projects: { select: { start_date: true, end_date: true, is_current: true } },
     },
   });
+  const skillIdRows = await prisma.providerSkill.findMany({ where: { provider_profile_id: { in: rows.map((r) => r.id) } }, select: { provider_profile_id: true, skill_id: true } });
 
   const cards = rows.map((p) => ({
     profileId: p.id,
@@ -99,6 +121,8 @@ export async function listMentors(
     personId: p.person.id,
     currency: p.currency,
     teaches: p.person.learnLessons.length,
+    years: experienceYears([...p.employers, ...p.projects].map((x) => ({ start: x.start_date, end: x.end_date, isCurrent: x.is_current }))) || null,
+    skillIds: skillIdRows.filter((x) => x.provider_profile_id === p.id).map((x) => x.skill_id),
   }));
 
   // SORTED IN MEMORY, AND THAT IS NOT LAZINESS. Postgres orders an enum by
