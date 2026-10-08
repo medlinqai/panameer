@@ -1,7 +1,7 @@
 // RULING 1: THE WORD IS "GROUPS" WS-C)
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
-import { canLeaveGroup, groupOffer, isGroupMember } from "@/lib/group-membership";
+import { canLeaveGroup, ensureEnrolmentMembership, groupOffer, isGroupMember } from "@/lib/group-membership";
 /* `P1-J3-E383` — ONE instructor predicate, extracted rather than copied. */
 import { teachesPathWhere } from "@/lib/learn-home";
 import type { Viewer } from "@/lib/access";
@@ -316,21 +316,31 @@ export async function createThread(
     select: { id: true, learning_path_id: true, host_person_id: true, title: true },
   });
   if (!board) throw new ForumError("That board doesn't exist.", "NOT_FOUND");
+  // A lesson question must belong to this path's group.
+  if (input.lessonId) {
+    const lesson = await prisma.lesson.findUnique({ where: { id: input.lessonId }, select: { section: { select: { course: { select: { learning_path_id: true } } } } } });
+    if (!lesson || lesson.section.course.learning_path_id !== board.learning_path_id) throw new ForumError("That lesson isn't part of this group's path.", "INVALID");
+  }
+
   // A PATH FORUM IS CLOSED TO POSTING TOO — enrolled learners
   if (board.learning_path_id) {
-    const allowed = await canAccessPathForum(viewer, board.learning_path_id);
+    let allowed = await canAccessPathForum(viewer, board.learning_path_id);
+    // Asking on a lesson joins the path and its group (Scott 2026-10-08).
+    if (!allowed && input.lessonId) {
+      await prisma.learnEnrollment.upsert({
+        where: { user_id_learning_path_id: { user_id: viewer.userId, learning_path_id: board.learning_path_id } },
+        create: { user_id: viewer.userId, learning_path_id: board.learning_path_id },
+        update: {},
+      });
+      await ensureEnrolmentMembership(viewer.userId, board.learning_path_id);
+      allowed = true;
+    }
     if (!allowed) {
       throw new ForumError(
         "This group is for people taking the path. Enroll to join the conversation.",
         "NOT_ENROLLED"
       );
     }
-  }
-
-  // A lesson question must belong to this path's group.
-  if (input.lessonId) {
-    const lesson = await prisma.lesson.findUnique({ where: { id: input.lessonId }, select: { section: { select: { course: { select: { learning_path_id: true } } } } } });
-    if (!lesson || lesson.section.course.learning_path_id !== board.learning_path_id) throw new ForumError("That lesson isn't part of this group's path.", "INVALID");
   }
 
   const title = input.title.trim();
