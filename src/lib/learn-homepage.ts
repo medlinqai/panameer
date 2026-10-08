@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getTestState } from "@/lib/learn-assessment";
+import { areaFor } from "@/lib/skill-areas";
 
 // Learn › Home (2026-10-08): the path you're furthest into, two boards, and the most popular paths (ranked by learners).
 type LessonRow = { id: string; title: string; seconds: number | null; runTime: string | null };
@@ -66,7 +67,8 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
   const areaOf = (p: (typeof paths)[number]) => {
     const tally = new Map<string, number>();
     for (const s of p.skills) if (s.skill.area) tally.set(s.skill.area, (tally.get(s.skill.area) ?? 0) + 1);
-    return [...tally].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+    // No tagged skills yet: the same keyword rules the catalog uses, on the title and group (never AI).
+    return [...tally].sort((a, b) => b[1] - a[1])[0]?.[0] ?? areaFor(p.title, p.group ? [p.group] : []);
   };
 
   // The path the viewer is furthest into (started, not finished).
