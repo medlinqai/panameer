@@ -7,6 +7,7 @@ import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { CatalogPathCard } from "@/components/learn/CatalogPathCard";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { BubbleField } from "@/components/casing/BubbleField";
+import { StartHere } from "@/components/learn/StartHere";
 import { BEGINNER_PATH as START_SLUG } from "@/lib/learn-homepage";
 import { NotifyMe } from "@/components/learn/NotifyMe";
 
@@ -30,6 +31,8 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
     if (sp.open === "1" && !p.playable) return false;
     if (sp.test === "1" && !p.test.ready) return false;
     if (mineOnly && !p.mine) return false;
+    // The Start Here feature replaces its own card in the area rows (unless you searched or picked an area).
+    if (p.slug === START_SLUG && !q && !sp.area) return false;
     if (q && ![p.title, p.summary ?? "", p.teacher?.name ?? "", ...p.courses.flatMap((c) => [c.title, c.teacher ?? "", ...c.lessons.map((l) => l.title)])].some((x) => x.toLowerCase().includes(q))) return false;
     return true;
   });
@@ -84,6 +87,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
             </>
           }
         />
+        {start && !q && !sp.area && <StartHere p={start} />}
         <form id="areas" method="get" action="/learn/paths" className="mt-7 flex scroll-mt-24 flex-wrap gap-2">
           {sp.area && <input type="hidden" name="area" value={sp.area} />}
           {sp.open && <input type="hidden" name="open" value={sp.open} />}

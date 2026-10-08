@@ -8,7 +8,7 @@ export type CatLesson = { id: string; title: string; minutes: number | null; pla
 export type CatCourse = { id: string; slug: string; title: string; summary: string | null; lessons: CatLesson[]; minutes: number; done: number; teacher: string | null };
 export type PathTag = "IN_PROGRESS" | "CERTIFIED" | "COMING_SOON" | null;
 export type CatPath = {
-  id: string; slug: string; title: string; summary: string | null; area: string | null; group: string | null; cover: string | null;
+  id: string; slug: string; title: string; summary: string | null; area: string | null; group: string | null; cover: string | null; introVideo: string | null;
   teacher: { personId: string; name: string; title: string | null; photoUrl: string | null; profileId: string | null } | null;
   courses: CatCourse[]; lessons: number; minutes: number; playable: boolean;
   learners: number; completed: number;
@@ -36,7 +36,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
     where: { status: "PUBLISHED", ...(opts.slug ? { slug: opts.slug } : {}) },
     orderBy: [{ sort_order: "asc" }, { title: "asc" }],
     select: {
-      id: true, slug: true, title: true, summary: true, group: true, cover_image: true,
+      id: true, slug: true, title: true, summary: true, group: true, cover_image: true, intro_video_ref: true,
       expert: { select: { id: true, first_name: true, last_name: true, title: true, photo_url: true, providerProfile: { select: { id: true } } } },
       assessment: { select: { status: true, questions: true, pass_threshold: true, max_attempts: true } },
       skills: { select: { skill: { select: { area: true } } } },
@@ -96,7 +96,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
     const playable = flat.some((l) => l.playable);
     const questions = Array.isArray(p.assessment?.questions) ? (p.assessment!.questions as unknown[]).length : 0;
     return {
-      id: p.id, slug: p.slug, title: p.title, summary: p.summary, area, group: p.group, cover: p.cover_image,
+      id: p.id, slug: p.slug, title: p.title, summary: p.summary, area, group: p.group, cover: p.cover_image, introVideo: p.intro_video_ref,
       teacher: p.expert ? { personId: p.expert.id, name: nameOf(p.expert), title: p.expert.title, photoUrl: p.expert.photo_url, profileId: p.expert.providerProfile?.id ?? null } : null,
       courses, lessons: flat.length, minutes: flat.reduce((n, l) => n + (l.minutes ?? 0), 0), playable,
       learners: p._count.enrollments, completed: p._count.credentials,
