@@ -5,6 +5,7 @@ import { learnCatalogue } from "@/lib/learn-catalogue";
 import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { CataloguePathCard } from "@/components/learn/CataloguePathCard";
+import { NotifyMe } from "@/components/learn/NotifyMe";
 
 export const metadata = {
   title: "Learning Paths — Panameer Learn",
@@ -84,7 +85,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
               {!sp.area && g.paths.length > 3 && <Link href={href({ area: g.code })} className="text-[13px] font-bold text-magenta-dark underline underline-offset-4">See all {g.paths.length}</Link>}
             </div>
             <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {(sp.area ? g.paths : g.paths.slice(0, 3)).map((p) => <CataloguePathCard key={p.id} p={p} areaLabel={p.area ? label.get(p.area) ?? null : null} />)}
+              {(sp.area ? g.paths : g.paths.slice(0, 3)).map((p) => <CataloguePathCard key={p.id} p={p} areaLabel={p.area ? label.get(p.area) ?? null : null} notify={<NotifyMe pathId={p.id} initial={p.watching} signedIn={!!viewer} />} />)}
             </ul>
           </section>
         ))}

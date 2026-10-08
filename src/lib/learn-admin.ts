@@ -1,3 +1,4 @@
+import { notifyOpenedPaths } from "@/lib/learn-watch";
 import { prisma } from "@/lib/prisma";
 import { ensurePathBoard } from "@/lib/forums";
 import { PLAYABLE_STATUSES, isPlayable, urlMissing as urlMissingRow } from "@/lib/learn";
@@ -772,7 +773,7 @@ export async function updateLesson(id: string, input: LessonInput) {
     }
   }
 
-  return prisma.lesson.update({
+  const saved = await prisma.lesson.update({
     where: { id },
     data: {
       title: input.title.trim(),
@@ -788,6 +789,8 @@ export async function updateLesson(id: string, input: LessonInput) {
     },
     select: { id: true },
   });
+  await notifyOpenedPaths();
+  return saved;
 }
 
 export async function createLesson(sectionId: string, input: LessonInput) {
@@ -878,6 +881,7 @@ export async function setLessonUrl(id: string, rawUrl: string | null) {
       is_custom: true,
     },
   });
+  await notifyOpenedPaths();
   return { ok: true as const, vimeoRef: vimeo, statusChanged: !alreadyClaims };
 }
 

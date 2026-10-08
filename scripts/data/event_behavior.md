@@ -207,6 +207,7 @@ it, because an item with no clearing writer would sit there forever (`E579` one 
 | `group.question_asked` | the group's owner | `Send for Approval` | worklist | ⚠ The same question `countThreadsWaitingOn` counts on the Groups page — one definition. **Cleared by answering.** ⚠⚠ The four general boards are ownerless, so nothing fires |
 | `colleague.invite_received` | the person invited | `Send for Approval` | worklist | **Cleared by accepting OR declining** — both end the wait |
 | `mentor.request_received` | the person asked to mentor | `Send for Approval` | worklist | **Cleared by accepting, declining, or the asker withdrawing.** Emailed. Kept as a request so a payment step can sit before Accept (R2) |
+| `learn.path_opened` | members who pressed Notify Me | `Do It` | worklist | Once per watcher, when the path first has a playable lesson (after an admin lesson save). Emailed |
 | `follow.received` | the person followed | `Do It` | worklist | One-way, no approval; one notice per follower (dedupe on the pair). A Dismiss-type worklist row. Emailed (attention rule, 2026-10-08) |
 | `group.reply_posted` | everyone already in the thread | `Do It` | worklist | Starter + earlier repliers, never the replier. A new question still goes to the group host (`group.question_asked`). Emailed |
 | `mentor.request_accepted` | the person who asked | `Do It` | in-app | A decline is silent, like a colleague decline |

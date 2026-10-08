@@ -553,6 +553,18 @@ export const NOTIFICATION_EVENTS = {
     body: () => "A few lines about working together. It shows on their profile.",
     href: (v) => str(v, "respondPath", "/connect/recommendations"),
   },
+  "learn.path_opened": {
+    event: "learn.path_opened",
+    recipient: "members who pressed Notify Me on the path",
+    category: "community.activity",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    /* A worklist info row (Dismiss), per the attention rule. */
+    requiresAction: true,
+    title: (v) => `${str(v, "pathTitle", "A learning path")} is open — you can start it now`,
+    body: () => "You asked to be told when it opened.",
+    href: (v) => `/learn/${str(v, "pathSlug", "")}`,
+  },
   "follow.received": {
     event: "follow.received",
     recipient: "the person followed",

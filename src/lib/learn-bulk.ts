@@ -1,3 +1,4 @@
+import { notifyOpenedPaths } from "@/lib/learn-watch";
 import { prisma } from "@/lib/prisma";
 import { normalizeVimeoRef } from "@/lib/learn-admin";
 
@@ -275,5 +276,6 @@ export async function applyBulkUrls(csv: string): Promise<BulkPlan & { applied: 
       `unmatched=${plan.unmatched} invalid=${plan.invalid} unchanged=${plan.unchanged}`
   );
 
+  if (writes.length) await notifyOpenedPaths();
   return { ...plan, applied: writes.length };
 }

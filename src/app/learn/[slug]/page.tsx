@@ -10,6 +10,7 @@ import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHe
 import { ProgressRing } from "@/components/learn/ProgressRing";
 import { WhatsInside } from "@/components/learn/WhatsInside";
 import { Avatar } from "@/components/Avatar";
+import { NotifyMe } from "@/components/learn/NotifyMe";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,7 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
                 )}
                 {p.test.ready && !p.test.passed && <Link href={viewer ? `/learn/${p.slug}/test` : signIn} className={HERO_BTN_W}>Take the Certification Test</Link>}
                 {p.certificate?.verifyUrl && <Link href={p.certificate.verifyUrl} className={HERO_BTN_W}>View Certificate</Link>}
+                {!p.playable && <NotifyMe pathId={p.id} initial={p.watching} signedIn={!!viewer} className={HERO_BTN_W} />}
               </>
             }
           />
