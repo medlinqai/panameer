@@ -28,7 +28,7 @@ import { ROUTES } from "@/lib/routes";
 export const revalidate = 60;
 
 export const metadata = {
-  metadataBase: new URL("https://status.panameer.com"),
+  metadataBase: new URL("https://app.panameer.com"), // preview image is served from the app host (status host 404s it)
   title: "Panameer Work Tracker",
   description: "Daily progress on the Panameer build, from first idea to public beta.",
 };
