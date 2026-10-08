@@ -1,10 +1,5 @@
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
-import { CommunityHero } from "@/components/community/CommunityHero";
-import { getCommunityHero } from "@/lib/community-hero";
-import { levelStandingFor } from "@/lib/levels";
-import { getCommunityWeb } from "@/lib/community-web";
-import "@/components/community/community-web.css";
 import "@/components/community/community-page.css";
 import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
@@ -32,14 +27,17 @@ const TABS: { key: string; label: string; window: GrowthWindow }[] = [
   { key: "network", label: "People I Brought In", window: "all" },
 ];
 
-export default async function GrowPage({
+export const metadata = { title: "Leaders · Panameer" };
+
+// Connect › Leaders (2026-10-08): how your score adds up + the leaderboard. The network graphic lives on Connections.
+export default async function LeadersPage({
   searchParams,
 }: {
   searchParams: Promise<{ tab?: string }>;
 }) {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
-  if (!viewer) redirect("/login?callbackUrl=%2Fcommunity%2Fgrow");
+  if (!viewer) redirect("/login?callbackUrl=%2Fconnect%2Fleaders");
 
   const person = await prisma.person.findFirst({
     where: { user_id: viewer.userId },
@@ -52,12 +50,10 @@ export default async function GrowPage({
   const tab = TABS.find((t) => t.key === rawTab) ?? TABS[0];
 
   const unread = await unreadCount(viewer);
-  const [me, board, network, web, hero] = await Promise.all([
+  const [me, board, network] = await Promise.all([
     growthScore(personId, "month"),
     growthBoard(tab.window),
     tab.key === "network" ? myNetwork(personId) : Promise.resolve([]),
-    getCommunityWeb(viewer),
-    getCommunityHero(viewer),
   ]);
   const movement = tab.key === "month" ? await movementFor(board) : null;
   const hrefs = await providerHrefs(board.map((r) => r.personId));
@@ -78,12 +74,9 @@ export default async function GrowPage({
       <div className="mx-auto w-full max-w-3xl">
         {}
         <h1 className="mb-1 font-display text-[26px] font-bold tracking-[-0.5px]">
-          Grow Your Community
+          Leaders
         </h1>
-        {}
-        <div className="mb-5">
-          <CommunityHero web={web} hero={hero} standing={await levelStandingFor(personId)} />
-        </div>
+        <p className="mb-5 text-[14px] text-ink-2">Who&apos;s growing Panameer — invitations sent and colleagues who joined.</p>
 
         {/* ── your score ─────────────────────────────────────────────── */}
         <section className="rounded-brand border border-line bg-white px-[18px] py-4">
