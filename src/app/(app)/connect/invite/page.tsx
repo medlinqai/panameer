@@ -5,9 +5,9 @@ import { inviteAllowance, INVITE_LIMIT_PER_DAY } from "@/lib/colleague-invite";
 import { InviteColleagueClient } from "@/components/console/InviteColleagueClient";
 import { ROUTES } from "@/lib/routes";
 
-export const metadata = { title: "Join Panameer · Panameer" };
+export const metadata = { title: "Invite Someone to Panameer · Panameer" };
 
-// Connect › Join Panameer (2026-10-08): invitations to people not on Panameer yet. Member requests live in Connections › Requests.
+// Connect › Invite Someone to Panameer (2026-10-08): invitations to people not on Panameer yet. Member requests live in Connections › Requests.
 export default async function JoinPanameerPage() {
   const viewer = await guardPage("authenticated");
 
@@ -77,7 +77,7 @@ export default async function JoinPanameerPage() {
       >
         ‹ Back to Connections
       </Link>
-      <h1 className="mt-3 font-display text-[28px] font-bold tracking-[-0.5px]">Join Panameer</h1>
+      <h1 className="mt-3 font-display text-[28px] font-bold tracking-[-0.5px]">Invite Someone to Panameer</h1>
       <p className="mb-5 mt-1.5 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
         Invite someone who isn&apos;t on Panameer yet. They get one email from you with a link to take a look.
       </p>

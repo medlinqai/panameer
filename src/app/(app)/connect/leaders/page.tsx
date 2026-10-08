@@ -102,7 +102,7 @@ export default async function LeadersPage({
           paragraph={say}
           actions={
             <>
-              <Link href="/connect/invite" className={HERO_BTN}>Join Panameer</Link>
+              <Link href="/connect/invite" className={HERO_BTN}>Invite to Panameer</Link>
               <Link href="/connect/connections" className={HERO_BTN_W}>See My Connections</Link>
             </>
           }

@@ -105,7 +105,7 @@ async function sendInviteEmail(input: { inviteId: string; inviterPersonId: strin
       companyMemberships: {
         where: { status: "APPROVED" },
         take: 1,
-        orderBy: { created_at: "asc" },
+        orderBy: { created_at: "desc" }, // latest approved company, same rule as the profile
         select: { company: { select: { name: true, website: true, show_on_profiles: true } } },
       },
       providerProfile: { select: { id: true, onboarding_completed_at: true } },

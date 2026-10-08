@@ -26,7 +26,7 @@ export function UsageHero({
       paragraph={<p data-usage-summary>{summary}</p>}
       actions={
         <>
-          <Link href="/connect/invite" className={HERO_BTN}>Join Panameer</Link>
+          <Link href="/connect/invite" className={HERO_BTN}>Invite to Panameer</Link>
           <Link href="/profile" className={HERO_BTN_W}>{scoreComplete ? "View Your Profile" : "Complete Your Profile"}</Link>
         </>
       }

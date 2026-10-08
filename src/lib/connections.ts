@@ -88,7 +88,7 @@ export async function requestColleague(viewer: Viewer, toUserId: string) {
       companyMemberships: {
         where: { status: "APPROVED" },
         take: 1,
-        orderBy: { created_at: "asc" },
+        orderBy: { created_at: "desc" }, // latest approved company, same rule as the profile
         select: { company: { select: { name: true, website: true, show_on_profiles: true } } },
       },
     },

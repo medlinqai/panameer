@@ -253,7 +253,7 @@ export function InviteColleagueClient({
             disabled={busy || dayRemaining <= 0}
             className="bg-ink px-6 py-2.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
           >
-            {busy ? "Sending…" : "Send Invitation"}
+            {busy ? "Sending…" : confirming ? "Yes, Send Invitation" : "Review Invitation"}
           </button>
           {/* be corrected. It only appears once the ask is on screen. */}
           {confirming && !busy && (

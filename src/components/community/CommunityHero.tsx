@@ -83,7 +83,7 @@ export function CommunityHero({
         </>
       }
       // ONE BUTTON. Ruling 45(4): the second slot is absent unless a second
-      primary={{ label: "Join Panameer", href: "/connect/invite" }}
+      primary={{ label: "Invite to Panameer", href: "/connect/invite" }}
     />
   );
 }
@@ -130,7 +130,7 @@ export function ConnectionsHero({ web, hero, standing, requests }: { web: WebDat
           {hero?.latestJoin ? <> <strong className="text-ink">{hero.latestJoin.name}</strong> joined from your invitation.</> : null}
         </p>
         <div className="flex flex-wrap gap-3">
-          <a href="/connect/invite" className="inline-flex min-h-[44px] items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover">Join Panameer</a>
+          <a href="/connect/invite" className="inline-flex min-h-[44px] items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover">Invite to Panameer</a>
           <a href="/connect/connections?chip=requests" className="inline-flex min-h-[44px] items-center border border-ink px-5 text-[14px] font-bold hover:bg-ink/5">Requests{requests > 0 ? ` (${requests})` : ""}</a>
         </div>
       </div>
