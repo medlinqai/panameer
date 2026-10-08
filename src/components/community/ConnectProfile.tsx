@@ -384,7 +384,7 @@ export function ConnectProfile({
                                     ? `${growth.points} points${growth.rank ? ` · #${growth.rank} this month` : ""}`
                                     : `A colleague who joins is worth ${GROWTH_WEIGHTS.JOINED} points`,
                                 },
-                                { label: "Invite a Colleague", href: "/invite-colleague", hint: "Join = 50 points" },
+                                { label: "Join Panameer", href: "/connect/invite", hint: "Join = 50 points" },
                                 { label: "Request a Recommendation", href: "/connect/recommendations", hint: null },
                                 { label: "Request a Mentor", href: "/connect/mentors", hint: null },
                               ].map((a) => (

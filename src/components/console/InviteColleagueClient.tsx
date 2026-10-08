@@ -14,12 +14,28 @@ export const DEFAULT_INVITE_NOTE = [
   "Free to join. You keep what you build.",
 ].join("\n");
 
+function ResendInvitation({ id }: { id: string }) {
+  const [state, setState] = useState<"idle" | "busy" | "sent" | "error">("idle");
+  const resend = async () => {
+    setState("busy");
+    const r = await fetch(`/api/community/invites/${id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "resend" }) }).catch(() => null);
+    setState(r?.ok ? "sent" : "error");
+  };
+  if (state === "sent") return <span className="text-[12.5px] font-bold text-[#1f8a5b]">✓ Sent again</span>;
+  return (
+    <button type="button" disabled={state === "busy"} onClick={resend} className="border border-ink px-3 py-1 text-[12.5px] font-semibold disabled:opacity-50">
+      {state === "error" ? "Try Again" : "Resend"}
+    </button>
+  );
+}
+
 export type SentInvite = {
   id: string;
   email: string;
   name: string | null;
   status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
   joined: boolean;
+  joinedAt?: string | null;
   sentAt: string;
   expired: boolean;
   undelivered: string | null;
@@ -105,12 +121,6 @@ export function InviteColleagueClient({
   return (
     <div className="space-y-4">
       <form onSubmit={submit} className="border-t border-line py-5">
-        <h2 className="font-display text-[16px] font-bold">Invite a Colleague</h2>
-        <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
-          They&apos;ll get one email explaining what Panameer is and a link to
-          take a look. Nothing is created for them and they don&apos;t have to
-          join.
-        </p>
 
         {error && (
           <p className="mt-3 rounded-[10px] bg-red-50 px-3 py-2 text-[13.5px] text-red-700">
@@ -267,7 +277,7 @@ export function InviteColleagueClient({
       </form>
 
       <section className="border-t border-line py-5">
-        <h2 className="font-display text-[16px] font-bold">Invitations Sent</h2>
+        <h2 className="font-display text-[16px] font-bold">Invitations Sent ({sent.length})</h2>
         {sent.length === 0 ? (
           <p className="mt-3 text-[14px] leading-relaxed text-ink-2">
             You haven&apos;t invited anyone yet. Invitations you send show up
@@ -285,16 +295,17 @@ export function InviteColleagueClient({
               // them whatever a stale receipt says. Otherwise a failure to
               const status =
                 row.undelivered && !row.joined ? UNDELIVERED : STATUS[key];
+              const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
+              const line = row.joined && row.joinedAt ? `Joined ${day(row.joinedAt)} from your invitation` : `Sent ${day(row.sentAt)} · ${key === "EXPIRED" ? "expired" : key === "REVOKED" ? "withdrawn" : "not joined yet"}`;
               return (
-                <li key={row.id} className="flex flex-wrap items-baseline gap-2 py-3.5">
-                  {row.name && (
-                    <span className="text-[14.5px] font-bold">{row.name}</span>
-                  )}
-                  <span className="text-[13px] text-ink-2">{row.email}</span>
-                  <span
-                    className={`ml-auto rounded-full px-2.5 py-0.5 text-[11.5px] font-bold ${status.tone}`}
-                  >
-                    {status.label}
+                <li key={row.id} data-invitation={row.id} className="flex flex-wrap items-center gap-2 py-3.5">
+                  <span className="min-w-0">
+                    <span className="block text-[14.5px] font-bold">{row.name || row.email}</span>
+                    <span className="block text-[12.5px] text-ink-2">{row.name ? `${row.email} · ` : ""}{line}</span>
+                  </span>
+                  <span className="ml-auto flex items-center gap-2">
+                    {(row.undelivered && !row.joined) && <span className={`rounded-full px-2.5 py-0.5 text-[11.5px] font-bold ${status.tone}`}>{status.label}</span>}
+                    {!row.joined && key !== "REVOKED" && <ResendInvitation id={row.id} />}
                   </span>
                 </li>
               );

@@ -130,7 +130,7 @@ export function StatisticsCards({
                   /* A COUNT, NOT A COMPLIMENT. */
                   credit={creditLine(s)}
                   links={[
-                    { label: "Invite a Colleague", href: "/invite-colleague" },
+                    { label: "Join Panameer", href: "/connect/invite" },
                     { label: "Grow Your Community", href: "/connect/leaders" },
                     { label: "Find a Mentor", href: "/connect/mentors" },
                   ]}

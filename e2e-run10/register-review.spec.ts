@@ -65,7 +65,7 @@ test("register review: thin-line sections, square ink buttons", async ({ page })
   }
 });
 
-const CONNECT = ["/connect/community", "/connect/connections", "/connect/mentors", "/connect/community", "/connect/groups", "/invite-colleague"];
+const CONNECT = ["/connect/community", "/connect/connections", "/connect/mentors", "/connect/community", "/connect/groups", "/connect/invite"];
 test("connect pages: shots", async ({ page }) => {
   await persona();
   await signIn(page);

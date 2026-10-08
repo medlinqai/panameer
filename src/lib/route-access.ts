@@ -17,7 +17,6 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/your-path", requires: "authenticated" },
   { prefix: "/account-health", requires: "authenticated" },
   { prefix: "/worklist", requires: "authenticated" },
-  { prefix: "/invite-colleague", requires: "authenticated" },
   { prefix: "/hire", requires: "canHireTalent" },
   { prefix: "/work-requests", requires: "canHireTalent" },
   // FIND WORK IS A PROVIDER SURFACE — searching open job postings. This said

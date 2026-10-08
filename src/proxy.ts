@@ -69,7 +69,6 @@ export const config = {
     "/worklist/:path*",
     "/worklist",
     // Paired with `route-access.ts`'s entry — the spec parses
-    "/invite-colleague/:path*",
     "/hire/:path*",
     // Paired with `route-access.ts`'s entry — the spec parses
     "/work-requests/:path*",

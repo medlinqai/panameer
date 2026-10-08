@@ -269,7 +269,7 @@ test("E721 item 1c — inviting an address that is already a member offers the c
 
   const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   await signInAsSeeded(page, VIEWER);
-  await page.goto("/invite-colleague", { waitUntil: "domcontentloaded" });
+  await page.goto("/connect/invite", { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(1800);
   await page.fill('input[type="email"]', target!.email);
   /*

@@ -83,7 +83,7 @@ export function CommunityHero({
         </>
       }
       // ONE BUTTON. Ruling 45(4): the second slot is absent unless a second
-      primary={{ label: "Invite a Colleague", href: "/invite-colleague" }}
+      primary={{ label: "Join Panameer", href: "/connect/invite" }}
     />
   );
 }
@@ -130,8 +130,8 @@ export function ConnectionsHero({ web, hero, standing, invitations }: { web: Web
           {hero?.latestJoin ? <> <strong className="text-ink">{hero.latestJoin.name}</strong> joined from your invite.</> : null}
         </p>
         <div className="flex flex-wrap gap-3">
-          <a href="/invite-colleague" className="inline-flex min-h-[44px] items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover">Invite a Colleague</a>
-          <a href="/invite-colleague" className="inline-flex min-h-[44px] items-center border border-ink px-5 text-[14px] font-bold hover:bg-ink/5">Invitations{invitations > 0 ? ` (${invitations})` : ""}</a>
+          <a href="/connect/invite" className="inline-flex min-h-[44px] items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover">Join Panameer</a>
+          <a href="/connect/invite" className="inline-flex min-h-[44px] items-center border border-ink px-5 text-[14px] font-bold hover:bg-ink/5">Invitations{invitations > 0 ? ` (${invitations})` : ""}</a>
           <a href="/connect/leaders" className="inline-flex min-h-[44px] items-center border border-line px-5 text-[14px] font-bold hover:border-ink">See Leaders</a>
         </div>
       </div>

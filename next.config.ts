@@ -94,6 +94,7 @@ const nextConfig: NextConfig = {
       { source: "/community", destination: "/connect/community", permanent: true },
       { source: "/community/:path*", destination: "/connect/:path*", permanent: true },
       { source: "/recommendations", destination: "/connect/recommendations", permanent: true },
+      { source: "/invite-colleague", destination: "/connect/invite", permanent: true },
       { source: "/recommendations/:path*", destination: "/connect/recommendations/:path*", permanent: true },
       { source: "/coordinator/:path*", destination: "/dashboard", permanent: true },
       // C-E003: Colleagues became Connections.
