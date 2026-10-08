@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { lessonTitle, lessonDescription } from "@/lib/learn-display";
 import { shownRunTime } from "@/lib/lesson-duration";
 import { LESSON_STATE_LABEL, OTHER_GROUP, isPlayable, lessonState, pathHasPlayableLessons, pathIsOpenTo, playableProgress, playableProgressOfRows } from "@/lib/learn";
 import { lessonFace } from "@/lib/learn-faces";
@@ -281,8 +282,8 @@ export async function getLearnPath(
       description: s.description,
       lessons: s.lessons.map((l) => ({
         id: l.id,
-        title: l.title,
-        description: l.description,
+        title: lessonTitle(l.title),
+        description: lessonDescription(l.description),
         runTime: shownRunTime(l),
         stateLabel: LESSON_STATE_LABEL[lessonState(l)],
         playable: isPlayable(l),
@@ -408,8 +409,8 @@ export async function getLearnLesson(
   return {
     lesson: {
       id: here.lesson.id,
-      title: here.lesson.title,
-      description: here.lesson.description,
+      title: lessonTitle(here.lesson.title),
+      description: lessonDescription(here.lesson.description),
       runTime: here.lesson.runTime,
       vimeoRef: own?.vimeo_ref ?? null,
       thumbnailUrl: own?.thumbnail_url ?? null,

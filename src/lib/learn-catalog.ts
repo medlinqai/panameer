@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { lessonTitle, lessonDescription } from "@/lib/learn-display";
 import { isPlayable } from "@/lib/learn";
 import { areaFor } from "@/lib/skill-areas";
 import { experienceYears } from "@/lib/experience";
@@ -68,7 +69,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
   return paths.map((p) => {
     const courses: CatCourse[] = p.courses.map((c) => {
       const lessons = c.sections.flatMap((s) => s.lessons).map((l) => ({
-        id: l.id, title: l.title, minutes: minutesOf(l.duration_seconds, l.run_time), playable: isPlayable(l), done: done.has(l.id), description: l.description, vimeoRef: l.vimeo_ref,
+        id: l.id, title: lessonTitle(l.title), minutes: minutesOf(l.duration_seconds, l.run_time), playable: isPlayable(l), done: done.has(l.id), description: lessonDescription(l.description), vimeoRef: l.vimeo_ref,
         _expert: l.expert ? nameOf(l.expert) : null,
       }));
       const experts = lessons.map((l) => l._expert).filter(Boolean) as string[];
