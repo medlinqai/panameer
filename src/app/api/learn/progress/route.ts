@@ -5,6 +5,7 @@ import { ensureEnrolmentMembership } from "@/lib/group-membership";
 import { learnEnrolmentRefusal } from "@/lib/learn-enrolment-gate";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
+import { isPlayable } from "@/lib/learn";
 
 const BODY = z.object({
   lessonId: z.string().uuid(),
@@ -33,6 +34,8 @@ export async function POST(request: Request) {
     },
     select: {
       id: true,
+      vimeo_ref: true,
+      production_status: true,
       section: {
         select: {
           course: {
@@ -59,6 +62,11 @@ export async function POST(request: Request) {
       where: { user_id: viewer.userId, lesson_id: lessonId },
     });
     return NextResponse.json({ ok: true, completed: false });
+  }
+
+  // No credit for a lesson with no video yet (Scott 2026-10-08).
+  if (!isPlayable(lesson)) {
+    return NextResponse.json({ error: "This lesson isn't out yet, so it can't be marked complete." }, { status: 409 });
   }
 
   const pathId = lesson.section.course.learning_path_id;

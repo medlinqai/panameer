@@ -105,7 +105,16 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
             <LessonPlayer embedUrl={embed} title={lesson.title} instructor={instructor ? { name: instructor.name, photoUrl: instructor.photoUrl } : null} thumbnailUrl={lesson.thumbnailUrl} stateLabel={lesson.stateLabel} />
             <p className="mt-5 text-[11px] font-semibold tracking-[0.12em] text-magenta">LESSON {i + 1} OF {flat.length}{here.minutes ? ` · ${here.minutes} MIN` : ""}</p>
             <h1 className="mb-4 mt-1 text-[26px] font-bold leading-tight sm:text-[30px]">{lesson.title}</h1>
-            <LessonStep lessonId={lessonId} prevHref={prev ? `/learn/${p.slug}/${prev.id}` : null} nextHref={nextHref} lastLabel={lastLabel} />
+            {lesson.playable ? (
+              <LessonStep lessonId={lessonId} prevHref={prev ? `/learn/${p.slug}/${prev.id}` : null} nextHref={nextHref} lastLabel={lastLabel} />
+            ) : (
+              // No video yet: nothing to complete, just move on (Scott 2026-10-08).
+              <div className="flex flex-wrap items-center gap-3">
+                {prev && <Link href={`/learn/${p.slug}/${prev.id}`} className="inline-flex min-h-11 items-center border border-ink px-5 text-[14px] font-semibold hover:bg-black/[0.04]">‹ Previous</Link>}
+                <Link href={nextHref} className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover">{next ? "Skip to Next Lesson ›" : "Back to the Path"}</Link>
+                <span className="text-[13px] text-ink-3">Coming soon — no video yet, so there's nothing to mark complete.</span>
+              </div>
+            )}
             {instructor && (
               <div data-lesson-instructor className="mt-5 flex flex-wrap items-center gap-3 border-t border-line pt-4">
                 {instructor.photoUrl ? (
