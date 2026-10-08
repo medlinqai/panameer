@@ -67,7 +67,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
           picture={
             <BubbleField
               bubbles={all.filter((p) => p.slug !== START_SLUG).map((p) => ({ key: p.id, href: `/learn/${p.slug}`, label: p.title, hover: `${p.title} · ${p.lessons} lessons${p.playable ? "" : " · coming soon"}`, size: p.lessons, fill: p.playable ? 1 : null }))}
-              centre={start ? { key: start.id, href: `/learn/${start.slug}`, label: start.title, hover: `${start.title} · ${start.lessons} lessons · start here`, size: start.lessons, fill: 1, badge: "START" } : undefined}
+              center={start ? { key: start.id, href: `/learn/${start.slug}`, label: start.title, hover: `${start.title} · ${start.lessons} lessons · start here`, size: start.lessons, fill: 1, badge: "START" } : undefined}
               me="YOU"
               caption="Bubble size = lessons · click one to open the path"
               legend={[

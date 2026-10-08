@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRebuild } from "@/components/motion/Rebuild";
 
-// One shared bubble picture (Learn + Groups, 2026-10-08): you in the centre, bubbles on two loose rings, size by a number,
+// One shared bubble picture (Learn + Groups, 2026-10-08): you in the center, bubbles on two loose rings, size by a number,
 // drift every 15 s (reduced motion = still). Ink = done/active · dashed #C9CDDC = quiet/not started · magenta ring = you are here / waiting on you.
 export type Bubble = {
   key: string;
@@ -39,11 +39,11 @@ const LABEL_H = 18;
 const labelW = (s: string) => Math.min(18, s.length) * 5.4;
 
 /** Seed on two loose rings, then relax: every bubble is a box (circle + its label) and boxes push apart until none overlap. */
-function layout(rs: number[], labels: string[], seed: number, centre: { r: number; label: string } | null) {
+function layout(rs: number[], labels: string[], seed: number, center: { r: number; label: string } | null) {
   const n = rs.length;
   const off = rand(seed) * Math.PI * 2;
   const pts: Box[] = [];
-  if (centre) pts.push({ x: CX, y: CY, w: Math.max(2 * centre.r, labelW(centre.label)) + 8, h: 2 * centre.r + LABEL_H, fixed: true });
+  if (center) pts.push({ x: CX, y: CY, w: Math.max(2 * center.r, labelW(center.label)) + 8, h: 2 * center.r + LABEL_H, fixed: true });
   else pts.push({ x: CX, y: CY, w: 56, h: 52, fixed: true }); // the "YOU" disc
   rs.forEach((r, i) => {
     const ang = off + i * ((2 * Math.PI) / Math.max(n, 1));
@@ -87,29 +87,29 @@ function layout(rs: number[], labels: string[], seed: number, centre: { r: numbe
   return { pts: pts.slice(1), c };
 }
 
-export function BubbleField({ bubbles, me, caption, legend, centre }: { bubbles: Bubble[]; me: string; caption: string; legend: { label: string; swatch: "ink" | "half" | "ring" | "quiet" | "check" }[]; centre?: Bubble & { badge?: string } }) {
+export function BubbleField({ bubbles, me, caption, legend, center }: { bubbles: Bubble[]; me: string; caption: string; legend: { label: string; swatch: "ink" | "half" | "ring" | "quiet" | "check" }[]; center?: Bubble & { badge?: string } }) {
   const { cycle, secondsLeft } = useRebuild();
   const list = bubbles.slice(0, 18);
-  const max = Math.max(...list.map((b) => b.size), centre?.size ?? 1, 1);
-  const min = Math.min(...list.map((b) => b.size), centre?.size ?? 0, 0);
+  const max = Math.max(...list.map((b) => b.size), center?.size ?? 1, 1);
+  const min = Math.min(...list.map((b) => b.size), center?.size ?? 0, 0);
   const span = max - min || 1;
   const radius = (size: number) => MIN_R + ((size - min) / span) * (MAX_R - MIN_R);
-  const centreR = centre ? Math.max(radius(centre.size), 30) : 0;
+  const centerR = center ? Math.max(radius(center.size), 30) : 0;
   const placed = useMemo(() => {
     const rs = list.map((b) => radius(b.size));
     let best: Box[] = [];
     let bestC = Infinity;
     for (let at = 0; at < 25 && bestC > 0; at++) {
-      const res = layout(rs, list.map((b) => b.label), cycle * 31 + at, centre ? { r: centreR, label: centre.label } : null);
+      const res = layout(rs, list.map((b) => b.label), cycle * 31 + at, center ? { r: centerR, label: center.label } : null);
       if (res.c < bestC) {
         best = res.pts;
         bestC = res.c;
       }
     }
-    // Box centre → circle centre (the label sits under the circle).
+    // Box center → circle center (the label sits under the circle).
     return list.map((b, i) => ({ ...b, r: rs[i], x: best[i].x, y: best[i].y - LABEL_H / 2 }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bubbles, cycle, centre?.key]);
+  }, [bubbles, cycle, center?.key]);
 
   return (
     <div data-bubble-field>
@@ -144,14 +144,14 @@ export function BubbleField({ bubbles, me, caption, legend, centre }: { bubbles:
             </a>
           );
         })}
-        {centre ? (
-          <a href={centre.href} aria-label={centre.hover}>
+        {center ? (
+          <a href={center.href} aria-label={center.hover}>
             <g transform={`translate(${CX}, ${CY - LABEL_H / 2})`}>
-              <title>{centre.hover}</title>
-              <circle r={centreR} fill={INK} />
-              <circle r={centreR + 5} fill="none" stroke={MAG} strokeWidth={3} />
-              {centre.badge && <text y={4} textAnchor="middle" fontSize={11} fontWeight={800} letterSpacing={1.2} fill="#fff">{centre.badge}</text>}
-              <text y={centreR + 14} textAnchor="middle" fontSize={10} fontWeight={700} fill={INK}>{clip(centre.label, 24)}</text>
+              <title>{center.hover}</title>
+              <circle r={centerR} fill={INK} />
+              <circle r={centerR + 5} fill="none" stroke={MAG} strokeWidth={3} />
+              {center.badge && <text y={4} textAnchor="middle" fontSize={11} fontWeight={800} letterSpacing={1.2} fill="#fff">{center.badge}</text>}
+              <text y={centerR + 14} textAnchor="middle" fontSize={10} fontWeight={700} fill={INK}>{clip(center.label, 24)}</text>
             </g>
           </a>
         ) : (
