@@ -1,106 +1,98 @@
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
-import { getLearnCourses, courseTotals } from "@/lib/learn-courses";
 import { viewerTeaches } from "@/lib/learn-home";
+import { learnCatalogue, timeLabel } from "@/lib/learn-catalogue";
+import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
-import { PatternHeader } from "@/components/casing/PatternHeader";
-import { AUDIENCE_LABEL, AUDIENCE_PREFIX } from "@/lib/learn";
 
 export const metadata = {
-  title: "Courses · Learn · Panameer",
-  description:
-    "Every course in the Panameer catalog, grouped by the learning path it belongs to.",
+  title: "Courses — Panameer Learn",
+  description: "Every course in every Panameer learning path, searchable, with length and your progress.",
 };
+export const dynamic = "force-dynamic";
 
-export default async function Page() {
+// Learn › Courses (2026-10-08, mockup D): one dense table for people who want one topic, not a whole path.
+export default async function CoursesPage({ searchParams }: { searchParams: Promise<{ q?: string; area?: string; video?: string; short?: string }> }) {
   const viewer = await getSessionViewer();
-  const groups = await getLearnCourses();
-  const totals = courseTotals(groups);
-  const teaches = viewer ? await viewerTeaches(viewer) : false;
+  const sp = await searchParams;
+  const [paths, areas, teaches] = await Promise.all([learnCatalogue(viewer?.userId ?? null), getSkillAreas(), viewerTeaches(viewer)]);
+  const q = sp.q?.trim().toLowerCase() ?? "";
+  const rows = paths
+    .flatMap((p) => p.courses.map((c) => ({ p, c })))
+    .filter(({ p, c }) => {
+      if (sp.area && p.area !== sp.area) return false;
+      if (sp.video === "1" && !c.lessons.some((l) => l.playable)) return false;
+      if (sp.short === "1" && !(c.minutes > 0 && c.minutes < 30)) return false;
+      if (q && ![c.title, c.summary ?? "", c.teacher ?? "", p.title, ...c.lessons.map((l) => l.title)].some((x) => x.toLowerCase().includes(q))) return false;
+      return true;
+    });
+  const href = (patch: Record<string, string | undefined>) => {
+    const u = new URLSearchParams();
+    for (const [k, v] of Object.entries({ q: sp.q, area: sp.area, video: sp.video, short: sp.short, ...patch })) if (v) u.set(k, v);
+    const s = u.toString();
+    return `/learn/courses${s ? `?${s}` : ""}`;
+  };
+  const chip = (on: boolean) => "shrink-0 whitespace-nowrap border px-3 py-1.5 text-[13px] font-semibold " + (on ? "border-ink bg-ink text-surface" : "border-line text-ink hover:border-ink");
+  const usedAreas = new Set(paths.map((p) => p.area));
+  const BTN_K = "inline-flex min-h-9 items-center bg-ink px-3.5 text-[13px] font-semibold text-surface hover:bg-ink-hover";
+  const BTN = "inline-flex min-h-9 items-center border border-ink px-3.5 text-[13px] font-semibold hover:bg-black/[0.04]";
 
   return (
     <>
       {viewer && <LearnTabs active="courses" teaches={teaches} />}
-
-      <div className="mx-auto w-full max-w-5xl px-5 py-6 sm:px-8">
-        {}
-        <PatternHeader
-          eyebrow="EVERY COURSE"
-          headline="Courses"
-          lede="A course covers one Oracle application. A path is the job that strings several of them together."
-          figures={[
-            { label: "Courses", value: totals.courses },
-            { label: "Across Paths", value: totals.paths },
-            { label: "With Video", value: totals.playable },
-          ]}
-          move={
-            <>
-              {}
-              {totals.courses === 0 ? (
-                <>Nothing is published yet.</>
-              ) : (
-                <>
-                  Every course belongs to one path, so the path is where you enrol — the course is
-                  what you watch.
-                </>
-              )}
-            </>
-          }
-          primary={{ label: "Browse Learning Paths", href: "/learn/paths" }}
-        />
-
-        <div className="mt-6 space-y-6">
-          {groups.map((g) => (
-            <section key={g.pathSlug}>
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h2 className="font-display text-[17px] font-bold tracking-[-0.2px] text-ink">
-                  <Link href={`/learn/${g.pathSlug}`} className="hover:text-magenta">
-                    {g.pathTitle}
-                  </Link>
-                </h2>
-                {/* — the audience carries its prefix and is */}
-                <span className="text-[11.5px] font-semibold uppercase tracking-[0.07em] text-ink-2">
-                  {`${AUDIENCE_PREFIX} ${AUDIENCE_LABEL[g.audience] ?? g.audience}`}
-                  {g.group ? ` · ${g.group}` : ""}
-                </span>
-                <span className="text-[12px] text-ink-2">
-                  {g.courses.length} course{g.courses.length === 1 ? "" : "s"}
-                </span>
-              </div>
-
-              <ul className="mt-2.5 grid gap-2.5 sm:grid-cols-2">
-                {g.courses.map((c, i) => (
-                  <li key={c.id}>
-                    <Link
-                      href={c.href}
-                      className="flex h-full min-h-[44px] flex-col rounded-brand border border-line bg-white p-4 transition-colors hover:border-magenta"
-                    >
-                      {/* THREE COURSES IN THE CATALOGUE HAVE NO TITLE */}
-                      {c.title.trim() ? (
-                        <b className="font-display text-[14.5px] font-bold leading-[1.3] text-ink">
-                          {c.title}
-                        </b>
-                      ) : (
-                        <b className="font-display text-[14.5px] font-bold leading-[1.3] text-ink-2">
-                          Course {i + 1}
-                        </b>
-                      )}
-                      {c.summary && (
-                        <p className="mt-1 line-clamp-2 text-[12.5px] leading-relaxed text-ink-2">
-                          {c.summary}
-                        </p>
-                      )}
-                      {/* TWO COUNTS, AND THE SECOND ONLY WHEN IT DISAGREES */}
-                      <span className="mt-auto pt-2 text-[11.5px] text-ink-2">
-                        {c.lessons} lesson{c.lessons === 1 ? "" : "s"}
-                        {c.playable !== c.lessons ? ` · ${c.playable} with video` : ""}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
+      <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-courses>
+        <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">EVERY COURSE</p>
+        <h1 className="mt-1.5 text-[30px] font-bold leading-tight">Courses</h1>
+        <form method="get" action="/learn/courses" className="mt-4 flex flex-wrap gap-2">
+          {sp.area && <input type="hidden" name="area" value={sp.area} />}
+          {sp.video && <input type="hidden" name="video" value={sp.video} />}
+          {sp.short && <input type="hidden" name="short" value={sp.short} />}
+          <input name="q" defaultValue={sp.q ?? ""} placeholder="Search courses, lessons, teachers and paths…" aria-label="Search courses" className="h-10 min-w-[220px] flex-1 border border-line bg-surface px-3 text-[14px] focus:border-ink focus:outline-none" />
+          <button type="submit" className="inline-flex min-h-[40px] items-center border border-ink bg-ink px-3.5 text-[13px] font-bold text-surface">Search</button>
+        </form>
+        <nav aria-label="Filters" className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
+          <Link href={href({ area: undefined })} className={chip(!sp.area)}>All Areas</Link>
+          {areas.filter((a) => !a.hidden && usedAreas.has(a.code)).map((a) => <Link key={a.code} href={href({ area: a.code })} className={chip(sp.area === a.code)}>{a.label}</Link>)}
+          <Link href={href({ video: sp.video ? undefined : "1" })} className={chip(sp.video === "1")}>With Video</Link>
+          <Link href={href({ short: sp.short ? undefined : "1" })} className={chip(sp.short === "1")}>Under 30 min</Link>
+        </nav>
+        <p className="mt-3 text-[13px] text-ink-2"><b className="text-ink">{rows.length}</b> {rows.length === 1 ? "course" : "courses"}</p>
+        <div className="mt-2 overflow-x-auto border border-line">
+          <table className="w-full min-w-[760px] text-[13.5px]">
+            <thead>
+              <tr className="border-b border-ink text-left text-[11px] font-bold uppercase tracking-[0.08em] text-ink-3">
+                <th className="px-3 py-2">Course</th>
+                <th className="px-3 py-2">Part Of</th>
+                <th className="px-3 py-2 text-right">Lessons</th>
+                <th className="px-3 py-2">Time</th>
+                <th className="px-3 py-2">You</th>
+                <th className="px-3 py-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ p, c }) => {
+                const total = c.lessons.length;
+                const all = total > 0 && c.done === total;
+                const firstOpen = c.lessons.find((l) => !l.done && l.playable) ?? c.lessons.find((l) => l.playable) ?? null;
+                const go = viewer && firstOpen ? `/learn/${p.slug}/${firstOpen.id}` : `/learn/${p.slug}#course-${c.slug}`;
+                return (
+                  <tr key={c.id} data-course={c.slug} className="border-b border-line align-middle">
+                    <td className="px-3 py-2.5"><Link href={`/learn/${p.slug}#course-${c.slug}`} className="font-semibold hover:underline">{c.title}</Link>{c.teacher && <span className="block text-[12px] text-ink-3">{c.teacher}</span>}</td>
+                    <td className="px-3 py-2.5 text-ink-2"><Link href={`/learn/${p.slug}`} className="hover:underline">{p.title}</Link></td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">{total}</td>
+                    <td className="px-3 py-2.5 text-ink-2">{timeLabel(c.minutes) ?? "—"}</td>
+                    <td className="w-[120px] px-3 py-2.5">
+                      {all ? <span className="text-[12.5px] font-bold">✓ Done</span> : c.done > 0 ? <span aria-label={`${c.done} of ${total}`} className="block h-[6px] w-full bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${Math.round((c.done / total) * 100)}%` }} /></span> : <span className="text-ink-3">—</span>}
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      {!c.lessons.some((l) => l.playable) ? <span className="text-[12px] font-semibold text-ink-3">Coming Soon</span> : <Link href={all ? `/learn/${p.slug}#course-${c.slug}` : go} className={c.done > 0 && !all ? BTN_K : BTN}>{all ? "Review" : c.done > 0 ? "Continue" : "Start"}</Link>}
+                    </td>
+                  </tr>
+                );
+              })}
+              {rows.length === 0 && <tr><td colSpan={6} className="px-3 py-6 text-center text-ink-2">No courses match.</td></tr>}
+            </tbody>
+          </table>
         </div>
       </div>
     </>
