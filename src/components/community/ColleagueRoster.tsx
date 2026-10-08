@@ -333,6 +333,25 @@ function OtherMembers({
   );
 }
 
+/** Starter notes for the ask (Scott 2026-10-08) — tap one, then edit the [brackets]. */
+const RECO_FORMATS: { label: string; text: (first: string) => string }[] = [
+  {
+    label: "A Project We Did",
+    text: (f) =>
+      `Hi ${f}, we worked together on [project] at [company]. Could you write a few lines on what I did on it — [my part] — and how it turned out?`,
+  },
+  {
+    label: "My Skills",
+    text: (f) =>
+      `Hi ${f}, could you speak to my work in [skill 1] and [skill 2] — for example how I handled [a challenge] when we worked together?`,
+  },
+  {
+    label: "Working With Me",
+    text: (f) =>
+      `Hi ${f}, could you say what I'm like to work with — how I communicate, whether I deliver on time, and how I handle pressure?`,
+  },
+];
+
 /** THE ASK WS-A) */
 function AskForRecommendation({
   row,
@@ -402,11 +421,27 @@ function AskForRecommendation({
               <span className="text-[13.5px] font-bold">
                 What should they talk about?
               </span>
+            </label>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-[12.5px] text-ink-2">Start from:</span>
+              {RECO_FORMATS.map((f) => (
+                <button
+                  key={f.label}
+                  type="button"
+                  onClick={() => setNote(f.text(row.name.split(" ")[0] ?? ""))}
+                  className="border border-line px-2.5 py-1 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-ink hover:text-ink"
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <label className="mt-2 block">
+              <span className="sr-only">Your note</span>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={5}
-                placeholder="Remind them what you worked on together, and what would be useful to mention."
+                placeholder="Pick a starting point above, or write your own: what you worked on together and what would be useful to mention."
                 className="mt-1 w-full border border-line bg-surface px-3 py-2.5 text-[14.5px] leading-relaxed outline-none focus:border-magenta"
               />
             </label>
