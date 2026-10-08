@@ -103,6 +103,10 @@ export type TriageRow = {
   at: Date;
   unread: boolean;
   needsAction: boolean;
+  /** For the row's own buttons (Approve / Decline, Reply, Dismiss). */
+  entityId: string | null;
+  dedupeKey: string | null;
+  resolved: boolean;
 };
 
 const TRIAGE_SELECT = {
@@ -117,12 +121,15 @@ const TRIAGE_SELECT = {
   requires_action: true,
   resolved_at: true,
   delivered_in_app_at: true,
+  entity_id: true,
+  dedupe_key: true,
 } as const;
 
 function toTriage(n: {
   id: string; title: string; body: string | null; href: string | null;
   category: string; event_key: string; created_at: Date; read_at: Date | null;
   requires_action: boolean; resolved_at: Date | null; delivered_in_app_at: Date | null;
+  entity_id: string | null; dedupe_key: string | null;
 }): TriageRow {
   return {
     id: n.id,
@@ -134,6 +141,9 @@ function toTriage(n: {
     at: n.created_at,
     unread: n.read_at === null,
     needsAction: isWorklistItem(n),
+    entityId: n.entity_id,
+    dedupeKey: n.dedupe_key,
+    resolved: n.resolved_at !== null,
   };
 }
 
@@ -178,7 +188,7 @@ export async function getTriageCounts(
   };
 }
 
-export type ActRow = TriageRow & { resolved: boolean };
+export type ActRow = TriageRow;
 
 /** Closes action items whose ask is already done: messages that have been read,
  *  and "profile hidden" once the profile is visible again. Idempotent. */
@@ -228,7 +238,7 @@ export async function getActList(
     take: 200,
     select: TRIAGE_SELECT,
   });
-  return rows.map((n) => ({ ...toTriage(n), resolved: n.resolved_at !== null }));
+  return rows.map(toTriage);
 }
 
 export async function getActCounts(

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { shortTime } from "@/lib/short-time";
 import "@/components/notifications/triage.css";
+import { RowActions } from "@/components/notifications/RowActions";
+import type { RowAction } from "@/lib/worklist-actions";
 
 export type Row = {
   id: string;
@@ -15,6 +17,7 @@ export type Row = {
   at: string;
   unread: boolean;
   needsAction: boolean;
+  action?: RowAction;
 };
 
 export type Chip = { key: string; label: string; n: number };
@@ -215,6 +218,11 @@ export function TriageList({
                     {r.needsAction && <span className="pm-triage-needs">Needs You</span>}
                   </div>
                   {r.body && <p className="pm-triage-body">{r.body}</p>}
+                  {r.action && (
+                    <div className="mt-1.5">
+                      <RowActions id={r.id} action={r.action} href={r.href} />
+                    </div>
+                  )}
                 </div>
                 <time className="pm-triage-at" dateTime={r.at}>
                   {shortTime(new Date(r.at), now)}

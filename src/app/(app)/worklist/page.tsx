@@ -3,6 +3,8 @@ import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { findCategory } from "@/lib/notification-categories";
 import { getActList, getActCounts, settleStale } from "@/lib/worklist";
+import { actionsFor } from "@/lib/worklist-actions";
+import { WorklistRow } from "@/components/notifications/RowActions";
 import { shortTime } from "@/lib/short-time";
 import "@/components/notifications/triage.css";
 
@@ -60,6 +62,7 @@ export default async function Page({
     }
     rows.push({ ...r });
   }
+  const actions = await actionsFor(rows);
 
   const href = (next: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
@@ -152,10 +155,7 @@ export default async function Page({
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} data-row={r.id} data-resolved={r.resolved ? "yes" : "no"}>
-                    <td data-label="Status">
-                      <span className="pm-wl-status">{r.resolved ? "Completed" : "Open"}</span>
-                    </td>
+                  <WorklistRow key={r.id} id={r.id} resolved={r.resolved} action={actions[r.id] ?? null} href={r.href}>
                     <td data-label="Title">
                       <strong>{r.n && r.n > 1 ? r.title.replace(/^New message from /, `${r.n} new messages from `) : r.title}</strong>
                       {r.body && <div className="text-[12.5px] text-ink-2">{r.body}</div>}
@@ -164,17 +164,7 @@ export default async function Page({
                     <td data-label="Created">
                       <time dateTime={r.at.toISOString()}>{shortTime(r.at, now)}</time>
                     </td>
-                    <td data-label="Action">
-                      {r.href ? (
-                        <Link href={r.href} className="pm-triage-btn pm-triage-btn-p">
-                          Open
-                        </Link>
-                      ) : (
-                        // A row with no href has nowhere to send anybody. The cell
-                        <span className="text-[12.5px] text-ink-3">No link</span>
-                      )}
-                    </td>
-                  </tr>
+                  </WorklistRow>
                 ))}
               </tbody>
             </table>
