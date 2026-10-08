@@ -530,6 +530,18 @@ export const NOTIFICATION_EVENTS = {
     body: () => "Accept or decline on your Mentors tab.",
     href: () => "/connect/mentors#requests",
   },
+  // Scott 2026-10-08: an on-platform colleague asked for a recommendation got no bell item.
+  "recommendation.requested": {
+    event: "recommendation.requested",
+    recipient: "the person asked to write a recommendation",
+    category: "community.activity",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `${str(v, "fromName", "Someone")} asked you for a recommendation`,
+    body: () => "A few lines about working together. It shows on their profile.",
+    href: (v) => str(v, "respondPath", "/connect/recommendations"),
+  },
   "follow.received": {
     event: "follow.received",
     recipient: "the person followed",

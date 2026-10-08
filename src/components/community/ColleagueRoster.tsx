@@ -364,6 +364,7 @@ function AskForRecommendation({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [emailed, setEmailed] = useState(true);
 
   const send = async () => {
     setBusy(true);
@@ -380,6 +381,7 @@ function AskForRecommendation({
         setError(data?.error ?? "We couldn't send that just now.");
         return;
       }
+      setEmailed(data?.sent !== false);
       setDone(true);
     } catch {
       setError("We couldn't send that just now.");
@@ -397,8 +399,9 @@ function AskForRecommendation({
         {done ? (
           <>
             <p className="mt-3 text-[14px] leading-relaxed text-ink-2">
-              Sent. {row.name.split(" ")[0]} will get an email with your note and a
-              link to write it.
+              {emailed
+                ? <>Sent. {row.name.split(" ")[0]} will get a notification and an email with your note and a link to write it.</>
+                : <>Sent to {row.name.split(" ")[0]}&apos;s notifications on Panameer. The email didn&apos;t go out — we&apos;ll keep it in their notifications.</>}
             </p>
             <div className="mt-4 flex justify-end">
               <button

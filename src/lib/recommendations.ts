@@ -6,6 +6,7 @@ import { normalizeEmail } from "@/lib/normalizeEmail";
 import { sendEmail } from "@/lib/resend";
 import { recommendationRequestTemplate } from "@/lib/email/templates/recommendation-request";
 import { displayFullName } from "@/lib/display";
+import { notify } from "@/lib/notifications";
 
 /** 30 days. A busy former client will not answer within 24 hours. */
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -142,6 +143,21 @@ export async function requestRecommendation(
       });
 
   const url = `${appBaseUrl(opts.origin)}/recommend/${raw}`;
+
+  // On-platform: a bell + worklist item too, not only the email.
+  if (existing) {
+    const asked = await prisma.person.findFirst({ where: { user_id: existing.id }, select: { id: true } });
+    if (asked) {
+      await notify({
+        event: "recommendation.requested",
+        personId: asked.id,
+        entityType: "recommendation_request",
+        entityId: row.id,
+        dedupeKey: `recommendation.request:${row.id}:${fields.sent_at.toISOString()}`,
+        vars: { fromName: providerName, respondPath: `/recommend/${raw}` },
+      });
+    }
+  }
   const { subject, html, text } = recommendationRequestTemplate({
     providerName,
     contactName: input.contactName.trim(),
