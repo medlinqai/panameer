@@ -370,10 +370,10 @@ function AskForRecommendation({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-lg border-t border-line py-5">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={onClose}>
+      <div role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} className="w-full max-w-lg border border-line bg-surface p-6 shadow-[0_18px_48px_-12px_rgba(23,30,62,0.35)]">
         <h2 className="font-display text-[18px] font-bold">
-          Ask {row.name} for a recommendation
+          Ask {row.name} for a Recommendation
         </h2>
         {done ? (
           <>
@@ -407,7 +407,7 @@ function AskForRecommendation({
                 onChange={(e) => setNote(e.target.value)}
                 rows={5}
                 placeholder="Remind them what you worked on together, and what would be useful to mention."
-                className="mt-1 w-full rounded-[10px] border border-line px-3 py-2.5 text-[14.5px] leading-relaxed outline-none focus:border-magenta"
+                className="mt-1 w-full border border-line bg-surface px-3 py-2.5 text-[14.5px] leading-relaxed outline-none focus:border-magenta"
               />
             </label>
             {error && (
