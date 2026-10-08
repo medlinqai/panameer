@@ -28,6 +28,7 @@ import { ROUTES } from "@/lib/routes";
 export const revalidate = 60;
 
 export const metadata = {
+  metadataBase: new URL("https://status.panameer.com"),
   title: "Panameer Work Tracker",
   description: "Daily progress on the Panameer build, from first idea to public beta.",
 };
