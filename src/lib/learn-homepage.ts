@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getTestState } from "@/lib/learn-assessment";
 import { areaFor } from "@/lib/skill-areas";
+import { experienceYears } from "@/lib/experience";
 
 // Learn › Home (2026-10-08): the path you're furthest into, two boards, and the most popular paths (ranked by learners).
 type LessonRow = { id: string; title: string; seconds: number | null; runTime: string | null };
@@ -38,6 +39,19 @@ const monthStart = () => {
 };
 const nameOf = (p: { first_name: string | null; last_name: string | null } | null | undefined) => `${p?.first_name ?? ""} ${p?.last_name ?? ""}`.trim() || "A member";
 
+/** The suggestion for members with under 2 years' experience and no enrollments (Scott 2026-10-08). */
+export const BEGINNER_PATH = "oracle-cloud-foundations";
+
+/** Years of work from the member's own profile spans (0 with no provider profile). */
+export async function profileYears(userId: string) {
+  const pp = await prisma.providerProfile.findFirst({
+    where: { person: { user_id: userId } },
+    select: { employers: { select: { start_date: true, end_date: true, is_current: true } }, projects: { select: { start_date: true, end_date: true, is_current: true } } },
+  });
+  if (!pp) return 0;
+  return experienceYears([...pp.employers, ...pp.projects].map((x) => ({ start: x.start_date, end: x.end_date, isCurrent: x.is_current })));
+}
+
 export async function learnHomeData(userId: string, areaFilter?: string) {
   const [paths, enrollments, myProgress, myCerts] = await Promise.all([
     prisma.learningPath.findMany({
@@ -55,6 +69,7 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
     prisma.certification.findMany({ where: { user_id: userId, learning_path_id: { not: null } }, select: { learning_path_id: true } }),
   ]);
   const lessons = await lessonsByPath(paths.map((p) => p.id));
+  const beginner = enrollments.length === 0 && (await profileYears(userId)) < 2;
   const done = new Set(myProgress.map((p) => p.lesson_id));
   const certified = new Set(myCerts.map((c) => c.learning_path_id));
   const enrolled = new Set(enrollments.map((e) => e.learning_path_id));
@@ -97,6 +112,8 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
       };
     })
     .sort((a, b) => b.learners - a.learners || b.completed - a.completed || a.title.localeCompare(b.title))
+    // Beginners (< 2 years' experience, no enrollments): Oracle Cloud Foundations first.
+    .sort((a, b) => (beginner ? Number(b.slug === BEGINNER_PATH) - Number(a.slug === BEGINNER_PATH) : 0))
     .map((p, i) => ({ ...p, rank: i + 1 }));
 
   const teachers = new Set(paths.map((p) => p.expert_person_id).filter(Boolean)).size;
@@ -112,6 +129,7 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
     kpis: { inProgress: started.length, certificates: myCerts.length, lessonsDone: myProgress.length, paths: paths.length, teachers },
     popular: areaFilter ? popular.filter((p) => p.area === areaFilter) : popular,
     topPath: popular[0] ?? null,
+    beginner,
   };
 }
 

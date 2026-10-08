@@ -67,7 +67,13 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
               { value: d.kpis.teachers, label: "TEACHERS" },
               { value: d.kpis.certificates, label: "YOUR CERTIFICATES" },
             ]}
-            paragraph={<>Start with the most popular path in your area. Every certificate you earn shows on your profile and lifts your Search Score.</>}
+            paragraph={
+              d.beginner && d.topPath ? (
+                <>New to Oracle Cloud? Start with <b className="text-ink">{d.topPath.title}</b> — it covers the basics before any module path. Every certificate you earn shows on your profile and lifts your Search Score.</>
+              ) : (
+                <>Start with the most popular path in your area. Every certificate you earn shows on your profile and lifts your Search Score.</>
+              )
+            }
             actions={
               <>
                 {d.topPath && <Link href={`/learn/${d.topPath.slug}`} className={HERO_BTN}>Start {d.topPath.title}</Link>}
