@@ -3,7 +3,7 @@ import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { decideEstimate, EstimateError, saveEstimate, sendEstimate } from "@/lib/estimates";
 
-const LINE = z.object({ kind: z.enum(["SERVICE", "FIXED", "NOT_TO_EXCEED"]), description: z.string().max(300), providerServiceId: z.string().uuid().optional().nullable(), uom: z.string().max(16).optional().nullable(), quantity: z.number().nonnegative().max(1e6).optional().nullable(), rateCents: z.number().int().nonnegative().max(1e9).optional().nullable(), amountCents: z.number().int().nonnegative().max(1e10).optional().nullable() });
+const LINE = z.object({ kind: z.enum(["SERVICE", "FIXED", "NOT_TO_EXCEED"]), description: z.string().max(300), providerServiceId: z.string().uuid().optional().nullable(), serviceProductId: z.string().uuid().optional().nullable(), uom: z.string().max(16).optional().nullable(), quantity: z.number().nonnegative().max(1e6).optional().nullable(), rateCents: z.number().int().nonnegative().max(1e9).optional().nullable(), amountCents: z.number().int().nonnegative().max(1e10).optional().nullable() });
 const EST = z.object({
   customerPersonId: z.string().uuid().optional().nullable(),
   customerEmail: z.string().email().max(200).optional().nullable().or(z.literal("")),

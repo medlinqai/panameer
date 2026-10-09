@@ -16,7 +16,7 @@ export class EstimateError extends Error {
   }
 }
 
-export type EstimateLineInput = { kind: CostEstimateLineKind; description: string; providerServiceId?: string | null; uom?: string | null; quantity?: number | null; rateCents?: number | null; amountCents?: number | null };
+export type EstimateLineInput = { kind: CostEstimateLineKind; description: string; providerServiceId?: string | null; serviceProductId?: string | null; uom?: string | null; quantity?: number | null; rateCents?: number | null; amountCents?: number | null };
 export type EstimateInput = {
   customerPersonId?: string | null;
   customerEmail?: string | null;
@@ -61,6 +61,7 @@ function linesData(lines: EstimateLineInput[]) {
         kind: l.kind,
         description: l.description.trim().slice(0, 300),
         provider_service_id: l.providerServiceId || null,
+        service_product_id: l.kind === "SERVICE" ? null : l.serviceProductId || null,
         uom: l.kind === "SERVICE" ? (l.uom || "HOUR").toUpperCase() : null,
         quantity: l.kind === "SERVICE" ? new Prisma.Decimal(Number(l.quantity)) : null,
         rate_cents: l.kind === "SERVICE" ? Math.round(Number(l.rateCents)) : null,
@@ -205,7 +206,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
         lines: {
           create: rev.lines.map((l) => ({
             line_number: l.line_number, transaction_type: l.kind === "SERVICE" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", fee_bps: fees.get(l.id)!, description: l.description,
-            uom: l.uom, quantity: l.quantity, unit_price_cents: l.rate_cents, amount_cents: l.amount_cents, provider_service_id: l.provider_service_id,
+            uom: l.uom, quantity: l.quantity, unit_price_cents: l.rate_cents, amount_cents: l.amount_cents, provider_service_id: l.provider_service_id, service_product_id: l.service_product_id,
             billing_cycle: l.kind === "SERVICE" ? rev.billing_cycle : null, payment_terms: rev.payment_terms,
             payment_trigger: l.kind === "SERVICE" ? "TIMESHEET" : l.kind === "FIXED" ? "ACCEPTANCE" : "PAYMENT_REQUEST",
           })),

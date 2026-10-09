@@ -21,9 +21,10 @@ export async function snapshotMilestones(orderId: string) {
   const lines = await prisma.workOrderLine.findMany({ where: { work_order_id: orderId, transaction_type: "SERVICE_BY_AMT" } });
   const reqLines = await prisma.workRequestLine.findMany({ where: { id: { in: lines.map((l) => l.work_request_line_id).filter((x): x is string => !!x) } }, select: { id: true, service_product_id: true } });
   const productOf = new Map(reqLines.map((r) => [r.id, r.service_product_id]));
-  const products = new Map((await prisma.serviceProduct.findMany({ where: { id: { in: reqLines.map((r) => r.service_product_id).filter((x): x is string => !!x) } }, select: { id: true, kind: true, payment_trigger: true, milestones: { orderBy: { sequence: "asc" } } } })).map((p) => [p.id, p]));
+  const productIds = [...reqLines.map((r) => r.service_product_id), ...lines.map((l) => l.service_product_id)].filter((x): x is string => !!x);
+  const products = new Map((await prisma.serviceProduct.findMany({ where: { id: { in: productIds } }, select: { id: true, kind: true, payment_trigger: true, milestones: { orderBy: { sequence: "asc" } } } })).map((p) => [p.id, p]));
   for (const l of lines) {
-    const p = l.work_request_line_id ? products.get(productOf.get(l.work_request_line_id) ?? "") : undefined;
+    const p = products.get(l.service_product_id ?? (l.work_request_line_id ? productOf.get(l.work_request_line_id) ?? "" : ""));
     let rows: { label: string; percent: number; trigger: PaymentTrigger }[] = [];
     if (p) {
       if (p.kind === "BLANKET" || p.kind === "DEPLOYABLE") continue;

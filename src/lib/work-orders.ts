@@ -187,6 +187,7 @@ async function buildWorkOrder(
             unit_price_cents: l.unit_price_cents,
             amount_cents: l.amount_cents,
             supplier_part_id: l.supplier_part_id,
+            service_product_id: l.service_product_id,
             service_start: l.service_start,
             service_end: l.service_end,
             ...lineTerms.get(l.id)!,

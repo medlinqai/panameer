@@ -6231,6 +6231,8 @@ model WorkOrderLine {
 
   /// O-E004: billing terms snapshotted at order time from the provider service or service product — never looked up.
   provider_service_id String?         @db.Uuid
+  /// CAT-E007: the service product this line sells (its milestones are snapshotted from it).
+  service_product_id  String?         @db.Uuid
   billing_cycle       BillingCycle?
   payment_terms       PaymentTerms?
   payment_trigger     PaymentTrigger?
@@ -8508,6 +8510,8 @@ model CostEstimateLine {
   kind                CostEstimateLineKind
   description         String
   provider_service_id String?              @db.Uuid
+  /// Copied from a service product: the order line keeps its payment schedule.
+  service_product_id  String?              @db.Uuid
   uom                 String?
   quantity            Decimal?
   rate_cents          Int?

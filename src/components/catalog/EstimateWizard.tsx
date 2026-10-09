@@ -7,7 +7,7 @@ import { CoverBand } from "@/components/casing/CoverBand";
 import { AREA, BTN, BTN_K, INPUT, LABEL, PaidStrip, Steps, money } from "@/components/catalog/WizardParts";
 
 type Kind = "SERVICE" | "FIXED" | "NOT_TO_EXCEED";
-export type EstLine = { kind: Kind; description: string; providerServiceId: string | null; uom: string; quantity: string; rate: string; amount: string };
+export type EstLine = { kind: Kind; description: string; providerServiceId: string | null; serviceProductId?: string | null; uom: string; quantity: string; rate: string; amount: string };
 export type EstimateDraft = {
   id: string | null;
   customerPersonId: string;
@@ -61,7 +61,7 @@ export function EstimateWizard({ initial, customers, workRequests, services, sou
       validUntil: d.validUntil || null,
       scope: d.scope, assumptions: d.assumptions, exclusions: d.exclusions, message: d.message,
       paymentTerms: d.paymentTerms, billingCycle: d.billingCycle,
-      lines: d.lines.map((l) => ({ kind: l.kind, description: l.description, providerServiceId: l.providerServiceId, uom: l.uom, quantity: l.kind === "SERVICE" ? Number(l.quantity || 0) : null, rateCents: l.kind === "SERVICE" ? Math.round(Number(l.rate || 0) * 100) : null, amountCents: l.kind === "SERVICE" ? null : Math.round(Number(l.amount || 0) * 100) })),
+      lines: d.lines.map((l) => ({ kind: l.kind, description: l.description, providerServiceId: l.providerServiceId, serviceProductId: l.serviceProductId ?? null, uom: l.uom, quantity: l.kind === "SERVICE" ? Number(l.quantity || 0) : null, rateCents: l.kind === "SERVICE" ? Math.round(Number(l.rate || 0) * 100) : null, amountCents: l.kind === "SERVICE" ? null : Math.round(Number(l.amount || 0) * 100) })),
     };
     const r = await fetch("/api/estimates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save", id: d.id, estimate, send }) });
     const j = (await r.json().catch(() => ({}))) as { error?: string; id?: string };

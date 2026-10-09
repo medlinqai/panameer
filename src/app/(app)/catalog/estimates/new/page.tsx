@@ -8,8 +8,8 @@ import { BackLink } from "@/components/console/BackLink";
 export const metadata = { title: "Create a Cost Estimate · Panameer" };
 export const dynamic = "force-dynamic";
 
-const toLine = (l: { kind: "SERVICE" | "FIXED" | "NOT_TO_EXCEED"; description: string; provider_service_id: string | null; uom: string | null; quantity: unknown; rate_cents: number | null; amount_cents: number | null }): EstLine => ({
-  kind: l.kind, description: l.description, providerServiceId: l.provider_service_id, uom: l.uom ?? "HOUR",
+const toLine = (l: { kind: "SERVICE" | "FIXED" | "NOT_TO_EXCEED"; description: string; provider_service_id: string | null; service_product_id?: string | null; uom: string | null; quantity: unknown; rate_cents: number | null; amount_cents: number | null }): EstLine => ({
+  kind: l.kind, description: l.description, providerServiceId: l.provider_service_id, serviceProductId: l.service_product_id ?? null, uom: l.uom ?? "HOUR",
   quantity: l.quantity == null ? "" : String(Number(l.quantity)), rate: l.rate_cents ? (l.rate_cents / 100).toFixed(2) : "", amount: l.amount_cents ? (l.amount_cents / 100).toFixed(2) : "",
 });
 
@@ -44,7 +44,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
     lines: rev?.lines.map(toLine) ?? [],
   };
   const sources = [
-    ...products.filter((p) => p.priceCents).map((p) => ({ id: `p:${p.id}`, label: `Copy a service product · ${p.title}`, title: p.title, scope: p.summary ?? "", lines: [{ kind: (p.kind === "BLANKET" ? "NOT_TO_EXCEED" : "FIXED") as EstLine["kind"], description: p.title, providerServiceId: null, uom: "EACH", quantity: "1", rate: "", amount: ((p.priceCents ?? 0) / 100).toFixed(2) }] })),
+    ...products.filter((p) => p.priceCents).map((p) => ({ id: `p:${p.id}`, label: `Copy a service product · ${p.title}`, title: p.title, scope: p.summary ?? "", lines: [{ kind: (p.kind === "BLANKET" ? "NOT_TO_EXCEED" : "FIXED") as EstLine["kind"], description: p.title, providerServiceId: null, serviceProductId: p.id, uom: "EACH", quantity: "1", rate: "", amount: ((p.priceCents ?? 0) / 100).toFixed(2) }] })),
     ...past.filter((e) => e.id !== editing?.id).map((e) => ({ id: `e:${e.id}`, label: `Copy a past estimate · ${e.title}`, title: e.title, scope: e.revisions[0]?.scope ?? "", lines: e.revisions[0]?.lines.map(toLine) ?? [] })),
   ];
   return (
