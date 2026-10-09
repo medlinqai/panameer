@@ -31,6 +31,9 @@ export const WORK_ORDER_LABEL: Record<WorkOrderStatus, string> = {
   FINALLY_CLOSED: "Finally Closed",
 };
 
+/** O-E003: shown instead of Open while a change order waits on the provider. */
+export const PENDING_CHANGE_LABEL = "Pending Change Acknowledgment";
+
 export const WORK_ORDER_LINE_LABEL: Record<WorkOrderLineStatus, string> = {
   OPEN: "Open",
   DRAWN: "Closed for Invoicing",

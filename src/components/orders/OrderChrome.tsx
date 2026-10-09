@@ -1,5 +1,5 @@
 import type { WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
-import { WORK_ORDER_LABEL, WORK_ORDER_TONE } from "@/lib/oracle-status";
+import { PENDING_CHANGE_LABEL, WORK_ORDER_LABEL, WORK_ORDER_TONE } from "@/lib/oracle-status";
 
 export function OriginBadge({ origin }: { origin: WorkOrderOrigin }) {
   if (origin !== "DIRECT") return null;
@@ -15,10 +15,10 @@ export function OriginBadge({ origin }: { origin: WorkOrderOrigin }) {
 }
 
 
-export function StatusPill({ status, waiting, frozen }: { status: WorkOrderStatus; waiting?: string | null; frozen?: boolean }) {
+export function StatusPill({ status, waiting, frozen, pendingChange }: { status: WorkOrderStatus; waiting?: string | null; frozen?: boolean; pendingChange?: boolean }) {
   return (
     <span className="inline-flex flex-col items-end">
-      <span className={`rounded-full px-3 py-1 text-[12.5px] font-bold ${WORK_ORDER_TONE[status]}`}>{WORK_ORDER_LABEL[status]}{frozen ? " · Frozen" : ""}</span>
+      <span className={`rounded-full px-3 py-1 text-[12.5px] font-bold ${pendingChange ? WORK_ORDER_TONE.ISSUED : WORK_ORDER_TONE[status]}`}>{pendingChange ? PENDING_CHANGE_LABEL : WORK_ORDER_LABEL[status]}{frozen ? " · Frozen" : ""}</span>
       {waiting && <span className="mt-1 text-[12px] text-ink-2">{waiting}</span>}
     </span>
   );

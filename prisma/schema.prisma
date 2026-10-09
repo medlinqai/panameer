@@ -6105,6 +6105,8 @@ model WorkOrder {
   /// O-E002: Freeze is a flag beside the status (Oracle "Open · Frozen"); Hold remembers the status it returns to.
   frozen_at        DateTime?
   held_from_status WorkOrderStatus?
+  /// O-E003: bumped each time the provider accepts a change order.
+  revision_number  Int @default(0)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -8199,4 +8201,32 @@ enum PathLevel {
   BEGINNER
   INTERMEDIATE
   ADVANCED
+}
+
+enum WorkOrderRevisionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+/// O-E003: a change order. Both parties accept; the current terms stay in force until the provider accepts.
+model WorkOrderRevision {
+  id                     String                  @id @default(uuid()) @db.Uuid
+  work_order_id          String                  @db.Uuid
+  revision_number        Int
+  /// { header: { field: { before, after } }, lines: [{ lineId, lineNumber, field: { before, after } }] }
+  changes                Json
+  status                 WorkOrderRevisionStatus @default(PENDING)
+  requested_by_person_id String?                 @db.Uuid
+  buyer_accepted_at      DateTime                @default(now())
+  provider_accepted_at   DateTime?
+  decided_at             DateTime?
+  decided_note           String?
+  /// Set when the change came from an ERP OrderRequest update (X-E004).
+  external_payload_id    String?
+  created_at             DateTime                @default(now())
+
+  @@unique([work_order_id, revision_number])
+  @@index([work_order_id, status])
+  @@map("work_order_revisions")
 }

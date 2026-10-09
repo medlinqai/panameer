@@ -15,6 +15,8 @@ import { History } from "@/components/orders/History";
 import { orderHistory } from "@/lib/transaction-history";
 import { OrderControls } from "@/components/orders/OrderControls";
 import { BILLABLE } from "@/lib/orders";
+import { ChangeOrders } from "@/components/orders/ChangeOrders";
+import { changeBlocked, describeChanges, revisionsFor } from "@/lib/change-orders";
 import { BuyerCard } from "@/components/orders/BuyerCard";
 import { WORK_ORDER_LINE_LABEL } from "@/lib/oracle-status";
 
@@ -41,6 +43,9 @@ export default async function Page({
   }
 
   const { tab } = await searchParams;
+  const revisions = await revisionsFor(o.id);
+  const pendingChange = revisions.some((r) => r.status === "PENDING");
+  const blockedReason = changeBlocked({ status: o.status, frozen_at: o.frozen ? new Date() : null }, pendingChange);
   if (tab === "plan") {
     const money = await loadWoMoney(o.id);
     return (
@@ -79,7 +84,7 @@ export default async function Page({
             {o.buyerName} <span className="text-ink-2/60">→</span> {o.providerName}
           </p>
         </div>
-        <StatusPill status={o.status} waiting={o.waiting} frozen={o.frozen} />
+        <StatusPill status={o.status} waiting={o.waiting} frozen={o.frozen} pendingChange={pendingChange} />
       </div>
 
       <OrderTabs id={o.id} current="overview" />
@@ -196,6 +201,16 @@ export default async function Page({
           <LineCard key={l.id} line={l} currency={o.currency} showFee={o.party === "PROVIDER"} />
         ))}
       </ul>
+
+      <ChangeOrders
+        orderId={o.id}
+        party={o.party}
+        canChange={o.party === "BUYER" && !blockedReason}
+        blockedReason={blockedReason}
+        header={{ nteCents: o.notToExceedCents, start: o.periodStart, end: o.periodEnd, sow: o.sowText }}
+        lines={o.lines.map((l) => ({ id: l.id, lineNumber: l.lineNumber, description: l.description, byQuantity: l.drawdown.pricedBy === "QUANTITY", quantity: l.quantity, rateCents: l.unitPriceCents, amountCents: l.amountCents, start: l.serviceStart, end: l.serviceEnd }))}
+        history={revisions.map((r) => ({ id: r.id, number: r.number, status: r.status, createdAt: r.createdAt, decidedAt: r.decidedAt, note: r.note, fromErp: r.fromErp, lines: describeChanges(r.changes, (c) => formatCents(c, o.currency)) }))}
+      />
 
       <History events={await orderHistory(o.id)} />
 
