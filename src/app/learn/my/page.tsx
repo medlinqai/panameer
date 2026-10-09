@@ -6,7 +6,6 @@ import { learnCatalog } from "@/lib/learn-catalog";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { BubbleField } from "@/components/casing/BubbleField";
-import { CredentialsBody } from "@/components/profile/CredentialsBody";
 
 export const metadata = { title: "My Learning — Panameer", description: "Your learning record: in progress, completed, certificates and tests." };
 export const dynamic = "force-dynamic";
@@ -31,7 +30,6 @@ export default async function MyLearningPage() {
   const completed = paths.filter((p) => p.mine && p.mine.total > 0 && p.mine.done >= p.mine.total);
   const nextCert = [...inProgress].sort((a, b) => b.mine!.done / b.mine!.total - a.mine!.done / a.mine!.total)[0] ?? null;
   const lessonsDone = watched.length;
-  const tests = paths.filter((p) => p.test.ready && (p.mine || p.test.used > 0 || p.certificate));
   const toNext = nextCert ? nextCert.mine!.total - nextCert.mine!.done : null;
   // One bubble per enrolled path: size = lessons, ink rises with progress, certified = solid ✓, furthest-into = magenta ring.
   const enrolled = paths.filter((p) => p.mine?.enrolled || p.certificate);
@@ -56,7 +54,7 @@ export default async function MyLearningPage() {
 
   return (
     <>
-      <LearnTabs active="my-learning" teaches={teaches} onLearnHome />
+      <LearnTabs active="my-learning" teaches={teaches} />
       <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-my-learning>
         <AccountHero
           testId="my-learning-hero"
@@ -85,7 +83,7 @@ export default async function MyLearningPage() {
           paragraph={
             <>
               {nextCert ? <>You&apos;re furthest into <b className="text-ink">{nextCert.title}</b> — {toNext} {toNext === 1 ? "lesson" : "lessons"} from its certificate. </> : null}
-              Certificates show on your profile under <b className="text-ink">Credentials</b>.
+              Your certificates and tests are on <Link href="/learn/certificates" className="font-bold text-ink underline">Certificates</Link>.
             </>
           }
           actions={
@@ -111,7 +109,9 @@ export default async function MyLearningPage() {
                 </li>
               ))}
             </ul>
-            <h2 className="mt-6 text-[20px] font-bold">Completed <small className="ml-1 text-[12px] font-medium text-ink-3">{completed.length}</small></h2>
+          </section>
+          <section className="min-w-0 border-t border-line py-6 md:border-l md:border-t-0 md:pl-7">
+            <h2 className="text-[20px] font-bold">Completed <small className="ml-1 text-[12px] font-medium text-ink-3">{completed.length}</small></h2>
             {completed.length === 0 && <p className="mt-2 text-[13.5px] text-ink-2">Paths you finish show here.</p>}
             <ul>
               {completed.map((p) => (
@@ -125,33 +125,7 @@ export default async function MyLearningPage() {
               ))}
             </ul>
           </section>
-          <section className="min-w-0 border-t border-line py-6 md:border-l md:border-t-0 md:pl-7">
-            <h2 id="certificates" className="scroll-mt-24 text-[20px] font-bold">Certificates <small className="ml-1 text-[12px] font-medium text-ink-3">{certified.length}</small></h2>
-            <div className="mt-2">
-              <CredentialsBody
-                credentials={[
-                  ...certified.map((p) => ({ id: p.certificate!.id, name: p.title, issuer: "Panameer", issuedOn: p.certificate!.earnedOn.slice(0, 10), issuedFrom: "LEARN", kind: "CERTIFICATION", publicUrl: p.certificate!.verifyUrl, credentialId: p.certificate!.id })),
-                ]}
-                empty="No certificates yet."
-              />
-              <p className="mt-2 text-[12px] text-ink-3">Same chips as Credentials on your profile. Tap one to see the date, score and verification link.</p>
-            </div>
-            <h2 className="mt-6 text-[20px] font-bold">Tests <small className="ml-1 text-[12px] font-medium text-ink-3">attempts left</small></h2>
-            {tests.length === 0 && <p className="mt-2 text-[13.5px] text-ink-2">Tests for your paths show here once they open.</p>}
-            <ul>
-              {tests.map((p) => (
-                <li key={p.id} className={row}>
-                  <span className="min-w-0 flex-1">
-                    <b className="block truncate text-[14px]">{p.title}</b>
-                    <span className="block text-[12px] text-ink-3">{p.test.passed ? `Passed ${p.test.best}%` : p.test.used ? `Best ${p.test.best}% · ${Math.max(0, p.test.maxAttempts - p.test.used)} attempts left` : `Not taken · ${p.test.maxAttempts} attempts`}</span>
-                  </span>
-                  {p.test.passed ? <span className="text-[13px] font-bold">✓</span> : p.test.used < p.test.maxAttempts ? <Link href={`/learn/${p.slug}/test`} className={BTN}>Take the Test</Link> : <span className="text-[12px] text-ink-3">No attempts left</span>}
-                </li>
-              ))}
-            </ul>
-          </section>
         </div>
-        {teaches && <p id="teaching" className="mt-2 text-[13px] text-ink-2">You teach on Panameer — see <Link href="/learn" className="font-bold underline">Top Teachers</Link> on Learn Home.</p>}
       </div>
     </>
   );

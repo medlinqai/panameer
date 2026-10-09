@@ -32,7 +32,7 @@ export function MyLearning({ data }: { data: MyLearningData }) {
     <div className="-mx-5 -mt-6 bg-canvas sm:-mx-8">
       {/* THE TAB ROW (item 4) */}
       {/* EXTRACTED TO `LearnTabs` (brief 9 WS-A). This row was hand-rolled */}
-      <LearnTabs active="my-learning" teaches={teaching.length > 0} onLearnHome />
+      <LearnTabs active="my-learning" teaches={teaching.length > 0} />
 
       {/* ITEM 6 — THE MOCKUP'S `.wrap`: `max-width:1120px; margin:0 auto */}
       <div className="mx-auto w-full max-w-[1120px] px-5 pt-[22px] pb-[60px] sm:px-5">

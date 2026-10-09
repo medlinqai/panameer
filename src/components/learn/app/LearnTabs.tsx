@@ -1,45 +1,39 @@
 import Link from "next/link";
 import { ScrollRow } from "@/components/casing/ScrollRow";
 
-export type LearnTab = "home" | "my-learning" | "paths" | "courses";
+export type LearnTab = "home" | "my-learning" | "paths" | "courses" | "certificates" | "teaching";
 
 const TAB = "shrink-0 whitespace-nowrap border-b-2 py-[14px] text-[13.5px] font-semibold";
 const IDLE = `${TAB} border-transparent text-ink-2 hover:text-magenta`;
 const ACTIVE = `${TAB} border-magenta text-magenta-ink`;
 
+// T-E001: every tab opens its own page (Certificates and Teaching were #anchors that jumped down the page).
 export function LearnTabs({
   active,
-  /** Capability, not a count — see the docblock. */
+  /** Capability, not a count. */
   teaches,
-  /** TRUE ONLY ON `/learn`, where the two anchored sections actually exist. */
-  onLearnHome = false,
 }: {
   active: LearnTab;
   teaches: boolean;
-  onLearnHome?: boolean;
 }) {
-  const anchor = (id: string) => (onLearnHome ? `#${id}` : `/learn/my#${id}`);
-
+  const tabs: [LearnTab, string, string][] = [
+    ["home", "Home", "/learn"],
+    ["paths", "All Learning Paths", "/learn/paths"],
+    ["my-learning", "My Learning", "/learn/my"],
+    ["certificates", "Certificates", "/learn/certificates"],
+    ...(teaches ? [["teaching", "Teaching", "/learn/teaching"] as [LearnTab, string, string]] : []),
+  ];
   return (
-    // IT WRAPS. , AND THE ACTIVE TAB IS WHY (brief 9, 53d)
     <ScrollRow as="nav" label="Learn" className="items-center gap-x-[22px] border-b border-line bg-white px-5 sm:gap-x-[26px] sm:px-6">
       <span className="shrink-0 border-r border-line py-[14px] pr-[22px] font-display text-[12px] font-bold tracking-[0.12em] text-ink">
         LEARN
       </span>
-
-      {/* Home · All Learning Paths · My Learning (Scott 2026-10-08: no separate Courses tab — search finds courses). */}
-      {active === "home" ? <span aria-current="page" className={ACTIVE}>Home</span> : <Link href="/learn" className={IDLE}>Home</Link>}
-      {active === "paths" ? <span aria-current="page" className={ACTIVE}>All Learning Paths</span> : <Link href="/learn/paths" className={IDLE}>All Learning Paths</Link>}
-      {active === "my-learning" ? <span aria-current="page" className={ACTIVE}>My Learning</span> : <Link href="/learn/my" className={IDLE}>My Learning</Link>}
-
-      <a href={anchor("certificates")} className={IDLE}>
-        Certificates
-      </a>
-
-      {teaches && (
-        <a href={anchor("teaching")} className={IDLE}>
-          Teaching
-        </a>
+      {tabs.map(([key, label, href]) =>
+        active === key ? (
+          <span key={key} aria-current="page" className={ACTIVE}>{label}</span>
+        ) : (
+          <Link key={key} href={href} className={IDLE}>{label}</Link>
+        )
       )}
     </ScrollRow>
   );
