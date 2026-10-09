@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE cXML SYSTEM "http://xml.cxml.org/schemas/cXML/1.2.063/cXML.dtd">
+<cXML payloadID="{{PAYLOAD}}" timestamp="2026-10-09T10:00:00+00:00" xml:lang="en-US">
+  <Header>
+    <From><Credential domain="NetworkID"><Identity>{{FROM}}</Identity></Credential></From>
+    <To><Credential domain="NetworkID"><Identity>PANAMEER</Identity></Credential></To>
+    <Sender><Credential domain="NetworkID"><Identity>{{SENDER}}</Identity><SharedSecret>{{SECRET}}</SharedSecret></Credential><UserAgent>Oracle Fusion Procurement</UserAgent></Sender>
+  </Header>
+  <Request>
+    <PunchOutSetupRequest operation="create">
+      <BuyerCookie>{{COOKIE}}</BuyerCookie>
+      <Extrinsic name="UserId">{{USERID}}</Extrinsic>
+      <Extrinsic name="UserEmail">{{EMAIL}}</Extrinsic>
+      <BrowserFormPost><URL>https://erp.example.test/punchout/return</URL></BrowserFormPost>
+      <Contact role="endUser"><Name xml:lang="en-US">Bea Walk</Name><Email>{{EMAIL}}</Email></Contact>
+      <ShipTo><Address addressID="HQ"><Name xml:lang="en-US">HQ</Name></Address></ShipTo>
+    </PunchOutSetupRequest>
+  </Request>
+</cXML>

@@ -623,6 +623,20 @@ async function loadParty(viewer: Viewer, id: string) {
   return { order, party: partyFor(order, personId) };
 }
 
+/** X-E005: an ERP order arrives with the customer's acceptance, so the provider's acceptance opens it and the ERP is told. */
+export async function acknowledgeErpOrder(order: { id: string; provider_person_id: string; buyer_person_id: string }): Promise<boolean> {
+  const now = new Date();
+  const moved = await prisma.$transaction(async (tx) => {
+    const m = await tx.workOrder.updateMany({ where: { id: order.id, status: "ISSUED", erp_connection_id: { not: null }, buyer_accepted_at: { not: null } }, data: { status: "RELEASED", provider_accepted_at: now } });
+    if (m.count) await tx.onboardingRequest.create({ data: { onboarding_request_number: `ONB-${Date.now().toString(36).toUpperCase()}-${order.id.slice(0, 4)}`, work_order_id: order.id, provider_person_id: order.provider_person_id, buyer_person_id: order.buyer_person_id, raised_at: now } });
+    return m.count;
+  });
+  if (!moved) return false;
+  await prisma.notification.updateMany({ where: { dedupe_key: `work.order_offered:${order.id}`, resolved_at: null }, data: { resolved_at: now } }).catch(() => {});
+  await queueConfirmation(order.id, "accept");
+  return true;
+}
+
 /** THE PROVIDER ACCEPTS. THE BOUNDARY, NOT THE BUTTON. */
 export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDetail> {
   const { order, party } = await loadParty(viewer, id);
@@ -642,17 +656,7 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
   const actor = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   if (parties && actor) await assertCanSign(actor.id, parties.buyer_person_id, parties.provider_person_id);
   if (party === "PROVIDER" && order.erp_connection_id && order.buyer_accepted_at) {
-    // X-E005: an ERP order arrives with the customer's acceptance, so the provider's acceptance opens it and the ERP is told.
-    const now = new Date();
-    const moved = await prisma.$transaction(async (tx) => {
-      const m = await tx.workOrder.updateMany({ where: { id: order.id, status: "ISSUED" }, data: { status: "RELEASED", provider_accepted_at: now } });
-      if (m.count) await tx.onboardingRequest.create({ data: { onboarding_request_number: `ONB-${Date.now().toString(36).toUpperCase()}-${order.id.slice(0, 4)}`, work_order_id: order.id, provider_person_id: order.provider_person_id, buyer_person_id: order.buyer_person_id, raised_at: now } });
-      return m.count;
-    });
-    if (moved) {
-      await prisma.notification.updateMany({ where: { dedupe_key: `work.order_offered:${order.id}`, resolved_at: null }, data: { resolved_at: now } }).catch(() => {});
-      await queueConfirmation(order.id, "accept");
-    }
+    await acknowledgeErpOrder(order);
     return getOrderDetail(viewer, id);
   }
   if (party === "PROVIDER") {

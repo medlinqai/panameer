@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE cXML SYSTEM "http://xml.cxml.org/schemas/cXML/1.2.063/cXML.dtd">
+<cXML payloadID="{{PAYLOAD}}" timestamp="2026-10-09T11:00:00+00:00" xml:lang="en-US">
+  <Header>
+    <From><Credential domain="NetworkID"><Identity>{{FROM}}</Identity></Credential></From>
+    <To><Credential domain="NetworkID"><Identity>PANAMEER</Identity></Credential></To>
+    <Sender><Credential domain="NetworkID"><Identity>{{SENDER}}</Identity><SharedSecret>{{SECRET}}</SharedSecret></Credential><UserAgent>Oracle Fusion Procurement</UserAgent></Sender>
+  </Header>
+  <Request deploymentMode="test">
+    <OrderRequest>
+      <OrderRequestHeader orderID="{{PO}}" orderDate="2026-10-09T11:00:00+00:00" type="delete">
+        <Total><Money currency="USD">{{TOTAL}}</Money></Total>
+      </OrderRequestHeader>
+      <ItemOut quantity="{{QTY}}" lineNumber="1">
+        <ItemID><SupplierPartID>{{SERVICE}}</SupplierPartID><SupplierPartAuxiliaryID>{{AUX1}}</SupplierPartAuxiliaryID></ItemID>
+        <ItemDetail>
+          <UnitPrice><Money currency="USD">{{RATE}}</Money></UnitPrice>
+          <Description xml:lang="en-US">Oracle Procurement consulting</Description>
+          <UnitOfMeasure>HUR</UnitOfMeasure>
+          <Classification domain="UNSPSC">80101500</Classification>
+        </ItemDetail>
+      </ItemOut>
+    </OrderRequest>
+  </Request>
+</cXML>
