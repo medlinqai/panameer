@@ -10,7 +10,7 @@ import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHe
 import { BubbleField } from "@/components/casing/BubbleField";
 import { StartHere } from "@/components/learn/StartHere";
 import { BEGINNER_PATH as START_SLUG } from "@/lib/learn-homepage";
-import { nextStep } from "@/lib/learn-state";
+import { nextStep, pathState } from "@/lib/learn-state";
 import { NotifyMe } from "@/components/learn/NotifyMe";
 
 export const metadata = {
@@ -28,13 +28,16 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
   label.set(START_AREA, START_AREA_LABEL);
   const q = sp.q?.trim().toLowerCase() ?? "";
   const mineOnly = sp.tab === "mine";
+  // L-E055: once Foundations is finished (Ready to Test or certified) the page drops its start buttons and panel.
+  const startPath = all.find((p) => p.slug === START_SLUG) ?? null;
+  const startDone = !!startPath && ["READY_TO_TEST", "CERTIFIED"].includes(pathState(startPath));
   const shown = all.filter((p) => {
     if (sp.area && (p.area ?? "OTHER") !== sp.area) return false;
     if (sp.short === "1" && !(p.minutes > 0 && p.minutes < 120)) return false;
     if (sp.test === "1" && !p.test.ready) return false;
     if (mineOnly && !p.mine) return false;
     // The Start Here feature replaces its own card in the area rows (unless you searched or picked an area).
-    if (p.slug === START_SLUG && !q && !sp.area) return false;
+    if (p.slug === START_SLUG && !q && !sp.area && !startDone) return false;
     if (q && ![p.title, p.summary ?? "", p.teacher?.name ?? "", ...p.courses.flatMap((c) => [c.title, c.teacher ?? "", ...c.lessons.map((l) => l.title)])].some((x) => x.toLowerCase().includes(q))) return false;
     return true;
   });
@@ -84,7 +87,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
           title="Learn Oracle Cloud From the People Who Implement It"
           kpis={kpis.map(([v, k]) => ({ value: v, label: k }))}
           paragraph={<>Taught by working consultants. Finish a path, pass the test, and the certificate goes on your profile.{start ? <> New to Oracle Cloud? Start with <b className="text-ink">{start.title}</b>.</> : null}</>}
-          actions={
+          actions={startDone ? undefined : (
             <>
               {start && (() => {
                 const s = nextStep(start, { long: true });
@@ -92,9 +95,9 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
               })()}
               <a href="#areas" className={HERO_BTN_W}>Browse by Area</a>
             </>
-          }
+          )}
         />
-        {start && !q && !sp.area && <StartHere p={start} />}
+        {start && !q && !sp.area && !startDone && <StartHere p={start} />}
         <form id="areas" method="get" action="/learn/paths" className="mt-7 flex scroll-mt-24 flex-wrap gap-2">
           {sp.area && <input type="hidden" name="area" value={sp.area} />}
           {sp.short && <input type="hidden" name="short" value={sp.short} />}
