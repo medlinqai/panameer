@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { lessonTitle, lessonDescription } from "@/lib/learn-display";
 import { isPlayable } from "@/lib/learn";
-import { areaFor } from "@/lib/skill-areas";
+import { pathArea } from "@/lib/learn-area";
 import { experienceYears } from "@/lib/experience";
 
 // Learn's one data shape (2026-10-08): paths → courses → lessons, with the viewer's marks, the test and the certificate.
@@ -41,7 +41,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
     where: { status: "PUBLISHED", ...(opts.slug ? { slug: opts.slug } : {}) },
     orderBy: [{ sort_order: "asc" }, { title: "asc" }],
     select: {
-      id: true, slug: true, title: true, summary: true, group: true, cover_image: true, intro_video_ref: true, outcome: true, level: true,
+      id: true, slug: true, title: true, summary: true, group: true, pillar: true, cover_image: true, intro_video_ref: true, outcome: true, level: true,
       expert: { select: { id: true, first_name: true, last_name: true, title: true, photo_url: true, providerProfile: { select: { id: true, employers: { select: { start_date: true, end_date: true, is_current: true } } } } } },
       assessment: { select: { status: true, questions: true, pass_threshold: true, max_attempts: true } },
       skills: { select: { skill: { select: { area: true } } } },
@@ -97,7 +97,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
     for (const s of p.skills) if (s.skill.area) tally.set(s.skill.area, (tally.get(s.skill.area) ?? 0) + 1);
     // Foundational paths are where everyone starts (Scott 2026-10-08) — their own "Start Here" row, first.
     const foundational = p.slug === "oracle-cloud-foundations" || /foundation/i.test(p.group ?? "");
-    const area = foundational ? START_AREA : [...tally].sort((a, b) => b[1] - a[1])[0]?.[0] ?? areaFor(p.title, p.group ? [p.group] : []);
+    const area = foundational ? START_AREA : pathArea(p, p.skills.map((s) => s.skill.area).filter((x): x is string => !!x));
     const myAttempts = attempts.filter((a) => a.learning_path_id === p.id);
     const cert = certs.find((c) => c.learning_path_id === p.id) ?? null;
     const passed = myAttempts.find((a) => a.passed) ?? null;

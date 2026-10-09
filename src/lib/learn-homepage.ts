@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getTestState } from "@/lib/learn-assessment";
 import { isPlayable } from "@/lib/learn";
-import { areaFor } from "@/lib/skill-areas";
+import { pathArea } from "@/lib/learn-area";
 import { experienceYears } from "@/lib/experience";
 
 // Learn › Home (2026-10-08): the path you're furthest into, two boards, and the most popular paths (ranked by learners).
@@ -58,7 +58,7 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
     prisma.learningPath.findMany({
       where: { status: "PUBLISHED" },
       select: {
-        id: true, title: true, slug: true, group: true, expert_person_id: true,
+        id: true, title: true, slug: true, group: true, pillar: true, expert_person_id: true,
         expert: { select: { first_name: true, last_name: true } },
         assessment: { select: { status: true } },
         skills: { select: { skill: { select: { area: true } } } },
@@ -86,7 +86,7 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
     const tally = new Map<string, number>();
     for (const s of p.skills) if (s.skill.area) tally.set(s.skill.area, (tally.get(s.skill.area) ?? 0) + 1);
     // No tagged skills yet: the same keyword rules the catalog uses, on the title and group (never AI).
-    return [...tally].sort((a, b) => b[1] - a[1])[0]?.[0] ?? areaFor(p.title, p.group ? [p.group] : []);
+    return pathArea(p, [...tally.keys()]);
   };
 
   // The path the viewer is furthest into (started, not finished).
