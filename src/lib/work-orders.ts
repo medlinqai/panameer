@@ -225,7 +225,7 @@ async function buildWorkOrder(
 }
 
 /** O-E004: each line's billing terms, copied from its provider service or service product (else the provider's matching service, else defaults). */
-async function snapshotTerms(
+export async function snapshotTerms(
   lines: { id: string; transaction_type: TransactionType; service_product_id: string | null; provider_service_id: string | null }[],
   providerPersonId: string
 ): Promise<Map<string, LineTerms & { provider_service_id: string | null }>> {
