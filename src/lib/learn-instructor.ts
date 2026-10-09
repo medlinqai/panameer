@@ -8,7 +8,7 @@ import { isPlayable } from "@/lib/learn";
 export async function pathInstructor(pathId: string): Promise<string | null> {
   const p = await prisma.learningPath.findUnique({
     where: { id: pathId },
-    select: { expert_person_id: true, courses: { select: { sections: { select: { lessons: { select: { expert_person_id: true } } } } } } },
+    select: { expert_person_id: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { expert_person_id: true } } } } } } },
   });
   if (!p) return null;
   if (p.expert_person_id) return p.expert_person_id;
@@ -40,7 +40,7 @@ export async function notifyInstructorEnrolled(userId: string, pathId: string) {
 export async function notifyPathCompletedIfDone(userId: string, pathId: string) {
   const path = await prisma.learningPath.findUnique({
     where: { id: pathId },
-    select: { title: true, slug: true, courses: { select: { sections: { select: { lessons: { select: { id: true, vimeo_ref: true, production_status: true } } } } } } },
+    select: { title: true, slug: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { id: true, vimeo_ref: true, production_status: true } } } } } } },
   });
   if (!path) return;
   const playable = path.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons.filter(isPlayable).map((l) => l.id)));

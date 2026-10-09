@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
-import { updateLesson, deleteLesson, setLessonUrl } from "@/lib/learn-admin";
+import { updateLesson, deleteLesson, setLessonUrl, setLessonRetired } from "@/lib/learn-admin";
 import { learnErrorResponse } from "@/lib/learn-admin-http";
 import { LESSON_BODY } from "../route";
 
@@ -18,6 +18,15 @@ export async function PATCH(
   const { id } = await params;
 
   const raw = await request.json().catch(() => null);
+
+  // L-E043: { retired: true | false } → retire or restore.
+  if (raw && typeof raw === "object" && Object.keys(raw).length === 1 && "retired" in raw && typeof (raw as { retired: unknown }).retired === "boolean") {
+    try {
+      return NextResponse.json(await setLessonRetired(id, (raw as { retired: boolean }).retired));
+    } catch (e) {
+      return learnErrorResponse(e, "Could not change that lesson");
+    }
+  }
 
   // Exactly one key, and it's the URL → the fast path.
   if (raw && typeof raw === "object" && Object.keys(raw).length === 1 && "vimeoRef" in raw) {

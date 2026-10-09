@@ -76,7 +76,7 @@ export function LessonEditor({
 
   return (
     <Modal title="Edit Lesson" onClose={onClose} wide>
-      <p className="-mt-3 mb-5 text-[13px] text-ink-2">In {section.title}</p>
+      <p className="-mt-3 mb-5 text-[13px] text-ink-2">In {section.title}{lesson.retired ? " · Retired — hidden from members, nothing deleted" : ""}</p>
 
       <div className="space-y-5">
         <Field label="Title">
@@ -169,7 +169,23 @@ export function LessonEditor({
           </p>
         )}
 
-        <div className="flex justify-end gap-3 border-t border-line pt-5">
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-line pt-5">
+          <button
+            type="button"
+            disabled={busy}
+            data-retire-lesson
+            onClick={async () => {
+              setBusy(true);
+              setError(null);
+              const r = await fetch(`/api/admin/learn/lessons/${lesson.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ retired: !lesson.retired }) });
+              setBusy(false);
+              if (!r.ok) return setError("Could not change that lesson.");
+              onSaved();
+            }}
+            className="mr-auto text-[13.5px] font-semibold text-ink-2 underline underline-offset-4"
+          >
+            {lesson.retired ? "Restore Lesson" : "Retire Lesson"}
+          </button>
           <Button type="button" tone="ghost" onClick={onClose}>
             Cancel
           </Button>

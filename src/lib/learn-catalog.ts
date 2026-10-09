@@ -48,7 +48,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
         orderBy: { sort_order: "asc" },
         select: {
           id: true, slug: true, title: true, summary: true,
-          sections: { orderBy: { sort_order: "asc" }, select: { lessons: { orderBy: { sort_order: "asc" }, select: { id: true, title: true, description: true, duration_seconds: true, run_time: true, vimeo_ref: true, production_status: true, expert: { select: { first_name: true, last_name: true } } } } } },
+          sections: { orderBy: { sort_order: "asc" }, select: { lessons: { where: { retired_at: null }, orderBy: { sort_order: "asc" }, select: { id: true, title: true, description: true, duration_seconds: true, run_time: true, vimeo_ref: true, production_status: true, expert: { select: { first_name: true, last_name: true } } } } } },
         },
       },
     },

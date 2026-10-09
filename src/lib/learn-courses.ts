@@ -42,6 +42,7 @@ export async function getLearnCourses(): Promise<CourseGroup[]> {
           sections: {
             select: {
               lessons: {
+                where: { retired_at: null },
                 select: { vimeo_ref: true, production_status: true },
               },
             },

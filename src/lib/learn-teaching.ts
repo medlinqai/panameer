@@ -14,7 +14,7 @@ export async function teachingData(userId: string) {
   const paths = await prisma.learningPath.findMany({
     where: { status: "PUBLISHED", ...teachesPathWhere(me.id) },
     orderBy: { title: "asc" },
-    select: { id: true, slug: true, title: true, courses: { select: { sections: { select: { lessons: { select: { id: true, title: true, vimeo_ref: true, production_status: true, expert_person_id: true } } } } } } },
+    select: { id: true, slug: true, title: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { id: true, title: true, vimeo_ref: true, production_status: true, expert_person_id: true } } } } } } },
   });
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   let finishedThisMonth = 0;

@@ -390,6 +390,7 @@ export async function getPathTree(id: string) {
                   vimeo_ref: true,
                   thumbnail_url: true,
                   production_status: true,
+                  retired_at: true,
                   sort_order: true,
                   expert_person_id: true,
                   expert: { select: { first_name: true, last_name: true } },
@@ -443,6 +444,7 @@ export async function getPathTree(id: string) {
           vimeoRef: l.vimeo_ref,
           thumbnailUrl: l.thumbnail_url,
           productionStatus: l.production_status,
+          retired: !!l.retired_at,
           sortOrder: l.sort_order,
           expertPersonId: l.expert_person_id,
           expert: name(l.expert),
@@ -1005,4 +1007,10 @@ export async function setPathStatus(id: string, status: "DRAFT" | "PUBLISHED") {
     select: { id: true, status: true, slug: true },
   });
   return updated;
+}
+
+/** L-E043: retire (hide everywhere members look, nothing deleted) or restore a lesson. */
+export async function setLessonRetired(id: string, retired: boolean) {
+  await prisma.lesson.update({ where: { id }, data: { retired_at: retired ? new Date() : null } });
+  return { ok: true, retired };
 }

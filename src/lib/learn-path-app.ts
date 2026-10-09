@@ -140,6 +140,7 @@ export async function getAppPath(
               id: true,
               title: true,
               lessons: {
+                where: { retired_at: null },
                 orderBy: [{ sort_order: "asc" }, { title: "asc" }],
                 select: {
                   id: true,

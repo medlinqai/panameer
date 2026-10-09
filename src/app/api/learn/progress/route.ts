@@ -31,6 +31,7 @@ export async function POST(request: Request) {
   const lesson = await prisma.lesson.findFirst({
     where: {
       id: lessonId,
+      retired_at: null,
       section: { course: { learningPath: { status: "PUBLISHED" } } },
     },
     select: {
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
               learning_path_id: true,
               learningPath: { select: { slug: true } },
               sections: {
-                select: { lessons: { select: { id: true, expert_person_id: true, vimeo_ref: true, production_status: true } } },
+                select: { lessons: { where: { retired_at: null }, select: { id: true, expert_person_id: true, vimeo_ref: true, production_status: true } } },
               },
             },
           },

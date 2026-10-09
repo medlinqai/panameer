@@ -3978,6 +3978,8 @@ model Lesson {
   /// Vimeo video id or embed URL. Null until the video is wired.
   vimeo_ref         String?
   production_status LessonProductionStatus @default(IN_CONCEPT)
+  /// L-E043: retired lessons are hidden and uncounted everywhere members look; nothing is deleted.
+  retired_at        DateTime?
   expert_person_id  String?                @db.Uuid
   sort_order        Int                    @default(0)
   created_at        DateTime               @default(now())
@@ -4107,6 +4109,8 @@ model CertificationTest {
    * Which documentation URLs, if any, informed this set. Provenance, not prose.
    */
   source_note String?
+  /// L-E042: questions flagged during an admin preview — [{ index, note, by, at }].
+  review_flags Json?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -4141,6 +4145,8 @@ model CertificationAttempt {
   passed           Boolean
   /// [{ questionId, chosen, correct }] — enough to show a review screen.
   answers          Json
+  /// L-E042: an admin's review run of a draft test — shows the answers, issues no certificate.
+  is_preview       Boolean  @default(false)
   created_at       DateTime @default(now())
 
   certificationTest CertificationTest @relation(fields: [certification_test_id], references: [id], onDelete: Cascade)
@@ -8219,6 +8225,9 @@ model LearnPathWatch {
   created_at       DateTime  @default(now())
   /// Set when the watcher was told the path opened, so they're told once.
   notified_at      DateTime?
+  /// L-E041: also tell them when the certification test opens.
+  test_watch       Boolean   @default(false)
+  test_notified_at DateTime?
 
   @@unique([user_id, learning_path_id])
   @@index([learning_path_id])

@@ -12,7 +12,7 @@ async function lessonsByPath(pathIds: string[]) {
   const courses = await prisma.course.findMany({
     where: { learning_path_id: { in: pathIds } },
     orderBy: { sort_order: "asc" },
-    select: { learning_path_id: true, sections: { orderBy: { sort_order: "asc" }, select: { lessons: { orderBy: { sort_order: "asc" }, select: { id: true, title: true, duration_seconds: true, run_time: true } } } } },
+    select: { learning_path_id: true, sections: { orderBy: { sort_order: "asc" }, select: { lessons: { where: { retired_at: null }, orderBy: { sort_order: "asc" }, select: { id: true, title: true, duration_seconds: true, run_time: true } } } } },
   });
   const out = new Map<string, LessonRow[]>();
   for (const c of courses) {

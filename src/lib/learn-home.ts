@@ -55,6 +55,7 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
             sections: {
               select: {
                 lessons: {
+                  where: { retired_at: null },
                   select: {
                     id: true,
                     title: true,
@@ -233,6 +234,7 @@ export async function getLearnPath(
               title: true,
               description: true,
               lessons: {
+                where: { retired_at: null },
                 orderBy: [{ sort_order: "asc" }, { title: "asc" }],
                 select: {
                   id: true,
@@ -460,7 +462,7 @@ export function teachesPathWhere(personId: string) {
         courses: {
           some: {
             sections: {
-              some: { lessons: { some: { expert_person_id: personId } } },
+              some: { lessons: { some: { expert_person_id: personId, retired_at: null } } },
             },
           },
         },
@@ -553,6 +555,7 @@ export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> 
           sections: {
             select: {
               lessons: {
+                where: { retired_at: null },
                 select: {
                   vimeo_ref: true,
                   production_status: true,

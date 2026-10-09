@@ -19,7 +19,7 @@ export async function notifyOpenedPaths() {
     const pathIds = [...new Set(waiting.map((w) => w.learning_path_id))];
     const paths = await prisma.learningPath.findMany({
       where: { id: { in: pathIds }, status: "PUBLISHED" },
-      select: { id: true, slug: true, title: true, courses: { select: { sections: { select: { lessons: { select: { vimeo_ref: true, production_status: true } } } } } } },
+      select: { id: true, slug: true, title: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { vimeo_ref: true, production_status: true } } } } } } },
     });
     const open = paths.filter((p) => p.courses.some((c) => c.sections.some((s) => s.lessons.some((l) => isPlayable(l)))));
     let told = 0;

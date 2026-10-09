@@ -29,7 +29,7 @@ export async function learnEnrolmentRefusal(
       courses: {
         select: {
           sections: {
-            select: { lessons: { select: { vimeo_ref: true, production_status: true } } },
+            select: { lessons: { where: { retired_at: null }, select: { vimeo_ref: true, production_status: true } } },
           },
         },
       },

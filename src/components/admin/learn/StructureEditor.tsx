@@ -22,6 +22,8 @@ export type TreeLesson = {
   vimeoRef: string | null;
   thumbnailUrl: string | null;
   productionStatus: string;
+  /** L-E043: hidden from members; restorable. */
+  retired?: boolean;
   sortOrder: number;
   expertPersonId: string | null;
   expert: string | null;
@@ -460,7 +462,7 @@ export function StructureEditor({
 function LessonSummary({ lesson }: { lesson: TreeLesson }) {
   return (
     <span className="block">
-      <span className="block truncate text-[14px]">{lesson.title}</span>
+      <span className="block truncate text-[14px]">{lesson.title}{lesson.retired && <span className="ml-2 border border-line px-1.5 text-[11px] font-semibold text-ink-3">Retired</span>}</span>
       <span className="block text-[12.5px] text-ink-2">
         {lesson.runTime ?? "—"}
         {isPlayable(lesson) ? (

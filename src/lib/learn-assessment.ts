@@ -115,6 +115,7 @@ export async function buildAssessmentSource(learningPathId: string): Promise<Ass
               title: true,
               description: true,
               lessons: {
+                where: { retired_at: null },
                 orderBy: { sort_order: "asc" },
                 select: { id: true, title: true, description: true },
               },

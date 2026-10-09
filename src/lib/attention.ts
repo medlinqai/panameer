@@ -201,7 +201,7 @@ async function countCoursesToWatch(userId: string): Promise<number> {
       learning_path_id: true,
       learningPath: {
         select: {
-          courses: { select: { sections: { select: { _count: { select: { lessons: true } } } } } },
+          courses: { select: { sections: { select: { _count: { select: { lessons: { where: { retired_at: null } } } } } } } },
         },
       },
     },

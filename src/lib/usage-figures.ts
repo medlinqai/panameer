@@ -59,7 +59,7 @@ export async function usageFigures(opts: {
     /* A lesson belongs to a SECTION, and the section to the path. */
     const lessons = await prisma.lesson.findMany({
       /* lesson → section → course → path. */
-      where: { section: { course: { learning_path_id: e.learning_path_id } } },
+      where: { retired_at: null, section: { course: { learning_path_id: e.learning_path_id } } },
       select: { id: true },
     });
     if (lessons.length === 0) continue;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getLearnLesson, viewerTeaches } from "@/lib/learn-home";
 import { guardPage } from "@/lib/guard";
@@ -21,6 +21,15 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const viewer = await guardPage("authenticated");
   const { slug, lessonId } = await params;
   const [view, [p], teaches] = await Promise.all([getLearnLesson(slug, lessonId, viewer.userId), learnCatalog(viewer.userId, { slug }), viewerTeaches(viewer)]);
+  if (!view && p) {
+    // L-E043: a retired lesson's URL forwards to the next lesson in its course (else the path page).
+    const r = await prisma.lesson.findFirst({ where: { id: lessonId, retired_at: { not: null } }, select: { section: { select: { course_id: true } } } });
+    if (r) {
+      const flat = p.courses.flatMap((c) => c.lessons.map((l) => ({ ...l, courseId: c.id })));
+      const next = flat.find((l) => l.courseId === r.section.course_id && l.playable) ?? flat.find((l) => l.playable);
+      redirect(next ? `/learn/${slug}/${next.id}` : `/learn/${slug}`);
+    }
+  }
   if (!view || !p) notFound();
   const { lesson, instructor } = view;
   const embed = lesson.playable ? vimeoEmbedUrl(lesson.vimeoRef) : null;
