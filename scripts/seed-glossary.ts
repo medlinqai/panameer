@@ -34,6 +34,16 @@ const EXTRA: Row[] = [
   { term: "Coming Soon", category: "Learn & Connect", type: "Panameer term", definition: "A learning path whose lessons are planned but not yet playable. Press Notify Me to be told when it opens.", also: null, dont: null, shown: "Public", confirm: null },
   { term: "Path Group", category: "Learn & Connect", type: "Panameer term", definition: "The group for everyone taking a learning path. Questions asked on a lesson show here too.", also: null, dont: null, shown: "Public", confirm: null },
   { term: "Connect", category: "Learn & Connect", type: "Panameer term", definition: "Panameer's community area: Leaders, Community, Connections, Mentors, Groups and Recommendations.", also: null, dont: null, shown: "Public", confirm: null },
+  // CAT-E008 (2026-10-09): "Catalog" now means a provider's items; the skills tree is the Business Type Taxonomy.
+  { term: "Catalog", category: "Marketplace & work", type: "Panameer term", definition: "The items a provider sells on Panameer: their Services, Service Products and Cost Estimates. Managed from My Catalog on your profile.", also: "My Catalog", dont: null, shown: "Public", confirm: null },
+  { term: "Business Type Taxonomy", category: "Skills & catalog (RDS)", type: "Panameer term", definition: "Panameer's approved list of roles, domains, skills and service types, used for search and matching.", also: "Skill Catalog (older name)", dont: null, shown: "Public", confirm: null },
+  { term: "Service", category: "Marketplace & work", type: "Panameer term", definition: "Work a provider sells by the hour, day, week or month, priced as rate × quantity. Each service has a type, a rate, and billing terms (cycle, payment terms, payment trigger).", also: null, dont: null, shown: "Public", confirm: null },
+  { term: "Service Type", category: "Marketplace & work", type: "Panameer term", definition: "What kind of service it is — Onsite Consulting, Offsite Consulting, Mentoring, Training, Staff Augmentation, AI Agent Support — or one a provider adds, reviewed in the Business Type Taxonomy.", also: null, dont: null, shown: "Public", confirm: null },
+  { term: "Service Product", category: "Marketplace & work", type: "Panameer term", definition: "A packaged offer with one price, sold to any buyer: a Deliverable (fixed price), an AI Agent (recurring) or a Blanket (not-to-exceed). Paid in full or by a payment schedule.", also: null, dont: null, shown: "Public", confirm: null },
+  { term: "Cost Estimate", category: "Marketplace & work", type: "Panameer term", definition: "A provider's quote for one customer — their scope, their price. Private to the two of them. The customer accepts it (it becomes a work order), asks for changes, or declines.", also: "Estimate", dont: null, shown: "Public", confirm: null },
+  { term: "Payment Trigger", category: "Company & payment", type: "Panameer term", definition: "The event that raises a payment request: a timesheet, a payment request, an invoice, or for products a download, installation or the customer's acceptance.", also: null, dont: null, shown: "Public", confirm: null },
+  { term: "Billing Cycle", category: "Company & payment", type: "Panameer term", definition: "How often a service is billed: weekly, every 2 weeks, monthly or every 90 days. At the end of each cycle the provider submits the trigger.", also: null, dont: null, shown: "Public", confirm: null },
+  { term: "Payment Terms", category: "Company & payment", type: "Panameer term", definition: "How long the customer has to pay once a payment request is submitted — Immediate, Net 15, Net 30, Net 45 or Net 60. Terms start on submission, not approval.", also: "Net terms", dont: null, shown: "Public", confirm: null },
 ];
 const text = (v: ExcelJS.CellValue) => (v == null ? "" : typeof v === "object" && "richText" in v ? v.richText.map((r) => r.text).join("") : typeof v === "object" && "text" in v ? String(v.text) : String(v)).trim();
 
@@ -56,6 +66,9 @@ const text = (v: ExcelJS.CellValue) => (v == null ? "" : typeof v === "object" &
     if (i >= 0) rows[i] = e;
     else rows.push(e);
   }
+  // --only=Term,Term limits the run to those terms (so a targeted update leaves admin edits elsewhere alone).
+  const only = process.argv.find((x) => x.startsWith("--only="))?.slice(7).split(",").map((t) => termKey(t.trim()));
+  if (only) rows.splice(0, rows.length, ...rows.filter((r) => only.includes(termKey(r.term))));
   const existing = new Map((await prisma.glossaryTerm.findMany({ select: { term_key: true } })).map((r) => [r.term_key, true]));
   let created = 0, updated = 0, admin = 0;
   for (const r of rows) {

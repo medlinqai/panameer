@@ -212,7 +212,7 @@ function skillGroups(st: ReviewState): { key: string; label: string; note?: stri
       items: specs.filter((x) => x.kind === g.kind).map((x) => ({ key: `spec:${x.id}`, name: x.name, from: "spec" as const, id: x.id, remove: { action: "remove", kind: "spec", id: x.id } })),
     })),
     { key: "skills", label: "Skills", items: skills.map((x) => ({ key: `skill:${x.id}`, name: x.name, from: "skill" as const, id: x.id, remove: { action: "remove", kind: "skill", id: x.id } })) },
-    { key: "keywords", label: "Keywords", note: "not in the catalog yet — kept exactly as written", items: keywords.map((k) => ({ key: `kw:${k}`, name: k, from: "keyword" as const, id: k, remove: { action: "removeKeyword", name: k } })) },
+    { key: "keywords", label: "Keywords", note: "not in the taxonomy yet — kept exactly as written", items: keywords.map((k) => ({ key: `kw:${k}`, name: k, from: "keyword" as const, id: k, remove: { action: "removeKeyword", name: k } })) },
   ].filter((g) => g.items.length > 0);
 }
 type PanelProps = { st: ReviewState; act: Act; busy: boolean; onSrc: (s: Src) => void };

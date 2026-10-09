@@ -1547,7 +1547,7 @@ setScreen(target);
               {/* WS-B/E051-5 — SUGGEST AND CONFIRM. The import used to report "34 */}
               {(importOutcome?.applied.skillSuggestions?.length ?? 0) > 0 && (
                 <div className="mt-4">
-                  <ProfileCard title="AI Found These — They're Not in Our Catalog Yet">
+                  <ProfileCard title="AI Found These — They're Not in Our Taxonomy Yet">
                     <p className="mb-3 text-[14px] text-ink-2">
                       AI read these off your document but couldn&apos;t match
                       them to the ERP Service Catalog. Tick the ones that are

@@ -636,7 +636,7 @@ export function SkillCatalogTree({
   const compareView = (
     <div data-compare className="mt-4 grid grid-cols-1 gap-6 min-[901px]:grid-cols-2">
       <div data-compare-catalog className="min-w-0">
-        <h3 className="mb-2 text-[16px] font-bold">Catalog</h3>
+        <h3 className="mb-2 text-[16px] font-bold">Taxonomy</h3>
         {closestBox}
         {sub === "skills" ? (
           treeView

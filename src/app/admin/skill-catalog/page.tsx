@@ -237,7 +237,7 @@ export default async function Page({
 
   // — ONE LINK COLOUR ON THE PAGE. `BackLink` does NOT render here
   const clearLink = (
-    <BackLink href="/admin/skill-catalog" label="the Catalog" />
+    <BackLink href="/admin/skill-catalog" label="the Taxonomy" />
   );
 
   return (

@@ -78,7 +78,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
               ]}
             />
           }
-          eyebrow="The Catalog"
+          eyebrow="All Learning Paths"
           title="Learn Oracle Cloud From the People Who Implement It"
           kpis={kpis.map(([v, k]) => ({ value: v, label: k }))}
           paragraph={<>Taught by working consultants. Finish a path, pass the test, and the certificate goes on your profile.{start ? <> New to Oracle Cloud? Start with <b className="text-ink">{start.title}</b>.</> : null}</>}

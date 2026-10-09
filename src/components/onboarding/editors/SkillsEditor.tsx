@@ -269,7 +269,7 @@ export function SkillsEditor({
                   addCustomSkill();
                 }
               }}
-              placeholder="Search the full catalog, or type your own"
+              placeholder="Search the full taxonomy, or type your own"
               className="min-w-0 flex-1"
             />
             <button
