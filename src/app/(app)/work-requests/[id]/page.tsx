@@ -40,8 +40,10 @@ export default async function Page({
   }
 
   let detail;
+  let erpReturned = false;
   try {
     detail = await getWorkRequestDetail(viewer, id);
+    erpReturned = !!(await prisma.workRequest.findUnique({ where: { id }, select: { erp_returned_at: true } }))?.erp_returned_at;
   } catch (e) {
     if (e instanceof WorkRequestError && (e.code === "NOT_FOUND" || e.code === "NOT_A_BUYER"))
       notFound();
@@ -100,8 +102,11 @@ export default async function Page({
           </p>
         </div>
         {/* ONE PLACE — this pill read `posted ? … : "Draft"` */}
-        <span className={workRequestStatusPillClass(detail.status)}>
-          {WORK_REQUEST_STATUS_LABEL[detail.status]}
+        <span className="inline-flex flex-col items-end">
+          <span className={workRequestStatusPillClass(detail.status)}>
+            {WORK_REQUEST_STATUS_LABEL[detail.status]}
+          </span>
+          {detail.status === "ASSIGNED" && erpReturned && <span className="mt-1 text-[12px] text-ink-2">Returned to ERP — waiting for the PO</span>}
         </span>
       </div>
 
