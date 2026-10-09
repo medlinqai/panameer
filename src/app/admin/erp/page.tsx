@@ -23,7 +23,7 @@ export default async function Page() {
     <div className="mx-auto w-full max-w-6xl">
       <h1 className="mb-1 text-[28px] font-bold">ERP Connections</h1>
       <p className="mb-5 text-[14px] text-ink-2">
-        One per customer ERP. Outbound sending is {process.env.ERP_SEND_ENABLED?.trim() === "1" ? <b>on</b> : <b>off</b>} (ERP_SEND_ENABLED). Credentials are never stored here: a connection names the env var that holds them.
+        One per customer ERP. Outbound sending is {process.env.ERP_SEND_ENABLED?.trim() === "1" ? <b>on</b> : <b>off</b>} (ERP_SEND_ENABLED). Credentials stay out of the database: a connection names the env var that holds them.
       </p>
       <ErpConnections initial={connections} accounts={accounts} />
       <ErpMessages rows={rows} />
