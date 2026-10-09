@@ -167,17 +167,17 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
 
       {error && <p className="mt-3 text-[13px] text-red-600">{error}</p>}
 
-      {/* Health's lower half: two columns split by one vertical rule; each group lists its lines. */}
-      <div className="mt-9 grid border-t border-line md:grid-cols-2" data-testid="score-lines">
+      {/* M-E010: two columns split by one vertical rule; every group gets the same top divider and gap (no empty band under the hero). */}
+      <div className="mt-6 grid md:grid-cols-2" data-testid="score-lines">
         {columns.map((col, ci) => (
-          <section key={ci} className={ci ? "border-t border-line py-5 md:border-l md:border-t-0 md:pl-7" : "py-5 md:pr-7"}>
+          <section key={ci} className={ci ? "md:border-l md:border-line md:pl-7" : "md:pr-7"}>
             {col.map((g) => {
               const inGroup = score.lines.filter((l) => l.group === g);
               if (inGroup.length === 0) return null;
               const got = inGroup.filter((l) => lineCounts(l.state)).reduce((a, l) => a + l.points, 0);
               const all = inGroup.reduce((a, l) => a + l.points, 0);
               return (
-                <div key={g} className="mb-4" data-score-group={g}>
+                <div key={g} className="border-t border-line pb-3 pt-5" data-score-group={g}>
                   <h2 className="mb-1.5 flex items-baseline justify-between text-[19px] font-bold">
                     {SCORE_GROUP_LABELS[g]}
                     <small className="text-[13px] font-semibold text-ink-2">
