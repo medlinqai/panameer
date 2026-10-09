@@ -97,23 +97,29 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
           <aside className="min-w-0 border-t border-line py-6 md:border-l md:border-t-0 md:pl-7">
             <section id="test" data-path-test>
               <h2 className="text-[18px] font-bold">Certification Test</h2>
-              {p.test.ready ? (
-                <>
+              {/* L-E041: three clear states — passed, open, opens soon. */}
+              {p.test.passed ? (
+                <div data-test-state="passed">
+                  <p className="mt-2 text-[15px] font-bold">Passed{p.certificate ? ` · ${new Date(p.certificate.earnedOn).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}{p.test.best ? ` · ${p.test.best}%` : ""}</p>
+                  {p.certificate?.verifyUrl ? <Link href={p.certificate.verifyUrl} className="mt-3 inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover">View Certificate</Link> : <Link href="/learn/certificates" className="mt-3 inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover">View Certificate</Link>}
+                </div>
+              ) : p.test.ready ? (
+                <div data-test-state="open">
+                  <p className="mt-2 text-[15px] font-bold">Ready when you are</p>
                   <dl className="mt-2 grid grid-cols-3 gap-2">
                     {[["Questions", p.test.questions], ["To pass", `${p.test.threshold}%`], ["Attempts", p.test.maxAttempts]].map(([k, v]) => (
                       <div key={k as string}><dd className="text-[20px] font-medium tabular-nums">{v}</dd><dt className="text-[11px] font-semibold tracking-[0.06em] text-ink-3">{(k as string).toUpperCase()}</dt></div>
                     ))}
                   </dl>
-                  <p className="mt-2 text-[13px] text-ink-2">Pass it and the certificate goes on your profile under <b className="text-ink">Credentials</b>, verified by Panameer.</p>
-                  {p.test.passed ? (
-                    <p className="mt-3 text-[13.5px] font-bold">Certified ✓{p.test.best ? ` · ${p.test.best}%` : ""}</p>
-                  ) : (
-                    <Link href={viewer ? `/learn/${p.slug}/test` : signIn} className="mt-3 inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover">Take the Test</Link>
-                  )}
-                  {viewer && !p.test.passed && p.test.used > 0 && <p className="mt-1.5 text-[12px] text-ink-3">{Math.max(0, p.test.maxAttempts - p.test.used)} of {p.test.maxAttempts} attempts left</p>}
-                </>
+                  <p className="mt-2 text-[13px] text-ink-2">Take it whenever you like — the lessons aren&apos;t required. Pass it and the certificate goes on your profile under <b className="text-ink">Credentials</b>, verified by Panameer.</p>
+                  <Link href={viewer ? `/learn/${p.slug}/test` : signIn} data-take-test className="mt-3 inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover">Take the Test</Link>
+                  {viewer && p.test.used > 0 && <p className="mt-1.5 text-[12px] text-ink-3">{Math.max(0, p.test.maxAttempts - p.test.used)} of {p.test.maxAttempts} attempts left</p>}
+                </div>
               ) : (
-                <p className="mt-2 text-[13.5px] text-ink-2">The test for this path isn&apos;t open yet. Your lessons count toward it the moment it opens.</p>
+                <div data-test-state="soon">
+                  <p className="mt-2 text-[13.5px] text-ink-2">The test isn&apos;t open yet. We&apos;ll let you know when it opens.</p>
+                  <div className="mt-3"><NotifyMe pathId={p.id} initial={p.watchingTest} signedIn={!!viewer} test /></div>
+                </div>
               )}
             </section>
             {p.teacher && (
