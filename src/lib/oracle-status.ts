@@ -31,6 +31,9 @@ export const WORK_ORDER_LABEL: Record<WorkOrderStatus, string> = {
   FINALLY_CLOSED: "Finally Closed",
 };
 
+/** X-E006: a payment request on an ERP order, waiting on the requester in the ERP. */
+export const ERP_PENDING_LABEL = "Sent to ERP · Pending Requester Approval";
+
 /** O-E003: shown instead of Open while a change order waits on the provider. */
 export const PENDING_CHANGE_LABEL = "Pending Change Acknowledgment";
 

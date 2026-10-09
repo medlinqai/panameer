@@ -2,6 +2,7 @@ import type { ErpMessageType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { cxmlDoc, cxmlUom, esc, payloadId, timestamp } from "@/lib/erp/cxml";
 import { erpSendEnabled, logMessage } from "@/lib/erp/connections";
+import { adapterFor } from "@/lib/erp/adapter";
 
 // X-E005/X-E006: outbound ERP messages. Queued as HELD while ERP_SEND_ENABLED is off — nothing leaves Panameer.
 export async function queueOutbound(m: { connectionId: string; type: ErpMessageType; body: string; payloadId: string; workOrderId?: string | null; settlementRequestId?: string | null }) {
@@ -22,12 +23,16 @@ export async function sendMessage(id: string): Promise<{ ok: boolean; note: stri
   if (!conn?.active) return { ok: false, note: "Connection is off" };
   try {
     let response: string;
-    const externalId: string | null = m.external_id;
+    let externalId: string | null = m.external_id;
     if (m.type === "CONFIRMATION") {
       if (!conn.outbound_cxml_url) throw new Error("No outbound cXML URL on this connection");
       const r = await fetch(conn.outbound_cxml_url, { method: "POST", headers: { "Content-Type": "text/xml; charset=utf-8" }, body: m.body });
       response = `${r.status} ${(await r.text()).slice(0, 2000)}`;
       if (!r.ok) throw new Error(response);
+    } else if (m.type === "WORK_CONFIRMATION") {
+      const out = await adapterFor(conn).sendReceipt(conn, m.body);
+      response = out.response;
+      externalId = out.externalId;
     } else throw new Error(`Nothing sends ${m.type}`);
     await prisma.erpMessage.update({ where: { id }, data: { status: "SENT", response, external_id: externalId, attempts: { increment: 1 }, last_error: null } });
     return { ok: true, note: "Sent" };

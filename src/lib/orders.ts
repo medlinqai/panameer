@@ -252,6 +252,8 @@ export type OrderRow = {
   externalRef: string | null;
   waiting: string | null;
   frozen: boolean;
+  /** X-E007: from the customer's ERP. */
+  erp: boolean;
 };
 
 async function namesFor(personIds: string[]): Promise<Map<string, string>> {
@@ -290,6 +292,7 @@ export async function listOrders(viewer: Viewer): Promise<OrderRow[]> {
       provider_accepted_at: true,
       buyer_accepted_at: true,
       frozen_at: true,
+      erp_connection_id: true,
     },
   });
   if (orders.length === 0) return [];
@@ -349,6 +352,7 @@ export async function listOrders(viewer: Viewer): Promise<OrderRow[]> {
       externalRef: o.external_ref,
       waiting: waitingLine(o, party, { buyer: names.get(o.buyer_person_id) ?? "the buyer", provider: names.get(o.provider_person_id) ?? "the provider" }),
       frozen: !!o.frozen_at,
+      erp: !!o.erp_connection_id,
     };
   });
 }
@@ -419,6 +423,7 @@ export type OrderDetail = {
   actions: OrderAction[];
   controls: OrderControl[];
   frozen: boolean;
+  erp: boolean;
   /** Payment requests waiting on the customer (Finally Close is refused while any exist). */
   pendingRequests: number;
   activationMessage: string;
@@ -583,8 +588,9 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     remainingCents: Math.max(0, (o.not_to_exceed_cents ?? valueCents) - approvedCents),
     // THE ACTIONS COME FROM THE ONE FUNCTION, SERVER-SIDE, AND THE PAGE
     actions: availableActions(o, party),
-    controls: availableControls(o, party),
+    controls: availableControls({ ...o, erp: !!o.erp_connection_id }, party),
     frozen: !!o.frozen_at,
+    erp: !!o.erp_connection_id,
     pendingRequests: await prisma.settlementRequest.count({ where: { work_order_id: o.id, status: "SUBMITTED" } }),
     activationMessage: activationMessage(o.status, party),
     hasChanges: views.some((v) => v.changes.length > 0),

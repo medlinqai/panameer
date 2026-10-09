@@ -50,7 +50,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             </Link>
           </p>
         </div>
-        <SettlementStatusPill status={s.status} paidOut={s.party === "PROVIDER" ? !!s.paidOut : undefined} />
+        <SettlementStatusPill status={s.status} paidOut={s.party === "PROVIDER" ? !!s.paidOut : undefined} erp={s.erp} />
       </div>
 
       <dl className="mt-6 grid gap-x-8 gap-y-3.5 rounded-brand border border-line bg-white p-5 sm:grid-cols-3">

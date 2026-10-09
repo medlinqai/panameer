@@ -2,14 +2,15 @@ import Link from "next/link";
 import { formatCents } from "@/lib/display";
 import type { SettlementRow } from "@/lib/settlements";
 import type { SettlementStatus } from "@prisma/client";
-import { SETTLEMENT_LABEL, SETTLEMENT_TONE } from "@/lib/oracle-status";
+import { ERP_PENDING_LABEL, SETTLEMENT_LABEL, SETTLEMENT_TONE } from "@/lib/oracle-status";
 
 const TONE = SETTLEMENT_TONE;
 const LABEL = SETTLEMENT_LABEL;
 
 /** `paidOut` is passed on the provider's side only: buyer-paid but not yet paid out reads "Payout pending". */
-export function SettlementStatusPill({ status, paidOut }: { status: SettlementStatus; paidOut?: boolean }) {
+export function SettlementStatusPill({ status, paidOut, erp }: { status: SettlementStatus; paidOut?: boolean; erp?: boolean }) {
   const pending = status === "PAID" && paidOut === false;
+  if (erp && status === "SUBMITTED") return <span className={`rounded-full px-3 py-1 text-[12.5px] font-bold ${TONE.SUBMITTED}`}>{ERP_PENDING_LABEL}</span>;
   return (
     <span className={`rounded-full px-3 py-1 text-[12.5px] font-bold ${pending ? TONE.SUBMITTED : TONE[status]}`}>
       {pending ? "Payout pending" : LABEL[status]}
@@ -45,7 +46,7 @@ export function SettlementRowCard({ row }: { row: SettlementRow }) {
           </p>
         </div>
         <div className="text-right">
-          <SettlementStatusPill status={row.status} paidOut={row.party === "PROVIDER" ? row.paidOut : undefined} />
+          <SettlementStatusPill status={row.status} paidOut={row.party === "PROVIDER" ? row.paidOut : undefined} erp={row.erp} />
           <p className="mt-1.5 text-[15px] font-bold">
             {formatCents(row.totalCents, row.currency)}
           </p>

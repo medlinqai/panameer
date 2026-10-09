@@ -1,5 +1,6 @@
 import { formatCents } from "@/lib/display";
 import { dueDate } from "@/lib/billing-terms";
+import { queueWorkConfirmation } from "@/lib/erp/settlement";
 import { notify } from "@/lib/notifications";
 import { randomBytes } from "node:crypto";
 import { LineBasis, Prisma, SettlementStatus, TransactionType } from "@prisma/client";
@@ -376,7 +377,12 @@ export async function createSettlement(
   });
 
   const detail = await getSettlement(viewer, created.id);
-  const buyer = await prisma.workOrder.findUnique({ where: { id: o.id }, select: { buyer_person_id: true } });
+  const buyer = await prisma.workOrder.findUnique({ where: { id: o.id }, select: { buyer_person_id: true, erp_connection_id: true } });
+  // X-E006: on an ERP order the request goes to the ERP as a receipt; the customer acts there, not in Panameer.
+  if (buyer?.erp_connection_id) {
+    await queueWorkConfirmation(created.id);
+    return getSettlement(viewer, created.id);
+  }
   if (buyer)
     await notify({
       event: "work.settlement_approval",
@@ -413,8 +419,10 @@ export type SettlementAction = "APPROVE" | "REJECT";
 /** THE PARTY RULE, AND IT IS 's, NOT A SECOND ONE. */
 export function settlementActions(
   settlement: { status: SettlementStatus },
-  party: OrderParty
+  party: OrderParty,
+  erp = false
 ): SettlementAction[] {
+  if (erp) return [];
   if (party === "BUYER") return settlement.status === "SUBMITTED" ? ["APPROVE", "REJECT"] : [];
   return [];
 }
@@ -464,6 +472,8 @@ export type SettlementDetail = {
   resubmittedAs: { id: string; number: string } | null;
   /** RATE if any line is a timesheet — decides which rendering the reader gets. */
   hasTimesheet: boolean;
+  /** X-E006: the order came from the customer's ERP; approval happens there. */
+  erp: boolean;
   actions: SettlementAction[];
 };
 
@@ -562,7 +572,8 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
         }
       : null,
     hasTimesheet: lines.some((l) => l.basis === "RATE"),
-    actions: settlementActions(s, order.party),
+    erp: order.erp,
+    actions: settlementActions(s, order.party, order.erp),
   };
 }
 
@@ -582,6 +593,7 @@ export type SettlementRow = {
   submittedAt: string | null;
   dueDate: string | null;
   paidOut: boolean;
+  erp: boolean;
 };
 
 /** Every settlement the viewer is a party to — both scopes, one function. */
@@ -621,6 +633,7 @@ export async function listSettlements(viewer: Viewer): Promise<SettlementRow[]> 
       lineCount: s.lines.length,
       submittedAt: s.submitted_at ? s.submitted_at.toISOString() : null,
       dueDate: s.due_date ? s.due_date.toISOString().slice(0, 10) : null,
+      erp: o.erp,
       paidOut: s.lines.some((l) => outLines.has(l.id)),
     };
   });
@@ -633,7 +646,7 @@ export async function listSettlements(viewer: Viewer): Promise<SettlementRow[]> 
 /** APPROVING A SETTLEMENT IS ACCEPTING THE WORK. */
 export async function approveSettlement(viewer: Viewer, id: string): Promise<SettlementDetail> {
   const current = await getSettlement(viewer, id);
-  if (!settlementActions({ status: current.status }, current.party).includes("APPROVE"))
+  if (!settlementActions({ status: current.status }, current.party, current.erp).includes("APPROVE"))
     throw new SettlementError(
       current.party === "PROVIDER"
         ? "Only the buyer can approve a payment request"
@@ -657,7 +670,7 @@ export async function rejectSettlement(
   reason: string
 ): Promise<SettlementDetail> {
   const current = await getSettlement(viewer, id);
-  if (!settlementActions({ status: current.status }, current.party).includes("REJECT"))
+  if (!settlementActions({ status: current.status }, current.party, current.erp).includes("REJECT"))
     throw new SettlementError(
       current.party === "PROVIDER"
         ? "Only the buyer can reject a payment request"
@@ -687,7 +700,7 @@ export async function rejectSettlement(
 }
 
 /** Give back what a rejected settlement had drawn. */
-async function returnTheDraw(settlementId: string): Promise<void> {
+export async function returnTheDraw(settlementId: string): Promise<void> {
   const lines = await prisma.settlementLine.findMany({
     where: { settlement_request_id: settlementId },
     select: { work_order_line_id: true, basis: true, quantity: true, unit_price_cents: true, amount_cents: true },
