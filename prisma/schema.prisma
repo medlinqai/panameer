@@ -8547,3 +8547,16 @@ model WorkOrderMilestone {
   @@unique([work_order_line_id, sequence])
   @@map("work_order_milestones")
 }
+
+/// L-E046: admin-set "Recommended next" — after finishing `from`, suggest `to` (in sort order).
+model LearningPathNext {
+  id           String   @id @default(uuid()) @db.Uuid
+  from_path_id String   @db.Uuid
+  to_path_id   String   @db.Uuid
+  sort_order   Int      @default(0)
+  created_at   DateTime @default(now())
+
+  @@unique([from_path_id, to_path_id])
+  @@index([from_path_id])
+  @@map("learning_path_next")
+}

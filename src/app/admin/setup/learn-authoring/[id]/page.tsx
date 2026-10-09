@@ -17,6 +17,7 @@ import {
   SectionUrlTable,
 } from "@/components/admin/learn/LessonEditor";
 import { PublishControls } from "@/components/admin/learn/PublishControls";
+import { RecommendedNext } from "@/components/admin/learn/RecommendedNext";
 import { BackLink } from "@/components/console/BackLink";
 
 export default function AdminLearnPathPage({
@@ -108,6 +109,8 @@ export default function AdminLearnPathPage({
               </div>
             </div>
           </div>
+
+          <RecommendedNext pathId={data.id} />
 
           <StructureEditor
             tree={data}
