@@ -4,6 +4,7 @@ import { notify } from "@/lib/notifications";
 import { resolveCommissionBps, sourcingKindForLine } from "@/lib/application-commissions";
 import { pricedByQuantity } from "@/lib/transaction-spine";
 import { snapshotTerms } from "@/lib/work-orders";
+import { snapshotMilestones } from "@/lib/order-milestones";
 import { proposeChange, type ChangeInput } from "@/lib/change-orders";
 import { all, attr, first, parseCxml, statusResponse, text } from "@/lib/erp/cxml";
 import { authenticate } from "@/lib/erp/punchout";
@@ -115,6 +116,7 @@ async function createOrders(connectionId: string, pAccountId: string, poNumber: 
       return o;
     });
     orderIds.push(order.id);
+    await snapshotMilestones(order.id);
     await notify({ event: "work.order_offered", personId: providerId, entityType: "work_order", entityId: order.id, dedupeKey: `work.order_offered:${order.id}`, vars: { orderId: order.id, requestTitle: `PO ${poNumber} from the customer's ERP` } });
   }
   await prisma.workRequest.updateMany({ where: { id: { in: wrIds } }, data: { status: "ORDERED" } });

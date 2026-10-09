@@ -695,7 +695,11 @@ export async function rejectSettlement(
   });
 
   // ONLY IF THIS CALL IS THE ONE THAT REJECTED IT. Two buyers clicking at once
-  if (done.count === 1) await returnTheDraw(id);
+  if (done.count === 1) {
+    await returnTheDraw(id);
+    // CAT-E007: a rejected milestone request can be reported again.
+    await prisma.workOrderMilestone.updateMany({ where: { settlement_request_id: id }, data: { reported_at: null, settlement_request_id: null } });
+  }
   return getSettlement(viewer, id);
 }
 

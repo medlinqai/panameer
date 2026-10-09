@@ -7,6 +7,7 @@ import { emailShell, escapeHtml, paragraph, primaryButton } from "@/lib/email/sh
 import { resolveCommissionBps } from "@/lib/application-commissions";
 import { formatCents } from "@/lib/display";
 import type { Viewer } from "@/lib/access";
+import { snapshotMilestones } from "@/lib/order-milestones";
 
 // CAT-E006: cost estimates — one provider, one customer, private to them. Accept → work order; Ask for Changes → revision n+1.
 export class EstimateError extends Error {
@@ -215,6 +216,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
     await tx.costEstimate.update({ where: { id: e.id }, data: { work_order_id: o.id } });
     return o;
   });
+  await snapshotMilestones(order.id);
   await notify({ event: "work.order_offered", personId: e.provider_person_id, entityType: "work_order", entityId: order.id, dedupeKey: `work.order_offered:${order.id}`, vars: { orderId: order.id, requestTitle: `From estimate ${e.estimate_number}` } });
   return order.id;
 }

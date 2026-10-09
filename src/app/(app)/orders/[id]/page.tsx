@@ -15,6 +15,8 @@ import { History } from "@/components/orders/History";
 import { orderHistory } from "@/lib/transaction-history";
 import { OrderControls } from "@/components/orders/OrderControls";
 import { BILLABLE } from "@/lib/orders";
+import { milestonesFor } from "@/lib/order-milestones";
+import { Milestones } from "@/components/orders/Milestones";
 import { ChangeOrders } from "@/components/orders/ChangeOrders";
 import { changeBlocked, describeChanges, revisionsFor } from "@/lib/change-orders";
 import { BuyerCard } from "@/components/orders/BuyerCard";
@@ -45,6 +47,7 @@ export default async function Page({
 
   const { tab } = await searchParams;
   const revisions = await revisionsFor(o.id);
+  const milestones = await milestonesFor(o.lines.map((l) => l.id));
   const pendingChange = revisions.some((r) => r.status === "PENDING");
   const blockedReason = changeBlocked({ status: o.status, frozen_at: o.frozen ? new Date() : null }, pendingChange);
   if (tab === "plan") {
@@ -206,7 +209,7 @@ export default async function Page({
       </h2>
       <ul className="mt-4 grid gap-3">
         {o.lines.map((l) => (
-          <LineCard key={l.id} line={l} currency={o.currency} showFee={o.party === "PROVIDER"} />
+          <LineCard key={l.id} line={l} currency={o.currency} showFee={o.party === "PROVIDER"} milestones={milestones.get(l.id) ? <Milestones orderId={o.id} rows={milestones.get(l.id)!} canReport={o.party === "PROVIDER" && BILLABLE.includes(o.status)} /> : null} />
         ))}
       </ul>
 
@@ -239,7 +242,7 @@ export default async function Page({
 }
 
 /** THE TWO BASES DRAW DIFFERENTLY AND THE TWO BRANCHES ARE NOT COSMETIC. */
-function LineCard({ line, currency, showFee }: { line: OrderLineView; currency: string; showFee: boolean }) {
+function LineCard({ line, currency, showFee, milestones }: { line: OrderLineView; currency: string; showFee: boolean; milestones?: React.ReactNode }) {
   const d = line.drawdown;
   return (
     <li className="rounded-brand border border-line bg-white p-5">
@@ -316,6 +319,7 @@ function LineCard({ line, currency, showFee }: { line: OrderLineView; currency: 
         )}
       </div>
 
+      {milestones}
       {/* A line with no originating request line says so, rather than showing an */}
       {!line.hasOrigin && (
         <p className="mt-3 text-[13px] text-ink-2">

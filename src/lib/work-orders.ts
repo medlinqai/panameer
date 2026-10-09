@@ -10,6 +10,7 @@ import { SourcingError } from "@/lib/sourcing";
 import { assertTransactionLineShape, pricedByQuantity } from "@/lib/transaction-spine";
 import { notify } from "@/lib/notifications";
 import { queueConfirmation } from "@/lib/erp/outbound";
+import { snapshotMilestones } from "@/lib/order-milestones";
 import type { Viewer } from "@/lib/access";
 
 export type OrderFromRequisition = {
@@ -206,6 +207,7 @@ async function buildWorkOrder(
     return order;
   });
 
+  await snapshotMilestones(built.id);
   // THE PROVIDER IS TOLD, THROUGH THE EVENT THAT ALREADY EXISTS
   await notify({
     event: "work.order_offered",

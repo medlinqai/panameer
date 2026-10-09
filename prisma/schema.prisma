@@ -8518,3 +8518,19 @@ model CostEstimateLine {
   @@unique([revision_id, line_number])
   @@map("cost_estimate_lines")
 }
+
+/// CAT-E007: a work-order line's payment schedule, copied from the service product (or one 100% milestone). Reporting it raises its payment request.
+model WorkOrderMilestone {
+  id                    String         @id @default(uuid()) @db.Uuid
+  work_order_line_id    String         @db.Uuid
+  sequence              Int
+  label                 String
+  percent               Int
+  trigger               PaymentTrigger
+  reported_at           DateTime?
+  settlement_request_id String?        @db.Uuid
+  created_at            DateTime       @default(now())
+
+  @@unique([work_order_line_id, sequence])
+  @@map("work_order_milestones")
+}
