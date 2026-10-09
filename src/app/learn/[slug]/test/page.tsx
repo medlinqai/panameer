@@ -5,6 +5,7 @@ import { getSessionViewer } from "@/lib/session";
 import { getTestState } from "@/lib/learn-assessment";
 import { TestRunner } from "@/components/learn/TestRunner";
 import { TestPreview } from "@/components/learn/TestPreview";
+import { canAdminister } from "@/lib/access";
 import { BackLink } from "@/components/console/BackLink";
 
 export default async function TestPage({
@@ -24,7 +25,7 @@ export default async function TestPage({
 
   const state = await getTestState(viewer.userId, path.id);
   // L-E042: admins preview a draft (or published) test — answers shown, nothing counted, no certificate.
-  if (preview && (viewer.isAdmin || viewer.isSystemAdmin))
+  if (preview && canAdminister(viewer))
     return (
       <div className="mx-auto w-full max-w-3xl px-6 py-8 sm:py-10">
         <BackLink href={`/learn/${path.slug}`} label={path.title} />

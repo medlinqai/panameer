@@ -11,6 +11,7 @@ import { ProgressRing } from "@/components/learn/ProgressRing";
 import { WhatsInside } from "@/components/learn/WhatsInside";
 import { CourseTile } from "@/components/learn/CourseTile";
 import { pathState } from "@/lib/learn-state";
+import { canAdminister } from "@/lib/access";
 import { lessonCount } from "@/lib/learn-time";
 import { Avatar } from "@/components/Avatar";
 import { NotifyMe } from "@/components/learn/NotifyMe";
@@ -32,7 +33,7 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
   const state = pathState(p);
   const pickNext = await nextPathSuggestion(viewer?.userId ?? null);
   const signIn = `/login?callbackUrl=${encodeURIComponent(`/learn/${p.slug}`)}`;
-  const draftForAdmin = viewer && (viewer.isAdmin || viewer.isSystemAdmin) ? (await prisma.certificationTest.findUnique({ where: { learning_path_id: p.id }, select: { status: true } }))?.status ?? null : null;
+  const draftForAdmin = viewer && canAdminister(viewer) ? (await prisma.certificationTest.findUnique({ where: { learning_path_id: p.id }, select: { status: true } }))?.status ?? null : null;
   const startHref = !viewer ? signIn : next ? `/learn/${p.slug}/${next.id}` : first ? `/learn/${p.slug}/${first.id}` : null;
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
