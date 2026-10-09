@@ -10,6 +10,7 @@ import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHe
 import { ProgressRing } from "@/components/learn/ProgressRing";
 import { WhatsInside } from "@/components/learn/WhatsInside";
 import { CourseTile } from "@/components/learn/CourseTile";
+import { nextStep, pathState, PICK_NEXT_HREF } from "@/lib/learn-state";
 import { lessonCount } from "@/lib/learn-time";
 import { Avatar } from "@/components/Avatar";
 import { NotifyMe } from "@/components/learn/NotifyMe";
@@ -54,7 +55,7 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
           <AccountHero
             testId="path-hero"
             picture={picture}
-            eyebrow={[areaLabel, p.group].filter(Boolean).join(" · ") || "Learning Path"}
+            eyebrow={[areaLabel, p.group, pathState(p) === "READY_TO_TEST" ? "Ready to Test" : null].filter(Boolean).join(" · ") || "Learning Path"}
             title={p.title}
             kpis={[
               { value: p.courses.length, label: "COURSES" },

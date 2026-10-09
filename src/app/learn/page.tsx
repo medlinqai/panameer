@@ -41,7 +41,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
             ]}
             paragraph={
               <>
-                {f.next ? <>Next up in <b className="text-ink">{f.title}</b>: Lesson {f.next.index}, {f.next.title}{f.next.minutes ? ` · ${f.next.minutes} min` : ""}.</> : <>You&apos;ve watched every lesson in <b className="text-ink">{f.title}</b>.</>}
+                {f.next && !f.readyToTest ? <>Next up in <b className="text-ink">{f.title}</b>: Lesson {f.next.index}, {f.next.title}{f.next.minutes ? ` · ${f.next.minutes} min` : ""}.</> : <><b className="text-ink">Ready to Test</b> — you&apos;ve watched every lesson that&apos;s out in <b className="text-ink">{f.title}</b> ({f.done} of {f.total}).{f.soon ? ` ${f.soon} more ${f.soon === 1 ? "is" : "are"} coming soon.` : ""}</>}
                 {f.test?.ready && !f.test.passed && (
                   <span className="mt-2 block text-[12.5px] text-ink-3">
                     Already know it? Take the test now — {f.test.questions} questions · {f.test.passPct}% to pass · {f.test.attemptsLeft} {f.test.attemptsLeft === 1 ? "attempt" : "attempts"}.
@@ -51,7 +51,8 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
             }
             actions={
               <>
-                {f.next && <Link href={`/learn/${f.slug}/${f.next.id}`} className={HERO_BTN}>Continue Lesson {f.next.index}</Link>}
+                {f.next && !f.readyToTest && <Link href={`/learn/${f.slug}/${f.next.id}`} className={HERO_BTN}>Continue Lesson {f.next.index}</Link>}
+                {f.readyToTest && !f.test?.ready && <Link href="/learn/paths#areas" className={HERO_BTN}>Pick Your Next Path</Link>}
                 {f.test?.ready && !f.test.passed && <Link href={`/learn/${f.slug}/test`} className={HERO_BTN_W}>Take the Certification Test</Link>}
                 <Link href="/learn/paths" className={HERO_BTN_W}>Browse Learning Paths</Link>
               </>

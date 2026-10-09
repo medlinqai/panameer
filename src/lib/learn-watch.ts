@@ -40,3 +40,28 @@ export async function notifyOpenedPaths() {
     return 0;
   }
 }
+
+/** L-E041: Notify Me for a path's certification test (told once, when the test opens). */
+export async function setTestWatch(userId: string, learningPathId: string, watch: boolean) {
+  await prisma.learnPathWatch.upsert({
+    where: { user_id_learning_path_id: { user_id: userId, learning_path_id: learningPathId } },
+    create: { user_id: userId, learning_path_id: learningPathId, test_watch: watch },
+    update: { test_watch: watch },
+  });
+}
+
+/** L-E042: the test is published — tell its watchers and everyone enrolled, once each. */
+export async function notifyTestOpened(learningPathId: string) {
+  const path = await prisma.learningPath.findUnique({ where: { id: learningPathId }, select: { id: true, slug: true, title: true } });
+  if (!path) return 0;
+  const [watchers, enrolled] = await Promise.all([
+    prisma.learnPathWatch.findMany({ where: { learning_path_id: path.id, test_watch: true, test_notified_at: null }, select: { user_id: true } }),
+    prisma.learnEnrollment.findMany({ where: { learning_path_id: path.id }, select: { user_id: true } }),
+  ]);
+  const users = [...new Set([...watchers, ...enrolled].map((w) => w.user_id))];
+  const people = await prisma.person.findMany({ where: { user_id: { in: users } }, select: { id: true } });
+  for (const p of people)
+    await notify({ event: "learn.test_opened", personId: p.id, entityType: "learning_path", entityId: path.id, dedupeKey: `learn.test_opened:${path.id}:${p.id}`, vars: { pathTitle: path.title, pathSlug: path.slug } });
+  await prisma.learnPathWatch.updateMany({ where: { learning_path_id: path.id, test_watch: true, test_notified_at: null }, data: { test_notified_at: new Date() } });
+  return people.length;
+}

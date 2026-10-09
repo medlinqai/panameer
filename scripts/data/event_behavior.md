@@ -239,6 +239,7 @@ the day its writer lands.
 | `estimate.accepted` | the provider who wrote it | `Send for Approval` | worklist + email | CAT-E006. Links to the new work order |
 | `estimate.changes_requested` | the provider who wrote it | `Send for Approval` | worklist + email | CAT-E006. Cleared by resubmitting the revision |
 | `estimate.declined` | the provider who wrote it | `Send for Approval` | worklist + email | CAT-E006. Dismiss to clear |
+| `learn.test_opened` | enrolled learners and test watchers | `Do It` | in-app + email | L-E041/L-E042: sent once per person when an admin publishes the path's test |
 | `work.order_control` | the provider on the order | `Send for Approval` | worklist + email | O-E002: Hold / Release Hold / Freeze / Unfreeze / Close / Reopen / Finally Close by the customer. Dismiss to clear |
 | `work.change_order_received` | the provider on the order | `Send for Approval` | worklist + email | O-E003. Cleared by accepting or rejecting the change order |
 | `work.change_order_decided` | the customer who raised the change order | `Do It` | in-app | O-E003. Not sent on ERP orders (the ERP gets a ConfirmationRequest) |

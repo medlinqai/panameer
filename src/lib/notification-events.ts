@@ -259,6 +259,17 @@ export const NOTIFICATION_EVENTS = {
     body: () => "Say hello and ask what they hope to get from it.",
     href: (v) => (v.learnerUserId ? `/messages?with=${str(v, "learnerUserId")}` : "/messages"),
   },
+  "learn.test_opened": {
+    event: "learn.test_opened",
+    recipient: "a learner enrolled in the path, or watching its test",
+    category: "learn.progress",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `The ${str(v, "pathTitle", "")} certification test is open`,
+    body: () => "Take it when you're ready — pass it and the certificate shows on your profile.",
+    href: (v) => (v.pathSlug ? `/learn/${str(v, "pathSlug")}/test` : "/learn"),
+  },
   "learn.course_registered": {
     event: "learn.course_registered",
     recipient: "the learner",

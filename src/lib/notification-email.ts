@@ -42,6 +42,7 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "learn.path_enrolled.instructor",
   "learn.course_completed.instructor",
   "learn.path_completed.instructor",
+  "learn.test_opened",
   "work.order_control",
   "work.change_order_received",
   "shop.offer_received",

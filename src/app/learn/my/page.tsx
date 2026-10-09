@@ -117,10 +117,10 @@ export default async function MyLearningPage() {
               {completed.map((p) => (
                 <li key={p.id} className={row}>
                   <span className="min-w-0 flex-1">
-                    <b className="block truncate text-[14px]">{p.title}</b>
-                    <span className="block text-[12px] text-ink-3">Completed {lastBy.get(p.id) ? day(lastBy.get(p.id)!) : ""}{p.test.best ? ` · test ${p.test.best}%` : ""}</span>
+                    <b className="block truncate text-[14px]">{p.title}{!p.certificate && <span data-ready-tag className="ml-2 border border-magenta px-1.5 align-[1px] text-[10.5px] font-bold tracking-[0.06em] text-magenta-dark">READY TO TEST</span>}</b>
+                    <span className="block text-[12px] text-ink-3">Completed {lastBy.get(p.id) ? day(lastBy.get(p.id)!) : ""}{p.mine?.soon ? ` · ${p.mine.soon} coming soon` : ""}{p.test.best ? ` · test ${p.test.best}%` : ""}</span>
                   </span>
-                  <Link href={`/learn/${p.slug}`} className={BTN}>Review</Link>
+                  {!p.certificate && p.test.ready ? <Link href={`/learn/${p.slug}/test`} className={BTN_K}>Take the Test</Link> : <Link href={`/learn/${p.slug}`} className={BTN}>Review</Link>}
                 </li>
               ))}
             </ul>

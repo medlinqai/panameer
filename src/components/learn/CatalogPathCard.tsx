@@ -6,7 +6,7 @@ import { timeLabel } from "@/lib/learn-time";
 const BTN_K = "inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover";
 const BTN = "inline-flex min-h-10 items-center border border-ink bg-surface px-4 text-[13.5px] font-semibold text-ink hover:bg-surface-hover";
 const OFF = "inline-flex min-h-10 cursor-not-allowed items-center border border-line px-4 text-[13.5px] font-semibold text-ink-3";
-const TAG: Record<string, string> = { IN_PROGRESS: "IN PROGRESS", CERTIFIED: "CERTIFIED ✓", COMING_SOON: "COMING SOON" };
+const TAG: Record<string, string> = { IN_PROGRESS: "IN PROGRESS", READY_TO_TEST: "READY TO TEST", CERTIFIED: "CERTIFIED ✓", COMING_SOON: "COMING SOON" };
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
 
 export function CatalogPathCard({ p, areaLabel, notify }: { p: CatPath; areaLabel: string | null; notify?: React.ReactNode }) {
@@ -15,7 +15,7 @@ export function CatalogPathCard({ p, areaLabel, notify }: { p: CatPath; areaLabe
   return (
     <li data-path-card={p.slug} data-tag={p.tag ?? "none"} className="flex flex-col border border-line bg-white p-4">
       <p className="flex flex-wrap items-center gap-2 text-[10.5px] font-bold tracking-[0.08em]">
-        {p.tag && <span className={"px-1.5 py-0.5 " + (p.tag === "CERTIFIED" ? "bg-ink text-surface" : p.tag === "IN_PROGRESS" ? "border border-magenta text-magenta-dark" : "border border-[#C9CDDC] text-ink-3")}>{TAG[p.tag]}</span>}
+        {p.tag && <span className={"px-1.5 py-0.5 " + (p.tag === "CERTIFIED" ? "bg-ink text-surface" : p.tag === "IN_PROGRESS" || p.tag === "READY_TO_TEST" ? "border border-magenta text-magenta-dark" : "border border-[#C9CDDC] text-ink-3")}>{TAG[p.tag]}</span>}
         <span className="text-ink-3">{[areaLabel, p.group].filter(Boolean).join(" · ").toUpperCase()}</span>
       </p>
       <Link href={`/learn/${p.slug}`} className="mt-2 text-[15.5px] font-bold leading-snug hover:underline">{p.title}</Link>

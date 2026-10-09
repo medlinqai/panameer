@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { getTestState } from "@/lib/learn-assessment";
+import { isPlayable } from "@/lib/learn";
 import { areaFor } from "@/lib/skill-areas";
 import { experienceYears } from "@/lib/experience";
 
 // Learn › Home (2026-10-08): the path you're furthest into, two boards, and the most popular paths (ranked by learners).
-type LessonRow = { id: string; title: string; seconds: number | null; runTime: string | null };
+type LessonRow = { id: string; title: string; seconds: number | null; runTime: string | null; playable: boolean };
 
 /** Every published path's lessons, in reading order (course → section → lesson). */
 async function lessonsByPath(pathIds: string[]) {
@@ -12,12 +13,12 @@ async function lessonsByPath(pathIds: string[]) {
   const courses = await prisma.course.findMany({
     where: { learning_path_id: { in: pathIds } },
     orderBy: { sort_order: "asc" },
-    select: { learning_path_id: true, sections: { orderBy: { sort_order: "asc" }, select: { lessons: { where: { retired_at: null }, orderBy: { sort_order: "asc" }, select: { id: true, title: true, duration_seconds: true, run_time: true } } } } },
+    select: { learning_path_id: true, sections: { orderBy: { sort_order: "asc" }, select: { lessons: { where: { retired_at: null }, orderBy: { sort_order: "asc" }, select: { id: true, title: true, duration_seconds: true, run_time: true, vimeo_ref: true, production_status: true } } } } },
   });
   const out = new Map<string, LessonRow[]>();
   for (const c of courses) {
     const list = out.get(c.learning_path_id) ?? [];
-    for (const s of c.sections) for (const l of s.lessons) list.push({ id: l.id, title: l.title, seconds: l.duration_seconds, runTime: l.run_time });
+    for (const s of c.sections) for (const l of s.lessons) list.push({ id: l.id, title: l.title, seconds: l.duration_seconds, runTime: l.run_time, playable: isPlayable(l) });
     out.set(c.learning_path_id, list);
   }
   return out;
@@ -75,9 +76,10 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
   const enrolled = new Set(enrollments.map((e) => e.learning_path_id));
 
   const progressOf = (pathId: string) => {
-    const list = lessons.get(pathId) ?? [];
+    // L-E045: count and continue only through lessons with a video.
+    const list = (lessons.get(pathId) ?? []).filter((l) => l.playable);
     const n = list.filter((l) => done.has(l.id)).length;
-    return { done: n, total: list.length, next: list.find((l) => !done.has(l.id)) ?? null };
+    return { done: n, total: list.length, soon: (lessons.get(pathId) ?? []).length - list.length, next: list.find((l) => !done.has(l.id)) ?? null };
   };
   const areaOf = (p: (typeof paths)[number]) => {
     if (p.slug === "oracle-cloud-foundations" || /foundation/i.test(p.group ?? "")) return "START";
@@ -92,7 +94,11 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
     .map((p) => ({ p, pr: progressOf(p.id) }))
     .filter(({ p, pr }) => (enrolled.has(p.id) || pr.done > 0) && pr.total > 0 && pr.done < pr.total)
     .sort((a, b) => b.pr.done / b.pr.total - a.pr.done / a.pr.total || b.pr.done - a.pr.done);
-  const focus = started[0] ?? null;
+  // Nothing in progress, but a path is finished-as-far-as-it-goes: show it as Ready to Test.
+  const ready = paths
+    .map((p) => ({ p, pr: progressOf(p.id) }))
+    .filter(({ p, pr }) => (enrolled.has(p.id) || pr.done > 0) && pr.total > 0 && pr.done >= pr.total && !certified.has(p.id));
+  const focus = started[0] ?? ready[0] ?? null;
   const focusTest = focus ? await getTestState(userId, focus.p.id) : null;
 
   const popular = paths
@@ -122,7 +128,7 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
     firstVisit: enrollments.length === 0 && myProgress.length === 0,
     focus: focus
       ? {
-          slug: focus.p.slug, title: focus.p.title, done: focus.pr.done, total: focus.pr.total,
+          slug: focus.p.slug, title: focus.p.title, done: focus.pr.done, total: focus.pr.total, soon: focus.pr.soon, readyToTest: focus.pr.done >= focus.pr.total,
           next: focus.pr.next ? { id: focus.pr.next.id, title: focus.pr.next.title, index: focus.pr.done + 1, minutes: minutesOf(focus.pr.next) } : null,
           test: focusTest ? { ready: focusTest.ready, questions: focusTest.questionCount, passPct: focusTest.threshold, attemptsLeft: Math.max(0, focusTest.maxAttempts - focusTest.attemptsUsed), passed: !!focusTest.passed } : null,
         }

@@ -8,7 +8,7 @@ import { experienceYears } from "@/lib/experience";
 // Status language everywhere: done (ink ✓) · now (magenta dot) · not started (grey ring).
 export type CatLesson = { id: string; title: string; minutes: number | null; playable: boolean; done: boolean; description: string | null; vimeoRef: string | null };
 export type CatCourse = { id: string; slug: string; title: string; summary: string | null; lessons: CatLesson[]; minutes: number; done: number; teacher: string | null };
-export type PathTag = "IN_PROGRESS" | "CERTIFIED" | "COMING_SOON" | null;
+export type PathTag = "IN_PROGRESS" | "READY_TO_TEST" | "CERTIFIED" | "COMING_SOON" | null;
 export type CatPath = {
   id: string; slug: string; title: string; summary: string | null; area: string | null; group: string | null; cover: string | null; introVideo: string | null; outcome: string | null; level: string | null;
   teacher: { personId: string; name: string; title: string | null; photoUrl: string | null; profileId: string | null; years: number | null } | null;
@@ -20,6 +20,8 @@ export type CatPath = {
   certificate: { id: string; earnedOn: string; score: number | null; verifyUrl: string | null } | null;
   tag: PathTag;
   watching: boolean;
+  /** L-E041: asked to be told when the test opens. */
+  watchingTest: boolean;
 };
 
 const minutesOf = (seconds: number | null, runTime: string | null) => {
@@ -60,12 +62,13 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
         prisma.lessonProgress.findMany({ where: { user_id: userId }, select: { lesson_id: true } }),
         prisma.certificationAttempt.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { learning_path_id: true, score: true, passed: true } }),
         prisma.certification.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { id: true, learning_path_id: true, created_at: true, issued_on: true, public_credential_url: true } }),
-        prisma.learnPathWatch.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { learning_path_id: true } }).catch(() => []),
+        prisma.learnPathWatch.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { learning_path_id: true, test_watch: true } }).catch(() => []),
       ])
     : [[], [], [], [], []];
   const done = new Set(progress.map((p) => p.lesson_id));
   const enrolledSet = new Set(enrolled.map((e) => e.learning_path_id));
   const watching = new Set(watches.map((w) => w.learning_path_id));
+  const watchingTest = new Set(watches.filter((w) => (w as { test_watch?: boolean }).test_watch).map((w) => w.learning_path_id));
 
   return paths.map((p) => {
     const courses: CatCourse[] = p.courses.map((c) => {
@@ -108,8 +111,9 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
       mine,
       test: { ready: p.assessment?.status === "PUBLISHED", questions, threshold: p.assessment?.pass_threshold ?? 70, maxAttempts: p.assessment?.max_attempts ?? 3, used: myAttempts.length, passed: !!passed || !!cert, best: myAttempts.reduce((m, a) => Math.max(m, a.score), 0) },
       certificate: cert ? { id: cert.id, earnedOn: (cert.issued_on ?? cert.created_at).toISOString(), score: passed?.score ?? null, verifyUrl: cert.public_credential_url } : null,
-      tag: cert || passed ? "CERTIFIED" : !playable ? "COMING_SOON" : mine ? "IN_PROGRESS" : null,
+      tag: cert || passed ? "CERTIFIED" : !playable ? "COMING_SOON" : mine && mine.total > 0 && mine.done >= mine.total ? "READY_TO_TEST" : mine ? "IN_PROGRESS" : null,
       watching: watching.has(p.id),
+      watchingTest: watchingTest.has(p.id),
     };
   });
 }

@@ -54,8 +54,10 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const here = flat[i];
   const prev = flat.slice(0, i).reverse().find((l) => l.playable) ?? null;
   const next = flat.slice(i + 1).find((l) => l.playable) ?? null;
-  const nextHref = next ? `/learn/${p.slug}/${next.id}` : p.test.ready && !p.test.passed ? `/learn/${p.slug}/test` : `/learn/${p.slug}`;
-  const lastLabel = next ? null : p.test.ready && !p.test.passed ? "Mark Complete & Take the Test" : "Mark Complete & Finish";
+  // L-E045: once this is the last unwatched lesson that's out, Mark Complete lands on "You're Ready to Test".
+  const lastOne = !flat.some((l) => l.playable && !l.done && l.id !== lessonId);
+  const nextHref = lastOne ? `/learn/${p.slug}/ready` : next ? `/learn/${p.slug}/${next.id}` : `/learn/${p.slug}`;
+  const lastLabel = lastOne ? "Mark Complete & Finish" : null;
   const count = lessonCount(flat);
   const pct = count.out ? Math.round((count.done / count.out) * 100) : 0;
 
@@ -74,7 +76,7 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
     <aside data-lesson-outline className="border border-line lg:sticky lg:self-start" style={{ top: "calc(var(--pm-band-h) + 1.5rem)" }}>
       <div className="border-b border-line p-4">
         <p className="text-[13.5px] font-bold">{p.title}</p>
-        <p className="mt-0.5 text-[12px] text-ink-3">{count.label}</p>
+        <p className="mt-0.5 flex flex-wrap items-center gap-2 text-[12px] text-ink-3">{count.label}{count.finished && <span data-ready-tag className="border border-magenta px-1.5 text-[10.5px] font-bold tracking-[0.06em] text-magenta-dark">READY TO TEST</span>}</p>
         <span aria-hidden className="mt-2 block h-[6px] w-full bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${pct}%` }} /></span>
       </div>
       <ol className="max-h-[520px] overflow-y-auto p-3">
