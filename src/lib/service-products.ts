@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import type { PaymentTerms, PaymentTrigger } from "@prisma/client";
 import { PAYMENT_TERMS_LABEL, PAYMENT_TRIGGER_LABEL } from "@/lib/billing-terms";
+import { publishGate } from "@/lib/my-catalog";
+import { solutionViolations } from "@/lib/catalog/solution-types";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError } from "@/lib/onboarding";
 import { gapSentence, sellGaps } from "@/lib/gate-reads";
@@ -10,7 +12,7 @@ export const DEFAULT_MILESTONES = [
   { label: "On completion", percent: 50, sequence: 1 },
 ];
 
-export type MilestoneInput = { label: string; percent: number };
+export type MilestoneInput = { label: string; percent: number; trigger?: PaymentTrigger | null };
 
 export type ServiceProductInput = {
   title: string;
@@ -26,6 +28,11 @@ export type ServiceProductInput = {
   capabilityDomainIds?: string[];
   paymentTerms?: PaymentTerms | null;
   paymentTrigger?: PaymentTrigger | null;
+  /** CAT-E003 wizard fields. */
+  kind?: "DELIVERABLE" | "DEPLOYABLE" | "BLANKET" | null;
+  pricingType?: "FIXED" | "RECURRING" | "NOT_TO_EXCEED" | null;
+  billingPeriod?: "MONTHLY" | "ANNUAL" | null;
+  coverCode?: string | null;
 };
 
 async function ownedProfileId(viewer: Viewer): Promise<string> {
@@ -54,12 +61,15 @@ const shape = (p: {
   currency: string;
   payment_terms?: PaymentTerms | null;
   payment_trigger?: PaymentTrigger | null;
+  kind?: string;
+  billing_period?: string | null;
+  cover_code?: string | null;
   cover_image_url: string | null;
   status: string;
   role_type_id: string | null;
   roleType?: { id: string; name: string } | null;
   deliverables: { id: string; text: string; sequence: number }[];
-  milestones: { id: string; label: string; percent: number; sequence: number }[];
+  milestones: { id: string; label: string; percent: number; sequence: number; trigger?: PaymentTrigger | null }[];
   skills?: { skill: { id: string; name: string } }[];
   capabilityDomains?: {
     capability_domain_id: string;
@@ -75,6 +85,9 @@ const shape = (p: {
   currency: p.currency,
   paymentTerms: p.payment_terms ?? null,
   paymentTrigger: p.payment_trigger ?? null,
+  kind: p.kind ?? "DELIVERABLE",
+  billingPeriod: p.billing_period ?? null,
+  coverCode: p.cover_code ?? null,
   coverImageUrl: p.cover_image_url,
   status: p.status,
   roleTypeId: p.role_type_id,
@@ -86,7 +99,7 @@ const shape = (p: {
   milestones: p.milestones
     .slice()
     .sort((a, b) => a.sequence - b.sequence)
-    .map((m) => ({ id: m.id, label: m.label, percent: m.percent })),
+    .map((m) => ({ id: m.id, label: m.label, percent: m.percent, trigger: m.trigger ?? null })),
   skills: (p.skills ?? []).map((s) => ({ id: s.skill.id, name: s.skill.name })),
   /* the saved selection, so re-opening the form shows what was chosen */
   capabilityDomainIds: (p.capabilityDomains ?? []).map((c) => c.capability_domain_id),
@@ -129,6 +142,7 @@ function normalizeMilestones(input?: MilestoneInput[]) {
     label: clean(m.label, 120)!,
     percent: Math.round(Number(m.percent)),
     sequence: i,
+    trigger: (m as MilestoneInput).trigger && (m as MilestoneInput).trigger! in PAYMENT_TRIGGER_LABEL ? (m as MilestoneInput).trigger! : null,
   }));
 
   for (const m of milestones) {
@@ -178,6 +192,11 @@ function serviceProductData(input: ServiceProductInput) {
     role_type_id: input.roleTypeId || null,
     payment_terms: input.paymentTerms && input.paymentTerms in PAYMENT_TERMS_LABEL ? input.paymentTerms : null,
     payment_trigger: input.paymentTrigger && input.paymentTrigger in PAYMENT_TRIGGER_LABEL ? input.paymentTrigger : null,
+    ...(input.kind ? { kind: input.kind } : {}),
+    ...(input.pricingType ? { pricing_type: input.pricingType } : {}),
+    ...(input.pricingType ? { billing_period: input.pricingType === "RECURRING" ? input.billingPeriod ?? "MONTHLY" : null } : {}),
+    ...(input.kind === "DEPLOYABLE" ? { duration_weeks: null } : {}),
+    ...(input.coverCode !== undefined ? { cover_code: clean(input.coverCode, 4)?.toUpperCase() ?? null } : {}),
   };
 }
 
@@ -326,8 +345,9 @@ export async function setServiceProductStatus(
     const missing: string[] = [];
     if (!pkg.title.trim()) missing.push("a title");
     if (pkg.price_cents == null) missing.push("a price");
-    if (pkg.duration_weeks == null) missing.push("a duration");
-    if (pkg.deliverables.length === 0) missing.push("at least one deliverable");
+    // CAT-E003: duration and deliverables describe a Deliverable; agents run and blankets draw down.
+    if (pkg.kind === "DELIVERABLE" && pkg.duration_weeks == null) missing.push("a duration");
+    if (pkg.kind === "DELIVERABLE" && pkg.deliverables.length === 0) missing.push("at least one deliverable");
     if (missing.length > 0) {
       throw new OnboardingError(
         `Before publishing this package, add ${missing.join(", ")}.`,
@@ -355,4 +375,22 @@ export async function listPublishedServiceProducts(profileId: string) {
     include: INCLUDE,
   });
   return rows.map(shape);
+}
+
+/** CAT-E003/E004: the wizard's save — create or update, then publish when asked (validated company + the product checks). */
+export async function saveServiceProductFromWizard(viewer: Viewer, id: string | null, input: ServiceProductInput, publish: boolean) {
+  if (input.kind) {
+    const pricing = input.pricingType ?? (input.kind === "DEPLOYABLE" ? "RECURRING" : input.kind === "BLANKET" ? "NOT_TO_EXCEED" : "FIXED");
+    const bad = solutionViolations({ kind: input.kind, pricing_type: pricing, billing_period: pricing === "RECURRING" ? input.billingPeriod ?? "MONTHLY" : null, duration_weeks: input.kind === "DEPLOYABLE" ? null : input.durationWeeks ?? null, milestones: input.kind === "DEPLOYABLE" ? 0 : (input.milestones ?? []).length, deliverables: input.kind === "DEPLOYABLE" ? 0 : (input.deliverables ?? []).length });
+    if (bad.length) throw new OnboardingError(bad[0], "INVALID");
+    input = { ...input, pricingType: pricing, ...(input.kind === "DEPLOYABLE" ? { milestones: [], deliverables: [] } : {}) };
+  }
+  const savedId = id ? (await updateServiceProduct(viewer, id, input), id) : await createServiceProduct(viewer, input);
+  if (publish) {
+    const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+    const gate = person ? await publishGate(person.id) : null;
+    if (!gate?.ok) throw new OnboardingError("You can publish once your company is validated.", "GATE_UNMET");
+    await setServiceProductStatus(viewer, savedId, "PUBLISHED");
+  } else if (id) await setServiceProductStatus(viewer, savedId, "DRAFT");
+  return savedId;
 }

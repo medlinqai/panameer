@@ -6,6 +6,7 @@ import {
   updateServiceProduct,
   deleteServiceProduct,
   setServiceProductStatus,
+  saveServiceProductFromWizard,
   listCapabilityDomains,
 } from "@/lib/service-products";
 import { OnboardingError } from "@/lib/onboarding";
@@ -37,6 +38,10 @@ export async function POST(request: Request) {
       case "create":
         await createServiceProduct(viewer, body.package ?? {});
         break;
+      case "wizard": {
+        const id = await saveServiceProductFromWizard(viewer, body.serviceProductId ? String(body.serviceProductId) : null, body.package ?? {}, body.publish === true);
+        return NextResponse.json({ ok: true, id });
+      }
       case "update":
         await updateServiceProduct(viewer, String(body.serviceProductId), body.package ?? {});
         break;

@@ -3,7 +3,7 @@ import type { BillingCycle, PaymentTerms, PaymentTrigger, TransactionType } from
 // O-E004: billing cycle, payment terms and payment trigger — labels, defaults and the due-date rule.
 export const BILLING_CYCLE_LABEL: Record<BillingCycle, string> = { WEEKLY: "Weekly", BIWEEKLY: "Every 2 weeks", MONTHLY: "Monthly", EVERY_90_DAYS: "Every 90 days" };
 export const PAYMENT_TERMS_LABEL: Record<PaymentTerms, string> = { IMMEDIATE: "Immediate", NET15: "Net 15", NET30: "Net 30", NET45: "Net 45", NET60: "Net 60" };
-export const PAYMENT_TRIGGER_LABEL: Record<PaymentTrigger, string> = { TIMESHEET: "Timesheet", PAYMENT_REQUEST: "Payment request", INVOICE: "Invoice", DOWNLOAD: "Download", INSTALLATION: "Installation" };
+export const PAYMENT_TRIGGER_LABEL: Record<PaymentTrigger, string> = { TIMESHEET: "Timesheet", PAYMENT_REQUEST: "Payment request", INVOICE: "Invoice", DOWNLOAD: "Download", INSTALLATION: "Installation", ACCEPTANCE: "Acceptance", ORDER_ACCEPTED: "Order accepted" };
 export const TERMS_DAYS: Record<PaymentTerms, number> = { IMMEDIATE: 0, NET15: 15, NET30: 30, NET45: 45, NET60: 60 };
 
 /** Terms start on submission, not approval. */

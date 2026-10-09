@@ -1,9 +1,9 @@
 
-export const SERVICE_PRODUCT_KINDS = ["DEPLOYABLE", "HOURS", "DELIVERABLE"] as const;
+export const SERVICE_PRODUCT_KINDS = ["DEPLOYABLE", "HOURS", "DELIVERABLE", "BLANKET"] as const;
 export type ServiceProductKind = (typeof SERVICE_PRODUCT_KINDS)[number];
 
 /** Mirrors `enum PackagePricingType`. */
-export const PRICING_TYPES = ["FIXED", "HOURLY", "TM", "RECURRING"] as const;
+export const PRICING_TYPES = ["FIXED", "HOURLY", "TM", "RECURRING", "NOT_TO_EXCEED"] as const;
 export type PricingType = (typeof PRICING_TYPES)[number];
 
 /** Mirrors `enum BillingPeriod`. */
@@ -14,6 +14,8 @@ export const PRICING_FOR_KIND: Record<ServiceProductKind, readonly PricingType[]
   DEPLOYABLE: ["RECURRING"],
   HOURS: ["HOURLY", "RECURRING"],
   DELIVERABLE: ["FIXED"],
+  // CAT-E003: a blanket is a cap drawn down by payment requests.
+  BLANKET: ["NOT_TO_EXCEED"],
 };
 
 export type SolutionRow = {

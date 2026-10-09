@@ -2345,6 +2345,8 @@ model ServiceProduct {
    */
   kind                ServiceProductKind        @default(DELIVERABLE)
   status              ServiceProductStatus      @default(DRAFT)
+  /// CAT-E003: short code shown faded on the colored cover.
+  cover_code          String?
   /// O-E004: when the product is paid, and what event triggers the payment request.
   payment_terms       PaymentTerms?
   payment_trigger     PaymentTrigger?
@@ -2404,6 +2406,8 @@ enum ServiceProductKind {
   HOURS
   /// A defined scope, settled by payment request — lump sum or milestones. `FIXED`.
   DELIVERABLE
+  /// CAT-E003: a not-to-exceed amount drawn down as work happens.
+  BLANKET
 }
 
 /// ⚠ `RECURRING` NEEDS A PERIOD AND `price_cents` ALONE CANNOT CARRY ONE. `$450` is
@@ -2429,6 +2433,8 @@ enum ServiceProductPricingType {
   /// because `$450/mo` was not expressible at all: a `DEPLOYABLE` has no other shape.
   /// Requires `billing_period`; see the invariant on `Package.billing_period`.
   RECURRING
+  /// CAT-E003: blankets — a cap, paid only for what's drawn.
+  NOT_TO_EXCEED
 }
 
 enum ServiceProductStatus {
@@ -2473,6 +2479,8 @@ model ServiceProductMilestone {
   label      String
   percent    Int
   sequence   Int      @default(0)
+  /// CAT-E003: what releases this part of the price.
+  trigger    PaymentTrigger?
   created_at DateTime @default(now())
 
   service_product ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
@@ -8271,6 +8279,10 @@ enum PaymentTrigger {
   INVOICE
   DOWNLOAD
   INSTALLATION
+  /// CAT-E003: the customer accepts the delivered work.
+  ACCEPTANCE
+  /// CAT-E003: a milestone paid when the order is accepted (e.g. 50% kickoff).
+  ORDER_ACCEPTED
 }
 
 /// O-E004: a service the provider sells, with its rate and billing terms. Snapshotted onto the order line.
