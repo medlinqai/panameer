@@ -9,6 +9,7 @@ import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { ProgressRing } from "@/components/learn/ProgressRing";
 import { WhatsInside } from "@/components/learn/WhatsInside";
+import { CourseTile } from "@/components/learn/CourseTile";
 import { Avatar } from "@/components/Avatar";
 import { NotifyMe } from "@/components/learn/NotifyMe";
 
@@ -84,6 +85,11 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
         <div className="grid md:grid-cols-[1.35fr_1fr]">
           <section className="min-w-0 py-6 md:pr-7">
             <h2 className="text-[20px] font-bold">What&apos;s Inside <small className="ml-1 text-[12px] font-medium text-ink-3">{p.courses.length} courses · {p.lessons} lessons</small></h2>
+            <div data-course-tiles className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              {p.courses.map((c, i) => (
+                <CourseTile key={c.id} n={i + 1} title={c.title} lessons={c.lessons.filter((l) => l.playable).length || c.lessons.length} done={c.done} href={`/learn/${p.slug}/course/${c.slug}`} />
+              ))}
+            </div>
             <WhatsInside slug={p.slug} courses={p.courses} nextLessonId={next?.id ?? null} canPlay={!!viewer} />
           </section>
           <aside className="min-w-0 border-t border-line py-6 md:border-l md:border-t-0 md:pl-7">

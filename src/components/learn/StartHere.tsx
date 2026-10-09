@@ -1,30 +1,22 @@
 import Link from "next/link";
 import type { CatPath } from "@/lib/learn-catalog";
 import { timeLabel } from "@/lib/learn-time";
-import { vimeoEmbedUrl } from "@/lib/learn";
+import { CourseTile } from "@/components/learn/CourseTile";
 
-// Learning Paths › Start Here: the one path for people new to Oracle Cloud, big — intro video or cover, what you'll learn, one button.
+// Learning Paths › Start Here: the one path for people new to Oracle Cloud — course tiles, what you'll learn, one button.
 const tidy = (t: string) => t.replace(/^\s*\d+[.)]\s*/, "");
 
 export function StartHere({ p }: { p: CatPath }) {
-  const embed = vimeoEmbedUrl(p.introVideo);
   const ticks = p.courses.slice(0, 4).map((c) => tidy(c.title));
   const go = p.mine?.next ? `/learn/${p.slug}/${p.mine.next.id}` : `/learn/${p.slug}`;
   return (
     <section data-start-here className="mt-7 grid bg-ink text-surface md:grid-cols-[1.15fr_1fr]">
-      <div className="relative min-h-[220px] overflow-hidden">
-        {embed ? (
-          <iframe src={embed} title={`${p.title} — intro`} allow="autoplay; fullscreen; picture-in-picture" className="absolute inset-0 h-full w-full" />
-        ) : p.cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={p.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        ) : (
-          <div className="absolute inset-0 grid grid-cols-2 gap-2 bg-[linear-gradient(135deg,#3a3350,#14111d)] p-6">
-            {ticks.map((t) => (
-              <span key={t} className="flex items-end border border-white/15 p-3 text-[13px] font-bold text-white/80">{t}</span>
-            ))}
-          </div>
-        )}
+      {/* T-E003: each course as its own colored tile, 2×2 on a phone. */}
+      <div data-start-tiles className="grid grid-cols-2 content-start gap-2.5 p-5 sm:p-6">
+        {p.courses.map((c, i) => {
+          const out = c.lessons.filter((l) => l.playable).length || c.lessons.length;
+          return <CourseTile key={c.id} n={i + 1} title={c.title} lessons={out} done={c.done} href={`/learn/${p.slug}/course/${c.slug}`} />;
+        })}
       </div>
       <div className="p-6 sm:p-8">
         <p className="text-[11px] font-semibold tracking-[0.12em] text-[#ef8cee]">START HERE · NEW TO ORACLE CLOUD?</p>
