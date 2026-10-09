@@ -233,6 +233,8 @@ the day its writer lands.
 | `work.test_requested` | the provider sent a skills test | `Send for Approval` | worklist | ⚠⚠ **THE WRITER SHIPPED WITHOUT AN EVENT** — `sendTest()` (`work-tests.ts`) created a `TestRequest` and told nobody; zero `notify()` calls in that file and no `work.test_*` row here. Registered with its caller in `E683a` WS-E. ⚠ Cleared by sitting the test or declining it |
 | `work.order_offered` | the provider offered the work | `Send for Approval` | worklist | Cleared by accepting the order |
 | `learn.path_enrolled.instructor` | the instructor | `Do It` | worklist + email | L-E035. One per learner per path (dedupe on path + learner). Row action: Message {First}; Dismiss to clear |
+| `learn.path_completed` | the learner | `Do It` | in-app | L-E037: every lesson out so far in the path is done (dedupe per path + learner) |
+| `learn.path_completed` | the instructor | `Do It` | worklist + email | L-E037. Row action Message {First}; Dismiss to clear |
 | `work.order_control` | the provider on the order | `Send for Approval` | worklist + email | O-E002: Hold / Release Hold / Freeze / Unfreeze / Close / Reopen / Finally Close by the customer. Dismiss to clear |
 | `work.change_order_received` | the provider on the order | `Send for Approval` | worklist + email | O-E003. Cleared by accepting or rejecting the change order |
 | `work.change_order_decided` | the customer who raised the change order | `Do It` | in-app | O-E003. Not sent on ERP orders (the ERP gets a ConfirmationRequest) |

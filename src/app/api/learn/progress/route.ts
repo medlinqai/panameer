@@ -6,7 +6,7 @@ import { learnEnrolmentRefusal } from "@/lib/learn-enrolment-gate";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
 import { isPlayable } from "@/lib/learn";
-import { notifyInstructorEnrolled } from "@/lib/learn-instructor";
+import { notifyInstructorEnrolled, notifyPathCompletedIfDone } from "@/lib/learn-instructor";
 
 const BODY = z.object({
   lessonId: z.string().uuid(),
@@ -144,5 +144,6 @@ export async function POST(request: Request) {
     }
   }
 
+  await notifyPathCompletedIfDone(viewer.userId, pathId);
   return NextResponse.json({ ok: true, completed: true });
 }
