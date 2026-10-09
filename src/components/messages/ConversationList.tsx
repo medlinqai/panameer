@@ -44,7 +44,7 @@ export function ConversationList({ rows, active }: { rows: ConvRow[]; active: st
           placeholder="🔍 Search people and messages"
           aria-label="Search people and messages"
           data-message-search
-          className="h-9 w-full border border-line bg-bg-soft px-3 text-[13.5px] focus:border-ink focus:outline-none"
+          className="h-9 w-full min-w-0 border border-line bg-bg-soft px-3 text-[13.5px] focus:border-ink focus:outline-none"
         />
       </div>
       {shown.length === 0 && <p className="px-4 py-6 text-center text-[13px] text-ink-2">{rows.length ? "No conversations match." : "No conversations yet."}</p>}

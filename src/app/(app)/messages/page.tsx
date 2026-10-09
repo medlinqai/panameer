@@ -65,12 +65,12 @@ export default async function MessagesPage({
         </header>
 
         <div className="overflow-hidden rounded-brand border border-line bg-white">
-          <div className="grid md:grid-cols-[280px_1fr]">
+          <div className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[280px_minmax(0,1fr)]">
             {/* ---- Conversation list ------------------------------------ */}
             {/* HIDDEN ON MOBILE ONCE A CONVERSATION IS OPEN — see the header. */}
             <aside
               className={
-                "border-b border-line md:border-b-0 md:border-r " +
+                "min-w-0 border-b border-line md:border-b-0 md:border-r " +
                 (withUserId ? "hidden md:block" : "")
               }
             >
@@ -94,7 +94,7 @@ export default async function MessagesPage({
             </aside>
 
             {/* ---- Conversation ----------------------------------------- */}
-            <section className="flex min-h-[320px] flex-col">
+            <section className="flex min-h-[320px] min-w-0 flex-col">
               {!withUserId ? (
                 <div className="flex flex-1 items-center justify-center px-6 py-10 text-center">
                   <div className="max-w-md">
@@ -148,7 +148,7 @@ export default async function MessagesPage({
                           >
                             <div
                               className={
-                                "max-w-[80%] whitespace-pre-wrap rounded-brand px-3 py-2 text-[14px] leading-relaxed " +
+                                "max-w-[80%] whitespace-pre-wrap rounded-brand px-3 py-2 text-[14px] leading-relaxed [overflow-wrap:anywhere] " +
                                 (mine ? "bg-magenta text-white" : "bg-ink-2/[0.07] text-ink")
                               }
                             >

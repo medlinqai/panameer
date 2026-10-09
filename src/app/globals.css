@@ -244,3 +244,8 @@ main:has(:is(.pm-white-page, .account-surface)) {
 
 /* Square rows and cards inside an admin page (design system: no rounded corners). */
 .pm-square [class*="rounded"] { border-radius: 0; }
+
+/* M-E003: on phones a grid child can shrink below its text, so long titles truncate instead of running off the right. */
+@media (max-width: 639.98px) {
+  .grid > * { min-width: 0; }
+}

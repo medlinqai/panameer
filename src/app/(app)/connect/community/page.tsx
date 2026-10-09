@@ -52,14 +52,14 @@ export default async function CommunityPage({ searchParams }: { searchParams: Pr
         {view.rows.length === 0 ? (
           <p className="mt-8 text-center text-[14px] text-ink-2">No one matches yet. Try fewer filters.</p>
         ) : (
-          <ul data-member-cards className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul data-member-cards className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {view.rows.slice(0, 60).map((p) => {
               const [first, ...rest] = p.name.split(" ");
               return (
-                <li key={p.userId} data-member={p.userId} className="flex flex-col border border-line bg-white p-4">
-                  <div className="flex items-start gap-3">
+                <li key={p.userId} data-member={p.userId} className="flex min-w-0 flex-col border border-line bg-white p-4">
+                  <div className="flex min-w-0 items-start gap-3">
                     <Avatar firstName={first ?? ""} lastName={rest.join(" ")} photoUrl={p.photoUrl} size={48} />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-[15px] font-bold">{p.name}</p>
                       <p className="truncate text-[12.5px] text-ink-2">{[p.title, p.company].filter(Boolean).join(" · ") || "Member"}</p>
                     </div>
