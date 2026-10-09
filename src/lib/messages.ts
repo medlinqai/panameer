@@ -1,4 +1,5 @@
 import { memberVisibleWhere } from "@/lib/access";
+import { teachesEnrolled } from "@/lib/learn-instructor";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import type { Viewer } from "@/lib/access";
@@ -59,6 +60,8 @@ export async function canMessage(
     select: { status: true },
   });
 
+  // L-E038: an instructor and a trainee on one of their paths can message without a colleague connection.
+  if (rel?.status !== "ACCEPTED" && (await teachesEnrolled(viewer.userId, otherUserId))) return { ok: true };
   if (!rel) return deny("NOT_CONNECTED");
   if (rel.status === "PENDING") return deny("PENDING");
   if (rel.status === "DECLINED") return deny("DECLINED");

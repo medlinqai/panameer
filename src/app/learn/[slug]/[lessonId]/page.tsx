@@ -12,6 +12,7 @@ import { StatusMark } from "@/components/learn/StatusMark";
 import { LessonStep } from "@/components/learn/LessonStep";
 import { LessonAsk } from "@/components/learn/LessonAsk";
 import { ConnectControls, type Relation } from "@/components/community/ConnectControls";
+import { canMessage } from "@/lib/messages";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,8 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
     : null;
   const tutorRelation: Relation = tutorConn ? (tutorConn.status as Relation) : null;
   const tutorIncoming = tutorConn?.status === "PENDING" && tutorConn.from_user_id === tutorUserId ? tutorConn.id : null;
+  // L-E038: an enrolled learner can message the path's instructor without connecting first.
+  const canMsgTutor = !!tutorUserId && tutorUserId !== viewer.userId && tutorRelation !== "ACCEPTED" && !!p?.mine?.enrolled && (await canMessage(viewer, tutorUserId)).ok;
 
   const flat = p.courses.flatMap((c, ci) => c.lessons.map((l) => ({ ...l, ci, course: c })));
   const i = flat.findIndex((l) => l.id === lessonId);
@@ -129,6 +132,9 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
                     <b>{instructor.name}</b>
                   )}
                 </div>
+                {canMsgTutor && (
+                  <Link href={`/messages?with=${tutorUserId}`} data-message-instructor className="inline-flex min-h-10 items-center border border-ink px-4 text-[14px] font-semibold text-ink hover:bg-surface-hover">Message</Link>
+                )}
                 {tutorUserId && tutorUserId !== viewer.userId && (
                   <ConnectControls toUserId={tutorUserId} relation={tutorRelation} incomingConnectionId={tutorIncoming} tone="outline" part="colleague" />
                 )}
