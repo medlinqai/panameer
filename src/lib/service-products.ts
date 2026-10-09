@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import type { PaymentTerms, PaymentTrigger } from "@prisma/client";
+import { PAYMENT_TERMS_LABEL, PAYMENT_TRIGGER_LABEL } from "@/lib/billing-terms";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError } from "@/lib/onboarding";
 import { gapSentence, sellGaps } from "@/lib/gate-reads";
@@ -22,6 +24,8 @@ export type ServiceProductInput = {
   coverImageUrl?: string | null;
   milestones?: MilestoneInput[];
   capabilityDomainIds?: string[];
+  paymentTerms?: PaymentTerms | null;
+  paymentTrigger?: PaymentTrigger | null;
 };
 
 async function ownedProfileId(viewer: Viewer): Promise<string> {
@@ -48,6 +52,8 @@ const shape = (p: {
   pricing_type: string;
   price_cents: number | null;
   currency: string;
+  payment_terms?: PaymentTerms | null;
+  payment_trigger?: PaymentTrigger | null;
   cover_image_url: string | null;
   status: string;
   role_type_id: string | null;
@@ -67,6 +73,8 @@ const shape = (p: {
   pricingType: p.pricing_type,
   priceCents: p.price_cents,
   currency: p.currency,
+  paymentTerms: p.payment_terms ?? null,
+  paymentTrigger: p.payment_trigger ?? null,
   coverImageUrl: p.cover_image_url,
   status: p.status,
   roleTypeId: p.role_type_id,
@@ -168,6 +176,8 @@ function serviceProductData(input: ServiceProductInput) {
     currency: clean(input.currency, 8) ?? "USD",
     cover_image_url: clean(input.coverImageUrl, 1000),
     role_type_id: input.roleTypeId || null,
+    payment_terms: input.paymentTerms && input.paymentTerms in PAYMENT_TERMS_LABEL ? input.paymentTerms : null,
+    payment_trigger: input.paymentTrigger && input.paymentTrigger in PAYMENT_TRIGGER_LABEL ? input.paymentTrigger : null,
   };
 }
 

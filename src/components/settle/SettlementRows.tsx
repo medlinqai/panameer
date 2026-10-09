@@ -49,6 +49,7 @@ export function SettlementRowCard({ row }: { row: SettlementRow }) {
           <p className="mt-1.5 text-[15px] font-bold">
             {formatCents(row.totalCents, row.currency)}
           </p>
+          {row.dueDate && row.status !== "PAID" && row.status !== "REJECTED" && <p className="text-[12.5px] text-ink-2">Due {row.dueDate}</p>}
         </div>
       </div>
     </li>

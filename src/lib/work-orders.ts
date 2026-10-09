@@ -1,5 +1,6 @@
 import { assertCanSign } from "@/lib/your-path";
-import { WorkOrderOrigin } from "@prisma/client";
+import { TransactionType, WorkOrderOrigin } from "@prisma/client";
+import { defaultTerms, type LineTerms } from "@/lib/billing-terms";
 import { prisma } from "@/lib/prisma";
 import {
   resolveCommissionBps,
@@ -65,6 +66,7 @@ async function buildWorkOrder(
           amount_cents: true,
           supplier_part_id: true,
           service_product_id: true,
+          provider_service_id: true,
           provider_person_id: true,
           service_start: true,
           service_end: true,
@@ -120,6 +122,7 @@ async function buildWorkOrder(
     const resolved = await resolveCommissionBps(kind, l.transaction_type);
     lineFees.set(l.id, resolved.bps);
   }
+  const lineTerms = await snapshotTerms(lines, providerPersonId);
   const distinct = [...new Set(lineFees.values())];
   const feeBps = distinct.length === 1 ? distinct[0]! : null;
 
@@ -184,6 +187,7 @@ async function buildWorkOrder(
             supplier_part_id: l.supplier_part_id,
             service_start: l.service_start,
             service_end: l.service_end,
+            ...lineTerms.get(l.id)!,
           })),
         },
       },
@@ -218,6 +222,33 @@ async function buildWorkOrder(
     lineCount: lines.length,
     valueCents,
   };
+}
+
+/** O-E004: each line's billing terms, copied from its provider service or service product (else the provider's matching service, else defaults). */
+async function snapshotTerms(
+  lines: { id: string; transaction_type: TransactionType; service_product_id: string | null; provider_service_id: string | null }[],
+  providerPersonId: string
+): Promise<Map<string, LineTerms & { provider_service_id: string | null }>> {
+  const productIds = lines.map((l) => l.service_product_id).filter((x): x is string => !!x);
+  const products = new Map((await prisma.serviceProduct.findMany({ where: { id: { in: productIds } }, select: { id: true, payment_terms: true, payment_trigger: true } })).map((p) => [p.id, p]));
+  const profile = await prisma.providerProfile.findUnique({ where: { person_id: providerPersonId }, select: { id: true } });
+  const named = lines.map((l) => l.provider_service_id).filter((x): x is string => !!x);
+  const services = await prisma.providerService.findMany({
+    where: { OR: [{ id: { in: named } }, ...(profile ? [{ provider_profile_id: profile.id, active: true }] : [])] },
+    orderBy: { sort_order: "asc" },
+  });
+  const out = new Map<string, LineTerms & { provider_service_id: string | null }>();
+  for (const l of lines) {
+    if (l.service_product_id) {
+      const p = products.get(l.service_product_id);
+      const d = defaultTerms(l.transaction_type, true);
+      out.set(l.id, { provider_service_id: null, billing_cycle: null, payment_terms: p?.payment_terms ?? d.payment_terms, payment_trigger: p?.payment_trigger ?? d.payment_trigger });
+      continue;
+    }
+    const svc = services.find((s) => s.id === l.provider_service_id) ?? services.find((s) => s.service_type === l.transaction_type);
+    out.set(l.id, svc ? { provider_service_id: svc.id, billing_cycle: svc.billing_cycle, payment_terms: svc.payment_terms, payment_trigger: svc.payment_trigger } : { provider_service_id: null, ...defaultTerms(l.transaction_type, false) });
+  }
+  return out;
 }
 
 /** DOOR 1 — THE BUYER PRESSES HIRE. Panameer generated these terms, so it */

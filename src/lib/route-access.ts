@@ -10,6 +10,7 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/settings", requires: "authenticated" },
   { prefix: "/my-services", requires: "canProvideServices" },
   { prefix: "/settings/packages", requires: "canProvideServices" },
+  { prefix: "/settings/services", requires: "canProvideServices" },
   { prefix: "/settings/profile", requires: "canProvideServices" },
   { prefix: "/settings/withdrawals", requires: "canProvideServices" },
   { prefix: "/profile", requires: "authenticated" },

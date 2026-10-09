@@ -1,4 +1,5 @@
 import { formatCents } from "@/lib/display";
+import { dueDate } from "@/lib/billing-terms";
 import { notify } from "@/lib/notifications";
 import { randomBytes } from "node:crypto";
 import { LineBasis, Prisma, SettlementStatus, TransactionType } from "@prisma/client";
@@ -203,6 +204,10 @@ export async function createSettlement(
   }
 
   const rows = (input.lines ?? []).filter((l) => l.workOrderLineId);
+  // O-E004: a service line bills per cycle, so its period must have ended.
+  const today = new Date(new Date().toISOString().slice(0, 10) + "T23:59:59Z");
+  const cycled = rows.some((r) => o.lines.find((l) => l.id === r.workOrderLineId)?.billingCycle);
+  if (cycled && periodEnd > today) throw new SettlementError("A service payment request covers a billing period that has ended. Pick an end date of today or earlier.", "INVALID");
   if (rows.length === 0)
     throw new SettlementError("Add at least one line to this payment request", "INVALID");
 
@@ -255,6 +260,7 @@ export async function createSettlement(
     });
   }
 
+  const submittedAt = new Date();
   // THE SPINE'S FIVE RULES, RUN AS ONE. Nothing above re-implements them —
   // Check and draw in one transaction, with the order row locked, so two requests cannot both pass the cap.
   const created = await prisma.$transaction(async (tx) => {
@@ -293,7 +299,8 @@ export async function createSettlement(
         period_end: periodEnd,
         currency: o.currency,
         status: "SUBMITTED",
-        submitted_at: new Date(),
+        submitted_at: submittedAt,
+        due_date: dueDate(submittedAt, orderLineById.get(rows[0].workOrderLineId)?.paymentTerms),
         resubmits_id: resubmitsId,
         lines: {
           create: rows.map((r, i) => {
@@ -431,6 +438,7 @@ export type SettlementDetail = {
   periodStart: string;
   periodEnd: string;
   submittedAt: string | null;
+  dueDate: string | null;
   decidedAt: string | null;
   decisionNote: string | null;
   lines: SettlementLineView[];
@@ -525,6 +533,7 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
     periodStart: s.period_start.toISOString().slice(0, 10),
     periodEnd: s.period_end.toISOString().slice(0, 10),
     submittedAt: s.submitted_at ? s.submitted_at.toISOString() : null,
+    dueDate: s.due_date ? s.due_date.toISOString().slice(0, 10) : null,
     decidedAt: s.decided_at ? s.decided_at.toISOString() : null,
     decisionNote: s.decision_note,
     lines,
@@ -559,6 +568,7 @@ export type SettlementRow = {
   totalCents: number;
   lineCount: number;
   submittedAt: string | null;
+  dueDate: string | null;
   paidOut: boolean;
 };
 
@@ -598,6 +608,7 @@ export async function listSettlements(viewer: Viewer): Promise<SettlementRow[]> 
       totalCents: s.lines.reduce((n, l) => n + lineValue(l), 0),
       lineCount: s.lines.length,
       submittedAt: s.submitted_at ? s.submitted_at.toISOString() : null,
+      dueDate: s.due_date ? s.due_date.toISOString().slice(0, 10) : null,
       paidOut: s.lines.some((l) => outLines.has(l.id)),
     };
   });

@@ -57,6 +57,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <Fact label="Period">{s.periodStart} → {s.periodEnd}</Fact>
         <Fact label="Total">{formatCents(s.totalCents, s.currency)}</Fact>
         <Fact label="Submitted">{s.submittedAt ? s.submittedAt.slice(0, 10) : "Not yet"}</Fact>
+        <Fact label="Due">{s.dueDate ?? "—"}</Fact>
         {s.party === "PROVIDER" && (
           <>
             <Fact label="Service fee">

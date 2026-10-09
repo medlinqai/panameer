@@ -1,5 +1,5 @@
 import { assertCanSign } from "@/lib/your-path";
-import { Prisma, TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
+import { BillingCycle, PaymentTerms, PaymentTrigger, Prisma, TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
 import { notify } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { feeSplit, pricedByQuantity } from "@/lib/transaction-spine";
@@ -367,6 +367,9 @@ export type OrderLineView = {
   /** Whether a comparison was POSSIBLE at all, which is not the same as "none". */
   hasOrigin: boolean;
   feeBps: number;
+  billingCycle: BillingCycle | null;
+  paymentTerms: PaymentTerms | null;
+  paymentTrigger: PaymentTrigger | null;
 };
 
 export type OrderDetail = {
@@ -507,6 +510,9 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
       ),
       hasOrigin: !!origin,
       feeBps: l.fee_bps,
+      billingCycle: l.billing_cycle,
+      paymentTerms: l.payment_terms,
+      paymentTrigger: l.payment_trigger,
     };
   });
 

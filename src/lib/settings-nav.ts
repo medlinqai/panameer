@@ -25,6 +25,12 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     blurb: "How you pay Panameer for your membership.",
   },
   {
+    label: "Services & Billing Terms",
+    requires: "canProvideServices",
+    href: "/settings/services",
+    blurb: "What you sell, your rates, and how and when each service is billed.",
+  },
+  {
     label: "Withdrawals",
     requires: "canProvideServices",
     href: "/settings/withdrawals",

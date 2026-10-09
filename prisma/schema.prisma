@@ -2345,6 +2345,9 @@ model ServiceProduct {
    */
   kind                ServiceProductKind        @default(DELIVERABLE)
   status              ServiceProductStatus      @default(DRAFT)
+  /// O-E004: when the product is paid, and what event triggers the payment request.
+  payment_terms       PaymentTerms?
+  payment_trigger     PaymentTrigger?
   sort_order          Int                @default(100)
   created_at          DateTime           @default(now())
   updated_at          DateTime           @updatedAt
@@ -5915,6 +5918,8 @@ model WorkRequestLine {
    * finished. Reported.
    */
   service_product_id String? @db.Uuid
+  /// O-E004: the provider service this line buys (its terms are snapshotted onto the order line).
+  provider_service_id String? @db.Uuid
 
   /// ⚠⚠ WRITTEN INTO `SupplierPartAuxiliaryID` ON THE WAY OUT AND MATCHED ON THE
   /// WAY BACK. It is the ONLY field proven to survive the punchout round trip:
@@ -6211,6 +6216,12 @@ model WorkOrderLine {
   /// and the invoice it would have priced never gets created.
   external_line_ref String?
 
+  /// O-E004: billing terms snapshotted at order time from the provider service or service product — never looked up.
+  provider_service_id String?         @db.Uuid
+  billing_cycle       BillingCycle?
+  payment_terms       PaymentTerms?
+  payment_trigger     PaymentTrigger?
+
   service_start DateTime?
   service_end   DateTime?
 
@@ -6278,6 +6289,9 @@ model SettlementRequest {
 
   /// Run 13: a request raised again after a rejection points at the one it replaces.
   resubmits_id String? @db.Uuid
+
+  /// O-E004: submitted_at + the line's payment terms. Terms start on submission, not approval.
+  due_date DateTime?
 
   lines SettlementLine[]
 
@@ -8229,4 +8243,50 @@ model WorkOrderRevision {
   @@unique([work_order_id, revision_number])
   @@index([work_order_id, status])
   @@map("work_order_revisions")
+}
+
+enum BillingCycle {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  EVERY_90_DAYS
+}
+
+enum PaymentTerms {
+  IMMEDIATE
+  NET15
+  NET30
+  NET45
+  NET60
+}
+
+enum PaymentTrigger {
+  TIMESHEET
+  PAYMENT_REQUEST
+  INVOICE
+  DOWNLOAD
+  INSTALLATION
+}
+
+/// O-E004: a service the provider sells, with its rate and billing terms. Snapshotted onto the order line.
+model ProviderService {
+  id                  String          @id @default(uuid()) @db.Uuid
+  provider_profile_id String          @db.Uuid
+  name                String
+  /// SERVICE_BY_QTY (rate x quantity, timesheets) or SERVICE_BY_AMT (a not-to-exceed amount, drawn down).
+  service_type        TransactionType
+  /// cXML-style unit: HOUR, DAY, MONTH, EACH.
+  uom                 String?
+  rate_cents          Int?
+  billing_cycle       BillingCycle    @default(MONTHLY)
+  payment_terms       PaymentTerms    @default(NET30)
+  payment_trigger     PaymentTrigger  @default(TIMESHEET)
+  unspsc_code         String?
+  active              Boolean         @default(true)
+  sort_order          Int             @default(100)
+  created_at          DateTime        @default(now())
+  updated_at          DateTime        @updatedAt
+
+  @@index([provider_profile_id])
+  @@map("provider_services")
 }

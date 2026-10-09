@@ -19,6 +19,7 @@ import { ChangeOrders } from "@/components/orders/ChangeOrders";
 import { changeBlocked, describeChanges, revisionsFor } from "@/lib/change-orders";
 import { BuyerCard } from "@/components/orders/BuyerCard";
 import { WORK_ORDER_LINE_LABEL } from "@/lib/oracle-status";
+import { termsLine } from "@/lib/billing-terms";
 
 export const metadata = { title: "Work Order · Panameer" };
 
@@ -245,6 +246,9 @@ function LineCard({ line, currency, showFee }: { line: OrderLineView; currency: 
             {showFee && <> · fee {bpsToPercentLabel(line.feeBps)}</>}
           </p>
           <p className="mt-1 text-[16px] font-bold">{line.description}</p>
+          {termsLine({ billing_cycle: line.billingCycle, payment_terms: line.paymentTerms, payment_trigger: line.paymentTrigger }) && (
+            <p data-line-terms className="mt-0.5 text-[13px] text-ink-2">{termsLine({ billing_cycle: line.billingCycle, payment_terms: line.paymentTerms, payment_trigger: line.paymentTrigger })}</p>
+          )}
           {(line.serviceStart || line.serviceEnd) && (
             <p className="mt-1 text-[13.5px] text-ink-2">
               {line.serviceStart ?? "…"} → {line.serviceEnd ?? "…"}
