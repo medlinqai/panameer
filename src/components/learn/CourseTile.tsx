@@ -15,7 +15,7 @@ export function courseCode(title: string): string {
   return words.slice(0, 3).map((w) => w[0]).join("").toUpperCase();
 }
 
-export function CourseTile({ n, title, lessons, done, href }: { n: number; title: string; lessons: number; done: number; href: string }) {
+export function CourseTile({ n, title, lessons, done, soon = 0, href }: { n: number; title: string; lessons: number; done: number; soon?: number; href: string }) {
   const [a, b] = TONES[(n - 1) % TONES.length];
   const pct = lessons ? Math.min(100, Math.round((done / lessons) * 100)) : 0;
   return (
@@ -24,7 +24,7 @@ export function CourseTile({ n, title, lessons, done, href }: { n: number; title
       <span aria-hidden className="absolute -bottom-3.5 -right-1.5 text-[64px] font-extrabold leading-none tracking-[-2px] text-white/[0.12]">{courseCode(title)}</span>
       <span className="relative block">
         <b className="line-clamp-3 block text-[15px] font-bold leading-tight">{tidyCourse(title)}</b>
-        <span className="mt-1 block text-[11px] opacity-80">{lessons} {lessons === 1 ? "lesson" : "lessons"}{done >= lessons && lessons > 0 ? " · done" : done > 0 ? ` · ${done} done` : ""}</span>
+        <span className="mt-1 block text-[11px] opacity-80">{lessons} {lessons === 1 ? "lesson" : "lessons"}{done >= lessons && lessons > 0 ? " · done" : done > 0 ? ` · ${done} done` : ""}{soon ? ` · ${soon} coming soon` : ""}</span>
         <span aria-hidden className="mt-2 block h-[3px] bg-white/25"><span className="block h-full bg-white" style={{ width: `${pct}%` }} /></span>
       </span>
     </Link>

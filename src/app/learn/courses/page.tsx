@@ -1,5 +1,6 @@
 import { ScrollRow } from "@/components/casing/ScrollRow";
 import Link from "next/link";
+import { lessonCount } from "@/lib/learn-time";
 import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
 import { learnCatalog, timeLabel } from "@/lib/learn-catalog";
@@ -72,8 +73,9 @@ export default async function CoursesPage({ searchParams }: { searchParams: Prom
             </thead>
             <tbody>
               {rows.map(({ p, c }) => {
-                const total = c.lessons.length;
-                const all = total > 0 && c.done === total;
+                const k = lessonCount(c.lessons);
+                const total = k.out;
+                const all = k.finished;
                 const firstOpen = c.lessons.find((l) => !l.done && l.playable) ?? c.lessons.find((l) => l.playable) ?? null;
                 const go = viewer && firstOpen ? `/learn/${p.slug}/${firstOpen.id}` : `/learn/${p.slug}#course-${c.slug}`;
                 return (
@@ -83,7 +85,7 @@ export default async function CoursesPage({ searchParams }: { searchParams: Prom
                     <td className="px-3 py-2.5 text-right tabular-nums">{total}</td>
                     <td className="px-3 py-2.5 text-ink-2">{timeLabel(c.minutes) ?? "—"}</td>
                     <td className="w-[120px] px-3 py-2.5">
-                      {all ? <span className="text-[12.5px] font-bold">✓ Done</span> : c.done > 0 ? <span aria-label={`${c.done} of ${total}`} className="block h-[6px] w-full bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${Math.round((c.done / total) * 100)}%` }} /></span> : <span className="text-ink-3">—</span>}
+                      {all ? <span className="text-[12.5px] font-bold">✓ Done</span> : c.done > 0 ? <span aria-label={k.label} className="block h-[6px] w-full bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${Math.round((c.done / total) * 100)}%` }} /></span> : <span className="text-ink-3">—</span>}
                     </td>
                     <td className="px-3 py-2.5 text-right">
                       {!c.lessons.some((l) => l.playable) ? <span className="text-[12px] font-semibold text-ink-3">Coming Soon</span> : <Link href={all ? `/learn/${p.slug}#course-${c.slug}` : go} className={c.done > 0 && !all ? BTN_K : BTN}>{all ? "Review" : c.done > 0 ? "Continue" : "Start"}</Link>}

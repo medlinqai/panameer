@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { CatCourse } from "@/lib/learn-catalog";
-import { timeLabel } from "@/lib/learn-time";
+import { lessonCount, timeLabel } from "@/lib/learn-time";
 import { StatusMark } from "@/components/learn/StatusMark";
 
 // What's Inside: courses as rows with marks; the current course open; click to open/close in place (#course-<slug> opens one).
@@ -23,7 +23,8 @@ export function WhatsInside({ slug, courses, nextLessonId, canPlay }: { slug: st
   return (
     <ol data-whats-inside className="mt-2">
       {courses.map((c, ci) => {
-        const state = c.lessons.length && c.done === c.lessons.length ? "done" : c.slug === current ? "now" : "todo";
+        const n = lessonCount(c.lessons);
+        const state = n.finished ? "done" : c.slug === current ? "now" : "todo";
         const isOpen = open.has(c.slug);
         return (
           <li key={c.id} id={`course-${c.slug}`} className="scroll-mt-24 border-b border-line">
@@ -31,7 +32,7 @@ export function WhatsInside({ slug, courses, nextLessonId, canPlay }: { slug: st
               <StatusMark state={state} />
               <span className="min-w-0 flex-1">
                 <b className="block text-[14.5px]">{ci + 1} · {c.title}</b>
-                <span className="block text-[12.5px] text-ink-3">{c.done} of {c.lessons.length}{c.minutes ? ` · ${timeLabel(c.minutes)}` : ""}{c.teacher ? ` · ${c.teacher}` : ""}</span>
+                <span className="block text-[12.5px] text-ink-3">{n.label}{c.minutes ? ` · ${timeLabel(c.minutes)}` : ""}{c.teacher ? ` · ${c.teacher}` : ""}</span>
               </span>
               <span aria-hidden className="text-ink-3">{isOpen ? "▴" : "▾"}</span>
             </button>

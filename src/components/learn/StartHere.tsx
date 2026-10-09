@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { CatPath } from "@/lib/learn-catalog";
-import { timeLabel } from "@/lib/learn-time";
+import { lessonCount, timeLabel } from "@/lib/learn-time";
 import { CourseTile } from "@/components/learn/CourseTile";
 
 // Learning Paths › Start Here: the one path for people new to Oracle Cloud — course tiles, what you'll learn, one button.
@@ -14,8 +14,8 @@ export function StartHere({ p }: { p: CatPath }) {
       {/* T-E003: each course as its own colored tile, 2×2 on a phone. */}
       <div data-start-tiles className="grid grid-cols-2 content-start gap-2.5 p-5 sm:p-6">
         {p.courses.map((c, i) => {
-          const out = c.lessons.filter((l) => l.playable).length || c.lessons.length;
-          return <CourseTile key={c.id} n={i + 1} title={c.title} lessons={out} done={c.done} href={`/learn/${p.slug}/course/${c.slug}`} />;
+          const k = lessonCount(c.lessons);
+          return <CourseTile key={c.id} n={i + 1} title={c.title} lessons={k.out} done={k.done} soon={k.soon} href={`/learn/${p.slug}/course/${c.slug}`} />;
         })}
       </div>
       <div className="p-6 sm:p-8">

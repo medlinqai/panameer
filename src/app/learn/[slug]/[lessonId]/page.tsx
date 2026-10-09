@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { lessonCount } from "@/lib/learn-time";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getLearnLesson, viewerTeaches } from "@/lib/learn-home";
@@ -55,8 +56,8 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const next = flat.slice(i + 1).find((l) => l.playable) ?? null;
   const nextHref = next ? `/learn/${p.slug}/${next.id}` : p.test.ready && !p.test.passed ? `/learn/${p.slug}/test` : `/learn/${p.slug}`;
   const lastLabel = next ? null : p.test.ready && !p.test.passed ? "Mark Complete & Take the Test" : "Mark Complete & Finish";
-  const done = flat.filter((l) => l.done).length;
-  const pct = flat.length ? Math.round((done / flat.length) * 100) : 0;
+  const count = lessonCount(flat);
+  const pct = count.out ? Math.round((count.done / count.out) * 100) : 0;
 
   // The path's group board; created only if this path never had one (no write on an ordinary view).
   const board =
@@ -73,7 +74,7 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
     <aside data-lesson-outline className="border border-line lg:sticky lg:self-start" style={{ top: "calc(var(--pm-band-h) + 1.5rem)" }}>
       <div className="border-b border-line p-4">
         <p className="text-[13.5px] font-bold">{p.title}</p>
-        <p className="mt-0.5 text-[12px] text-ink-3">{done} of {flat.length} lessons</p>
+        <p className="mt-0.5 text-[12px] text-ink-3">{count.label}</p>
         <span aria-hidden className="mt-2 block h-[6px] w-full bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${pct}%` }} /></span>
       </div>
       <ol className="max-h-[520px] overflow-y-auto p-3">
