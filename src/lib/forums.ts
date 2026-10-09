@@ -1,4 +1,5 @@
 // RULING 1: THE WORD IS "GROUPS" WS-C)
+import { notifyInstructorEnrolled } from "@/lib/learn-instructor";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import { canLeaveGroup, ensureEnrolmentMembership, groupOffer, isGroupMember } from "@/lib/group-membership";
@@ -333,6 +334,7 @@ export async function createThread(
         update: {},
       });
       await ensureEnrolmentMembership(viewer.userId, board.learning_path_id);
+      await notifyInstructorEnrolled(viewer.userId, board.learning_path_id);
       allowed = true;
     }
     if (!allowed) {

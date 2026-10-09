@@ -34,8 +34,14 @@ export function RowActions({ id, action, href, onDone }: { id: string; action: R
         </>
       )}
       {action?.kind === "reply" && <Link href={action.href} data-reply className="pm-triage-btn pm-triage-btn-p">Reply</Link>}
+      {action?.kind === "message" && (
+        <>
+          <Link href={action.href} data-message-learner className="pm-triage-btn pm-triage-btn-p">{action.label}</Link>
+          <button type="button" data-dismiss disabled={busy} onClick={() => post({ action: "dismiss" }, "Dismissed")} className="pm-triage-btn pm-triage-btn-s">Dismiss</button>
+        </>
+      )}
       {action?.kind === "dismiss" && <button type="button" data-dismiss disabled={busy} onClick={() => post({ action: "dismiss" }, "Dismissed")} className="pm-triage-btn pm-triage-btn-s">Dismiss</button>}
-      {action?.kind !== "reply" && open}
+      {action?.kind !== "reply" && action?.kind !== "message" && open}
       {!href && !action && <span className="text-[12.5px] text-ink-3">No link</span>}
       {err && <span role="alert" className="text-[12px] font-semibold text-magenta-dark">{err}</span>}
     </span>

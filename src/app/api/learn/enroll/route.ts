@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ensureEnrolmentMembership, removeEnrolmentMembership } from "@/lib/group-membership";
 import { learnEnrolmentRefusal } from "@/lib/learn-enrolment-gate";
 import { notify } from "@/lib/notifications";
+import { notifyInstructorEnrolled } from "@/lib/learn-instructor";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
 
@@ -77,5 +78,6 @@ export async function POST(request: Request) {
       vars: { pathTitle: path.title, pathSlug: path.slug },
     });
   }
+  await notifyInstructorEnrolled(viewer.userId, path.id);
   return NextResponse.json({ ok: true, enrolled: true });
 }

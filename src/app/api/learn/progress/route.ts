@@ -6,6 +6,7 @@ import { learnEnrolmentRefusal } from "@/lib/learn-enrolment-gate";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
 import { isPlayable } from "@/lib/learn";
+import { notifyInstructorEnrolled } from "@/lib/learn-instructor";
 
 const BODY = z.object({
   lessonId: z.string().uuid(),
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
     return NextResponse.json(body, { status });
   }
 
+  const wasEnrolled = await prisma.learnEnrollment.findUnique({ where: { user_id_learning_path_id: { user_id: viewer.userId, learning_path_id: pathId } }, select: { id: true } });
   await prisma.$transaction([
     prisma.lessonProgress.upsert({
       where: { user_id_lesson_id: { user_id: viewer.userId, lesson_id: lessonId } },
@@ -92,6 +94,7 @@ export async function POST(request: Request) {
     }),
   ]);
   await ensureEnrolmentMembership(viewer.userId, pathId);
+  if (!wasEnrolled) await notifyInstructorEnrolled(viewer.userId, pathId);
 
   const course = lesson.section.course;
   const courseLessonIds = course.sections.flatMap((s) => s.lessons.map((l) => l.id));
