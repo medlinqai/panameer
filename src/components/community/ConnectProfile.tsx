@@ -26,6 +26,9 @@ import type { Testimonial } from "@/lib/recommendations";
 import type { CommunitySignal } from "@/lib/community-signal";
 import type { ProfileScore } from "@/lib/completeness";
 import type { MessagePermission } from "@/lib/messages";
+import type { CatalogService } from "@/lib/my-catalog";
+import type { EstimateRow } from "@/lib/estimates";
+import { TurnRatesIntoServices } from "@/components/catalog/TurnRatesIntoServices";
 // document for the re-run to read. `OwnerResumeRerun` STAYS ON DISK in `OwnerAiPass.tsx`
 import { OwnerResumeRebuild } from "@/components/profile/OwnerResumeRebuild";
 import { CommunitySignalBlock } from "@/components/profile/CommunitySignal";
@@ -74,8 +77,14 @@ export function ConnectProfile({
   follow,
   recommend,
   previewAsBuyer = false,
+  catalogServices = [],
+  estimates = [],
 }: {
   p: ProviderProfileView;
+  /** CAT-E001: services — owner sees drafts too; visitors only published. */
+  catalogServices?: CatalogService[];
+  /** CAT-E001: owner-only — never passed for a visitor. */
+  estimates?: EstimateRow[];
   taughtPaths?: TaughtPath[];
   /** `LearnEnrollment` rows — paths TAKEN, not taught (`E593` WS-B 17). */
   takenPaths?: TakenPath[];
@@ -147,6 +156,8 @@ export function ConnectProfile({
           // THE OWNER AND THE VISITOR READ DIFFERENT NAMES item 6)
           title={owner ? "My Service Products" : "Service Products"}
           /* SUPERSEDED, quoted not deleted (`E164`): title="Services" */
+          id="my-service-products"
+          action={owner ? <Link href="/catalog/products/new" className="text-[13px] font-bold text-magenta-dark hover:underline">+ Create</Link> : undefined}
           count={p.packages.length}
           showWhenEmpty={owner}
         >
@@ -219,6 +230,59 @@ export function ConnectProfile({
             </p>
           )}
         </>
+      )}
+    </CleanSection>
+  );
+
+  // CAT-E001: My Catalog — services (type · rate / UOM) and, for the owner only, cost estimates.
+  const shownServices = owner ? catalogServices : catalogServices.filter((s) => s.published);
+  const servicesSection = (owner || shownServices.length > 0) && (
+    <CleanSection title={owner ? "My Services" : "Services"} id="my-services" count={shownServices.length} showWhenEmpty={owner}
+      action={owner ? <Link href="/catalog/services/new" className="text-[13px] font-bold text-magenta-dark hover:underline">+ Create</Link> : undefined}>
+      {shownServices.length === 0 ? (
+        <p className="text-[13.5px] text-ink-2">Nothing listed yet. A service is work you sell by the hour, day or month.</p>
+      ) : (
+        <div className="flex flex-col">
+          {shownServices.map((s) => (
+            <div data-row data-service={s.published ? "published" : "draft"} key={s.id} className="flex items-center justify-between gap-3.5 py-3">
+              <div className="min-w-0">
+                <span className="text-[14.5px] font-bold">{s.name}</span>
+                {owner && !s.published && <span className="ml-2 border border-line px-1.5 text-[11px] font-semibold text-ink-3">Draft</span>}
+                <p className="mt-0.5 text-[12.5px] text-ink-2">{[s.typeName, s.terms].filter(Boolean).join(" · ")}</p>
+              </div>
+              <div className="shrink-0 text-right">
+                <b className="text-[14px] tabular-nums">{money(s.rateCents, "USD")}</b>
+                <span className="text-[12.5px] text-ink-2"> / {s.uom.toLowerCase()}</span>
+                {owner && <Link href={`/catalog/services/new?id=${s.id}`} className="block text-[12.5px] font-semibold underline">Edit</Link>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </CleanSection>
+  );
+  const ESTIMATE_STATUS: Record<string, string> = { DRAFT: "Draft", SENT: "Sent", CHANGES_REQUESTED: "Changes Requested", ACCEPTED: "Accepted", DECLINED: "Declined", EXPIRED: "Expired" };
+  const estimatesSection = owner && (
+    <CleanSection title="My Cost Estimates" id="my-cost-estimates" count={estimates.length} showWhenEmpty
+      action={<Link href="/catalog/estimates/new" className="text-[13px] font-bold text-magenta-dark hover:underline">+ Create</Link>}>
+      <p className="-mt-1.5 mb-2 text-[12.5px] text-ink-3">Private to you and each customer — not shown on your profile.</p>
+      {estimates.length === 0 ? (
+        <p className="text-[13.5px] text-ink-2">No estimates yet. An estimate is a quote for one customer: their scope, their price.</p>
+      ) : (
+        <div className="flex flex-col">
+          {estimates.map((e) => (
+            <Link key={e.id} href={`/estimates/${e.id}`} data-row className="flex items-center justify-between gap-3.5 py-3 hover:bg-bg-soft">
+              <span className="min-w-0">
+                <b className="block truncate text-[14.5px]">{e.title}</b>
+                <span className="block truncate text-[12.5px] text-ink-2">{e.counterpart} · {e.number}{e.revision > 1 ? ` · rev ${e.revision}` : ""}</span>
+              </span>
+              <span className="shrink-0 text-right">
+                <b className="block text-[14px] tabular-nums">{money(e.totalCents, e.currency)}</b>
+                <span className={"text-[11.5px] font-bold " + (e.status === "CHANGES_REQUESTED" ? "text-magenta-dark" : "text-ink-2")}>{ESTIMATE_STATUS[e.status] ?? e.status}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
       )}
     </CleanSection>
   );
@@ -576,14 +640,15 @@ export function ConnectProfile({
           </>
         )}
         {/* ITEM 3 — RATES MOVES TO THE BOTTOM OF THE RAIL */}
-        {p.rates && (
-          // RATES IS A SIDE BLOCK, NOT A SECTION WS-A item 9)
+        {p.rates && shownServices.length === 0 && (
+          // RATES IS A SIDE BLOCK, NOT A SECTION WS-A item 9) — replaced by Services once there is one (CAT-E001).
           <div className="pm-rail-rates">
             <CleanSide
               title="Rates"
               action={owner ? <CleanEdit href={editHref("rates")} title="Rates" /> : undefined}
             >
               <RateRows p={p} />
+              {owner && <TurnRatesIntoServices />}
             </CleanSide>
           </div>
         )}
@@ -697,6 +762,7 @@ export function ConnectProfile({
         {/* <CleanSection id="bio" title="Bio" isEmpty={!p.overview} showWhenEmpty={owner} */}
 
         {/* THE VISITOR'S BUYING SURFACE, HIGH UP — a buyer is here to buy. */}
+        {!owner && servicesSection}
         {!owner && serviceProducts}
 
         {/* SKILLS AND SPECIALIZATIONS ARE TWO CARDS AGAIN (WS-B) */}
@@ -860,12 +926,14 @@ export function ConnectProfile({
           />
         </CleanSection>
 
+        {owner && servicesSection}
         {owner && serviceProducts}
+        {estimatesSection}
 
         {/* THE TITLE IS WRONG FOR HALF ITS OWN ROWS */}
         {/* RENAMED `Teaching` (WS-A item 7 / brief item 10). Scott: `Learning Paths I */}
         <CleanSection
-          title={owner ? "My Learning Paths" : "Learning Paths"}
+          title={owner ? "My Learning Paths" : "Learning Paths I Teach"}
           count={taughtPaths.length}
           showWhenEmpty={owner}
         >

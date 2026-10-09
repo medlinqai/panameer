@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { OnboardingError } from "@/lib/onboarding";
-import { listProviderServices, retireProviderService, saveProviderService } from "@/lib/provider-services";
+import { listProviderServices, retireProviderService, saveProviderService, servicesFromRates } from "@/lib/provider-services";
 import { addServiceType } from "@/lib/my-catalog";
 import { prisma } from "@/lib/prisma";
 
@@ -22,6 +22,7 @@ const SERVICE = z.object({
 const BODY = z.discriminatedUnion("action", [
   z.object({ action: z.literal("save"), id: z.string().uuid().nullable(), service: SERVICE, publish: z.boolean().optional() }),
   z.object({ action: z.literal("addType"), name: z.string().min(3).max(60) }),
+  z.object({ action: z.literal("fromRates") }),
   z.object({ action: z.literal("retire"), id: z.string().uuid() }),
 ]);
 
@@ -42,6 +43,10 @@ export async function POST(request: Request) {
       if (!person) return NextResponse.json({ error: "No person" }, { status: 404 });
       const t = await addServiceType(body.data.name, person.id);
       return NextResponse.json({ type: { id: t.id, name: t.name, is_baseline: t.is_baseline } });
+    }
+    if (body.data.action === "fromRates") {
+      await servicesFromRates(gate);
+      return NextResponse.json({ services: await listProviderServices(gate) });
     }
     let saved: { id: string } | undefined;
     if (body.data.action === "save") saved = await saveProviderService(gate, body.data.id, body.data.service, body.data.publish ?? false);

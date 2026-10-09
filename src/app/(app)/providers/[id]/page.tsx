@@ -1,3 +1,4 @@
+import { catalogServicesFor } from "@/lib/my-catalog";
 import { RecommendMe } from "@/components/community/RecommendMe";
 import { followState } from "@/lib/follow";
 import { FollowButton } from "@/components/community/FollowButton";
@@ -221,6 +222,7 @@ export default async function PublicProviderPage({
           // THE BUYER'S VIEW, ALWAYS. `isOwner` stays true on the view
           // BOTH previews — a peer sees no owner tools either. The rate
           previewAsBuyer
+          catalogServices={await catalogServicesFor(profile.id, false)}
         />
         </div>
       </main>

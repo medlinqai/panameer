@@ -2,7 +2,7 @@ import type { BillingCycle, PaymentTerms, PaymentTrigger } from "@prisma/client"
 import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError } from "@/lib/onboarding";
-import { publishGate } from "@/lib/my-catalog";
+import { listServiceTypes, publishGate } from "@/lib/my-catalog";
 
 // O-E004: the services a provider sells, each with a rate and billing terms. Owner-scoped from the session.
 export type ProviderServiceInput = {
@@ -74,4 +74,24 @@ export async function saveProviderService(viewer: Viewer, id: string | null, inp
 export async function retireProviderService(viewer: Viewer, id: string) {
   const pid = await profileId(viewer);
   await prisma.providerService.updateMany({ where: { id, provider_profile_id: pid }, data: { active: false } });
+}
+
+/** CAT-E001: "Turn My Rates Into Services" — on the provider's click only. Published when the company is validated, else drafts. */
+export async function servicesFromRates(viewer: Viewer) {
+  const prof = await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { id: true, person_id: true, onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true } });
+  if (!prof) throw new OnboardingError("No provider profile for this user", "NOT_A_PROVIDER");
+  const types = await listServiceTypes();
+  const typeId = (n: string) => types.find((t) => t.name === n)?.id ?? null;
+  const onsite = prof.onsite_rate_cents ?? (prof.remote_rate_cents == null ? prof.hourly_rate_cents : null);
+  const wanted = [
+    onsite ? { name: "Onsite Consulting", rate: onsite } : null,
+    prof.remote_rate_cents ? { name: "Offsite Consulting", rate: prof.remote_rate_cents } : null,
+  ].filter((x): x is { name: string; rate: number } => !!x);
+  if (!wanted.length) throw new OnboardingError("Add your rates first", "INVALID");
+  const gate = await publishGate(prof.person_id);
+  const existing = await prisma.providerService.findMany({ where: { provider_profile_id: prof.id, active: true }, select: { name: true } });
+  for (const w of wanted) {
+    if (existing.some((e) => e.name === w.name)) continue;
+    await prisma.providerService.create({ data: { provider_profile_id: prof.id, name: w.name, service_type: "SERVICE_BY_QTY", service_type_id: typeId(w.name), uom: "HOUR", rate_cents: w.rate, billing_cycle: "MONTHLY", payment_terms: "NET30", payment_trigger: "TIMESHEET", expenses: w.name === "Onsite Consulting" ? "AT_COST" : "NOT_APPLICABLE", published_at: gate.ok ? new Date() : null } });
+  }
 }

@@ -1,3 +1,5 @@
+import { catalogServicesFor } from "@/lib/my-catalog";
+import { myEstimates } from "@/lib/estimates";
 import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
 import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
@@ -85,6 +87,8 @@ export default async function MyProfilePage() {
           rank: rankFor(growthRows, profile.person.personId),
         }}
         score={await ownerScore(profile.id)}
+        catalogServices={await catalogServicesFor(profile.id, true)}
+        estimates={await myEstimates(viewer).catch(() => [])}
       />
       </div>
     </>
