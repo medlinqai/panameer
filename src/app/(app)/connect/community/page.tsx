@@ -1,3 +1,4 @@
+import { companyBesidesName } from "@/lib/display";
 import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
@@ -61,7 +62,7 @@ export default async function CommunityPage({ searchParams }: { searchParams: Pr
                     <Avatar firstName={first ?? ""} lastName={rest.join(" ")} photoUrl={p.photoUrl} size={48} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[15px] font-bold">{p.name}</p>
-                      <p className="truncate text-[12.5px] text-ink-2">{[p.title, p.company].filter(Boolean).join(" · ") || "Member"}</p>
+                      <p className="truncate text-[12.5px] text-ink-2">{[p.title, companyBesidesName(p.company, p.name)].filter(Boolean).join(" · ") || "Member"}</p>
                     </div>
                   </div>
                   <p className="mt-2.5 text-[12.5px] font-semibold text-ink-2">{p.whyLine}</p>

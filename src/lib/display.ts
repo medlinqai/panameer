@@ -70,3 +70,12 @@ export function rateBreakdown(
   const fee = Math.round((hourlyCents * serviceFeeBps) / 10_000);
   return { rate: hourlyCents, fee, youGet: hourlyCents - fee };
 }
+
+/** M-E004: a one-person company named after its owner repeats the name; show it only when it adds something. */
+export function companyBesidesName(company: string | null | undefined, name: string | null | undefined): string | null {
+  const c = (company ?? "").trim();
+  if (!c) return null;
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const n = norm(name ?? "");
+  return n && (norm(c) === n || norm(c).startsWith(n + " ")) ? null : c;
+}

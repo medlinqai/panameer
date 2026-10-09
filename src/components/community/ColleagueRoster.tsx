@@ -1,5 +1,6 @@
 "use client";
 
+import { companyBesidesName } from "@/lib/display";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/Avatar";
@@ -183,9 +184,9 @@ export function ColleagueRoster({ rows, bare = false }: { rows: RosterRowView[];
                     </span>
                   )}
                 </p>
-                {[r.title, r.company].filter(Boolean).length > 0 && (
+                {[r.title, companyBesidesName(r.company, r.name)].filter(Boolean).length > 0 && (
                   <p className="text-[13px] text-ink-2">
-                    <TitleAndCompany title={r.title} company={r.company} companyId={r.companyId} />
+                    <TitleAndCompany title={r.title} company={companyBesidesName(r.company, r.name)} companyId={r.companyId} />
                   </p>
                 )}
                 {/* THE DISAMBIGUATING LINE ( , B2). THE MUTUAL */}
@@ -311,9 +312,9 @@ function OtherMembers({
               />
               <div className="min-w-[180px] flex-1">
                 <p className="text-[15px] font-bold">{m.name}</p>
-                {[m.title, m.company].filter(Boolean).length > 0 && (
+                {[m.title, companyBesidesName(m.company, m.name)].filter(Boolean).length > 0 && (
                   <p className="text-[13px] text-ink-2">
-                    <TitleAndCompany title={m.title} company={m.company} companyId={m.companyId} />
+                    <TitleAndCompany title={m.title} company={companyBesidesName(m.company, m.name)} companyId={m.companyId} />
                   </p>
                 )}
               </div>

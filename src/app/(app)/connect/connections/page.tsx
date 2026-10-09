@@ -1,3 +1,4 @@
+import { companyBesidesName } from "@/lib/display";
 import { prisma } from "@/lib/prisma";
 import { outgoingRequests } from "@/lib/connections";
 import { guardPage } from "@/lib/guard";
@@ -95,8 +96,8 @@ export default async function ConnectionsPage({ searchParams }: { searchParams: 
               userId: r.userId,
               name: r.name,
               title: r.title,
-              company: r.company,
-              companyId: r.companyId,
+              company: companyBesidesName(r.company, r.name),
+              companyId: companyBesidesName(r.company, r.name) ? r.companyId : null,
               skillNames: [...r.skillNames.values()],
               photoUrl: r.photoUrl,
               reason: r.why.how,
