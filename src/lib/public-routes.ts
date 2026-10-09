@@ -60,6 +60,8 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/assess/claim/[token]", category: 4 },
   { route: "/assess/r/[token]", category: 4 },
   { route: "/assess/r/[token]/deck", category: 4 },
+  // X-E002: punchout pages, addressed by a one-time token then a punchout-only cookie (not a Panameer sign-in).
+  { route: "/punchout", category: 4, subtree: true },
 
   { route: "/assess", category: 5 },
   { route: "/explore", category: 5 },

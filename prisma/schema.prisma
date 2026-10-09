@@ -8375,3 +8375,25 @@ model ErpMessage {
   @@index([settlement_request_id])
   @@map("erp_messages")
 }
+
+/// X-E002: a punchout session — scoped to the punchout pages only, not a Panameer sign-in. Ends when the cart returns.
+model PunchoutSession {
+  id                    String    @id @default(uuid()) @db.Uuid
+  connection_id         String    @db.Uuid
+  /// sha256 of the one-time StartPage token; the token itself is never stored.
+  start_token_hash      String    @unique
+  /// sha256 of the cookie value issued at /punchout/start.
+  cookie_hash           String?   @unique
+  requester_person_id   String    @db.Uuid
+  buyer_cookie          String
+  browser_form_post_url String
+  operation             String    @default("create")
+  work_request_id       String?   @db.Uuid
+  expires_at            DateTime
+  started_at            DateTime?
+  returned_at           DateTime?
+  created_at            DateTime  @default(now())
+
+  @@index([connection_id])
+  @@map("punchout_sessions")
+}
