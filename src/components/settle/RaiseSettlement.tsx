@@ -39,6 +39,7 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
   const [claimed, setClaimed] = useState<Record<string, boolean>>(() =>
     Object.fromEntries((resubmit?.amountLineIds ?? []).map((id) => [id, true]))
   );
+  const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +50,12 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
   const setRows = (id: string, rows: Row[]) =>
     setRowsByLine((prev) => ({ ...prev, [id]: rows }));
 
+  /** O-E005: the draw-down on an amount line; blank means what's left. */
+  const amountFor = (l: SettleLineOption) => {
+    const v = amounts[l.workOrderLineId];
+    return v == null || v.trim() === "" ? l.remainingCents ?? l.amountCents ?? 0 : Math.round(Number(v) * 100);
+  };
+
   /** CLAIMED SO FAR, PER LINE — what "remaining" counts down from. */
   const claimedQty = (id: string) =>
     rowsFor(id).reduce((n, r) => n + (Number(r.quantity) || 0), 0);
@@ -56,15 +63,16 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
   const total = useMemo(() => {
     let cents = 0;
     for (const l of rate) cents += Math.round(claimedQty(l.workOrderLineId) * (l.unitPriceCents ?? 0));
-    for (const l of amount) if (claimed[l.workOrderLineId]) cents += l.amountCents ?? 0;
+    for (const l of amount) if (claimed[l.workOrderLineId]) cents += amountFor(l);
     return cents;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rowsByLine, claimed, form]);
+  }, [rowsByLine, claimed, amounts, form]);
 
   /** THE OVERDRAW IS SHOWN BEFORE SUBMIT — the server still refuses it. */
-  const overdrawn = rate.filter(
-    (l) => claimedQty(l.workOrderLineId) > (l.remainingQuantity ?? 0)
-  );
+  const overdrawn = [
+    ...rate.filter((l) => claimedQty(l.workOrderLineId) > (l.remainingQuantity ?? 0)),
+    ...amount.filter((l) => claimed[l.workOrderLineId] && (amountFor(l) <= 0 || amountFor(l) > (l.remainingCents ?? 0))),
+  ];
 
   const anyClaim =
     rate.some((l) => claimedQty(l.workOrderLineId) > 0) ||
@@ -89,7 +97,7 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
         ),
         ...amount
           .filter((l) => claimed[l.workOrderLineId])
-          .map((l) => ({ workOrderLineId: l.workOrderLineId })),
+          .map((l) => ({ workOrderLineId: l.workOrderLineId, amountCents: amountFor(l) })),
       ];
       const r = await fetch("/api/settlements", {
         method: "POST",
@@ -160,7 +168,7 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
         />
       ))}
 
-      {/* ══ AMOUNT LINES — ONE ROW, IN FULL ═══════════════════════════════ */}
+      {/* Amount lines — drawn down by amount (O-E005). */}
       {amount.map((l) => (
         <MilestoneLine
           key={l.workOrderLineId}
@@ -168,6 +176,8 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
           currency={form.currency}
           checked={!!claimed[l.workOrderLineId]}
           onChange={(v) => setClaimed((p) => ({ ...p, [l.workOrderLineId]: v }))}
+          amount={amounts[l.workOrderLineId] ?? ""}
+          onAmount={(v) => setAmounts((p) => ({ ...p, [l.workOrderLineId]: v }))}
         />
       ))}
 
@@ -306,17 +316,21 @@ function TimesheetLine({
   );
 }
 
-/** AN AMOUNT LINE IS ONE ROW AND A CHECKBOX, because in-full-or-not-at-all has */
+/** An amount line is one row: tick it and enter the draw-down (blank = what's left). */
 function MilestoneLine({
   line,
   currency,
   checked,
   onChange,
+  amount,
+  onAmount,
 }: {
   line: SettleLineOption;
   currency: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  amount: string;
+  onAmount: (v: string) => void;
 }) {
   return (
     <div className="mt-5 rounded-brand border border-line bg-white p-5">
@@ -329,15 +343,12 @@ function MilestoneLine({
         </div>
         <div className="text-right">
           <p className="text-[15px] font-bold">{formatCents(line.amountCents ?? 0, currency)}</p>
-          <p className="text-[12.5px] text-ink-2">the amount agreed on the work order</p>
+          <p className="text-[12.5px] text-ink-2">{formatCents(line.remainingCents ?? 0, currency)} left to draw</p>
         </div>
       </div>
 
       {line.alreadyDrawn ? (
-        <p className="mt-3 text-[14px] text-ink-2">
-          Already claimed in full — a fixed-amount line is drawn once and cannot be
-          claimed again.
-        </p>
+        <p className="mt-3 text-[14px] text-ink-2">Fully drawn. Nothing is left to claim on this line.</p>
       ) : (
         <label className="mt-3.5 flex items-center gap-2.5 text-[14.5px]">
           <input
@@ -346,7 +357,17 @@ function MilestoneLine({
             onChange={(e) => onChange(e.target.checked)}
             className="h-4 w-4 accent-[var(--color-magenta)]"
           />
-          Claim this line in full
+          Claim against this line
+          {checked && (
+            <input
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => onAmount(e.target.value)}
+              placeholder={((line.remainingCents ?? 0) / 100).toFixed(2)}
+              aria-label="Amount to claim"
+              className="ml-2 h-10 w-36 border border-line px-2.5 text-[14px]"
+            />
+          )}
         </label>
       )}
     </div>

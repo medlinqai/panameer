@@ -220,11 +220,12 @@ refuses("6.3 — ⚠⚠ an AMOUNT line cannot be drawn TWICE", () =>
       orderLine: { ...amountOrderLine, drawn_amount_cents: 500000 },
     }],
   }), "AMOUNT_ALREADY_DRAWN");
-refuses("6.3 — ⚠⚠ an AMOUNT line cannot be drawn IN PART", () =>
+// O-E005: an AMOUNT line is drawn down in part, but never past what's left.
+refuses("6.3 — an AMOUNT draw past what's left is refused", () =>
   assertSettlementDraw({
     order: RELEASED, ...period, alreadySettledCents: 0,
-    lines: [{ draft: { work_order_line_id: "wol2", basis: "AMOUNT", amount_cents: 250000 }, orderLine: amountOrderLine }],
-  }), "AMOUNT_PARTIAL_DRAW");
+    lines: [{ draft: { work_order_line_id: "wol2", basis: "AMOUNT", amount_cents: 250000 }, orderLine: { ...amountOrderLine, drawn_amount_cents: (amountOrderLine.amount_cents ?? 0) - 100000 } }],
+  }), "AMOUNT_OVERDRAW");
 
 refuses("6.4 — a draw past not_to_exceed is refused", () =>
   assertSettlementDraw({
@@ -250,7 +251,7 @@ refuses("6.5 — a period ending after the order is refused", () =>
     lines: [{ draft: { work_order_line_id: "wol1", basis: "RATE", quantity: 1 }, orderLine: rateOrderLine }],
   }), "PERIOD_AFTER_ORDER");
 
-for (const status of ["DRAFT", "ISSUED", "ACCEPTED", "CLOSED", "CANCELLED"]) {
+for (const status of ["DRAFT", "ISSUED", "ACCEPTED", "CANCELLED", "ON_HOLD", "FINALLY_CLOSED"]) { // O-E002: Closed still takes payment requests (Oracle)
   refuses(`6 — ⚠ a settlement against a ${status} order is refused (only RELEASED)`, () =>
     assertSettlementDraw({
       order: { ...RELEASED, status }, ...period, alreadySettledCents: 0,

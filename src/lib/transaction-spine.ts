@@ -172,9 +172,11 @@ export function priceSettlementLine(
       "A settlement line's price is copied from the work-order line, never supplied",
       "PRICE_NOT_COPIED"
     );
+  // O-E005: an AMOUNT line is drawn down by the claimed amount (blanket / milestone); default is what's left.
+  const left = (orderLine.amount_cents ?? 0) - (orderLine.drawn_amount_cents ?? 0);
   return orderLine.basis === "RATE"
     ? { unit_price_cents: orderLine.unit_price_cents ?? null, amount_cents: null }
-    : { unit_price_cents: null, amount_cents: orderLine.amount_cents ?? null };
+    : { unit_price_cents: null, amount_cents: draft.amount_cents ?? left };
 }
 
 export function assertSettlementDraw(input: {
@@ -225,12 +227,14 @@ export function assertSettlementDraw(input: {
         );
       drawCents += Math.round(want * (priced.unit_price_cents ?? 0));
     } else {
-      // AMOUNT DRAWS ONCE, IN FULL — the exact amount, and never twice. A
-      if ((orderLine.drawn_amount_cents ?? 0) > 0)
-        throw new SpineError("An AMOUNT line has already been drawn", "AMOUNT_ALREADY_DRAWN");
-      if (draft.amount_cents != null && draft.amount_cents !== orderLine.amount_cents)
-        throw new SpineError("An AMOUNT line draws in full, not in part", "AMOUNT_PARTIAL_DRAW");
-      drawCents += priced.amount_cents ?? 0;
+      // O-E005: an AMOUNT line is drawn down across requests, never past its amount.
+      const left = (orderLine.amount_cents ?? 0) - (orderLine.drawn_amount_cents ?? 0);
+      if (left <= 0) throw new SpineError("An AMOUNT line has already been drawn", "AMOUNT_ALREADY_DRAWN");
+      const want = priced.amount_cents ?? 0;
+      if (want <= 0) throw new SpineError("An AMOUNT draw needs an amount", "AMOUNT_DRAW_EMPTY");
+      if (want > left)
+        throw new SpineError(`Drawing ${(want / 100).toFixed(2)} would exceed what's left on the line (${(left / 100).toFixed(2)})`, "AMOUNT_OVERDRAW");
+      drawCents += want;
     }
   }
 

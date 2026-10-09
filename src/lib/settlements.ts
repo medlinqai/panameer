@@ -72,8 +72,10 @@ export type SettleLineOption = {
   amountCents: number | null;
   /** RATE only — what is left to draw. Straight from `E393`'s drawdown. */
   remainingQuantity: number | null;
-  /** AMOUNT only — an already-drawn line cannot appear again. */
+  /** AMOUNT only — fully drawn; it cannot appear again. */
   alreadyDrawn: boolean;
+  /** AMOUNT only — what's left to draw down (O-E005). */
+  remainingCents: number | null;
   /** False when there is nothing left to claim on this line. */
   claimable: boolean;
 };
@@ -128,6 +130,7 @@ export async function settleFormFor(viewer: Viewer, orderId: string): Promise<Se
         // ASKED OF THE DRAWDOWN, WHICH ALREADY ANSWERED IT — no second
         remainingQuantity: d.pricedBy === "QUANTITY" ? d.remainingQuantity : null,
         alreadyDrawn: d.pricedBy === "AMOUNT" ? d.drawn : false,
+        remainingCents: d.pricedBy === "AMOUNT" ? d.remainingCents : null,
         // A RATE line with nothing left, or an AMOUNT line already drawn, is
         claimable: d.pricedBy === "QUANTITY" ? d.remainingQuantity > 0 : !d.drawn,
       };
@@ -167,6 +170,8 @@ export type SettleLineInput = {
   serviceDate?: string | null;
   /** RATE only — hours (or whatever the line's UOM is). */
   quantity?: number | null;
+  /** AMOUNT only — the draw-down; omitted means what's left. */
+  amountCents?: number | null;
   note?: string | null;
 };
 
@@ -217,11 +222,12 @@ export async function createSettlement(
       throw new SettlementError("That line is not on this work order", "NOT_FOUND");
 
   // THE AGGREGATION — see the docblock. One draft per ORDER LINE, carrying
-  const byOrderLine = new Map<string, { quantity: number; count: number }>();
+  const byOrderLine = new Map<string, { quantity: number; count: number; amountCents: number | null }>();
   for (const r of rows) {
-    const cur = byOrderLine.get(r.workOrderLineId) ?? { quantity: 0, count: 0 };
+    const cur = byOrderLine.get(r.workOrderLineId) ?? { quantity: 0, count: 0, amountCents: null };
     cur.quantity += Number(r.quantity ?? 0);
     cur.count += 1;
+    if (r.amountCents != null) cur.amountCents = Math.round(Number(r.amountCents));
     byOrderLine.set(r.workOrderLineId, cur);
   }
 
@@ -246,7 +252,7 @@ export async function createSettlement(
     // AN AMOUNT LINE MAY NOT BE SPLIT ACROSS ROWS — it claims once, in full
     if (!byQuantity && agg.count > 1)
       throw new SettlementError(
-        "A fixed-amount line is claimed in full, on one row — it cannot be split",
+        "An amount line is claimed on one row per payment request",
         "INVALID"
       );
     drafts.push({
@@ -255,6 +261,7 @@ export async function createSettlement(
         basis: settlementBasis,
         // NO PRICE IS SUPPLIED. `priceSettlementLine` REFUSES a supplied one
         quantity: byQuantity ? agg.quantity : null,
+        amount_cents: byQuantity ? null : agg.amountCents,
       },
       orderLine,
     });
@@ -313,6 +320,7 @@ export async function createSettlement(
                 work_order_line_id: r.workOrderLineId,
                 basis: olBasis,
                 quantity: olByQuantity ? Number(r.quantity ?? 0) : null,
+                amount_cents: olByQuantity ? null : r.amountCents == null ? null : Math.round(Number(r.amountCents)),
               },
               {
                 id: ol.id,
@@ -321,6 +329,7 @@ export async function createSettlement(
                 quantity: ol.quantity,
                 unit_price_cents: ol.unitPriceCents,
                 amount_cents: ol.amountCents,
+                drawn_amount_cents: drafts.find((d) => d.orderLine.id === ol.id)?.orderLine.drawn_amount_cents ?? 0,
               }
             );
             return {
@@ -354,9 +363,12 @@ export async function createSettlement(
           },
         });
       } else {
+        const d = drafts.find((x) => x.orderLine.id === workOrderLineId)!;
+        const draw = priceSettlementLine(d.draft, d.orderLine).amount_cents ?? 0;
+        const full = (d.orderLine.drawn_amount_cents ?? 0) + draw >= (ol.amountCents ?? 0);
         await tx.workOrderLine.update({
           where: { id: workOrderLineId },
-          data: { drawn_amount_cents: ol.amountCents ?? 0, status: "DRAWN" },
+          data: { drawn_amount_cents: { increment: draw }, ...(full ? { status: "DRAWN" as const } : {}) },
         });
       }
     }
@@ -678,13 +690,13 @@ export async function rejectSettlement(
 async function returnTheDraw(settlementId: string): Promise<void> {
   const lines = await prisma.settlementLine.findMany({
     where: { settlement_request_id: settlementId },
-    select: { work_order_line_id: true, basis: true, quantity: true, unit_price_cents: true },
+    select: { work_order_line_id: true, basis: true, quantity: true, unit_price_cents: true, amount_cents: true },
   });
   const byLine = new Map<string, { quantity: number; cents: number; basis: LineBasis }>();
   for (const l of lines) {
     const cur = byLine.get(l.work_order_line_id) ?? { quantity: 0, cents: 0, basis: l.basis };
     cur.quantity += Number(l.quantity ?? 0);
-    cur.cents += Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0));
+    cur.cents += l.basis === "RATE" ? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0)) : l.amount_cents ?? 0;
     byLine.set(l.work_order_line_id, cur);
   }
   for (const [workOrderLineId, agg] of byLine) {
@@ -697,10 +709,10 @@ async function returnTheDraw(settlementId: string): Promise<void> {
         },
       });
     } else {
-      // AN AMOUNT LINE GOES BACK TO ZERO AND OPEN — it draws once in full, so
+      // O-E005: give back exactly what this request drew; the line is open again.
       await prisma.workOrderLine.update({
         where: { id: workOrderLineId },
-        data: { drawn_amount_cents: 0, status: "OPEN" },
+        data: { drawn_amount_cents: { decrement: agg.cents }, status: "OPEN" },
       });
     }
   }

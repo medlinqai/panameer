@@ -240,7 +240,7 @@ function LineCard({ line, currency, showFee }: { line: OrderLineView; currency: 
         <div className="min-w-0">
           <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
             Line {line.lineNumber} ·{" "}
-            {line.transactionType === "SERVICE_BY_AMT" ? "Fixed amount" : "Rate"}
+            {line.transactionType === "SERVICE_BY_AMT" ? "Amount · not to exceed" : "Rate"}
             {line.externalLineRef && <> · PO line {line.externalLineRef}</>}
             {line.status !== "OPEN" && <> · {WORK_ORDER_LINE_LABEL[line.status as keyof typeof WORK_ORDER_LINE_LABEL] ?? line.status}</>}
             {showFee && <> · fee {bpsToPercentLabel(line.feeBps)}</>}
@@ -288,22 +288,21 @@ function LineCard({ line, currency, showFee }: { line: OrderLineView; currency: 
           </>
         ) : (
           <div className="text-[14px]">
-            {/* DRAWN OR NOT. There is no third state, and no bar. */}
-            {d.drawn ? (
-              <span className="font-semibold text-emerald-700">
-                ✓ Drawn in full — {formatCents(d.drawnCents, currency)}
-              </span>
-            ) : (
+            {/* O-E005: an amount (blanket) line is drawn down by payment requests, capped at its amount. */}
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="text-ink-2">
-                Not drawn yet · draws once, in full
+                <span className="font-semibold text-ink">{formatCents(d.drawnCents, currency)}</span> of {formatCents(d.orderedCents, currency)} drawn
               </span>
-            )}
-            {/* THE IMPOSSIBLE STATE IS REPORTED, NOT DRAWN. `assertSettlementDraw` */}
+              <span className="text-ink-2">
+                <span className="font-semibold text-ink">{formatCents(d.remainingCents, currency)}</span> remaining
+              </span>
+            </div>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-ink/[0.07]" role="progressbar" aria-valuenow={d.percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Line ${line.lineNumber} drawn`}>
+              <div className="h-full rounded-full bg-ink" style={{ width: `${d.percent}%` }} />
+            </div>
             {d.inconsistent && (
-              <p className="mt-1.5 text-[13.5px] font-semibold text-amber-700">
-                This line records a partial draw of {formatCents(d.drawnCents, currency)}
-                , which an amount line cannot have. Reported rather than shown as
-                progress — please contact support.
+              <p className="mt-1.5 text-[13.5px] font-semibold text-magenta-dark">
+                This line records more drawn than its amount. Reported rather than shown as progress. Please contact support.
               </p>
             )}
           </div>

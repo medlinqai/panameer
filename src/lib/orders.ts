@@ -86,7 +86,7 @@ export function activationMessage(status: WorkOrderStatus, party: OrderParty): s
     case "ACTIVE":
       return "Both parties have accepted. Settlements can be raised against this order.";
     case "CLOSED":
-      return "This order is closed. Payment requests can still be submitted, approved and paid.";
+      return "This order is closed. Payment requests for work done can still be submitted and paid.";
     case "CANCELLED":
       return "This order was canceled.";
     case "ON_HOLD":
@@ -122,9 +122,12 @@ export type Drawdown =
     }
   | {
       pricedBy: "AMOUNT";
+      /** Fully drawn. */
       drawn: boolean;
       orderedCents: number;
       drawnCents: number;
+      remainingCents: number;
+      percent: number;
       inconsistent: boolean;
     };
 
@@ -155,10 +158,12 @@ export function drawdownFor(line: LineForDrawdown): Drawdown {
   }
   return {
     pricedBy: "AMOUNT",
-    drawn: drawnCents > 0,
+    drawn: orderedCents > 0 && drawnCents >= orderedCents,
     orderedCents,
     drawnCents,
-    inconsistent: drawnCents > 0 && drawnCents !== orderedCents,
+    remainingCents: Math.max(0, orderedCents - drawnCents),
+    percent: orderedCents > 0 ? Math.min(100, Math.round((drawnCents / orderedCents) * 100)) : 0,
+    inconsistent: drawnCents > orderedCents,
   };
 }
 

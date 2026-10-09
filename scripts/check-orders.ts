@@ -352,34 +352,21 @@ for (const st of STATUSES) {
   /* ⚠⚠ THE TYPE IS THE ENFORCEMENT. The AMOUNT variant carries NO quantity, NO
      remaining and NO percent — so a half-full bar is not merely "not rendered",
      it cannot be expressed. */
-  for (const forbidden of ["percent", "remainingQuantity", "remainingCents", "orderedQuantity"]) {
-    check(
-      `2 — ABSENCE: an AMOUNT drawdown has no ${forbidden}`,
-      !(forbidden in (undrawn as Record<string, unknown>))
-    );
-  }
-  /* ⚠ THE IMPOSSIBLE STATE IS FLAGGED, NOT DRAWN. */
+  /* O-E005: an AMOUNT line draws down in part; only drawing past its amount is flagged. */
   const partial = drawdownFor({ transaction_type: "SERVICE_BY_AMT", amount_cents: 2400000, drawn_amount_cents: 900000 });
-  check(
-    "2 — a partial AMOUNT draw is flagged inconsistent",
-    partial.pricedBy === "AMOUNT" && partial.inconsistent
-  );
-  check(
-    "2 — a full AMOUNT draw is NOT flagged",
-    drawn.pricedBy === "AMOUNT" && !drawn.inconsistent
-  );
-  check(
-    "2 — an undrawn AMOUNT line is NOT flagged",
-    undrawn.pricedBy === "AMOUNT" && !undrawn.inconsistent
-  );
+  check("2 — a partial AMOUNT draw shows what's left", partial.pricedBy === "AMOUNT" && !partial.inconsistent && partial.remainingCents === 1500000);
+  const over = drawdownFor({ transaction_type: "SERVICE_BY_AMT", amount_cents: 2400000, drawn_amount_cents: 2500000 });
+  check("2 — an AMOUNT draw past its amount is flagged inconsistent", over.pricedBy === "AMOUNT" && over.inconsistent);
+  check("2 — a full AMOUNT draw is NOT flagged", drawn.pricedBy === "AMOUNT" && !drawn.inconsistent);
+  check("2 — an undrawn AMOUNT line is NOT flagged", undrawn.pricedBy === "AMOUNT" && !undrawn.inconsistent);
 }
-/* ⚠ AND THE PAGE HAS NO PROGRESS BAR IN THE AMOUNT BRANCH. */
+/* O-E005: both branches draw down, so each has a bar. */
 {
   const page = fileAt("src/app/(app)/orders/[id]/page.tsx");
   check("2 — the detail page exists", !!page);
   check(
-    "2 — the progress bar is inside the RATE branch only",
-    !!page && (page.code.match(/role="progressbar"/g) ?? []).length === 1
+    "2 — one progress bar per pricing branch",
+    !!page && (page.code.match(/role="progressbar"/g) ?? []).length === 2
   );
   /* ⚠ SUPERSEDED (`E164`) — ruling 44 renamed the discriminant, because a
      property called `basis` that is not the `basis` column is the trap:
