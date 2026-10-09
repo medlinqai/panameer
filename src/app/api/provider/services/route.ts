@@ -3,6 +3,8 @@ import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { OnboardingError } from "@/lib/onboarding";
 import { listProviderServices, retireProviderService, saveProviderService } from "@/lib/provider-services";
+import { addServiceType } from "@/lib/my-catalog";
+import { prisma } from "@/lib/prisma";
 
 const SERVICE = z.object({
   name: z.string().max(200),
@@ -12,9 +14,14 @@ const SERVICE = z.object({
   billingCycle: z.enum(["WEEKLY", "BIWEEKLY", "MONTHLY", "EVERY_90_DAYS"]),
   paymentTerms: z.enum(["IMMEDIATE", "NET15", "NET30", "NET45", "NET60"]),
   paymentTrigger: z.enum(["TIMESHEET", "PAYMENT_REQUEST", "INVOICE", "DOWNLOAD", "INSTALLATION"]),
+  serviceTypeId: z.string().uuid().optional().nullable(),
+  description: z.string().max(4000).optional().nullable(),
+  minimumQuantity: z.number().nonnegative().max(100000).optional().nullable(),
+  expenses: z.enum(["AT_COST", "INCLUDED", "NOT_APPLICABLE"]).optional().nullable(),
 });
 const BODY = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("save"), id: z.string().uuid().nullable(), service: SERVICE }),
+  z.object({ action: z.literal("save"), id: z.string().uuid().nullable(), service: SERVICE, publish: z.boolean().optional() }),
+  z.object({ action: z.literal("addType"), name: z.string().min(3).max(60) }),
   z.object({ action: z.literal("retire"), id: z.string().uuid() }),
 ]);
 
@@ -30,9 +37,16 @@ export async function POST(request: Request) {
   const body = BODY.safeParse(await request.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: "Check the service details" }, { status: 400 });
   try {
-    if (body.data.action === "save") await saveProviderService(gate, body.data.id, body.data.service);
+    if (body.data.action === "addType") {
+      const person = await prisma.person.findUnique({ where: { user_id: gate.userId }, select: { id: true } });
+      if (!person) return NextResponse.json({ error: "No person" }, { status: 404 });
+      const t = await addServiceType(body.data.name, person.id);
+      return NextResponse.json({ type: { id: t.id, name: t.name, is_baseline: t.is_baseline } });
+    }
+    let saved: { id: string } | undefined;
+    if (body.data.action === "save") saved = await saveProviderService(gate, body.data.id, body.data.service, body.data.publish ?? false);
     else await retireProviderService(gate, body.data.id);
-    return NextResponse.json({ services: await listProviderServices(gate) });
+    return NextResponse.json({ id: saved?.id ?? null, services: await listProviderServices(gate) });
   } catch (e) {
     if (e instanceof OnboardingError) return NextResponse.json({ error: e.message }, { status: 400 });
     console.error("[provider-services]", e);

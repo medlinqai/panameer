@@ -8289,6 +8289,13 @@ model ProviderService {
   unspsc_code         String?
   active              Boolean         @default(true)
   sort_order          Int             @default(100)
+  /// CAT-E002: the create flow's fields — type from the taxonomy, buyer-facing description, minimum, expenses, publish state.
+  service_type_id     String?         @db.Uuid
+  description         String?
+  minimum_quantity    Decimal?
+  /// AT_COST (billed separately, capped per order) · INCLUDED · NOT_APPLICABLE
+  expenses            String?
+  published_at        DateTime?
   created_at          DateTime        @default(now())
   updated_at          DateTime        @updatedAt
 
@@ -8396,4 +8403,19 @@ model PunchoutSession {
 
   @@index([connection_id])
   @@map("punchout_sessions")
+}
+
+/// CAT-E002: service types — Panameer's baseline list plus ones providers add (reviewed in Admin › Business Type Taxonomy).
+model ServiceType {
+  id                   String    @id @default(uuid()) @db.Uuid
+  name                 String    @unique
+  is_baseline          Boolean   @default(false)
+  created_by_person_id String?   @db.Uuid
+  /// Set when an admin folds a custom type into another (merge).
+  merged_into_id       String?   @db.Uuid
+  reviewed_at          DateTime?
+  sort_order           Int       @default(100)
+  created_at           DateTime  @default(now())
+
+  @@map("service_types")
 }

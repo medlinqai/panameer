@@ -217,11 +217,13 @@ export default async function Page({
         .sort((a, b) => b.providers - a.providers || a.name.localeCompare(b.name))
     : [];
 
+  const customTypes = await prisma.serviceType.count({ where: { is_baseline: false, reviewed_at: null, merged_into_id: null } });
   // A DRILL-IN TAKES OVER THE PAGE
   const isDrillIn = !!view || !!claimedRole;
   if (!isDrillIn && sp.view !== "tree")
     return (
       <div className="mx-auto w-full max-w-6xl">
+        <p className="mb-3 text-[13px]"><a href="/admin/skill-catalog/service-types" className="font-bold text-magenta-dark underline underline-offset-4">Service Types{customTypes ? ` · ${customTypes} to review` : ""} →</a></p>
         <SkillCatalogList
           rows={listRows}
           pairs={pairs}

@@ -2,10 +2,15 @@ import type { BillingCycle, PaymentTerms, PaymentTrigger } from "@prisma/client"
 import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError } from "@/lib/onboarding";
+import { publishGate } from "@/lib/my-catalog";
 
 // O-E004: the services a provider sells, each with a rate and billing terms. Owner-scoped from the session.
 export type ProviderServiceInput = {
   name: string;
+  serviceTypeId?: string | null;
+  description?: string | null;
+  minimumQuantity?: number | null;
+  expenses?: "AT_COST" | "INCLUDED" | "NOT_APPLICABLE" | null;
   serviceType: "SERVICE_BY_QTY" | "SERVICE_BY_AMT";
   uom?: string | null;
   rateCents?: number | null;
@@ -14,7 +19,7 @@ export type ProviderServiceInput = {
   paymentTrigger: PaymentTrigger;
 };
 
-export type ProviderServiceRow = ProviderServiceInput & { id: string; active: boolean };
+export type ProviderServiceRow = ProviderServiceInput & { id: string; active: boolean; published: boolean; serviceTypeName: string | null };
 
 async function profileId(viewer: Viewer) {
   const p = await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { id: true } });
@@ -25,7 +30,8 @@ async function profileId(viewer: Viewer) {
 export async function listProviderServices(viewer: Viewer): Promise<ProviderServiceRow[]> {
   const pid = await profileId(viewer);
   const rows = await prisma.providerService.findMany({ where: { provider_profile_id: pid }, orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] });
-  return rows.map((r) => ({ id: r.id, name: r.name, serviceType: r.service_type === "SERVICE_BY_AMT" ? "SERVICE_BY_AMT" : "SERVICE_BY_QTY", uom: r.uom, rateCents: r.rate_cents, billingCycle: r.billing_cycle, paymentTerms: r.payment_terms, paymentTrigger: r.payment_trigger, active: r.active }));
+  const types = new Map((await prisma.serviceType.findMany({ where: { id: { in: rows.map((r) => r.service_type_id).filter((x): x is string => !!x) } }, select: { id: true, name: true } })).map((t) => [t.id, t.name]));
+  return rows.map((r) => ({ id: r.id, name: r.name, serviceTypeId: r.service_type_id, serviceTypeName: r.service_type_id ? types.get(r.service_type_id) ?? null : null, description: r.description, minimumQuantity: r.minimum_quantity == null ? null : Number(r.minimum_quantity), expenses: (r.expenses as ProviderServiceInput["expenses"]) ?? null, published: !!r.published_at, serviceType: r.service_type === "SERVICE_BY_AMT" ? "SERVICE_BY_AMT" : "SERVICE_BY_QTY", uom: r.uom, rateCents: r.rate_cents, billingCycle: r.billing_cycle, paymentTerms: r.payment_terms, paymentTrigger: r.payment_trigger, active: r.active }));
 }
 
 function data(input: ProviderServiceInput) {
@@ -42,14 +48,26 @@ function data(input: ProviderServiceInput) {
     billing_cycle: input.billingCycle,
     payment_terms: input.paymentTerms,
     payment_trigger: input.paymentTrigger,
-  } as const;
+    ...(input.serviceTypeId !== undefined ? { service_type_id: input.serviceTypeId || null } : {}),
+    ...(input.description !== undefined ? { description: input.description?.trim().slice(0, 4000) || null } : {}),
+    ...(input.minimumQuantity !== undefined ? { minimum_quantity: input.minimumQuantity && input.minimumQuantity > 0 ? input.minimumQuantity : null } : {}),
+    ...(input.expenses !== undefined ? { expenses: input.expenses ?? null } : {}),
+  };
 }
 
-export async function saveProviderService(viewer: Viewer, id: string | null, input: ProviderServiceInput) {
+/** CAT-E002/E004: save as draft, or publish — publishing needs a validated seller company. */
+export async function saveProviderService(viewer: Viewer, id: string | null, input: ProviderServiceInput, publish = false) {
   const pid = await profileId(viewer);
-  if (!id) return prisma.providerService.create({ data: { provider_profile_id: pid, ...data(input) } });
-  const done = await prisma.providerService.updateMany({ where: { id, provider_profile_id: pid }, data: data(input) });
+  if (publish) {
+    const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+    const gate = person ? await publishGate(person.id) : { ok: false, reason: null };
+    if (!gate.ok) throw new OnboardingError("You can publish once your company is validated.", "INVALID");
+  }
+  const d = { ...data(input), published_at: publish ? new Date() : null };
+  if (!id) return prisma.providerService.create({ data: { provider_profile_id: pid, ...d }, select: { id: true } });
+  const done = await prisma.providerService.updateMany({ where: { id, provider_profile_id: pid }, data: d });
   if (done.count === 0) throw new OnboardingError("That service isn't yours", "INVALID");
+  return { id };
 }
 
 /** Retired, not deleted: order lines keep their snapshot, and the id stays valid for punchout carts already returned. */
