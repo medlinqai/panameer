@@ -27,7 +27,7 @@ export function shortCode(title: string) {
   return (w.length > 1 ? w.map((x) => x[0]).join("") : (w[0] ?? "").slice(0, 3)).toUpperCase().slice(0, 3);
 }
 
-export function LearnPathCard({ p, areaLabel, tag, outcome, level, notify, signedIn = true }: { p: CatPath; areaLabel: string | null; tag?: string; outcome?: string | null; level?: string | null; notify?: React.ReactNode; signedIn?: boolean }) {
+export function LearnPathCard({ p, areaLabel, tag, outcome, level, notify, signedIn = true, reason }: { p: CatPath; areaLabel: string | null; tag?: string; outcome?: string | null; level?: string | null; notify?: React.ReactNode; signedIn?: boolean; reason?: string | null }) {
   const [from, to] = TONE[p.area ?? ""] ?? ["#272334", "#4a4658"];
   const line = outcome || p.outcome || p.summary?.split(/(?<=[.!?])\s/)[0] || null;
   const now = Math.max(0, p.learners - p.completed);
@@ -49,6 +49,7 @@ export function LearnPathCard({ p, areaLabel, tag, outcome, level, notify, signe
         <span className="relative text-[11px] font-bold tracking-[0.1em] opacity-85 [text-shadow:0_1px_2px_rgba(0,0,0,0.4)]">{[areaLabel, p.group].filter(Boolean).join(" · ").toUpperCase()}</span>
       </Link>
       <div className="flex flex-1 flex-col p-4">
+        {reason && <p data-pick-reason className="mb-1 text-[11.5px] font-bold uppercase tracking-[0.06em] text-magenta-dark">{reason}</p>}
         <Link href={`/learn/${p.slug}`} className="text-[15.5px] font-bold leading-snug hover:underline">{p.title}</Link>
         {line && <p className="mt-1 line-clamp-2 text-[13px] text-ink-2">{line}</p>}
         {p.teacher && (

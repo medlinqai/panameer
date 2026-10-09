@@ -20,7 +20,7 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 // Learn › Learning Paths (2026-10-08, mockup A): one search, area chips + Has a Test + Under 2 h, open paths by area, Coming Soon in one quiet row.
-export default async function LearningPathsPage({ searchParams }: { searchParams: Promise<{ q?: string; area?: string; short?: string; test?: string; tab?: string }> }) {
+export default async function LearningPathsPage({ searchParams }: { searchParams: Promise<{ q?: string; area?: string; short?: string; test?: string; tab?: string; focus?: string }> }) {
   const viewer = await getSessionViewer();
   const sp = await searchParams;
   const [all, areas, teaches] = await Promise.all([learnCatalog(viewer?.userId ?? null), getSkillAreas(), viewerTeaches(viewer)]);
@@ -99,7 +99,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
           {sp.area && <input type="hidden" name="area" value={sp.area} />}
           {sp.short && <input type="hidden" name="short" value={sp.short} />}
           {sp.test && <input type="hidden" name="test" value={sp.test} />}
-          <input name="q" defaultValue={sp.q ?? ""} placeholder="What do you want to learn? Try “three-way match” or “approvals”" aria-label="Search learning paths" className="h-10 min-w-[220px] flex-1 border border-line bg-surface px-3 text-[14px] focus:border-ink focus:outline-none" />
+          <input name="q" autoFocus={sp.focus === "1"} defaultValue={sp.q ?? ""} placeholder="What do you want to learn? Try “three-way match” or “approvals”" aria-label="Search learning paths" className="h-10 min-w-[220px] flex-1 border border-line bg-surface px-3 text-[14px] focus:border-ink focus:outline-none" />
           <button type="submit" className="inline-flex min-h-[40px] items-center border border-ink bg-ink px-3.5 text-[13px] font-bold text-surface">Search</button>
         </form>
         <div className="-mx-1 mt-3"><ScrollRow as="nav" label="Filters" className="gap-1.5 px-1 pb-1">

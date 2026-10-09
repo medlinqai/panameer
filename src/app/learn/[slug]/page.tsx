@@ -11,6 +11,9 @@ import { ProgressRing } from "@/components/learn/ProgressRing";
 import { WhatsInside } from "@/components/learn/WhatsInside";
 import { CourseTile } from "@/components/learn/CourseTile";
 import { pathState } from "@/lib/learn-state";
+import { recommendNext, testOutPicks } from "@/lib/learn-next";
+import { WhatsNext } from "@/components/learn/WhatsNext";
+import { LearnPathCard } from "@/components/learn/LearnPathCard";
 import { canAdminister } from "@/lib/access";
 import { lessonCount } from "@/lib/learn-time";
 import { Avatar } from "@/components/Avatar";
@@ -32,6 +35,12 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
   const allWatched = !!p.mine && p.mine.total > 0 && p.mine.done >= p.mine.total;
   const state = pathState(p);
   const pickNext = await nextPathSuggestion(viewer?.userId ?? null);
+  // L-E047: what to do after this path (or, while in it, what's up next).
+  const finished = state === "READY_TO_TEST" || state === "CERTIFIED";
+  const rec = viewer && p.playable ? await recommendNext(viewer.userId, { after: p.id }) : null;
+  const top = finished ? rec?.picks[0] ?? null : null;
+  const testPicks = finished && viewer ? await testOutPicks(viewer.userId, { after: p.id }) : [];
+  const labelOf = (code: string | null) => (code === "START" ? "Start Here" : code ? areas.find((a) => a.code === code)?.label ?? code : null);
   const signIn = `/login?callbackUrl=${encodeURIComponent(`/learn/${p.slug}`)}`;
   const draftForAdmin = viewer && canAdminister(viewer) ? (await prisma.certificationTest.findUnique({ where: { learning_path_id: p.id }, select: { status: true } }))?.status ?? null : null;
   const startHref = !viewer ? signIn : next ? `/learn/${p.slug}/${next.id}` : first ? `/learn/${p.slug}/${first.id}` : null;
@@ -81,12 +90,14 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
                 {state === "READY_TO_TEST" ? (
                   <>
                     {p.test.ready ? <Link href={`/learn/${p.slug}/test`} className={HERO_BTN}>Take the Test</Link> : <NotifyMe pathId={p.id} initial={p.watchingTest} signedIn={!!viewer} test label="Test Opens Soon · Notify Me" className={HERO_BTN_W} />}
-                    <Link href={pickNext} className={HERO_BTN_W}>Pick Your Next Path</Link>
+                    {top ? <Link href={top.path.mine?.next ? `/learn/${top.path.slug}/${top.path.mine.next.id}` : `/learn/${top.path.slug}`} data-continue-with className={HERO_BTN_W}>Continue With {top.path.title}</Link> : <Link href={pickNext} className={HERO_BTN_W}>Pick Your Next Path</Link>}
+                    <a href="#whats-next" className="self-center text-[13px] font-bold text-magenta-dark underline underline-offset-4">or see all paths</a>
                   </>
                 ) : state === "CERTIFIED" ? (
                   <>
                     {p.certificate?.verifyUrl && <Link href={p.certificate.verifyUrl} className={HERO_BTN}>View Certificate</Link>}
-                    <Link href={pickNext} className={HERO_BTN_W}>Pick Your Next Path</Link>
+                    {top ? <Link href={top.path.mine?.next ? `/learn/${top.path.slug}/${top.path.mine.next.id}` : `/learn/${top.path.slug}`} data-continue-with className={HERO_BTN_W}>Continue With {top.path.title}</Link> : <Link href={pickNext} className={HERO_BTN_W}>Pick Your Next Path</Link>}
+                    <a href="#whats-next" className="self-center text-[13px] font-bold text-magenta-dark underline underline-offset-4">or see all paths</a>
                   </>
                 ) : p.playable && startHref ? (
                   <Link href={startHref} className={HERO_BTN}>{next && p.mine && p.mine.done > 0 ? `Continue Lesson ${next.index}` : "Start"}</Link>
@@ -106,6 +117,8 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
             }
           />
         </div>
+
+        {finished && rec && <WhatsNext picks={rec.picks} testPicks={testPicks} skillMatched={rec.skillMatched} areaLabel={labelOf} />}
 
         <div className="grid md:grid-cols-[1.35fr_1fr]">
           <section className="min-w-0 py-6 md:pr-7">
@@ -175,6 +188,14 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
             </section>
           </aside>
         </div>
+        {!finished && rec && rec.picks.length > 0 && (
+          <section data-up-next className="mt-4 border-t border-line pt-6">
+            <h2 className="text-[20px] font-bold">Up Next</h2>
+            <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {rec.picks.map((x) => <LearnPathCard key={x.path.id} p={x.path} areaLabel={labelOf(x.path.area)} reason={x.reason} />)}
+            </ul>
+          </section>
+        )}
       </div>
     </>
   );
