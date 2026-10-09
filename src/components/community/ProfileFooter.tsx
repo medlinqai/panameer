@@ -41,7 +41,8 @@ export function ShareBar({ url, name }: { url: string | null; name: string }) {
       {/* ONE LINE THAT SAYS WHY, VERBATIM FROM SCOTT . The bar */}
       <p className="mt-1.5 text-[14px] text-ink">Share your profile where clients look for you.</p>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      {/* M-E012: one row of four equal buttons — icon + short label, icon only under 360px. */}
+      <div data-share-row className="mt-3 grid grid-cols-4 gap-2">
         {/* COPY LINK IS THE PRIMARY AND IT IS FILLED (`squareActions` */}
         <button
           type="button"
@@ -63,13 +64,14 @@ export function ShareBar({ url, name }: { url: string | null; name: string }) {
             }
           }}
           className={
-            "inline-flex min-h-[44px] items-center px-4 text-[13.5px] font-bold transition-opacity " +
+            "inline-flex min-h-[44px] min-w-0 items-center justify-center gap-1.5 px-2 text-[13.5px] font-bold transition-opacity " +
             // MAGENTA ONLY ON THE CONFIRMATION, and it is a STATUS, not a
             // WAS WRONG. `--color-ink` INVERTS (`#272334` light → `#f2f0f7`
             (copied ? "bg-ink text-magenta" : "bg-ink text-surface hover:opacity-85")
           }
         >
-          {copied ? "Copied ✓" : "Copy Link"}
+          <svg viewBox="0 0 24 24" aria-hidden className="h-[17px] w-[17px] shrink-0" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M10 14a4.5 4.5 0 006.4 0l3-3a4.5 4.5 0 00-6.4-6.4l-1.2 1.2M14 10a4.5 4.5 0 00-6.4 0l-3 3a4.5 4.5 0 006.4 6.4l1.2-1.2" /></svg>
+          <span className="truncate max-[359px]:sr-only">{copied ? "Copied ✓" : "Copy"}</span>
         </button>
 
         {shareLinks(url, text).map((s) => (
@@ -79,13 +81,14 @@ export function ShareBar({ url, name }: { url: string | null; name: string }) {
             target="_blank"
             // half; a `target="_blank"` without them hands the opened page a
             rel="noopener noreferrer"
-            className="inline-flex min-h-[44px] items-center gap-2 border border-ink bg-surface px-3.5 text-[13.5px] font-bold text-ink transition-colors hover:bg-ink/5"
+            aria-label={`Share on ${s.label}`}
+            className="inline-flex min-h-[44px] min-w-0 items-center justify-center gap-1.5 border border-ink bg-surface px-2 text-[13.5px] font-bold text-ink transition-colors hover:bg-ink/5"
           >
             {/* follow dark mode — a hard-coded brand hex would not. */}
             <svg viewBox="0 0 24 24" aria-hidden className="h-[17px] w-[17px] shrink-0" fill="currentColor">
               <path d={s.path} />
             </svg>
-            {s.label}
+            <span className="truncate max-[359px]:sr-only">{s.label}</span>
           </a>
         ))}
       </div>
