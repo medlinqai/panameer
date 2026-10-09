@@ -108,3 +108,11 @@ html {
     display: none;
   }
 }
+
+/* T-E004: the menu lives at the bottom on phones, so the mark + wordmark grow ~36% under 480px (bar stays 57px). */
+@media (max-width: 479.98px) {
+  .pm-band-brand img {
+    height: 30px;
+    max-width: 124px;
+  }
+}
