@@ -119,7 +119,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
               {!sp.area && g.paths.length > 3 && <Link href={href({ area: g.code })} className="text-[13px] font-bold text-magenta-dark underline underline-offset-4">See all {g.paths.length}</Link>}
             </div>
             <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {(sp.area ? g.paths : g.paths.slice(0, 3)).map((p) => <LearnPathCard key={p.id} p={p} areaLabel={p.area ? label.get(p.area) ?? null : null} notify={<NotifyMe pathId={p.id} initial={p.watching} signedIn={!!viewer} />} />)}
+              {(sp.area ? g.paths : g.paths.slice(0, 3)).map((p) => <LearnPathCard key={p.id} p={p} areaLabel={p.area ? label.get(p.area) ?? null : null} notify={<NotifyMe pathId={p.id} initial={p.watching} signedIn={!!viewer} />} signedIn={!!viewer} />)}
             </ul>
           </section>
         ))}

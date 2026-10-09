@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { nextStep } from "@/lib/learn-state";
+import { NotifyMe } from "@/components/learn/NotifyMe";
 import type { CatPath } from "@/lib/learn-catalog";
 import { timeLabel } from "@/lib/learn-time";
 import { Avatar } from "@/components/Avatar";
@@ -26,7 +27,7 @@ export function shortCode(title: string) {
   return (w.length > 1 ? w.map((x) => x[0]).join("") : (w[0] ?? "").slice(0, 3)).toUpperCase().slice(0, 3);
 }
 
-export function LearnPathCard({ p, areaLabel, tag, outcome, level, notify }: { p: CatPath; areaLabel: string | null; tag?: string; outcome?: string | null; level?: string | null; notify?: React.ReactNode }) {
+export function LearnPathCard({ p, areaLabel, tag, outcome, level, notify, signedIn = true }: { p: CatPath; areaLabel: string | null; tag?: string; outcome?: string | null; level?: string | null; notify?: React.ReactNode; signedIn?: boolean }) {
   const [from, to] = TONE[p.area ?? ""] ?? ["#272334", "#4a4658"];
   const line = outcome || p.outcome || p.summary?.split(/(?<=[.!?])\s/)[0] || null;
   const now = Math.max(0, p.learners - p.completed);
@@ -68,12 +69,13 @@ export function LearnPathCard({ p, areaLabel, tag, outcome, level, notify }: { p
           ) : (
             <Link href={step.href} className="inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover">{step.label}</Link>
           )}
+          {/* L-E044: Test Out as a real button; not open yet → Test Out · Opens Soon sets Notify Me. */}
           {p.certificate ? (
             <span className="text-[12.5px] font-bold">Certified ✓</span>
           ) : p.test.ready ? (
-            <Link href={`/learn/${p.slug}/test`} className="text-[12.5px] font-bold text-magenta-dark hover:underline">Test out →</Link>
+            <Link href={`/learn/${p.slug}/test`} data-test-out title="Already know this? Pass the test and skip the lessons." className="inline-flex min-h-10 items-center border border-ink px-3 text-[13px] font-semibold hover:bg-surface-hover">{step.state === "READY_TO_TEST" ? "Take the Test" : "Test Out"}</Link>
           ) : p.playable ? (
-            <span className="text-[12px] text-ink-3">Test opens soon</span>
+            <NotifyMe pathId={p.id} initial={p.watchingTest} signedIn={signedIn} test label="Test Out · Opens Soon" className="inline-flex min-h-10 items-center border border-line bg-surface px-3 text-[12.5px] font-semibold text-ink-2 hover:border-ink" />
           ) : null}
         </div>
       </div>

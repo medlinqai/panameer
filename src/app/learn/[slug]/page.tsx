@@ -3,14 +3,14 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
-import { learnCatalog, timeLabel } from "@/lib/learn-catalog";
+import { learnCatalog, nextPathSuggestion, timeLabel } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { ProgressRing } from "@/components/learn/ProgressRing";
 import { WhatsInside } from "@/components/learn/WhatsInside";
 import { CourseTile } from "@/components/learn/CourseTile";
-import { nextStep, pathState, PICK_NEXT_HREF } from "@/lib/learn-state";
+import { pathState } from "@/lib/learn-state";
 import { lessonCount } from "@/lib/learn-time";
 import { Avatar } from "@/components/Avatar";
 import { NotifyMe } from "@/components/learn/NotifyMe";
@@ -29,6 +29,8 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
   const first = p.courses.flatMap((c) => c.lessons).find((l) => l.playable) ?? null;
   const next = p.mine?.next ?? null;
   const allWatched = !!p.mine && p.mine.total > 0 && p.mine.done >= p.mine.total;
+  const state = pathState(p);
+  const pickNext = await nextPathSuggestion(viewer?.userId ?? null);
   const signIn = `/login?callbackUrl=${encodeURIComponent(`/learn/${p.slug}`)}`;
   const draftForAdmin = viewer && (viewer.isAdmin || viewer.isSystemAdmin) ? (await prisma.certificationTest.findUnique({ where: { learning_path_id: p.id }, select: { status: true } }))?.status ?? null : null;
   const startHref = !viewer ? signIn : next ? `/learn/${p.slug}/${next.id}` : first ? `/learn/${p.slug}/${first.id}` : null;
@@ -74,11 +76,30 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
             }
             actions={
               <>
-                {p.playable && startHref && (
-                  <Link href={startHref} className={allWatched && p.test.ready && !p.test.passed ? HERO_BTN_W : HERO_BTN}>{next ? `Continue Lesson ${next.index}` : allWatched ? "Review" : "Start"}</Link>
+                {/* L-E040/L-E044/L-E045: the main step follows where you are; Test Out sits beside it. */}
+                {state === "READY_TO_TEST" ? (
+                  <>
+                    {p.test.ready ? <Link href={`/learn/${p.slug}/test`} className={HERO_BTN}>Take the Test</Link> : <NotifyMe pathId={p.id} initial={p.watchingTest} signedIn={!!viewer} test label="Test Opens Soon · Notify Me" className={HERO_BTN_W} />}
+                    <Link href={pickNext} className={HERO_BTN_W}>Pick Your Next Path</Link>
+                  </>
+                ) : state === "CERTIFIED" ? (
+                  <>
+                    {p.certificate?.verifyUrl && <Link href={p.certificate.verifyUrl} className={HERO_BTN}>View Certificate</Link>}
+                    <Link href={pickNext} className={HERO_BTN_W}>Pick Your Next Path</Link>
+                  </>
+                ) : p.playable && startHref ? (
+                  <Link href={startHref} className={HERO_BTN}>{next && p.mine && p.mine.done > 0 ? `Continue Lesson ${next.index}` : "Start"}</Link>
+                ) : null}
+                {(state === "NEW" || state === "IN_PROGRESS") && (
+                  <>
+                    {p.test.ready ? (
+                      <Link href={viewer ? `/learn/${p.slug}/test` : signIn} data-test-out className={HERO_BTN_W}>Test Out</Link>
+                    ) : (
+                      <NotifyMe pathId={p.id} initial={p.watchingTest} signedIn={!!viewer} test label="Test Out · Opens Soon" className={HERO_BTN_W} />
+                    )}
+                    <p className="w-full text-[12.5px] text-ink-3">Already know this? Pass the test and skip the lessons.</p>
+                  </>
                 )}
-                {p.test.ready && !p.test.passed && <Link href={viewer ? `/learn/${p.slug}/test` : signIn} className={HERO_BTN_W}>Take the Certification Test</Link>}
-                {p.certificate?.verifyUrl && <Link href={p.certificate.verifyUrl} className={HERO_BTN_W}>View Certificate</Link>}
                 {!p.playable && <NotifyMe pathId={p.id} initial={p.watching} signedIn={!!viewer} className={HERO_BTN_W} />}
               </>
             }

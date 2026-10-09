@@ -666,6 +666,8 @@ export async function gradeAttempt(
   });
 
   const credential = passed ? await issueCredential(userId, learningPathId) : null;
+  // L-E044: passing a test-out completes the path — it joins My Learning even without lessons watched.
+  if (passed) await prisma.learnEnrollment.upsert({ where: { user_id_learning_path_id: { user_id: userId, learning_path_id: learningPathId } }, create: { user_id: userId, learning_path_id: learningPathId }, update: {} }).catch(() => {});
 
   return {
     score,

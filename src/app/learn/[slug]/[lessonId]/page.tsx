@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NotifyMe } from "@/components/learn/NotifyMe";
 import { lessonCount } from "@/lib/learn-time";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -78,6 +79,17 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
         <p className="text-[13.5px] font-bold">{p.title}</p>
         <p className="mt-0.5 flex flex-wrap items-center gap-2 text-[12px] text-ink-3">{count.label}{count.finished && <span data-ready-tag className="border border-magenta px-1.5 text-[10.5px] font-bold tracking-[0.06em] text-magenta-dark">READY TO TEST</span>}</p>
         <span aria-hidden className="mt-2 block h-[6px] w-full bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${pct}%` }} /></span>
+        {/* L-E044: Test Out, right where you see how much is left. */}
+        {!p.test.passed && (
+          <div className="mt-3">
+            {p.test.ready ? (
+              <Link href={`/learn/${p.slug}/test`} data-test-out className="inline-flex min-h-9 w-full items-center justify-center border border-ink px-3 text-[13px] font-semibold hover:bg-surface-hover">{count.finished ? "Take the Test" : "Test Out"}</Link>
+            ) : (
+              <NotifyMe pathId={p.id} initial={p.watchingTest} signedIn test label={count.finished ? "Test Opens Soon · Notify Me" : "Test Out · Opens Soon"} className="inline-flex min-h-9 w-full items-center justify-center border border-ink bg-surface px-3 text-[13px] font-semibold text-ink hover:bg-surface-hover" />
+            )}
+            {!count.finished && <p className="mt-1 text-[11.5px] text-ink-3">Already know this? Pass the test and skip the lessons.</p>}
+          </div>
+        )}
       </div>
       <ol className="max-h-[520px] overflow-y-auto p-3">
         {p.courses.map((c, ci) => (
