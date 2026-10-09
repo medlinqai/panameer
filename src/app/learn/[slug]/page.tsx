@@ -30,6 +30,7 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
   const next = p.mine?.next ?? null;
   const allWatched = !!p.mine && p.mine.total > 0 && p.mine.done >= p.mine.total;
   const signIn = `/login?callbackUrl=${encodeURIComponent(`/learn/${p.slug}`)}`;
+  const draftForAdmin = viewer && (viewer.isAdmin || viewer.isSystemAdmin) ? (await prisma.certificationTest.findUnique({ where: { learning_path_id: p.id }, select: { status: true } }))?.status ?? null : null;
   const startHref = !viewer ? signIn : next ? `/learn/${p.slug}/${next.id}` : first ? `/learn/${p.slug}/${first.id}` : null;
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
@@ -97,6 +98,9 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
           <aside className="min-w-0 border-t border-line py-6 md:border-l md:border-t-0 md:pl-7">
             <section id="test" data-path-test>
               <h2 className="text-[18px] font-bold">Certification Test</h2>
+              {draftForAdmin && (
+                <Link href={`/learn/${p.slug}/test?preview=1`} data-test-preview-link className="mt-2 inline-flex min-h-10 items-center border border-magenta px-3 text-[13px] font-bold text-magenta-dark">Test · {draftForAdmin === "DRAFT" ? "Draft" : "Published"} — Take as Preview</Link>
+              )}
               {/* L-E041: three clear states — passed, open, opens soon. */}
               {p.test.passed ? (
                 <div data-test-state="passed">

@@ -176,7 +176,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       select: { learning_path_id: true, name: true, issued_on: true, created_at: true },
     }),
     prisma.certificationAttempt.findMany({
-      where: { user_id: userId },
+      where: { user_id: userId, is_preview: false },
       select: { score: true, passed: true, learning_path_id: true, created_at: true },
     }),
   ]);

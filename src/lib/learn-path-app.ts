@@ -179,7 +179,7 @@ export async function getAppPath(
     pathInterestFor(userId, path.id),
     userId
       ? prisma.certificationAttempt.findMany({
-          where: { user_id: userId, learning_path_id: path.id },
+          where: { user_id: userId, learning_path_id: path.id, is_preview: false },
           select: { passed: true },
         })
       : Promise.resolve([]),

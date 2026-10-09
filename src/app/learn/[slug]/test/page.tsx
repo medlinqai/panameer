@@ -4,14 +4,18 @@ import { getLearnPath } from "@/lib/learn-home";
 import { getSessionViewer } from "@/lib/session";
 import { getTestState } from "@/lib/learn-assessment";
 import { TestRunner } from "@/components/learn/TestRunner";
+import { TestPreview } from "@/components/learn/TestPreview";
 import { BackLink } from "@/components/console/BackLink";
 
 export default async function TestPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview?: string }>;
 }) {
   const { slug } = await params;
+  const { preview } = await searchParams;
   const viewer = await getSessionViewer();
   if (!viewer) redirect(`/login?callbackUrl=${encodeURIComponent(`/learn/${slug}/test`)}`);
 
@@ -19,6 +23,15 @@ export default async function TestPage({
   if (!path) notFound();
 
   const state = await getTestState(viewer.userId, path.id);
+  // L-E042: admins preview a draft (or published) test — answers shown, nothing counted, no certificate.
+  if (preview && (viewer.isAdmin || viewer.isSystemAdmin))
+    return (
+      <div className="mx-auto w-full max-w-3xl px-6 py-8 sm:py-10">
+        <BackLink href={`/learn/${path.slug}`} label={path.title} />
+        <h1 className="mt-3 font-display text-[27px] font-bold tracking-[-0.5px]">{path.title} — Test Preview</h1>
+        <TestPreview pathId={path.id} pathSlug={path.slug} />
+      </div>
+    );
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8 sm:py-10">

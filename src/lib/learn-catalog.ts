@@ -60,7 +60,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
     ? await Promise.all([
         prisma.learnEnrollment.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { learning_path_id: true } }),
         prisma.lessonProgress.findMany({ where: { user_id: userId }, select: { lesson_id: true } }),
-        prisma.certificationAttempt.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { learning_path_id: true, score: true, passed: true } }),
+        prisma.certificationAttempt.findMany({ where: { user_id: userId, learning_path_id: { in: ids }, is_preview: false }, select: { learning_path_id: true, score: true, passed: true } }),
         prisma.certification.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { id: true, learning_path_id: true, created_at: true, issued_on: true, public_credential_url: true } }),
         prisma.learnPathWatch.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { learning_path_id: true, test_watch: true } }).catch(() => []),
       ])

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { notifyTestOpened } from "@/lib/learn-watch";
 import { prisma } from "@/lib/prisma";
 import { guardApi } from "@/lib/guard";
 import {
@@ -58,6 +59,8 @@ export async function PATCH(
   // THE ACTION IS AN ALLOW-LIST, NOT A SWITCH WITH A DEFAULT. An unrecognised
   if (body?.action === "publish") {
     const out = await publishAssessment(id, viewer.userId);
+    // L-E042: once published, enrolled members and test watchers hear it's open.
+    if (out.ok) await notifyTestOpened(id);
     return out.ok
       ? NextResponse.json({ ok: true, status: out.status, questions: out.questions })
       : NextResponse.json({ error: out.message, code: out.code }, { status: 409 });

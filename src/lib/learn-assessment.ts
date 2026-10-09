@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { randomUUID, createHash } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { isPlayable } from "@/lib/learn";
 import { env } from "@/lib/env";
 import { DOC_SOURCE_LABEL, docExcerpt } from "@/lib/learn-doc-source";
 
@@ -117,7 +118,7 @@ export async function buildAssessmentSource(learningPathId: string): Promise<Ass
               lessons: {
                 where: { retired_at: null },
                 orderBy: { sort_order: "asc" },
-                select: { id: true, title: true, description: true },
+                select: { id: true, title: true, description: true, vimeo_ref: true, production_status: true },
               },
             },
           },
@@ -150,7 +151,8 @@ export async function buildAssessmentSource(learningPathId: string): Promise<Ass
       }
       lines.push(`\n### SECTION: ${sec.title}`);
       if (sec.description) lines.push(sec.description);
-      for (const l of sec.lessons) {
+      // L-E042: questions come only from lessons with a video — what a learner can actually watch.
+      for (const l of sec.lessons.filter(isPlayable)) {
         index.push({ id: l.id, title: l.title, courseTitle: c.title });
         lines.push(
           l.description
@@ -619,10 +621,10 @@ export async function gradeAttempt(
   }
 
   const priorAttempts = await prisma.certificationAttempt.count({
-    where: { user_id: userId, learning_path_id: learningPathId },
+    where: { user_id: userId, learning_path_id: learningPathId, is_preview: false },
   });
   const alreadyPassed = await prisma.certificationAttempt.findFirst({
-    where: { user_id: userId, learning_path_id: learningPathId, passed: true },
+    where: { user_id: userId, learning_path_id: learningPathId, passed: true, is_preview: false },
     select: { id: true },
   });
 
@@ -741,7 +743,7 @@ export async function getTestState(userId: string | null, learningPathId: string
     prisma.certificationTest.findUnique({ where: { learning_path_id: learningPathId } }),
     userId
       ? prisma.certificationAttempt.findMany({
-          where: { user_id: userId, learning_path_id: learningPathId },
+          where: { user_id: userId, learning_path_id: learningPathId, is_preview: false },
           orderBy: { created_at: "desc" },
           select: { id: true, score: true, passed: true, created_at: true },
         })
