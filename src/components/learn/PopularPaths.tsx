@@ -1,3 +1,4 @@
+import { ScrollRow } from "@/components/casing/ScrollRow";
 import Link from "next/link";
 import type { CatPath } from "@/lib/learn-catalog";
 import { LearnPathCard } from "@/components/learn/LearnPathCard";
@@ -19,10 +20,10 @@ export function PopularPaths({ cards, areas, area, catalog }: { cards: Card[]; a
         <h2 className="text-[22px] font-bold">Most Popular Learning Paths</h2>
         <Link href="/learn/paths" className="text-[13.5px] font-bold text-magenta-dark underline underline-offset-4">See All Learning Paths</Link>
       </div>
-      <nav aria-label="Areas" className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
+      <div className="-mx-1 mt-3"><ScrollRow as="nav" label="Areas" className="gap-1.5 px-1 pb-1">
         <Link href="/learn" className={chip(!area)}>All Areas</Link>
         {areas.map((a) => <Link key={a.code} href={`/learn?area=${a.code}#popular`} className={chip(area === a.code)}>{a.label}</Link>)}
-      </nav>
+      </ScrollRow></div>
       {cards.length === 0 ? (
         <p className="mt-6 text-center text-[14px] text-ink-2">No learning paths in this area yet.</p>
       ) : (

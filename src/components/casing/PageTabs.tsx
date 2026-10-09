@@ -1,6 +1,7 @@
 import "./page-tabs.css";
 import Link from "next/link";
 import { StepDisc, StepConnector } from "@/components/casing/StepDisc";
+import { ScrollRow } from "@/components/casing/ScrollRow";
 
 export type PageTab = {
   label: string;
@@ -42,21 +43,15 @@ export function PageTabs({
         aria-hidden
         className="pointer-events-none absolute -top-6 bottom-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-surface"
       />
-      {}
-      <div
-        data-testid="page-tabs"
-        className={
-          "-mx-1 mb-4 flex items-center gap-0.5 border-b border-line bg-surface px-1 " +
-          (wrap ? "flex-wrap items-end gap-y-0" : "items-center overflow-x-auto")
-        }
-      >
-        {}
+      <div data-testid="page-tabs-wrap" className="-mx-1 mb-4 flex items-end border-b border-line bg-surface px-1">
+      <ScrollRow wrapFrom={wrap ? "md" : undefined} className={"min-w-0 flex-1 items-center gap-0.5 " + (wrap ? "md:items-end" : "")}>
+        <div data-testid="page-tabs" className="contents">
         {eyebrow && (
           <>
-            <span className="shrink-0 whitespace-nowrap py-2.5 pl-2 pr-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">
+            <span className="hidden shrink-0 whitespace-nowrap py-2.5 pl-2 pr-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2 md:inline">
               {eyebrow}
             </span>
-            <span aria-hidden className="mr-2 h-5 w-px shrink-0 self-center bg-line" />
+            <span aria-hidden className="mr-2 hidden h-5 w-px shrink-0 self-center bg-line md:inline" />
           </>
         )}
         {tabs.map((t, i) => {
@@ -100,13 +95,10 @@ export function PageTabs({
             </div>
           );
         })}
-        {children && <div className="ml-auto shrink-0 pb-1 pl-3">{children}</div>}
+        </div>
+      </ScrollRow>
+      {children && <div className="ml-auto shrink-0 pb-1 pl-3">{children}</div>}
       </div>
-      {}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute bottom-[calc(1rem+1px)] right-0 top-0 w-8 bg-gradient-to-l from-surface to-transparent"
-      />
     </div>
   );
 }

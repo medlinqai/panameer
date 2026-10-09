@@ -1,3 +1,4 @@
+import { ScrollRow } from "@/components/casing/ScrollRow";
 import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
@@ -103,13 +104,13 @@ export default async function MentorsPage({ searchParams }: { searchParams: Prom
             <input name="q" defaultValue={q} placeholder="Search skill, role or name…" aria-label="Search mentors" className="h-10 min-w-[220px] flex-1 border border-line bg-surface px-3 text-[14px] focus:border-ink focus:outline-none" />
             <button type="submit" className="inline-flex min-h-[40px] items-center border border-ink bg-ink px-3.5 text-[13px] font-bold text-surface">Search</button>
           </form>
-          <nav aria-label="Areas" className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
+          <div className="-mx-1 mt-3"><ScrollRow as="nav" label="Areas" className="gap-1.5 px-1 pb-1">
             <Link href={href({ area: "" })} className={chip(!area)}>All Areas</Link>
             {areas.filter((a) => !a.hidden).map((a) => (
               <Link key={a.code} href={href({ area: a.code })} className={chip(area === a.code)}>{a.label}</Link>
             ))}
             {mySkills.size > 0 && <Link href={href({ shared: shared ? "" : "1" })} className={chip(shared)}>Shared skills</Link>}
-          </nav>
+          </ScrollRow></div>
           <p className="mt-2 text-[13px] text-ink-2"><b className="text-ink">{cards.length}</b> {cards.length === 1 ? "mentor" : "mentors"}</p>
           {cards.length === 0 ? (
             <p className="mt-6 text-center text-[14px] text-ink-2">No one open for mentoring matches yet. Try another area or search.</p>

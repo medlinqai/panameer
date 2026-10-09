@@ -1,30 +1,8 @@
-/* M2 FITS ONE LINE AT PHONE WIDTH WS-E, ruling 88b/91) */
-
+/* M-E001: on phones the tab row scrolls sideways (ScrollRow); tabs tighten a little so more of them show. */
 @media (max-width: 767.98px) {
-  /* THE SCROLLER COMES OFF. With the row fitting, `overflow-x: auto` has */
-  [data-testid="page-tabs"] {
-    overflow-x: visible;
-  }
-
-  /* THE EYEBROW GOES — 89px, AND IT IS NOT A TAB. It names the section you */
-  [data-testid="page-tabs"] > span:first-child {
-    display: none;
-  }
-
-  /* PADDING WAS THE BIGGEST WASTE — 120px across five tabs — BUT NOT THE ONLY */
-  /* THE ROW'S OWN SIDE PADDING GOES TOO — 8px of the 358, and the tabs are */
-  [data-testid="page-tabs"] {
-    padding-left: 0;
-    padding-right: 0;
-    /* AND THE GAP. MEASURED: with the padding fixed the row still hid */
-    gap: 0;
-  }
-
-  /* TWO LEVERS, BOTH SMALL, BECAUSE ONE ALONE DID NOT REACH. */
   [data-testid="page-tabs"] a {
-    padding-left: 6px;
-    padding-right: 6px;
-    font-size: 12.5px;
-    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 13px;
   }
 }

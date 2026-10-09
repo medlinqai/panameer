@@ -1,3 +1,4 @@
+import { ScrollRow } from "@/components/casing/ScrollRow";
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
@@ -96,7 +97,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
           <input name="q" defaultValue={sp.q ?? ""} placeholder="What do you want to learn? Try “three-way match” or “approvals”" aria-label="Search learning paths" className="h-10 min-w-[220px] flex-1 border border-line bg-surface px-3 text-[14px] focus:border-ink focus:outline-none" />
           <button type="submit" className="inline-flex min-h-[40px] items-center border border-ink bg-ink px-3.5 text-[13px] font-bold text-surface">Search</button>
         </form>
-        <nav aria-label="Filters" className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
+        <div className="-mx-1 mt-3"><ScrollRow as="nav" label="Filters" className="gap-1.5 px-1 pb-1">
           <Link href={href({ area: undefined })} className={chip(!sp.area)}>All</Link>
           {countByArea.get(START_AREA) ? <Link href={href({ area: START_AREA })} className={chip(sp.area === START_AREA)}>{START_AREA_LABEL} <span className="opacity-70">{countByArea.get(START_AREA)}</span></Link> : null}
           {areas.filter((a) => !a.hidden && countByArea.get(a.code)).map((a) => (
@@ -104,7 +105,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
           ))}
           <Link href={href({ test: sp.test ? undefined : "1" })} className={chip(sp.test === "1")}>Has a Test</Link>
           <Link href={href({ short: sp.short ? undefined : "1" })} className={chip(sp.short === "1")}>Under 2 h</Link>
-        </nav>
+        </ScrollRow></div>
         {groups.length === 0 && soon.length === 0 && <p className="mt-8 text-center text-[14px] text-ink-2">No learning paths match.</p>}
         {groups.map((g) => (
           <section key={g.code} data-area-group={g.code} className="mt-7">

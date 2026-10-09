@@ -1,3 +1,4 @@
+import { ScrollRow } from "@/components/casing/ScrollRow";
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
@@ -50,12 +51,12 @@ export default async function CoursesPage({ searchParams }: { searchParams: Prom
           <input name="q" defaultValue={sp.q ?? ""} placeholder="Search courses, lessons, teachers and paths…" aria-label="Search courses" className="h-10 min-w-[220px] flex-1 border border-line bg-surface px-3 text-[14px] focus:border-ink focus:outline-none" />
           <button type="submit" className="inline-flex min-h-[40px] items-center border border-ink bg-ink px-3.5 text-[13px] font-bold text-surface">Search</button>
         </form>
-        <nav aria-label="Filters" className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
+        <div className="-mx-1 mt-3"><ScrollRow as="nav" label="Filters" className="gap-1.5 px-1 pb-1">
           <Link href={href({ area: undefined })} className={chip(!sp.area)}>All Areas</Link>
           {areas.filter((a) => !a.hidden && usedAreas.has(a.code)).map((a) => <Link key={a.code} href={href({ area: a.code })} className={chip(sp.area === a.code)}>{a.label}</Link>)}
           <Link href={href({ video: sp.video ? undefined : "1" })} className={chip(sp.video === "1")}>With Video</Link>
           <Link href={href({ short: sp.short ? undefined : "1" })} className={chip(sp.short === "1")}>Under 30 min</Link>
-        </nav>
+        </ScrollRow></div>
         <p className="mt-3 text-[13px] text-ink-2"><b className="text-ink">{rows.length}</b> {rows.length === 1 ? "course" : "courses"}</p>
         <div className="mt-2 overflow-x-auto border border-line">
           <table className="w-full min-w-[760px] text-[13.5px]">

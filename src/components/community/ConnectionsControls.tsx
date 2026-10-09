@@ -1,5 +1,6 @@
 "use client";
 
+import { ScrollRow } from "@/components/casing/ScrollRow";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -63,7 +64,7 @@ export function ConnectionsControls({ f, total, chipCounts, applied, tree, views
         <button type="submit" className={`${BTN} border-ink bg-ink text-surface`}>Search</button>
       </form>
 
-      <nav aria-label="Quick filters" className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
+      <div className="-mx-1 mt-3"><ScrollRow as="nav" label="Quick filters" className="gap-1.5 px-1 pb-1">
         {chips.map((c) => {
           const on = f.chip === c.key;
           return (
@@ -89,7 +90,7 @@ export function ConnectionsControls({ f, total, chipCounts, applied, tree, views
           All Filters{panelCount ? ` (${panelCount})` : ""}
         </button>
         {views && <SavedViewsMenu views={views} />}
-      </nav>
+      </ScrollRow></div>
       {members && <p data-count className="mt-2 text-[13px] text-ink-2"><b className="text-ink">{total}</b> {total === 1 ? "person" : "people"} · sorted by best match</p>}
 
       {applied.length > 0 && (
