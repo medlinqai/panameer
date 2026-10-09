@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import type { BoardRow } from "@/lib/learn-homepage";
+import { WantToTeach } from "@/components/learn/WantToTeach";
 
 // Learn Home boards: Top Learners | Top Teachers, split by one rule. Under 3 people → dashed "Be the first" spots.
 function Switch({ param, value, other }: { param: string; value: "month" | "all"; other: string }) {
@@ -18,6 +19,7 @@ function Board({ rows, meUserId, empty, unit }: { rows: BoardRow[]; meUserId: st
   const spots = Math.max(0, 3 - rows.length);
   return (
     <ol className="mt-1">
+      <li aria-hidden className="flex justify-end pt-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-ink-3">{unit}</li>
       {rows.map((r, i) => {
         const me = r.userId === meUserId;
         const [first, ...rest] = r.name.split(" ");
@@ -49,19 +51,20 @@ function Board({ rows, meUserId, empty, unit }: { rows: BoardRow[]; meUserId: st
   );
 }
 
-export function LearnBoards({ learners, teachers, lb, tb, meUserId, createHref }: { learners: BoardRow[]; teachers: BoardRow[]; lb: "month" | "all"; tb: "month" | "all"; meUserId: string; createHref: string }) {
+export function LearnBoards({ learners, teachers, lb, tb, meUserId, createHref, teaches = false }: { learners: BoardRow[]; teachers: BoardRow[]; lb: "month" | "all"; tb: "month" | "all"; meUserId: string; createHref: string | null; teaches?: boolean }) {
   return (
     <div className="grid md:grid-cols-2">
       <section data-top-learners className="min-w-0 py-6 md:pr-7">
-        <h2 className="text-[20px] font-bold">Top Learners <small className="ml-1 text-[12px] font-medium text-ink-3">certificates earned</small></h2>
+        <h2 className="text-[20px] font-bold">Top Learners <small className="ml-1 text-[12px] font-medium text-ink-3">paths finished {lb === "month" ? "this month" : "all time"}</small></h2>
         <Switch param="lb" value={lb} other={tb === "all" ? "tb=all" : ""} />
-        <Board rows={learners} meUserId={meUserId} empty="Be the first to take this spot" unit="certificates" />
+        <Board rows={learners} meUserId={meUserId} empty="Be the first to take this spot" unit="paths" />
       </section>
       <section data-top-teachers className="min-w-0 border-t border-line py-6 md:border-l md:border-t-0 md:pl-7">
         <h2 className="text-[20px] font-bold">Top Teachers <small className="ml-1 text-[12px] font-medium text-ink-3">learners {tb === "month" ? "this month" : "all time"}</small></h2>
         <Switch param="tb" value={tb} other={lb === "all" ? "lb=all" : ""} />
         <Board rows={teachers} meUserId={meUserId} empty="Teach what you know — publish a learning path" unit="learners" />
-        <Link href={createHref} className="mt-4 inline-flex min-h-11 items-center border border-ink bg-surface px-5 text-[14px] font-semibold hover:bg-surface-hover">Create a Learning Path</Link>
+        {/* L-E051: creating a path is for admins and existing instructors; everyone else asks. */}
+        {createHref ? <Link href={createHref} className="mt-4 inline-flex min-h-11 items-center border border-ink bg-surface px-5 text-[14px] font-semibold hover:bg-surface-hover">Create a Learning Path</Link> : teaches ? <WantToTeach label="Create a Learning Path" topic="New learning path proposal" prompt="What's the new path about?" /> : <WantToTeach />}
       </section>
     </div>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { canAdminister } from "@/lib/access";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { learnHomeData, topLearners, topTeachers } from "@/lib/learn-homepage";
 import { LearnBoards } from "@/components/learn/LearnBoards";
@@ -125,7 +126,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
             </ul>
           </section>
         )}
-        <LearnBoards learners={learners} teachers={teachers} lb={lb} tb={tb} meUserId={viewer.userId} createHref={viewer.isSystemAdmin ? "/admin/setup/learn-authoring" : "/support/help"} />
+        <LearnBoards learners={learners} teachers={teachers} lb={lb} tb={tb} meUserId={viewer.userId} createHref={canAdminister(viewer) ? "/admin/setup/learn-authoring" : null} teaches={teaches} />
         {/* L-E053: one place to browse — the area chips and the full grid live on All Learning Paths. */}
         <p className="border-t border-line py-6 text-center"><Link href="/learn/paths" data-browse-all className="text-[15px] font-bold text-magenta-dark underline underline-offset-4">Browse All Learning Paths →</Link></p>
       </div>

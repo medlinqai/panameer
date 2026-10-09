@@ -142,42 +142,86 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
 
 export type BoardRow = { personId: string; userId: string | null; name: string; title: string | null; photoUrl: string | null; n: number; sub?: string };
 
-/** Top Learners: certificates earned (this month or all time). */
-export async function topLearners(window: "month" | "all"): Promise<BoardRow[]> {
-  const rows = await prisma.certification.groupBy({
-    by: ["user_id"],
-    where: { learning_path_id: { not: null }, ...(window === "month" ? { created_at: { gte: monthStart() } } : {}) },
-    _count: { _all: true },
-    orderBy: { _count: { user_id: "desc" } },
-    take: 5,
+/** Every published path's lessons with a video, and who has finished which (every one done) — and when. */
+async function finishes() {
+  const paths = await prisma.learningPath.findMany({
+    where: { status: "PUBLISHED" },
+    select: { id: true, expert_person_id: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { id: true, vimeo_ref: true, production_status: true, expert_person_id: true } } } } } } },
   });
-  const people = await prisma.person.findMany({ where: { user_id: { in: rows.map((r) => r.user_id) }, user: { is: { is_test: false } } }, select: { id: true, user_id: true, first_name: true, last_name: true, title: true, photo_url: true } });
-  return rows.flatMap((r) => {
-    const p = people.find((x) => x.user_id === r.user_id);
-    return p ? [{ personId: p.id, userId: p.user_id, name: nameOf(p), title: p.title, photoUrl: p.photo_url, n: r._count._all }] : [];
-  });
+  const pathOf = new Map<string, string>();
+  const total = new Map<string, number>();
+  for (const p of paths) {
+    const out = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons)).filter(isPlayable);
+    total.set(p.id, out.length);
+    for (const l of out) pathOf.set(l.id, p.id);
+  }
+  const progress = await prisma.lessonProgress.findMany({ where: { lesson_id: { in: [...pathOf.keys()] } }, select: { user_id: true, lesson_id: true, completed_at: true } });
+  const per = new Map<string, { n: number; last: Date }>();
+  for (const r of progress) {
+    const k = `${r.user_id}|${pathOf.get(r.lesson_id)}`;
+    const cur = per.get(k) ?? { n: 0, last: r.completed_at };
+    cur.n++;
+    if (r.completed_at > cur.last) cur.last = r.completed_at;
+    per.set(k, cur);
+  }
+  const finished: { userId: string; pathId: string; at: Date }[] = [];
+  for (const [k, v] of per) {
+    const [userId, pathId] = k.split("|");
+    if ((total.get(pathId) ?? 0) > 0 && v.n >= total.get(pathId)!) finished.push({ userId, pathId, at: v.last });
+  }
+  return { paths, finished, progress };
 }
 
-/** Top Teachers: learners on their paths (enrolments this month or all time). */
-export async function topTeachers(window: "month" | "all"): Promise<BoardRow[]> {
-  const enr = await prisma.learnEnrollment.findMany({
-    where: { learningPath: { status: "PUBLISHED", expert_person_id: { not: null } }, ...(window === "month" ? { created_at: { gte: monthStart() } } : {}) },
-    select: { learningPath: { select: { expert_person_id: true } } },
-  });
-  const tally = new Map<string, number>();
-  for (const e of enr) tally.set(e.learningPath.expert_person_id!, (tally.get(e.learningPath.expert_person_id!) ?? 0) + 1);
-  const ids = [...tally.keys()];
-  const [people, pathCounts, completions] = await Promise.all([
-    prisma.person.findMany({ where: { id: { in: ids }, user: { is: { is_test: false } } }, select: { id: true, user_id: true, first_name: true, last_name: true, title: true, photo_url: true } }),
-    prisma.learningPath.groupBy({ by: ["expert_person_id"], where: { status: "PUBLISHED", expert_person_id: { in: ids } }, _count: { _all: true } }),
-    prisma.certification.findMany({ where: { learningPath: { expert_person_id: { in: ids } } }, select: { learningPath: { select: { expert_person_id: true } } } }),
+/** L-E049: Top Learners — paths finished (every lesson with a video, certified counts too), then certificates, then lessons watched. */
+export async function topLearners(window: "month" | "all"): Promise<BoardRow[]> {
+  const since = window === "month" ? monthStart() : new Date(0);
+  const [{ finished, progress }, certs] = await Promise.all([
+    finishes(),
+    prisma.certification.findMany({ where: { learning_path_id: { not: null }, created_at: { gte: since } }, select: { user_id: true, learning_path_id: true } }),
   ]);
+  const tally = new Map<string, { paths: Set<string>; certs: number; lessons: number }>();
+  const row = (u: string) => tally.get(u) ?? (tally.set(u, { paths: new Set(), certs: 0, lessons: 0 }), tally.get(u)!);
+  for (const f of finished) if (f.at >= since) row(f.userId).paths.add(f.pathId);
+  for (const c of certs) { row(c.user_id).paths.add(c.learning_path_id!); row(c.user_id).certs++; }
+  for (const p of progress) if (p.completed_at >= since && tally.has(p.user_id)) row(p.user_id).lessons++;
+  const ranked = [...tally].filter(([, t]) => t.paths.size > 0).sort((a, b) => b[1].paths.size - a[1].paths.size || b[1].certs - a[1].certs || b[1].lessons - a[1].lessons).slice(0, 10);
+  const people = await prisma.person.findMany({ where: { user_id: { in: ranked.map(([u]) => u) }, user: { is: { is_test: false } } }, select: { id: true, user_id: true, first_name: true, last_name: true, title: true, photo_url: true } });
+  return ranked
+    .flatMap(([u, t]) => {
+      const p = people.find((x) => x.user_id === u);
+      return p ? [{ personId: p.id, userId: p.user_id, name: nameOf(p), title: p.title, photoUrl: p.photo_url, n: t.paths.size, sub: `${t.paths.size} path${t.paths.size === 1 ? "" : "s"} finished · ${t.certs} certificate${t.certs === 1 ? "" : "s"}` }] : [];
+    })
+    .slice(0, 5);
+}
+
+/** L-E050: Top Teachers — every instructor of a published path (even with 0 learners), learners in the window, and how many finished. */
+export async function topTeachers(window: "month" | "all"): Promise<BoardRow[]> {
+  const since = window === "month" ? monthStart() : new Date(0);
+  const { paths, finished } = await finishes();
+  // The instructor: the path's expert, else whoever fronts the most lessons.
+  const teacherOf = new Map<string, string>();
+  for (const p of paths) {
+    let t = p.expert_person_id;
+    if (!t) {
+      const c = new Map<string, number>();
+      for (const l of p.courses.flatMap((x) => x.sections.flatMap((s) => s.lessons))) if (l.expert_person_id) c.set(l.expert_person_id, (c.get(l.expert_person_id) ?? 0) + 1);
+      t = [...c].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+    }
+    if (t) teacherOf.set(p.id, t);
+  }
+  const enr = await prisma.learnEnrollment.findMany({ where: { learning_path_id: { in: [...teacherOf.keys()] }, created_at: { gte: since } }, select: { learning_path_id: true, user_id: true } });
+  const ids = [...new Set(teacherOf.values())];
+  const stat = new Map(ids.map((id) => [id, { paths: 0, learners: new Set<string>(), done: 0 }]));
+  for (const [pathId, t] of teacherOf) stat.get(t)!.paths++;
+  for (const e of enr) stat.get(teacherOf.get(e.learning_path_id)!)?.learners.add(`${e.user_id}|${e.learning_path_id}`);
+  for (const f of finished) if (f.at >= since && teacherOf.has(f.pathId)) stat.get(teacherOf.get(f.pathId)!)!.done++;
+  const people = await prisma.person.findMany({ where: { id: { in: ids }, user: { is: { is_test: false } } }, select: { id: true, user_id: true, first_name: true, last_name: true, title: true, photo_url: true } });
   return people
     .map((p) => {
-      const nPaths = pathCounts.find((c) => c.expert_person_id === p.id)?._count._all ?? 0;
-      const nDone = completions.filter((c) => c.learningPath?.expert_person_id === p.id).length;
-      return { personId: p.id, userId: p.user_id, name: nameOf(p), title: p.title, photoUrl: p.photo_url, n: tally.get(p.id) ?? 0, sub: `${nPaths} learning path${nPaths === 1 ? "" : "s"} · ${nDone} completion${nDone === 1 ? "" : "s"}` };
+      const s = stat.get(p.id)!;
+      const n = s.learners.size;
+      return { personId: p.id, userId: p.user_id, name: nameOf(p), title: p.title, photoUrl: p.photo_url, n, sub: `Teaches ${s.paths} path${s.paths === 1 ? "" : "s"} · ${n} learner${n === 1 ? "" : "s"} · ${s.done} finished` };
     })
-    .sort((a, b) => b.n - a.n)
+    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name))
     .slice(0, 5);
 }
