@@ -162,7 +162,7 @@ discipline that makes "at least 5 notifications" survivable.
 | `learn.course_registered` | the learner | `Do It` | in-app | |
 | `learn.lesson_completed` | the learner | `Do It` | **digest only** | ⚠⚠ **522 lessons. Per-lesson delivery is the single fastest way to get muted.** |
 | `learn.course_completed` | **the learner** | `Do It` | in-app | |
-| `learn.course_completed` | **the instructor** | `Send for Approval` | in-app | **`P1-J3-E048` — the lead.** ⚠ **Not `Do It`: it discloses a named learner to a third party. Privacy — named / anonymous / opt-in — is Scott's and is undecided.** |
+| `learn.course_completed` | **the instructor** | `Do It` | worklist + email | L-E036 (Scott 2026-10-08): fires when every lesson with a video is done; row action Message {First}. Supersedes the earlier `Send for Approval` hold — the learner is named (Scott 2026-09-02). |
 | `learn.certified` | the learner | `Do It` | in-app | Worth the most; couples `Certification` |
 | `learn.certified` | the instructor | `Do It` | digest | Their material produced a credential — the strongest sell signal there is |
 | `learn.course_published` | **every provider whose skills match the course's tags** | `Send for Approval` | digest | ⚠⚠ **NEW, Scott 2026-09-01: *"force it on the new courses… so we can broadcast the minute it gets released."* THE PAYOFF OF THE SKILL NEXUS (`P1-J3-E046`) — and the FIRST event with a potentially large audience. `Send for Approval`, not `Do It`: a broadcast to many people is not a thing an AI should send unreviewed. Volume, opt-out and digest are mandatory here, not optional.** |

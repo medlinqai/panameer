@@ -46,7 +46,7 @@ export async function POST(request: Request) {
               learning_path_id: true,
               learningPath: { select: { slug: true } },
               sections: {
-                select: { lessons: { select: { id: true, expert_person_id: true } } },
+                select: { lessons: { select: { id: true, expert_person_id: true, vimeo_ref: true, production_status: true } } },
               },
             },
           },
@@ -97,7 +97,8 @@ export async function POST(request: Request) {
   if (!wasEnrolled) await notifyInstructorEnrolled(viewer.userId, pathId);
 
   const course = lesson.section.course;
-  const courseLessonIds = course.sections.flatMap((s) => s.lessons.map((l) => l.id));
+  // L-E036: a course is finished when every lesson with a video is done (Coming Soon lessons don't count).
+  const courseLessonIds = course.sections.flatMap((s) => s.lessons.filter(isPlayable).map((l) => l.id));
   const doneCount = await prisma.lessonProgress.count({
     where: { user_id: viewer.userId, lesson_id: { in: courseLessonIds } },
   });
@@ -137,7 +138,7 @@ export async function POST(request: Request) {
           entityType: "Course",
           entityId: course.id,
           dedupeKey: `learn.course_completed:${course.id}:${learner.id}:instructor`,
-          vars: { courseTitle: course.title, learnerName },
+          vars: { courseTitle: course.title, learnerName, learnerUserId: viewer.userId },
         });
       }
     }

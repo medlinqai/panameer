@@ -297,12 +297,13 @@ export const NOTIFICATION_EVENTS = {
     recipient: "the instructor",
     category: "learn.progress",
     // THE LEARNER IS NAMED — SCOTT DECIDED IT , 2026-09-02).
-    aiMode: "SEND_FOR_APPROVAL",
+    aiMode: "DO_IT",
     visibility: "FEED",
-    requiresAction: false,
+    requiresAction: true,
     title: (v) =>
       `${str(v, "learnerName", "Someone")} finished ${str(v, "courseTitle", "your course")}`,
-    body: () => null,
+    body: () => "Ask how it went — what helped and what was missing.",
+    href: (v) => (v.learnerUserId ? `/messages?with=${str(v, "learnerUserId")}` : "/messages"),
   },
   "learn.path_completed.learner": {
     event: "learn.path_completed",
