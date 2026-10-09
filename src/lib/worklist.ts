@@ -1,3 +1,4 @@
+import { displayTitle } from "@/lib/notification-events";
 import { prisma } from "@/lib/prisma";
 
 export function isWorklistItem(n: {
@@ -135,7 +136,7 @@ function toTriage(n: {
 }): TriageRow {
   return {
     id: n.id,
-    title: n.title,
+    title: displayTitle(n.title),
     body: n.body,
     href: n.href,
     category: n.category,

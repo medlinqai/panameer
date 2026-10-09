@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { displayTitle } from "@/lib/notification-events";
 import { guardApi } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 
@@ -37,7 +38,7 @@ export async function GET() {
   return NextResponse.json({
     rows: rows.map((n) => ({
       id: n.id,
-      title: n.title,
+      title: displayTitle(n.title),
       href: n.href,
       unread: n.read_at === null,
       needsAction: n.requires_action && n.resolved_at === null,

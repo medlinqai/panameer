@@ -26,17 +26,18 @@ const SETTINGS_SECTIONS: ProfileSection[] = [
 ];
 
 const SECTION_LABEL: Partial<Record<ProfileSection, { noun: string; plural: boolean }>> = {
-  work_type: { noun: "Work Type", plural: false },
-  work_method: { noun: "How You Work", plural: false },
-  skills: { noun: "Skills", plural: true },
-  title: { noun: "Title", plural: false },
-  experience: { noun: "Work History", plural: false },
-  education_languages: { noun: "Education and Languages", plural: true },
-  bio: { noun: "Overview", plural: false },
-  rate: { noun: "Rates", plural: true },
-  region: { noun: "Location", plural: false },
-  photo: { noun: "Photo", plural: false },
-  certifications: { noun: "Certifications", plural: true },
+  // N-E003: sentence-case nouns with the matching verb ("Your skills were updated").
+  work_type: { noun: "work type", plural: false },
+  work_method: { noun: "How You Work section", plural: false },
+  skills: { noun: "skills", plural: true },
+  title: { noun: "title", plural: false },
+  experience: { noun: "work history", plural: false },
+  education_languages: { noun: "education and languages", plural: true },
+  bio: { noun: "overview", plural: false },
+  rate: { noun: "rates", plural: true },
+  region: { noun: "location", plural: false },
+  photo: { noun: "photo", plural: false },
+  certifications: { noun: "certifications", plural: true },
 };
 
 /** Resolve the viewer's OWN provider profile (id + personId). Fails closed. */

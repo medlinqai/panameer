@@ -922,3 +922,12 @@ export const NOTIFICATION_EVENTS = {
     href: () => "/status",
   },
 } as const satisfies Record<string, NotificationEvent>;
+
+const PLURAL_SECTIONS = /^(skills|rates|certifications|education and languages)$/i;
+/** N-E003: older stored titles read "Your Skills was updated"; shown as "Your skills were updated" (display only). */
+export function displayTitle(title: string): string {
+  const m = /^Your (.+) (was|were) updated$/.exec(title);
+  if (!m) return title;
+  const noun = m[1] === "How You Work" ? "How You Work section" : m[1].toLowerCase();
+  return `Your ${noun} ${PLURAL_SECTIONS.test(noun) ? "were" : "was"} updated`;
+}
