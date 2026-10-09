@@ -7,7 +7,6 @@ import { actionsFor } from "@/lib/worklist-actions";
 import { WorklistRow } from "@/components/notifications/RowActions";
 import { shortTime } from "@/lib/short-time";
 import "@/components/notifications/triage.css";
-import { DismissAll } from "@/components/notifications/DismissAll";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Worklist · Panameer" };
@@ -79,12 +78,9 @@ export default async function Page({
     <div className="account-surface px-4 py-6 sm:px-6">
       <div className="mx-auto mb-4 flex max-w-[1100px] flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-[22px] font-bold">Worklist</h1>
-        <span className="flex flex-wrap items-center gap-2">
-          <DismissAll />
-          <Link href="/notifications" className="pm-triage-btn pm-triage-btn-s">
-            &larr; All Notifications
-          </Link>
-        </span>
+        <Link href="/notifications" className="pm-triage-btn pm-triage-btn-s">
+          &larr; All Notifications
+        </Link>
       </div>
 
       <div className="pm-wl">

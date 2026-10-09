@@ -76,11 +76,11 @@ export async function countWorklist(personId: string): Promise<number> {
   });
 }
 
+/** N-E002: Show All lists every notification, dismissed ones included (they render muted). */
 export function triageWhere(personId: string) {
   return {
     person_id: personId,
     delivered_in_app_at: { not: null },
-    dismissed_at: null,
   };
 }
 
@@ -107,6 +107,7 @@ export type TriageRow = {
   entityId: string | null;
   dedupeKey: string | null;
   resolved: boolean;
+  dismissed: boolean;
 };
 
 const TRIAGE_SELECT = {
@@ -123,13 +124,14 @@ const TRIAGE_SELECT = {
   delivered_in_app_at: true,
   entity_id: true,
   dedupe_key: true,
+  dismissed_at: true,
 } as const;
 
 function toTriage(n: {
   id: string; title: string; body: string | null; href: string | null;
   category: string; event_key: string; created_at: Date; read_at: Date | null;
   requires_action: boolean; resolved_at: Date | null; delivered_in_app_at: Date | null;
-  entity_id: string | null; dedupe_key: string | null;
+  entity_id: string | null; dedupe_key: string | null; dismissed_at: Date | null;
 }): TriageRow {
   return {
     id: n.id,
@@ -144,6 +146,7 @@ function toTriage(n: {
     entityId: n.entity_id,
     dedupeKey: n.dedupe_key,
     resolved: n.resolved_at !== null,
+    dismissed: n.dismissed_at !== null,
   };
 }
 

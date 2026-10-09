@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
   if (action === "read_all") {
     const r = await prisma.notification.updateMany({
-      where: { ...mine, read_at: null },
+      where: { person_id: person.id, delivered_in_app_at: { not: null }, read_at: null },
       data: { read_at: now },
     });
     return NextResponse.json({ ok: true, count: r.count });
