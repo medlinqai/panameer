@@ -23,7 +23,7 @@ async function main() {
   const buyer = await party("BUYER", "Bea");
   const prov = await party("PROVIDER", "Pat");
   await prisma.requesterProfile.create({ data: { person_id: buyer.personId, employee_id: `E-${tag}` } });
-  const svc = await prisma.providerService.create({ data: { provider_profile_id: prov.profileId!, name: `Oracle Procurement consulting ${tag}`, service_type: "SERVICE_BY_QTY", uom: "HOUR", rate_cents: 15000, billing_cycle: "WEEKLY", payment_terms: "NET30", payment_trigger: "TIMESHEET" } });
+  const svc = await prisma.providerService.create({ data: { provider_profile_id: prov.profileId!, name: `Oracle Procurement consulting ${tag}`, service_type: "SERVICE_BY_QTY", uom: "HOUR", rate_cents: 15000, billing_cycle: "WEEKLY", payment_terms: "NET30", payment_trigger: "TIMESHEET", published_at: new Date() } });
   const secret = `s3cret-${tag}-0123456789`;
   const conn = await prisma.erpConnection.create({ data: { p_account_id: buyer.pAccountId, name: "Devwalk Oracle", from_identity: `ERP-${tag}`, sender_identity: `ERP-${tag}`, shared_secret_hash: hashSecret(secret), outbound_cxml_url: "https://erp.example.test/cxml", oracle_rest_base_url: "https://erp.example.test", credential_env_name: "ORACLE_DEVWALK_REST" } });
   made.connections.push(conn.id);

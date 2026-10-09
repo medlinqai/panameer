@@ -341,6 +341,9 @@ export async function setServiceProductStatus(
     if (gaps.length > 0) {
       throw new OnboardingError(gapSentence(gaps), "GATE_UNMET", gaps);
     }
+    // CAT-E004: no Panameer review — a validated seller company is the gate.
+    const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+    if (!me || !(await publishGate(me.id)).ok) throw new OnboardingError("You can publish once your company is validated.", "GATE_UNMET");
 
     const missing: string[] = [];
     if (!pkg.title.trim()) missing.push("a title");
