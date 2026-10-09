@@ -2,8 +2,7 @@ import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { findCategory } from "@/lib/notification-categories";
 import { getTriage, getTriageCounts, countWorklist } from "@/lib/worklist";
-import { TriageList, type Chip } from "@/components/notifications/TriageList";
-import { actionsFor } from "@/lib/worklist-actions";
+import { NotificationList, type Chip } from "@/components/notifications/NotificationList";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Notifications · Panameer" };
@@ -29,7 +28,6 @@ export default async function Page({
     countWorklist(person.id),
   ]);
 
-  const actions = await actionsFor(rows);
   const chips: Chip[] = [
     { key: "all", label: "All", n: counts.all },
     { key: "unread", label: "Unread", n: counts.unread },
@@ -42,8 +40,8 @@ export default async function Page({
 
   return (
     <div className="account-surface px-4 py-6 sm:px-6">
-      <TriageList
-        rows={rows.map((r) => ({ ...r, at: r.at.toISOString(), action: actions[r.id] ?? null }))}
+      <NotificationList
+        rows={rows.map((r) => ({ ...r, at: r.at.toISOString() }))}
         chips={chips}
         filter={filter}
         more={more}
