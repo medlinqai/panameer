@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { feeSplit, pricedByQuantity } from "@/lib/transaction-spine";
 import type { Viewer } from "@/lib/access";
 import { waitingOn } from "@/lib/oracle-status";
+import { queueConfirmation } from "@/lib/erp/outbound";
 
 /** The Pending Acknowledgment sub-line, worded for the viewer. */
 export function waitingLine(o: { status: WorkOrderStatus; provider_accepted_at?: Date | null; buyer_accepted_at?: Date | null }, party: OrderParty, names: { buyer: string; provider: string }): string | null {
@@ -608,6 +609,8 @@ async function loadParty(viewer: Viewer, id: string) {
       provider_person_id: true,
       // ADDED BY RULING 43, AND ITS ABSENCE WAS A REAL BUG FOR EXACTLY ONE
       provider_accepted_at: true,
+      buyer_accepted_at: true,
+      erp_connection_id: true,
     },
   });
   if (!order) throw new OrderError("Work order not found", "NOT_FOUND");
@@ -632,6 +635,20 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
   const parties = await prisma.workOrder.findUnique({ where: { id: order.id }, select: { buyer_person_id: true, provider_person_id: true } });
   const actor = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   if (parties && actor) await assertCanSign(actor.id, parties.buyer_person_id, parties.provider_person_id);
+  if (party === "PROVIDER" && order.erp_connection_id && order.buyer_accepted_at) {
+    // X-E005: an ERP order arrives with the customer's acceptance, so the provider's acceptance opens it and the ERP is told.
+    const now = new Date();
+    const moved = await prisma.$transaction(async (tx) => {
+      const m = await tx.workOrder.updateMany({ where: { id: order.id, status: "ISSUED" }, data: { status: "RELEASED", provider_accepted_at: now } });
+      if (m.count) await tx.onboardingRequest.create({ data: { onboarding_request_number: `ONB-${Date.now().toString(36).toUpperCase()}-${order.id.slice(0, 4)}`, work_order_id: order.id, provider_person_id: order.provider_person_id, buyer_person_id: order.buyer_person_id, raised_at: now } });
+      return m.count;
+    });
+    if (moved) {
+      await prisma.notification.updateMany({ where: { dedupe_key: `work.order_offered:${order.id}`, resolved_at: null }, data: { resolved_at: now } }).catch(() => {});
+      await queueConfirmation(order.id, "accept");
+    }
+    return getOrderDetail(viewer, id);
+  }
   if (party === "PROVIDER") {
     await prisma.workOrder.updateMany({
       where: { id: order.id, status: "ISSUED" },

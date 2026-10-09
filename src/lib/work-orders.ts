@@ -9,6 +9,7 @@ import {
 import { SourcingError } from "@/lib/sourcing";
 import { assertTransactionLineShape, pricedByQuantity } from "@/lib/transaction-spine";
 import { notify } from "@/lib/notifications";
+import { queueConfirmation } from "@/lib/erp/outbound";
 import type { Viewer } from "@/lib/access";
 
 export type OrderFromRequisition = {
@@ -284,7 +285,7 @@ export async function declineWorkOrder(
 
   const order = await prisma.workOrder.findFirst({
     where: { id: orderId, provider_person_id: me.id },
-    select: { id: true, status: true, work_request_id: true },
+    select: { id: true, status: true, work_request_id: true, erp_connection_id: true },
   });
   if (!order) throw new SourcingError("That work order isn't yours.", "NOT_FOUND");
   // ONLY BEFORE ACCEPTING. Once a provider has accepted the terms the order is
@@ -333,6 +334,8 @@ export async function declineWorkOrder(
     }
   });
 
+  // X-E005: an ERP order's rejection goes back to the ERP as a ConfirmationRequest.
+  if (order.erp_connection_id) await queueConfirmation(order.id, "reject", reason?.trim() || null);
   // The provider's own worklist item goes — they answered it. Resolved
   await prisma.notification
     .updateMany({

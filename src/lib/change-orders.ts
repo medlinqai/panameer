@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
+import { queueConfirmation } from "@/lib/erp/outbound";
 import { pricedByQuantity } from "@/lib/transaction-spine";
 import { OrderError, partyFor } from "@/lib/orders";
 import type { Viewer } from "@/lib/access";
@@ -150,6 +151,8 @@ export async function decideChange(viewer: Viewer, orderId: string, revisionId: 
   });
   await prisma.workOrderEvent.create({ data: { work_order_id: orderId, person_id: me, kind: `change.${decision.toLowerCase()}`, text: `Change order ${rev.revision_number} ${decision === "ACCEPT" ? "accepted" : "rejected"}` } });
   await prisma.notification.updateMany({ where: { dedupe_key: `work.change_order_received:${rev.id}`, resolved_at: null }, data: { resolved_at: now } }).catch(() => {});
+  // X-E005: a change from the ERP is answered with a ConfirmationRequest.
+  if (rev.external_payload_id) await queueConfirmation(orderId, decision === "ACCEPT" ? "accept" : "reject", note?.trim() || null, { number: rev.revision_number, payloadId: rev.external_payload_id });
   if (!rev.external_payload_id) {
     const prov = await prisma.person.findUnique({ where: { id: o.provider_person_id }, select: { first_name: true, last_name: true } });
     await notify({
