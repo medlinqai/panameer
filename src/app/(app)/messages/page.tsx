@@ -52,7 +52,7 @@ export default async function MessagesPage({
           {/* THE UNREAD COUNT LIVES IN THE TITLE LINE  */}
           <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">Messages</h1>
           <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-ink-2">
-            Direct conversations with the colleagues you have connected with.
+            Direct conversations with your colleagues, instructors and trainees.
             {unread > 0 && (
               <>
                 {" "}
