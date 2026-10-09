@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { BAND_LIT, BAND_IDLE } from "@/components/casing/band-lit";
 import { useRouter } from "next/navigation";
+import { SwipeRow } from "@/components/notifications/SwipeRow";
 
 type Row = {
   id: string;
@@ -67,6 +68,12 @@ export function NotificationBell({
     };
   }, [open]);
 
+  /** N-E001: hides it from the quick view only; nothing is deleted and the worklist task is untouched. */
+  function dismissOne(id: string) {
+    setRows((r) => (r ?? []).filter((x) => x.id !== id));
+    void fetch("/api/notifications/act", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "dismiss", ids: [id] }) }).catch(() => {});
+  }
+
   async function readOne(row: Row) {
     setOpen(false);
     if (row.unread) {
@@ -128,13 +135,6 @@ export function NotificationBell({
                   {needActionCount} need action
                 </Link>
               )}
-              <Link
-                href="/notifications"
-                onClick={() => setOpen(false)}
-                className="text-[13px] font-bold text-magenta hover:underline"
-              >
-                See All
-              </Link>
             </span>
           </div>
 
@@ -154,12 +154,13 @@ export function NotificationBell({
           ) : (
             <ul>
               {rows.map((n) => (
-                <li key={n.id}>
+                <li key={n.id} className="border-b border-line last:border-0">
+                  <SwipeRow label={n.title} onDismiss={() => dismissOne(n.id)}>
                   <button
                     type="button"
                     role="menuitem"
                     onClick={() => readOne(n)}
-                    className="block w-full border-b border-line px-4 py-3 text-left transition-colors last:border-0 hover:bg-line-2"
+                    className="block w-full py-3 pl-4 pr-1 text-left transition-colors hover:bg-line-2"
                   >
                     <span className="flex items-start gap-2">
                       {/* UNREAD IS A DOT AND A WEIGHT, never colour */}
@@ -188,10 +189,14 @@ export function NotificationBell({
                       </span>
                     </span>
                   </button>
+                  </SwipeRow>
                 </li>
               ))}
             </ul>
           )}
+          <Link href="/notifications" onClick={() => setOpen(false)} data-show-all className="block border-t border-line px-4 py-3 text-center text-[13.5px] font-bold text-magenta-dark hover:bg-line-2">
+            Show All →
+          </Link>
         </div>
       )}
     </div>

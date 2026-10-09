@@ -4,8 +4,8 @@ import { guardApi } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 
 const Body = z.object({
-  action: z.enum(["read", "dismiss", "read_all", "dismiss_all"]),
-  ids: z.array(z.string().uuid()).max(200).optional(),
+  action: z.enum(["read", "dismiss", "undismiss", "read_all", "dismiss_all"]),
+  ids: z.array(z.string().uuid()).max(2000).optional(),
 });
 
 export async function POST(req: Request) {
@@ -41,11 +41,10 @@ export async function POST(req: Request) {
   }
 
   if (action === "dismiss_all") {
-    const r = await prisma.notification.updateMany({
-      where: mine,
-      data: { dismissed_at: now },
-    });
-    return NextResponse.json({ ok: true, count: r.count });
+    // N-E002: returns the ids so the page can offer Undo.
+    const hit = (await prisma.notification.findMany({ where: mine, select: { id: true }, take: 2000 })).map((n) => n.id);
+    const r = await prisma.notification.updateMany({ where: { id: { in: hit }, dismissed_at: null }, data: { dismissed_at: now } });
+    return NextResponse.json({ ok: true, count: r.count, ids: hit });
   }
 
   if (!ids?.length) {
@@ -54,11 +53,7 @@ export async function POST(req: Request) {
 
   const r = await prisma.notification.updateMany({
     where: { id: { in: ids }, person_id: person.id },
-    data:
-      action === "read"
-        ? 
-          { read_at: now }
-        : { dismissed_at: now },
+    data: action === "read" ? { read_at: now } : action === "undismiss" ? { dismissed_at: null } : { dismissed_at: now },
   });
   return NextResponse.json({ ok: true, count: r.count });
 }

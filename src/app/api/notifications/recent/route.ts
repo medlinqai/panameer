@@ -19,7 +19,8 @@ export async function GET() {
   if (!person) return NextResponse.json({ rows: [] });
 
   const rows = await prisma.notification.findMany({
-    where: { person_id: person.id, delivered_in_app_at: { not: null } },
+    // N-E001: the quick view shows only what hasn't been dismissed.
+    where: { person_id: person.id, delivered_in_app_at: { not: null }, dismissed_at: null },
     orderBy: { created_at: "desc" },
     take: TAKE,
     select: {
