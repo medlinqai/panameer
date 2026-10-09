@@ -40,11 +40,11 @@ export function DevBanner() {
           aria-hidden="true"
           className="hidden h-1.5 w-1.5 shrink-0 rounded-full bg-magenta sm:block"
         />
-        <p className="min-w-0 flex-1 text-[13px] leading-snug">
-          {}
-          <span className="font-bold">Panameer is the Oracle Cloud marketplace</span>
-          {}
-          <span className="text-ink-2">
+        <p className="min-w-0 flex-1 text-[13px] leading-snug max-[479px]:truncate">
+          {/* M-E016: one short line under 480px; the full sentence above that. */}
+          <span className="font-bold min-[480px]:hidden">Public beta opens November&nbsp;15.</span>
+          <span className="font-bold max-[479px]:hidden">Panameer is the Oracle Cloud marketplace</span>
+          <span className="text-ink-2 max-[479px]:hidden">
             {" "}
             — hire providers, buy service products and settle the work in one place. Public beta
             opens November&nbsp;15.
