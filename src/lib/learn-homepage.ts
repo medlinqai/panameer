@@ -220,8 +220,9 @@ export async function topTeachers(window: "month" | "all"): Promise<BoardRow[]> 
     .map((p) => {
       const s = stat.get(p.id)!;
       const n = s.learners.size;
-      return { personId: p.id, userId: p.user_id, name: nameOf(p), title: p.title, photoUrl: p.photo_url, n, sub: `Teaches ${s.paths} path${s.paths === 1 ? "" : "s"} · ${n} learner${n === 1 ? "" : "s"} · ${s.done} finished` };
+      return { personId: p.id, userId: p.user_id, name: nameOf(p), title: p.title, photoUrl: p.photo_url, n, taught: s.paths, sub: `Teaches ${s.paths} path${s.paths === 1 ? "" : "s"} · ${n} learner${n === 1 ? "" : "s"} · ${s.done} finished` };
     })
-    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name))
+    .sort((a, b) => b.n - a.n || b.taught - a.taught || a.name.localeCompare(b.name))
+    .map(({ taught, ...r }) => (void taught, r))
     .slice(0, 5);
 }
