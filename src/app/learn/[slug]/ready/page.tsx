@@ -6,6 +6,7 @@ import { viewerTeaches } from "@/lib/learn-home";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { NotifyMe } from "@/components/learn/NotifyMe";
 import { pathState, PICK_NEXT_HREF } from "@/lib/learn-state";
+import { recommendNext } from "@/lib/learn-next";
 
 export const metadata = { title: "Ready to Test · Panameer" };
 export const dynamic = "force-dynamic";
@@ -22,6 +23,7 @@ export default async function ReadyPage({ params }: { params: Promise<{ slug: st
   const state = pathState(p);
   if (state === "IN_PROGRESS" || state === "NEW") redirect(p.mine?.next ? `/learn/${slug}/${p.mine.next.id}` : `/learn/${slug}`);
   const m = p.mine;
+  const top = (await recommendNext(viewer.userId, { after: p.id })).picks[0] ?? null;
   return (
     <>
       <LearnTabs active="paths" teaches={teaches} />
@@ -41,8 +43,9 @@ export default async function ReadyPage({ params }: { params: Promise<{ slug: st
           ) : (
             <NotifyMe pathId={p.id} initial={p.watchingTest} signedIn test label="Test Opens Soon · Notify Me" className={BTN_K.replace("bg-ink", "bg-surface").replace("text-surface", "text-ink") + " border border-ink"} />
           )}
-          <Link href={PICK_NEXT_HREF} className={BTN}>Pick Your Next Path</Link>
+          <Link href={top ? `/learn/${top.path.slug}` : PICK_NEXT_HREF} className={BTN}>{top ? `Continue With ${top.path.title}` : "Pick Your Next Path"}</Link>
         </div>
+        {top && <p data-top-pick className="mt-3 text-[13px] text-ink-2">{top.reason} · <Link href={`/learn/${slug}#whats-next`} className="font-bold text-magenta-dark underline underline-offset-4">See What&apos;s Next</Link></p>}
       </main>
     </>
   );
