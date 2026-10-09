@@ -865,7 +865,7 @@ export function ConnectProfile({
         {/* THE TITLE IS WRONG FOR HALF ITS OWN ROWS */}
         {/* RENAMED `Teaching` (WS-A item 7 / brief item 10). Scott: `Learning Paths I */}
         <CleanSection
-          title={owner ? "My Courses" : "Courses"}
+          title={owner ? "My Learning Paths" : "Learning Paths"}
           count={taughtPaths.length}
           showWhenEmpty={owner}
         >
@@ -892,7 +892,7 @@ export function ConnectProfile({
 
         {/* LEARNING — ITS OWN SECTION WS-A item 6 / brief item 11) */}
         <CleanSection
-          title={owner ? "Courses Taken / In-Process" : "Courses Taken"}
+          title="Learning Paths Taken"
           count={visibleTaken.length}
           showWhenEmpty={owner}
         >
