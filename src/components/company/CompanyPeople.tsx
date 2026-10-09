@@ -117,6 +117,7 @@ export async function CompanyPeople({ viewer, binding }: { viewer: Viewer; bindi
         <KV
           rows={[
             {
+              stack: true,
               k: "By website",
               v: site ? (
                 <span>
@@ -126,6 +127,7 @@ export async function CompanyPeople({ viewer, binding }: { viewer: Viewer; bindi
               add: admin ? "Add your website on Overview" : "No website yet",
             },
             {
+              stack: true,
               k: "By work email",
               v: c.email_domain ? (
                 <span data-email-domain>

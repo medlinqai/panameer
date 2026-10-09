@@ -9,9 +9,9 @@ export function CompanyDetailsRead({ c, role, editor }: { c: NonNullable<Company
   const site = c.website?.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const rows = [
     { k: "Website", v: site ? <a href={`https://${site}`} target="_blank" rel="noopener noreferrer" className="text-magenta-dark hover:underline">{site}</a> : null },
-    { k: "Company name", v: c.name },
+    { k: "Company Name", v: c.name },
     { k: "Industry", v: c.industry },
-    { k: "Description", v: c.description, add: "Add · what the company does and for whom — shown on every proposal" },
+    { k: "Description", v: c.description, add: "Add · what the company does and for whom — shown on every proposal", stack: true },
   ];
   return (
     <CompanySection
@@ -55,6 +55,7 @@ export function PayReadyBox({ c }: { c: NonNullable<CompanyView> }) {
 export function CompanyVerification({ c, buyer = false, acceptTerms }: { c: NonNullable<CompanyView>; buyer?: boolean; acceptTerms?: React.ReactNode }) {
   const t = c.tos;
   const termsRow = {
+    stack: true,
     k: "Company terms",
     v: t.current ? (
       <span data-company-terms="accepted">
@@ -83,6 +84,7 @@ export function CompanyVerification({ c, buyer = false, acceptTerms }: { c: NonN
       <KV
         rows={[
           {
+            stack: true,
             k: "Business entity",
             v: (
               <>
@@ -95,6 +97,7 @@ export function CompanyVerification({ c, buyer = false, acceptTerms }: { c: NonN
             ),
           },
           {
+            stack: true,
             k: "Source",
             v: v.source ? (
               <a href={v.source} target="_blank" rel="noopener noreferrer" className="text-magenta-dark hover:underline">
@@ -141,6 +144,7 @@ export function LegalTaxRead({ c, editor, acceptTerms, taxLabel = "EIN", taxUplo
             { k: "State of filing", v: c.stateOfFiling },
             { k: taxLabel, v: c.ein ? <span data-tax-id-masked>{maskTaxId(c.ein)}</span> : null, add: "Add · masked after saving" },
             {
+              stack: true,
               k: "Registry check",
               v: v.status ? (
                 <span>
@@ -157,6 +161,7 @@ export function LegalTaxRead({ c, editor, acceptTerms, taxLabel = "EIN", taxUplo
               add: c.stateOfFiling ? "Not checked yet" : "Runs once the state is added",
             },
             {
+              stack: true,
               k: taxFormLabel(c.country),
               v: c.taxForm?.uploadedAt ? (
                 <span data-tax-form>
@@ -172,6 +177,7 @@ export function LegalTaxRead({ c, editor, acceptTerms, taxLabel = "EIN", taxUplo
               ),
             },
             {
+              stack: true,
               k: "Company terms",
               v: t.current ? (
                 <span data-company-terms="accepted">
