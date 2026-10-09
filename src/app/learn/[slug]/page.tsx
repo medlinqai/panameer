@@ -13,6 +13,7 @@ import { CourseTile } from "@/components/learn/CourseTile";
 import { pathState } from "@/lib/learn-state";
 import { recommendNext, testOutPicks } from "@/lib/learn-next";
 import { WhatsNext } from "@/components/learn/WhatsNext";
+import { PathSteps } from "@/components/learn/PathSteps";
 import { LearnPathCard } from "@/components/learn/LearnPathCard";
 import { canAdminister } from "@/lib/access";
 import { lessonCount } from "@/lib/learn-time";
@@ -118,6 +119,21 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
           />
         </div>
 
+        {p.playable && (
+          <PathSteps
+            pathId={p.id}
+            slug={p.slug}
+            signedIn={!!viewer}
+            enrolled={!!p.mine?.enrolled || (p.mine?.done ?? 0) > 0}
+            at={state === "CERTIFIED" ? 5 : state === "READY_TO_TEST" ? 4 : p.mine?.enrolled || (p.mine?.done ?? 0) > 0 ? 2 : 1}
+            watchHref={state === "READY_TO_TEST" || state === "CERTIFIED" ? null : startHref}
+            watchLabel={next && (p.mine?.done ?? 0) > 0 ? `Continue: ${next.title}` : "Start with Course 1"}
+            done={p.mine?.done ?? 0}
+            total={p.mine?.total ?? p.courses.flatMap((c) => c.lessons).filter((l) => l.playable).length}
+            test={{ ready: p.test.ready, passed: p.test.passed, watching: p.watchingTest }}
+            certificateHref={p.certificate?.verifyUrl ?? null}
+          />
+        )}
         {finished && rec && <WhatsNext picks={rec.picks} testPicks={testPicks} skillMatched={rec.skillMatched} areaLabel={labelOf} />}
 
         <div className="grid md:grid-cols-[1.35fr_1fr]">
