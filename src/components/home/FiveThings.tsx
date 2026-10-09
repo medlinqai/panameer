@@ -5,6 +5,7 @@ import { fiveThings, type Thing } from "@/lib/five-things";
 import { lifecycleForUser } from "@/lib/your-path";
 import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
 import { RoadGraphic } from "@/components/lifecycle/RoadGraphic";
+import { RoadStepper } from "@/components/lifecycle/RoadStepper";
 import { TurnOnButton, MoreCards } from "@/components/home/FiveThingsClient";
 
 // Dashboard (mockup dashboard_five_things 2026-10-06): greeting + Your Path bar, 5 cards, "Waiting on you" tiles.
@@ -56,7 +57,8 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
             <h2 className="flex items-center gap-1.5 text-[17px] font-bold">How Panameer works <LifecycleHelp /></h2>
             <span className="text-[11px] font-bold tracking-[0.1em] text-ink-2">STEP {path.current + 1} OF {path.steps.length}</span>
           </div>
-          <div className="mt-3 overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>
+          <div className="mt-3 hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>
+          <div className="mt-4 sm:hidden"><RoadStepper current={path.current} /></div>
           <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-[13.5px]">
             <span className="text-ink-2">Connect and Learn are open now. Add your company when you&apos;re ready to sell.</span>
             {next && <Link href={next.href} className={BTN}>Next: {next.next} →</Link>}

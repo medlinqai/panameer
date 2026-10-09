@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { LifecycleGraphic } from "@/components/lifecycle/LifecycleGraphic";
 import { RoadGraphic } from "@/components/lifecycle/RoadGraphic";
+import { RoadStepper } from "@/components/lifecycle/RoadStepper";
 
 // The "?" next to "Your Path · Step N of 9". It signals one host in AppShell, so closing the account menu can't unmount the panel.
 const EVENT = "pm:lifecycle-help";
@@ -48,7 +49,8 @@ export function LifecycleHelpHost() {
           <p className="mb-2 text-[14px] text-ink-2">
             Nine stops from sign-up to getting paid. You can sell before any company paperwork — that comes right before your first work order. Panameer pays companies, not individuals.
           </p>
-          <div className="overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>
+          <div className="hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>
+          <div className="sm:hidden"><RoadStepper current={path.current} /></div>
           <a href="/join/provider/road" className="mt-2 inline-block text-[13.5px] font-bold text-magenta-dark underline underline-offset-4">See the detailed road (offers, work requests, interviews) →</a>
         </>
       ) : (
