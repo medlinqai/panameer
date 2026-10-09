@@ -1,7 +1,9 @@
 import type { WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
 import { PENDING_CHANGE_LABEL, WORK_ORDER_LABEL, WORK_ORDER_TONE } from "@/lib/oracle-status";
 
-export function OriginBadge({ origin }: { origin: WorkOrderOrigin }) {
+export function OriginBadge({ origin, erpRef }: { origin: WorkOrderOrigin; erpRef?: string | null }) {
+  if (erpRef !== undefined && erpRef !== null)
+    return <span data-erp-badge className="rounded-full border border-ink px-2.5 py-0.5 text-[11.5px] font-bold uppercase tracking-[0.06em]">From ERP · PO {erpRef}</span>;
   if (origin !== "DIRECT") return null;
   return (
     <span

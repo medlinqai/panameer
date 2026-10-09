@@ -42,7 +42,7 @@ export function changeBlocked(o: { status: string; frozen_at: Date | null }, pen
 }
 
 /** Builds the before/after diff against the order as it stands. Throws when nothing changed or a change is impossible. */
-async function diffFor(orderId: string, input: ChangeInput): Promise<{ changes: Changes; order: { id: string; order_number: string; status: string; frozen_at: Date | null; buyer_person_id: string; provider_person_id: string; revision_number: number } }> {
+async function diffFor(orderId: string, input: ChangeInput): Promise<{ changes: Changes; order: { id: string; order_number: string; status: string; frozen_at: Date | null; buyer_person_id: string; provider_person_id: string; revision_number: number; erp_connection_id: string | null } }> {
   const o = await prisma.workOrder.findUnique({ where: { id: orderId }, include: { lines: { orderBy: { line_number: "asc" } } } });
   if (!o) throw new OrderError("Work order not found", "NOT_FOUND");
   const changes: Changes = { header: {}, lines: [] };
@@ -79,6 +79,7 @@ export async function proposeChange(viewer: Viewer | null, orderId: string, inpu
   const me = viewer ? await personId(viewer) : null;
   const { changes, order } = await diffFor(orderId, input);
   if (viewer && partyFor(order, me!) !== "BUYER") throw new OrderError("Only the customer can raise a change order", "FORBIDDEN");
+  if (viewer && order.erp_connection_id) throw new OrderError("This order comes from your ERP. Change it there; the update arrives here.", "INVALID");
   const pending = await prisma.workOrderRevision.count({ where: { work_order_id: orderId, status: "PENDING" } });
   const blocked = changeBlocked(order, pending > 0);
   if (blocked) throw new OrderError(blocked, "INVALID");

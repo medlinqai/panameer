@@ -79,7 +79,7 @@ export default async function Page({
             <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
               {o.orderNumber}
             </h1>
-            <OriginBadge origin={o.origin} />
+            <OriginBadge origin={o.origin} erpRef={o.erp ? o.externalRef ?? "" : null} />
           </div>
           <p className="mt-1.5 text-[14.5px] text-ink-2">
             {o.buyerName} <span className="text-ink-2/60">→</span> {o.providerName}
@@ -97,7 +97,14 @@ export default async function Page({
       </div>
 
       {}
-      {o.origin === "DIRECT" && (
+      {o.erp && (
+        <div data-erp-order className="mt-4 border-l-2 border-ink py-1 pl-3.5 text-[14px] text-ink-2">
+          {o.party === "BUYER"
+            ? "This order comes from your ERP. Hold, freeze, close and changes happen there, and Panameer mirrors what your ERP sends."
+            : "This order comes from the customer's ERP. Your acceptance goes back to their ERP, and payment requests go to it as receipts for the requester's approval."}
+        </div>
+      )}
+      {o.origin === "DIRECT" && !o.erp && (
         <div className="mt-4 rounded-brand border border-line bg-ink/[0.02] p-5">
           {}
           <p className="text-[15px] font-bold">An externally sourced work order</p>
@@ -206,8 +213,8 @@ export default async function Page({
       <ChangeOrders
         orderId={o.id}
         party={o.party}
-        canChange={o.party === "BUYER" && !blockedReason}
-        blockedReason={blockedReason}
+        canChange={o.party === "BUYER" && !blockedReason && !o.erp}
+        blockedReason={o.erp ? "Change this order in your ERP." : blockedReason}
         header={{ nteCents: o.notToExceedCents, start: o.periodStart, end: o.periodEnd, sow: o.sowText }}
         lines={o.lines.map((l) => ({ id: l.id, lineNumber: l.lineNumber, description: l.description, byQuantity: l.drawdown.pricedBy === "QUANTITY", quantity: l.quantity, rateCents: l.unitPriceCents, amountCents: l.amountCents, start: l.serviceStart, end: l.serviceEnd }))}
         history={revisions.map((r) => ({ id: r.id, number: r.number, status: r.status, createdAt: r.createdAt, decidedAt: r.decidedAt, note: r.note, fromErp: r.fromErp, lines: describeChanges(r.changes, (c) => formatCents(c, o.currency)) }))}

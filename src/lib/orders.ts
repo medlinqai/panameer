@@ -728,11 +728,12 @@ export async function controlOrder(viewer: Viewer, id: string, action: OrderCont
   const personId = await ownPersonId(viewer);
   const o = await prisma.workOrder.findFirst({
     where: { id, OR: [{ buyer_person_id: personId }, { provider_person_id: personId }] },
-    select: { id: true, order_number: true, status: true, frozen_at: true, held_from_status: true, buyer_person_id: true, provider_person_id: true },
+    select: { id: true, order_number: true, status: true, frozen_at: true, held_from_status: true, buyer_person_id: true, provider_person_id: true, erp_connection_id: true },
   });
   if (!o) throw new OrderError("Work order not found", "NOT_FOUND");
   const party = partyFor(o, personId);
   if (party !== "BUYER") throw new OrderError("Only the customer can change this work order's status", "FORBIDDEN");
+  if (o.erp_connection_id) throw new OrderError("This order comes from your ERP. Change its status there.", "INVALID");
   if (!availableControls(o, party).includes(action)) throw new OrderError(`This work order can't be ${CONTROL_TEXT[action].done.toLowerCase()} from ${o.status.toLowerCase().replace("_", " ")}`, "INVALID");
 
   let data: Prisma.WorkOrderUpdateManyMutationInput;

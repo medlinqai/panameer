@@ -93,7 +93,7 @@ export default async function Page() {
                     >
                       {o.orderNumber}
                     </Link>
-                    <OriginBadge origin={o.origin} />
+                    <OriginBadge origin={o.origin} erpRef={o.erp ? o.externalRef ?? "" : null} />
                   </div>
                   <p className="mt-1 text-[14.5px]">
                     {/* THE ROW NAMES THE OTHER SIDE AND SAYS WHICH SIDE THAT IS. */}
