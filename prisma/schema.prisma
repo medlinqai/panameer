@@ -8431,3 +8431,90 @@ model ServiceType {
 
   @@map("service_types")
 }
+
+enum CostEstimateStatus {
+  DRAFT
+  SENT
+  CHANGES_REQUESTED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum CostEstimateLineKind {
+  SERVICE
+  FIXED
+  NOT_TO_EXCEED
+}
+
+/// CAT-E006: a provider's estimate for one customer — private to the two of them. Accept → work order.
+model CostEstimate {
+  id                  String             @id @default(uuid()) @db.Uuid
+  estimate_number     String             @unique
+  provider_person_id  String             @db.Uuid
+  /// The customer when they are a member (set on send, or when a non-member signs up with the emailed address).
+  customer_person_id  String?            @db.Uuid
+  customer_email      String?
+  work_request_id     String?            @db.Uuid
+  title               String
+  status              CostEstimateStatus @default(DRAFT)
+  valid_until         DateTime
+  current_revision    Int                @default(1)
+  currency            String             @default("USD")
+  work_order_id       String?            @db.Uuid
+  sent_at             DateTime?
+  decided_at          DateTime?
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+
+  revisions CostEstimateRevision[]
+
+  @@index([provider_person_id])
+  @@index([customer_person_id])
+  @@index([customer_email])
+  @@map("cost_estimates")
+}
+
+/// CAT-E006: each send is a revision; Ask for Changes → the provider revises and resubmits as revision n+1 (history kept).
+model CostEstimateRevision {
+  id               String         @id @default(uuid()) @db.Uuid
+  estimate_id      String         @db.Uuid
+  revision_number  Int
+  scope            String?
+  assumptions      String?
+  exclusions       String?
+  message          String?
+  payment_terms    PaymentTerms   @default(NET30)
+  billing_cycle    BillingCycle   @default(MONTHLY)
+  total_cents      Int            @default(0)
+  sent_at          DateTime?
+  /// CHANGES_REQUESTED · ACCEPTED · DECLINED — the customer's answer to this revision.
+  decision         String?
+  customer_comment String?
+  decided_at       DateTime?
+  created_at       DateTime       @default(now())
+
+  estimate CostEstimate       @relation(fields: [estimate_id], references: [id], onDelete: Cascade)
+  lines    CostEstimateLine[]
+
+  @@unique([estimate_id, revision_number])
+  @@map("cost_estimate_revisions")
+}
+
+model CostEstimateLine {
+  id                  String               @id @default(uuid()) @db.Uuid
+  revision_id         String               @db.Uuid
+  line_number         Int
+  kind                CostEstimateLineKind
+  description         String
+  provider_service_id String?              @db.Uuid
+  uom                 String?
+  quantity            Decimal?
+  rate_cents          Int?
+  amount_cents        Int?
+
+  revision CostEstimateRevision @relation(fields: [revision_id], references: [id], onDelete: Cascade)
+
+  @@unique([revision_id, line_number])
+  @@map("cost_estimate_lines")
+}

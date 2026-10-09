@@ -623,11 +623,11 @@ async function loadParty(viewer: Viewer, id: string) {
   return { order, party: partyFor(order, personId) };
 }
 
-/** X-E005: an ERP order arrives with the customer's acceptance, so the provider's acceptance opens it and the ERP is told. */
+/** X-E005 / CAT-E006: an ERP order or an accepted estimate arrives with the customer's acceptance, so the provider's acceptance opens it (and an ERP is told). */
 export async function acknowledgeErpOrder(order: { id: string; provider_person_id: string; buyer_person_id: string }): Promise<boolean> {
   const now = new Date();
   const moved = await prisma.$transaction(async (tx) => {
-    const m = await tx.workOrder.updateMany({ where: { id: order.id, status: "ISSUED", erp_connection_id: { not: null }, buyer_accepted_at: { not: null } }, data: { status: "RELEASED", provider_accepted_at: now } });
+    const m = await tx.workOrder.updateMany({ where: { id: order.id, status: "ISSUED", buyer_accepted_at: { not: null } }, data: { status: "RELEASED", provider_accepted_at: now } });
     if (m.count) await tx.onboardingRequest.create({ data: { onboarding_request_number: `ONB-${Date.now().toString(36).toUpperCase()}-${order.id.slice(0, 4)}`, work_order_id: order.id, provider_person_id: order.provider_person_id, buyer_person_id: order.buyer_person_id, raised_at: now } });
     return m.count;
   });
@@ -655,7 +655,7 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
   const parties = await prisma.workOrder.findUnique({ where: { id: order.id }, select: { buyer_person_id: true, provider_person_id: true } });
   const actor = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   if (parties && actor) await assertCanSign(actor.id, parties.buyer_person_id, parties.provider_person_id);
-  if (party === "PROVIDER" && order.erp_connection_id && order.buyer_accepted_at) {
+  if (party === "PROVIDER" && order.buyer_accepted_at) {
     await acknowledgeErpOrder(order);
     return getOrderDetail(viewer, id);
   }
