@@ -2,7 +2,7 @@ import { ScrollRow } from "@/components/casing/ScrollRow";
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
-import { learnCatalog, START_AREA, START_AREA_LABEL } from "@/lib/learn-catalog";
+import { nextPathSuggestion, learnCatalog, START_AREA, START_AREA_LABEL } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { LearnPathCard } from "@/components/learn/LearnPathCard";
@@ -10,6 +10,7 @@ import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHe
 import { BubbleField } from "@/components/casing/BubbleField";
 import { StartHere } from "@/components/learn/StartHere";
 import { BEGINNER_PATH as START_SLUG } from "@/lib/learn-homepage";
+import { nextStep } from "@/lib/learn-state";
 import { NotifyMe } from "@/components/learn/NotifyMe";
 
 export const metadata = {
@@ -51,6 +52,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
     .filter((g) => g.paths.length);
   const soon = shown.filter((p) => !p.playable);
   const start = all.find((p) => p.slug === START_SLUG) ?? null;
+  const pickNext = await nextPathSuggestion(viewer?.userId ?? null);
   const kpis = [
     [all.length, "LEARNING PATHS"],
     [all.reduce((n, p) => n + p.courses.length, 0), "COURSES"],
@@ -84,7 +86,10 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
           paragraph={<>Taught by working consultants. Finish a path, pass the test, and the certificate goes on your profile.{start ? <> New to Oracle Cloud? Start with <b className="text-ink">{start.title}</b>.</> : null}</>}
           actions={
             <>
-              {start && <Link href={start.mine?.next ? `/learn/${start.slug}/${start.mine.next.id}` : `/learn/${start.slug}`} className={HERO_BTN}>Start {start.title}</Link>}
+              {start && (() => {
+                const s = nextStep(start, { long: true });
+                return <Link href={s.state === "READY_TO_TEST" || s.state === "CERTIFIED" ? pickNext : s.href} className={HERO_BTN}>{s.state === "CERTIFIED" ? "Pick Your Next Path" : s.label}</Link>;
+              })()}
               <a href="#areas" className={HERO_BTN_W}>Browse by Area</a>
             </>
           }

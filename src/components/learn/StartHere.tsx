@@ -2,13 +2,17 @@ import Link from "next/link";
 import type { CatPath } from "@/lib/learn-catalog";
 import { lessonCount, timeLabel } from "@/lib/learn-time";
 import { CourseTile } from "@/components/learn/CourseTile";
+import { nextStep } from "@/lib/learn-state";
 
 // Learning Paths › Start Here: the one path for people new to Oracle Cloud — course tiles, what you'll learn, one button.
 const tidy = (t: string) => t.replace(/^\s*\d+[.)]\s*/, "");
 
 export function StartHere({ p }: { p: CatPath }) {
   const ticks = p.courses.slice(0, 4).map((c) => tidy(c.title));
-  const go = p.mine?.next ? `/learn/${p.slug}/${p.mine.next.id}` : `/learn/${p.slug}`;
+  // L-E040: Start / Continue while there's more to watch; Review once every lesson that's out is done.
+  const s = nextStep(p);
+  const done = s.state === "READY_TO_TEST" || s.state === "CERTIFIED";
+  const go = done ? `/learn/${p.slug}` : s.href;
   return (
     <section data-start-here className="mt-7 grid bg-ink text-surface md:grid-cols-[1.15fr_1fr]">
       {/* T-E003: each course as its own colored tile, 2×2 on a phone. */}
@@ -33,7 +37,7 @@ export function StartHere({ p }: { p: CatPath }) {
           {[`${p.courses.length} courses`, `${p.lessons} lessons`, timeLabel(p.minutes), p.test.ready ? "Certificate" : null].filter(Boolean).join(" · ")}
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link href={go} className="inline-flex min-h-11 items-center bg-surface px-5 text-[14px] font-semibold text-ink hover:bg-white/90">{p.mine ? "Continue Learning" : "Start Learning"}</Link>
+          <Link href={go} className="inline-flex min-h-11 items-center bg-surface px-5 text-[14px] font-semibold text-ink hover:bg-white/90">{done ? "Review" : s.state === "IN_PROGRESS" ? "Continue Learning" : "Start Learning"}</Link>
           <Link href={`/learn/${p.slug}`} className="inline-flex min-h-11 items-center border border-white/60 px-5 text-[14px] font-semibold text-surface hover:bg-white/10">See What&apos;s Inside</Link>
         </div>
       </div>

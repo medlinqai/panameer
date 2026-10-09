@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { nextStep } from "@/lib/learn-state";
 import type { CatPath } from "@/lib/learn-catalog";
 import { timeLabel } from "@/lib/learn-time";
 import { Avatar } from "@/components/Avatar";
@@ -29,9 +30,10 @@ export function LearnPathCard({ p, areaLabel, tag, outcome, level, notify }: { p
   const [from, to] = TONE[p.area ?? ""] ?? ["#272334", "#4a4658"];
   const line = outcome || p.outcome || p.summary?.split(/(?<=[.!?])\s/)[0] || null;
   const now = Math.max(0, p.learners - p.completed);
-  const go = p.mine?.next ? `/learn/${p.slug}/${p.mine.next.id}` : `/learn/${p.slug}`;
+  // L-E040: the button follows where you are (Start · Continue · Pick Your Next Path · Review).
+  const step = nextStep(p);
   const lv = level ?? p.level;
-  const label = tag ?? (lv ? LEVEL[lv] : null);
+  const label = tag ?? (step.state === "READY_TO_TEST" ? "READY TO TEST" : lv ? LEVEL[lv] : null);
   const pct = p.mine && p.mine.total ? Math.round((p.mine.done / p.mine.total) * 100) : 0;
   return (
     <li data-path-card={p.slug} className="group flex flex-col border border-line bg-white transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-12px_rgba(39,35,52,0.35)]">
@@ -64,7 +66,7 @@ export function LearnPathCard({ p, areaLabel, tag, outcome, level, notify }: { p
           {!p.playable ? (
             notify ?? <Link href={`/learn/${p.slug}#notify`} className="inline-flex min-h-10 items-center border border-ink px-4 text-[13.5px] font-semibold">Notify Me</Link>
           ) : (
-            <Link href={p.certificate ? `/learn/${p.slug}` : go} className="inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover">{p.certificate ? "Review" : p.mine ? "Continue" : "Start"}</Link>
+            <Link href={step.href} className="inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover">{step.label}</Link>
           )}
           {p.certificate ? (
             <span className="text-[12.5px] font-bold">Certified ✓</span>

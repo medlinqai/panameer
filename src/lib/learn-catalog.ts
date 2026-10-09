@@ -117,3 +117,12 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
     };
   });
 }
+
+/** L-E040: where "Pick Your Next Path" points — Basic Procurement for procurement-skilled members, else the area rows. */
+export async function nextPathSuggestion(userId: string | null): Promise<string> {
+  if (!userId) return "/learn/paths#areas";
+  const n = await prisma.providerSkill.count({ where: { providerProfile: { person: { user_id: userId } }, skill: { area: "PRC" } } }).catch(() => 0);
+  if (!n) return "/learn/paths#areas";
+  const done = await prisma.certification.count({ where: { user_id: userId, learningPath: { slug: "end-user-procurement-basic-procurement" } } });
+  return done ? "/learn/paths?area=PRC" : "/learn/end-user-procurement-basic-procurement";
+}
