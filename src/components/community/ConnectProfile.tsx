@@ -627,7 +627,7 @@ export function ConnectProfile({
           )}
 
           {/* THE META LINE. EVERY ITEM IS A FACT THAT EXISTS */}
-          <div className="mt-3.5 flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[14px] text-ink-2">
+          <div className="mt-3.5 flex flex-wrap items-center gap-x-6 gap-y-3 text-[14px] text-ink-2">
             {/* ITEM 11 — THE MAP LINK, AND WHAT IS NOT IN IT */}
             {(() => {
               const lines = locationLines(p.location, p.country);
@@ -680,7 +680,7 @@ export function ConnectProfile({
 
           {/* ROW 3 — THE BIO IS PLAIN TEXT, NOT A FOLDING SECTION */}
           {(p.overview || owner) && (
-            <div id="bio" className="mt-5 scroll-mt-24 text-[15px] leading-relaxed">
+            <div id="bio" className="mt-4 scroll-mt-24 text-[15px] leading-relaxed">
               <OverviewBody
                 overview={p.overview}
                 empty="Nothing here yet. A short bio is the first thing a buyer reads."
