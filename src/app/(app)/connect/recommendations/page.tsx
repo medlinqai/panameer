@@ -47,15 +47,16 @@ export default async function RecommendationsPage() {
               {notYet.map((c) => {
                 const [first, ...rest] = c.name.split(" ");
                 return (
-                  <li key={c.userId} className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2.5">
-                    <span className="flex min-w-0 items-center gap-2.5">
+                  <li key={c.userId} className="flex items-center gap-3 border-b border-line py-2.5">
+                    <span className="flex min-w-0 flex-1 items-center gap-2.5">
                       <Avatar firstName={first ?? ""} lastName={rest.join(" ")} photoUrl={c.photoUrl} size={36} />
                       <span className="min-w-0">
                         <b className="block truncate text-[14px]">{c.name}</b>
                         {c.title && <span className="block truncate text-[12.5px] text-ink-3">{c.title}</span>}
                       </span>
                     </span>
-                    <RecommendMe toUserId={c.userId} name={c.name} requested={c.st === "SENT"} />
+                    {/* M-E005: same place, same width on every row. */}
+                    <span className="w-[128px] shrink-0"><RecommendMe toUserId={c.userId} name={c.name} requested={c.st === "SENT"} fixed /></span>
                   </li>
                 );
               })}

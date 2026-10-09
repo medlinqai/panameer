@@ -17,8 +17,8 @@ export type RecommendationRow = {
 };
 
 const STATUS: Record<RecommendationRow["status"], { label: string; tone: string }> = {
-  SENT: { label: "Awaiting reply", tone: "bg-amber-100 text-amber-800" },
-  SUBMITTED: { label: "Recommended", tone: "bg-emerald-100 text-emerald-800" },
+  SENT: { label: "Awaiting Reply", tone: "border border-magenta text-magenta-dark" },
+  SUBMITTED: { label: "Recommended", tone: "bg-ink text-surface" },
   DECLINED: { label: "Declined", tone: "bg-black/[0.06] text-ink-2" },
   EXPIRED: { label: "Expired", tone: "bg-black/[0.06] text-ink-2" },
 };
