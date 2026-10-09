@@ -7,6 +7,7 @@ import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
 import { RoadGraphic } from "@/components/lifecycle/RoadGraphic";
 import { RoadStepper } from "@/components/lifecycle/RoadStepper";
 import { TurnOnButton, MoreCards } from "@/components/home/FiveThingsClient";
+import { CoverBand } from "@/components/casing/CoverBand";
 
 // Dashboard (mockup dashboard_five_things 2026-10-06): greeting + Your Path bar, 5 cards, "Waiting on you" tiles.
 const ICON = { eye: Eye, chart: TrendingUp, badge: BadgeCheck, book: BookOpen, folder: FolderPlus, people: Users, search: Search, tag: Tag, send: Send, message: MessageSquare, person: UserPlus, alert: AlertTriangle };
@@ -43,10 +44,10 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
   // While on the road (before Validate Company), the cards become one question with four directions.
   const onRoad = !!path && path.steps.length === 9 && path.current < 6;
   const choices = [
-    { key: "learn", icon: BookOpen, title: "Learn", line: "Free courses and certification tests.", cta: "Start Learning", href: "/learn" },
-    { key: "connect", icon: Users, title: "Connect", line: "Find colleagues and mentors.", cta: "Find People", href: "/connect/community" },
-    { key: "services", icon: Search, title: "Sell my services", line: "Browse open work and get invited to propose.", cta: "Browse Work", href: "/find-work", needsCompany: true },
-    { key: "products", icon: Tag, title: "Sell service products", line: "List a fixed-price package buyers can order.", cta: "List a Service", href: "/my-services", needsCompany: true },
+    { key: "learn", code: "LRN", tone: ["#272334", "#4b3e6e"] as [string, string], title: "Learn", line: "Free courses and certification tests.", cta: "Start Learning", href: "/learn" },
+    { key: "connect", code: "CON", tone: ["#272334", "#6b2f6a"] as [string, string], title: "Connect", line: "Find colleagues and mentors.", cta: "Find People", href: "/connect/community" },
+    { key: "services", code: "SVC", tone: ["#1d2a3a", "#36506e"] as [string, string], title: "Sell My Services", line: "Browse open work and get invited to propose.", cta: "Browse Work", href: "/find-work", needsCompany: true },
+    { key: "products", code: "PRD", tone: ["#1f2b28", "#3e5f55"] as [string, string], title: "Sell Service Products", line: "List a fixed-price package buyers can order.", cta: "List a Service", href: "/my-services", needsCompany: true },
   ];
   return (
     <section data-five-things className="mb-8 font-body text-ink">
@@ -92,22 +93,25 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
             {choices.map((c) => {
               const locked = "needsCompany" in c && c.needsCompany && !hasCompany;
               return locked ? (
-                <div key={c.key} role="listitem" data-choice={c.key} data-locked className="flex flex-col border border-dashed border-line bg-bg-soft p-5">
-                  <span className="flex items-center justify-between">
-                    <span className="grid h-11 w-11 place-items-center bg-surface text-ink-3"><c.icon className="h-[22px] w-[22px]" aria-hidden /></span>
-                    <span className="flex items-center gap-1 text-[11px] font-bold tracking-[0.08em] text-ink-2"><Lock className="h-3.5 w-3.5" aria-hidden /> AFTER STEP 4</span>
-                  </span>
-                  <b className="mt-3 block text-[18px] leading-snug text-ink-3">{c.title}</b>
+                <div key={c.key} role="listitem" data-choice={c.key} data-locked className="flex flex-col border border-dashed border-line bg-bg-soft">
+                  <CoverBand code={c.code} tone={c.tone} className="h-[84px] opacity-45 grayscale">
+                    <span className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" aria-hidden /> After Step 4</span>
+                  </CoverBand>
+                  <span className="flex flex-1 flex-col p-5 pt-3">
+                  <b className="block text-[18px] leading-snug text-ink-3">{c.title}</b>
                   <span className="mt-1 block flex-1 text-[13.5px] text-ink-3">{c.line}</span>
                   <span className="mt-3 block text-[13px] font-bold text-ink">Add your company first.</span>
                   <Link href="/company?join=1#join" className="mt-2 inline-flex min-h-[40px] w-full items-center justify-center border border-ink px-4 text-[13.5px] font-bold text-ink hover:bg-surface-hover">Add Company →</Link>
+                  </span>
                 </div>
               ) : (
-                <Link key={c.key} role="listitem" href={c.href} data-choice={c.key} className="group flex flex-col border border-line bg-surface p-5 hover:border-ink">
-                  <span className="grid h-11 w-11 place-items-center bg-[#E8EAF1] text-[#5C6485]"><c.icon className="h-[22px] w-[22px]" aria-hidden /></span>
-                  <b className="mt-3 block text-[18px] leading-snug">{c.title}</b>
-                  <span className="mt-1 block flex-1 text-[13.5px] text-ink-2">{c.line}</span>
-                  <span className={`${BTN} mt-4 w-full`}>{c.cta} →</span>
+                <Link key={c.key} role="listitem" href={c.href} data-choice={c.key} className="group flex flex-col border border-line bg-surface hover:border-ink">
+                  <CoverBand code={c.code} tone={c.tone} className="h-[84px]" />
+                  <span className="flex flex-1 flex-col p-5 pt-3">
+                    <b className="block text-[18px] leading-snug">{c.title}</b>
+                    <span className="mt-1 block flex-1 text-[13.5px] text-ink-2">{c.line}</span>
+                    <span className={`${BTN} mt-4 w-full`}>{c.cta} →</span>
+                  </span>
                 </Link>
               );
             })}
