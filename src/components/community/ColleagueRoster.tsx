@@ -148,7 +148,7 @@ export function ColleagueRoster({ rows, bare = false }: { rows: RosterRowView[];
           {visible.map((r) => (
             <div
               key={r.connectionId}
-              className="pm-member-row flex flex-wrap items-center gap-3 border-t border-line py-5"
+              className="flex items-start gap-3 border-t border-line py-5"
             >
               {/* THE PHOTO LINKS TOO ( , B2: *"Name and photo link to the */}
               {r.profileHref ? (
@@ -168,8 +168,8 @@ export function ColleagueRoster({ rows, bare = false }: { rows: RosterRowView[];
                   size={44}
                 />
               )}
-              <div className="min-w-[180px] flex-1">
-                <p className="text-[15px] font-bold">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[15px] font-bold">
                   {r.profileHref ? (
                     <Link href={r.profileHref} className="hover:text-magenta hover:underline">
                       {r.name}
@@ -185,7 +185,7 @@ export function ColleagueRoster({ rows, bare = false }: { rows: RosterRowView[];
                   )}
                 </p>
                 {[r.title, companyBesidesName(r.company, r.name)].filter(Boolean).length > 0 && (
-                  <p className="text-[13px] text-ink-2">
+                  <p className="truncate text-[13px] text-ink-2">
                     <TitleAndCompany title={r.title} company={companyBesidesName(r.company, r.name)} companyId={r.companyId} />
                   </p>
                 )}
@@ -217,11 +217,12 @@ export function ColleagueRoster({ rows, bare = false }: { rows: RosterRowView[];
                   </p>
                 )}
               </div>
-              <div className="pm-member-row-actions flex flex-wrap items-center gap-2">
+              <div className="shrink-0">
                 <ColleagueRowActions
                   toUserId={r.userId}
                   name={r.name}
                   buySide={r.buySide}
+                  profileHref={r.profileHref}
                   onAskRecommendation={() => setAsking(r)}
                 />
               </div>

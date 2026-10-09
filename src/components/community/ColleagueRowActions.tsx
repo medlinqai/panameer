@@ -3,15 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
+// M-E006: every row's actions sit in one ••• menu, so every row is the same height.
+const ITEM = "block w-full px-4 py-2.5 text-left text-[14px] text-ink transition-colors hover:bg-bg-soft";
+
 export function ColleagueRowActions({
   toUserId,
   name,
   buySide,
+  profileHref,
   onAskRecommendation,
 }: {
   toUserId: string;
   name: string;
   buySide: boolean;
+  profileHref?: string | null;
   onAskRecommendation: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -34,55 +39,26 @@ export function ColleagueRowActions({
   }, [open]);
 
   return (
-    <>
-      {}
-      <Link
-        href={`/messages?with=${toUserId}`}
-        className="border border-ink bg-surface px-4 py-1.5 text-[13.5px] font-semibold text-ink transition-colors hover:bg-surface-hover"
+    <div ref={box} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Actions for ${name}`}
+        data-row-menu
+        className="grid h-10 w-10 place-items-center border border-ink bg-surface text-[16px] font-bold leading-none text-ink transition-colors hover:bg-surface-hover"
       >
-        Message
-      </Link>
-
-      <div ref={box} className="relative">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-haspopup="menu"
-          aria-expanded={open}
-          aria-label={`More actions for ${name}`}
-          className="border border-ink bg-surface px-3 py-1.5 text-[13.5px] font-semibold leading-none text-ink-2 transition-colors hover:bg-surface-hover text-ink"
-        >
-          ···
-        </button>
-        {open && (
-          <div
-            role="menu"
-            className="absolute right-0 z-20 mt-1 w-[240px] overflow-hidden rounded-brand border border-line bg-white py-1 shadow-lg"
-          >
-            {/* MENTORING IS OMITTED ON BUY-SIDE ROWS — see the header. */}
-            {!buySide && (
-              <Link
-                role="menuitem"
-                href={`/connect/mentors?ask=${toUserId}`}
-                className="block px-4 py-2.5 text-left text-[14px] text-ink transition-colors hover:bg-bg-soft"
-              >
-                Ask Them to Mentor Me
-              </Link>
-            )}
-            <button
-              role="menuitem"
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                onAskRecommendation();
-              }}
-              className="block w-full px-4 py-2.5 text-left text-[14px] text-ink transition-colors hover:bg-bg-soft"
-            >
-              Request a Recommendation
-            </button>
-          </div>
-        )}
-      </div>
-    </>
+        •••
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 z-20 mt-1 w-[240px] overflow-hidden border border-line bg-white py-1 shadow-lg">
+          <Link role="menuitem" href={`/messages?with=${toUserId}`} className={ITEM}>Message</Link>
+          {profileHref && <Link role="menuitem" href={profileHref} className={ITEM}>View Profile</Link>}
+          <button role="menuitem" type="button" onClick={() => { setOpen(false); onAskRecommendation(); }} className={ITEM}>Request a Recommendation</button>
+          {!buySide && <Link role="menuitem" href={`/connect/mentors?ask=${toUserId}`} className={ITEM}>Ask Them to Mentor Me</Link>}
+        </div>
+      )}
+    </div>
   );
 }
