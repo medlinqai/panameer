@@ -1,4 +1,5 @@
 import { CommunityWeb } from "@/components/community/CommunityWeb";
+import { KpiRow } from "@/components/casing/KpiRow";
 import { PatternHeader } from "@/components/casing/PatternHeader";
 import { webFigures, type CommunityWeb as WebData } from "@/lib/community-web";
 import type { CommunityHero as HeroData } from "@/lib/community-hero";
@@ -106,14 +107,7 @@ export function ConnectionsHero({ web, hero, standing, requests }: { web: WebDat
       <div>
         <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">{standing ? `LEVEL ${standing.level.number} · ${standing.level.name.toUpperCase()}` : "YOUR COMMUNITY"}</p>
         <h2 className="mb-4 mt-1.5 text-[30px] font-bold leading-tight">Grow Your Community</h2>
-        <div className="flex flex-wrap gap-x-11 gap-y-3 border-b border-line pb-4">
-          {[["Joined", figures.joined], ["Invited", figures.invited], ["Reachable", figures.reachable]].map(([label, value]) => (
-            <div key={label as string}>
-              <b className="block text-[26px] font-medium tabular-nums">{value}</b>
-              <span className="text-[11px] font-semibold tracking-[0.08em] text-ink-2">{(label as string).toUpperCase()}</span>
-            </div>
-          ))}
-        </div>
+        <KpiRow className="pb-4" kpis={[{ value: figures.joined, label: "JOINED" }, { value: figures.invited, label: "INVITED" }, { value: figures.reachable, label: "REACHABLE" }]} />
         {standing && (
           <>
             <p className="mb-1.5 mt-4 text-[13px]">

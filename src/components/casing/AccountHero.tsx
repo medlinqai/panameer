@@ -1,3 +1,4 @@
+import { KpiRow } from "@/components/casing/KpiRow";
 import type { ReactNode } from "react";
 
 // The Account pages' hero (Health's look, shared by Score / Usage / Health so they can't drift):
@@ -37,14 +38,7 @@ export function AccountHero({
       <div className="min-w-0">
         <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">{eyebrow.toUpperCase()}</p>
         <h1 className="mb-5 mt-1.5 text-[30px] font-bold leading-tight">{title}</h1>
-        <div className="flex flex-wrap gap-x-11 gap-y-3 border-b border-line pb-[18px]" data-testid={kpiTestId}>
-          {kpis.map((k) => (
-            <div key={k.label}>
-              <b className="block whitespace-nowrap text-[26px] font-medium">{k.value}</b>
-              <span className="whitespace-nowrap text-[11px] font-semibold tracking-[0.08em] text-ink-2">{k.label}</span>
-            </div>
-          ))}
-        </div>
+        <KpiRow kpis={kpis} testId={kpiTestId} className="pb-[18px]" />
         {paragraph && <div className="my-[18px] text-[14px] leading-[1.65] text-ink-2">{paragraph}</div>}
         {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
       </div>
