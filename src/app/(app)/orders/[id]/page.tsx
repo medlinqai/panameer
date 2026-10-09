@@ -15,6 +15,7 @@ import { History } from "@/components/orders/History";
 import { orderHistory } from "@/lib/transaction-history";
 import { CloseOrder } from "@/components/orders/CloseOrder";
 import { BuyerCard } from "@/components/orders/BuyerCard";
+import { WORK_ORDER_LINE_LABEL } from "@/lib/oracle-status";
 
 export const metadata = { title: "Work Order · Panameer" };
 
@@ -77,7 +78,7 @@ export default async function Page({
             {o.buyerName} <span className="text-ink-2/60">→</span> {o.providerName}
           </p>
         </div>
-        <StatusPill status={o.status} />
+        <StatusPill status={o.status} waiting={o.waiting} />
       </div>
 
       <OrderTabs id={o.id} current="overview" />
@@ -135,11 +136,11 @@ export default async function Page({
         <Fact label="Not to exceed">
           {o.notToExceedCents == null ? "No cap" : formatCents(o.notToExceedCents, o.currency)}
         </Fact>
-        <Fact label="Accepted">
+        <Fact label="Provider accepted">
           {o.providerAcceptedAt ? o.providerAcceptedAt.slice(0, 10) : "Not yet"}
         </Fact>
-        <Fact label="Released">
-          {o.buyerReleasedAt ? o.buyerReleasedAt.slice(0, 10) : "Not yet"}
+        <Fact label="Buyer accepted">
+          {(o.buyerAcceptedAt ?? o.buyerReleasedAt)?.slice(0, 10) ?? "Not yet"}
         </Fact>
         {o.party === "PROVIDER" && (
           <>
@@ -224,6 +225,7 @@ function LineCard({ line, currency, showFee }: { line: OrderLineView; currency: 
             Line {line.lineNumber} ·{" "}
             {line.transactionType === "SERVICE_BY_AMT" ? "Fixed amount" : "Rate"}
             {line.externalLineRef && <> · PO line {line.externalLineRef}</>}
+            {line.status !== "OPEN" && <> · {WORK_ORDER_LINE_LABEL[line.status as keyof typeof WORK_ORDER_LINE_LABEL] ?? line.status}</>}
             {showFee && <> · fee {bpsToPercentLabel(line.feeBps)}</>}
           </p>
           <p className="mt-1 text-[16px] font-bold">{line.description}</p>

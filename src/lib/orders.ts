@@ -3,6 +3,15 @@ import { TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/clien
 import { prisma } from "@/lib/prisma";
 import { feeSplit, pricedByQuantity } from "@/lib/transaction-spine";
 import type { Viewer } from "@/lib/access";
+import { waitingOn } from "@/lib/oracle-status";
+
+/** The Pending Acknowledgment sub-line, worded for the viewer. */
+export function waitingLine(o: { status: WorkOrderStatus; provider_accepted_at?: Date | null; buyer_accepted_at?: Date | null }, party: OrderParty, names: { buyer: string; provider: string }): string | null {
+  const w = waitingOn(o);
+  if (!w) return null;
+  if (w === party) return "Waiting on you";
+  return `Waiting on ${w === "BUYER" ? names.buyer : names.provider}`;
+}
 
 export class OrderError extends Error {
   constructor(message: string, public code: "NOT_FOUND" | "FORBIDDEN" | "INVALID") {
@@ -78,7 +87,7 @@ export function activationMessage(status: WorkOrderStatus, party: OrderParty): s
     case "CLOSED":
       return "This order is closed.";
     case "CANCELLED":
-      return "This order was cancelled.";
+      return "This order was canceled.";
   }
 }
 
@@ -228,6 +237,7 @@ export type OrderRow = {
   /** DIRECT orders have none, and the row must not imply one. */
   workRequestId: string | null;
   externalRef: string | null;
+  waiting: string | null;
 };
 
 async function namesFor(personIds: string[]): Promise<Map<string, string>> {
@@ -263,6 +273,8 @@ export async function listOrders(viewer: Viewer): Promise<OrderRow[]> {
       period_start: true,
       period_end: true,
       currency: true,
+      provider_accepted_at: true,
+      buyer_accepted_at: true,
     },
   });
   if (orders.length === 0) return [];
@@ -320,6 +332,7 @@ export async function listOrders(viewer: Viewer): Promise<OrderRow[]> {
       lineCount: mine.length,
       workRequestId: o.work_request_id,
       externalRef: o.external_ref,
+      waiting: waitingLine(o, party, { buyer: names.get(o.buyer_person_id) ?? "the buyer", provider: names.get(o.provider_person_id) ?? "the provider" }),
     };
   });
 }
@@ -367,6 +380,8 @@ export type OrderDetail = {
   workRequestId: string | null;
   providerAcceptedAt: string | null;
   buyerReleasedAt: string | null;
+  buyerAcceptedAt: string | null;
+  waiting: string | null;
   termsVersion: string | null;
   lines: OrderLineView[];
   valueCents: number;
@@ -526,6 +541,8 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     workRequestId: o.work_request_id,
     providerAcceptedAt: o.provider_accepted_at ? o.provider_accepted_at.toISOString() : null,
     buyerReleasedAt: o.buyer_released_at ? o.buyer_released_at.toISOString() : null,
+    buyerAcceptedAt: o.buyer_accepted_at ? o.buyer_accepted_at.toISOString() : null,
+    waiting: waitingLine(o, party, { buyer: names.get(o.buyer_person_id) ?? "the buyer", provider: names.get(o.provider_person_id) ?? "the provider" }),
     termsVersion: o.terms_version,
     lines: views,
     valueCents,

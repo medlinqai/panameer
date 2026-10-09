@@ -92,7 +92,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
       {s.status === "REJECTED" && (
         <div className="mt-5 rounded-brand border-2 border-rose-300 bg-rose-50/60 p-5">
-          <p className="text-[15px] font-bold">Sent back</p>
+          <p className="text-[15px] font-bold">Rejected</p>
           <p className="mt-1 whitespace-pre-wrap text-[14.5px] leading-relaxed text-ink-2">
             {s.decisionNote}
           </p>

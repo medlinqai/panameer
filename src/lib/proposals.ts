@@ -1,3 +1,4 @@
+import { PROPOSAL_LABEL } from "@/lib/oracle-status";
 import type { ProposalStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { SourcingError, inviteIsOpen } from "@/lib/sourcing";
@@ -284,15 +285,7 @@ export async function withdrawProposal(
 // WS-D · THE BUYER READS THE PROPOSALS. READ-ONLY — NO DECISION IS TAKEN.
 
 /** A `Record`, SO AN EIGHTH `ProposalStatus` IS A COMPILE ERROR. The */
-export const PROPOSAL_STATUS_LABEL: Record<ProposalStatus, string> = {
-  DRAFT: "Draft",
-  SUBMITTED: "Submitted",
-  SHORTLISTED: "Shortlisted",
-  WITHDRAWN: "Withdrawn",
-  DECLINED: "Declined",
-  AWARDED: "Awarded",
-  NOT_SELECTED: "Not selected",
-};
+export const PROPOSAL_STATUS_LABEL: Record<ProposalStatus, string> = PROPOSAL_LABEL;
 
 /** One proposal as the buyer's compare view reads it. */
 export type ProposalForBuyer = {

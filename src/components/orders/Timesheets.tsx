@@ -1,8 +1,9 @@
+import { SETTLEMENT_LABEL } from "@/lib/oracle-status";
 import Link from "next/link";
 import { formatCents } from "@/lib/display";
 import type { TimesheetWeek } from "@/lib/wo-plan";
 
-const STATUS: Record<string, string> = { SUBMITTED: "Awaiting approval", APPROVED: "Approved", REJECTED: "Sent back", PAID: "Paid" };
+const STATUS: Record<string, string> = SETTLEMENT_LABEL;
 
 // Board 3: week · hours · amount · status, one line per week of each payment request.
 export function Timesheets({ weeks, currency }: { weeks: TimesheetWeek[]; currency: string }) {

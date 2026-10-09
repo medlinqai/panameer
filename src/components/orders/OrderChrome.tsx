@@ -1,4 +1,5 @@
 import type { WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
+import { WORK_ORDER_LABEL, WORK_ORDER_TONE } from "@/lib/oracle-status";
 
 export function OriginBadge({ origin }: { origin: WorkOrderOrigin }) {
   if (origin !== "DIRECT") return null;
@@ -13,30 +14,12 @@ export function OriginBadge({ origin }: { origin: WorkOrderOrigin }) {
   );
 }
 
-const TONE: Record<WorkOrderStatus, string> = {
-  DRAFT: "bg-ink/[0.05] text-ink-2",
-  ISSUED: "bg-amber-50 text-amber-700",
-  ACCEPTED: "bg-sky-50 text-sky-700",
-  RELEASED: "bg-emerald-50 text-emerald-700",
-  ACTIVE: "bg-emerald-50 text-emerald-700",
-  CLOSED: "bg-ink/[0.05] text-ink-2",
-  CANCELLED: "bg-ink/[0.05] text-ink-2",
-};
 
-const LABEL: Record<WorkOrderStatus, string> = {
-  DRAFT: "Draft",
-  ISSUED: "Issued",
-  ACCEPTED: "Accepted",
-  RELEASED: "Released",
-  ACTIVE: "Active",
-  CLOSED: "Closed",
-  CANCELLED: "Cancelled",
-};
-
-export function StatusPill({ status }: { status: WorkOrderStatus }) {
+export function StatusPill({ status, waiting }: { status: WorkOrderStatus; waiting?: string | null }) {
   return (
-    <span className={`rounded-full px-3 py-1 text-[12.5px] font-bold ${TONE[status]}`}>
-      {LABEL[status]}
+    <span className="inline-flex flex-col items-end">
+      <span className={`rounded-full px-3 py-1 text-[12.5px] font-bold ${WORK_ORDER_TONE[status]}`}>{WORK_ORDER_LABEL[status]}</span>
+      {waiting && <span className="mt-1 text-[12px] text-ink-2">{waiting}</span>}
     </span>
   );
 }

@@ -1,12 +1,13 @@
 import { adminSettlements } from "@/lib/admin-money";
 import { Listing } from "@/components/console/ConsolePage";
 import { formatCents } from "@/lib/display";
+import { SETTLEMENT_LABEL } from "@/lib/oracle-status";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Payment Requests · Admin · Panameer" };
 
 const statusLabel = (s: { status: string; paidOut: boolean }) =>
-  s.status === "PAID" ? (s.paidOut ? "paid out" : "buyer paid · payout due") : s.status.toLowerCase();
+  s.status === "PAID" ? (s.paidOut ? "Paid out" : "Buyer paid · payout due") : SETTLEMENT_LABEL[s.status as keyof typeof SETTLEMENT_LABEL] ?? s.status;
 
 export default async function Page() {
   const rows = await adminSettlements();

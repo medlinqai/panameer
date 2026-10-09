@@ -2,21 +2,10 @@ import Link from "next/link";
 import { formatCents } from "@/lib/display";
 import type { SettlementRow } from "@/lib/settlements";
 import type { SettlementStatus } from "@prisma/client";
+import { SETTLEMENT_LABEL, SETTLEMENT_TONE } from "@/lib/oracle-status";
 
-const TONE: Record<SettlementStatus, string> = {
-  DRAFT: "bg-ink/[0.05] text-ink-2",
-  SUBMITTED: "bg-amber-50 text-amber-700",
-  APPROVED: "bg-emerald-50 text-emerald-700",
-  REJECTED: "bg-rose-50 text-rose-700",
-  PAID: "bg-emerald-50 text-emerald-700",
-};
-const LABEL: Record<SettlementStatus, string> = {
-  DRAFT: "Draft",
-  SUBMITTED: "Awaiting approval",
-  APPROVED: "Approved",
-  REJECTED: "Sent back",
-  PAID: "Paid",
-};
+const TONE = SETTLEMENT_TONE;
+const LABEL = SETTLEMENT_LABEL;
 
 /** `paidOut` is passed on the provider's side only: buyer-paid but not yet paid out reads "Payout pending". */
 export function SettlementStatusPill({ status, paidOut }: { status: SettlementStatus; paidOut?: boolean }) {
