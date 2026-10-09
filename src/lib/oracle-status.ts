@@ -27,6 +27,8 @@ export const WORK_ORDER_LABEL: Record<WorkOrderStatus, string> = {
   ACTIVE: "Open",
   CLOSED: "Closed",
   CANCELLED: "Canceled",
+  ON_HOLD: "On Hold",
+  FINALLY_CLOSED: "Finally Closed",
 };
 
 export const WORK_ORDER_LINE_LABEL: Record<WorkOrderLineStatus, string> = {
@@ -34,6 +36,7 @@ export const WORK_ORDER_LINE_LABEL: Record<WorkOrderLineStatus, string> = {
   DRAWN: "Closed for Invoicing",
   CLOSED: "Closed",
   CANCELLED: "Canceled",
+  FINALLY_CLOSED: "Finally Closed",
 };
 
 export const SETTLEMENT_LABEL: Record<SettlementStatus, string> = {
@@ -58,5 +61,5 @@ const WAIT = "border border-magenta text-magenta-dark";
 const LIVE = "bg-ink text-surface";
 
 export const WORK_REQUEST_TONE: Record<WorkRequestStatus, string> = { DRAFT: QUIET, POSTED: LIVE, ASSIGNED: WAIT, ORDERED: LIVE, CANCELLED: QUIET };
-export const WORK_ORDER_TONE: Record<WorkOrderStatus, string> = { DRAFT: QUIET, ISSUED: WAIT, ACCEPTED: WAIT, RELEASED: LIVE, ACTIVE: LIVE, CLOSED: QUIET, CANCELLED: QUIET };
+export const WORK_ORDER_TONE: Record<WorkOrderStatus, string> = { DRAFT: QUIET, ISSUED: WAIT, ACCEPTED: WAIT, RELEASED: LIVE, ACTIVE: LIVE, CLOSED: QUIET, CANCELLED: QUIET, ON_HOLD: WAIT, FINALLY_CLOSED: QUIET };
 export const SETTLEMENT_TONE: Record<SettlementStatus, string> = { DRAFT: QUIET, SUBMITTED: WAIT, APPROVED: LIVE, REJECTED: "bg-rose-50 text-rose-700", PAID: LIVE };

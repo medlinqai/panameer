@@ -46,7 +46,8 @@ export async function openRequests(): Promise<OpenRequest[]> {
   });
   if (rows.length === 0) return [];
   const orders = await prisma.workOrder.findMany({
-    where: { id: { in: rows.map((r) => r.work_order_id) } },
+    // O-E002: an order on hold can't be paid until the hold is released.
+    where: { id: { in: rows.map((r) => r.work_order_id) }, status: { not: "ON_HOLD" } },
     select: { id: true, order_number: true, p_account_id: true, buyer_person_id: true, provider_person_id: true },
   });
   const byOrder = new Map(orders.map((o) => [o.id, o]));
@@ -59,7 +60,7 @@ export async function openRequests(): Promise<OpenRequest[]> {
     _sum: { amount_cents: true },
   });
   const allocated = new Map(alloc.map((a) => [a.settlement_request_id, a._sum.amount_cents ?? 0]));
-  return rows.map((r) => {
+  return rows.filter((r) => byOrder.has(r.work_order_id)).map((r) => {
     const o = byOrder.get(r.work_order_id)!;
     const total = r.lines.reduce((n, l) => n + settlementValue(l), 0);
     const got = allocated.get(r.id) ?? 0;

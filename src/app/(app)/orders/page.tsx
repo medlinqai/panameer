@@ -121,7 +121,7 @@ export default async function Page() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <StatusPill status={o.status} waiting={o.waiting} />
+                  <StatusPill status={o.status} waiting={o.waiting} frozen={o.frozen} />
                   <p className="mt-1.5 text-[15px] font-bold">
                     {formatCents(o.valueCents, o.currency)}
                   </p>

@@ -48,7 +48,7 @@ const CHECK: [string, string][] = [
   ["3 skills", "at least three skills"], ["Specialization", "at least one specialization"], ["Rate", "your rate"],
   ["Language", "at least one language"], ["Location", "your location"], ["Address", "your address"], ["Phone", "your phone number"],
 ];
-const SIGNED = ["ACCEPTED", "RELEASED", "ACTIVE", "CLOSED"] as const;
+const SIGNED = ["ACCEPTED", "RELEASED", "ACTIVE", "CLOSED", "ON_HOLD", "FINALLY_CLOSED"] as const;
 
 export default async function AdminUserPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

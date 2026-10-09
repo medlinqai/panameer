@@ -695,6 +695,17 @@ export const NOTIFICATION_EVENTS = {
     body: (v) => str(v, "requestTitle", "") || null,
     href: (v) => `/orders/${str(v, "orderId", "")}`,
   },
+  "work.order_control": {
+    event: "work.order_control",
+    recipient: "the provider on the order",
+    category: "work_order.status",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `${str(v, "orderNumber", "A work order")}: ${str(v, "done", "status changed")}`,
+    body: (v) => `${str(v, "buyerName", "The customer")} ${str(v, "text", "changed this work order.")}`,
+    href: (v) => `/orders/${str(v, "orderId", "")}`,
+  },
   "work.settlement_approval": {
     event: "work.settlement_approval",
     recipient: "the buyer who owes the approval",

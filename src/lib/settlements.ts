@@ -12,7 +12,7 @@ import {
   type DraftSettlementLine,
   type OrderLineForDraw,
 } from "@/lib/transaction-spine";
-import { getOrderDetail, listOrders, OrderError, type OrderParty } from "@/lib/orders";
+import { BILLABLE, getOrderDetail, listOrders, OrderError, PAYABLE, type OrderParty } from "@/lib/orders";
 
 export class SettlementError extends Error {
   constructor(message: string, public code: "NOT_FOUND" | "FORBIDDEN" | "INVALID") {
@@ -48,7 +48,7 @@ export type SettleableOrder = {
 export async function settleableOrdersFor(viewer: Viewer): Promise<SettleableOrder[]> {
   const orders = await listOrders(viewer);
   return orders
-    .filter((o) => o.party === "PROVIDER" && o.status === "RELEASED")
+    .filter((o) => o.party === "PROVIDER" && BILLABLE.includes(o.status))
     .map((o) => ({
       id: o.id,
       orderNumber: o.orderNumber,
@@ -97,9 +97,9 @@ export async function settleFormFor(viewer: Viewer, orderId: string): Promise<Se
   // ONLY THE PROVIDER RAISES A SETTLEMENT. A buyer reaching this URL is not
   if (o.party !== "PROVIDER")
     throw new SettlementError("Only the provider on this order can raise a payment request", "FORBIDDEN");
-  if (o.status !== "RELEASED")
+  if (!BILLABLE.includes(o.status))
     throw new SettlementError(
-      "A payment request can only be raised against a released work order",
+      o.status === "ON_HOLD" ? "This work order is on hold. Payment requests wait until the customer releases the hold." : "A payment request can only be raised against an open or closed work order",
       "INVALID"
     );
 
@@ -617,6 +617,9 @@ export async function approveSettlement(viewer: Viewer, id: string): Promise<Set
         : "This payment request is not waiting for a decision",
       current.party === "PROVIDER" ? "FORBIDDEN" : "INVALID"
     );
+  const order = await prisma.workOrder.findUnique({ where: { id: current.orderId }, select: { status: true } });
+  if (order && !PAYABLE.includes(order.status))
+    throw new SettlementError(order.status === "ON_HOLD" ? "This work order is on hold. Release the hold before approving." : "This work order can't take approvals", "INVALID");
   await prisma.settlementRequest.updateMany({
     where: { id, status: "SUBMITTED" },
     data: { status: "APPROVED", decided_at: new Date(), decided_by_person_id: await personIdOf(viewer) },

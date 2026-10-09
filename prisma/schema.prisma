@@ -5989,6 +5989,10 @@ enum WorkOrderStatus {
   ACTIVE
   CLOSED
   CANCELLED
+  /// O-E002: customer hold — no payment requests, approvals or payments until released.
+  ON_HOLD
+  /// O-E002: permanent; nothing further.
+  FINALLY_CLOSED
 }
 
 enum WorkOrderLineStatus {
@@ -5996,6 +6000,7 @@ enum WorkOrderLineStatus {
   DRAWN
   CLOSED
   CANCELLED
+  FINALLY_CLOSED
 }
 
 model WorkOrder {
@@ -6096,6 +6101,10 @@ model WorkOrder {
   /// Run 13: the buyer's statement of work, written when ordering; the provider reads it before accepting.
   sow_text String?
   external_ref String?
+
+  /// O-E002: Freeze is a flag beside the status (Oracle "Open · Frozen"); Hold remembers the status it returns to.
+  frozen_at        DateTime?
+  held_from_status WorkOrderStatus?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

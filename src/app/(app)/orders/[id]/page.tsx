@@ -13,7 +13,8 @@ import { loadWoMoney } from "@/lib/wo-money";
 import { WoPlanSection } from "@/components/orders/WoPlanSection";
 import { History } from "@/components/orders/History";
 import { orderHistory } from "@/lib/transaction-history";
-import { CloseOrder } from "@/components/orders/CloseOrder";
+import { OrderControls } from "@/components/orders/OrderControls";
+import { BILLABLE } from "@/lib/orders";
 import { BuyerCard } from "@/components/orders/BuyerCard";
 import { WORK_ORDER_LINE_LABEL } from "@/lib/oracle-status";
 
@@ -49,7 +50,7 @@ export default async function Page({
         <h1 className="mt-1 text-[28px] font-bold">{o.lines[0]?.description ?? o.orderNumber}</h1>
         <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
           <p className="text-[14px] text-ink-2">{o.buyerName} · {o.providerName}</p>
-          {o.party === "PROVIDER" && o.status === "RELEASED" && (
+          {o.party === "PROVIDER" && BILLABLE.includes(o.status) && (
             <a href={`/orders/${o.id}/settle`} className="inline-flex min-h-11 w-full items-center justify-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover sm:w-auto">
               Submit Time
             </a>
@@ -78,7 +79,7 @@ export default async function Page({
             {o.buyerName} <span className="text-ink-2/60">→</span> {o.providerName}
           </p>
         </div>
-        <StatusPill status={o.status} waiting={o.waiting} />
+        <StatusPill status={o.status} waiting={o.waiting} frozen={o.frozen} />
       </div>
 
       <OrderTabs id={o.id} current="overview" />
@@ -200,10 +201,10 @@ export default async function Page({
 
       <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-line pt-6">
         {/* RAISING A PAYMENT REQUEST LIVES INSIDE THE ORDER . */}
-        {o.party === "PROVIDER" && o.status === "RELEASED" && (
+        {o.party === "PROVIDER" && BILLABLE.includes(o.status) && (
           <Button href={`/orders/${o.id}/settle`}>Raise a payment request</Button>
         )}
-        {o.party === "BUYER" && (o.status === "RELEASED" || o.status === "ACTIVE") && <CloseOrder orderId={o.id} />}
+        <OrderControls orderId={o.id} controls={o.controls} unusedLabel={formatCents(o.remainingCents, o.currency)} pending={o.pendingRequests} />
         {o.workRequestId && (
           <Button href={`/work-requests/${o.workRequestId}`} variant="ghost">
             Open the work request

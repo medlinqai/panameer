@@ -185,9 +185,9 @@ export function assertSettlementDraw(input: {
   /** Cents already settled against this ORDER, for rule 4. */
   alreadySettledCents: number;
 }): void {
-  if (input.order.status !== "RELEASED")
+  if (!["RELEASED", "ACTIVE", "CLOSED"].includes(input.order.status))
     throw new SpineError(
-      "A settlement may only be raised against a RELEASED work order",
+      input.order.status === "ON_HOLD" ? "This work order is on hold. Payment requests wait until the customer releases the hold." : "A payment request can only be raised against an open or closed work order",
       "ORDER_NOT_RELEASED"
     );
 

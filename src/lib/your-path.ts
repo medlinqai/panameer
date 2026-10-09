@@ -3,7 +3,7 @@ import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { LIFECYCLE, PROVIDER_ROAD, lifecycleStatus, type LifecycleFacts } from "@/lib/user-levels";
 
 // Lifecycle loader for one person; the work-order gate reads the same Validate Company check.
-const SIGNED = ["ACCEPTED", "RELEASED", "ACTIVE", "CLOSED"] as const;
+const SIGNED = ["ACCEPTED", "RELEASED", "ACTIVE", "CLOSED", "ON_HOLD", "FINALLY_CLOSED"] as const;
 const isUS = (country: string | null | undefined) => !country?.trim() || /^(us|usa|united states( of america)?)$/i.test(country.trim());
 
 /** Validate Company: legal name + tax ID + W-9 / W-8BEN-E; a provider's company also needs a payout account (always in the legal name). */

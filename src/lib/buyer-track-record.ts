@@ -18,7 +18,7 @@ export type TrackRecord = {
   erp: string | null;
   isNew: boolean;
 };
-const LIVE = ["ISSUED", "ACCEPTED", "RELEASED", "ACTIVE", "CLOSED"] as const;
+const LIVE = ["ISSUED", "ACCEPTED", "RELEASED", "ACTIVE", "CLOSED", "ON_HOLD", "FINALLY_CLOSED"] as const;
 const DAY = 86_400_000;
 
 export async function buyerTrackRecord(companyId: string): Promise<TrackRecord | null> {

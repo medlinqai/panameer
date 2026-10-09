@@ -1,5 +1,6 @@
 import { assertCanSign } from "@/lib/your-path";
-import { TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
+import { Prisma, TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
+import { notify } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { feeSplit, pricedByQuantity } from "@/lib/transaction-spine";
 import type { Viewer } from "@/lib/access";
@@ -85,9 +86,15 @@ export function activationMessage(status: WorkOrderStatus, party: OrderParty): s
     case "ACTIVE":
       return "Both parties have accepted. Settlements can be raised against this order.";
     case "CLOSED":
-      return "This order is closed.";
+      return "This order is closed. Payment requests can still be submitted, approved and paid.";
     case "CANCELLED":
       return "This order was canceled.";
+    case "ON_HOLD":
+      return party === "BUYER"
+        ? "On hold. No payment requests can be raised, approved or paid until you release the hold."
+        : "The buyer put this order on hold. Payment requests wait until the hold is released.";
+    case "FINALLY_CLOSED":
+      return "This order is finally closed. Nothing further can happen on it.";
   }
 }
 
@@ -238,6 +245,7 @@ export type OrderRow = {
   workRequestId: string | null;
   externalRef: string | null;
   waiting: string | null;
+  frozen: boolean;
 };
 
 async function namesFor(personIds: string[]): Promise<Map<string, string>> {
@@ -275,6 +283,7 @@ export async function listOrders(viewer: Viewer): Promise<OrderRow[]> {
       currency: true,
       provider_accepted_at: true,
       buyer_accepted_at: true,
+      frozen_at: true,
     },
   });
   if (orders.length === 0) return [];
@@ -333,6 +342,7 @@ export async function listOrders(viewer: Viewer): Promise<OrderRow[]> {
       workRequestId: o.work_request_id,
       externalRef: o.external_ref,
       waiting: waitingLine(o, party, { buyer: names.get(o.buyer_person_id) ?? "the buyer", provider: names.get(o.provider_person_id) ?? "the provider" }),
+      frozen: !!o.frozen_at,
     };
   });
 }
@@ -398,6 +408,10 @@ export type OrderDetail = {
   paidCents: number;
   remainingCents: number;
   actions: OrderAction[];
+  controls: OrderControl[];
+  frozen: boolean;
+  /** Payment requests waiting on the customer (Finally Close is refused while any exist). */
+  pendingRequests: number;
   activationMessage: string;
   /** True when ANY line's terms moved against what was asked. */
   hasChanges: boolean;
@@ -557,6 +571,9 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     remainingCents: Math.max(0, (o.not_to_exceed_cents ?? valueCents) - approvedCents),
     // THE ACTIONS COME FROM THE ONE FUNCTION, SERVER-SIDE, AND THE PAGE
     actions: availableActions(o, party),
+    controls: availableControls(o, party),
+    frozen: !!o.frozen_at,
+    pendingRequests: await prisma.settlementRequest.count({ where: { work_order_id: o.id, status: "SUBMITTED" } }),
     activationMessage: activationMessage(o.status, party),
     hasChanges: views.some((v) => v.changes.length > 0),
   };
@@ -642,17 +659,84 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
 
 // AUTO-RELEASE REPLACED IT. `RELEASED` is now produced by the buyer's
 
-/** The buyer closes a released order: no more payment requests can be raised against it. */
-export async function closeOrder(viewer: Viewer, id: string): Promise<OrderDetail> {
-  const { order, party } = await loadParty(viewer, id);
-  if (party !== "BUYER") throw new OrderError("Only the buyer can close this work order", "FORBIDDEN");
-  if (order.status !== "RELEASED" && order.status !== "ACTIVE")
-    throw new OrderError("Only a released work order can be closed", "INVALID");
-  const waiting = await prisma.settlementRequest.count({ where: { work_order_id: id, status: "SUBMITTED" } });
-  if (waiting > 0)
-    throw new OrderError(`Decide the ${waiting} payment request${waiting === 1 ? "" : "s"} waiting on you first`, "INVALID");
-  await prisma.workOrder.updateMany({ where: { id, status: { in: ["RELEASED", "ACTIVE"] } }, data: { status: "CLOSED" } });
+/** Statuses a payment request can be submitted against (Oracle: Open, and Closed until Finally Closed). */
+export const BILLABLE: WorkOrderStatus[] = ["RELEASED", "ACTIVE", "CLOSED"];
+/** Statuses where a pending payment request can be approved or paid (not On Hold, not Finally Closed). */
+export const PAYABLE: WorkOrderStatus[] = ["RELEASED", "ACTIVE", "CLOSED"];
+
+export type OrderControl = "HOLD" | "RELEASE_HOLD" | "FREEZE" | "UNFREEZE" | "CLOSE" | "REOPEN" | "FINALLY_CLOSE";
+
+const OPEN: WorkOrderStatus[] = ["RELEASED", "ACTIVE"];
+
+/** Which controls the customer has right now (Oracle's control-action table). ERP orders are controlled in the ERP. */
+export function availableControls(o: { status: WorkOrderStatus; frozen_at?: Date | string | null; erp?: boolean }, party: OrderParty): OrderControl[] {
+  if (party !== "BUYER" || o.erp) return [];
+  const out: OrderControl[] = [];
+  if (OPEN.includes(o.status)) out.push("HOLD", o.frozen_at ? "UNFREEZE" : "FREEZE", "CLOSE");
+  if (o.status === "ON_HOLD") out.push("RELEASE_HOLD");
+  if (o.status === "CLOSED") out.push("REOPEN");
+  if (OPEN.includes(o.status) || o.status === "CLOSED") out.push("FINALLY_CLOSE");
+  return out;
+}
+
+const CONTROL_TEXT: Record<OrderControl, { done: string; provider: string }> = {
+  HOLD: { done: "Put on hold", provider: "put {order} on hold. Payment requests wait until the hold is released." },
+  RELEASE_HOLD: { done: "Hold released", provider: "released the hold on {order}. You can raise payment requests again." },
+  FREEZE: { done: "Frozen", provider: "froze {order}. No change orders; payment requests carry on." },
+  UNFREEZE: { done: "Unfrozen", provider: "unfroze {order}. Change orders are possible again." },
+  CLOSE: { done: "Closed", provider: "closed {order}. You can still submit payment requests for work done." },
+  REOPEN: { done: "Reopened", provider: "reopened {order}." },
+  FINALLY_CLOSE: { done: "Finally closed", provider: "finally closed {order}. Nothing further can be raised on it." },
+};
+
+/** The customer's Hold / Freeze / Close / Finally Close, each conditional on the status it read. */
+export async function controlOrder(viewer: Viewer, id: string, action: OrderControl): Promise<OrderDetail> {
+  const personId = await ownPersonId(viewer);
+  const o = await prisma.workOrder.findFirst({
+    where: { id, OR: [{ buyer_person_id: personId }, { provider_person_id: personId }] },
+    select: { id: true, order_number: true, status: true, frozen_at: true, held_from_status: true, buyer_person_id: true, provider_person_id: true },
+  });
+  if (!o) throw new OrderError("Work order not found", "NOT_FOUND");
+  const party = partyFor(o, personId);
+  if (party !== "BUYER") throw new OrderError("Only the customer can change this work order's status", "FORBIDDEN");
+  if (!availableControls(o, party).includes(action)) throw new OrderError(`This work order can't be ${CONTROL_TEXT[action].done.toLowerCase()} from ${o.status.toLowerCase().replace("_", " ")}`, "INVALID");
+
+  let data: Prisma.WorkOrderUpdateManyMutationInput;
+  switch (action) {
+    case "HOLD": data = { status: "ON_HOLD", held_from_status: o.status }; break;
+    case "RELEASE_HOLD": data = { status: o.held_from_status ?? "RELEASED", held_from_status: null }; break;
+    case "FREEZE": data = { frozen_at: new Date() }; break;
+    case "UNFREEZE": data = { frozen_at: null }; break;
+    case "CLOSE": data = { status: "CLOSED" }; break;
+    case "REOPEN": data = { status: "RELEASED" }; break;
+    case "FINALLY_CLOSE": {
+      const pending = await prisma.settlementRequest.count({ where: { work_order_id: id, status: "SUBMITTED" } });
+      if (pending > 0) throw new OrderError("Approve or reject the pending payment request first.", "INVALID");
+      data = { status: "FINALLY_CLOSED", frozen_at: null };
+      break;
+    }
+  }
+  const moved = await prisma.workOrder.updateMany({ where: { id, status: o.status }, data });
+  if (moved.count === 0) throw new OrderError("This work order changed while you were looking at it. Refresh and try again.", "INVALID");
+  if (action === "FINALLY_CLOSE")
+    await prisma.workOrderLine.updateMany({ where: { work_order_id: id, status: { notIn: ["CANCELLED"] } }, data: { status: "FINALLY_CLOSED" } });
+  await prisma.workOrderEvent.create({ data: { work_order_id: id, person_id: personId, kind: `control.${action.toLowerCase()}`, text: CONTROL_TEXT[action].done } });
+
+  const names = await namesFor([o.buyer_person_id]);
+  await notify({
+    event: "work.order_control",
+    personId: o.provider_person_id,
+    entityType: "work_order",
+    entityId: id,
+    dedupeKey: `work.order_control:${id}:${action}:${Date.now()}`,
+    vars: { orderId: id, orderNumber: o.order_number, buyerName: names.get(o.buyer_person_id) ?? "The customer", text: CONTROL_TEXT[action].provider.replace("{order}", o.order_number), done: CONTROL_TEXT[action].done },
+  });
   return getOrderDetail(viewer, id);
+}
+
+/** Kept for the existing close route: Close (Oracle) — payment requests continue; Reopen allowed. */
+export async function closeOrder(viewer: Viewer, id: string): Promise<OrderDetail> {
+  return controlOrder(viewer, id, "CLOSE");
 }
 
 /** Closes an order once the buyer has paid everything it can be billed for (cap, or value when uncapped). */

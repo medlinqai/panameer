@@ -120,7 +120,7 @@ export default async function Page({
   const realPeople = people.filter((p) => !p.user?.is_test);
   // Lifecycle: each real person is in the box of their status (Registered … Paid).
   const companyIds = [...new Set(people.map((p) => p.companyMemberships[0]?.company_id).filter((x): x is string => !!x))];
-  const SIGNED = ["ACCEPTED", "RELEASED", "ACTIVE", "CLOSED"] as const;
+  const SIGNED = ["ACCEPTED", "RELEASED", "ACTIVE", "CLOSED", "ON_HOLD", "FINALLY_CLOSED"] as const;
   const [cos, orders, payoutsPaid] = await Promise.all([
     prisma.company.findMany({ where: { id: { in: companyIds } }, select: { id: true, name: true, legal_name: true, tin: true, tax_form_uploaded_at: true, p_account_id: true, _count: { select: { payoutMethods: true } }, memberships: { where: { status: "APPROVED" }, select: { person_id: true } } } }),
     prisma.workOrder.findMany({ where: { status: { in: [...SIGNED] } }, select: { buyer_person_id: true, provider_person_id: true } }),
