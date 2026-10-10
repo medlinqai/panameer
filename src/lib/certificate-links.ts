@@ -6,7 +6,8 @@ export const certificateImageUrl = (credentialId: string) => `${appUrl()}/api/ce
 /** LinkedIn "Add license or certification", prefilled. Falls back to organizationName when the org id isn't set. */
 export function linkedInAddUrl(c: { title: string; credentialId: string; issuedOn: Date | string }) {
   const d = new Date(c.issuedOn);
-  const org = process.env.NEXT_PUBLIC_LINKEDIN_ORG_ID?.trim();
+  // Panameer's public LinkedIn company id (Scott 2026-10-10). Default here so localhost links get the logo too.
+  const org = process.env.NEXT_PUBLIC_LINKEDIN_ORG_ID?.trim() || "74523679";
   const q = new URLSearchParams({
     startTask: "CERTIFICATION_NAME",
     name: `${c.title} – Panameer Certificate`,
