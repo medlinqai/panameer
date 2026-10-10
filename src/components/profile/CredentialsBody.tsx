@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CLEAN_CHIP } from "@/components/profile/CleanSection";
+import { BRAND_GRADIENT } from "@/lib/certificate-links";
 import type { CertificationItem } from "@/components/profile/sections";
 
 // Credentials (2026-10-08): grouped headings with chips, like Skills. Verified (Learn) chips are filled ink with ✓.
@@ -26,9 +27,34 @@ export function CredentialsBody({ credentials, empty, emptyAction }: { credentia
         {emptyAction}
       </>
     );
-  const groups = CREDENTIAL_KINDS.map((k) => ({ ...k, items: credentials.filter((c) => (c.kind ?? "CERTIFICATION") === k.key) })).filter((g) => g.items.length);
+  // L-E057: Panameer-issued certificates stand apart as gradient badges; self-added ones keep the plain chips.
+  const panameer = credentials.filter((c) => c.issuedFrom === "LEARN");
+  const own = credentials.filter((c) => c.issuedFrom !== "LEARN");
+  const groups = CREDENTIAL_KINDS.map((k) => ({ ...k, items: own.filter((c) => (c.kind ?? "CERTIFICATION") === k.key) })).filter((g) => g.items.length);
   return (
     <div data-credentials>
+      {panameer.length > 0 && (
+        <div data-panameer-certificates className="mb-4">
+          <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">Panameer Certificates</p>
+          <div className="flex flex-wrap gap-2">
+            {panameer.map((c, i) => (
+              <a
+                key={c.id ?? `p-${i}`}
+                href={c.credentialId ? `/verify/${c.credentialId}` : c.publicUrl ?? "#"}
+                title="Issued by Panameer after passing the test."
+                data-panameer-badge
+                className="inline-flex max-w-full items-center gap-2 px-3 py-1.5 text-white shadow-sm hover:brightness-110"
+                style={{ background: BRAND_GRADIENT }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/brand/panameer-mark-32.png" alt="" className="h-4 w-4 shrink-0" />
+                <span className="min-w-0 truncate text-[12.5px] font-bold">{c.name}</span>
+                {day(c.issuedOn) && <span className="shrink-0 text-[11px] text-white/75">{day(c.issuedOn)}</span>}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
       {groups.map((g) => (
         <div key={g.key} data-credential-kind={g.key} className="mb-3 last:mb-0">
           <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">{g.label}</p>
