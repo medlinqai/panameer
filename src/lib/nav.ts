@@ -208,6 +208,12 @@ export const PERSONA_NAV: NavItem[] = [
   { label: "Support", href: "/support/tickets" },
 ];
 export const COMPANY_PERSONA_ITEM: NavItem = { label: "Company", href: "/company" };
+/** Providers' catalog in the My menu, after Profile and Company (Scott 2026-10-10). */
+export const SELLER_PERSONA_ITEMS: NavItem[] = [
+  { label: "Services", href: "/profile#my-services" },
+  { label: "Service Products", href: "/profile#my-service-products" },
+  { label: "Cost Estimates", href: "/profile#my-cost-estimates" },
+];
 
 export const THEME_BEFORE_HREF = null;
 
