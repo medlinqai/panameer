@@ -41,7 +41,7 @@ export default async function ReadyPage({ params }: { params: Promise<{ slug: st
           ) : p.test.ready ? (
             <Link href={`/learn/${slug}/test`} data-take-test className={BTN_K}>Take the Test</Link>
           ) : (
-            <NotifyMe pathId={p.id} initial={p.watchingTest} signedIn test label="Test Opens Soon · Notify Me" className={BTN_K.replace("bg-ink", "bg-surface").replace("text-surface", "text-ink") + " border border-ink"} />
+            <NotifyMe pathId={p.id} initial={p.watchingTest} signedIn test label="Test Opens Soon · Notify Me" className={BTN + " bg-surface text-ink"} />
           )}
           <Link href={top ? `/learn/${top.path.slug}` : PICK_NEXT_HREF} className={BTN}>{top ? `Continue With ${top.path.title}` : "Pick Your Next Path"}</Link>
         </div>
