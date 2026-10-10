@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { CertificateCard } from "@/components/certificates/CertificateCard";
+import { CertificateActions } from "@/components/certificates/CertificateActions";
+import { Confetti } from "@/components/certificates/Confetti";
 import { useEffect, useState } from "react";
 import { ProgressBar } from "@/components/learn/ProgressBar";
 
@@ -39,10 +42,15 @@ export function TestRunner({
   pathId,
   pathSlug,
   pathTitle,
+  holderName = "",
+  next = null,
 }: {
   pathId: string;
   pathSlug: string;
   pathTitle: string;
+  holderName?: string;
+  /** L-E056: the What's Next chooser, rendered on the server. */
+  next?: React.ReactNode;
 }) {
   const [state, setState] = useState<State | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,7 +114,7 @@ export function TestRunner({
   }
   if (!state) return null;
 
-  if (result) return <ResultPanel result={result} pathSlug={pathSlug} pathTitle={pathTitle} />;
+  if (result) return <ResultPanel result={result} pathSlug={pathSlug} pathTitle={pathTitle} holderName={holderName} next={next} courseOf={new Map(state.questions.map((q) => [q.id, q.courseTitle]))} />;
 
   const q = state.questions[at];
   const answered = Object.keys(answers).length;
@@ -233,70 +241,57 @@ function ResultPanel({
   result,
   pathSlug,
   pathTitle,
+  holderName,
+  next,
+  courseOf,
 }: {
   result: Result;
   pathSlug: string;
   pathTitle: string;
+  holderName: string;
+  next: React.ReactNode;
+  courseOf: Map<string, string>;
 }) {
-  const verifyUrl = result.credential
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}${result.credential.url}`
-    : null;
-
+  // L-E056: a pass is a big deal — the certificate card on the brand gradient; a miss stays calm and says what to review.
+  const missedCourses = [...new Set(result.review.filter((r) => !r.correct).map((r) => courseOf.get(r.id)).filter((x): x is string => !!x))];
+  const left = Math.max(0, result.attemptsAllowed - result.attemptsUsed);
   return (
     <div>
-      <div
-        className={
-          "rounded-brand border-2 p-7 text-center " +
-          (result.passed
-            ? "border-ink bg-[#C9CDDC]/25"
-            : "border-amber-500/40 bg-amber-500/[0.06]")
-        }
-      >
-        <p className="font-display text-[42px] font-bold leading-none">{result.score}%</p>
-        <p className="mt-2 text-[18px] font-bold">
-          {result.passed ? "Passed — nice work." : "Not quite this time."}
-        </p>
-        <p className="mt-1 text-[14.5px] text-ink-2">
-          {result.correct} of {result.total} correct · {result.threshold}% needed
-          {!result.passed &&
-            ` · attempt ${result.attemptsUsed} of ${result.attemptsAllowed}`}
-        </p>
-
-        {result.passed && result.credential && (
-          <div className="mx-auto mt-5 max-w-md rounded-brand border border-line bg-white p-5 text-left">
-            <p className="text-[15px] font-bold">Your certificate is issued.</p>
-            <p className="mt-1 text-[14px] text-ink-2">
-              It&apos;s on your profile under Credentials, and anyone can check it
-              here:
-            </p>
-            <Link
-              href={result.credential.url}
-              className="mt-2 block break-all font-mono text-[13px] font-bold text-magenta hover:underline"
-            >
-              {verifyUrl ?? result.credential.url}
-            </Link>
-            <p className="mt-3 text-[13px] text-ink-2">
-              Paste that link into LinkedIn&apos;s &ldquo;Add license or
-              certification&rdquo; as the credential URL.
-            </p>
+      {result.passed && result.credential ? (
+        <div data-pass-screen>
+          <Confetti />
+          <CertificateCard title={pathTitle} holder={holderName || "You"} issuedOn={new Date().toISOString()} credentialId={result.credential.id} score={result.score} correct={result.correct} total={result.total} />
+          <div className="mt-4">
+            <CertificateActions title={pathTitle} credentialId={result.credential.id} issuedOn={new Date().toISOString()} profileHref="/profile#credentials" />
           </div>
-        )}
+          <p className="mt-2 text-[12.5px] text-ink-3">Issued by Panameer after passing the test. Anyone can check it at the verify link.</p>
+          {next}
+        </div>
+      ) : result.passed ? (
+        <div className="border border-ink p-6">
+          <p className="text-[18px] font-bold">Passed · {result.score}%</p>
+          <p className="mt-1 text-[14px] text-ink-2">You passed, and the attempt is on your record.</p>
+          {next}
+        </div>
+      ) : (
+        <div data-fail-screen className="border border-line p-6">
+          <p className="font-display text-[40px] font-bold leading-none">{result.score}%</p>
+          <p className="mt-2 text-[17px] font-bold">Not quite this time.</p>
+          <p className="mt-1 text-[14px] text-ink-2">{result.correct} of {result.total} correct · {result.threshold}% needed · {left} {left === 1 ? "attempt" : "attempts"} left</p>
+          {missedCourses.length > 0 && (
+            <div className="mt-4">
+              <p className="text-[13px] font-bold">What to review</p>
+              <ul className="mt-1 text-[14px] text-ink-2">{missedCourses.map((c) => <li key={c}>· {c}</li>)}</ul>
+            </div>
+          )}
+          {left > 0 && (
+            <button type="button" onClick={() => window.location.reload()} className="mt-5 inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover">Try Again</button>
+          )}
+        </div>
+      )}
 
-        {result.passed && !result.credential && (
-          <p className="mx-auto mt-5 max-w-md rounded-[10px] bg-white px-4 py-3 text-[14px] text-ink-2">
-            You passed, and the attempt is on your record. Certificates hang off a
-            provider profile — set one up and this becomes a credential you can share.
-          </p>
-        )}
-
-        {!result.passed && result.attemptsUsed < result.attemptsAllowed && (
-          <p className="mt-4 text-[14px] text-ink-2">
-            Look through the answers below, then have another go.
-          </p>
-        )}
-      </div>
-
-      <h2 className="mt-8 text-[19px] font-bold">Your Answers</h2>
+      <details className="mt-8 border-t border-line pt-4">
+        <summary className="cursor-pointer text-[15px] font-bold">Review your answers</summary>
       <div className="mt-3 space-y-3">
         {result.review.map((r, i) => (
           <div
@@ -340,6 +335,7 @@ function ResultPanel({
           </div>
         ))}
       </div>
+      </details>
 
       <div className="mt-8 flex flex-wrap gap-3 border-t border-line pt-6">
         <Link
@@ -348,15 +344,6 @@ function ResultPanel({
         >
           Back to {pathTitle}
         </Link>
-        {!result.passed && result.attemptsUsed < result.attemptsAllowed && (
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-          >
-            Try Again
-          </button>
-        )}
       </div>
     </div>
   );

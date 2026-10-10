@@ -4,6 +4,10 @@ import { getLearnPath } from "@/lib/learn-home";
 import { getSessionViewer } from "@/lib/session";
 import { getTestState } from "@/lib/learn-assessment";
 import { TestRunner } from "@/components/learn/TestRunner";
+import { prisma } from "@/lib/prisma";
+import { recommendNext, testOutPicks } from "@/lib/learn-next";
+import { WhatsNext } from "@/components/learn/WhatsNext";
+import { getSkillAreas } from "@/lib/skill-area-store";
 import { TestPreview } from "@/components/learn/TestPreview";
 import { canAdminister } from "@/lib/access";
 import { BackLink } from "@/components/console/BackLink";
@@ -24,6 +28,12 @@ export default async function TestPage({
   if (!path) notFound();
 
   const state = await getTestState(viewer.userId, path.id);
+  // L-E056: the pass screen's name line and its What's Next chooser (computed here, shown after a pass).
+  const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { first_name: true, last_name: true } });
+  const holderName = `${me?.first_name ?? ""} ${me?.last_name ?? ""}`.trim();
+  const [rec, testPicks, areas] = await Promise.all([recommendNext(viewer.userId, { after: path.id }), testOutPicks(viewer.userId, { after: path.id }), getSkillAreas()]);
+  const labelOf = (code: string | null) => (code === "START" ? "Start Here" : code ? areas.find((a) => a.code === code)?.label ?? code : null);
+  const next = <WhatsNext picks={rec.picks} testPicks={testPicks} skillMatched={rec.skillMatched} areaLabel={labelOf} />;
   // L-E042: admins preview a draft (or published) test — answers shown, nothing counted, no certificate.
   if (preview && canAdminister(viewer))
     return (
@@ -83,7 +93,7 @@ export default async function TestPage({
               : `${state.threshold}% to pass · attempt ${state.attemptsUsed + 1} of ${state.maxAttempts}`}
           </p>
           <div className="mt-6">
-            <TestRunner pathId={path.id} pathSlug={path.slug} pathTitle={path.title} />
+            <TestRunner pathId={path.id} pathSlug={path.slug} pathTitle={path.title} holderName={holderName} next={next} />
           </div>
         </>
       )}
