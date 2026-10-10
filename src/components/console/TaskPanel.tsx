@@ -55,7 +55,7 @@ export function TaskPanel() {
     };
   }, [active]);
 
-  if (!pathname.startsWith("/admin")) return null;
+  // Shown on every page for admins (2026-10-10); AppShell mounts it only for system admins.
 
   const reports: Report[] = reportsFor(pathname);
   const def = TABS.find((t) => t.key === active) ?? null;
