@@ -27,7 +27,7 @@ export async function certificatePng(c: CertificateView): Promise<ImageResponse>
           <span>Credential {c.credentialId}</span>
           {c.score != null ? <span>{`${c.score}%${c.correct != null && c.total ? ` · ${c.correct} of ${c.total}` : ""}`}</span> : null}
         </div>
-        <div style={{ position: "absolute", right: 72, bottom: 66, fontSize: 22, fontWeight: 700, display: "flex" }}>Verified by Panameer</div>
+        <div style={{ position: "absolute", right: 72, top: 84, fontSize: 22, fontWeight: 700, letterSpacing: 2, color: "#F3B6F0", display: "flex" }}>VERIFIED BY PANAMEER</div>
       </div>
     ),
     { width: 1200, height: 630 }
