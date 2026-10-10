@@ -1,107 +1,88 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
+import { certificateView } from "@/lib/certificates";
+import { certificateImageUrl, issuedLabel, verifyUrl } from "@/lib/certificate-links";
+import { getSessionViewer } from "@/lib/session";
+import { CertificateCard } from "@/components/certificates/CertificateCard";
+import { CertificateActions } from "@/components/certificates/CertificateActions";
 
 export const dynamic = "force-dynamic";
 
-export default async function VerifyPage({
-  params,
-}: {
-  params: Promise<{ credentialId: string }>;
-}) {
+// L-E059: the drill-back from LinkedIn — the certificate card, OG image of the same design.
+export async function generateMetadata({ params }: { params: Promise<{ credentialId: string }> }): Promise<Metadata> {
+  const c = await certificateView((await params).credentialId);
+  if (!c) return { title: "Credential · Panameer" };
+  const title = `${c.holder} — ${c.title} · Panameer Certificate`;
+  const description = `Verified by Panameer: ${c.holder} passed the ${c.title} certification test on ${issuedLabel(c.issuedOn)}.`;
+  const image = { url: certificateImageUrl(c.credentialId), width: 1200, height: 630, alt: `${c.title} — Panameer Certificate` };
+  return {
+    title,
+    description,
+    openGraph: { title, description, url: verifyUrl(c.credentialId), siteName: "Panameer", type: "website", images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image.url] },
+  };
+}
+
+const BTN = "inline-flex min-h-11 items-center justify-center border border-ink px-5 text-[14px] font-semibold hover:bg-surface-hover";
+const BTN_K = "inline-flex min-h-11 items-center justify-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover";
+
+export default async function VerifyPage({ params }: { params: Promise<{ credentialId: string }> }) {
   const { credentialId } = await params;
-
-  const cert = await prisma.certification.findFirst({
-    // issued_from is part of the lookup, not just a column: a SELF_REPORTED row
-    // is a claim the provider typed in, and this page vouches for what it shows.
-    where: { credential_id: credentialId, issued_from: "LEARN" },
-    select: {
-      name: true,
-      issuer: true,
-      issued_on: true,
-      credential_id: true,
-      learningPath: { select: { title: true, slug: true, status: true } },
-      user: {
-        select: {
-          person: { select: { first_name: true, last_name: true, photo_url: true } },
-        },
-      },
-      providerProfile: { select: { id: true } },
-    },
-  });
-  if (!cert) notFound();
-
-  const person = cert.user.person ?? null;
-  const holder =
-    `${person?.first_name ?? ""} ${person?.last_name ?? ""}`.trim() || "This member";
+  // Panameer-issued only: a self-reported row is a claim the member typed in, and this page vouches for what it shows.
+  const c = await certificateView(credentialId);
+  if (!c) notFound();
+  const viewer = await getSessionViewer();
+  const owner = viewer?.userId === c.userId;
 
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-ink">
       <MarketingHeader />
       <main className="flex-1">
-        <div className="mx-auto w-full max-w-xl px-6 py-14">
-          <div className="rounded-brand border-2 border-emerald-500/40 bg-emerald-500/[0.05] p-8 text-center">
-            <p className="text-[13px] font-bold uppercase tracking-wide text-emerald-700">
-              ✓ Verified Credential
-            </p>
-
-            {person?.photo_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={person.photo_url}
-                alt=""
-                className="mx-auto mt-5 h-20 w-20 rounded-full border border-line object-cover"
-              />
-            )}
-
-            <h1 className="mt-4 font-display text-[26px] font-bold leading-tight">
-              {holder}
-            </h1>
-            <p className="mt-1 text-[15px] text-ink-2">completed and passed</p>
-            <p className="mt-2 font-display text-[21px] font-bold">{cert.name}</p>
-
-            <p className="mt-4 text-[14px] text-ink-2">
-              Issued by {cert.issuer ?? "Panameer Learn"}
-              {cert.issued_on &&
-                ` on ${cert.issued_on.toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}`}
-            </p>
-            <p className="mt-1 font-mono text-[12.5px] text-ink-2">
-              Credential {cert.credential_id}
-            </p>
-          </div>
-
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            {cert.learningPath && cert.learningPath.status === "PUBLISHED" && (
-              <Link
-                href={`/learn/${cert.learningPath.slug}`}
-                className="border-[1.5px] border-line px-6 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
-              >
-                See the Path
-              </Link>
-            )}
-            {/* ONLY WHEN THERE IS A PROFILE TO VIEW (E019). A learner who is not */}
-            {cert.providerProfile && (
-              <Link
-                href={`/providers/${cert.providerProfile.id}`}
-                className="bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-              >
-                View Profile
-              </Link>
-            )}
-          </div>
-
-          <p className="mt-8 text-center text-[13.5px] text-ink-2">
-            Panameer issues this credential and stands behind it. Courses are free —{" "}
-            <Link href="/training" className="font-bold text-magenta hover:underline">
-              start one
-            </Link>
-            .
+        <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+          <p className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.12em] text-magenta-dark">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/panameer-mark-32.png" alt="" className="h-5 w-5" /> Verified by Panameer
           </p>
+          <div className="mt-3">
+            <CertificateCard title={c.title} holder={c.holder} issuedOn={c.issuedOn} credentialId={c.credentialId} score={c.score} correct={c.correct} total={c.total} />
+          </div>
+
+          <div className="mt-5 flex items-center gap-3">
+            {c.photoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={c.photoUrl} alt="" className="h-14 w-14 rounded-full border border-line object-cover" />
+            )}
+            <p className="text-[15px]">
+              <b>{c.holder}</b> passed the <b>{c.title}</b> certification test on {issuedLabel(c.issuedOn)}.
+              <span className="block font-mono text-[12.5px] text-ink-2">Credential {c.credentialId}</span>
+            </p>
+          </div>
+
+          {owner && (
+            <div className="mt-5" data-owner-actions>
+              <CertificateActions title={c.title} credentialId={c.credentialId} issuedOn={c.issuedOn.toISOString()} profileHref="/profile#credentials" />
+            </div>
+          )}
+
+          {c.path && (
+            <section className="mt-8 border-t border-line pt-5">
+              <h2 className="text-[18px] font-bold">What {c.title} Covers</h2>
+              <ol className="mt-2 grid gap-1 text-[14px] text-ink-2 sm:grid-cols-2">
+                {c.path.courses.map((t, i) => <li key={`${i}-${t}`}>{i + 1}. {t}</li>)}
+              </ol>
+              {c.path.teacher && <p className="mt-3 text-[14px]">Taught by <b>{c.path.teacher}</b></p>}
+            </section>
+          )}
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            {c.path?.published && <Link href={`/learn/${c.path.slug}`} className={BTN}>See the Path</Link>}
+            {c.profileId && <Link href={`/providers/${c.profileId}`} className={BTN}>View Profile</Link>}
+            <Link href="/training" className={BTN_K}>Start Learning Free</Link>
+          </div>
+
+          <p className="mt-8 text-[13px] text-ink-2">Panameer issues this certificate after the member passes the path&apos;s certification test, and stands behind it.</p>
         </div>
       </main>
     </div>
