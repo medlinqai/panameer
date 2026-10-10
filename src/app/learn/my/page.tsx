@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { viewerTeaches } from "@/lib/learn-home";
 import { learnCatalog } from "@/lib/learn-catalog";
-import { recommendNext } from "@/lib/learn-next";
+import { recommendNext, testOutPicks } from "@/lib/learn-next";
+import { WhatsNext } from "@/components/learn/WhatsNext";
+import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { BubbleField } from "@/components/casing/BubbleField";
@@ -27,7 +29,8 @@ export default async function MyLearningPage() {
     if (!lastBy.get(k) || lastBy.get(k)! < w.completed_at) lastBy.set(k, w.completed_at);
   }
   const certified = paths.filter((p) => p.certificate);
-  const next = await recommendNext(viewer.userId, { paths });
+  const [next, testPicks, areas] = await Promise.all([recommendNext(viewer.userId, { paths }), testOutPicks(viewer.userId, { paths }), getSkillAreas()]);
+  const labelOf = (code: string | null) => (code === "START" ? "Start Here" : code ? areas.find((a) => a.code === code)?.label ?? code : null);
   const inProgress = paths.filter((p) => p.mine && !p.certificate && p.mine.done < p.mine.total).sort((a, b) => (lastBy.get(b.id)?.getTime() ?? 0) - (lastBy.get(a.id)?.getTime() ?? 0));
   const completed = paths.filter((p) => p.mine && p.mine.total > 0 && p.mine.done >= p.mine.total);
   const nextCert = [...inProgress].sort((a, b) => b.mine!.done / b.mine!.total - a.mine!.done / a.mine!.total)[0] ?? null;
@@ -128,26 +131,8 @@ export default async function MyLearningPage() {
             </ul>
           </section>
         </div>
-        {/* L-E048: under Completed, the top picks for what to take next. */}
-        {next.picks.length > 0 && (
-          <section data-whats-next-strip className="border-t border-line py-6">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-[20px] font-bold">What&apos;s Next</h2>
-              <Link href="/learn/paths?focus=1#areas" className="text-[13px] font-bold text-magenta-dark underline underline-offset-4">Browse All Learning Paths</Link>
-            </div>
-            <ul className="mt-1">
-              {next.picks.map((x) => (
-                <li key={x.path.id} className={row}>
-                  <span className="min-w-0 flex-1">
-                    <Link href={`/learn/${x.path.slug}`} className="block truncate text-[14px] font-bold hover:underline">{x.path.title}</Link>
-                    <span className="block text-[12px] text-magenta-dark">{x.reason}</span>
-                  </span>
-                  <Link href={x.path.mine?.next ? `/learn/${x.path.slug}/${x.path.mine.next.id}` : `/learn/${x.path.slug}`} className={BTN_K}>{x.path.mine ? "Continue" : "Start"}</Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+        {/* What's Next lives here (moved from Learn Home 2026-10-10). */}
+        <WhatsNext picks={next.picks} testPicks={testPicks} skillMatched={next.skillMatched} areaLabel={labelOf} />
       </div>
     </>
   );

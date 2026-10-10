@@ -3,8 +3,7 @@ import { canAdminister } from "@/lib/access";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { learnHomeData, topLearners, topTeachers } from "@/lib/learn-homepage";
 import { LearnBoards } from "@/components/learn/LearnBoards";
-import { recommendNext, testOutPicks } from "@/lib/learn-next";
-import { WhatsNext } from "@/components/learn/WhatsNext";
+import { recommendNext } from "@/lib/learn-next";
 import { LearnPathCard } from "@/components/learn/LearnPathCard";
 import { learnCatalog } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
@@ -33,7 +32,6 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
   // L-E048: nothing in progress → ask what's next; in progress → Continue, with Recommended for You below.
   const inProgress = !!f && !f.readyToTest;
   const rec = await recommendNext(viewer.userId, { paths: catalog });
-  const testPicks = inProgress ? [] : await testOutPicks(viewer.userId, { paths: catalog });
   const top = rec.picks[0] ?? null;
   const labelOf = (code: string | null) => (code === "START" ? "Start Here" : code ? areas.find((a) => a.code === code)?.label ?? code : null);
   return (
@@ -109,7 +107,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
               <>
                 <Link href={top.path.mine?.next ? `/learn/${top.path.slug}/${top.path.mine.next.id}` : `/learn/${top.path.slug}`} data-start-next className={HERO_BTN}>Start {top.path.title}</Link>
                 {f?.readyToTest && f.test?.ready && !f.test.passed && <Link href={`/learn/${f.slug}/test`} className={HERO_BTN_W}>Take the {f.title} Test</Link>}
-                <a href="#whats-next" className={HERO_BTN_W}>What&apos;s Next?</a>
+                <Link href="/learn/my#whats-next" className={HERO_BTN_W}>What&apos;s Next?</Link>
               </>
             }
           />
@@ -139,7 +137,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
             }
           />
         )}
-        {!inProgress && !d.firstVisit && <WhatsNext picks={rec.picks} testPicks={testPicks} skillMatched={rec.skillMatched} areaLabel={labelOf} />}
+        {/* What's Next moved to My Learning (2026-10-10) so Top Learners sits right under the hero. */}
         {(inProgress || d.firstVisit) && rec.picks.length > 0 && (
           <section data-recommended className="mt-8 border-t border-line pt-6">
             <h2 className="text-[22px] font-bold">Recommended for You</h2>
