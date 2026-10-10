@@ -24,7 +24,7 @@ export function AccountHero({
   picture: ReactNode;
   eyebrow: string;
   title: ReactNode;
-  kpis: { value: ReactNode; label: string }[];
+  kpis: { value: ReactNode; label: string; delta?: string | null }[];
   kpiTestId?: string;
   paragraph?: ReactNode;
   actions?: ReactNode;

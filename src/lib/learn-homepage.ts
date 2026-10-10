@@ -66,8 +66,8 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
       },
     }),
     prisma.learnEnrollment.findMany({ where: { user_id: userId }, select: { learning_path_id: true, created_at: true } }),
-    prisma.lessonProgress.findMany({ where: { user_id: userId }, select: { lesson_id: true } }),
-    prisma.certification.findMany({ where: { user_id: userId, learning_path_id: { not: null } }, select: { learning_path_id: true } }),
+    prisma.lessonProgress.findMany({ where: { user_id: userId }, select: { lesson_id: true, completed_at: true } }),
+    prisma.certification.findMany({ where: { user_id: userId, learning_path_id: { not: null } }, select: { learning_path_id: true, issued_on: true, created_at: true } }),
   ]);
   const lessons = await lessonsByPath(paths.map((p) => p.id));
   const beginner = enrollments.length === 0 && (await profileYears(userId)) < 2;
@@ -123,6 +123,18 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
     .sort((a, b) => (beginner ? Number(b.slug === BEGINNER_PATH) - Number(a.slug === BEGINNER_PATH) : 0))
     .map((p, i) => ({ ...p, rank: i + 1 }));
 
+  // Learn Home hero (2026-10-10): earned badges (oldest → newest), certified-of-published, and this month's gains.
+  const certAt = (c: (typeof myCerts)[number]) => c.issued_on ?? c.created_at;
+  const monthAgo = new Date(Date.now() - 30 * 864e5);
+  const badges = myCerts
+    .map((c) => ({ c, p: paths.find((x) => x.id === c.learning_path_id) }))
+    .filter((x) => x.p)
+    .sort((a, b) => certAt(a.c).getTime() - certAt(b.c).getTime())
+    .map(({ c, p }) => ({ slug: p!.slug, title: p!.title, at: certAt(c).toISOString() }));
+  const month = {
+    certificates: myCerts.filter((c) => certAt(c) >= monthAgo).length,
+    lessonsDone: myProgress.filter((x) => x.completed_at >= monthAgo).length,
+  };
   const teachers = new Set(paths.map((p) => p.expert_person_id).filter(Boolean)).size;
   return {
     firstVisit: enrollments.length === 0 && myProgress.length === 0,
@@ -134,6 +146,8 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
         }
       : null,
     kpis: { inProgress: started.length, certificates: myCerts.length, lessonsDone: myProgress.length, paths: paths.length, teachers },
+    badges,
+    month,
     popular: areaFilter ? popular.filter((p) => p.area === areaFilter) : popular,
     topPath: popular[0] ?? null,
     beginner,

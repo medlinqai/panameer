@@ -12,6 +12,9 @@ import { viewerTeaches } from "@/lib/learn-home";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { ProgressRing } from "@/components/learn/ProgressRing";
+import { CertRing } from "@/components/learn/CertRing";
+import { shortCode } from "@/components/learn/LearnPathCard";
+import { timeLabel } from "@/lib/learn-time";
 
 export const metadata = {
   title: "Learn — Panameer",
@@ -69,18 +72,37 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
         ) : !d.firstVisit && top ? (
           <AccountHero
             testId="learn-hero-next"
-            picture={<ProgressRing done={f?.done ?? 0} total={f?.total ?? 0} caption={f ? undefined : String(d.kpis.certificates)} title={f ? `${f.title} · Ready to Test` : `${d.kpis.certificates} certificates`} />}
+            picture={<CertRing certified={d.badges.length} total={d.kpis.paths} badges={d.badges} />}
             eyebrow="Learn"
-            title="Start Your Next Path"
+            title={d.badges.length > 0 ? `${countWord(d.badges.length)} ${d.badges.length === 1 ? "Certificate" : "Certificates"} and Counting` : "Start Your Next Path"}
             kpis={[
+              { value: d.kpis.certificates, label: "CERTIFICATES", delta: d.month.certificates ? `+${d.month.certificates} this month` : null },
+              { value: d.kpis.lessonsDone, label: "LESSONS DONE", delta: d.month.lessonsDone ? `+${d.month.lessonsDone} this month` : null },
               { value: d.kpis.inProgress, label: "IN PROGRESS" },
-              { value: d.kpis.certificates, label: "CERTIFICATES" },
-              { value: d.kpis.lessonsDone, label: "LESSONS DONE" },
             ]}
             paragraph={
               <>
-                {f?.readyToTest && <>You&apos;ve watched every lesson that&apos;s out in <b className="text-ink">{f.title}</b> — <b className="text-ink">Ready to Test</b>. </>}
-                Up next: <b className="text-ink">{top.path.title}</b> — {top.reason.charAt(0).toLowerCase() + top.reason.slice(1)}.
+                {f?.readyToTest && <span className="mb-3 block">You&apos;ve watched every lesson that&apos;s out in <b className="text-ink">{f.title}</b> — <b className="text-ink">Ready to Test</b>.</span>}
+                <Link href={`/learn/${top.path.slug}`} data-up-next className="flex items-center gap-3 border border-line bg-white p-2.5 transition hover:border-ink-3">
+                  <span
+                    className="relative grid h-14 w-[84px] shrink-0 place-items-center overflow-hidden text-[18px] font-extrabold text-white/80"
+                    style={top.path.cover ? undefined : { background: "linear-gradient(135deg, #272334, #6b2f6a)" }}
+                  >
+                    {top.path.cover ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={top.path.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                    ) : (
+                      shortCode(top.path.title)
+                    )}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[10.5px] font-bold uppercase tracking-[0.14em] text-magenta-dark">Up Next · {top.reason}</span>
+                    <span className="block truncate text-[16px] font-bold text-ink">{top.path.title}</span>
+                    <span className="block truncate text-[12px] text-ink-2">
+                      {[top.path.teacher?.name, top.path.courses.length ? `${top.path.courses.length} course${top.path.courses.length === 1 ? "" : "s"}` : null, timeLabel(top.path.minutes)].filter(Boolean).join(" · ")}
+                    </span>
+                  </span>
+                </Link>
               </>
             }
             actions={
@@ -132,4 +154,10 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
       </div>
     </>
   );
+}
+
+/** "Six Certificates and Counting" — words up to twelve, digits after. */
+function countWord(n: number) {
+  const w = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+  return w[n] ?? String(n);
 }
