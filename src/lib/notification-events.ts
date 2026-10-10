@@ -571,8 +571,9 @@ export const NOTIFICATION_EVENTS = {
     /* WORKLIST — cleared by accepting or declining. */
     requiresAction: true,
     title: (v) => `${str(v, "fromName", "Someone")} sent you a connection request`,
-    body: () => null,
-    href: () => "/connect/community",
+    body: () => "Accept or decline in your Requests.",
+    // Scott 2026-10-10: it landed on Community with no obvious Accept — go straight to Requests.
+    href: () => "/connect/connections?chip=requests",
   },
   // Mentoring needs approval (2026-10-08): the mentor accepts or declines; the asker is told the answer.
   "mentor.request_received": {
