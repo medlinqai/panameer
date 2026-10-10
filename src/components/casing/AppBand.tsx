@@ -45,7 +45,10 @@ export function AppBand() {
 
   // [comment, paraphrased: the clock was an external store carried over from
 
-  const items = navForRoles(me);
+  // Admins keep a way back to the task panel from every app (2026-10-10).
+  const items = isAdmin
+    ? [{ ...ADMIN_HOME, label: "Admin", requires: undefined }, ...navForRoles(me)]
+    : navForRoles(me);
 
   const ownProviderPath = me?.providerProfile?.id
     ? `/providers/${me.providerProfile.id}`
