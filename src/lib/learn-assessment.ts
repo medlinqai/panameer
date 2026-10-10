@@ -400,7 +400,8 @@ export async function generateAssessment(
 
     return {
       ok: true,
-      questions: usable,
+      // Scott 2026-10-10: the model puts the right answer first; shuffle so it lands on a random letter.
+      questions: usable.map(shuffleOptions),
       model: MODEL,
       ms: Date.now() - started,
       rejected: {
@@ -421,6 +422,13 @@ export async function generateAssessment(
       message: e instanceof Error ? `Question generation failed: ${e.message}` : "Question generation failed.",
     };
   }
+}
+
+/** Random order for a question's options, keeping correctIndex pointing at the right one. */
+export function shuffleOptions<Q extends { options: string[]; correctIndex: number }>(q: Q): Q {
+  const order = q.options.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  return { ...q, options: order.map((i) => q.options[i]), correctIndex: order.indexOf(q.correctIndex) };
 }
 
 /** Strip the answers. The client must never receive correctIndex. */

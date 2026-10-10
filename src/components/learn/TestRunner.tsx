@@ -168,6 +168,15 @@ export function TestRunner({
           Previous
         </button>
 
+        {/* Scott 2026-10-10: a disabled Submit with no reason read as broken. Say which question is missing and jump to it. */}
+        {last && answered < state.questions.length && (() => {
+          const miss = state.questions.findIndex((qq) => answers[qq.id] === undefined);
+          return (
+            <button type="button" onClick={() => setAt(miss)} className="basis-full text-left text-[13px] font-semibold text-magenta-dark underline">
+              Answer question {miss + 1} to submit ({state.questions.length - answered} left) →
+            </button>
+          );
+        })()}
         <span className="flex flex-wrap gap-1.5">
           {state.questions.map((qq, i) => (
             <button
