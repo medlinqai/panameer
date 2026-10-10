@@ -69,7 +69,8 @@ export default async function VerifyPage({ params }: { params: Promise<{ credent
           {c.path && (
             <section className="mt-8 border-t border-line pt-5">
               <h2 className="text-[18px] font-bold">What {c.title} Covers</h2>
-              <ol className="mt-2 grid gap-1 text-[14px] text-ink-2 sm:grid-cols-2">
+              <p className="mt-1 text-[14px] text-ink-2">The {c.title} Learning Path includes the following courses:</p>
+              <ol className="mt-2 grid gap-1 text-[14px] text-ink sm:grid-cols-1">
                 {c.path.courses.map((t, i) => <li key={`${i}-${t}`}>{i + 1}. {t}</li>)}
               </ol>
               {c.path.teacher && <p className="mt-3 text-[14px]">Taught by <b>{c.path.teacher}</b></p>}
