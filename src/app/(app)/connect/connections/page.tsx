@@ -75,7 +75,7 @@ export default async function ConnectionsPage({ searchParams }: { searchParams: 
       />
       <div className="mx-auto max-w-5xl">
         <h1 className="sr-only">Connections</h1>
-        <ConnectionsHero web={web} hero={hero} standing={standing} invitations={pendingCount} requests={requestCount} />
+        <ConnectionsHero web={web} hero={hero} standing={standing} invitations={pendingCount} requests={reqs.received.length} />
         <div className="mt-6 min-w-0 space-y-4">
           {/* Scott 2026-10-10: requests were hard to find — show what's waiting on you first, with Accept/Decline right here. */}
           {f.chip !== "requests" && reqs.received.length > 0 && (
