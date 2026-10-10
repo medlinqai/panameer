@@ -107,9 +107,11 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
       step: "catalog",
     });
   }
-  // Languages and date of birth are NOT errors any more — neither is prompted
-  // and neither gates publish. Languages remains a suggestion below; DOB is
-  // gone from the product entirely (WS7).
+  // Scott 2026-10-10 (Ravi stuck): the server publish gate (completeness.missingRequired) DOES require
+  // a language, so the review page must say so and link to the step — otherwise Publish fails with no way to fix it.
+  if (p.languages.length < 1) {
+    err("languages", "Add at least one language.", "Add language", { kind: "step", step: "languages" });
+  }
   if (!p.phone.trim()) {
     err("phone", "Add your phone number.", "Add phone", {
       kind: "field",
