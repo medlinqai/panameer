@@ -6,6 +6,7 @@ import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { themeVars } from "@/lib/dynamic-branding";
 import { LifecycleHelpHost } from "@/components/lifecycle/LifecycleHelp";
+import { TaskPanel } from "@/components/console/TaskPanel";
 
 export async function AppShell({ children }: { children: ReactNode }) {
 
@@ -20,6 +21,8 @@ export async function AppShell({ children }: { children: ReactNode }) {
         })
       )?.company ?? null
     : null;
+  // Admins get the Task Panel on the right on every page, not just /admin (2026-10-10).
+  const isAdmin = viewer?.isSystemAdmin === true;
   const theme = themeVars(company?.brand_hue, company?.theme_recipe, company?.theme_enabled ?? null);
 
   return (
@@ -36,11 +39,12 @@ export async function AppShell({ children }: { children: ReactNode }) {
         <HiddenProfileBanner />
 
         {}
-        <main className="flex-1 overflow-x-clip px-5 py-6 sm:px-8">{children}</main>
+        <main className={"flex-1 overflow-x-clip px-5 py-6 sm:px-8" + (isAdmin ? " lg:pr-[84px]" : "")}>{children}</main>
 
         {}
         <MarketingFooter />
       </div>
+      {isAdmin && <TaskPanel />}
     </div>
   );
 }

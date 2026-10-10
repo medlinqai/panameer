@@ -5,13 +5,11 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 //   import { useRef, useState, useSyncExternalStore } from "react";
 import { useMe } from "@/components/MeProvider";
-import { ConfigDrawer } from "@/components/casing/ConfigDrawer";
 import { BottomNav } from "@/components/casing/BottomNav";
 import { AccountMenu } from "@/components/casing/AccountMenu";
 import {
   ACCOUNT_BAND_HREF,
   BAND_CONTROL_HREFS,
-  CONFIG_BAND_HREF,
   HOME_BAND_HREF,
 } from "@/lib/nav";
 import { RailIcon } from "@/components/casing/RailIcon";
@@ -19,7 +17,6 @@ import { BAND_LIT, BAND_IDLE, BAND_TILE } from "@/components/casing/band-lit";
 import {
   navForRoles,
   railPersona,
-  ADMIN_NAV,
   ADMIN_HOME,
   bandActiveHref,
 } from "@/lib/nav";
@@ -122,15 +119,7 @@ export function AppBand() {
 
         {}
         {}
-        {isAdmin && (
-          <span className="contents">
-            <ConfigDrawer
-              groups={ADMIN_NAV}
-              label="Configuration"
-              active={isActive(CONFIG_BAND_HREF)}
-            />
-          </span>
-        )}
+        {/* Gear (Configuration drawer) removed 2026-10-10 — admins use the Task Panel on the right. */}
 
         {}
         {/* Bug icon removed (2026-10-07): Report a Problem is under Support in the avatar menu. */}
