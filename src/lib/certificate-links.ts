@@ -1,6 +1,8 @@
 // L-E058/L-E059: certificate links — client-safe (no DB). The verify URL always uses NEXT_PUBLIC_APP_URL.
 export const appUrl = () => (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100").replace(/\/$/, "");
-export const verifyUrl = (credentialId: string) => `${appUrl()}/verify/${credentialId}`;
+// Links that leave Panameer (LinkedIn, shares, copied links) point at the live site even from a dev machine (Scott 2026-10-10).
+const publicUrl = () => (/localhost|127\.0\.0\.1/.test(appUrl()) ? "https://app.panameer.com" : appUrl());
+export const verifyUrl = (credentialId: string) => `${publicUrl()}/verify/${credentialId}`;
 export const certificateImageUrl = (credentialId: string) => `${appUrl()}/api/certificates/${credentialId}/image`;
 
 /** LinkedIn "Add license or certification", prefilled. Falls back to organizationName when the org id isn't set. */
