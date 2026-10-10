@@ -77,6 +77,14 @@ export default async function ConnectionsPage({ searchParams }: { searchParams: 
         <h1 className="sr-only">Connections</h1>
         <ConnectionsHero web={web} hero={hero} standing={standing} invitations={pendingCount} requests={requestCount} />
         <div className="mt-6 min-w-0 space-y-4">
+          {/* Scott 2026-10-10: requests were hard to find — show what's waiting on you first, with Accept/Decline right here. */}
+          {f.chip !== "requests" && reqs.received.length > 0 && (
+            <section data-waiting className="border-[1.5px] border-magenta bg-surface p-4">
+              <h2 className="text-[17px] font-bold">Waiting on You <span className="ml-1 text-[13px] font-semibold text-magenta-dark">{reqs.received.length}</span></h2>
+              <p className="text-[13px] text-ink-2">Connection, mentoring and recommendation requests — accept or decline.</p>
+              <RequestsPanel received={reqs.received} sent={reqs.sent} tab="received" />
+            </section>
+          )}
           <ConnectionsControls
             f={f}
             total={view?.total ?? 0}
