@@ -183,6 +183,7 @@ export function TestRunner({
               key={qq.id}
               type="button"
               onClick={() => setAt(i)}
+              disabled={i > at && answers[state.questions[i - 1].id] === undefined}
               aria-label={`Question ${i + 1}`}
               className={
                 "h-2.5 w-2.5 rounded-full transition-colors " +
@@ -214,7 +215,9 @@ export function TestRunner({
           <button
             type="button"
             onClick={() => setAt((n) => n + 1)}
-            className="bg-magenta px-6 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark"
+            disabled={answers[state.questions[at].id] === undefined}
+            title={answers[state.questions[at].id] === undefined ? "Pick an answer to go on." : undefined}
+            className="bg-magenta px-6 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
           >
             Next
           </button>
