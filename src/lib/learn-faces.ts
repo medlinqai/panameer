@@ -16,12 +16,12 @@ export type LessonFace = {
 };
 
 export function lessonFace(
-  lesson: { expert_person_id?: string | null; expertPersonId?: string | null },
+  lesson: { instructor_person_id?: string | null; expertPersonId?: string | null },
   directory: Map<string, Omit<Instructor, "lessons">>,
   courseInstructors: Instructor[],
   pathInstructors: Instructor[] = []
 ): LessonFace {
-  const id = lesson.expert_person_id ?? lesson.expertPersonId ?? null;
+  const id = lesson.instructor_person_id ?? lesson.expertPersonId ?? null;
 
   if (id) {
     const person = directory.get(id);

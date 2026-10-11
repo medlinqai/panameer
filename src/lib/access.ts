@@ -243,7 +243,7 @@ export function hasIdentityBlock(p: {
 /** The required set, computed from a LOADED profile. */
 export function providerMeetsRequired(p: {
   // THE TITLE MOVED TO `Person.title` WS-B).
-  role_type_id: string | null;
+  role_id: string | null;
   skills: unknown[];
   hourly_rate_cents: number | null;
   rate_min_cents: number | null;
@@ -260,7 +260,7 @@ export function providerMeetsRequired(p: {
 }): boolean {
   return Boolean(
     p.person.title?.trim() &&
-      p.role_type_id &&
+      p.role_id &&
       p.skills.length > 0 &&
       (p.hourly_rate_cents != null ||
         p.rate_min_cents != null ||
@@ -295,7 +295,7 @@ export function marketplaceVisibleWhere(viewerIsTest = false) {
     paused_at: null,
     // Title · Role · Skill · Rate
     // THE TITLE CLAUSE FOLLOWED THE COLUMN WS-B).
-    role_type_id: { not: null },
+    role_id: { not: null },
     skills: { some: {} },
     OR: [
       { hourly_rate_cents: { not: null } },

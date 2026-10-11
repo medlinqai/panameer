@@ -562,7 +562,7 @@ export async function publishAssessment(
 
   const saved = await prisma.certificationTest.update({
     where: { learning_path_id: learningPathId },
-    data: { status: "PUBLISHED", reviewed_by: person.id, reviewed_at: new Date() },
+    data: { status: "PUBLISHED", reviewed_by_person_id: person.id, reviewed_at: new Date() },
   });
   console.info(
     `[learn-assessment] published path=${learningPathId} by=${person.id} questions=${questions.length}`
@@ -675,7 +675,7 @@ export async function gradeAttempt(
 
   const credential = passed ? await issueCredential(userId, learningPathId) : null;
   // L-E044: passing a test-out completes the path — it joins My Learning even without lessons watched.
-  if (passed) await prisma.learnEnrollment.upsert({ where: { user_id_learning_path_id: { user_id: userId, learning_path_id: learningPathId } }, create: { user_id: userId, learning_path_id: learningPathId }, update: {} }).catch(() => {});
+  if (passed) await prisma.enrollment.upsert({ where: { user_id_learning_path_id: { user_id: userId, learning_path_id: learningPathId } }, create: { user_id: userId, learning_path_id: learningPathId }, update: {} }).catch(() => {});
 
   return {
     score,
@@ -714,11 +714,11 @@ export async function issueCredential(
   // ONLY THE PATH IS REQUIRED. `!profile` used to be half of this test — see
   if (!path) return null;
 
-  const existing = await prisma.certification.findFirst({
+  const existing = await prisma.credential.findFirst({
     where: {
       user_id: userId,
       learning_path_id: learningPathId,
-      issued_from: "LEARN",
+      issued_from: "PANAMEER",
     },
     select: { credential_id: true, public_credential_url: true },
   });
@@ -730,7 +730,7 @@ export async function issueCredential(
   }
 
   const id = credentialId();
-  await prisma.certification.create({
+  await prisma.credential.create({
     data: {
       /* THE OWNER IS THE USER. The profile rides along when there is one. */
       user_id: userId,
@@ -740,7 +740,7 @@ export async function issueCredential(
       issued_on: new Date(),
       credential_id: id,
       public_credential_url: `/verify/${id}`,
-      issued_from: "LEARN",
+      issued_from: "PANAMEER",
       learning_path_id: learningPathId,
     },
   });

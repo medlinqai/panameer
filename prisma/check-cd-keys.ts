@@ -10,7 +10,7 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 /**
  * ⚠ THE JOIN THE WHOLE VALUE MODEL DEPENDS ON — ASSERTED, NOT EYEBALLED (E004).
  *
- * Products are indexed by `capability_domain_id` and a buyer's answers are keyed by the
+ * Products are indexed by `domain_id` and a buyer's answers are keyed by the
  * assessment bank's `key`. If a bank key does not resolve to exactly one row, a roadmap line
  * cannot reach the products written for it, and the failure is silent: an empty result looks
  * identical to "no products yet".
@@ -32,7 +32,7 @@ async function main() {
   try {
     console.log("\n=== every assessment-bank key resolves to exactly one row ===");
     for (const d of BANK) {
-      const n = await prisma.capabilityDomain.count({
+      const n = await prisma.domain.count({
         where: { process: "Procure-to-Pay", key: d.key },
       });
       check(`${d.key} → 1 row`, n === 1, n);
@@ -44,7 +44,7 @@ async function main() {
       ADVERTISED.map((a) => a.id).join(",") === BANK.map((b) => b.key).join(","),
       { advertised: ADVERTISED.map((a) => a.id), bank: BANK.map((b) => b.key) }
     );
-    const rows = await prisma.capabilityDomain.findMany({
+    const rows = await prisma.domain.findMany({
       where: { process: "Procure-to-Pay" },
       select: { key: true, name: true },
     });
@@ -74,8 +74,8 @@ async function main() {
     check("zero duplicate (process, key) pairs", dupes.length === 0, dupes);
 
     console.log("\n=== keys exist only where a bank does ===");
-    const keyed = await prisma.capabilityDomain.count({ where: { key: { not: null } } });
-    const total = await prisma.capabilityDomain.count();
+    const keyed = await prisma.domain.count({ where: { key: { not: null } } });
+    const total = await prisma.domain.count();
     check(
       `${keyed} of ${total} carry a key — only Procure-to-Pay, which is the only authored bank`,
       keyed === BANK.length,

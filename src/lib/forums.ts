@@ -328,7 +328,7 @@ export async function createThread(
     let allowed = await canAccessPathForum(viewer, board.learning_path_id);
     // Asking on a lesson joins the path and its group (Scott 2026-10-08).
     if (!allowed && input.lessonId) {
-      await prisma.learnEnrollment.upsert({
+      await prisma.enrollment.upsert({
         where: { user_id_learning_path_id: { user_id: viewer.userId, learning_path_id: board.learning_path_id } },
         create: { user_id: viewer.userId, learning_path_id: board.learning_path_id },
         update: {},
@@ -357,7 +357,7 @@ export async function createThread(
   const thread = await prisma.forumThread.create({
     data: {
       board_id: board.id,
-      author_id: person.id,
+      author_person_id: person.id,
       title: title.slice(0, 200),
       body: body.slice(0, 8000),
       last_post_at: new Date(),
@@ -393,7 +393,7 @@ export async function createPost(
 
   const thread = await prisma.forumThread.findUnique({
     where: { id: input.threadId },
-    select: { id: true, title: true, author_id: true, board: { select: { learning_path_id: true, title: true } } },
+    select: { id: true, title: true, author_person_id: true, board: { select: { learning_path_id: true, title: true } } },
   });
   /* SAME GATE, REACHED THROUGH THE THREAD'S BOARD. A reply is a post. */
   if (thread?.board?.learning_path_id) {
@@ -412,7 +412,7 @@ export async function createPost(
     const created = await tx.forumPost.create({
       data: {
         thread_id: thread.id,
-        author_id: person.id,
+        author_person_id: person.id,
         body: body.slice(0, 8000),
       },
       select: { id: true },
@@ -427,8 +427,8 @@ export async function createPost(
   await awardForumPost(person.id, post.id);
 
   // Attention rule (2026-10-08): a reply tells everyone already in the thread — the starter and earlier repliers, not the replier.
-  const earlier = await prisma.forumPost.findMany({ where: { thread_id: thread.id, id: { not: post.id } }, select: { author_id: true }, distinct: ["author_id"] });
-  const who = [...new Set([thread.author_id, ...earlier.map((p) => p.author_id)])].filter((id) => id && id !== person.id);
+  const earlier = await prisma.forumPost.findMany({ where: { thread_id: thread.id, id: { not: post.id } }, select: { author_person_id: true }, distinct: ["author_person_id"] });
+  const who = [...new Set([thread.author_person_id, ...earlier.map((p) => p.author_person_id)])].filter((id) => id && id !== person.id);
   if (who.length) {
     const me = await prisma.person.findUnique({ where: { id: person.id }, select: { first_name: true, last_name: true } });
     const fromName = [me?.first_name, me?.last_name].filter(Boolean).join(" ") || "Someone";
@@ -456,20 +456,20 @@ async function loadForMarking(viewer: Viewer, postId: string) {
     where: { id: postId },
     select: {
       id: true,
-      author_id: true,
+      author_person_id: true,
       marked_helpful_at: true,
-      thread: { select: { id: true, author_id: true } },
+      thread: { select: { id: true, author_person_id: true } },
     },
   });
   if (!post) throw new ForumError("That reply no longer exists.", "NOT_FOUND");
 
-  if (post.thread.author_id !== person.id) {
+  if (post.thread.author_person_id !== person.id) {
     throw new ForumError(
       "Only the person who asked the question can mark an answer helpful.",
       "INVALID"
     );
   }
-  if (post.author_id === person.id) {
+  if (post.author_person_id === person.id) {
     throw new ForumError("You can't mark your own reply helpful.", "INVALID");
   }
   return { person, post };
@@ -483,7 +483,7 @@ export async function markHelpful(viewer: Viewer, postId: string) {
 
   const updated = await prisma.forumPost.update({
     where: { id: post.id },
-    data: { marked_helpful_at: new Date(), marked_helpful_by: person.id },
+    data: { marked_helpful_at: new Date(), marked_helpful_by_person_id: person.id },
     select: { id: true, marked_helpful_at: true },
   });
   return {
@@ -499,7 +499,7 @@ async function loadForConfirming(viewer: Viewer, postId: string) {
     where: { id: postId },
     select: {
       id: true,
-      author_id: true,
+      author_person_id: true,
       instructor_confirmed_at: true,
       thread: { select: { id: true, board: { select: { learning_path_id: true } } } },
     },
@@ -525,7 +525,7 @@ async function loadForConfirming(viewer: Viewer, postId: string) {
     );
   }
   // THE FARMABLE SHAPE, REFUSED. An instructor answering in their own path
-  if (post.author_id === person.id) {
+  if (post.author_person_id === person.id) {
     throw new ForumError("You can't confirm your own reply.", "INVALID");
   }
   return { person, post };
@@ -540,7 +540,7 @@ export async function confirmAnswer(viewer: Viewer, postId: string) {
   }
   const updated = await prisma.forumPost.update({
     where: { id: post.id },
-    data: { instructor_confirmed_at: new Date(), instructor_confirmed_by: person.id },
+    data: { instructor_confirmed_at: new Date(), instructor_confirmed_by_person_id: person.id },
     select: { id: true, instructor_confirmed_at: true },
   });
   return {
@@ -556,7 +556,7 @@ export async function unconfirmAnswer(viewer: Viewer, postId: string) {
   const { post } = await loadForConfirming(viewer, postId);
   await prisma.forumPost.update({
     where: { id: post.id },
-    data: { instructor_confirmed_at: null, instructor_confirmed_by: null },
+    data: { instructor_confirmed_at: null, instructor_confirmed_by_person_id: null },
   });
   return { id: post.id, instructorConfirmedAt: null };
 }
@@ -566,7 +566,7 @@ export async function unmarkHelpful(viewer: Viewer, postId: string) {
   const { post } = await loadForMarking(viewer, postId);
   await prisma.forumPost.update({
     where: { id: post.id },
-    data: { marked_helpful_at: null, marked_helpful_by: null },
+    data: { marked_helpful_at: null, marked_helpful_by_person_id: null },
   });
   return { id: post.id, markedHelpfulAt: null };
 }
@@ -602,7 +602,7 @@ export async function pathForumAccess(
   const idFilter = learningPathId ? { id: learningPathId } : {};
 
   const [enrolments, taughtRows] = await Promise.all([
-    prisma.learnEnrollment.findMany({
+    prisma.enrollment.findMany({
       where: { user_id: viewer.userId, ...pathFilter },
       select: { learning_path_id: true },
     }),
@@ -650,7 +650,7 @@ export async function getPathForumTeaser(
     select: { id: true, slug: true, _count: { select: { threads: true } } },
   });
   const [members, canOpen] = await Promise.all([
-    prisma.learnEnrollment.count({ where: { learning_path_id: learningPathId } }),
+    prisma.enrollment.count({ where: { learning_path_id: learningPathId } }),
     canAccessPathForum(viewer, learningPathId),
   ]);
   return {
@@ -756,7 +756,7 @@ export async function getForumsHome(viewer: Viewer) {
     title: true,
     created_at: true,
     board: { select: { slug: true, title: true } },
-    posts: { select: { author_id: true } },
+    posts: { select: { author_person_id: true } },
   } as const;
 
   const [instructorThreads, recent] = await Promise.all([
@@ -790,7 +790,7 @@ export async function getForumsHome(viewer: Viewer) {
   const noReplies = instructorThreads.filter((t) => t.posts.length === 0).map(shape);
   /* Replies exist, NONE of them from the viewer. */
   const unweighed = instructorThreads
-    .filter((t) => t.posts.length > 0 && !t.posts.some((p) => p.author_id === person?.id))
+    .filter((t) => t.posts.length > 0 && !t.posts.some((p) => p.author_person_id === person?.id))
     .map(shape);
 
   return {
@@ -814,7 +814,7 @@ export async function countThreadsWaitingOn(
       board: { learning_path_id: { in: pathIds } },
       // TWO `posts` FILTERS, SO THEY GO IN AN `AND` — one object cannot
       AND: [
-        { posts: { none: { author_id: personId } } },
+        { posts: { none: { author_person_id: personId } } },
         { posts: { none: { marked_helpful_at: { not: null } } } },
       ],
     },
@@ -832,7 +832,7 @@ export async function listThreadsWaitingOn(
     where: {
       board_id: { in: boardIds },
       AND: [
-        { posts: { none: { author_id: personId } } },
+        { posts: { none: { author_person_id: personId } } },
         { posts: { none: { marked_helpful_at: { not: null } } } },
       ],
     },

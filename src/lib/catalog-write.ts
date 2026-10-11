@@ -51,7 +51,7 @@ export async function addSpecialization(rawName: string, kind: SpecKind): Promis
   if (!catalogId) return refuse("There is no service catalog to add to.");
 
   const existing = await prisma.specialization.findFirst({
-    where: { catalog_id: catalogId, name: { equals: name, mode: "insensitive" } },
+    where: { business_type_id: catalogId, name: { equals: name, mode: "insensitive" } },
     select: { id: true, name: true, status: true },
   });
   if (existing) {
@@ -63,7 +63,7 @@ export async function addSpecialization(rawName: string, kind: SpecKind): Promis
   }
 
   const row = await prisma.specialization.create({
-    data: { catalog_id: catalogId, name, kind, sort_order: 900, origin: "ADMIN" },
+    data: { business_type_id: catalogId, name, kind, sort_order: 900, origin: "ADMIN" },
     select: { id: true, name: true },
   });
   return { ok: true, id: row.id, message: `Added "${row.name}".` };
@@ -73,13 +73,13 @@ export async function renameSpecialization(id: string, rawName: string): Promise
   const name = formatSkillName(rawName);
   const row = await prisma.specialization.findUnique({
     where: { id },
-    select: { id: true, catalog_id: true, name: true },
+    select: { id: true, business_type_id: true, name: true },
   });
   if (!row) return refuse("That specialization no longer exists.");
 
   const clash = await prisma.specialization.findFirst({
     where: {
-      catalog_id: row.catalog_id,
+      business_type_id: row.business_type_id,
       name: { equals: name, mode: "insensitive" },
       NOT: { id },
     },
@@ -111,8 +111,8 @@ export async function addSkill(
 
   const existing = await prisma.skill.findFirst({
     where: {
-      catalog_id: catalogId,
-      role_type_id: roleTypeId,
+      business_type_id: catalogId,
+      role_id: roleTypeId,
       pillar_id: pillarId,
       name: { equals: name, mode: "insensitive" },
     },
@@ -128,8 +128,8 @@ export async function addSkill(
 
   const row = await prisma.skill.create({
     data: {
-      catalog_id: catalogId,
-      role_type_id: roleTypeId,
+      business_type_id: catalogId,
+      role_id: roleTypeId,
       pillar_id: pillarId,
       name,
       origin: "ADMIN",
@@ -148,14 +148,14 @@ export async function renameSkill(id: string, rawName: string): Promise<WriteRes
   const name = formatSkillName(rawName);
   const row = await prisma.skill.findUnique({
     where: { id },
-    select: { catalog_id: true, role_type_id: true, pillar_id: true },
+    select: { business_type_id: true, role_id: true, pillar_id: true },
   });
   if (!row) return refuse("That skill no longer exists.");
 
   const clash = await prisma.skill.findFirst({
     where: {
-      catalog_id: row.catalog_id,
-      role_type_id: row.role_type_id,
+      business_type_id: row.business_type_id,
+      role_id: row.role_id,
       pillar_id: row.pillar_id,
       name: { equals: name, mode: "insensitive" },
       NOT: { id },
@@ -175,14 +175,14 @@ export async function moveSkill(
 ): Promise<WriteResult> {
   const row = await prisma.skill.findUnique({
     where: { id },
-    select: { name: true, catalog_id: true },
+    select: { name: true, business_type_id: true },
   });
   if (!row) return refuse("That skill no longer exists.");
 
   const clash = await prisma.skill.findFirst({
     where: {
-      catalog_id: row.catalog_id,
-      role_type_id: roleTypeId,
+      business_type_id: row.business_type_id,
+      role_id: roleTypeId,
       pillar_id: pillarId,
       name: { equals: row.name, mode: "insensitive" },
       NOT: { id },
@@ -198,7 +198,7 @@ export async function moveSkill(
 
   await prisma.skill.update({
     where: { id },
-    data: { role_type_id: roleTypeId, pillar_id: pillarId },
+    data: { role_id: roleTypeId, pillar_id: pillarId },
   });
   return { ok: true, id, message: `Moved "${row.name}".` };
 }
@@ -217,10 +217,10 @@ export async function setSkillVisibility(id: string, visible: boolean): Promise<
 }
 
 export async function renamePillar(id: string, name: string): Promise<WriteResult> {
-  const row = await prisma.pillar.findUnique({ where: { id }, select: { catalog_id: true } });
+  const row = await prisma.pillar.findUnique({ where: { id }, select: { business_type_id: true } });
   if (!row) return refuse("That domain no longer exists.");
   const clash = await prisma.pillar.findFirst({
-    where: { catalog_id: row.catalog_id, name: { equals: name, mode: "insensitive" }, NOT: { id } },
+    where: { business_type_id: row.business_type_id, name: { equals: name, mode: "insensitive" }, NOT: { id } },
     select: { name: true },
   });
   if (clash) return refuse(`"${clash.name}" already exists.`);
@@ -229,14 +229,14 @@ export async function renamePillar(id: string, name: string): Promise<WriteResul
 }
 
 export async function renameRoleType(id: string, display: string): Promise<WriteResult> {
-  const row = await prisma.roleType.findUnique({ where: { id }, select: { id: true } });
+  const row = await prisma.role.findUnique({ where: { id }, select: { id: true } });
   if (!row) return refuse("That role no longer exists.");
-  const clash = await prisma.roleType.findFirst({
+  const clash = await prisma.role.findFirst({
     where: { display: { equals: display, mode: "insensitive" }, NOT: { id } },
     select: { display: true },
   });
   if (clash) return refuse(`"${clash.display}" already exists.`);
-  await prisma.roleType.update({ where: { id }, data: { display } });
+  await prisma.role.update({ where: { id }, data: { display } });
   return { ok: true, id, message: `Renamed to "${display}".` };
 }
 
@@ -368,7 +368,7 @@ export async function suggestionQueue(): Promise<Suggestion[]> {
 export async function promoteSuggestion(id: string, kind: SpecKind): Promise<WriteResult> {
   const row = await prisma.specialization.findUnique({
     where: { id },
-    select: { name: true, status: true, catalog_id: true },
+    select: { name: true, status: true, business_type_id: true },
   });
   if (!row) return refuse("That suggestion no longer exists.");
   // A REJECTED ROW CAN STILL BE PROMOTED — that is the point of keeping it.
@@ -377,7 +377,7 @@ export async function promoteSuggestion(id: string, kind: SpecKind): Promise<Wri
   // A SUGGESTION THAT DUPLICATES A LIVE ROW IS A MERGE, NOT A PROMOTE, and
   const clash = await prisma.specialization.findFirst({
     where: {
-      catalog_id: row.catalog_id,
+      business_type_id: row.business_type_id,
       name: { equals: row.name, mode: "insensitive" },
       status: "ACTIVE",
       NOT: { id },
@@ -426,14 +426,14 @@ export async function updateSkill(
   id: string,
   p: { name?: string; roleTypeId?: string; pillarId?: string; aliases?: string[]; area?: string | null; visible?: boolean }
 ): Promise<WriteResult> {
-  const row = await prisma.skill.findUnique({ where: { id }, select: { name: true, catalog_id: true, role_type_id: true, pillar_id: true } });
+  const row = await prisma.skill.findUnique({ where: { id }, select: { name: true, business_type_id: true, role_id: true, pillar_id: true } });
   if (!row) return refuse("That skill no longer exists.");
   const name = p.name?.trim().replace(/\s+/g, " ") ?? row.name;
   if (name.length < 2) return refuse("A skill needs a name.");
-  const roleTypeId = p.roleTypeId ?? row.role_type_id;
+  const roleTypeId = p.roleTypeId ?? row.role_id;
   const pillarId = p.pillarId ?? row.pillar_id;
   const clash = await prisma.skill.findFirst({
-    where: { catalog_id: row.catalog_id, role_type_id: roleTypeId, pillar_id: pillarId, name: { equals: name, mode: "insensitive" }, merged_into_id: null, NOT: { id } },
+    where: { business_type_id: row.business_type_id, role_id: roleTypeId, pillar_id: pillarId, name: { equals: name, mode: "insensitive" }, merged_into_id: null, NOT: { id } },
     select: { name: true },
   });
   if (clash) return refuse(`"${clash.name}" already exists there — merge into it instead.`);
@@ -442,7 +442,7 @@ export async function updateSkill(
     where: { id },
     data: {
       name,
-      role_type_id: roleTypeId,
+      role_id: roleTypeId,
       pillar_id: pillarId,
       ...(aliases ? { aliases } : {}),
       ...(p.area !== undefined ? { area: p.area } : {}),

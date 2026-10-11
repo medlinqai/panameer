@@ -59,7 +59,7 @@ check(
 );
 check(
   "1 — the ladder does not re-test a required field by hand",
-  !/headline\?\.trim\(\)|role_type_id\s*\)\s*missing|skills\.length\s*<\s*1/.test(
+  !/headline\?\.trim\(\)|role_id\s*\)\s*missing|skills\.length\s*<\s*1/.test(
     bar.slice(bar.indexOf("GATE_REASONS"))
   ),
   "the comparison belongs to lib/completeness.ts"
@@ -71,7 +71,7 @@ check(
   losing its reason.
 */
 const EMPTY_REQUIRED = {
-  headline: null, role_type_id: null, skills: [], photoUrl: null,
+  headline: null, role_id: null, skills: [], photoUrl: null,
   hasCompany: false, hasAddress: false, hasPhone: false,
 };
 const allPhrases = missingRequired(EMPTY_REQUIRED);

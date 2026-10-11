@@ -80,14 +80,14 @@ export async function addNewSkill(viewer: Viewer, id: string, roleTypeId: string
   // "Add as": the admin's edited name, exactly; the member's wording stays as an alias.
   const as = asName?.trim().replace(/\s+/g, " ");
   const s = as && as !== found.name ? { ...found, name: as } : found;
-  const row = await prisma.skill.findUnique({ where: { id }, select: { catalog_id: true } });
+  const row = await prisma.skill.findUnique({ where: { id }, select: { business_type_id: true } });
   const clash = await prisma.skill.findFirst({
-    where: { catalog_id: row!.catalog_id, role_type_id: roleTypeId, pillar_id: pillarId, name: { equals: s.name, mode: "insensitive" }, NOT: { id } },
+    where: { business_type_id: row!.business_type_id, role_id: roleTypeId, pillar_id: pillarId, name: { equals: s.name, mode: "insensitive" }, NOT: { id } },
     select: { name: true },
   });
   if (clash) return refuse(`"${clash.name}" is already in that domain — merge into it instead.`);
   const typed = s.name !== found.name ? { name: s.name, aliases: { push: found.name } } : {};
-  await prisma.skill.update({ where: { id }, data: { ...typed, role_type_id: roleTypeId, pillar_id: pillarId, visible_to_members: false, review_pending: false } });
+  await prisma.skill.update({ where: { id }, data: { ...typed, role_id: roleTypeId, pillar_id: pillarId, visible_to_members: false, review_pending: false } });
   const members = await skillMembers(id);
   await writeAudit(viewer, { action: "catalog.skill.add_new", targetTable: "skills", targetId: id, detail: { name: s.name, roleTypeId, pillarId, members } });
   await refreshCatalogReview();
@@ -231,8 +231,8 @@ const SHOWN_SKILL = { status: "ACTIVE" as const, visible_to_members: true, pilla
 /** Links every waiting member skill/specialization whose name equals a Shown catalog entry. Returns counts. */
 export async function autoLinkSameLetters(onlyIds?: { skills?: string[]; specs?: string[] }) {
   const [waiting, shown, specWaiting, specShown] = await Promise.all([
-    prisma.skill.findMany({ where: { ...NEW_SKILL_WHERE, ...(onlyIds?.skills ? { id: { in: onlyIds.skills } } : {}) }, select: { id: true, name: true, role_type_id: true, pillar_id: true } }),
-    prisma.skill.findMany({ where: SHOWN_SKILL, select: { id: true, name: true, role_type_id: true, pillar_id: true, _count: { select: { providerSkills: true } } } }),
+    prisma.skill.findMany({ where: { ...NEW_SKILL_WHERE, ...(onlyIds?.skills ? { id: { in: onlyIds.skills } } : {}) }, select: { id: true, name: true, role_id: true, pillar_id: true } }),
+    prisma.skill.findMany({ where: SHOWN_SKILL, select: { id: true, name: true, role_id: true, pillar_id: true, _count: { select: { providerSkills: true } } } }),
     prisma.specialization.findMany({ where: { origin: "PROVIDER", status: "SUGGESTED", ...(onlyIds?.specs ? { id: { in: onlyIds.specs } } : {}) }, select: { id: true, name: true } }),
     prisma.specialization.findMany({ where: { status: "ACTIVE" }, select: { id: true, name: true } }),
   ]);

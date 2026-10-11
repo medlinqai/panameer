@@ -36,7 +36,7 @@ export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
   const pp = await prisma.providerProfile.findFirst({
     where: { person: { user_id: viewerUserId } },
     select: {
-      role_type_id: true,
+      role_id: true,
       hourly_rate_cents: true,
       rate_min_cents: true,
       rate_max_cents: true,
@@ -56,13 +56,13 @@ export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
   });
   if (!pp) {
     return missingForSell({
-      headline: null, role_type_id: null, skills: [], photoUrl: null,
+      headline: null, role_id: null, skills: [], photoUrl: null,
       hasAddress: false, hasPhone: false, payoutMethodCount: 0,
     });
   }
   return missingForSell({
     headline: pp.person.title,
-    role_type_id: pp.role_type_id,
+    role_id: pp.role_id,
     skills: pp.skills,
     photoUrl: pp.person.photo_url,
     hourly_rate_cents: pp.hourly_rate_cents,

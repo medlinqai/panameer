@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { formatCents } from "@/lib/display";
 import type { SettlementRow } from "@/lib/settlements";
-import type { SettlementStatus } from "@prisma/client";
+import type { PaymentRequestStatus } from "@prisma/client";
 import { ERP_PENDING_LABEL, SETTLEMENT_LABEL, SETTLEMENT_TONE } from "@/lib/oracle-status";
 
 const TONE = SETTLEMENT_TONE;
 const LABEL = SETTLEMENT_LABEL;
 
 /** `paidOut` is passed on the provider's side only: buyer-paid but not yet paid out reads "Payout pending". */
-export function SettlementStatusPill({ status, paidOut, erp, held }: { status: SettlementStatus; paidOut?: boolean; erp?: boolean; held?: boolean }) {
+export function SettlementStatusPill({ status, paidOut, erp, held }: { status: PaymentRequestStatus; paidOut?: boolean; erp?: boolean; held?: boolean }) {
   const pending = status === "PAID" && paidOut === false;
   // RD-E003: both sides read the same line while the provider's tax & banking is missing.
   if (held) return <span data-held className={`rounded-full px-3 py-1 text-[12.5px] font-bold ${TONE.SUBMITTED}`}>Waiting on Tax &amp; Banking</span>;

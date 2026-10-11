@@ -129,11 +129,11 @@ async function main() {
     if (!write) continue;
 
     const hash = seedTokenHash(inv.email);
-    const prior = await prisma.colleagueInvite.findUnique({
+    const prior = await prisma.invitationToJoin.findUnique({
       where: { token_hash: hash },
       select: { id: true },
     });
-    const row = await prisma.colleagueInvite.upsert({
+    const row = await prisma.invitationToJoin.upsert({
       where: { token_hash: hash },
       create: {
         inviter_person_id: me.person!.id,

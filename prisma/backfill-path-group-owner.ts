@@ -81,14 +81,14 @@ async function main() {
         select: {
           id: true,
           title: true,
-          expert_person_id: true,
-          expert: { select: { first_name: true, last_name: true } },
+          instructor_person_id: true,
+          instructor: { select: { first_name: true, last_name: true } },
           courses: {
             select: {
               sections: {
                 select: {
                   lessons: {
-                    select: { expert_person_id: true, created_at: true },
+                    select: { instructor_person_id: true, created_at: true },
                   },
                 },
               },
@@ -114,14 +114,14 @@ async function main() {
     if (!p) continue;
 
     /* ── TIER 1 — the declared lead ─────────────────────────────────────── */
-    if (p.expert_person_id) {
+    if (p.instructor_person_id) {
       plan.push({
         path: p.title,
         slug: b.slug,
-        ownerId: p.expert_person_id,
-        ownerName: p.expert ? `${p.expert.first_name} ${p.expert.last_name}` : "(unnamed)",
+        ownerId: p.instructor_person_id,
+        ownerName: p.instructor ? `${p.instructor.first_name} ${p.instructor.last_name}` : "(unnamed)",
         tier: "declared lead",
-        detail: "LearningPath.expert_person_id",
+        detail: "LearningPath.instructor_person_id",
       });
       continue;
     }
@@ -134,13 +134,13 @@ async function main() {
     const lessons = p.courses
       .flatMap((c) => c.sections)
       .flatMap((s) => s.lessons)
-      .filter((l): l is { expert_person_id: string; created_at: Date } => Boolean(l.expert_person_id));
+      .filter((l): l is { instructor_person_id: string; created_at: Date } => Boolean(l.instructor_person_id));
 
     if (lessons.length > 0) {
       const byPerson = new Map<string, { n: number; earliest: Date }>();
       for (const l of lessons) {
-        const cur = byPerson.get(l.expert_person_id);
-        if (!cur) byPerson.set(l.expert_person_id, { n: 1, earliest: l.created_at });
+        const cur = byPerson.get(l.instructor_person_id);
+        if (!cur) byPerson.set(l.instructor_person_id, { n: 1, earliest: l.created_at });
         else {
           cur.n += 1;
           if (l.created_at < cur.earliest) cur.earliest = l.created_at;

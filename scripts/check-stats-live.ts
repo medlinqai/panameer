@@ -102,7 +102,7 @@
 //     });
 //     if (!person?.user_id) throw new Error("the fixture persona was not found");
 // 
-//     const before = await prisma.colleagueInvite.count({
+//     const before = await prisma.invitationToJoin.count({
 //       where: { inviter_person_id: person.id },
 //     });
 //     check(
@@ -122,7 +122,7 @@
 //      * makes the series empty while the figure is not.
 //      */
 //     const longAgo = new Date(new Date().getFullYear(), 0, 15);
-//     const seeded = await prisma.colleagueInvite.create({
+//     const seeded = await prisma.invitationToJoin.create({
 //       data: {
 //         inviter_person_id: person.id,
 //            so even if something later tried to mail this row, the transport
@@ -348,13 +348,13 @@
 //       }
 //     }
 //     if (wroteInvites.length) {
-//       const removed = await prisma.colleagueInvite.deleteMany({
+//       const removed = await prisma.invitationToJoin.deleteMany({
 //         where: { id: { in: wroteInvites } },
 //       });
 //       if (removed.count !== wroteInvites.length) {
 //         failures.push(`teardown removed ${removed.count} of ${wroteInvites.length}`);
 //       }
-//       const left = await prisma.colleagueInvite.count({ where: { id: { in: wroteInvites } } });
+//       const left = await prisma.invitationToJoin.count({ where: { id: { in: wroteInvites } } });
 //       if (left !== 0) failures.push(`${left} seeded rows survived teardown`);
 //     }
 //     await browser.close();

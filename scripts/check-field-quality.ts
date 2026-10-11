@@ -262,7 +262,7 @@ check(
   /matchSkill\s*\(/.test(onboarding),
   "lib/onboarding.ts must consult the catalog before upserting a custom skill"
 );
-const upsertAt = onboarding.indexOf("catalog_id_role_type_id_pillar_id_name");
+const upsertAt = onboarding.indexOf("business_type_id_role_id_pillar_id_name");
 const matchAt = onboarding.indexOf("matchSkill(");
 check(
   "4 — and it matches BEFORE the upsert, not after",

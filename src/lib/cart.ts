@@ -1,4 +1,4 @@
-import type { PaymentTrigger, TransactionType } from "@prisma/client";
+import type { PaymentEvent, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import { formatCents } from "@/lib/display";
@@ -15,7 +15,7 @@ export class CartError extends Error {
 }
 
 const MAX_QTY = 99;
-const WHEN: Partial<Record<PaymentTrigger, string>> = { ORDER_ACCEPTED: "at order", ACCEPTANCE: "on delivery", DOWNLOAD: "on download", INSTALLATION: "on install", PAYMENT_REQUEST: "on payment request" };
+const WHEN: Partial<Record<PaymentEvent, string>> = { ORDER_ACCEPTED: "at order", ACCEPTANCE: "on delivery", DOWNLOAD: "on download", INSTALLATION: "on install", PAYMENT_REQUEST: "on payment request" };
 
 async function me(viewer: Viewer) {
   const p = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, first_name: true, last_name: true, requesterProfile: { select: { id: true } }, company: { select: { p_account_id: true } } } });
@@ -24,20 +24,20 @@ async function me(viewer: Viewer) {
 }
 
 const productSelect = {
-  id: true, title: true, status: true, price_cents: true, currency: true, pricing_type: true, kind: true, billing_period: true, payment_terms: true, payment_trigger: true,
-  milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, trigger: true } },
+  id: true, title: true, status: true, price_cents: true, currency: true, pricing_type: true, kind: true, billing_period: true, payment_terms: true, payment_event: true,
+  milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, payment_event: true } },
   providerProfile: { select: { id: true, person_id: true, accepts_orders_manually: true, person: { select: { first_name: true, last_name: true } } } },
 };
 
 const settlesByQty = (pricing: string) => pricing === "HOURLY" || pricing === "TM";
 
 /** "50% Kickoff at order · 50% Delivery on delivery" — the product's payment schedule in one line. */
-export function scheduleLine(p: { pricing_type: string; billing_period: string | null; payment_trigger: PaymentTrigger | null; milestones: { label: string; percent: number; trigger: PaymentTrigger | null }[] }): string {
+export function scheduleLine(p: { pricing_type: string; billing_period: string | null; payment_event: PaymentEvent | null; milestones: { label: string; percent: number; payment_event: PaymentEvent | null }[] }): string {
   if (settlesByQty(p.pricing_type)) return "Billed by timesheet";
   if (p.pricing_type === "RECURRING") return `Billed ${(p.billing_period ?? "monthly").toLowerCase()}`;
-  const fallback = p.payment_trigger ?? "ACCEPTANCE";
+  const fallback = p.payment_event ?? "ACCEPTANCE";
   if (!p.milestones.length) return `In full ${WHEN[fallback] ?? "on delivery"}`;
-  return p.milestones.map((m) => `${m.percent}% ${m.label} ${WHEN[m.trigger ?? fallback] ?? ""}`.trim()).join(" · ");
+  return p.milestones.map((m) => `${m.percent}% ${m.label} ${WHEN[m.payment_event ?? fallback] ?? ""}`.trim()).join(" · ");
 }
 
 export async function cartCount(personId: string): Promise<number> {
@@ -126,8 +126,8 @@ export async function placeOrder(viewer: Viewer): Promise<{ orderId: string; pro
       return {
         line_number: i + 1, transaction_type: type, fee_bps: fee, description: prod.title, service_product_id: prod.id, payment_terms: prod.payment_terms,
         ...(type === "SERVICE_BY_QTY"
-          ? { uom: "HOUR", quantity: l.quantity, unit_price_cents: l.unit_price_cents, payment_trigger: "TIMESHEET" as const }
-          : { amount_cents: l.unit_price_cents * l.quantity, payment_trigger: prod.payment_trigger ?? ("ACCEPTANCE" as const) }),
+          ? { uom: "HOUR", quantity: l.quantity, unit_price_cents: l.unit_price_cents, payment_event: "TIMESHEET" as const }
+          : { amount_cents: l.unit_price_cents * l.quantity, payment_event: prod.payment_event ?? ("ACCEPTANCE" as const) }),
       };
     }));
     const fees = [...new Set(rows.map((r) => r.fee_bps))];

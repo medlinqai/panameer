@@ -1,3 +1,4 @@
+import type { RequesterOnboardingStep } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 /* THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
 import { countryColumns } from "@/lib/country";
@@ -204,7 +205,7 @@ export async function getRequesterState(viewer: Viewer) {
     email: p.user?.email ?? "",
     emailVerified: !!p.user?.email_verified,
     steps: REQUESTER_STEPS,
-    resumeStep: rp.onboarding_step,
+    resumeStep: rp.onboarding_step.toLowerCase(),
     completed: !!rp.completed_at,
     company: {
       /** Any CompanyMembership at all — PENDING counts. */
@@ -361,12 +362,12 @@ export async function saveRequesterStep(
   // and saving it shouldn't rewind where a returning user lands.
   const next = REQUESTER_STEPS[REQUESTER_STEPS.indexOf(step) + 1] ?? "review";
   const furthest =
-    REQUESTER_STEPS.indexOf(next) > REQUESTER_STEPS.indexOf(rp.onboarding_step as RequesterStep)
+    REQUESTER_STEPS.indexOf(next) > REQUESTER_STEPS.indexOf(rp.onboarding_step.toLowerCase() as RequesterStep)
       ? next
-      : (rp.onboarding_step as RequesterStep);
+      : (rp.onboarding_step.toLowerCase() as RequesterStep);
   await prisma.requesterProfile.update({
     where: { id: rp.id },
-    data: { onboarding_step: furthest },
+    data: { onboarding_step: furthest.toUpperCase() as RequesterOnboardingStep },
   });
 
   return getRequesterState(viewer);
@@ -397,7 +398,7 @@ export async function completeRequester(viewer: Viewer) {
   const p = await loadRequester(viewer);
   await prisma.requesterProfile.update({
     where: { id: p.requesterProfile!.id },
-    data: { completed_at: new Date(), onboarding_step: "review" },
+    data: { completed_at: new Date(), onboarding_step: "REVIEW" },
   });
   return getRequesterState(viewer);
 }

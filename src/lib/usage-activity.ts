@@ -35,8 +35,8 @@ export async function usageActivity(input: {
     prisma.serviceProduct.count({ where: { provider_profile_id: input.profileId, status: "PUBLISHED", ...since } }),
     prisma.serviceProductOffer.count({ where: { provider_person_id: pid, ...since } }),
     prisma.serviceProductOffer.count({ where: { provider_person_id: pid, status: "ACCEPTED", ...since } }),
-    prisma.settlementRequest.count({ where: { provider_person_id: pid, ...since } }),
-    prisma.settlementRequest.count({ where: { provider_person_id: pid, status: "SUBMITTED" } }),
+    prisma.paymentRequest.count({ where: { provider_person_id: pid, ...since } }),
+    prisma.paymentRequest.count({ where: { provider_person_id: pid, status: "SUBMITTED" } }),
     prisma.providerPayout.aggregate({ where: { provider_person_id: pid, ...since }, _sum: { net_cents: true } }),
     prisma.providerPayout.aggregate({ where: { provider_person_id: pid, status: "PAID", ...since }, _sum: { net_cents: true } }),
   ]);

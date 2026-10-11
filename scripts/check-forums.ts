@@ -138,24 +138,24 @@ async function main() {
     "3 — enrolment grants access",
     /learnEnrollment\.findMany[\s\S]{0,200}?user_id: viewer\.userId/.test(forums)
   );
-  /* ⚠⚠ THE INSTRUCTOR HALF USES THE EXTRACTED PREDICATE, AND `expert_person_id`
+  /* ⚠⚠ THE INSTRUCTOR HALF USES THE EXTRACTED PREDICATE, AND `instructor_person_id`
      ALONE IS THE KNOWN-WRONG ANSWER THAT HAS ALREADY COST ONCE. */
   check(
     "3 — the instructor rule is teachesPathWhere, not a second query",
     /teachesPathWhere\(person\.id\)/.test(forums),
-    "expert_person_id alone would lock Marelise out of her own 33 lessons"
+    "instructor_person_id alone would lock Marelise out of her own 33 lessons"
   );
   check(
-    "3 — forums.ts never writes expert_person_id itself",
-    !/expert_person_id/.test(forums),
-    "a second OR with expert_person_id is the third-copy-of-isPlayable mistake"
+    "3 — forums.ts never writes instructor_person_id itself",
+    !/instructor_person_id/.test(forums),
+    "a second OR with instructor_person_id is the third-copy-of-isPlayable mistake"
   );
   check(
     "3 — the predicate is exported once, from learn-home.ts",
     /export function teachesPathWhere/.test(learnHome)
   );
   const predicateCopies = [...bodies.entries()].filter(
-    ([f, b]) => f !== join("src", "lib", "learn-home.ts") && /lessons: \{ some: \{ expert_person_id/.test(b)
+    ([f, b]) => f !== join("src", "lib", "learn-home.ts") && /lessons: \{ some: \{ instructor_person_id/.test(b)
   );
   check(
     "3 — only one copy of the per-lesson teaching query exists",
@@ -531,7 +531,7 @@ async function main() {
   check(
     "9 — condition 2 is teachesPathWhere, the one definition",
     /where: \{ \.\.\.idFilter, \.\.\.teachesPathWhere\(person\.id\) \}/.test(accessFn),
-    "expert_person_id alone is the known-wrong answer and has already cost once"
+    "instructor_person_id alone is the known-wrong answer and has already cost once"
   );
 
   const queries = (accessFn.match(/prisma\./g) ?? []).length;

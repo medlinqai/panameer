@@ -79,7 +79,7 @@ export async function computeRerunDiff(
       person: { select: { title: true } },
       education: { select: { institution: true } },
       languages: { select: { name: true } },
-      certifications: { select: { name: true } },
+      credentials: { select: { name: true } },
       skills: { select: { skill_id: true, source: true } },
       specializations: { select: { specialization_id: true } },
     },
@@ -102,11 +102,11 @@ export async function computeRerunDiff(
   }
 
   const catalogId = await activeCatalogId();
-  const inActiveCatalog = catalogId ? { catalog_id: catalogId } : {};
+  const inActiveCatalog = catalogId ? { business_type_id: catalogId } : {};
 
   const catalog = await prisma.skill.findMany({
     where: { ...OFFERABLE, ...inActiveCatalog },
-    select: { id: true, name: true, role_type_id: true },
+    select: { id: true, name: true, role_id: true },
   });
 
   const certTerms = certTermsOf(parsed);
@@ -124,7 +124,7 @@ export async function computeRerunDiff(
 
   const roleIds = selectedRoleIds(profile);
   const shownIds = new Set(
-    shownSkills(roleIds, catalog, (c) => c.role_type_id).map((c) => c.id)
+    shownSkills(roleIds, catalog, (c) => c.role_id).map((c) => c.id)
   );
   const isShown = (id: string) => shownIds.has(id);
 
@@ -165,7 +165,7 @@ export async function computeRerunDiff(
     profile.employers.map((e) => jobKey(e.name, e.role_title))
   );
   const haveEdu = new Set(profile.education.map((e) => e.institution.toLowerCase()));
-  const haveCerts = new Set(profile.certifications.map((c) => c.name.toLowerCase()));
+  const haveCerts = new Set(profile.credentials.map((c) => c.name.toLowerCase()));
   const haveLangs = new Set(profile.languages.map((l) => l.name.toLowerCase()));
 
   const parsedJobKeys = new Set(

@@ -143,12 +143,12 @@ async function main() {
     if (apply) {
       for (const r of retirees) {
         const lessons = await prisma.lesson.updateMany({
-          where: { expert_person_id: r.id },
-          data: { expert_person_id: canonical.id },
+          where: { instructor_person_id: r.id },
+          data: { instructor_person_id: canonical.id },
         });
         const paths = await prisma.learningPath.updateMany({
-          where: { expert_person_id: r.id },
-          data: { expert_person_id: canonical.id },
+          where: { instructor_person_id: r.id },
+          data: { instructor_person_id: canonical.id },
         });
         console.log(`\n  ${r.email}: moved ${lessons.count} lessons, ${paths.count} paths -> ${CANONICAL_EMAIL}`);
 
@@ -200,7 +200,7 @@ async function main() {
 
     // ── The 56. Surfaced, never assigned. ──
     const orphans = await prisma.lesson.findMany({
-      where: { expert_person_id: null },
+      where: { instructor_person_id: null },
       orderBy: [{ section: { course: { learningPath: { title: "asc" } } } }, { sort_order: "asc" }],
       select: {
         title: true,

@@ -21,7 +21,7 @@ export type EmployerScalars = {
   logo_url: string | null;
   contact_email: string | null;
   software_suite: SoftwareSuite | null;
-  job_role_type_id: string | null;
+  job_role_id: string | null;
 };
 
 export type ProjectScalars = {
@@ -35,7 +35,7 @@ export type ProjectScalars = {
   logo_url: string | null;
   contact_email: string | null;
   software_suite: SoftwareSuite | null;
-  role_type_id: string | null;
+  role_id: string | null;
   client_name: string;
 };
 
@@ -57,7 +57,7 @@ export function employerToProjectData(
     logo_url: e.logo_url,
     contact_email: e.contact_email,
     software_suite: e.software_suite,
-    role_type_id: e.job_role_type_id,
+    role_id: e.job_role_id,
     client_name: clientName,
   };
 }
@@ -77,7 +77,7 @@ export function projectToEmployerData(p: ProjectScalars, name: string): Employer
     logo_url: p.logo_url,
     contact_email: p.contact_email,
     software_suite: p.software_suite,
-    job_role_type_id: p.role_type_id,
+    job_role_id: p.role_id,
   };
 }
 

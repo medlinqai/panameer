@@ -39,7 +39,7 @@ export async function reviewState(profileId: string) {
         person: { select: { title: true } },
         employers: { select: { id: true, name: true, role_title: true, start_date: true, end_date: true }, orderBy: { start_date: "desc" } },
         projects: { select: { id: true, name: true, client_name: true, start_date: true, end_date: true }, orderBy: { start_date: "desc" } },
-        certifications: { select: { id: true, name: true, issuer: true, year: true }, orderBy: { created_at: "asc" } },
+        credentials: { select: { id: true, name: true, issuer: true, year: true }, orderBy: { created_at: "asc" } },
         education: { select: { id: true, institution: true, degree: true, field: true, end_year: true }, orderBy: { created_at: "asc" } },
         skills: { select: { id: true, skill: { select: { id: true, name: true, is_custom: true, review_pending: true } } } },
         specializations: { select: { specialization: { select: { id: true, name: true, kind: true } } } },
@@ -73,7 +73,7 @@ export async function reviewState(profileId: string) {
     return { id: e.id, name: e.name ?? "", title: e.role_title, dates: span(e.start_date, e.end_date), why };
   });
   const projects = profile.projects.map((p) => ({ id: p.id, name: p.name, client: p.client_name, dates: span(p.start_date, p.end_date) }));
-  const certs = profile.certifications.map((c) => ({ id: c.id, name: c.name, issuer: c.issuer, year: c.year }));
+  const certs = profile.credentials.map((c) => ({ id: c.id, name: c.name, issuer: c.issuer, year: c.year }));
   const edu = profile.education.map((e) => ({ id: e.id, institution: e.institution, degree: e.degree, field: e.field, year: e.end_year }));
 
   // Skills sorted by the catalog: skills · specializations by kind · keywords · probably not skills. One chip per name.
@@ -167,9 +167,9 @@ export async function reviewAction(profileId: string, a: ReviewAction): Promise<
         await prisma.project.delete({ where: { id: a.id } });
         await recordRemoved(profileId, "project", [row.name]);
       } else if (a.kind === "cert") {
-        const row = await prisma.certification.findFirst({ where: { id: a.id, ...own }, select: { name: true } });
+        const row = await prisma.credential.findFirst({ where: { id: a.id, ...own }, select: { name: true } });
         if (!row) return { ok: false, error: "Not found." };
-        await prisma.certification.delete({ where: { id: a.id } });
+        await prisma.credential.delete({ where: { id: a.id } });
         await recordRemoved(profileId, "cert", [row.name]);
       } else {
         const row = await prisma.education.findFirst({ where: { id: a.id, ...own }, select: { institution: true, degree: true } });
@@ -199,7 +199,7 @@ export async function reviewAction(profileId: string, a: ReviewAction): Promise<
       if (!Object.values(data)[0]) return { ok: false, error: "A name is needed." };
       const r =
         a.kind === "project" ? await prisma.project.updateMany({ where: { id: a.id, ...own }, data })
-        : a.kind === "cert" ? await prisma.certification.updateMany({ where: { id: a.id, ...own }, data })
+        : a.kind === "cert" ? await prisma.credential.updateMany({ where: { id: a.id, ...own }, data })
         : await prisma.education.updateMany({ where: { id: a.id, ...own }, data });
       if (!r.count) return { ok: false, error: "Not found." };
       break;
@@ -208,7 +208,7 @@ export async function reviewAction(profileId: string, a: ReviewAction): Promise<
       const ids = a.dropIds.filter((x) => x !== a.keepId);
       const where = { id: { in: ids }, ...own };
       if (a.kind === "project") await prisma.project.deleteMany({ where });
-      else if (a.kind === "cert") await prisma.certification.deleteMany({ where });
+      else if (a.kind === "cert") await prisma.credential.deleteMany({ where });
       else await prisma.education.deleteMany({ where });
       break;
     }

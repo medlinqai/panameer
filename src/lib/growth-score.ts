@@ -52,11 +52,11 @@ export async function growthScore(
   const { from, to } = windowRange(window, now);
   const range = dateFilter(from, to);
 
-  const invited = await prisma.colleagueInvite.count({
+  const invited = await prisma.invitationToJoin.count({
     where: { inviter_person_id: personId, ...(range ? { created_at: range } : {}) },
   });
 
-  const joined = await prisma.colleagueInvite.count({
+  const joined = await prisma.invitationToJoin.count({
     where: {
       inviter_person_id: personId,
       accepted_at: { not: null, ...(range ?? {}) },
@@ -99,12 +99,12 @@ export async function growthBoard(
 
   // Two grouped counts for the whole board instead of two queries per person (Connect was slow to open).
   const [senders, joins] = await Promise.all([
-    prisma.colleagueInvite.groupBy({
+    prisma.invitationToJoin.groupBy({
       by: ["inviter_person_id"],
       where: { inviter_person_id: { not: null }, ...(range ? { created_at: range } : {}) },
       _count: { _all: true },
     }),
-    prisma.colleagueInvite.groupBy({
+    prisma.invitationToJoin.groupBy({
       by: ["inviter_person_id"],
       where: { inviter_person_id: { not: null }, accepted_at: { not: null, ...(range ?? {}) } },
       _count: { _all: true },
@@ -191,7 +191,7 @@ export type NetworkRow = {
 };
 
 export async function myNetwork(personId: string): Promise<NetworkRow[]> {
-  const rows = await prisma.colleagueInvite.findMany({
+  const rows = await prisma.invitationToJoin.findMany({
     where: { inviter_person_id: personId },
     select: {
       id: true,

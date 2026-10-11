@@ -195,7 +195,7 @@ async function main() {
   // The demo provider's field = the (Role, Domain) pair its skills live under
   // (brief_R). Without both, the step-7 prune would strip its skills as
   // "outside the chosen field".
-  const demoRole = await prisma.roleType.findUnique({
+  const demoRole = await prisma.role.findUnique({
     where: { code: "APPLICATION_SPECIFIC" },
   });
   // "Finance & Accounting" until the expanded catalog split it three ways
@@ -240,14 +240,14 @@ async function main() {
       status: "PENDING",
       validation_status: "VALIDATED",
       validated_at: new Date(),
-      role_type_id: demoRole?.id ?? null,
+      role_id: demoRole?.id ?? null,
       pillar_id: demoDomain?.id ?? null,
       hourly_rate_cents: 12500,
     },
     create: {
       person_id: adminPerson.id,
       region_id: americas?.id ?? null,
-      role_type_id: demoRole?.id ?? null,
+      role_id: demoRole?.id ?? null,
       pillar_id: demoDomain?.id ?? null,
       hourly_rate_cents: 12500,
       /* ⚠ `headline` COLUMN REMOVED (`P0-E595` WS-B). ⚠ SUPERSEDED, quoted not
@@ -344,10 +344,10 @@ async function main() {
   // the profile shows what a finished project actually looks like: a role, a
   // client (one of them confidential), tools, dates and a quantified outcome.
   const primaryRole =
-    (await prisma.roleType.findFirst({
+    (await prisma.role.findFirst({
       where: { name: "Application-Specific" },
       select: { id: true },
-    })) ?? (await prisma.roleType.findFirst({ orderBy: { sort_order: "asc" }, select: { id: true } }));
+    })) ?? (await prisma.role.findFirst({ orderBy: { sort_order: "asc" }, select: { id: true } }));
 
   /** Look up an industry from the INDUSTRY slice of the Specialization list. */
   const industryId = async (name: string) =>
@@ -439,7 +439,7 @@ async function main() {
       description: spec.description,
       sort_order: spec.sort_order,
       employer_id: employerIds[spec.employer] ?? null,
-      role_type_id: primaryRole!.id,
+      role_id: primaryRole!.id,
       industry_specialization_id: await industryId(spec.industry),
       client_name: spec.clientName,
       contact_email: spec.validation?.contactEmail ?? null,
@@ -533,15 +533,15 @@ async function main() {
     },
   ];
   for (const spec of certSpecs) {
-    const found = await prisma.certification.findFirst({
+    const found = await prisma.credential.findFirst({
       where: { provider_profile_id: providerProfile.id, name: spec.name },
       select: { id: true },
     });
     const data = { issuer: spec.issuer, year: spec.year };
     if (found) {
-      await prisma.certification.update({ where: { id: found.id }, data });
+      await prisma.credential.update({ where: { id: found.id }, data });
     } else {
-      await prisma.certification.create({
+      await prisma.credential.create({
         /* ⚠ BOTH. `user_id` is the owner (`P1-J3-E019`); the profile is where it
            displays. A seed that set only the profile would not compile, which is
            the point of making the column required. */
@@ -625,7 +625,7 @@ async function main() {
       name: { in: procurementSkillNames },
       // Scope to the demo's (Role, Domain): a skill name can now exist under
       // more than one pair, so a name-only match is ambiguous (brief_R).
-      role_type_id: demoRole?.id,
+      role_id: demoRole?.id,
       pillar_id: demoDomain?.id,
     },
     select: { id: true },
@@ -671,7 +671,7 @@ async function main() {
               provider_profile_id: providerProfile.id,
               name: "Self-Service Procurement rollout",
               description: "Requisition-to-receipt across 12 sites.",
-              role_type_id: primaryRole!.id,
+              role_id: primaryRole!.id,
               client_name: "Ceres Holdings",
               start_date: new Date("2019-02-01"),
               end_date: new Date("2020-11-30"),
@@ -680,7 +680,7 @@ async function main() {
               provider_profile_id: providerProfile.id,
               name: "Supplier Portal onboarding",
               description: "Migrated 400+ suppliers to the Supplier Portal.",
-              role_type_id: primaryRole!.id,
+              role_id: primaryRole!.id,
               client_name: "Ceres Holdings",
               start_date: new Date("2020-01-15"),
               end_date: new Date("2020-12-31"),
@@ -712,7 +712,7 @@ async function main() {
         employers: true,
         education: true,
         languages: true,
-        certifications: true,
+        credentials: true,
         person: {
           select: {
             /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
@@ -732,7 +732,7 @@ async function main() {
         overview: full.overview,
         work_method: full.work_method,
         pillar_id: full.pillar_id,
-        role_type_id: full.role_type_id,
+        role_id: full.role_id,
         onsite_rate_cents: full.onsite_rate_cents,
         remote_rate_cents: full.remote_rate_cents,
         hourly_rate_cents: full.hourly_rate_cents,
@@ -740,7 +740,7 @@ async function main() {
         languages: full.languages,
         employers: full.employers,
         education: full.education,
-        certifications: full.certifications,
+        certifications: full.credentials,
         specializations: full.specializations,
         photoUrl: full.person.photo_url,
         /* ⚠ `hasCompany: true` REMOVED (`P1-A1.4-E418`) — *"WS6 — the demo

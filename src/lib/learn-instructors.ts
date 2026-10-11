@@ -88,7 +88,7 @@ export function instructorIdsFor(
   lessons: LessonExpertRef[],
   declaredLeadId?: string | null
 ): string[] {
-  const ids = lessons.map((l) => l.expert_person_id).filter((x): x is string => Boolean(x));
+  const ids = lessons.map((l) => l.instructor_person_id).filter((x): x is string => Boolean(x));
   if (declaredLeadId) ids.push(declaredLeadId);
   return ids;
 }

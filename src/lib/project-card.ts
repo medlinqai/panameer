@@ -22,7 +22,7 @@ export function projectToCard(p: {
   document_path: string | null;
   document_name: string | null;
   logo_url: string | null;
-  roleType: { id: string; name: string } | null;
+  role: { id: string; name: string } | null;
   industry: { id: string; name: string } | null;
   applications: { application: { id: string; name: string } }[];
   outcomes: { id: string; label: string; value: string }[];
@@ -72,7 +72,7 @@ export function projectToCard(p: {
     documentPath: p.document_path,
     documentName: p.document_name,
     logoUrl: p.logo_url,
-    roleType: p.roleType,
+    roleType: p.role,
     industry: p.industry,
     applications: p.applications.map((a) => a.application),
     outcomes: p.outcomes.map((o) => ({ id: o.id, label: o.label, value: o.value })),

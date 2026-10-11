@@ -26,12 +26,12 @@ export default async function CommunityPage({ searchParams }: { searchParams: Pr
     unreadCount(viewer),
     membersView(viewer, f),
     getProviderFieldTree(),
-    prisma.skill.findMany({ where: { status: "ACTIVE", visible_to_members: true, pillar_id: { not: null }, review_pending: false, merged_into_id: null }, orderBy: { name: "asc" }, select: { id: true, name: true, role_type_id: true, pillar_id: true } }),
+    prisma.skill.findMany({ where: { status: "ACTIVE", visible_to_members: true, pillar_id: { not: null }, review_pending: false, merged_into_id: null }, orderBy: { name: "asc" }, select: { id: true, name: true, role_id: true, pillar_id: true } }),
   ]);
   const tree: PickerTree = fieldTree.map((r) => ({
     id: r.id,
     label: r.display || r.name,
-    domains: r.domains.map((d) => ({ id: d.id, name: d.name, skills: skills.filter((s) => s.role_type_id === r.id && s.pillar_id === d.id).map((s) => ({ id: s.id, name: s.name })) })).filter((d) => d.skills.length),
+    domains: r.domains.map((d) => ({ id: d.id, name: d.name, skills: skills.filter((s) => s.role_id === r.id && s.pillar_id === d.id).map((s) => ({ id: s.id, name: s.name })) })).filter((d) => d.skills.length),
   }));
   const skillName = new Map(skills.map((s) => [s.id, s.name]));
 

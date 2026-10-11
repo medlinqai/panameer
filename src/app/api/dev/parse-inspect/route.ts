@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   // fix can be checked against a real document without re-uploading it.
   const parsed = parseResume(text);
   const catalog = await prisma.skill.findMany({
-    select: { id: true, name: true, role_type_id: true },
+    select: { id: true, name: true, role_id: true },
   });
   const { matched, unmatched } = matchSkills(parsed.skills, catalog);
 

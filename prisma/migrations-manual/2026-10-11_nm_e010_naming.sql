@@ -4,7 +4,8 @@
 -- those break old code only until the new deploy is live. Drop the views in NM-E015.
 BEGIN;
 
--- 1 · Enums
+-- 1 · Enums ("Role" is the sign-in role; it becomes UserRole so the Role model — was role_types — can take the name)
+ALTER TYPE "Role" RENAME TO "UserRole";
 ALTER TYPE "SettlementStatus" RENAME TO "PaymentRequestStatus";
 ALTER TYPE "PaymentTrigger" RENAME TO "PaymentEvent";
 ALTER TYPE "ColleagueInviteStatus" RENAME TO "InvitationToJoinStatus";

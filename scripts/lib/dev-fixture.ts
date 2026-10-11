@@ -29,10 +29,10 @@ export async function party(kind: "BUYER" | "PROVIDER", first: string): Promise<
 export async function cleanup() {
   const orders = (await prisma.workOrder.findMany({ where: { OR: [{ buyer_person_id: { in: made.persons } }, { provider_person_id: { in: made.persons } }] }, select: { id: true } })).map((o) => o.id);
   const requests = (await prisma.workRequest.findMany({ where: { buyer_person_id: { in: made.persons } }, select: { id: true } })).map((r) => r.id);
-  const settlements = (await prisma.settlementRequest.findMany({ where: { work_order_id: { in: orders } }, select: { id: true } })).map((s) => s.id);
-  await prisma.erpMessage.deleteMany({ where: { OR: [{ work_order_id: { in: orders } }, { work_request_id: { in: requests } }, { settlement_request_id: { in: settlements } }, { connection_id: { in: made.connections } }] } });
+  const settlements = (await prisma.paymentRequest.findMany({ where: { work_order_id: { in: orders } }, select: { id: true } })).map((s) => s.id);
+  await prisma.erpMessage.deleteMany({ where: { OR: [{ work_order_id: { in: orders } }, { work_request_id: { in: requests } }, { payment_request_id: { in: settlements } }, { connection_id: { in: made.connections } }] } });
   await prisma.erpConnection.deleteMany({ where: { id: { in: made.connections } } });
-  await prisma.settlementRequest.deleteMany({ where: { id: { in: settlements } } });
+  await prisma.paymentRequest.deleteMany({ where: { id: { in: settlements } } });
   await prisma.workOrderRevision.deleteMany({ where: { work_order_id: { in: orders } } });
   await prisma.workOrderEvent.deleteMany({ where: { work_order_id: { in: orders } } });
   await prisma.onboardingRequest.deleteMany({ where: { work_order_id: { in: orders } } });

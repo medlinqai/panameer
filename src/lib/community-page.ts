@@ -84,7 +84,7 @@ export async function getCommunityPage(viewer: Viewer): Promise<{
   const now = new Date().getTime();
   const invited: InvitedCard[] = me
     ? (
-        await prisma.colleagueInvite.findMany({
+        await prisma.invitationToJoin.findMany({
           where: {
             inviter_person_id: me.id,
             status: "PENDING",

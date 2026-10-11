@@ -65,11 +65,11 @@ async function main() {
   };
 
   try {
-    const roles = await prisma.roleType.findMany({ select: { id: true, name: true } });
+    const roles = await prisma.role.findMany({ select: { id: true, name: true } });
     const idOf = (n: string) => roles.find((r) => r.name === n)?.id ?? "";
 
     const count = (name: string) =>
-      prisma.skill.count({ where: { role_type_id: idOf(name), is_custom: false } });
+      prisma.skill.count({ where: { role_id: idOf(name), is_custom: false } });
 
     const app = await count("Application-Specific");
     const tech = await count("Technology-Specific");
@@ -98,11 +98,11 @@ async function main() {
     // --- the property the model depends on ---------------------------------
     const named = await prisma.skill.findMany({
       where: { is_custom: false },
-      select: { name: true, role_type_id: true },
+      select: { name: true, role_id: true },
     });
     const rolesByName = new Map<string, Set<string>>();
     for (const s of named) {
-      rolesByName.set(s.name, (rolesByName.get(s.name) ?? new Set()).add(s.role_type_id));
+      rolesByName.set(s.name, (rolesByName.get(s.name) ?? new Set()).add(s.role_id));
     }
     const vendorIds = new Set([idOf("Application-Specific"), idOf("Technology-Specific")]);
     const crossVendor = [...rolesByName.entries()].filter(
@@ -133,10 +133,10 @@ async function main() {
 
     // --- aliases + category -------------------------------------------------
     const appNoAlias = await prisma.skill.count({
-      where: { role_type_id: idOf("Application-Specific"), is_custom: false, aliases: { isEmpty: true } },
+      where: { role_id: idOf("Application-Specific"), is_custom: false, aliases: { isEmpty: true } },
     });
     const techWithCategory = await prisma.skill.count({
-      where: { role_type_id: idOf("Technology-Specific"), is_custom: false, NOT: { category: null } },
+      where: { role_id: idOf("Technology-Specific"), is_custom: false, NOT: { category: null } },
     });
     ok(
       "vendor skills carry aliases",
@@ -150,9 +150,9 @@ async function main() {
     );
 
     // --- buyer vocabulary ---------------------------------------------------
-    const caps = await prisma.capabilityDomain.count();
-    const bridge = await prisma.capabilityModuleBridge.count();
-    const bridgeLinked = await prisma.capabilityModuleBridge.count({ where: { NOT: { skill_id: null } } });
+    const caps = await prisma.domain.count();
+    const bridge = await prisma.domainModuleBridge.count();
+    const bridgeLinked = await prisma.domainModuleBridge.count({ where: { NOT: { skill_id: null } } });
     ok("capability domains seeded", caps === EXPECT.capabilityDomains, `${caps}`);
     ok("bridge seeded and mostly linked", bridge > 0 && bridgeLinked / bridge > 0.9,
       `${bridgeLinked}/${bridge} rows resolve to a Skill`);

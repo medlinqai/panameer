@@ -195,7 +195,7 @@ async function countNewMatches(profileId: string): Promise<number> {
 }
 
 async function countCoursesToWatch(userId: string): Promise<number> {
-  const enrollments = await prisma.learnEnrollment.findMany({
+  const enrollments = await prisma.enrollment.findMany({
     where: { user_id: userId },
     select: {
       learning_path_id: true,

@@ -75,7 +75,7 @@ const EMPLOYER_DISPOSITION: Record<string, string> = {
   logo_url: "-> Project.logo_url",
   contact_email: "-> Project.contact_email",
   software_suite: "-> Project.software_suite",
-  job_role_type_id: "-> Project.role_type_id (both FK to RoleType)",
+  job_role_id: "-> Project.role_id (both FK to RoleType)",
   sort_order: "not carried — recomputed in the destination",
   created_at: "not carried — database default",
   updated_at: "not carried — database default",
@@ -122,7 +122,7 @@ const FULL: EmployerScalars = {
   logo_url: "/logo.png",
   contact_email: "ap@acme.test",
   software_suite: "ORACLE" as EmployerScalars["software_suite"],
-  job_role_type_id: "role-1",
+  job_role_id: "role-1",
 };
 
 const there = employerToProjectData(FULL, "Northwind");
@@ -139,7 +139,7 @@ for (const key of Object.keys(FULL) as (keyof EmployerScalars)[]) {
 }
 check("2 — the role TITLE survives the round trip", back.role_title === FULL.role_title, "this is the field that had no home before E296");
 check("2 — the location survives the round trip", back.location === "Houston, TX");
-check("2 — the role TYPE is carried under its other name", there.role_type_id === FULL.job_role_type_id);
+check("2 — the role TYPE is carried under its other name", there.role_id === FULL.job_role_id);
 check("2 — client_name is taken from the caller, never derived", there.client_name === "Northwind");
 
 /* ⚠ THE FOLD. Four Employer place fields, one Project place field. */
@@ -164,12 +164,12 @@ const BARE: EmployerScalars = {
   role_title: null, location: null, city: null, state: null, country: null,
   start_date: null, end_date: null, is_current: false,
   description: null, logo_url: null, contact_email: null,
-  software_suite: null, job_role_type_id: null,
+  software_suite: null, job_role_id: null,
 };
 const bareOut = employerToProjectData(BARE, "Some Client");
 check("2 — ⚠ a bare parser-created employer converts at all", bareOut.name === "Some Client");
 check("2 — with no dates", bareOut.start_date === null && bareOut.end_date === null);
-check("2 — with no role type", bareOut.role_type_id === null);
+check("2 — with no role type", bareOut.role_id === null);
 check("2 — with no description", bareOut.description === null);
 check("2 — and it round-trips too", projectToEmployerData(bareOut, BARE.name ?? "").name === "Some Client");
 

@@ -123,14 +123,14 @@ export async function getProfileSettings(viewer: Viewer) {
       ai_training_opt_in: true,
       linked_github: true,
       linked_stackoverflow: true,
-      roles: { select: { roleType: { select: { id: true, name: true } } } },
+      roles: { select: { role: { select: { id: true, name: true } } } },
       skills: {
         select: {
           skill: {
             select: {
               id: true,
               name: true,
-              roleType: { select: { name: true } },
+              role: { select: { name: true } },
               pillar: { select: { name: true } },
             },
           },
@@ -147,11 +147,11 @@ export async function getProfileSettings(viewer: Viewer) {
     aiTrainingOptIn: p.ai_training_opt_in,
     linkedGithub: p.linked_github,
     linkedStackoverflow: p.linked_stackoverflow,
-    roles: p.roles.map((r) => roleLong(r.roleType.name)),
+    roles: p.roles.map((r) => roleLong(r.role.name)),
     categories: p.skills.map((s) => ({
       id: s.skill.id,
       skill: s.skill.name,
-      role: roleLong(s.skill.roleType?.name ?? null),
+      role: roleLong(s.skill.role?.name ?? null),
       domain: s.skill.pillar?.name ?? null,
     })),
   };

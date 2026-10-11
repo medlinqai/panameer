@@ -13,7 +13,7 @@ import { SURVIVORS, EXPLICIT_DELETES, MANIFEST_PATH } from "./survivors-spec";
  * ── ⚠⚠⚠ WHAT IT MUST NOT TOUCH ───────────────────────────────────────────
  *
  * ⚠ **`Lesson` AND `LearningPath` ARE THE LEARN CATALOGUE.** Scott: do not
- * touch them. ⚠⚠ THEY ARE SAFE BY SCHEMA, NOT BY CARE: both `expert_person_id`
+ * touch them. ⚠⚠ THEY ARE SAFE BY SCHEMA, NOT BY CARE: both `instructor_person_id`
  * relations are `onDelete: SetNull`, so deleting a Person nulls the pointer and
  * never removes a lesson. ⚠ Verified before and after regardless — a schema
  * reading is a claim, and the counts are the evidence.
@@ -60,8 +60,8 @@ async function learnBaseline() {
   return {
     lessons: await prisma.lesson.count(),
     paths: await prisma.learningPath.count(),
-    lessonsWithExpert: await prisma.lesson.count({ where: { expert_person_id: { not: null } } }),
-    pathsWithExpert: await prisma.learningPath.count({ where: { expert_person_id: { not: null } } }),
+    lessonsWithExpert: await prisma.lesson.count({ where: { instructor_person_id: { not: null } } }),
+    pathsWithExpert: await prisma.learningPath.count({ where: { instructor_person_id: { not: null } } }),
   };
 }
 

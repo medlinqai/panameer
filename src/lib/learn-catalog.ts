@@ -42,7 +42,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
     orderBy: [{ sort_order: "asc" }, { title: "asc" }],
     select: {
       id: true, slug: true, title: true, summary: true, group: true, pillar: true, cover_image: true, intro_video_ref: true, outcome: true, level: true,
-      expert: { select: { id: true, first_name: true, last_name: true, title: true, photo_url: true, providerProfile: { select: { id: true, employers: { select: { start_date: true, end_date: true, is_current: true } } } } } },
+      instructor: { select: { id: true, first_name: true, last_name: true, title: true, photo_url: true, providerProfile: { select: { id: true, employers: { select: { start_date: true, end_date: true, is_current: true } } } } } },
       assessment: { select: { status: true, questions: true, pass_threshold: true, max_attempts: true } },
       skills: { select: { skill: { select: { area: true } } } },
       _count: { select: { enrollments: true, credentials: true } },
@@ -50,7 +50,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
         orderBy: { sort_order: "asc" },
         select: {
           id: true, slug: true, title: true, summary: true,
-          sections: { orderBy: { sort_order: "asc" }, select: { lessons: { where: { retired_at: null }, orderBy: { sort_order: "asc" }, select: { id: true, title: true, description: true, duration_seconds: true, run_time: true, vimeo_ref: true, production_status: true, expert: { select: { first_name: true, last_name: true } } } } } },
+          sections: { orderBy: { sort_order: "asc" }, select: { lessons: { where: { retired_at: null }, orderBy: { sort_order: "asc" }, select: { id: true, title: true, description: true, duration_seconds: true, run_time: true, vimeo_ref: true, production_status: true, instructor: { select: { first_name: true, last_name: true } } } } } },
         },
       },
     },
@@ -58,11 +58,11 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
   const ids = paths.map((p) => p.id);
   const [enrolled, progress, attempts, certs, watches] = userId
     ? await Promise.all([
-        prisma.learnEnrollment.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { learning_path_id: true } }),
+        prisma.enrollment.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { learning_path_id: true } }),
         prisma.lessonProgress.findMany({ where: { user_id: userId }, select: { lesson_id: true } }),
         prisma.certificationAttempt.findMany({ where: { user_id: userId, learning_path_id: { in: ids }, is_preview: false }, select: { learning_path_id: true, score: true, passed: true } }),
-        prisma.certification.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { id: true, learning_path_id: true, created_at: true, issued_on: true, public_credential_url: true } }),
-        prisma.learnPathWatch.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { learning_path_id: true, test_watch: true } }).catch(() => []),
+        prisma.credential.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { id: true, learning_path_id: true, created_at: true, issued_on: true, public_credential_url: true } }),
+        prisma.learningPathWatch.findMany({ where: { user_id: userId, learning_path_id: { in: ids } }, select: { learning_path_id: true, test_watch: true } }).catch(() => []),
       ])
     : [[], [], [], [], []];
   const done = new Set(progress.map((p) => p.lesson_id));
@@ -74,7 +74,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
     const courses: CatCourse[] = p.courses.map((c) => {
       const lessons = c.sections.flatMap((s) => s.lessons).map((l) => ({
         id: l.id, title: lessonTitle(l.title), minutes: minutesOf(l.duration_seconds, l.run_time), playable: isPlayable(l), done: done.has(l.id), description: lessonDescription(l.description), vimeoRef: l.vimeo_ref,
-        _expert: l.expert ? nameOf(l.expert) : null,
+        _expert: l.instructor ? nameOf(l.instructor) : null,
       }));
       const experts = lessons.map((l) => l._expert).filter(Boolean) as string[];
       return {
@@ -82,7 +82,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
         lessons: lessons.map(({ _expert, ...l }) => (void _expert, l)),
         minutes: lessons.reduce((n, l) => n + (l.minutes ?? 0), 0),
         done: lessons.filter((l) => l.done && l.playable).length,
-        teacher: experts.sort((a, b) => experts.filter((x) => x === b).length - experts.filter((x) => x === a).length)[0] ?? (p.expert ? nameOf(p.expert) : null),
+        teacher: experts.sort((a, b) => experts.filter((x) => x === b).length - experts.filter((x) => x === a).length)[0] ?? (p.instructor ? nameOf(p.instructor) : null),
       };
     });
     const flat = courses.flatMap((c, ci) => c.lessons.map((l) => ({ ...l, courseIndex: ci + 1, courseTitle: c.title })));
@@ -105,7 +105,7 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
     const questions = Array.isArray(p.assessment?.questions) ? (p.assessment!.questions as unknown[]).length : 0;
     return {
       id: p.id, slug: p.slug, title: p.title, summary: p.summary, area, group: p.group, pillar: p.pillar, cover: p.cover_image, introVideo: p.intro_video_ref, outcome: p.outcome, level: p.level,
-      teacher: p.expert ? { personId: p.expert.id, name: nameOf(p.expert), title: p.expert.title, photoUrl: p.expert.photo_url, profileId: p.expert.providerProfile?.id ?? null, years: experienceYears((p.expert.providerProfile?.employers ?? []).map((e) => ({ start: e.start_date, end: e.end_date, isCurrent: e.is_current }))) || null } : null,
+      teacher: p.instructor ? { personId: p.instructor.id, name: nameOf(p.instructor), title: p.instructor.title, photoUrl: p.instructor.photo_url, profileId: p.instructor.providerProfile?.id ?? null, years: experienceYears((p.instructor.providerProfile?.employers ?? []).map((e) => ({ start: e.start_date, end: e.end_date, isCurrent: e.is_current }))) || null } : null,
       courses, lessons: flat.length, minutes: flat.reduce((n, l) => n + (l.minutes ?? 0), 0), playable,
       learners: p._count.enrollments, completed: p._count.credentials,
       mine,
@@ -123,6 +123,6 @@ export async function nextPathSuggestion(userId: string | null): Promise<string>
   if (!userId) return "/learn/paths#areas";
   const n = await prisma.providerSkill.count({ where: { providerProfile: { person: { user_id: userId } }, skill: { area: "PRC" } } }).catch(() => 0);
   if (!n) return "/learn/paths#areas";
-  const done = await prisma.certification.count({ where: { user_id: userId, learningPath: { slug: "end-user-procurement-basic-procurement" } } });
+  const done = await prisma.credential.count({ where: { user_id: userId, learningPath: { slug: "end-user-procurement-basic-procurement" } } });
   return done ? "/learn/paths?area=PRC" : "/learn/end-user-procurement-basic-procurement";
 }

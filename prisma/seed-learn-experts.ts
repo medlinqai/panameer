@@ -11,8 +11,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
  *   npm run seed:learn-experts
  *
  * Teaching is recorded PER LESSON — 466 of the 522 lessons carry an
- * `expert_person_id` — and the app now derives a path's and a course's
- * instructors from those. `LearningPath.expert_person_id` has one remaining
+ * `instructor_person_id` — and the app now derives a path's and a course's
+ * instructors from those. `LearningPath.instructor_person_id` has one remaining
  * job: a fallback lead for a path whose lessons name nobody at all.
  *
  * The first version of this script got that wrong. It assigned one instructor
@@ -73,10 +73,10 @@ async function main() {
     select: {
       id: true,
       title: true,
-      expert_person_id: true,
+      instructor_person_id: true,
       courses: {
         select: {
-          sections: { select: { lessons: { select: { expert_person_id: true } } } },
+          sections: { select: { lessons: { select: { instructor_person_id: true } } } },
         },
       },
     },
@@ -92,21 +92,21 @@ async function main() {
     const lessonExperts = new Set(
       lp.courses
         .flatMap((c) => c.sections.flatMap((s) => s.lessons))
-        .map((l) => l.expert_person_id)
+        .map((l) => l.instructor_person_id)
         .filter((x): x is string => Boolean(x))
     );
 
     if (lessonExperts.size > 0) {
-      if (lp.expert_person_id && !lessonExperts.has(lp.expert_person_id)) {
+      if (lp.instructor_person_id && !lessonExperts.has(lp.instructor_person_id)) {
         await prisma.learningPath.update({
           where: { id: lp.id },
-          data: { expert_person_id: null },
+          data: { instructor_person_id: null },
         });
         console.log(
           `  cleared  ${lp.title.padEnd(46)} (declared lead teaches none of its ${lessonExperts.size > 1 ? "lessons" : "lessons"})`
         );
         cleared++;
-      } else if (lp.expert_person_id) {
+      } else if (lp.instructor_person_id) {
         kept++;
       }
       continue;
@@ -119,13 +119,13 @@ async function main() {
       noFace.push(lp.title);
       continue;
     }
-    if (lp.expert_person_id === person.id) {
+    if (lp.instructor_person_id === person.id) {
       kept++;
       continue;
     }
     await prisma.learningPath.update({
       where: { id: lp.id },
-      data: { expert_person_id: person.id },
+      data: { instructor_person_id: person.id },
     });
     console.log(
       `  fallback ${lp.title.padEnd(46)} → ${person.first_name} ${person.last_name}`

@@ -36,7 +36,7 @@ export async function getCommunityHero(viewer: Viewer): Promise<CommunityHero | 
     growthBoard("month", now),
   ]);
 
-  const joined = await prisma.colleagueInvite.findFirst({
+  const joined = await prisma.invitationToJoin.findFirst({
     where: {
       inviter_person_id: personId,
       status: "ACCEPTED",

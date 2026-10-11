@@ -136,7 +136,7 @@ export const SECOND_DEGREE: readonly (readonly [string, string])[] = [
 /**
  * ── ⚠⚠ TWO INVITATIONS, AND ONE OF THEM HAS LAPSED ON PURPOSE ─────────────
  *
- * ⚠⚠⚠ THE LAPSED ROW IS THE POINT. `ColleagueInviteStatus` has an `EXPIRED`
+ * ⚠⚠⚠ THE LAPSED ROW IS THE POINT. `InvitationToJoinStatus` has an `EXPIRED`
  * value and **nothing in the application ever writes it** (measured
  * 2026-09-20), so `community-web.ts` filters on `expires_at > now` instead. ⚠ A
  * row that is `PENDING` with a date in the past is the ONLY thing that can tell

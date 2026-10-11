@@ -186,7 +186,7 @@ async function main() {
       await prisma.providerSkill.deleteMany({ where: { provider_profile_id: twin.id } });
       await prisma.providerProfileSpecialization.deleteMany({ where: { provider_profile_id: twin.id } });
       await prisma.providerProfileRole.deleteMany({ where: { provider_profile_id: twin.id } });
-      await prisma.certification.deleteMany({ where: { provider_profile_id: twin.id } });
+      await prisma.credential.deleteMany({ where: { provider_profile_id: twin.id } });
       await prisma.employer.deleteMany({ where: { provider_profile_id: twin.id } });
       await prisma.providerProfile.delete({ where: { id: twin.id } });
       await prisma.person.delete({ where: { id: twinPerson.id } });
@@ -238,7 +238,7 @@ async function main() {
     await prisma.providerSkill.deleteMany({ where: { provider_profile_id: profile.id } });
     await prisma.providerProfileSpecialization.deleteMany({ where: { provider_profile_id: profile.id } });
     await prisma.providerProfileRole.deleteMany({ where: { provider_profile_id: profile.id } });
-    await prisma.certification.deleteMany({ where: { provider_profile_id: profile.id } });
+    await prisma.credential.deleteMany({ where: { provider_profile_id: profile.id } });
     await prisma.employer.deleteMany({ where: { provider_profile_id: profile.id } });
     await prisma.providerProfile.delete({ where: { id: profile.id } });
     await prisma.person.delete({ where: { id: person.id } });

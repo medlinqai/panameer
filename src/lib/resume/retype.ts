@@ -38,8 +38,8 @@ export async function readPiece(profileId: string, from: PieceKind, ref: PieceRe
     return r ? { piece: { name: r.institution, title: r.degree, start: ofYear(r.start_year), end: ofYear(r.end_year ?? r.year) }, remove: () => prisma.education.delete({ where: { id: r.id } }) } : null;
   }
   if (from === "cert") {
-    const r = match(await prisma.certification.findMany({ where: own }), (x) => x.id, (x) => x.name);
-    return r ? { piece: { name: r.name, title: r.issuer, start: iso(r.issued_on) ?? ofYear(r.year), end: null }, remove: () => prisma.certification.delete({ where: { id: r.id } }) } : null;
+    const r = match(await prisma.credential.findMany({ where: own }), (x) => x.id, (x) => x.name);
+    return r ? { piece: { name: r.name, title: r.issuer, start: iso(r.issued_on) ?? ofYear(r.year), end: null }, remove: () => prisma.credential.delete({ where: { id: r.id } }) } : null;
   }
   if (from === "spec") {
     const r = match(await prisma.providerProfileSpecialization.findMany({ where: own, select: { specialization_id: true, specialization: { select: { name: true } } } }), (x) => x.specialization_id, (x) => x.specialization.name);
@@ -72,11 +72,11 @@ export async function writePiece(profileId: string, to: Target, p: Piece) {
     const prof = await prisma.providerProfile.findUnique({ where: { id: profileId }, select: { person: { select: { user_id: true } } } });
     const userId = prof?.person.user_id;
     if (!userId) return;
-    const have = new Set((await prisma.certification.findMany({ where: own, select: { name: true } })).map((x) => key(x.name)));
+    const have = new Set((await prisma.credential.findMany({ where: own, select: { name: true } })).map((x) => key(x.name)));
     const names = splitList(p.name);
     const single = names.length === 1;
     for (const n of names)
-      if (!have.has(key(n))) await prisma.certification.create({ data: { ...own, user_id: userId, name: clip(n), issuer: single ? clip(p.title) || null : null, issued_on: single ? date(p.start) : null } });
+      if (!have.has(key(n))) await prisma.credential.create({ data: { ...own, user_id: userId, name: clip(n), issuer: single ? clip(p.title) || null : null, issued_on: single ? date(p.start) : null } });
   } else await addTerms(profileId, splitList(p.name));
 }
 

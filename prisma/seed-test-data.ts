@@ -8,7 +8,7 @@
  *
  * It says "do NOT touch the 4 real users (Scott/Keith/Mick/Rev — Learn-video
  * links)". Three of those four names are wrong. The people actually carrying
- * Learn lessons are, queried from `learn_lessons.expert_person_id`:
+ * Learn lessons are, queried from `learn_lessons.instructor_person_id`:
  *
  *     Scott Walls         iamscottwalls@outlook.com    338 lessons
  *     Linus Erley         sw_user2@straterp.com         70 lessons
@@ -205,14 +205,14 @@ async function main() {
 
   // ---- PROTECTED SET, derived from the data --------------------------------
   const lessons = await prisma.lesson.findMany({
-    where: { expert_person_id: { not: null } },
-    select: { expert: { select: { id: true, first_name: true, last_name: true, user: { select: { id: true, email: true } } } } },
+    where: { instructor_person_id: { not: null } },
+    select: { instructor: { select: { id: true, first_name: true, last_name: true, user: { select: { id: true, email: true } } } } },
   });
   const protectedEmails = new Set<string>();
   const protectedPersons = new Set<string>();
   const counts = new Map<string, number>();
   for (const l of lessons) {
-    const e = l.expert;
+    const e = l.instructor;
     if (!e) continue;
     protectedPersons.add(e.id);
     if (e.user?.email) protectedEmails.add(norm(e.user.email));
@@ -409,11 +409,11 @@ async function main() {
     Work Request.
   */
   const pillars = await prisma.pillar.findMany({
-    /* ⚠ `role_type_id` IS READ HERE BECAUSE THE VISIBILITY GATE REQUIRES IT
+    /* ⚠ `role_id` IS READ HERE BECAUSE THE VISIBILITY GATE REQUIRES IT
        (`access.ts:providerMeetsRequired`). It is DERIVED from the skills this
        persona actually gets — the rule `deriveRolesFromSkills` already uses —
        never typed, so a catalog change moves it without an edit here. */
-    select: { id: true, name: true, skills: { select: { id: true, name: true, role_type_id: true }, take: 40 } },
+    select: { id: true, name: true, skills: { select: { id: true, name: true, role_id: true }, take: 40 } },
     orderBy: { name: "asc" },
   });
 
@@ -540,14 +540,14 @@ async function main() {
 
     /*
       ⚠ THE ROLE IS DERIVED FROM THE SKILLS THIS PERSONA HOLDS — the modal
-      `role_type_id` among them — never typed. That is the rule
+      `role_id` among them — never typed. That is the rule
       `provider_skill_model_decision.md` states and `deriveRolesFromSkills`
       implements: *"a skill belongs to exactly one role"*. A tie breaks on the
       first skill, deterministically, because the skill list is ordered.
     */
     const roleVotes = new Map<string, number>();
     for (const s of skills) {
-      if (s.role_type_id) roleVotes.set(s.role_type_id, (roleVotes.get(s.role_type_id) ?? 0) + 1);
+      if (s.role_id) roleVotes.set(s.role_id, (roleVotes.get(s.role_id) ?? 0) + 1);
     }
     const derivedRole =
       [...roleVotes.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
@@ -558,7 +558,7 @@ async function main() {
       /* headline COLUMN REMOVED (E595 WS-B) - written to Person.title above. */
       overview: `Seeded coverage for ${t.pillar.name}. ${key}`,
       pillar_id: t.pillar.id,
-      role_type_id: derivedRole,
+      role_id: derivedRole,
       status: "ACTIVE",
       validation_status: isValidated ? "VALIDATED" : "NOT_REQUESTED",
       rate_min_cents: 12_000_00 + (pi % 8) * 1_500_00,
@@ -615,7 +615,7 @@ async function main() {
     `E581` residual with a reason, and it must be reported as one rather than
     papered over with a rate a recruiter does not have.
   */
-  const roleTypes = await prisma.roleType.findMany({ select: { id: true, name: true } });
+  const roleTypes = await prisma.role.findMany({ select: { id: true, name: true } });
   const roleByName = new Map(roleTypes.map((r) => [r.name.toLowerCase(), r.id]));
 
   /* ⚠ ONE POOL, BUILT FROM THE CATALOG ALREADY FETCHED ABOVE — not a second
@@ -623,9 +623,9 @@ async function main() {
   const skillsByRole = new Map<string, { id: string; name: string }[]>();
   for (const p of pillars) {
     for (const s of p.skills) {
-      if (!s.role_type_id) continue;
-      if (!skillsByRole.has(s.role_type_id)) skillsByRole.set(s.role_type_id, []);
-      skillsByRole.get(s.role_type_id)!.push({ id: s.id, name: s.name });
+      if (!s.role_id) continue;
+      if (!skillsByRole.has(s.role_id)) skillsByRole.set(s.role_id, []);
+      skillsByRole.get(s.role_id)!.push({ id: s.id, name: s.name });
     }
   }
   for (const list of skillsByRole.values()) list.sort((a, b) => a.id.localeCompare(b.id));
@@ -669,7 +669,7 @@ async function main() {
        its own — the skills come from a stable pool and the ROLE IS DERIVED FROM
        THEM, exactly as WS-2 does. ⚠⚠ THE POOL IS CHOSEN BY `si`, NOT "the
        biggest": picking the largest pool put all six Def Leppard personas on one
-       role and, worse, left `role_type_id` null because nothing derived it. */
+       role and, worse, left `role_id` null because nothing derived it. */
     const roleIdsOrdered = [...skillsByRole.keys()].sort();
     const fallbackRoleId = roleIdsOrdered[si % roleIdsOrdered.length];
     const chosenRoleId = rolePool.length >= 5 ? roleTypeId : fallbackRoleId;
@@ -729,7 +729,7 @@ async function main() {
       overview:
         `${stated(spec?.domain) ? `Focus: ${spec!.domain}. ` : ""}` +
         `Roster persona from Users.xlsx (${seller.pid}). ${SEED_TAG}`,
-      role_type_id: chosenRoleId,
+      role_id: chosenRoleId,
       work_method: isRecruiter ? "RECRUITER" : "SERVICES",
       status: "ACTIVE",
       validation_status: /^yes$/i.test(stated(spec?.validated) ?? "") ? "VALIDATED" : "NOT_REQUESTED",
@@ -773,7 +773,7 @@ async function main() {
     const gate = await prisma.providerProfile.findFirst({
       where: { person: { user: { email: GATE_PROVIDER_EMAIL } } },
       select: {
-        id: true, role_type_id: true,
+        id: true, role_id: true,
         hourly_rate_cents: true, rate_min_cents: true, rate_max_cents: true,
         onsite_rate_cents: true, remote_rate_cents: true,
         skills: { select: { skill_id: true, skill: { select: { name: true } } } },
@@ -793,7 +793,7 @@ async function main() {
     }
     const missing = [
       !gate.person.title?.trim() && "title",
-      !gate.role_type_id && "role",
+      !gate.role_id && "role",
       !gate.skills.length && "skills",
       gate.hourly_rate_cents == null && gate.rate_min_cents == null && gate.rate_max_cents == null &&
         gate.onsite_rate_cents == null && gate.remote_rate_cents == null && "rate",

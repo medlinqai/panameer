@@ -105,7 +105,7 @@ async function live() {
     paths: await prisma.learningPath.count(),
     assessments: await prisma.certificationTest.count(),
     joins: await prisma.learningPathSkill.count(),
-    certs: await prisma.certification.count(),
+    certs: await prisma.credential.count(),
   };
   const skill = await prisma.skill.findFirst({ select: { id: true } });
   check("3 — a skill exists to resolve against", skill != null);
@@ -157,7 +157,7 @@ async function live() {
 
       ⚠⚠ **A REVIEWER IS WRITTEN WITH THE PUBLISH, AND THAT IS NOT DECORATION IN A
       FIXTURE.** `check:learn-review` asserts *"every write of status PUBLISHED also
-      writes `reviewed_by` AND `reviewed_at`"* — and it **caught this gate** when
+      writes `reviewed_by_person_id` AND `reviewed_at`"* — and it **caught this gate** when
       `P2-A4-E702` renamed the model and the whole family was re-run.
       ⚠⚠⚠ **THE RED WAS REAL AND IT WAS MINE: `P2-A4-E701` ADDED THIS FIXTURE AND NEVER
       RAN `check:learn-review`, WHICH IS THE GATE ASSERTING THE RULE IT BROKE (98e).**
@@ -171,7 +171,7 @@ async function live() {
     check("3 — a person exists to stand as reviewer", reviewer != null);
     await prisma.certificationTest.update({
       where: { id: a.id },
-      data: { status: "PUBLISHED", reviewed_by: reviewer?.id ?? null, reviewed_at: new Date() },
+      data: { status: "PUBLISHED", reviewed_by_person_id: reviewer?.id ?? null, reviewed_at: new Date() },
     });
     const whenPublished = await certificationTestForSkill(skill.id);
     check(
@@ -198,7 +198,7 @@ async function live() {
     paths: await prisma.learningPath.count(),
     assessments: await prisma.certificationTest.count(),
     joins: await prisma.learningPathSkill.count(),
-    certs: await prisma.certification.count(),
+    certs: await prisma.credential.count(),
   };
   check(
     "3 — ⚠⚠ the gate left nothing behind",

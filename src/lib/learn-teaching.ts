@@ -14,7 +14,7 @@ export async function teachingData(userId: string) {
   const paths = await prisma.learningPath.findMany({
     where: { status: "PUBLISHED", ...teachesPathWhere(me.id) },
     orderBy: { title: "asc" },
-    select: { id: true, slug: true, title: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { id: true, title: true, vimeo_ref: true, production_status: true, expert_person_id: true } } } } } } },
+    select: { id: true, slug: true, title: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { id: true, title: true, vimeo_ref: true, production_status: true, instructor_person_id: true } } } } } } },
   });
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   let finishedThisMonth = 0;
@@ -22,9 +22,9 @@ export async function teachingData(userId: string) {
   for (const p of paths) {
     const lessons = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
     const playable = lessons.filter(isPlayable).map((l) => l.id);
-    const mine = lessons.filter((l) => l.expert_person_id === me.id);
+    const mine = lessons.filter((l) => l.instructor_person_id === me.id);
     const [enrolled, threads, instructor] = await Promise.all([
-      prisma.learnEnrollment.findMany({ where: { learning_path_id: p.id, user_id: { not: userId } }, select: { user_id: true, user: { select: { first_name: true, last_name: true, person: { select: { photo_url: true } } } } } }),
+      prisma.enrollment.findMany({ where: { learning_path_id: p.id, user_id: { not: userId } }, select: { user_id: true, user: { select: { first_name: true, last_name: true, person: { select: { photo_url: true } } } } } }),
       mine.length ? prisma.forumThread.findMany({ where: { lesson_id: { in: mine.map((l) => l.id) }, reply_count: 0 }, orderBy: { created_at: "desc" }, take: 20, select: { id: true, title: true, lesson_id: true, created_at: true } }) : Promise.resolve([]),
       pathInstructor(p.id),
     ]);

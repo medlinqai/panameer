@@ -77,7 +77,7 @@ export async function POST(request: Request) {
 
     const catalog = await prisma.skill.findMany({
       where: { is_custom: false, ...OFFERABLE },
-      select: { id: true, name: true, role_type_id: true },
+      select: { id: true, name: true, role_id: true },
     });
     const { matched, unmatched } = matchSkills(ai.skills, catalog);
 

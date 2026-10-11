@@ -103,7 +103,7 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
   /* ── 2 · invited ─────────────────────────────────────────────────────── */
   // EXPIRY IS COMPUTED FROM `expires_at`, NOT READ FROM `status`. The
   const invitedAll = mePerson
-    ? await prisma.colleagueInvite.findMany({
+    ? await prisma.invitationToJoin.findMany({
         where: {
           inviter_person_id: mePerson.id,
           status: "PENDING",

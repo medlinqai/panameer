@@ -29,14 +29,14 @@ async function main() {
   await saveProviderService(prov.viewer, draft.id, svc, true);
   check("after validation the service publishes", !!(await prisma.providerService.findUnique({ where: { id: draft.id } }))!.published_at);
 
-  const domain = await prisma.capabilityDomain.findFirstOrThrow({ select: { id: true } });
+  const domain = await prisma.domain.findFirstOrThrow({ select: { id: true } });
   const productId = await saveServiceProductFromWizard(prov.viewer, null, {
     title: "Procurement Spend Dashboard (OTBI)", summary: "A ready-to-use OTBI dashboard.", kind: "DELIVERABLE", pricingType: "FIXED", priceCents: 100000, durationWeeks: 2,
     capabilityDomainIds: [domain.id], deliverables: ["6 analyses + 1 dashboard page"], paymentTerms: "IMMEDIATE", paymentTrigger: "INSTALLATION", coverCode: "DSH",
     milestones: [{ label: "Kickoff", percent: 50, trigger: "ORDER_ACCEPTED" }, { label: "Installed in test pod", percent: 50, trigger: "INSTALLATION" }],
   }, false);
   const ms = await prisma.serviceProductMilestone.findMany({ where: { service_product_id: productId }, orderBy: { sequence: "asc" } });
-  check("product saved with a 50/50 schedule and triggers", ms.length === 2 && ms[0].percent === 50 && ms[1].trigger === "INSTALLATION");
+  check("product saved with a 50/50 schedule and triggers", ms.length === 2 && ms[0].percent === 50 && ms[1].payment_event === "INSTALLATION");
   await refuses("a schedule that doesn't total 100% is refused", () => saveServiceProductFromWizard(prov.viewer, productId, { title: "x", kind: "DELIVERABLE", priceCents: 1000, durationWeeks: 1, capabilityDomainIds: [domain.id], deliverables: ["x"], milestones: [{ label: "a", percent: 40 }, { label: "b", percent: 50 }] }, false), "100");
 
   const line = { kind: "FIXED" as const, description: "Procurement Spend Dashboard (OTBI)", serviceProductId: productId, amountCents: 100000 };
@@ -61,7 +61,7 @@ async function main() {
   await acceptOrder(prov.viewer, o.id);
   check("provider accepts → Open", (await prisma.workOrder.findUniqueOrThrow({ where: { id: o.id } })).status === "RELEASED");
   const mm = (await milestonesFor([o.lines[0].id])).get(o.lines[0].id) ?? [];
-  check("order line carries the product's 50/50 schedule", mm.length === 2 && mm[1].trigger === "INSTALLATION");
+  check("order line carries the product's 50/50 schedule", mm.length === 2 && mm[1].paymentEvent === "INSTALLATION");
   const s = await reportMilestone(prov.viewer, mm[1].id);
   const due = new Date(new Date(s.submittedAt!).getTime() + 30 * 86_400_000).toISOString().slice(0, 10);
   check("Report Installed → payment request for 50% ($600), due = report + Net 30", s.totalCents === 60000 && s.dueDate === due);

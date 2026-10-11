@@ -55,14 +55,14 @@ export async function applyResumeFixes(profileId: string) {
   const [skills, projects, certs, edu] = await Promise.all([
     prisma.providerSkill.findMany({ where: { provider_profile_id: profileId }, select: { id: true, skill: { select: { name: true } } } }),
     prisma.project.findMany({ where: { provider_profile_id: profileId }, select: { id: true, name: true } }),
-    prisma.certification.findMany({ where: { provider_profile_id: profileId }, select: { id: true, name: true } }),
+    prisma.credential.findMany({ where: { provider_profile_id: profileId }, select: { id: true, name: true } }),
     prisma.education.findMany({ where: { provider_profile_id: profileId }, select: { id: true, institution: true, degree: true } }),
   ]);
   const del = <T extends { id: string }>(rows: T[], test: (r: T) => boolean) => rows.filter(test).map((r) => r.id);
   await Promise.all([
     prisma.providerSkill.deleteMany({ where: { id: { in: del(skills, (r) => has("skill", r.skill.name)) } } }),
     prisma.project.deleteMany({ where: { id: { in: del(projects, (r) => has("project", r.name)) } } }),
-    prisma.certification.deleteMany({ where: { id: { in: del(certs, (r) => has("cert", r.name)) } } }),
+    prisma.credential.deleteMany({ where: { id: { in: del(certs, (r) => has("cert", r.name)) } } }),
     prisma.education.deleteMany({ where: { id: { in: del(edu, (r) => has("edu", `${r.institution} ${r.degree ?? ""}`)) } } }),
   ]);
   const switches = Object.entries(f.switches);

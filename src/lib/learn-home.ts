@@ -47,7 +47,7 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
         audience: true,
         cover_image: true,
         // The declared lead — consulted only when no lesson names anybody.
-        expert_person_id: true,
+        instructor_person_id: true,
         assessment: { select: { status: true } },
         courses: {
           select: {
@@ -61,7 +61,7 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
                     title: true,
                     vimeo_ref: true,
                     production_status: true,
-                    expert_person_id: true,
+                    instructor_person_id: true,
                   },
                 },
               },
@@ -71,7 +71,7 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
       },
     }),
     userId
-      ? prisma.learnEnrollment.findMany({
+      ? prisma.enrollment.findMany({
           where: { user_id: userId },
           select: { learning_path_id: true },
         })
@@ -88,7 +88,7 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
     paths.flatMap((p) =>
       instructorIdsFor(
         p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons)),
-        p.expert_person_id
+        p.instructor_person_id
       )
     )
   );
@@ -117,7 +117,7 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
       instructors: resolveInstructors(
         tallyExperts(lessons),
         directory,
-        p.expert_person_id
+        p.instructor_person_id
       ),
       enrolled: isEnrolled,
       progress: isEnrolled ? prog.percent : null,
@@ -128,7 +128,7 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
         p.group ?? "",
         ...p.courses.map((c) => c.title),
         ...p.courses.flatMap((c) => c.sections.flatMap((sec) => sec.lessons.map((l) => l.title))),
-        ...resolveInstructors(tallyExperts(lessons), directory, p.expert_person_id).map((i) => i.name),
+        ...resolveInstructors(tallyExperts(lessons), directory, p.instructor_person_id).map((i) => i.name),
       ]
         .join(" ")
         .toLowerCase(),
@@ -216,7 +216,7 @@ export async function getLearnPath(
       cover_image: true,
       intro_video_ref: true,
       // The declared lead — a fallback for a path whose lessons name nobody.
-      expert_person_id: true,
+      instructor_person_id: true,
       courses: {
         orderBy: [{ sort_order: "asc" }, { title: "asc" }],
         select: {
@@ -244,7 +244,7 @@ export async function getLearnPath(
                   duration_source: true,
                   vimeo_ref: true,
                   production_status: true,
-                  expert_person_id: true,
+                  instructor_person_id: true,
                 },
               },
             },
@@ -261,7 +261,7 @@ export async function getLearnPath(
 
   const [enrollment, progress, directory] = await Promise.all([
     userId
-      ? prisma.learnEnrollment.findUnique({
+      ? prisma.enrollment.findUnique({
           where: { user_id_learning_path_id: { user_id: userId, learning_path_id: path.id } },
           select: { id: true },
         })
@@ -272,7 +272,7 @@ export async function getLearnPath(
           select: { lesson_id: true },
         })
       : Promise.resolve([]),
-    loadInstructors(instructorIdsFor(allLessonRows, path.expert_person_id)),
+    loadInstructors(instructorIdsFor(allLessonRows, path.instructor_person_id)),
   ]);
 
   const done = new Set(progress.map((p) => p.lesson_id));
@@ -308,7 +308,7 @@ export async function getLearnPath(
       instructors: resolveInstructors(
         tallyExperts(courseLessonRows),
         directory,
-        path.expert_person_id
+        path.instructor_person_id
       ),
       sections,
     };
@@ -329,7 +329,7 @@ export async function getLearnPath(
     instructors: resolveInstructors(
       tallyExperts(allLessonRows),
       directory,
-      path.expert_person_id
+      path.instructor_person_id
     ),
     enrolled: Boolean(enrollment),
     lessons: allLessons.length,
@@ -394,15 +394,15 @@ export async function getLearnLesson(
     select: {
       vimeo_ref: true,
       thumbnail_url: true,
-      expert_person_id: true,
+      instructor_person_id: true,
     },
   });
 
-  const directory = own?.expert_person_id
-    ? await loadInstructors([own.expert_person_id])
+  const directory = own?.instructor_person_id
+    ? await loadInstructors([own.instructor_person_id])
     : new Map<string, Omit<Instructor, "lessons">>();
   const instructor = lessonFace(
-    { expert_person_id: own?.expert_person_id ?? null },
+    { instructor_person_id: own?.instructor_person_id ?? null },
     directory,
     [],
     path.instructors
@@ -457,12 +457,12 @@ export type TaughtPath = {
 export function teachesPathWhere(personId: string) {
   return {
     OR: [
-      { expert_person_id: personId },
+      { instructor_person_id: personId },
       {
         courses: {
           some: {
             sections: {
-              some: { lessons: { some: { expert_person_id: personId, retired_at: null } } },
+              some: { lessons: { some: { instructor_person_id: personId, retired_at: null } } },
             },
           },
         },
@@ -483,7 +483,7 @@ export type TakenPath = {
 
 export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[]> {
   if (!userId) return [];
-  const rows = await prisma.learnEnrollment.findMany({
+  const rows = await prisma.enrollment.findMany({
     where: { user_id: userId, learningPath: { status: "PUBLISHED" } },
     orderBy: { created_at: "desc" },
     select: {
@@ -507,7 +507,7 @@ export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[
       select: { lesson: { select: { section: { select: { course: { select: { learning_path_id: true } } } } } } },
     }),
   ]);
-  const sections = await prisma.section.findMany({
+  const sections = await prisma.courseSection.findMany({
     where: { id: { in: lessonTotals.map((t) => t.section_id) } },
     select: { id: true, course: { select: { learning_path_id: true } } },
   });
@@ -559,7 +559,7 @@ export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> 
                 select: {
                   vimeo_ref: true,
                   production_status: true,
-                  expert_person_id: true,
+                  instructor_person_id: true,
                 },
               },
             },
@@ -571,7 +571,7 @@ export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> 
 
   return paths.map((p) => {
     const lessons = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
-    const mine = lessons.filter((l) => l.expert_person_id === personId).length;
+    const mine = lessons.filter((l) => l.instructor_person_id === personId).length;
     return {
       id: p.id,
       title: p.title,

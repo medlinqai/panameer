@@ -60,8 +60,8 @@ function providerTextFilter(q: string) {
       { overview: like },
       { skills: { some: { skill: { name: like } } } },
       { keywords_text: like },
-      { roleType: { name: like } },
-      { roleType: { display: like } },
+      { role: { name: like } },
+      { role: { display: like } },
       { pillar: { name: like } },
     ],
   };

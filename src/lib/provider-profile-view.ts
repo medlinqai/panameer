@@ -56,7 +56,7 @@ export async function getProviderProfileView(
           user: { select: { email_verified: true } },
         },
       },
-      roleType: { select: { name: true, display: true } },
+      role: { select: { name: true, display: true } },
       pillar: { select: { name: true } },
       region: { select: { id: true, name: true } },
       skills: {
@@ -65,13 +65,13 @@ export async function getProviderProfileView(
             select: {
               id: true,
               name: true,
-              role_type_id: true,
+              role_id: true,
               pillar: { select: { id: true, name: true } },
             },
           },
         },
       },
-      roles: { select: { role_type_id: true } },
+      roles: { select: { role_id: true } },
       specializations: {
         include: { specialization: { select: { id: true, name: true, kind: true } } },
       },
@@ -96,7 +96,7 @@ export async function getProviderProfileView(
         orderBy: [{ sort_order: "asc" }, { created_at: "desc" }],
         include: {
           employer: { select: { id: true, name: true } },
-          roleType: { select: { id: true, name: true } },
+          role: { select: { id: true, name: true } },
           industry: { select: { id: true, name: true } },
           applications: {
             include: { application: { select: { id: true, name: true } } },
@@ -120,7 +120,7 @@ export async function getProviderProfileView(
   if (!profile) return null;
 
   const certifications = profile.person?.user_id
-    ? await prisma.certification.findMany({
+    ? await prisma.credential.findMany({
         where: { user_id: profile.person.user_id },
         orderBy: [{ issued_on: "desc" }, { year: "desc" }, { name: "asc" }],
       })
@@ -207,7 +207,7 @@ export async function getProviderProfileView(
     },
     missingRequired: missingRequired({
       headline: profile.person.title,
-      role_type_id: profile.role_type_id,
+      role_id: profile.role_id,
       skills: profile.skills,
       photoUrl: profile.person.photo_url,
       hasAddress: (profile.person.site?.addresses?.length ?? 0) > 0,
@@ -258,8 +258,8 @@ export async function getProviderProfileView(
     headline: profile.person.title ?? "",
     overview: profile.overview,
     field:
-      profile.roleType && profile.pillar
-        ? { role: roleLong(profile.roleType.name), domain: profile.pillar.name }
+      profile.role && profile.pillar
+        ? { role: roleLong(profile.role.name), domain: profile.pillar.name }
         : null,
     rates: opts.previewAsPeer || !canSeeRate({ isOwner, viewer: opts.viewer })
       ? null
@@ -301,7 +301,7 @@ export async function getProviderProfileView(
     skills: shownSkills(
       selectedRoleIds(profile),
       profile.skills,
-      (s) => s.skill.role_type_id
+      (s) => s.skill.role_id
     ).map((s) => ({
       id: s.skill.id,
       name: formatSkillName(s.skill.name),
@@ -352,7 +352,7 @@ export async function getProviderProfileView(
       videoUrl: p.video_url,
       documentName: p.document_name,
       logoUrl: p.logo_url,
-      roleType: p.roleType ? { id: p.roleType.id, name: p.roleType.name } : null,
+      roleType: p.role ? { id: p.role.id, name: p.role.name } : null,
       industry: p.industry ? { id: p.industry.id, name: p.industry.name } : null,
       applications: p.applications.map((a) => a.application),
       outcomes: p.outcomes.map((o) => ({ id: o.id, label: o.label, value: o.value })),

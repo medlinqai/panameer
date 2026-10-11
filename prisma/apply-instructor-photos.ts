@@ -83,11 +83,11 @@ async function main() {
       investigation, and it should be one command next time.
     */
     const grouped = await prisma.lesson.groupBy({
-      by: ["expert_person_id"],
+      by: ["instructor_person_id"],
       _count: { _all: true },
     });
     const ids = grouped
-      .map((g) => g.expert_person_id)
+      .map((g) => g.instructor_person_id)
       .filter((v): v is string => Boolean(v));
     const people = await prisma.person.findMany({
       where: { id: { in: ids } },
@@ -105,7 +105,7 @@ async function main() {
 
     console.log("\nLESSON INSTRUCTORS");
     for (const g of grouped.sort((a, b) => b._count._all - a._count._all)) {
-      const p = g.expert_person_id ? byId.get(g.expert_person_id) : null;
+      const p = g.instructor_person_id ? byId.get(g.instructor_person_id) : null;
       const who = p
         ? `${p.first_name} ${p.last_name} <${p.user?.email ?? "no user"}>`
         : "(no expert assigned)";

@@ -68,7 +68,7 @@ test("admin payments: record one payment across two work orders; a request paid 
     const s1 = await createSettlement(f!, "APPROVED");
     const s2 = await createSettlement(f2, "APPROVED");
     const prisma = db();
-    const num = async (id: string) => (await prisma.settlementRequest.findUnique({ where: { id }, select: { settlement_number: true } }))!.settlement_number;
+    const num = async (id: string) => (await prisma.paymentRequest.findUnique({ where: { id }, select: { payment_request_number: true } }))!.payment_request_number;
     const [n1, n2] = [await num(s1), await num(s2)];
 
     const { email, password } = adminAccount();
@@ -84,7 +84,7 @@ test("admin payments: record one payment across two work orders; a request paid 
     await form.getByRole("button", { name: "Record Payment" }).click();
     await expect(form.getByText(/Recorded PAY-/)).toBeVisible({ timeout: 30_000 });
 
-    const st = async (id: string) => (await prisma.settlementRequest.findUnique({ where: { id }, select: { status: true } }))!.status;
+    const st = async (id: string) => (await prisma.paymentRequest.findUnique({ where: { id }, select: { status: true } }))!.status;
     expect(await st(s1)).toBe("PAID");
     expect(await st(s2)).toBe("APPROVED");
     const pay = await prisma.payment.findFirst({ where: { external_ref: `e2e ${f!.tag}` }, include: { lines: true } });
@@ -109,7 +109,7 @@ test("payouts: provider sees Payout pending, admin records payout, provider sees
   try {
     const sid = await createSettlement(g, "APPROVED");
     const prisma = db();
-    const number = (await prisma.settlementRequest.findUnique({ where: { id: sid }, select: { settlement_number: true } }))!.settlement_number;
+    const number = (await prisma.paymentRequest.findUnique({ where: { id: sid }, select: { payment_request_number: true } }))!.payment_request_number;
     const { email, password } = adminAccount();
     await signInAs(page, email, password);
     const rec = await page.evaluate(async ({ acct, sid }) => {
@@ -150,7 +150,7 @@ test("payouts: provider sees Payout pending, admin records payout, provider sees
 // Lane 5: the admin lists show the fixture's order and its request.
 test("admin lists: work orders and payment requests list real rows", async ({ page }) => {
   const sid = await createSettlement(f!);
-  const num = (await db().settlementRequest.findUnique({ where: { id: sid }, select: { settlement_number: true } }))!.settlement_number;
+  const num = (await db().paymentRequest.findUnique({ where: { id: sid }, select: { payment_request_number: true } }))!.payment_request_number;
   const { email, password } = adminAccount();
   await signInAs(page, email, password);
   await page.goto("/admin/work-orders");
@@ -170,7 +170,7 @@ test("work order header: hours, approved, paid, remaining", async ({ page }) => 
     const sid = await createSettlement(g, "APPROVED");
     await db().payment.create({
       data: { payment_number: `PAY-${g.tag}`.slice(0, 40), p_account_id: g.pAccountId, received_at: new Date(), amount_cents: 20000, status: "PARTIALLY_ALLOCATED",
-        lines: { create: [{ line_number: 1, settlement_request_id: sid, amount_cents: 20000 }] } },
+        lines: { create: [{ line_number: 1, payment_request_id: sid, amount_cents: 20000 }] } },
     });
     await signIn(page, g.buyer.email);
     await page.goto(`/orders/${g.orderId}`);
@@ -202,7 +202,7 @@ test("safety: concurrent requests cannot overdraw, close blocks new requests, fu
     const line = await db().workOrderLine.findUnique({ where: { id: g.rateLineId }, select: { drawn_quantity: true } });
     expect(Number(line?.drawn_quantity)).toBe(8);
 
-    await db().settlementRequest.updateMany({ where: { work_order_id: g.orderId }, data: { status: "APPROVED", decided_at: new Date() } });
+    await db().paymentRequest.updateMany({ where: { work_order_id: g.orderId }, data: { status: "APPROVED", decided_at: new Date() } });
     await signIn(page, g.buyer.email);
     await page.goto(`/orders/${g.orderId}`);
     await page.getByRole("button", { name: "Close Work Order" }).click();
@@ -214,8 +214,8 @@ test("safety: concurrent requests cannot overdraw, close blocks new requests, fu
     expect(after, "a closed order refuses a new payment request").toBe(400);
 
     // h: bill the whole order (10h + workshop = $1,500 = cap), buyer pays all of it → closes itself.
-    const s = await db().settlementRequest.create({
-      data: { settlement_number: `PR-${h.tag}-full`, work_order_id: h.orderId, provider_person_id: h.provider.personId, period_start: new Date("2026-10-01"), period_end: new Date("2026-10-07"),
+    const s = await db().paymentRequest.create({
+      data: { payment_request_number: `PR-${h.tag}-full`, work_order_id: h.orderId, provider_person_id: h.provider.personId, period_start: new Date("2026-10-01"), period_end: new Date("2026-10-07"),
         status: "APPROVED", submitted_at: new Date(), decided_at: new Date(),
         lines: { create: [
           { line_number: 1, work_order_line_id: h.rateLineId, basis: "RATE", uom: "HOUR", quantity: 10, unit_price_cents: 10000 },
@@ -350,7 +350,7 @@ test("history: order and payment request list their events", async ({ page }) =>
   try {
     const sid = await createSettlement(g, "APPROVED");
     await db().payment.create({ data: { payment_number: `PAY-H-${g.tag}`.slice(0, 40), p_account_id: g.pAccountId, received_at: new Date(), amount_cents: 50000, status: "ALLOCATED",
-      lines: { create: [{ line_number: 1, settlement_request_id: sid, amount_cents: 50000 }] } } });
+      lines: { create: [{ line_number: 1, payment_request_id: sid, amount_cents: 50000 }] } } });
     await signIn(page, g.buyer.email);
     await page.goto(`/orders/${g.orderId}`);
     const h = page.getByTestId("history");

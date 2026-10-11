@@ -31,7 +31,7 @@ export async function getMe(viewer: Viewer) {
           validation_status: true,
           completeness: true,
           paused_at: true,
-          role_type_id: true,
+          role_id: true,
           hourly_rate_cents: true,
           rate_min_cents: true,
           rate_max_cents: true,

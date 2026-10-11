@@ -23,7 +23,7 @@ async function main() {
   const buyer = await party("BUYER", "Bea");
   const prov = await party("PROVIDER", "Pat");
   await prisma.requesterProfile.create({ data: { person_id: buyer.personId, employee_id: `E-${tag}` } });
-  const svc = await prisma.providerService.create({ data: { provider_profile_id: prov.profileId!, name: `Oracle Procurement consulting ${tag}`, service_type: "SERVICE_BY_QTY", uom: "HOUR", rate_cents: 15000, billing_cycle: "WEEKLY", payment_terms: "NET30", payment_trigger: "TIMESHEET", published_at: new Date() } });
+  const svc = await prisma.providerService.create({ data: { provider_profile_id: prov.profileId!, name: `Oracle Procurement consulting ${tag}`, service_type: "SERVICE_BY_QTY", uom: "HOUR", rate_cents: 15000, billing_cycle: "WEEKLY", payment_terms: "NET30", payment_event: "TIMESHEET", published_at: new Date() } });
   const secret = `s3cret-${tag}-0123456789`;
   const conn = await prisma.erpConnection.create({ data: { p_account_id: buyer.pAccountId, name: "Devwalk Oracle", from_identity: `ERP-${tag}`, sender_identity: `ERP-${tag}`, shared_secret_hash: hashSecret(secret), outbound_cxml_url: "https://erp.example.test/cxml", oracle_rest_base_url: "https://erp.example.test", credential_env_name: "ORACLE_DEVWALK_REST" } });
   made.connections.push(conn.id);
@@ -67,7 +67,7 @@ async function main() {
   check("provider accepts → Open; ConfirmationRequest HELD", d.status === "RELEASED" && conf?.status === "HELD" && /type="accept"/.test(conf.body));
 
   const ts = await createSettlement(prov.viewer, o.id, { periodStart: "2026-09-01", periodEnd: "2026-09-07", lines: [{ workOrderLineId: d.lines[0].id, serviceDate: "2026-09-02", quantity: 8 }] });
-  const wc = await prisma.erpMessage.findFirst({ where: { settlement_request_id: ts.id, type: "WORK_CONFIRMATION" } });
+  const wc = await prisma.erpMessage.findFirst({ where: { payment_request_id: ts.id, type: "WORK_CONFIRMATION" } });
   check("timesheet submitted → WORK_CONFIRMATION HELD", wc?.status === "HELD" && /"OrderNumber": "PO-/.test(wc.body));
   const asBuyer = await getSettlement(buyer.viewer, ts.id);
   check("customer gets no Approve/Reject in Panameer", asBuyer.erp && asBuyer.actions.length === 0);

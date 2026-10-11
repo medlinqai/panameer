@@ -30,7 +30,7 @@ async function main() {
       prisma.project.count({ where: { provider_profile_id: profileId } }),
       prisma.education.count({ where: { provider_profile_id: profileId } }),
       prisma.language.count({ where: { provider_profile_id: profileId } }),
-      prisma.certification.count({ where: { provider_profile_id: profileId } }),
+      prisma.credential.count({ where: { provider_profile_id: profileId } }),
       prisma.providerSkill.count({ where: { provider_profile_id: profileId } }),
       prisma.profileImport.count({ where: { provider_profile_id: profileId } }),
     ]);
@@ -72,7 +72,7 @@ async function main() {
     prisma.employer.deleteMany({ where: { provider_profile_id: profileId } }),
     prisma.education.deleteMany({ where: { provider_profile_id: profileId } }),
     prisma.language.deleteMany({ where: { provider_profile_id: profileId } }),
-    prisma.certification.deleteMany({ where: { provider_profile_id: profileId } }),
+    prisma.credential.deleteMany({ where: { provider_profile_id: profileId } }),
     prisma.providerSkill.deleteMany({ where: { provider_profile_id: profileId } }),
     prisma.profileImport.deleteMany({ where: { provider_profile_id: profileId } }),
   ]);

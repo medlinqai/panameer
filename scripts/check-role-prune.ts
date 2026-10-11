@@ -22,7 +22,7 @@ async function main() {
   const wanted = ["Procurement", "Inventory", "Purchasing", "General Ledger", "Tax"];
   const catalogRows = await prisma.skill.findMany({
     where: { status: "ACTIVE", name: { in: wanted } },
-    select: { id: true, name: true, role_type_id: true },
+    select: { id: true, name: true, role_id: true },
   });
   if (catalogRows.length < 3) {
     console.log("skip  — catalog does not carry enough of the probe skills");
@@ -68,7 +68,7 @@ async function main() {
 
     /* ⚠ WHAT `E509` WS-A DERIVES — the provider's own skills, not catalog size. */
     const derived = await deriveRolesFromSkills(profile.id);
-    const roles = await prisma.roleType.findMany({ select: { id: true, display: true, name: true } });
+    const roles = await prisma.role.findMany({ select: { id: true, display: true, name: true } });
     const rn = new Map(roles.map((r) => [r.id, r.display ?? r.name]));
     assert(
       derived.roleTypeIds.length > 0,
@@ -94,7 +94,7 @@ async function main() {
     */
     const primaryRole = derived.roleTypeIds[0];
     const wrongPillar = await prisma.skill.findFirst({
-      where: { status: "ACTIVE", role_type_id: primaryRole, pillar_id: { not: null } },
+      where: { status: "ACTIVE", role_id: primaryRole, pillar_id: { not: null } },
       orderBy: { name: "desc" },
       select: { pillar_id: true },
     });
@@ -108,9 +108,9 @@ async function main() {
         where: { provider_profile_id: profile.id }, select: { skill_id: true } });
       await saveProviderStep(viewer, "skills", { skillIds: held.map((h) => h.skill_id) } as never);
       const after = await prisma.providerProfile.findUnique({
-        where: { id: profile.id }, select: { pillar_id: true, role_type_id: true } });
+        where: { id: profile.id }, select: { pillar_id: true, role_id: true } });
       assert(after?.pillar_id === right, `a skills save RECOMPUTES a stale domain back to the evidence`);
-      assert(after?.role_type_id === primaryRole, `and it does NOT touch the provider's chosen ROLE`);
+      assert(after?.role_id === primaryRole, `and it does NOT touch the provider's chosen ROLE`);
     } else {
       console.log("skip  — no distinct second domain under this role to stale-test with");
     }
@@ -146,7 +146,7 @@ async function main() {
     await prisma.providerSkill.deleteMany({ where: { provider_profile_id: profile.id } });
     await prisma.providerProfileSpecialization.deleteMany({ where: { provider_profile_id: profile.id } });
     await prisma.providerProfileRole.deleteMany({ where: { provider_profile_id: profile.id } });
-    await prisma.certification.deleteMany({ where: { provider_profile_id: profile.id } });
+    await prisma.credential.deleteMany({ where: { provider_profile_id: profile.id } });
     await prisma.providerProfile.delete({ where: { id: profile.id } });
     await prisma.person.delete({ where: { id: person.id } });
     await prisma.user.delete({ where: { id: user.id } });

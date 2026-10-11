@@ -25,9 +25,9 @@ const rows = [{ r: APP }, { r: TECH }, { r: APP }, { r: OPS }];
 ok("shownSkills keeps order and drops the rest", JSON.stringify(shownSkills([APP], rows, (x) => x.r)) === JSON.stringify([{ r: APP }, { r: APP }]));
 ok("shownSkills with no selection keeps all", shownSkills([], rows, (x) => x.r).length === 4);
 
-ok("selectedRoleIds prefers the multi-select", JSON.stringify(selectedRoleIds({ role_type_id: OPS, roles: [{ role_type_id: APP }, { role_type_id: TECH }] })) === JSON.stringify([APP, TECH]));
-ok("selectedRoleIds falls back to the primary", JSON.stringify(selectedRoleIds({ role_type_id: OPS, roles: [] })) === JSON.stringify([OPS]));
-ok("selectedRoleIds empty means empty", selectedRoleIds({ role_type_id: null, roles: [] }).length === 0);
+ok("selectedRoleIds prefers the multi-select", JSON.stringify(selectedRoleIds({ role_id: OPS, roles: [{ role_id: APP }, { role_id: TECH }] })) === JSON.stringify([APP, TECH]));
+ok("selectedRoleIds falls back to the primary", JSON.stringify(selectedRoleIds({ role_id: OPS, roles: [] })) === JSON.stringify([OPS]));
+ok("selectedRoleIds empty means empty", selectedRoleIds({ role_id: null, roles: [] }).length === 0);
 
 /* NOTHING EXPIRES — there is no date in this module at all. */
 ok("the rule has no notion of age", !/(expire|month|year|Date)/.test(readFileSync("src/lib/shown-skills.ts", "utf8").replace(/\/\*[\s\S]*?\*\//g, "")));

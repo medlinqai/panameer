@@ -104,7 +104,7 @@ console.log("\ncheck:derived-source — only the rollup may write DERIVED\n");
    scoped by `source`, so it can only remove what that writer created.
    ⚠⚠ THE EXEMPTION IS GONE (`P2-J1.4-E517`, 2026-09-17). ⚠ SUPERSEDED, quoted
    not deleted (`E164`): *"ONE EXEMPTION, AND IT IS DELIBERATE: `E517`'s ROLE
-   PRUNE deletes by `role_type_id` regardless of source. Scott ruled that
+   PRUNE deletes by `role_id` regardless of source. Scott ruled that
    deletion correct on 2026-09-11."*
    ⚠ THAT PRUNE NO LONGER DELETES ANYTHING — the role filter moved to the READ
    (`lib/shown-skills.ts`), so there is nothing left to exempt. ⚠⚠ Scott:

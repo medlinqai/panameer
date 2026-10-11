@@ -1,4 +1,4 @@
-import type { ProposalStatus, SettlementStatus, WorkOrderLineStatus, WorkOrderStatus, WorkRequestStatus } from "@prisma/client";
+import type { ProposalStatus, PaymentRequestStatus, WorkOrderLineStatus, WorkOrderStatus, WorkRequestStatus } from "@prisma/client";
 
 // One map from stored statuses to Oracle Cloud labels (2026-10-09). Stored values never change; screens read these.
 export const WORK_REQUEST_LABEL: Record<WorkRequestStatus, string> = {
@@ -45,7 +45,7 @@ export const WORK_ORDER_LINE_LABEL: Record<WorkOrderLineStatus, string> = {
   FINALLY_CLOSED: "Finally Closed",
 };
 
-export const SETTLEMENT_LABEL: Record<SettlementStatus, string> = {
+export const SETTLEMENT_LABEL: Record<PaymentRequestStatus, string> = {
   DRAFT: "Draft",
   SUBMITTED: "Pending Approval",
   APPROVED: "Approved",
@@ -68,4 +68,4 @@ const LIVE = "bg-ink text-surface";
 
 export const WORK_REQUEST_TONE: Record<WorkRequestStatus, string> = { DRAFT: QUIET, POSTED: LIVE, ASSIGNED: WAIT, ORDERED: LIVE, CANCELLED: QUIET };
 export const WORK_ORDER_TONE: Record<WorkOrderStatus, string> = { DRAFT: QUIET, ISSUED: WAIT, ACCEPTED: WAIT, RELEASED: LIVE, ACTIVE: LIVE, CLOSED: QUIET, CANCELLED: QUIET, ON_HOLD: WAIT, FINALLY_CLOSED: QUIET };
-export const SETTLEMENT_TONE: Record<SettlementStatus, string> = { DRAFT: QUIET, SUBMITTED: WAIT, APPROVED: LIVE, REJECTED: "bg-rose-50 text-rose-700", PAID: LIVE };
+export const SETTLEMENT_TONE: Record<PaymentRequestStatus, string> = { DRAFT: QUIET, SUBMITTED: WAIT, APPROVED: LIVE, REJECTED: "bg-rose-50 text-rose-700", PAID: LIVE };

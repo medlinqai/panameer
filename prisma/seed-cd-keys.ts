@@ -54,13 +54,13 @@ async function main() {
       const key = BANK[i].key;
       const advertisedName = ADVERTISED[i].name;
       /* the row as the catalog seeded it, found by the name the catalog used */
-      const existing = await prisma.capabilityDomain.findFirst({
+      const existing = await prisma.domain.findFirst({
         where: { process: PROCESS, name: advertisedName },
         select: { id: true, key: true },
       });
       if (existing) {
         if (existing.key !== key) {
-          await prisma.capabilityDomain.update({ where: { id: existing.id }, data: { key } });
+          await prisma.domain.update({ where: { id: existing.id }, data: { key } });
           keyed++;
         }
       } else {
@@ -70,7 +70,7 @@ async function main() {
           Scott's deck and never existed in `Service Catalog.xlsx`. Seeded with the ADVERTISED
           name, because that is the phrasing every other row in this table uses.
         */
-        await prisma.capabilityDomain.create({
+        await prisma.domain.create({
           data: { process: PROCESS, name: advertisedName, key, sort_order: 100 + i },
         });
         created++;
@@ -79,7 +79,7 @@ async function main() {
     console.log(`  keys written: ${keyed}   rows created: ${created}`);
 
     /* ── report + the assertion the brief demands ────────────────────────────── */
-    const rows = await prisma.capabilityDomain.findMany({
+    const rows = await prisma.domain.findMany({
       where: { process: PROCESS },
       orderBy: { sort_order: "asc" },
       select: { key: true, name: true },
@@ -90,19 +90,19 @@ async function main() {
     console.log("\n  ⚠ every bank key resolves to EXACTLY ONE row:");
     let bad = 0;
     for (const d of BANK) {
-      const n = await prisma.capabilityDomain.count({ where: { process: PROCESS, key: d.key } });
+      const n = await prisma.domain.count({ where: { process: PROCESS, key: d.key } });
       if (n !== 1) bad++;
       console.log(`    ${d.key.padEnd(20)} ${n} row(s) ${n === 1 ? "✓" : "✗"}`);
     }
     if (bad) throw new Error(`${bad} bank key(s) do not resolve to exactly one row`);
 
-    const perProcess = await prisma.capabilityDomain.groupBy({ by: ["process"], _count: true });
+    const perProcess = await prisma.domain.groupBy({ by: ["process"], _count: true });
     console.log("\n  rows per process:");
     perProcess
       .sort((a, b) => a.process.localeCompare(b.process))
       .forEach((p) => console.log(`    ${String(p._count).padStart(3)}  ${p.process}`));
-    const keyed_total = await prisma.capabilityDomain.count({ where: { key: { not: null } } });
-    const total = await prisma.capabilityDomain.count();
+    const keyed_total = await prisma.domain.count({ where: { key: { not: null } } });
+    const total = await prisma.domain.count();
     console.log(
       `\n  ${keyed_total} of ${total} domains carry a key — only Procure-to-Pay has an authored assessment bank, so only it has keys. The rest stay NULL rather than carrying invented ones.`
     );

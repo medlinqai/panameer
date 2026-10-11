@@ -96,7 +96,7 @@ test.beforeAll(async () => {
      That is what makes the two periods genuinely disagree; on live data every
      dated row was created this month. */
   const longAgo = new Date(new Date().getFullYear(), 0, 15);
-  const seeded = await prisma.colleagueInvite.create({
+  const seeded = await prisma.invitationToJoin.create({
     data: {
       inviter_person_id: person.id,
       invitee_email: `e603-gate-${Date.now()}@example.seed`,
@@ -136,7 +136,7 @@ test.afterAll(async () => {
     }
   }
   if (wroteInvites.length) {
-    const r = await prisma.colleagueInvite.deleteMany({ where: { id: { in: wroteInvites } } });
+    const r = await prisma.invitationToJoin.deleteMany({ where: { id: { in: wroteInvites } } });
     if (r.count !== wroteInvites.length) {
       throw new Error(`teardown removed ${r.count} of ${wroteInvites.length} invitations`);
     }

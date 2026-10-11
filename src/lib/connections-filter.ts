@@ -98,7 +98,7 @@ async function loadPeople(viewer: Viewer, scope: "connections" | "members" = "co
             skills: { select: { skill_id: true, skill: { select: { name: true } } } },
             keywords: true,
             employers: { select: { name: true } },
-            roles: { select: { roleType: { select: { code: true } } } },
+            roles: { select: { role: { select: { code: true } } } },
           },
         },
       },
@@ -115,8 +115,8 @@ async function loadPeople(viewer: Viewer, scope: "connections" | "members" = "co
       where: { OR: [{ provider_person_id: { in: personIds } }, { buyer_person_id: { in: personIds } }], status: { not: "CANCELLED" } },
       select: { buyer_person_id: true, provider_person_id: true, status: true },
     }),
-    prisma.learnEnrollment.findMany({ where: { user_id: { in: [me, ...ids] } }, select: { user_id: true, learning_path_id: true } }),
-    prisma.certification.findMany({ where: { user_id: { in: ids }, learning_path_id: { not: null } }, select: { user_id: true } }),
+    prisma.enrollment.findMany({ where: { user_id: { in: [me, ...ids] } }, select: { user_id: true, learning_path_id: true } }),
+    prisma.credential.findMany({ where: { user_id: { in: ids }, learning_path_id: { not: null } }, select: { user_id: true } }),
     prisma.message.findMany({ where: { OR: [{ from_user_id: me, to_user_id: { in: ids } }, { to_user_id: me, from_user_id: { in: ids } }] }, select: { from_user_id: true, to_user_id: true, created_at: true }, orderBy: { created_at: "desc" } }),
     Promise.all(companyIds.map(async (id) => [id, !!(await companyChecklist(id))?.ready] as const)),
   ]);
@@ -140,7 +140,7 @@ async function loadPeople(viewer: Viewer, scope: "connections" | "members" = "co
     if (enrol.some((e) => e.user_id === uid && myPaths.has(e.learning_path_id))) how.add("course");
     const myCoord = mine?.providerProfile?.coordinator_person_id ?? null;
     if (mine && pp && ((pp.coordinator_person_id && (pp.coordinator_person_id === myCoord || pp.coordinator_person_id === mine.id)) || myCoord === p.id)) how.add("team");
-    const roles = new Set((pp?.roles ?? []).map((x) => ROLE_KEYS[x.roleType.code]).filter(Boolean));
+    const roles = new Set((pp?.roles ?? []).map((x) => ROLE_KEYS[x.role.code]).filter(Boolean));
     if (roles.has("func") && roles.has("tech")) roles.add("techfunc");
     const modes = new Set<string>();
     if (pp?.onsite_rate_cents != null) modes.add("onsite");

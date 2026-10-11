@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { PaymentTerms, PaymentTrigger } from "@prisma/client";
+import type { PaymentTerms, PaymentEvent } from "@prisma/client";
 import { PAYMENT_TERMS_LABEL, PAYMENT_TRIGGER_LABEL } from "@/lib/billing-terms";
 import { publishGate } from "@/lib/my-catalog";
 import { solutionViolations } from "@/lib/catalog/solution-types";
@@ -12,7 +12,7 @@ export const DEFAULT_MILESTONES = [
   { label: "On completion", percent: 50, sequence: 1 },
 ];
 
-export type MilestoneInput = { label: string; percent: number; trigger?: PaymentTrigger | null };
+export type MilestoneInput = { label: string; percent: number; trigger?: PaymentEvent | null };
 
 export type ServiceProductInput = {
   title: string;
@@ -27,7 +27,7 @@ export type ServiceProductInput = {
   milestones?: MilestoneInput[];
   capabilityDomainIds?: string[];
   paymentTerms?: PaymentTerms | null;
-  paymentTrigger?: PaymentTrigger | null;
+  paymentTrigger?: PaymentEvent | null;
   /** CAT-E003 wizard fields. */
   kind?: "DELIVERABLE" | "DEPLOYABLE" | "BLANKET" | null;
   pricingType?: "FIXED" | "RECURRING" | "NOT_TO_EXCEED" | null;
@@ -62,21 +62,21 @@ const shape = (p: {
   price_cents: number | null;
   currency: string;
   payment_terms?: PaymentTerms | null;
-  payment_trigger?: PaymentTrigger | null;
+  payment_event?: PaymentEvent | null;
   kind?: string;
   billing_period?: string | null;
   cover_code?: string | null;
   product_type_id?: string | null;
   cover_image_url: string | null;
   status: string;
-  role_type_id: string | null;
-  roleType?: { id: string; name: string } | null;
+  role_id: string | null;
+  role?: { id: string; name: string } | null;
   deliverables: { id: string; text: string; sequence: number }[];
-  milestones: { id: string; label: string; percent: number; sequence: number; trigger?: PaymentTrigger | null }[];
+  milestones: { id: string; label: string; percent: number; sequence: number; payment_event?: PaymentEvent | null }[];
   skills?: { skill: { id: string; name: string } }[];
-  capabilityDomains?: {
-    capability_domain_id: string;
-    capabilityDomain: { id: string; process: string; name: string };
+  domains?: {
+    domain_id: string;
+    domain: { id: string; process: string; name: string };
   }[];
 }) => ({
   id: p.id,
@@ -87,15 +87,15 @@ const shape = (p: {
   priceCents: p.price_cents,
   currency: p.currency,
   paymentTerms: p.payment_terms ?? null,
-  paymentTrigger: p.payment_trigger ?? null,
+  paymentTrigger: p.payment_event ?? null,
   kind: p.kind ?? "DELIVERABLE",
   billingPeriod: p.billing_period ?? null,
   coverCode: p.cover_code ?? null,
   productTypeId: p.product_type_id ?? null,
   coverImageUrl: p.cover_image_url,
   status: p.status,
-  roleTypeId: p.role_type_id,
-  roleTypeName: p.roleType?.name ?? null,
+  roleTypeId: p.role_id,
+  roleTypeName: p.role?.name ?? null,
   deliverables: p.deliverables
     .slice()
     .sort((a, b) => a.sequence - b.sequence)
@@ -103,25 +103,25 @@ const shape = (p: {
   milestones: p.milestones
     .slice()
     .sort((a, b) => a.sequence - b.sequence)
-    .map((m) => ({ id: m.id, label: m.label, percent: m.percent, trigger: m.trigger ?? null })),
+    .map((m) => ({ id: m.id, label: m.label, percent: m.percent, trigger: m.payment_event ?? null })),
   skills: (p.skills ?? []).map((s) => ({ id: s.skill.id, name: s.skill.name })),
   /* the saved selection, so re-opening the form shows what was chosen */
-  capabilityDomainIds: (p.capabilityDomains ?? []).map((c) => c.capability_domain_id),
-  process: (p.capabilityDomains ?? [])[0]?.capabilityDomain.process ?? null,
+  capabilityDomainIds: (p.domains ?? []).map((c) => c.domain_id),
+  process: (p.domains ?? [])[0]?.domain.process ?? null,
 });
 
 const INCLUDE = {
-  roleType: { select: { id: true, name: true } },
+  role: { select: { id: true, name: true } },
   deliverables: true,
   milestones: true,
   skills: { include: { skill: { select: { id: true, name: true } } } },
-  capabilityDomains: {
-    include: { capabilityDomain: { select: { id: true, process: true, name: true } } },
+  domains: {
+    include: { domain: { select: { id: true, process: true, name: true } } },
   },
 } as const;
 
 export async function listCapabilityDomains() {
-  return prisma.capabilityDomain.findMany({
+  return prisma.domain.findMany({
     orderBy: [{ process: "asc" }, { sort_order: "asc" }, { name: "asc" }],
     select: { id: true, process: true, name: true, key: true },
   });
@@ -146,7 +146,7 @@ function normalizeMilestones(input?: MilestoneInput[]) {
     label: clean(m.label, 120)!,
     percent: Math.round(Number(m.percent)),
     sequence: i,
-    trigger: (m as MilestoneInput).trigger && (m as MilestoneInput).trigger! in PAYMENT_TRIGGER_LABEL ? (m as MilestoneInput).trigger! : null,
+    payment_event: (m as MilestoneInput).trigger && (m as MilestoneInput).trigger! in PAYMENT_TRIGGER_LABEL ? (m as MilestoneInput).trigger! : null,
   }));
 
   for (const m of milestones) {
@@ -193,9 +193,9 @@ function serviceProductData(input: ServiceProductInput) {
     price_cents: price,
     currency: clean(input.currency, 8) ?? "USD",
     cover_image_url: clean(input.coverImageUrl, 1000),
-    role_type_id: input.roleTypeId || null,
+    role_id: input.roleTypeId || null,
     payment_terms: input.paymentTerms && input.paymentTerms in PAYMENT_TERMS_LABEL ? input.paymentTerms : null,
-    payment_trigger: input.paymentTrigger && input.paymentTrigger in PAYMENT_TRIGGER_LABEL ? input.paymentTrigger : null,
+    payment_event: input.paymentTrigger && input.paymentTrigger in PAYMENT_TRIGGER_LABEL ? input.paymentTrigger : null,
     ...(input.kind ? { kind: input.kind } : {}),
     ...(input.pricingType ? { pricing_type: input.pricingType } : {}),
     ...(input.pricingType ? { billing_period: input.pricingType === "RECURRING" ? input.billingPeriod ?? "MONTHLY" : null } : {}),
@@ -228,7 +228,7 @@ async function validSkillIds(ids?: string[]): Promise<string[]> {
 async function validCapabilityDomainIds(ids?: string[]): Promise<string[]> {
   const wanted = [...new Set(ids ?? [])].slice(0, 100);
   if (wanted.length === 0) return [];
-  const found = await prisma.capabilityDomain.findMany({
+  const found = await prisma.domain.findMany({
     where: { id: { in: wanted } },
     select: { id: true },
   });
@@ -266,8 +266,8 @@ export async function createServiceProduct(viewer: Viewer, input: ServiceProduct
       deliverables: { create: deliverableRows(input) },
       milestones: { create: milestones },
       skills: { create: skillIds.map((skill_id) => ({ skill_id })) },
-      capabilityDomains: {
-        create: domainIds.map((capability_domain_id) => ({ capability_domain_id })),
+      domains: {
+        create: domainIds.map((domain_id) => ({ domain_id })),
       },
     },
     select: { id: true },
@@ -291,7 +291,7 @@ export async function updateServiceProduct(
   const skillIds = await validSkillIds(input.skillIds);
   const domainIds = await validCapabilityDomainIds(input.capabilityDomainIds);
   /* how many it had BEFORE this edit — that is what decides whether zero is allowed */
-  const hadDomains = await prisma.serviceProductCapabilityDomain.count({
+  const hadDomains = await prisma.serviceProductDomain.count({
     where: { service_product_id: owned.id },
   });
   requireDomains(domainIds, hadDomains, false);
@@ -303,7 +303,7 @@ export async function updateServiceProduct(
     prisma.serviceProductDeliverable.deleteMany({ where: { service_product_id: owned.id } }),
     prisma.serviceProductMilestone.deleteMany({ where: { service_product_id: owned.id } }),
     prisma.serviceProductSkill.deleteMany({ where: { service_product_id: owned.id } }),
-    prisma.serviceProductCapabilityDomain.deleteMany({ where: { service_product_id: owned.id } }),
+    prisma.serviceProductDomain.deleteMany({ where: { service_product_id: owned.id } }),
     prisma.serviceProduct.update({
       where: { id: owned.id },
       data: {
@@ -311,8 +311,8 @@ export async function updateServiceProduct(
         deliverables: { create: deliverableRows(input) },
         milestones: { create: milestones },
         skills: { create: skillIds.map((skill_id) => ({ skill_id })) },
-        capabilityDomains: {
-          create: domainIds.map((capability_domain_id) => ({ capability_domain_id })),
+        domains: {
+          create: domainIds.map((domain_id) => ({ domain_id })),
         },
       },
     }),

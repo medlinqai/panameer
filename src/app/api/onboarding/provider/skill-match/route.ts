@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
   const catalogId = await activeCatalogId();
   const rows = await prisma.skill.findMany({
-    where: catalogId ? { ...OFFERABLE, catalog_id: catalogId } : OFFERABLE,
+    where: catalogId ? { ...OFFERABLE, business_type_id: catalogId } : OFFERABLE,
     select: { id: true, name: true, is_custom: true },
   });
   const candidates = rows.map((c) => ({ id: c.id, name: c.name, isCustom: c.is_custom }));

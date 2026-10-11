@@ -9,12 +9,12 @@ export const OFFERABLE = { ...OFFERABLE_BASE, visible_to_members: true } as cons
 export const CATALOG_CODE = "PANAMEER_V1";
 
 export async function activeCatalogId(): Promise<string | null> {
-  const row = await prisma.serviceCatalog.findUnique({
+  const row = await prisma.businessType.findUnique({
     where: { code: CATALOG_CODE },
     select: { id: true },
   });
   if (row) return row.id;
-  const any = await prisma.serviceCatalog.findFirst({ select: { id: true } });
+  const any = await prisma.businessType.findFirst({ select: { id: true } });
   return any?.id ?? null;
 }
 
@@ -27,32 +27,32 @@ async function offerScope(o?: CatalogScope) {
   const base = scope(o);
   if (o?.includeAllCatalogs) return base;
   const id = await activeCatalogId();
-  return id ? { ...base, catalog_id: id } : base;
+  return id ? { ...base, business_type_id: id } : base;
 }
 
 async function offerScopeBase(o?: CatalogScope) {
   const base = scopeBase(o);
   if (o?.includeAllCatalogs) return base;
   const id = await activeCatalogId();
-  return id ? { ...base, catalog_id: id } : base;
+  return id ? { ...base, business_type_id: id } : base;
 }
 
 export async function getRoleTypes() {
-  return prisma.roleType.findMany({
+  return prisma.role.findMany({
     orderBy: [{ sort_order: "asc" }, { name: "asc" }],
     select: { id: true, code: true, name: true, display: true },
   });
 }
 
 export async function getProviderFieldTree(opts?: CatalogScope) {
-  const roles = await prisma.roleType.findMany({
+  const roles = await prisma.role.findMany({
     orderBy: [{ sort_order: "asc" }, { name: "asc" }],
     select: { id: true, code: true, name: true, display: true },
   });
 
   // One grouped count instead of a query per role.
   const grouped = await prisma.skill.groupBy({
-    by: ["role_type_id", "pillar_id"],
+    by: ["role_id", "pillar_id"],
     where: await offerScope(opts),
     _count: { _all: true },
   });
@@ -75,7 +75,7 @@ export async function getProviderFieldTree(opts?: CatalogScope) {
       domains: grouped
         .filter(
           (g) =>
-            g.role_type_id === role.id &&
+            g.role_id === role.id &&
             g.pillar_id !== null &&
             g._count._all > 0
         )
@@ -99,13 +99,13 @@ export async function getSkillsForField(
   opts?: CatalogScope
 ) {
   return prisma.skill.findMany({
-    where: { role_type_id: roleTypeId, pillar_id: pillarId, ...(await offerScope(opts)) },
+    where: { role_id: roleTypeId, pillar_id: pillarId, ...(await offerScope(opts)) },
     orderBy: { name: "asc" },
     select: {
       id: true,
       name: true,
       image_url: true,
-      roleType: { select: { id: true, code: true, display: true } },
+      role: { select: { id: true, code: true, display: true } },
     },
   });
 }
@@ -118,7 +118,7 @@ export async function getSkillsForPillar(pillarId: string, opts?: CatalogScope) 
       id: true,
       name: true,
       image_url: true,
-      roleType: { select: { id: true, code: true, display: true } },
+      role: { select: { id: true, code: true, display: true } },
     },
   });
 }
@@ -174,22 +174,22 @@ export async function getRegions() {
 export async function getSkillsForRoleTypes(roleTypeIds: string[], opts?: CatalogScope) {
   if (roleTypeIds.length === 0) return [];
   return prisma.skill.findMany({
-    where: { role_type_id: { in: roleTypeIds }, ...(await offerScope(opts)) },
+    where: { role_id: { in: roleTypeIds }, ...(await offerScope(opts)) },
     orderBy: [{ name: "asc" }],
     select: {
       id: true,
       name: true,
       image_url: true,
-      role_type_id: true,
+      role_id: true,
       pillar: { select: { id: true, code: true, name: true } },
-      roleType: { select: { id: true, name: true, display: true } },
+      role: { select: { id: true, name: true, display: true } },
     },
   });
 }
 
 export async function getSkillsForRoleType(roleTypeId: string, opts?: CatalogScope) {
   return prisma.skill.findMany({
-    where: { role_type_id: roleTypeId, ...(await offerScope(opts)) },
+    where: { role_id: roleTypeId, ...(await offerScope(opts)) },
     orderBy: { name: "asc" },
     select: {
       id: true,
@@ -201,7 +201,7 @@ export async function getSkillsForRoleType(roleTypeId: string, opts?: CatalogSco
 }
 
 export async function getCatalogTree(code: string) {
-  const catalog = await prisma.serviceCatalog.findUnique({
+  const catalog = await prisma.businessType.findUnique({
     where: { code },
     include: {
       pillars: {
@@ -225,7 +225,7 @@ export async function getCatalogTree(code: string) {
 
   // Flat lookups are global; role types are shared across catalogs.
   const [roleTypes, regions, engagementTypes] = await Promise.all([
-    prisma.roleType.findMany({
+    prisma.role.findMany({
       orderBy: { code: "asc" },
       select: { id: true, code: true, name: true, display: true },
     }),
@@ -281,7 +281,7 @@ export type ClaimCount = {
 /** Distinct providers per ROLE, with the most-claimed DOMAIN inside it. */
 export async function getRoleClaims(): Promise<ClaimCount[]> {
   const [roles, links] = await Promise.all([
-    prisma.roleType.findMany({
+    prisma.role.findMany({
       orderBy: { sort_order: "asc" },
       select: { id: true, name: true, display: true },
     }),
@@ -289,13 +289,13 @@ export async function getRoleClaims(): Promise<ClaimCount[]> {
     prisma.providerSkill.findMany({
       select: {
         provider_profile_id: true,
-        skill: { select: { role_type_id: true, pillar: { select: { name: true } } } },
+        skill: { select: { role_id: true, pillar: { select: { name: true } } } },
       },
     }),
   ]);
 
   return roles.map((r) => {
-    const mine = links.filter((l) => l.skill?.role_type_id === r.id);
+    const mine = links.filter((l) => l.skill?.role_id === r.id);
     /* DISTINCT PEOPLE — a Set, not `mine.length`. */
     const providers = new Set(mine.map((l) => l.provider_profile_id)).size;
 
@@ -368,13 +368,13 @@ export async function getRoleDomainProviderCounts(): Promise<Map<string, number>
   const links = await prisma.providerSkill.findMany({
     select: {
       provider_profile_id: true,
-      skill: { select: { role_type_id: true, pillar_id: true } },
+      skill: { select: { role_id: true, pillar_id: true } },
     },
   });
   const by = new Map<string, Set<string>>();
   for (const l of links) {
-    if (!l.skill?.role_type_id || !l.skill?.pillar_id) continue;
-    const key = `${l.skill.role_type_id}::${l.skill.pillar_id}`;
+    if (!l.skill?.role_id || !l.skill?.pillar_id) continue;
+    const key = `${l.skill.role_id}::${l.skill.pillar_id}`;
     if (!by.has(key)) by.set(key, new Set());
     by.get(key)!.add(l.provider_profile_id);
   }

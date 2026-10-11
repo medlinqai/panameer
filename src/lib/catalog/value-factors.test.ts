@@ -111,11 +111,11 @@ console.log("\n=== the rate's unit is decided in exactly one place ===");
 console.log("\n=== the join is many-to-many, and process is not duplicated ===");
 {
   const join = schema.slice(
-    schema.indexOf("model ServiceProductCapabilityDomain"),
-    schema.indexOf("}", schema.indexOf("@@map(\"service_product_capability_domains\")"))
+    schema.indexOf("model ServiceProductDomain"),
+    schema.indexOf("}", schema.indexOf("@@map(\"service_product_domains\")"))
   );
-  check("unique on the pair", /@@unique\(\[service_product_id, capability_domain_id\]\)/.test(join));
-  check("indexed both ways", /@@index\(\[service_product_id\]\)/.test(join) && /@@index\(\[capability_domain_id\]\)/.test(join));
+  check("unique on the pair", /@@unique\(\[service_product_id, domain_id\]\)/.test(join));
+  check("indexed both ways", /@@index\(\[service_product_id\]\)/.test(join) && /@@index\(\[domain_id\]\)/.test(join));
   check("cascades on service product delete", /service_product_id\], references: \[id\], onDelete: Cascade/.test(join));
   check(
     "⚠ no `process` column on the join — CapabilityDomain.process is the one source",
@@ -123,8 +123,8 @@ console.log("\n=== the join is many-to-many, and process is not duplicated ===")
     join.split("\n").filter((l) => /\bprocess\b/.test(l) && !l.trim().startsWith("///"))
   );
   check(
-    "⚠ ServiceProduct.role_type_id survives — it answers a different question",
-    /role_type_id\s+String\?/.test(schema)
+    "⚠ ServiceProduct.role_id survives — it answers a different question",
+    /role_id\s+String\?/.test(schema)
   );
 }
 

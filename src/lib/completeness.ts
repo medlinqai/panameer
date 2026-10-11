@@ -11,7 +11,7 @@ export type CompletenessInput = {
   work_method: string | null;
   /** The chosen field is the (Role, Domain) pair (brief_R). */
   pillar_id: string | null;
-  role_type_id: string | null;
+  role_id: string | null;
   onsite_rate_cents: number | null;
   remote_rate_cents: number | null;
   hourly_rate_cents?: number | null;
@@ -80,7 +80,7 @@ if (COMPLETENESS_TOTAL !== 100) {
 /** THE REQUIRED SET, as a predicate. */
 export type RequiredSetInput = Pick<
   CompletenessInput,
-  "headline" | "role_type_id" | "skills" | "photoUrl" | "hasAddress" | "hasPhone"
+  "headline" | "role_id" | "skills" | "photoUrl" | "hasAddress" | "hasPhone"
 > & {
   // Checked when provided (lifecycle step 3).
   overview?: string | null;
@@ -99,7 +99,7 @@ export type RequiredSetInput = Pick<
 export function missingRequired(p: RequiredSetInput): string[] {
   const missing: string[] = [];
   if (!p.headline?.trim()) missing.push("a title");
-  if (!p.role_type_id) missing.push("a role");
+  if (!p.role_id) missing.push("a role");
   if (p.skills.length < MIN_SKILLS) missing.push("at least three skills");
   if (!hasAnyRate(p)) missing.push("your rate");
   if (!p.photoUrl) missing.push("a photo");
@@ -184,7 +184,7 @@ export function computeProfileScore(p: CompletenessInput): ProfileScore {
     // ── SO BUYERS CAN FIND YOU — the required set. No "I have none". ───────
     L("headline", "Title", W.headline, "find", state(!!p.headline?.trim())),
     // THE ROLE IS THE ANSWER. `pillar_id` is derived server-side and is no
-    L("field", "Field", W.field, "find", state(!!p.role_type_id)),
+    L("field", "Field", W.field, "find", state(!!p.role_id)),
     L("skills", "Skills", W.skills, "find", state((p.skills?.length ?? 0) >= MIN_SKILLS)),
     L("rate", "Rates", W.rate, "find", state(hasAnyRate(p))),
     L("photo", "Photo", W.photo, "find", state(!!p.photoUrl)),

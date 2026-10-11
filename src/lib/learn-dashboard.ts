@@ -126,7 +126,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
         pillar: true,
         audience: true,
         cover_image: true,
-        expert_person_id: true,
+        instructor_person_id: true,
         courses: {
           orderBy: [{ sort_order: "asc" }, { title: "asc" }],
           select: {
@@ -149,7 +149,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
                     thumbnail_url: true,
                     vimeo_ref: true,
                     production_status: true,
-                    expert_person_id: true,
+                    instructor_person_id: true,
                   },
                 },
               },
@@ -158,7 +158,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
         },
       },
     }),
-    prisma.learnEnrollment.findMany({
+    prisma.enrollment.findMany({
       where: { user_id: userId },
       select: { learning_path_id: true },
     }),
@@ -167,9 +167,9 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       select: { lesson_id: true, completed_at: true },
       orderBy: { completed_at: "desc" },
     }),
-    prisma.certification.findMany({
+    prisma.credential.findMany({
       where: {
-        issued_from: "LEARN",
+        issued_from: "PANAMEER",
         learning_path_id: { not: null },
         providerProfile: { person: { user_id: userId } },
       },
@@ -197,7 +197,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     paths.flatMap((p) =>
       instructorIdsFor(
         p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons)),
-        p.expert_person_id
+        p.instructor_person_id
       )
     )
   );
@@ -220,7 +220,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       resolveInstructors(
         tallyExperts(p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons))),
         directory,
-        p.expert_person_id
+        p.instructor_person_id
       )
     );
 
@@ -297,7 +297,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
         resolveInstructors(
           tallyExperts(hit.c.sections.flatMap((s) => s.lessons)),
           directory,
-          homePath.expert_person_id
+          homePath.instructor_person_id
         )
       );
       const face = lessonFace(hit.l, directory, courseInstructors, row.instructors);

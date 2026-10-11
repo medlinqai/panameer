@@ -41,7 +41,7 @@ model User {
   /// Record-keeping so support can see how an account authenticates; linking is
   /// keyed on the normalized email, not on this list.
   oauth_providers       String[]  @default([])
-  role                  Role      @default(MEMBER)
+  role                  UserRole      @default(MEMBER)
   is_active             Boolean   @default(true)
 
   /// ── ⚠⚠⚠ A TEST ACCOUNT (`P2-ALL-E793`, Scott 2026-10-03) ──────────────────
@@ -102,8 +102,8 @@ model User {
 
   /// Learn (brief_learn_v1 WS0). Keyed to the USER, not a profile: every role
   /// learns, and enrolment is the convert-to-account trigger (WS4).
-  learnEnrollments  LearnEnrollment[]
-  pathInterest      PathInterest[]
+  learnEnrollments  Enrollment[]
+  pathInterests      PathInterest[]
   lessonProgress    LessonProgress[]
   certificationAttempts CertificationAttempt[]
 
@@ -116,7 +116,7 @@ model User {
    * a learner with no `ProviderProfile` has these too, which is the whole point
    * of the column.
    */
-  certifications      Certification[]
+  credentials      Credential[]
   /// `P1-ALL-E372` — both directions, because a colleague request has a sender
   /// and a recipient and both need to see it.
   connectionsSent     Connection[]      @relation("ConnectionsSent")
@@ -131,7 +131,7 @@ model User {
   @@map("users")
 }
 
-enum Role {
+enum UserRole {
   ADMIN
   MEMBER
 }
@@ -554,12 +554,12 @@ model Person {
   repProviderProfiles ProviderProfile[]   @relation("CoordinatorProviders")
   coordinatorInvites  CoordinatorInvite[] @relation("CoordinatorInvitesSent")
   /// ⚠ `E493` — colleague invitations this person sent. No roster, no relation.
-  colleagueInvites    ColleagueInvite[]   @relation("ColleagueInvitesSent")
+  invitationsToJoin    InvitationToJoin[]   @relation("ColleagueInvitesSent")
   /// ⚠ The invitation that brought this person in, if one did (`E599` WS-C).
   /// ⚠⚠ A LIST because the relation is one-to-many at the schema level; in
   /// practice it holds at most one — `creditColleagueInvite` credits the
   /// FIRST invite and never a second ("one credit per joined person").
-  colleagueInviteAccepted ColleagueInvite[] @relation("ColleagueInviteAccepted")
+  invitationsToJoinAccepted InvitationToJoin[] @relation("ColleagueInviteAccepted")
   /// Profiles THIS person has viewed (`P0-E595` A2). ⚠ The attribution half
   /// of *"who is searching who"* — recorded now, displayed by a later ruling.
   profileViewsMade    ProfileView[]       @relation("ProfileViewer")
@@ -633,7 +633,7 @@ enum PersonStatus {
 
 /// A service catalog. ERP is the first; the model is built Oracle-based but
 /// meant to hold future catalogs for other ERPs.
-model ServiceCatalog {
+model BusinessType {
   id          String   @id @default(uuid()) @db.Uuid
   code        String   @unique
   name        String
@@ -646,13 +646,13 @@ model ServiceCatalog {
   tags            SkillTag[]
   specializations Specialization[]
 
-  @@map("service_catalogs")
+  @@map("business_types")
 }
 
 /// Global classification of what a person DOES on an engagement (Functional /
 /// Technical / Techno-Functional / Project / Operational). Not catalog-scoped —
 /// role types are shared across every catalog.
-model RoleType {
+model Role {
   id         String   @id @default(uuid()) @db.Uuid
   code       String   @unique
   name       String
@@ -678,13 +678,13 @@ model RoleType {
   profileRoles     ProviderProfileRole[]
   serviceProducts  ServiceProduct[]
 
-  @@map("role_types")
+  @@map("roles")
 }
 
 /// A top-level product pillar within a catalog (ERP, SCM, HCM, CX, EPM, NA).
 model Pillar {
   id         String   @id @default(uuid()) @db.Uuid
-  catalog_id String   @db.Uuid
+  business_type_id String   @db.Uuid
   code       String
   name       String
   created_at DateTime @default(now())
@@ -694,7 +694,7 @@ model Pillar {
   /// every seeded domain, which is why it is nullable: the catalog groups
   /// domains by the roles its SKILLS carry, and a brand-new empty domain has no
   /// skills yet to group it.
-  role_type_id String? @db.Uuid
+  role_id String? @db.Uuid
 
   /// A NEW DOMAIN IS HIDDEN FROM MEMBERS UNTIL SCOTT SWITCHES IT ON. Default
   /// TRUE so every existing domain is unaffected by this column arriving —
@@ -705,14 +705,14 @@ model Pillar {
   /// so ERP is pinned above AI and everything else. Ties break on name.
   sort_order Int @default(100)
 
-  catalog          ServiceCatalog    @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  businessType          BusinessType    @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
   offerings        Offering[]
   skills           Skill[]
   tags             SkillTag[]
   providerProfiles ProviderProfile[]
   workRequests     WorkRequest[]
 
-  @@unique([catalog_id, code])
+  @@unique([business_type_id, code])
   @@map("pillars")
 }
 
@@ -767,8 +767,8 @@ model Application {
 /// (catalog, name); functional (APPLICATION) sources win the role type.
 model Skill {
   id             String        @id @default(uuid()) @db.Uuid
-  catalog_id     String        @db.Uuid
-  role_type_id   String        @db.Uuid
+  business_type_id     String        @db.Uuid
+  role_id   String        @db.Uuid
   pillar_id      String?       @db.Uuid
   application_id String?       @db.Uuid
   name           String
@@ -815,14 +815,14 @@ model Skill {
   created_at     DateTime      @default(now())
   updated_at     DateTime      @updatedAt
 
-  catalog           ServiceCatalog           @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
-  roleType          RoleType                 @relation(fields: [role_type_id], references: [id])
+  businessType           BusinessType           @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  role          Role                 @relation(fields: [role_id], references: [id])
   pillar            Pillar?                  @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
   application       Application?             @relation(fields: [application_id], references: [id], onDelete: SetNull)
   providerSkills    ProviderSkill[]
   workRequestSkills WorkRequestSkill[]
   serviceProductSkills ServiceProductSkill[]
-  bridges           CapabilityModuleBridge[]
+  bridges           DomainModuleBridge[]
   jobSkills         JobSkill[]
   /// ⚠ The Learn courses that DECLARE they teach this skill (`P2-A4-E668`,
   /// ruling 55). ⚠⚠ Declared by a human, never derived from a text match.
@@ -833,8 +833,8 @@ model Skill {
   /// "Project Manager" legitimately exists under BOTH Project-Specific/Project
   /// Execution and Operations-Specific/Project Portfolio Management, and a
   /// name-only key silently collapsed them into one row.
-  @@unique([catalog_id, role_type_id, pillar_id, name])
-  @@index([role_type_id])
+  @@unique([business_type_id, role_id, pillar_id, name])
+  @@index([role_id])
   @@index([pillar_id])
   /// ⚠ Which learning paths certify this skill (`P2-A4-E701`).
   learningPaths LearningPathSkill[]
@@ -889,7 +889,7 @@ enum ProviderSkillSource {
 /// providers claim vendor modules, buyers ask for capabilities, and
 /// `CapabilityModuleBridge` is the translation. Collapsing the two vocabularies
 /// into one table is what forces a buyer to learn Oracle's product names.
-model CapabilityDomain {
+model Domain {
   id         String   @id @default(uuid()) @db.Uuid
   /// The business process this belongs to — "Procure-to-Pay", "Hire-to-Retire".
   process    String
@@ -915,15 +915,15 @@ model CapabilityDomain {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  bridges  CapabilityModuleBridge[]
-  serviceProducts ServiceProductCapabilityDomain[]
+  bridges  DomainModuleBridge[]
+  serviceProducts ServiceProductDomain[]
 
   @@unique([process, name])
   /// One key per process — the join the value model depends on.
   @@unique([process, key])
   @@index([process])
   @@index([key])
-  @@map("capability_domains")
+  @@map("domains")
 }
 
 /// CAPABILITY <-> MODULE BRIDGE — "who delivers this capability on that suite".
@@ -940,9 +940,9 @@ model CapabilityDomain {
 /// names drift, and a dangling FK would fail the whole seed over one rename.
 /// `module_name` always holds what the sheet said, so an unresolved row is
 /// visible and fixable rather than silently absent.
-model CapabilityModuleBridge {
+model DomainModuleBridge {
   id            String   @id @default(uuid()) @db.Uuid
-  capability_id String   @db.Uuid
+  domain_id String   @db.Uuid
   /// Suite as named in the catalog — matches `Pillar.name` for a vendor role.
   suite         String
   module_name   String
@@ -950,13 +950,13 @@ model CapabilityModuleBridge {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  capability CapabilityDomain @relation(fields: [capability_id], references: [id], onDelete: Cascade)
+  domain Domain @relation(fields: [domain_id], references: [id], onDelete: Cascade)
   skill      Skill?           @relation(fields: [skill_id], references: [id], onDelete: SetNull)
 
-  @@unique([capability_id, suite, module_name])
+  @@unique([domain_id, suite, module_name])
   @@index([skill_id])
   @@index([suite])
-  @@map("capability_module_bridge")
+  @@map("domain_module_bridges")
 }
 
 /// An incoming job-requisition skill term ("tag"), grouped by role type, that
@@ -967,8 +967,8 @@ model CapabilityModuleBridge {
 /// coordinator-coverage join is wired in the profiles brief.
 model SkillTag {
   id             String   @id @default(uuid()) @db.Uuid
-  catalog_id     String   @db.Uuid
-  role_type_id   String   @db.Uuid
+  business_type_id     String   @db.Uuid
+  role_id   String   @db.Uuid
   pillar_id      String?  @db.Uuid
   name           String
   panameer_skill String?
@@ -976,12 +976,12 @@ model SkillTag {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
-  catalog  ServiceCatalog @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
-  roleType RoleType       @relation(fields: [role_type_id], references: [id])
+  businessType  BusinessType @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  role Role       @relation(fields: [role_id], references: [id])
   pillar   Pillar?        @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
 
-  @@unique([catalog_id, role_type_id, name])
-  @@index([role_type_id])
+  @@unique([business_type_id, role_id, name])
+  @@index([role_id])
   @@map("skill_tags")
 }
 
@@ -1129,7 +1129,7 @@ model ProviderProfile {
   /// appears under more than one role (brief_R). `pillar_id` is the DOMAIN;
   /// `role_type_id` is the ROLE. Skills at the next step filter on both.
   pillar_id               String?            @db.Uuid
-  role_type_id            String?            @db.Uuid
+  role_id            String?            @db.Uuid
   /// How the provider sells; RECRUITER forks them to the Coordinator role
   /// (brief_P / E009).
   work_method             WorkMethod?
@@ -1303,7 +1303,7 @@ model ProviderProfile {
   coordinator       Person?                         @relation("CoordinatorProviders", fields: [coordinator_person_id], references: [id], onDelete: SetNull)
   region            Region?                         @relation(fields: [region_id], references: [id], onDelete: SetNull)
   pillar            Pillar?                         @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
-  roleType          RoleType?                       @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  role          Role?                       @relation(fields: [role_id], references: [id], onDelete: SetNull)
   skills            ProviderSkill[]
   /// The derived per-suite centre of gravity (WS-1). Written only by the
   /// rollup recompute, same as `skills`.
@@ -1316,12 +1316,12 @@ model ProviderProfile {
   serviceProducts   ServiceProduct[]
   education         Education[]
   languages         Language[]
-  certifications    Certification[]
+  credentials    Credential[]
   /// Views of THIS profile (`P0-E595` A2). See `model ProfileView`.
   profileViews      ProfileView[]     @relation("ProfileViewed")
   imports           ProfileImport[]
   resumeParseAudits ResumeParseAudit[]
-  profileGapFlags   ProfileGapFlags?
+  profileGapFlag   ProfileGapFlag?
   recommendations   RecommendationRequest[]
   /// `P2-J2-E563` WS-B — the 3-year experience attestation, one row per
   /// category the provider claims. See `ProviderExperienceAttestation`.
@@ -1332,7 +1332,7 @@ model ProviderProfile {
   @@index([region_id])
   @@index([coordinator_person_id])
   @@index([pillar_id])
-  @@index([role_type_id])
+  @@index([role_id])
   @@map("provider_profiles")
 }
 
@@ -1551,7 +1551,7 @@ enum ValidationStatus {
 /// this to providers, so only the provider join exists for now.
 model Specialization {
   id         String             @id @default(uuid()) @db.Uuid
-  catalog_id String             @db.Uuid
+  business_type_id String             @db.Uuid
   name       String
   kind       SpecializationKind @default(PRODUCT)
   /// Display order within a kind; ties break on name.
@@ -1573,7 +1573,7 @@ model Specialization {
   created_at DateTime           @default(now())
   updated_at DateTime           @updatedAt
 
-  catalog           ServiceCatalog                  @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  businessType           BusinessType                  @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
   /// Assessments that named this industry (INDUSTRY-kind rows only, in practice).
   assessments       Assessment[]
   providerProfiles  ProviderProfileSpecialization[]
@@ -1582,7 +1582,7 @@ model Specialization {
   /// linked (brief_project_model_v2).
   projectIndustries Project[]
 
-  @@unique([catalog_id, name])
+  @@unique([business_type_id, name])
   @@map("specializations")
 }
 
@@ -1759,7 +1759,7 @@ model Employer {
   /// The Role this job represents, derived from its skills (a Skill belongs to
   /// exactly one Role). Stored rather than recomputed on read because a
   /// provider may override it, and an override has to survive.
-  job_role_type_id String?        @db.Uuid
+  job_role_id String?        @db.Uuid
 
   /// ── ⚠⚠ EMPLOYER VALIDATION (`P2-A1.1-E747`, WS-B) ────────────────────────
   ///
@@ -1788,14 +1788,14 @@ model Employer {
   contact_domain    String?
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
-  jobRoleType     RoleType?       @relation("EmployerJobRole", fields: [job_role_type_id], references: [id], onDelete: SetNull)
+  jobRole     Role?       @relation("EmployerJobRole", fields: [job_role_id], references: [id], onDelete: SetNull)
   projects        Project[]
   artifacts       Artifact[]
   skills          JobSkill[]
   validations     EmployerValidation[]
 
   @@index([provider_profile_id])
-  @@index([job_role_type_id])
+  @@index([job_role_id])
   @@map("employers")
 }
 
@@ -1983,7 +1983,7 @@ model Project {
   /// silently poisoning the very charts this field exists to feed. A null is
   /// honest and queryable ("show me unclassified projects"), and the review
   /// page nudges the provider to fix it. Same reasoning as `employer_id`.
-  role_type_id               String?        @db.Uuid
+  role_id               String?        @db.Uuid
   /// The sector this was delivered in. Reuses the INDUSTRY slice of the
   /// Specialization vocabulary rather than a free-text column, so a
   /// confidential project can still say "Oil & Gas" in a chartable way.
@@ -2070,7 +2070,7 @@ model Project {
 
   providerProfile ProviderProfile      @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   employer        Employer?            @relation(fields: [employer_id], references: [id], onDelete: SetNull)
-  roleType        RoleType?            @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  role        Role?            @relation(fields: [role_id], references: [id], onDelete: SetNull)
   industry        Specialization?      @relation(fields: [industry_specialization_id], references: [id], onDelete: SetNull)
   applications    ProjectApplication[]
   outcomes        ProjectOutcome[]
@@ -2080,7 +2080,7 @@ model Project {
 
   @@index([provider_profile_id])
   @@index([employer_id])
-  @@index([role_type_id])
+  @@index([role_id])
   @@map("projects")
 }
 
@@ -2322,7 +2322,7 @@ model ServiceProduct {
   price_cents         Int?
   currency            String             @default("USD")
   /// Optional categorization for the catalog and future Work Request matching.
-  role_type_id        String?            @db.Uuid
+  role_id        String?            @db.Uuid
   cover_image_url     String?
   /**
    * ⚠ THE PERIOD `price_cents` CANNOT CARRY. Non-null EXACTLY WHEN
@@ -2353,24 +2353,24 @@ model ServiceProduct {
   product_type_id     String?            @db.Uuid
   /// O-E004: when the product is paid, and what event triggers the payment request.
   payment_terms       PaymentTerms?
-  payment_trigger     PaymentTrigger?
+  payment_event     PaymentEvent?
   sort_order          Int                @default(100)
   created_at          DateTime           @default(now())
   updated_at          DateTime           @updatedAt
 
   providerProfile   ProviderProfile           @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
-  roleType          RoleType?                 @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  role          Role?                 @relation(fields: [role_id], references: [id], onDelete: SetNull)
   deliverables      ServiceProductDeliverable[]
   milestones        ServiceProductMilestone[]
   skills            ServiceProductSkill[]
   /// Which capability domains this product operates on — MANY, see the join model.
-  capabilityDomains ServiceProductCapabilityDomain[]
+  domains ServiceProductDomain[]
   /// How this product's value is estimated. MANY: a product can save contract value
   /// AND avoid a fixed risk, so these are rows, not columns.
   valueFactors      ServiceProductValueFactor[]
 
   @@index([provider_profile_id])
-  @@index([role_type_id])
+  @@index([role_id])
   @@map("service_products")
 }
 
@@ -2484,7 +2484,7 @@ model ServiceProductMilestone {
   percent    Int
   sequence   Int      @default(0)
   /// CAT-E003: what releases this part of the price.
-  trigger    PaymentTrigger?
+  payment_event    PaymentEvent?
   created_at DateTime @default(now())
 
   service_product ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
@@ -2521,14 +2521,14 @@ model ServiceProductSkill {
 model ProviderProfileRole {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @db.Uuid
-  role_type_id        String   @db.Uuid
+  role_id        String   @db.Uuid
   created_at          DateTime @default(now())
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
-  roleType        RoleType        @relation(fields: [role_type_id], references: [id], onDelete: Cascade)
+  role        Role        @relation(fields: [role_id], references: [id], onDelete: Cascade)
 
-  @@unique([provider_profile_id, role_type_id])
-  @@index([role_type_id])
+  @@unique([provider_profile_id, role_id])
+  @@index([role_id])
   @@map("provider_profile_roles")
 }
 
@@ -2543,7 +2543,7 @@ model ProviderProfileRole {
 ///
 /// One row per profile, rewritten on each publish: the question is always
 /// "what is missing NOW", never a history of what once was.
-model ProfileGapFlags {
+model ProfileGapFlag {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @unique @db.Uuid
   no_bio              Boolean  @default(false)
@@ -2704,7 +2704,7 @@ model Language {
 /// ⚠ NOT A FORK. The model's own note below still holds: a Learn certificate IS a
 /// certification, `issued_from` is what tells the two apart, and a parallel model
 /// would give a provider two identical-looking sections that behaved differently.
-model Certification {
+model Credential {
   id                  String    @id @default(uuid()) @db.Uuid
   /**
    * ⚠ THE OWNER, AND IT IS REQUIRED. Every credential has one; this is the column
@@ -2810,7 +2810,7 @@ model Certification {
   @@index([user_id])
   @@index([provider_profile_id])
   @@index([learning_path_id])
-  @@map("certifications")
+  @@map("credentials")
 }
 
 /// A buyer's marketplace profile (1:1 with a Person that is a service buyer).
@@ -2976,9 +2976,9 @@ model ProfileImport {
 /// before the enum changed — a RESUME POINTER, not a record. No company, no
 /// membership and no person was altered, and none was deleted (`E164`).
 enum RequesterOnboardingStep {
-  requester_info
-  work_location
-  review
+  REQUESTER_INFO
+  WORK_LOCATION
+  REVIEW
 }
 
 model RequesterProfile {
@@ -3003,7 +3003,7 @@ model RequesterProfile {
   /// wizard uses, so a half-finished requester lands back where they stopped.
   /// ⚠ THE DEFAULT MOVED WITH THE STEP LIST (`E418`) — it was `company`, which
   /// is no longer a member of the enum. A new requester starts on step 1.
-  onboarding_step RequesterOnboardingStep @default(requester_info)
+  onboarding_step RequesterOnboardingStep @default(REQUESTER_INFO)
   /// Set when the wizard finishes — the "Ready to Post Work Request" state.
   completed_at    DateTime?
   /// First page: null until the member first opens /dashboard (greeting "Welcome to Panameer").
@@ -3208,7 +3208,7 @@ model CoordinatorInvite {
 ///
 /// ⚠ NO `accepted_provider_id` AND NO ROSTER WRITE, DELIBERATELY. Accepting this
 /// means one thing: they signed up. `accepted_at` records that and nothing else.
-model ColleagueInvite {
+model InvitationToJoin {
   id                 String                @id @default(uuid()) @db.Uuid
   /**
    * ⚠⚠ NULLABLE, AND THAT IS THE POINT (`E493`). Scott: store it, attribute
@@ -3233,7 +3233,7 @@ model ColleagueInvite {
   /// Resend rotates the token; earlier links keep working.
   prior_token_hashes String[]              @default([])
   last_sent_at       DateTime?
-  status             ColleagueInviteStatus @default(PENDING)
+  status             InvitationToJoinStatus @default(PENDING)
   expires_at         DateTime
   /// ⚠ Set when they sign up. NO provider id, NO roster row — see the note above.
   accepted_at        DateTime?
@@ -3272,14 +3272,14 @@ model ColleagueInvite {
   @@index([inviter_person_id, created_at])
   /// ⚠ The credit lookup: the oldest PENDING invite for an address.
   @@index([invitee_email, status, created_at])
-  @@map("colleague_invites")
+  @@map("invitations_to_join")
 }
 
 /// ⚠ ITS OWN ENUM, not `CoordinatorInviteStatus`. The VALUES are identical and
 /// the MEANING is identical — an invite's lifecycle — but putting a
 /// coordinator-named type on a colleague model is the naming half of the same
 /// confusion this model exists to avoid.
-enum ColleagueInviteStatus {
+enum InvitationToJoinStatus {
   PENDING
   ACCEPTED
   EXPIRED
@@ -3339,7 +3339,7 @@ model WorkRequest {
   id                  String               @id @default(uuid()) @db.Uuid
   buyer_person_id     String               @db.Uuid
   p_account_id        String               @db.Uuid
-  role_type_id        String?              @db.Uuid
+  role_id        String?              @db.Uuid
   /// THE DOMAIN of the Role → Domain → Skill cascade
   /// (brief_create_work_request_v1 WS-A).
   ///
@@ -3441,7 +3441,7 @@ model WorkRequest {
 
   buyer           Person                      @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
   pAccount        PAccount                    @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
-  roleType        RoleType?                   @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  role        Role?                   @relation(fields: [role_id], references: [id], onDelete: SetNull)
   pillar          Pillar?                     @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
   region          Region?                     @relation(fields: [region_id], references: [id], onDelete: SetNull)
   skills          WorkRequestSkill[]
@@ -3641,7 +3641,7 @@ enum LessonProductionStatus {
 /// distinguishable from one the provider typed in themselves.
 enum CredentialSource {
   SELF_REPORTED
-  LEARN
+  PANAMEER
 }
 
 /// ── ⚠⚠⚠ HOW SOMEBODY GETS INTO A GROUP (`P2-A3-E612`) ────────────────────
@@ -3727,7 +3727,7 @@ model LearningPath {
   group            String?
   /// The instructor. A Person, so an expert can front paths without needing a
   /// provider profile.
-  expert_person_id String?            @db.Uuid
+  instructor_person_id String?            @db.Uuid
   cover_image      String?
   /// Optional intro video for the path itself (same loose Vimeo reference the
   /// Lesson uses — see `vimeoEmbedUrl`). A path can front its curriculum with a
@@ -3765,10 +3765,10 @@ model LearningPath {
   outcome          String?
   level            PathLevel?
 
-  expert      Person?           @relation("LearnExpertPaths", fields: [expert_person_id], references: [id], onDelete: SetNull)
+  instructor      Person?           @relation("LearnExpertPaths", fields: [instructor_person_id], references: [id], onDelete: SetNull)
   courses     Course[]
-  enrollments LearnEnrollment[]
-  credentials Certification[]
+  enrollments Enrollment[]
+  credentials Credential[]
   interest    PathInterest[]
   assessment  CertificationTest?
   /// ⚠ `P1-J3-E383` — a path's forum. At most ONE; `check:forums` asserts it and
@@ -3855,13 +3855,13 @@ model Course {
   skill_scope CourseSkillScope?
 
   learningPath LearningPath  @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
-  sections     Section[]
+  sections     CourseSection[]
   /// ⚠ The skills this course declares it teaches — see `skill_scope` above.
   skills       CourseSkill[]
 
   @@unique([learning_path_id, slug])
   @@index([learning_path_id])
-  @@map("learn_courses")
+  @@map("courses")
 }
 
 /// ── ⚠⚠⚠ THE JOINT BETWEEN LEARN AND THE RANKING MODEL (`P2-A4-E668`) ────────
@@ -3912,10 +3912,10 @@ model CourseSkill {
   /// claim in any rollup that sums them.
   @@unique([course_id, skill_id])
   @@index([skill_id])
-  @@map("learn_course_skills")
+  @@map("course_skills")
 }
 
-model Section {
+model CourseSection {
   id            String   @id @default(uuid()) @db.Uuid
   course_id     String   @db.Uuid
   title         String
@@ -3940,7 +3940,7 @@ model Section {
   /// what makes a re-import an UPDATE rather than a duplicate.
   @@unique([course_id, title])
   @@index([course_id])
-  @@map("learn_sections")
+  @@map("course_sections")
 }
 
 model Lesson {
@@ -3984,7 +3984,7 @@ model Lesson {
   production_status LessonProductionStatus @default(IN_CONCEPT)
   /// L-E043: retired lessons are hidden and uncounted everywhere members look; nothing is deleted.
   retired_at        DateTime?
-  expert_person_id  String?                @db.Uuid
+  instructor_person_id  String?                @db.Uuid
   sort_order        Int                    @default(0)
   created_at        DateTime               @default(now())
   /// XLS-RE-RUN SHIELD (WS1). The catalog is seed-driven, but the admin console
@@ -4026,8 +4026,8 @@ model Lesson {
   /// today. ⚠ NOTHING IS DELETED; the three rows stay and become honest.
   cross_reference_lesson_id String? @db.Uuid
 
-  section  Section          @relation(fields: [section_id], references: [id], onDelete: Cascade)
-  expert   Person?          @relation("LearnExpertLessons", fields: [expert_person_id], references: [id], onDelete: SetNull)
+  section  CourseSection          @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  instructor   Person?          @relation("LearnExpertLessons", fields: [instructor_person_id], references: [id], onDelete: SetNull)
   progress LessonProgress[]
 
   /// ⚠ The lesson this row points at — see `cross_reference_lesson_id` above.
@@ -4041,13 +4041,13 @@ model Lesson {
   @@index([section_id])
   @@index([production_status])
   @@index([cross_reference_lesson_id])
-  @@map("learn_lessons")
+  @@map("lessons")
 }
 
 /// Free enrolment — a join row, not billing. Enrolment is what turns an
 /// anonymous browser into an account (WS4), so it is keyed to the User rather
 /// than to any one profile: a buyer, a provider and a recruiter all learn.
-model LearnEnrollment {
+model Enrollment {
   id               String   @id @default(uuid()) @db.Uuid
   user_id          String   @db.Uuid
   learning_path_id String   @db.Uuid
@@ -4058,7 +4058,7 @@ model LearnEnrollment {
 
   @@unique([user_id, learning_path_id])
   @@index([user_id])
-  @@map("learn_enrollments")
+  @@map("enrollments")
 }
 
 /// One row per lesson a user has finished. Section / Course / LP percentages are
@@ -4107,7 +4107,7 @@ model CertificationTest {
    * only WHICH MODEL wrote the set, never which human stood behind it. This is
    * the column that makes the badge earnable. The badge itself is not built here.
    */
-  reviewed_by String?            @db.Uuid
+  reviewed_by_person_id String?            @db.Uuid
   reviewed_at DateTime?
   /**
    * Which documentation URLs, if any, informed this set. Provenance, not prose.
@@ -4120,7 +4120,7 @@ model CertificationTest {
   updated_at DateTime @updatedAt
 
   learningPath LearningPath       @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
-  reviewer     Person?            @relation("CertificationTestReviewer", fields: [reviewed_by], references: [id], onDelete: SetNull)
+  reviewer     Person?            @relation("CertificationTestReviewer", fields: [reviewed_by_person_id], references: [id], onDelete: SetNull)
   attempts     CertificationAttempt[]
 
   @@index([status])
@@ -4926,7 +4926,7 @@ model ForumThread {
   board_id     String   @db.Uuid
   /// Asked from a lesson (2026-10-08): the question carries the lesson; the path group lists it as usual.
   lesson_id    String?   @db.Uuid
-  author_id    String   @db.Uuid
+  author_person_id    String   @db.Uuid
   title        String
   /// The opening post's text. Kept on the thread rather than as a first Post
   /// row so "a thread with no replies" is one row, not two, and so deleting a
@@ -4940,11 +4940,11 @@ model ForumThread {
   updated_at   DateTime @updatedAt
 
   board  ForumBoard  @relation(fields: [board_id], references: [id], onDelete: Cascade)
-  author Person      @relation("ForumThreadAuthor", fields: [author_id], references: [id], onDelete: Cascade)
+  author Person      @relation("ForumThreadAuthor", fields: [author_person_id], references: [id], onDelete: Cascade)
   posts  ForumPost[]
 
   @@index([board_id, last_post_at])
-  @@index([author_id])
+  @@index([author_person_id])
   @@map("forum_threads")
   @@index([lesson_id])
 }
@@ -4952,7 +4952,7 @@ model ForumThread {
 model ForumPost {
   id         String   @id @default(uuid()) @db.Uuid
   thread_id  String   @db.Uuid
-  author_id  String   @db.Uuid
+  author_person_id  String   @db.Uuid
   body       String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -4986,7 +4986,7 @@ model ForumPost {
    * still stands even if that account is later removed. Read it as "marked
    * helpful, by someone no longer here", never as "not marked".
    */
-  marked_helpful_by String?   @db.Uuid
+  marked_helpful_by_person_id String?   @db.Uuid
 
   /**
    * ── ⚠⚠ THE INSTRUCTOR'S CORRECTNESS SIGNAL (`P2-J3-E558` WS-B) ────────────
@@ -5020,15 +5020,15 @@ model ForumPost {
   instructor_confirmed_at DateTime?
   /// The instructor who confirmed. `SetNull` on delete for the same reason as
   /// `marked_helpful_by`: the judgement stands even if the account is removed.
-  instructor_confirmed_by String?   @db.Uuid
+  instructor_confirmed_by_person_id String?   @db.Uuid
 
   thread              ForumThread @relation(fields: [thread_id], references: [id], onDelete: Cascade)
-  author              Person      @relation("ForumPostAuthor", fields: [author_id], references: [id], onDelete: Cascade)
-  helpfulMarker       Person?     @relation("ForumPostHelpfulMarker", fields: [marked_helpful_by], references: [id], onDelete: SetNull)
-  instructorConfirmer Person?     @relation("ForumPostInstructorConfirmer", fields: [instructor_confirmed_by], references: [id], onDelete: SetNull)
+  author              Person      @relation("ForumPostAuthor", fields: [author_person_id], references: [id], onDelete: Cascade)
+  helpfulMarker       Person?     @relation("ForumPostHelpfulMarker", fields: [marked_helpful_by_person_id], references: [id], onDelete: SetNull)
+  instructorConfirmer Person?     @relation("ForumPostInstructorConfirmer", fields: [instructor_confirmed_by_person_id], references: [id], onDelete: SetNull)
 
   @@index([thread_id, created_at])
-  @@index([author_id])
+  @@index([author_person_id])
   /// The profile signal counts helpful answers per author, so it filters on this.
   @@index([marked_helpful_at])
   /// ⚠ Its own index — the instructor panel filters threads on it.
@@ -5178,7 +5178,7 @@ model AssessmentDomainResult {
   /// The bank key as answered ("invoices", "sourcing") — the durable identifier.
   domain_key           String
   /// Resolved from `CapabilityDomain.key` at write time. Null when unresolvable.
-  capability_domain_id String? @db.Uuid
+  domain_id String? @db.Uuid
 
   /// 10|23|37|50 (and the legacy 20|30|40), or NULL for "Not sure".
   /// ⚠ A NULL RUNG IS A ROW, NOT A MISSING ROW. The absence of an answer is
@@ -5257,7 +5257,7 @@ model AssessmentDomainResult {
 
   @@unique([assessment_id, domain_key])
   @@index([assessment_id])
-  @@index([capability_domain_id])
+  @@index([domain_id])
   @@index([domain_key])
   @@map("assessment_domain_results")
 }
@@ -5388,22 +5388,22 @@ model TaxRate {
 ///
 /// ⚠ `Package.role_type_id` IS UNAFFECTED. It answers a different question — what kind of
 /// PRACTITIONER — and nothing here replaces it.
-model ServiceProductCapabilityDomain {
+model ServiceProductDomain {
   id                   String   @id @default(uuid()) @db.Uuid
   service_product_id           String   @db.Uuid
-  capability_domain_id String   @db.Uuid
+  domain_id String   @db.Uuid
   created_at           DateTime @default(now())
 
   service_product          ServiceProduct          @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
-  capabilityDomain CapabilityDomain @relation(fields: [capability_domain_id], references: [id], onDelete: Cascade)
+  domain Domain @relation(fields: [domain_id], references: [id], onDelete: Cascade)
 
   /// One row per pair — selecting a domain twice is not a different fact.
-  @@unique([service_product_id, capability_domain_id])
+  @@unique([service_product_id, domain_id])
   /// Indexed BOTH ways: "which domains does this product cover" and "which products
   /// cover this domain" are both first-class queries.
   @@index([service_product_id])
-  @@index([capability_domain_id])
-  @@map("service_product_capability_domains")
+  @@index([domain_id])
+  @@map("service_product_domains")
 }
 
 /// WHICH ASSESSMENT VARIABLE A PRODUCT'S ESTIMATE MULTIPLIES.
@@ -5949,7 +5949,7 @@ model WorkRequestLine {
   /// ⚠ UNIQUE — it is the join key on the return leg.
   punchout_line_ref String? @unique
 
-  role_type_id String? @db.Uuid
+  role_id String? @db.Uuid
   skill_id     String? @db.Uuid
 
   /// ⚠ NAMED AT THE LINE, because ONE REQUEST CAN SOURCE SEVERAL PEOPLE — which
@@ -6245,7 +6245,7 @@ model WorkOrderLine {
   service_product_id  String?         @db.Uuid
   billing_cycle       BillingCycle?
   payment_terms       PaymentTerms?
-  payment_trigger     PaymentTrigger?
+  payment_event     PaymentEvent?
 
   service_start DateTime?
   service_end   DateTime?
@@ -6279,7 +6279,7 @@ model WorkOrderLine {
 // MODEL — two models would let the same draw be filed twice, once per screen.
 // ═══════════════════════════════════════════════════════════════════════════
 
-enum SettlementStatus {
+enum PaymentRequestStatus {
   DRAFT
   SUBMITTED
   APPROVED
@@ -6287,9 +6287,9 @@ enum SettlementStatus {
   PAID
 }
 
-model SettlementRequest {
+model PaymentRequest {
   id                String @id @default(uuid()) @db.Uuid
-  settlement_number String @unique
+  payment_request_number String @unique
   /// RD-E003: raised before the provider's company finished tax & banking — held from the buyer until it does.
   held_for_tax_banking Boolean @default(false)
 
@@ -6300,7 +6300,7 @@ model SettlementRequest {
   period_end   DateTime
 
   currency String           @default("USD")
-  status   SettlementStatus @default(DRAFT)
+  status   PaymentRequestStatus @default(DRAFT)
 
   submitted_at         DateTime?
   decided_at           DateTime?
@@ -6320,18 +6320,18 @@ model SettlementRequest {
   /// O-E004: submitted_at + the line's payment terms. Terms start on submission, not approval.
   due_date DateTime?
 
-  lines SettlementLine[]
+  lines PaymentRequestLine[]
 
   @@index([resubmits_id])
   @@index([work_order_id])
   @@index([provider_person_id])
   @@index([status])
-  @@map("settlement_requests")
+  @@map("payment_requests")
 }
 
-model SettlementLine {
+model PaymentRequestLine {
   id                    String @id @default(uuid()) @db.Uuid
-  settlement_request_id String @db.Uuid
+  payment_request_id String @db.Uuid
   line_number           Int
 
   /// ⚠⚠ NOT NULLABLE. Scott: *"the settlement request just goes against a
@@ -6361,12 +6361,12 @@ model SettlementLine {
 
   created_at DateTime @default(now())
 
-  settlementRequest SettlementRequest @relation(fields: [settlement_request_id], references: [id], onDelete: Cascade)
+  paymentRequest PaymentRequest @relation(fields: [payment_request_id], references: [id], onDelete: Cascade)
 
-  @@unique([settlement_request_id, line_number])
-  @@index([settlement_request_id])
+  @@unique([payment_request_id, line_number])
+  @@index([payment_request_id])
   @@index([work_order_line_id])
-  @@map("settlement_lines")
+  @@map("payment_request_lines")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -6425,7 +6425,7 @@ model PaymentLine {
   payment_id  String @db.Uuid
   line_number Int
 
-  settlement_request_id String @db.Uuid
+  payment_request_id String @db.Uuid
   amount_cents          Int
 
   created_at DateTime @default(now())
@@ -6438,7 +6438,7 @@ model PaymentLine {
   /// foreign key on the header.
   @@unique([payment_id, line_number])
   @@index([payment_id])
-  @@index([settlement_request_id])
+  @@index([payment_request_id])
   @@map("payment_lines")
 }
 
@@ -6480,7 +6480,7 @@ model ProviderPayoutLine {
   /// ⚠⚠ NOT NULLABLE. Every cent traces settlement line → work-order line →
   /// work-request line. A payout line with no settlement behind it is money
   /// leaving with no reason recorded, and no later report could reconstruct one.
-  settlement_line_id String @db.Uuid
+  payment_request_line_id String @db.Uuid
 
   gross_cents Int
   fee_cents   Int
@@ -6492,7 +6492,7 @@ model ProviderPayoutLine {
 
   @@unique([provider_payout_id, line_number])
   @@index([provider_payout_id])
-  @@index([settlement_line_id])
+  @@index([payment_request_line_id])
   @@map("provider_payout_lines")
 }
 
@@ -7335,7 +7335,7 @@ model PathInterest {
   /// remembering to.
   @@unique([user_id, learning_path_id])
   @@index([learning_path_id, wanted])
-  @@map("path_interest")
+  @@map("path_interests")
 }
 
 /// ── ⚠⚠⚠ ONE MEMBERSHIP TABLE (`P2-A3-E612` WS-A) ─────────────────────────
@@ -7844,7 +7844,7 @@ model WorkTrackerRelease {
   updated_by String?  @db.Uuid
 
   @@index([published, date])
-  @@map("work_tracker_milestones")
+  @@map("work_tracker_releases")
 }
 
 /// The daily "Shipped" log — the reason anyone comes back to the page.
@@ -8098,7 +8098,7 @@ model AdminAudit {
   @@index([created_at])
   @@index([actor_id])
   @@index([target_table, created_at])
-  @@map("admin_audit")
+  @@map("admin_audits")
 }
 
 /// A daily count of key tables, so the Data health page can show "since
@@ -8176,7 +8176,7 @@ model ConnectionView {
 }
 
 /// Skill areas (vendor-neutral, admin-managed). `Skill.area` holds the code; codes rename in one transaction.
-model SkillArea {
+model Area {
   id         String   @id @default(uuid()) @db.Uuid
   code       String   @unique
   label      String
@@ -8185,7 +8185,7 @@ model SkillArea {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@map("skill_areas")
+  @@map("areas")
 }
 
 enum GlossaryVisibility {
@@ -8224,7 +8224,7 @@ enum CredentialKind {
 }
 
 /// Notify Me (2026-10-08): a member asked to hear when a Coming Soon path first has playable lessons.
-model LearnPathWatch {
+model LearningPathWatch {
   id               String    @id @default(uuid()) @db.Uuid
   user_id          String    @db.Uuid
   learning_path_id String    @db.Uuid
@@ -8237,7 +8237,7 @@ model LearnPathWatch {
 
   @@unique([user_id, learning_path_id])
   @@index([learning_path_id])
-  @@map("learn_path_watches")
+  @@map("learning_path_watches")
 }
 
 /// Learning path level (2026-10-08). Null = not set; the card then hides the level tag.
@@ -8290,7 +8290,7 @@ enum PaymentTerms {
   NET60
 }
 
-enum PaymentTrigger {
+enum PaymentEvent {
   TIMESHEET
   PAYMENT_REQUEST
   INVOICE
@@ -8314,7 +8314,7 @@ model ProviderService {
   rate_cents          Int?
   billing_cycle       BillingCycle    @default(MONTHLY)
   payment_terms       PaymentTerms    @default(NET30)
-  payment_trigger     PaymentTrigger  @default(TIMESHEET)
+  payment_event     PaymentEvent  @default(TIMESHEET)
   unspsc_code         String?
   active              Boolean         @default(true)
   sort_order          Int             @default(100)
@@ -8394,7 +8394,7 @@ model ErpMessage {
   payload_id            String
   work_request_id       String?          @db.Uuid
   work_order_id         String?          @db.Uuid
-  settlement_request_id String?          @db.Uuid
+  payment_request_id String?          @db.Uuid
   status                ErpMessageStatus
   body                  String
   response              String?
@@ -8408,7 +8408,7 @@ model ErpMessage {
   @@unique([connection_id, payload_id])
   @@index([status])
   @@index([work_order_id])
-  @@index([settlement_request_id])
+  @@index([payment_request_id])
   @@map("erp_messages")
 }
 
@@ -8545,9 +8545,9 @@ model WorkOrderMilestone {
   sequence              Int
   label                 String
   percent               Int
-  trigger               PaymentTrigger
+  payment_event               PaymentEvent
   reported_at           DateTime?
-  settlement_request_id String?        @db.Uuid
+  payment_request_id String?        @db.Uuid
   created_at            DateTime       @default(now())
 
   @@unique([work_order_line_id, sequence])

@@ -7,7 +7,7 @@ const skillKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 export type CatalogSkill = {
   id: string;
   name: string;
-  role_type_id?: string | null;
+  role_id?: string | null;
 };
 
 /** Group rows by a key, PRESERVING every row — used to count multiplicity. */
@@ -29,7 +29,7 @@ function roleSpanningNames(catalog: CatalogSkill[]): Map<string, CatalogSkill[]>
   const out = new Map<string, CatalogSkill[]>();
   for (const [name, rows] of groupBy(catalog, (c) => c.name.toLowerCase())) {
     if (rows.length < 2) continue;
-    const roles = new Set(rows.map((r) => r.role_type_id ?? ""));
+    const roles = new Set(rows.map((r) => r.role_id ?? ""));
     if (roles.size > 1) out.set(name, rows);
   }
   return out;
@@ -44,7 +44,7 @@ function deriveRoleAnchor(
   for (const term of terms) {
     const rows = allByName.get(term.toLowerCase()) ?? allByKey.get(skillKey(term));
     if (!rows || rows.length !== 1) continue;
-    const role = rows[0].role_type_id;
+    const role = rows[0].role_id;
     if (role) tally.set(role, (tally.get(role) ?? 0) + 1);
   }
   let best: string | null = null;
@@ -89,7 +89,7 @@ export function matchSkills(
     if (!anchor) return hit;
     const rows = spanning.get(hit.name.toLowerCase());
     if (!rows) return hit;
-    const narrowed = rows.filter((r) => r.role_type_id === anchor);
+    const narrowed = rows.filter((r) => r.role_id === anchor);
     return narrowed.length > 0 ? narrowed[0] : hit;
   };
 

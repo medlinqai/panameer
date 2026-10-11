@@ -225,14 +225,14 @@ export async function seedLearn(prisma: PrismaClient): Promise<LearnSeedCounts> 
       }
 
       for (const s of c.sections) {
-        const existingSection = await prisma.section.findUnique({
+        const existingSection = await prisma.courseSection.findUnique({
           where: { course_id_title: { course_id: courseId, title: s.title } },
           select: { id: true, is_custom: true },
         });
 
         let sectionId: string;
         if (!existingSection) {
-          const created = await prisma.section.create({
+          const created = await prisma.courseSection.create({
             data: { course_id: courseId, title: s.title, sort_order: s.sort_order },
             select: { id: true },
           });
@@ -242,7 +242,7 @@ export async function seedLearn(prisma: PrismaClient): Promise<LearnSeedCounts> 
           sectionId = existingSection.id;
           counts.sections.shielded++;
         } else {
-          await prisma.section.update({
+          await prisma.courseSection.update({
             where: { id: existingSection.id },
             data: { sort_order: s.sort_order },
           });
@@ -265,7 +265,7 @@ export async function seedLearn(prisma: PrismaClient): Promise<LearnSeedCounts> 
                 run_time: l.run_time,
                 vimeo_ref: l.vimeo_ref,
                 production_status: l.production_status as never,
-                expert_person_id: expertId(l.expert),
+                instructor_person_id: expertId(l.expert),
                 sort_order: l.sort_order,
               },
             });
@@ -288,7 +288,7 @@ export async function seedLearn(prisma: PrismaClient): Promise<LearnSeedCounts> 
                 description: l.description,
                 run_time: l.run_time,
                 production_status: l.production_status as never,
-                expert_person_id: expertId(l.expert),
+                instructor_person_id: expertId(l.expert),
                 sort_order: l.sort_order,
                 ...(l.vimeo_ref ? { vimeo_ref: l.vimeo_ref } : {}),
               },

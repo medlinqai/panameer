@@ -48,7 +48,7 @@ async function main() {
     ];
     for (const [personId, sent, accepted] of plan) {
       for (let i = 0; i < sent; i++) {
-        const row = await prisma.colleagueInvite.create({
+        const row = await prisma.invitationToJoin.create({
           data: {
             inviter_person_id: personId,
             invitee_email: `${TAG}.${personId.slice(0, 8)}.${i}@example.seed`,
@@ -189,7 +189,7 @@ async function main() {
     /* ⚠⚠⚠ SCOPED TO THE IDS THIS RUN CREATED, and in a `finally` so a failed
        assertion still leaves the database as it found it. */
     if (made.length) {
-      const removed = await prisma.colleagueInvite.deleteMany({ where: { id: { in: made } } });
+      const removed = await prisma.invitationToJoin.deleteMany({ where: { id: { in: made } } });
       console.log(`check:growth-board — teardown removed ${removed.count} of ${made.length} seeded rows`);
     }
     await prisma.$disconnect();

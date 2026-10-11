@@ -301,8 +301,8 @@ check("8 — ⚠ a partially allocated settlement does NOT release its payout",
   !payoutIsReleasable({ settlementAllocatedCents: 4999, settlementTotalCents: 5000 }));
 check("8 — an unallocated settlement does NOT release its payout",
   !payoutIsReleasable({ settlementAllocatedCents: 0, settlementTotalCents: 5000 }));
-check("8 — ProviderPayoutLine.settlement_line_id is NOT nullable",
-  /settlement_line_id String @db\.Uuid/.test(SCHEMA_CODE));
+check("8 — ProviderPayoutLine.payment_request_line_id is NOT nullable",
+  /payment_request_line_id String @db\.Uuid/.test(SCHEMA_CODE));
 
 /* ═══ 9 · ⚠⚠ THE FIVE ABSENCES THIS BRIEF FORBIDS ═════════════════════════ */
 /*

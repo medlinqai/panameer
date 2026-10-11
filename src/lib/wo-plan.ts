@@ -131,7 +131,7 @@ const mondayOf = (d: Date) => {
 
 /** Board 3's Timesheets list: each payment request's time, by week. */
 export async function timesheetWeeks(orderId: string): Promise<TimesheetWeek[]> {
-  const reqs = await prisma.settlementRequest.findMany({
+  const reqs = await prisma.paymentRequest.findMany({
     where: { work_order_id: orderId, status: { not: "DRAFT" } },
     include: { lines: true },
     orderBy: { period_start: "desc" },
@@ -149,7 +149,7 @@ export async function timesheetWeeks(orderId: string): Promise<TimesheetWeek[]> 
       byWeek.set(week, cur);
     }
     for (const [week, v] of [...byWeek].sort((a, b) => b[0].localeCompare(a[0])))
-      out.push({ requestId: r.id, number: r.settlement_number, week, hours: Math.round(v.hours * 100) / 100, amountCents: v.cents, status: r.status });
+      out.push({ requestId: r.id, number: r.payment_request_number, week, hours: Math.round(v.hours * 100) / 100, amountCents: v.cents, status: r.status });
   }
   return out;
 }

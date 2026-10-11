@@ -213,7 +213,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
             line_number: l.line_number, transaction_type: l.kind === "SERVICE" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", fee_bps: fees.get(l.id)!, description: l.description,
             uom: l.uom, quantity: l.quantity, unit_price_cents: l.rate_cents, amount_cents: l.amount_cents, provider_service_id: l.provider_service_id, service_product_id: l.service_product_id,
             billing_cycle: l.kind === "SERVICE" ? rev.billing_cycle : null, payment_terms: rev.payment_terms,
-            payment_trigger: l.kind === "SERVICE" ? "TIMESHEET" : l.kind === "FIXED" ? "ACCEPTANCE" : "PAYMENT_REQUEST",
+            payment_event: l.kind === "SERVICE" ? "TIMESHEET" : l.kind === "FIXED" ? "ACCEPTANCE" : "PAYMENT_REQUEST",
           })),
         },
       },

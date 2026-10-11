@@ -509,11 +509,11 @@ async function loadDraft(viewer: Viewer) {
       providerProfile: {
         include: {
           pillar: { select: { id: true, code: true, name: true } },
-          roleType: { select: { id: true, code: true, name: true, display: true } },
+          role: { select: { id: true, code: true, name: true, display: true } },
           // WS2 — the full role set, primary included.
           roles: {
             select: {
-              roleType: { select: { id: true, code: true, name: true, display: true } },
+              role: { select: { id: true, code: true, name: true, display: true } },
             },
           },
           specializations: {
@@ -525,7 +525,7 @@ async function loadDraft(viewer: Viewer) {
           skills: {
             include: {
               skill: {
-                select: { id: true, name: true, role_type_id: true, pillar_id: true },
+                select: { id: true, name: true, role_id: true, pillar_id: true },
               },
             },
           },
@@ -540,7 +540,7 @@ async function loadDraft(viewer: Viewer) {
               projects: {
                 orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
                 include: {
-                  roleType: { select: { id: true, name: true } },
+                  role: { select: { id: true, name: true } },
                   industry: { select: { id: true, name: true } },
                   applications: {
                     include: { application: { select: { id: true, name: true } } },
@@ -559,7 +559,7 @@ async function loadDraft(viewer: Viewer) {
           projects: {
             orderBy: [{ sort_order: "asc" }, { created_at: "desc" }],
             include: {
-              roleType: { select: { id: true, name: true } },
+              role: { select: { id: true, name: true } },
               industry: { select: { id: true, name: true } },
               applications: {
                 include: { application: { select: { id: true, name: true } } },
@@ -573,7 +573,7 @@ async function loadDraft(viewer: Viewer) {
           },
           education: { orderBy: { created_at: "asc" } },
           languages: { orderBy: { created_at: "asc" } },
-          certifications: { orderBy: [{ year: "desc" }, { name: "asc" }] },
+          credentials: { orderBy: [{ year: "desc" }, { name: "asc" }] },
         },
       },
     },
@@ -591,7 +591,7 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
   const done: Record<ProviderStep, boolean> = {
     title: (p.title ?? "").trim() !== "",
     // WS3 — two steps, two conditions. A provider who claimed a role and then
-    roles: pp.role_type_id != null,
+    roles: pp.role_id != null,
     skills: pp.skills.length > 0,
     // WS-4 — done when there is at least one job to review.
     work_history: pp.employers.length > 0,
@@ -681,12 +681,12 @@ export async function getOnboardingState(viewer: Viewer) {
       pillarId: pp.pillar_id,
       pillarName: pp.pillar?.name ?? null,
       // The chosen field is the (Role, Domain) pair (brief_R).
-      roleTypeId: pp.role_type_id,
+      roleTypeId: pp.role_id,
       // WS2 — the full role set. `roleTypeId` above stays the PRIMARY so every
       roleTypeIds: pp.roles.length
-        ? pp.roles.map((r) => r.roleType.id)
-        : pp.role_type_id
-          ? [pp.role_type_id]
+        ? pp.roles.map((r) => r.role.id)
+        : pp.role_id
+          ? [pp.role_id]
           : [],
       // THE PREFILL, NEVER AN ASSIGNMENT ( WS-A). The role page reads
       derivedRoleTypeIds: derived.roleTypeIds,
@@ -694,20 +694,20 @@ export async function getOnboardingState(viewer: Viewer) {
       derivedFromSkills: derived.evidence,
       roleTypes: pp.roles.length
         ? pp.roles.map((r) => ({
-            id: r.roleType.id,
-            name: r.roleType.name,
-            display: r.roleType.display,
+            id: r.role.id,
+            name: r.role.name,
+            display: r.role.display,
           }))
-        : pp.roleType
+        : pp.role
           ? [
               {
-                id: pp.roleType.id,
-                name: pp.roleType.name,
-                display: pp.roleType.display,
+                id: pp.role.id,
+                name: pp.role.name,
+                display: pp.role.display,
               },
             ]
           : [],
-      roleTypeName: pp.roleType?.name ?? null,
+      roleTypeName: pp.role?.name ?? null,
       specializationIds: pp.specializations.map((s) => s.specialization_id),
       specializations: pp.specializations.map((s) => ({
         id: s.specialization.id,
@@ -719,7 +719,7 @@ export async function getOnboardingState(viewer: Viewer) {
       skillNames: pp.skills.map((s) => ({
         id: s.skill_id,
         name: s.skill.name,
-        roleTypeId: s.skill.role_type_id,
+        roleTypeId: s.skill.role_id,
       })),
       // WHICH OF THOSE SKILLS CAME OFF THE RÉSUMÉ (E187).
       resumeSkillIds: resumeSkillIds(pp.imports, pp.skills),
@@ -773,7 +773,7 @@ export async function getOnboardingState(viewer: Viewer) {
         projects: e.projects.map(projectToCard),
         // WS-4 — what the review step renders on each job card: the suite badge
         suite: e.software_suite,
-        roleTypeId: e.job_role_type_id,
+        roleTypeId: e.job_role_id,
         skills: e.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),
         // THE PROMPT FIRES ON THIS AND NOTHING ELSE.
         needsSuite: e.software_suite == null && e.skills.length > 0,
@@ -820,7 +820,7 @@ export async function getOnboardingState(viewer: Viewer) {
         proficiency: l.proficiency,
       })),
       // brief_T / E040 — rendered + editable on the review page.
-      certifications: pp.certifications.map((c) => ({
+      certifications: pp.credentials.map((c) => ({
         id: c.id,
         name: c.name,
         issuer: c.issuer,
@@ -915,7 +915,7 @@ export async function applyProviderSection(
         throw new OnboardingError("Pick at least one role", "INVALID");
       }
 
-      const realRoles = await prisma.roleType.findMany({
+      const realRoles = await prisma.role.findMany({
         where: { id: { in: roleTypeIds } },
         select: { id: true },
       });
@@ -932,7 +932,7 @@ export async function applyProviderSection(
         typeof data.pillarId === "string" && data.pillarId ? data.pillarId : null;
       if (pillarId) {
         const ok = await prisma.skill.findFirst({
-          where: { pillar_id: pillarId, role_type_id: primaryRoleId },
+          where: { pillar_id: pillarId, role_id: primaryRoleId },
           select: { id: true },
         });
         if (!ok) pillarId = null;
@@ -947,7 +947,7 @@ export async function applyProviderSection(
           const grouped = await prisma.skill.groupBy({
             by: ["pillar_id"],
             /* `E481` — a domain whose skills are all retired is not suggested. */
-            where: { role_type_id: primaryRoleId, pillar_id: { not: null }, ...OFFERABLE },
+            where: { role_id: primaryRoleId, pillar_id: { not: null }, ...OFFERABLE },
             _count: { _all: true },
             orderBy: { _count: { id: "desc" } },
             take: 1,
@@ -959,15 +959,15 @@ export async function applyProviderSection(
       await prisma.$transaction([
         prisma.providerProfile.update({
           where: { id: profileId },
-          data: { role_type_id: primaryRoleId, pillar_id: pillarId },
+          data: { role_id: primaryRoleId, pillar_id: pillarId },
         }),
         prisma.providerProfileRole.deleteMany({
           where: { provider_profile_id: profileId },
         }),
         prisma.providerProfileRole.createMany({
-          data: roleTypeIds.map((role_type_id) => ({
+          data: roleTypeIds.map((role_id) => ({
             provider_profile_id: profileId,
-            role_type_id,
+            role_id,
           })),
         }),
       ]);
@@ -1002,7 +1002,7 @@ export async function applyProviderSection(
 
         const patch: Record<string, unknown> = {};
         if ("suite" in job) patch.software_suite = job.suite ?? null;
-        if ("roleTypeId" in job) patch.job_role_type_id = job.roleTypeId ?? null;
+        if ("roleTypeId" in job) patch.job_role_id = job.roleTypeId ?? null;
         if (Object.keys(patch).length > 0) {
           await prisma.employer.update({ where: { id: employerId }, data: patch });
         }
@@ -1069,7 +1069,7 @@ export async function applyProviderSection(
         // A PROVIDER TYPING A TERM IS NOW A SUGGESTION
         const created = await prisma.specialization.create({
           data: {
-            catalog_id: catalogId,
+            business_type_id: catalogId,
             name,
             // NO `kind` — see above. Whatever the column defaults to is not
             // NOT OFFERED TO ANYONE ELSE. `status: SUGGESTED` is excluded by
@@ -1132,23 +1132,23 @@ export async function applyProviderSection(
       // WS2 — an add-on-the-fly skill is filed under a DECLARED role.
       const declaredRoles = await prisma.providerProfileRole.findMany({
         where: { provider_profile_id: profileId },
-        select: { role_type_id: true },
+        select: { role_id: true },
       });
-      const claimed = new Set(declaredRoles.map((r) => r.role_type_id));
+      const claimed = new Set(declaredRoles.map((r) => r.role_id));
       const profileRow = await prisma.providerProfile.findUnique({
         where: { id: profileId },
-        select: { role_type_id: true, pillar_id: true },
+        select: { role_id: true, pillar_id: true },
       });
-      if (profileRow?.role_type_id) claimed.add(profileRow.role_type_id);
+      if (profileRow?.role_id) claimed.add(profileRow.role_id);
 
       const requestedRole =
         typeof data.customSkillRoleId === "string" && data.customSkillRoleId
           ? data.customSkillRoleId
-          : (data.roleTypeId as string | undefined) ?? profileRow?.role_type_id ?? null;
+          : (data.roleTypeId as string | undefined) ?? profileRow?.role_id ?? null;
       const customRoleId =
         requestedRole && claimed.has(requestedRole)
           ? requestedRole
-          : profileRow?.role_type_id ?? null;
+          : profileRow?.role_id ?? null;
       const customPillarId =
         (typeof data.pillarId === "string" && data.pillarId
           ? data.pillarId
@@ -1184,17 +1184,17 @@ export async function applyProviderSection(
           }
           const skill = await prisma.skill.upsert({
             where: {
-              catalog_id_role_type_id_pillar_id_name: {
-                catalog_id: catalogRow.id,
-                role_type_id: customRoleId,
+              business_type_id_role_id_pillar_id_name: {
+                business_type_id: catalogRow.id,
+                role_id: customRoleId,
                 pillar_id: customPillarId,
                 name,
               },
             },
             update: {},
             create: {
-              catalog_id: catalogRow.id,
-              role_type_id: customRoleId,
+              business_type_id: catalogRow.id,
+              role_id: customRoleId,
               pillar_id: customPillarId,
               name,
               is_custom: true,
@@ -1644,12 +1644,12 @@ export async function applyProviderSection(
 
       await prisma.$transaction([
         // SCOPED TO THIS PROFILE, NOT TO THE USER. The editor is replacing the
-        prisma.certification.deleteMany({
+        prisma.credential.deleteMany({
           where: { provider_profile_id: profileId, issued_from: "SELF_REPORTED" },
         }),
         ...(clean.length
           ? [
-              prisma.certification.createMany({
+              prisma.credential.createMany({
                 data: clean.map((c) => ({
                   user_id: certUserId,
                   provider_profile_id: profileId,
@@ -1668,12 +1668,12 @@ export async function applyProviderSection(
   if (section === "skills") {
     const stored = await prisma.providerProfile.findUnique({
       where: { id: profileId },
-      select: { role_type_id: true, pillar_id: true },
+      select: { role_id: true, pillar_id: true },
     });
-    if (stored?.role_type_id) {
+    if (stored?.role_id) {
       const derived = await deriveRolesFromSkills(profileId);
       if (
-        derived.roleTypeIds[0] === stored.role_type_id &&
+        derived.roleTypeIds[0] === stored.role_id &&
         derived.pillarId &&
         derived.pillarId !== stored.pillar_id
       ) {
@@ -1784,7 +1784,7 @@ export async function deriveRolesFromSkills(profileId: string): Promise<DerivedR
     where: { provider_profile_id: profileId },
     select: {
       skill: {
-        select: { role_type_id: true, pillar_id: true, status: true },
+        select: { role_id: true, pillar_id: true, status: true },
       },
     },
   });
@@ -1798,8 +1798,8 @@ export async function deriveRolesFromSkills(profileId: string): Promise<DerivedR
 
   const byRole = new Map<string, number>();
   for (const r of rows) {
-    if (!r.role_type_id) continue;
-    byRole.set(r.role_type_id, (byRole.get(r.role_type_id) ?? 0) + 1);
+    if (!r.role_id) continue;
+    byRole.set(r.role_id, (byRole.get(r.role_id) ?? 0) + 1);
   }
   /* TIES BREAK ON THE ROLE ID so the order cannot flicker between equals. */
   const roleTypeIds = [...byRole.entries()]
@@ -1812,7 +1812,7 @@ export async function deriveRolesFromSkills(profileId: string): Promise<DerivedR
   const primary = roleTypeIds[0];
   const byPillar = new Map<string, number>();
   for (const r of rows) {
-    if (r.role_type_id !== primary || !r.pillar_id) continue;
+    if (r.role_id !== primary || !r.pillar_id) continue;
     byPillar.set(r.pillar_id, (byPillar.get(r.pillar_id) ?? 0) + 1);
   }
   const pillarId =
@@ -1824,14 +1824,14 @@ export async function deriveRolesFromSkills(profileId: string): Promise<DerivedR
 
 /** THE SCORER'S `include`, AS ONE CONSTANT */
 export const COMPLETENESS_INCLUDE = {
-      skills: { include: { skill: { select: { role_type_id: true } } } },
+      skills: { include: { skill: { select: { role_id: true } } } },
       /* `E517` — the selection the filter reads. */
-      roles: { select: { role_type_id: true } },
+      roles: { select: { role_id: true } },
       specializations: true,
       employers: true,
       education: true,
       languages: true,
-      certifications: true,
+      credentials: true,
       // WS-A — Solo Projects is its own scored line now, and a
       projects: { select: { employer_id: true, start_date: true } },
       person: {
@@ -1864,16 +1864,16 @@ export function completenessInputFrom(
     overview: profile.overview,
     work_method: profile.work_method,
     pillar_id: profile.pillar_id,
-    role_type_id: profile.role_type_id,
+    role_id: profile.role_id,
     onsite_rate_cents: profile.onsite_rate_cents,
     remote_rate_cents: profile.remote_rate_cents,
     hourly_rate_cents: profile.hourly_rate_cents,
     // COMPLETENESS COUNTS SHOWN, NOT HELD
-    skills: shownSkills(selectedRoleIds(profile), profile.skills, (s) => s.skill.role_type_id),
+    skills: shownSkills(selectedRoleIds(profile), profile.skills, (s) => s.skill.role_id),
     languages: profile.languages,
     employers: profile.employers,
     education: profile.education,
-    certifications: profile.certifications,
+    certifications: profile.credentials,
     specializations: profile.specializations,
     photoUrl: profile.person.photo_url,
     // An address row exists only once a street line has been entered.
@@ -1969,7 +1969,7 @@ export async function publishProfile(viewer: Viewer) {
   // THE PUBLISH GATE IS THE REQUIRED SET (WS6) — and it is the same set the
   const missing = missingRequired({
     headline: p.title,
-    role_type_id: pp.role_type_id,
+    role_id: pp.role_id,
     skills: pp.skills,
     photoUrl: p.photo_url,
     hourly_rate_cents: pp.hourly_rate_cents,
@@ -2036,7 +2036,7 @@ async function recordGapFlags(profileId: string): Promise<void> {
             specializations: true,
             languages: true,
             employers: true,
-            certifications: true,
+            credentials: true,
           },
         },
       },
@@ -2048,10 +2048,10 @@ async function recordGapFlags(profileId: string): Promise<void> {
       no_specializations: pp._count.specializations === 0,
       no_languages: pp._count.languages === 0,
       no_work_history: pp._count.employers === 0,
-      no_certifications: pp._count.certifications === 0,
+      no_certifications: pp._count.credentials === 0,
       computed_at: new Date(),
     };
-    await prisma.profileGapFlags.upsert({
+    await prisma.profileGapFlag.upsert({
       where: { provider_profile_id: profileId },
       update: data,
       create: { provider_profile_id: profileId, ...data },

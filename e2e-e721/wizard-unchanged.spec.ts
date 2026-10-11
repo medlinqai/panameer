@@ -117,7 +117,7 @@ async function fingerprint(profileId: string, personId: string): Promise<Fingerp
     p.employer.count({ where: { provider_profile_id: profileId } }),
     p.project.count({ where: { provider_profile_id: profileId } }),
     p.education.count({ where: { provider_profile_id: profileId } }),
-    p.certification.count({ where: { provider_profile_id: profileId } }),
+    p.credential.count({ where: { provider_profile_id: profileId } }),
     p.providerSkill.count({ where: { provider_profile_id: profileId } }),
     p.language.count({ where: { provider_profile_id: profileId } }),
     p.providerProfileSpecialization.count({ where: { provider_profile_id: profileId } }),

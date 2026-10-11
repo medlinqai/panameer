@@ -1,4 +1,4 @@
-import type { BillingCycle, PaymentTerms, PaymentTrigger } from "@prisma/client";
+import type { BillingCycle, PaymentTerms, PaymentEvent } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError } from "@/lib/onboarding";
@@ -16,7 +16,7 @@ export type ProviderServiceInput = {
   rateCents?: number | null;
   billingCycle: BillingCycle;
   paymentTerms: PaymentTerms;
-  paymentTrigger: PaymentTrigger;
+  paymentTrigger: PaymentEvent;
 };
 
 export type ProviderServiceRow = ProviderServiceInput & { id: string; active: boolean; published: boolean; serviceTypeName: string | null };
@@ -31,7 +31,7 @@ export async function listProviderServices(viewer: Viewer): Promise<ProviderServ
   const pid = await profileId(viewer);
   const rows = await prisma.providerService.findMany({ where: { provider_profile_id: pid }, orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] });
   const types = new Map((await prisma.serviceType.findMany({ where: { id: { in: rows.map((r) => r.service_type_id).filter((x): x is string => !!x) } }, select: { id: true, name: true } })).map((t) => [t.id, t.name]));
-  return rows.map((r) => ({ id: r.id, name: r.name, serviceTypeId: r.service_type_id, serviceTypeName: r.service_type_id ? types.get(r.service_type_id) ?? null : null, description: r.description, minimumQuantity: r.minimum_quantity == null ? null : Number(r.minimum_quantity), expenses: (r.expenses as ProviderServiceInput["expenses"]) ?? null, published: !!r.published_at, serviceType: r.service_type === "SERVICE_BY_AMT" ? "SERVICE_BY_AMT" : "SERVICE_BY_QTY", uom: r.uom, rateCents: r.rate_cents, billingCycle: r.billing_cycle, paymentTerms: r.payment_terms, paymentTrigger: r.payment_trigger, active: r.active }));
+  return rows.map((r) => ({ id: r.id, name: r.name, serviceTypeId: r.service_type_id, serviceTypeName: r.service_type_id ? types.get(r.service_type_id) ?? null : null, description: r.description, minimumQuantity: r.minimum_quantity == null ? null : Number(r.minimum_quantity), expenses: (r.expenses as ProviderServiceInput["expenses"]) ?? null, published: !!r.published_at, serviceType: r.service_type === "SERVICE_BY_AMT" ? "SERVICE_BY_AMT" : "SERVICE_BY_QTY", uom: r.uom, rateCents: r.rate_cents, billingCycle: r.billing_cycle, paymentTerms: r.payment_terms, paymentTrigger: r.payment_event, active: r.active }));
 }
 
 function data(input: ProviderServiceInput) {
@@ -47,7 +47,7 @@ function data(input: ProviderServiceInput) {
     rate_cents: rate,
     billing_cycle: input.billingCycle,
     payment_terms: input.paymentTerms,
-    payment_trigger: input.paymentTrigger,
+    payment_event: input.paymentTrigger,
     ...(input.serviceTypeId !== undefined ? { service_type_id: input.serviceTypeId || null } : {}),
     ...(input.description !== undefined ? { description: input.description?.trim().slice(0, 4000) || null } : {}),
     ...(input.minimumQuantity !== undefined ? { minimum_quantity: input.minimumQuantity && input.minimumQuantity > 0 ? input.minimumQuantity : null } : {}),
@@ -92,6 +92,6 @@ export async function servicesFromRates(viewer: Viewer) {
   const existing = await prisma.providerService.findMany({ where: { provider_profile_id: prof.id, active: true }, select: { name: true } });
   for (const w of wanted) {
     if (existing.some((e) => e.name === w.name)) continue;
-    await prisma.providerService.create({ data: { provider_profile_id: prof.id, name: w.name, service_type: "SERVICE_BY_QTY", service_type_id: typeId(w.name), uom: "HOUR", rate_cents: w.rate, billing_cycle: "MONTHLY", payment_terms: "NET30", payment_trigger: "TIMESHEET", expenses: w.name === "Onsite Consulting" ? "AT_COST" : "NOT_APPLICABLE", published_at: gate.ok ? new Date() : null } });
+    await prisma.providerService.create({ data: { provider_profile_id: prof.id, name: w.name, service_type: "SERVICE_BY_QTY", service_type_id: typeId(w.name), uom: "HOUR", rate_cents: w.rate, billing_cycle: "MONTHLY", payment_terms: "NET30", payment_event: "TIMESHEET", expenses: w.name === "Onsite Consulting" ? "AT_COST" : "NOT_APPLICABLE", published_at: gate.ok ? new Date() : null } });
   }
 }

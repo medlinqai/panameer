@@ -172,9 +172,9 @@ export async function getWorkRequestDetail(
   for (const r of inviteRows)
     invited.set(r.work_request_line_id, (invited.get(r.work_request_line_id) ?? 0) + 1);
 
-  const role = wr.role_type_id
-    ? await prisma.roleType.findUnique({
-        where: { id: wr.role_type_id },
+  const role = wr.role_id
+    ? await prisma.role.findUnique({
+        where: { id: wr.role_id },
         select: { display: true, name: true },
       })
     : null;
@@ -249,7 +249,7 @@ export async function ensureFirstLine(workRequestId: string): Promise<void> {
       currency: true,
       budget_type: true,
       budget_amount_cents: true,
-      role_type_id: true,
+      role_id: true,
       start_date: true,
       end_date: true,
     },
@@ -273,7 +273,7 @@ export async function ensureFirstLine(workRequestId: string): Promise<void> {
         // A FIXED budget IS a line amount; an HOURLY one is not a unit price —
         amount_cents: pricedByQuantity(transactionType) ? null : wr.budget_amount_cents,
         uom: pricedByQuantity(transactionType) ? "HOUR" : null,
-        role_type_id: wr.role_type_id,
+        role_id: wr.role_id,
         service_start: wr.start_date,
         service_end: wr.end_date,
       },

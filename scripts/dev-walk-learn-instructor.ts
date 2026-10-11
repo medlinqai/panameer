@@ -13,9 +13,9 @@ async function main() {
     data: {
       title: `Devwalk path ${tag}`, slug: `devwalk-${tag}`, audience: "END_USER", status: "DRAFT",
       courses: { create: [{ title: "Course A", slug: `a-${tag}`, sections: { create: [{ title: "S1", lessons: { create: [
-        { title: "L1", vimeo_ref: "123", production_status: "URL_ADDED_TO_LESSON", expert_person_id: teacher.personId },
-        { title: "L2", vimeo_ref: "124", production_status: "URL_ADDED_TO_LESSON", expert_person_id: teacher.personId },
-        { title: "L3 (coming soon)", production_status: "IN_CONCEPT", expert_person_id: teacher.personId },
+        { title: "L1", vimeo_ref: "123", production_status: "URL_ADDED_TO_LESSON", instructor_person_id: teacher.personId },
+        { title: "L2", vimeo_ref: "124", production_status: "URL_ADDED_TO_LESSON", instructor_person_id: teacher.personId },
+        { title: "L3 (coming soon)", production_status: "IN_CONCEPT", instructor_person_id: teacher.personId },
       ] } }] } }] },
     },
     include: { courses: { include: { sections: { include: { lessons: true } } } } },
@@ -24,7 +24,7 @@ async function main() {
   try {
     check("instructor = whoever fronts the most lessons (no expert on the path)", (await pathInstructor(path.id)) === teacher.personId);
     check("before enrolling: no message permission", !(await canMessage(learner.viewer, teacher.viewer.userId)).ok);
-    await prisma.learnEnrollment.create({ data: { user_id: learner.viewer.userId, learning_path_id: path.id } });
+    await prisma.enrollment.create({ data: { user_id: learner.viewer.userId, learning_path_id: path.id } });
     await notifyInstructorEnrolled(learner.viewer.userId, path.id);
     await notifyInstructorEnrolled(learner.viewer.userId, path.id);
     const count = (k: string) => prisma.notification.count({ where: { event_key: k, entity_id: path.id } });
@@ -44,7 +44,7 @@ async function main() {
     check("every playable lesson done (Coming Soon ignored) → one learner + one instructor notice", (await count("learn.path_completed.instructor")) === 1 && (await count("learn.path_completed.learner")) === 1);
   } finally {
     await prisma.lessonProgress.deleteMany({ where: { lesson_id: { in: lessons.map((l) => l.id) } } });
-    await prisma.learnEnrollment.deleteMany({ where: { learning_path_id: path.id } });
+    await prisma.enrollment.deleteMany({ where: { learning_path_id: path.id } });
     await prisma.notification.deleteMany({ where: { entity_id: path.id } });
     await prisma.learningPath.delete({ where: { id: path.id } });
   }

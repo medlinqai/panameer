@@ -53,7 +53,7 @@ export async function getMyTeams(viewer: Viewer): Promise<MyTeams> {
       paused_at: true,
       completeness: true,
       validation_status: true,
-      role_type_id: true,
+      role_id: true,
       hourly_rate_cents: true,
       rate_min_cents: true,
       rate_max_cents: true,
@@ -122,10 +122,10 @@ export async function rosterCoverage(coordinatorPersonId: string): Promise<strin
   const members = await prisma.providerProfile.findMany({
     where: { coordinator_person_id: coordinatorPersonId },
     select: {
-      role_type_id: true,
-      roles: { select: { role_type_id: true } },
+      role_id: true,
+      roles: { select: { role_id: true } },
       skills: {
-        select: { skill: { select: { name: true, role_type_id: true } } },
+        select: { skill: { select: { name: true, role_id: true } } },
       },
     },
   });
@@ -133,7 +133,7 @@ export async function rosterCoverage(coordinatorPersonId: string): Promise<strin
   const names = new Set<string>();
   for (const m of members) {
     // ONE RULE, THE SAME ONE THE PROFILE AND THE MATCHER READ. Not a second
-    for (const s of shownSkills(selectedRoleIds(m), m.skills, (x) => x.skill.role_type_id)) {
+    for (const s of shownSkills(selectedRoleIds(m), m.skills, (x) => x.skill.role_id)) {
       names.add(s.skill.name);
     }
   }

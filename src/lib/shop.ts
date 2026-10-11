@@ -34,8 +34,8 @@ export type ShopProduct = {
 
 const SELECT = {
   id: true, title: true, summary: true, pricing_type: true, billing_period: true, kind: true, price_cents: true, currency: true, duration_weeks: true, cover_code: true,
-  payment_terms: true, payment_trigger: true, product_type_id: true, created_at: true,
-  milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, trigger: true } },
+  payment_terms: true, payment_event: true, product_type_id: true, created_at: true,
+  milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, payment_event: true } },
   deliverables: { orderBy: { sequence: "asc" as const }, select: { text: true } },
   providerProfile: { select: { id: true, person_id: true, person: { select: { first_name: true, last_name: true, photo_url: true, company: { select: { country: true } } } } } },
 };

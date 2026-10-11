@@ -47,7 +47,7 @@ export async function POST(request: Request) {
               learning_path_id: true,
               learningPath: { select: { slug: true } },
               sections: {
-                select: { lessons: { where: { retired_at: null }, select: { id: true, expert_person_id: true, vimeo_ref: true, production_status: true } } },
+                select: { lessons: { where: { retired_at: null }, select: { id: true, instructor_person_id: true, vimeo_ref: true, production_status: true } } },
               },
             },
           },
@@ -79,14 +79,14 @@ export async function POST(request: Request) {
     return NextResponse.json(body, { status });
   }
 
-  const wasEnrolled = await prisma.learnEnrollment.findUnique({ where: { user_id_learning_path_id: { user_id: viewer.userId, learning_path_id: pathId } }, select: { id: true } });
+  const wasEnrolled = await prisma.enrollment.findUnique({ where: { user_id_learning_path_id: { user_id: viewer.userId, learning_path_id: pathId } }, select: { id: true } });
   await prisma.$transaction([
     prisma.lessonProgress.upsert({
       where: { user_id_lesson_id: { user_id: viewer.userId, lesson_id: lessonId } },
       create: { user_id: viewer.userId, lesson_id: lessonId },
       update: {},
     }),
-    prisma.learnEnrollment.upsert({
+    prisma.enrollment.upsert({
       where: {
         user_id_learning_path_id: { user_id: viewer.userId, learning_path_id: pathId },
       },
@@ -122,8 +122,8 @@ export async function POST(request: Request) {
       const tally = new Map<string, number>();
       for (const s of course.sections) {
         for (const l of s.lessons) {
-          if (l.expert_person_id) {
-            tally.set(l.expert_person_id, (tally.get(l.expert_person_id) ?? 0) + 1);
+          if (l.instructor_person_id) {
+            tally.set(l.instructor_person_id, (tally.get(l.instructor_person_id) ?? 0) + 1);
           }
         }
       }

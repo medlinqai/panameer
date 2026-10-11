@@ -142,11 +142,11 @@ check(
 /* The two rules exist, in one place, and both writers go through it. */
 check(
   "GUARD 2 — the gate refuses a caller who is not the thread's author",
-  /post\.thread\.author_id\s*!==\s*person\.id[\s\S]{0,200}throw new ForumError/.test(forums)
+  /post\.thread\.author_person_id\s*!==\s*person\.id[\s\S]{0,200}throw new ForumError/.test(forums)
 );
 check(
   "GUARD 2 — the gate refuses marking your OWN reply",
-  /post\.author_id\s*===\s*person\.id[\s\S]{0,160}throw new ForumError/.test(forums)
+  /post\.author_person_id\s*===\s*person\.id[\s\S]{0,160}throw new ForumError/.test(forums)
 );
 
 const CONFIRM_WRITE = /instructor_confirmed_(at|by)\s*:(?!\s*(?:true|false)\b)/;
@@ -172,7 +172,7 @@ check(
 check(
   "GUARD 3 — authority is `teachesPathWhere`, the one definition",
   /teachesPathWhere\(person\.id\)[\s\S]{0,400}if \(!teaches\)/.test(forums),
-  "expert_person_id alone silences a lesson-level expert in their own path"
+  "instructor_person_id alone silences a lesson-level expert in their own path"
 );
 check(
   "GUARD 3 — the gate refuses a caller who does not teach the path",
@@ -180,7 +180,7 @@ check(
 );
 check(
   "GUARD 3 — the gate refuses confirming your OWN reply",
-  /loadForConfirming[\s\S]{0,2000}post\.author_id\s*===\s*person\.id[\s\S]{0,160}throw new ForumError/.test(forums)
+  /loadForConfirming[\s\S]{0,2000}post\.author_person_id\s*===\s*person\.id[\s\S]{0,160}throw new ForumError/.test(forums)
 );
 check(
   "GUARD 3 — a board with no path cannot be confirmed in",

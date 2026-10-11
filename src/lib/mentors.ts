@@ -55,8 +55,8 @@ export async function listMentors(
               { person: { first_name: like } },
               { person: { last_name: like } },
               { person: { title: like } },
-              { roleType: { name: like } },
-              { roleType: { display: like } },
+              { role: { name: like } },
+              { role: { display: like } },
               { skills: { some: { skill: { name: like } } } },
             ],
           }

@@ -10,13 +10,13 @@ export type Instructor = {
 };
 
 /** A lesson reduced to the only field the derivation needs. */
-export type LessonExpertRef = { expert_person_id: string | null };
+export type LessonExpertRef = { instructor_person_id: string | null };
 
 export function tallyExperts(lessons: LessonExpertRef[]): { id: string; lessons: number }[] {
   const counts = new Map<string, number>();
   for (const l of lessons) {
-    if (!l.expert_person_id) continue;
-    counts.set(l.expert_person_id, (counts.get(l.expert_person_id) ?? 0) + 1);
+    if (!l.instructor_person_id) continue;
+    counts.set(l.instructor_person_id, (counts.get(l.instructor_person_id) ?? 0) + 1);
   }
   return [...counts.entries()]
     .map(([id, n]) => ({ id, lessons: n }))

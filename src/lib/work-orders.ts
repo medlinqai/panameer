@@ -234,7 +234,7 @@ export async function snapshotTerms(
   providerPersonId: string
 ): Promise<Map<string, LineTerms & { provider_service_id: string | null }>> {
   const productIds = lines.map((l) => l.service_product_id).filter((x): x is string => !!x);
-  const products = new Map((await prisma.serviceProduct.findMany({ where: { id: { in: productIds } }, select: { id: true, payment_terms: true, payment_trigger: true } })).map((p) => [p.id, p]));
+  const products = new Map((await prisma.serviceProduct.findMany({ where: { id: { in: productIds } }, select: { id: true, payment_terms: true, payment_event: true } })).map((p) => [p.id, p]));
   const profile = await prisma.providerProfile.findUnique({ where: { person_id: providerPersonId }, select: { id: true } });
   const named = lines.map((l) => l.provider_service_id).filter((x): x is string => !!x);
   const services = await prisma.providerService.findMany({
@@ -246,11 +246,11 @@ export async function snapshotTerms(
     if (l.service_product_id) {
       const p = products.get(l.service_product_id);
       const d = defaultTerms(l.transaction_type, true);
-      out.set(l.id, { provider_service_id: null, billing_cycle: null, payment_terms: p?.payment_terms ?? d.payment_terms, payment_trigger: p?.payment_trigger ?? d.payment_trigger });
+      out.set(l.id, { provider_service_id: null, billing_cycle: null, payment_terms: p?.payment_terms ?? d.payment_terms, payment_event: p?.payment_event ?? d.payment_event });
       continue;
     }
     const svc = services.find((s) => s.id === l.provider_service_id) ?? services.find((s) => s.service_type === l.transaction_type);
-    out.set(l.id, svc ? { provider_service_id: svc.id, billing_cycle: svc.billing_cycle, payment_terms: svc.payment_terms, payment_trigger: svc.payment_trigger } : { provider_service_id: null, ...defaultTerms(l.transaction_type, false) });
+    out.set(l.id, svc ? { provider_service_id: svc.id, billing_cycle: svc.billing_cycle, payment_terms: svc.payment_terms, payment_event: svc.payment_event } : { provider_service_id: null, ...defaultTerms(l.transaction_type, false) });
   }
   return out;
 }

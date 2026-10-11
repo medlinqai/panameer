@@ -99,7 +99,7 @@ export async function listEmployers(viewer: Viewer) {
       projects: {
         orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
         include: {
-          roleType: { select: { id: true, name: true } },
+          role: { select: { id: true, name: true } },
           industry: { select: { id: true, name: true } },
           applications: {
             include: { application: { select: { id: true, name: true } } },
@@ -294,7 +294,7 @@ function projectData(input: ProjectInput) {
     start_date: start,
     end_date: end,
     is_current: isCurrent,
-    role_type_id: roleTypeId,
+    role_id: roleTypeId,
     industry_specialization_id: clean(input.industrySpecializationId, 64),
     client_name: clientName,
     // Stored NORMALIZED (scheme/path/www stripped, lowercased) so the guard
@@ -631,7 +631,7 @@ export async function convertProjectToEmployer(
       logo_url: true,
       contact_email: true,
       software_suite: true,
-      role_type_id: true,
+      role_id: true,
       client_name: true,
       validation_status: true,
       _count: { select: { validations: true } },

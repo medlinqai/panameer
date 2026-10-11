@@ -69,14 +69,14 @@ export async function createFixture(opts: { feeBps?: number } = {}): Promise<R1F
 export async function dropFixture(f: R1Fixture | null): Promise<void> {
   if (!f) return;
   const prisma = db();
-  const settlements = await prisma.settlementRequest.findMany({ where: { work_order_id: f.orderId }, select: { id: true, lines: { select: { id: true } } } });
+  const settlements = await prisma.paymentRequest.findMany({ where: { work_order_id: f.orderId }, select: { id: true, lines: { select: { id: true } } } });
   const sIds = settlements.map((s) => s.id);
   const sLineIds = settlements.flatMap((s) => s.lines.map((l) => l.id));
-  const payLines = await prisma.paymentLine.findMany({ where: { settlement_request_id: { in: sIds } }, select: { payment_id: true } });
-  const payoutLines = await prisma.providerPayoutLine.findMany({ where: { settlement_line_id: { in: sLineIds } }, select: { provider_payout_id: true } });
+  const payLines = await prisma.paymentLine.findMany({ where: { payment_request_id: { in: sIds } }, select: { payment_id: true } });
+  const payoutLines = await prisma.providerPayoutLine.findMany({ where: { payment_request_line_id: { in: sLineIds } }, select: { provider_payout_id: true } });
   await prisma.providerPayout.deleteMany({ where: { id: { in: payoutLines.map((p) => p.provider_payout_id) } } });
   await prisma.payment.deleteMany({ where: { id: { in: payLines.map((p) => p.payment_id) } } });
-  await prisma.settlementRequest.deleteMany({ where: { id: { in: sIds } } });
+  await prisma.paymentRequest.deleteMany({ where: { id: { in: sIds } } });
   const extraOrders = await prisma.workOrder.findMany({ where: { buyer_person_id: f.buyer.personId }, select: { id: true } });
   const allOrders = [f.orderId, ...extraOrders.map((o) => o.id)];
   await prisma.plan.deleteMany({ where: { owner_key: { in: allOrders.map((id) => `wo:${id}`) } } });
@@ -108,9 +108,9 @@ export async function signIn(page: Page, email: string, password = PASSWORD) {
 /** A submitted payment request against the fixture order: 5 hours on the rate line. */
 export async function createSettlement(f: R1Fixture, status: "SUBMITTED" | "APPROVED" = "SUBMITTED"): Promise<string> {
   const prisma = db();
-  const s = await prisma.settlementRequest.create({
+  const s = await prisma.paymentRequest.create({
     data: {
-      settlement_number: `PR-${f.tag}-${Math.random().toString(36).slice(2, 7)}`,
+      payment_request_number: `PR-${f.tag}-${Math.random().toString(36).slice(2, 7)}`,
       work_order_id: f.orderId, provider_person_id: f.provider.personId,
       period_start: new Date("2026-10-01"), period_end: new Date("2026-10-07"),
       status, submitted_at: new Date(), ...(status === "APPROVED" ? { decided_at: new Date(), decided_by_person_id: f.buyer.personId } : {}),

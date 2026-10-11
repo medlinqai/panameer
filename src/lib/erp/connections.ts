@@ -81,7 +81,7 @@ export async function logMessage(m: {
   return prisma.erpMessage.create({
     data: {
       connection_id: m.connectionId, direction: m.direction, type: m.type, payload_id: m.payloadId, status: m.status, body: m.body, response: m.response ?? null,
-      work_request_id: m.workRequestId ?? null, work_order_id: m.workOrderId ?? null, settlement_request_id: m.settlementRequestId ?? null,
+      work_request_id: m.workRequestId ?? null, work_order_id: m.workOrderId ?? null, payment_request_id: m.settlementRequestId ?? null,
     },
     select: { id: true },
   });

@@ -13,7 +13,7 @@ import { check, cleanup, done, made, party, refuses } from "./lib/dev-fixture";
 
 const products: string[] = [];
 async function product(profileId: string, title: string, priceCents: number, milestones: { label: string; percent: number; trigger: "ORDER_ACCEPTED" | "ACCEPTANCE" }[]) {
-  const p = await prisma.serviceProduct.create({ data: { provider_profile_id: profileId, title, price_cents: priceCents, status: "PUBLISHED", payment_terms: "NET30", payment_trigger: "ACCEPTANCE", milestones: { create: milestones.map((m, i) => ({ ...m, sequence: i + 1 })) } } });
+  const p = await prisma.serviceProduct.create({ data: { provider_profile_id: profileId, title, price_cents: priceCents, status: "PUBLISHED", payment_terms: "NET30", payment_event: "ACCEPTANCE", milestones: { create: milestones.map((m, i) => ({ label: m.label, percent: m.percent, payment_event: m.trigger, sequence: i + 1 })) } } });
   products.push(p.id);
   return p.id;
 }
@@ -64,9 +64,9 @@ async function main() {
   check("provider accepts → Open, their item cleared", (await prisma.workOrder.findUnique({ where: { id: oM.id } }))!.status === "RELEASED" && !!(await prisma.notification.findFirst({ where: { person_id: man.personId, event_key: "shop.order_received" } }))?.resolved_at);
 
   const ms = await prisma.workOrderMilestone.findMany({ where: { work_order_line_id: oA.lines[0].id }, orderBy: { sequence: "asc" } });
-  check("milestones snapshotted from the product", ms.length === 2 && ms[0].percent === 50 && ms[0].trigger === "ORDER_ACCEPTED");
+  check("milestones snapshotted from the product", ms.length === 2 && ms[0].percent === 50 && ms[0].payment_event === "ORDER_ACCEPTED");
   const s = await reportMilestone(auto.viewer, ms[0].id);
-  const sr = await prisma.settlementRequest.findUnique({ where: { id: s.id }, include: { lines: true } });
+  const sr = await prisma.paymentRequest.findUnique({ where: { id: s.id }, include: { lines: true } });
   check("milestone reported → payment request for its share", !!sr && sr.lines.reduce((n, l) => n + (l.amount_cents ?? 0), 0) === 250000);
 
   // Punchout: the same products return to the ERP with product, qty, price, UOM.

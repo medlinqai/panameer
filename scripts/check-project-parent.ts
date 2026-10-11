@@ -258,7 +258,7 @@ const STORAGE = read("src", "lib", "storage.ts");
     name: "Panameer", role_title: "Founder", location: null, city: null, state: null,
     country: null, start_date: null, end_date: null, is_current: false,
     description: null, logo_url: null, contact_email: null,
-    software_suite: null, job_role_type_id: null,
+    software_suite: null, job_role_id: null,
   };
   /* ⚠⚠ THE DEFECT SCOTT SAW: the row was named after the COMPANY, and its
      `client_name` was the same company — it stated the company twice and the
@@ -302,14 +302,14 @@ const STORAGE = read("src", "lib", "storage.ts");
     city: null, state: null, country: null,
     start_date: new Date("2021-03-01T00:00:00.000Z"), end_date: null,
     is_current: true, description: "Ran it.", logo_url: null,
-    contact_email: null, software_suite: null, job_role_type_id: "role-1",
+    contact_email: null, software_suite: null, job_role_id: "role-1",
   };
   const back = projectToEmployerData(employerToProjectData(FULL, "Northwind"), "Acme Energy");
   check("8 — the employer name comes back", back.name === "Acme Energy");
   check("8 — ⚠ the role title survives, which is what Undo restores", back.role_title === "Lead Consultant");
   check("8 — the description survives", back.description === "Ran it.");
   check("8 — the dates survive", back.start_date?.getTime() === FULL.start_date?.getTime());
-  check("8 — the role type survives under its other name", back.job_role_type_id === "role-1");
+  check("8 — the role type survives under its other name", back.job_role_id === "role-1");
   check("8 — ⚠ `projectToEmployerData` takes the name as an argument", /function projectToEmployerData\(p: ProjectScalars, name: string\)/.test(RECLASS));
   check("8 — client_name is still taken from the caller", employerToProjectData(FULL, "Northwind").client_name === "Northwind");
 }

@@ -264,7 +264,7 @@ If there are five, return five. Copy each name verbatim.
 If the document says nothing about a field, use null — never invent one.`;
   const schema = sub(
     {
-      certifications: {
+      credentials: {
         type: "array",
         description: "Every certification in the document. Not a sample.",
         items: sub(

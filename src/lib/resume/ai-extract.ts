@@ -116,7 +116,7 @@ const TOOL_SCHEMA = {
         properties: {
           name: { type: "string" },
           client: { type: ["string", "null"] },
-          roleType: { type: ["string", "null"] },
+          role: { type: ["string", "null"] },
           software: { type: "array", items: { type: "string" } },
           skills: { type: "array", items: { type: "string" } },
           description: { type: ["string", "null"] },
@@ -143,7 +143,7 @@ const TOOL_SCHEMA = {
     },
     skills: { type: "array", items: { type: "string" } },
     languages: { type: "array", items: { type: "string" } },
-    certifications: {
+    credentials: {
       type: "array",
       items: {
         type: "object",

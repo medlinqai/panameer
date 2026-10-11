@@ -23,7 +23,7 @@ const check = (label: string, ok: boolean, detail?: unknown) => {
 function requiredOnly(over: Partial<CompletenessInput> = {}): CompletenessInput {
   return {
     headline: "Oracle Cloud P2P Consultant", // 1 Title
-    role_type_id: "role-1", //                  2 Role(s)
+    role_id: "role-1", //                  2 Role(s)
     pillar_id: "domain-1", //                   the (role, domain) catalog key
     skills: ["skill-1"], //                     3 Skills   (>= 1)
     hourly_rate_cents: 12500, //                4 Rate
@@ -143,7 +143,7 @@ for (const [label, over] of [
 console.log("=== the required set really is required ===");
 for (const [label, over] of [
   ["no title", { headline: null }],
-  ["no role", { role_type_id: null }],
+  ["no role", { role_id: null }],
   ["no skills", { skills: [] }],
   ["no rate", { hourly_rate_cents: null }],
   ["no photo", { photoUrl: null }],

@@ -53,7 +53,7 @@ export async function fiveThings(viewer: Viewer) {
   }
 
   // Learn lets anyone take a path's test without finishing the course.
-  const earned = new Set((await prisma.certification.findMany({ where: { user_id: viewer.userId, learning_path_id: { not: null } }, select: { learning_path_id: true } })).map((c) => c.learning_path_id));
+  const earned = new Set((await prisma.credential.findMany({ where: { user_id: viewer.userId, learning_path_id: { not: null } }, select: { learning_path_id: true } })).map((c) => c.learning_path_id));
   const tests = await prisma.certificationTest.findMany({ where: { status: "PUBLISHED", learningPath: { status: "PUBLISHED" } }, select: { learningPath: { select: { id: true, slug: true, title: true, pillar: true } } }, take: 50 });
   const field = pp?.pillar?.name ?? null;
   const test = tests.map((t) => t.learningPath).filter((p) => !earned.has(p.id)).sort((a, b) => Number(b.pillar === field) - Number(a.pillar === field))[0];
@@ -88,7 +88,7 @@ export async function fiveThings(viewer: Viewer) {
   const [messages, requests, credentials] = await Promise.all([
     unreadCount(viewer),
     getPendingRequests(viewer).then((r) => r.length).catch(() => 0),
-    prisma.certification.count({ where: { user_id: viewer.userId } }),
+    prisma.credential.count({ where: { user_id: viewer.userId } }),
   ]);
   const hidden = !!pp && (!!pp.paused_at || pp.completeness < 80);
   const waiting = [

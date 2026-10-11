@@ -40,7 +40,7 @@ export function ProviderServices({ initial }: { initial: ProviderServiceRow[] })
             <div className="min-w-0">
               <p className="truncate text-[15px] font-bold">{s.name} {!s.published && <span className="ml-1 border border-line px-1.5 text-[11px] font-semibold text-ink-3">Draft</span>}</p>
               <p className="text-[13px] text-ink-2">
-                {s.serviceType === "SERVICE_BY_QTY" ? `$${((s.rateCents ?? 0) / 100).toFixed(2)} / ${(s.uom ?? "HOUR").toLowerCase()}` : `Up to $${((s.rateCents ?? 0) / 100).toFixed(2)} · drawn down`} · {termsLine({ billing_cycle: s.billingCycle, payment_terms: s.paymentTerms, payment_trigger: s.paymentTrigger })}
+                {s.serviceType === "SERVICE_BY_QTY" ? `$${((s.rateCents ?? 0) / 100).toFixed(2)} / ${(s.uom ?? "HOUR").toLowerCase()}` : `Up to $${((s.rateCents ?? 0) / 100).toFixed(2)} · drawn down`} · {termsLine({ billing_cycle: s.billingCycle, payment_terms: s.paymentTerms, payment_event: s.paymentTrigger })}
               </p>
             </div>
             <span className="flex gap-3 text-[13px] font-semibold">

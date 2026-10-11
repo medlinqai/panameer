@@ -105,7 +105,7 @@ async function main() {
   } finally {
     await prisma.providerSkill.deleteMany({ where: { provider_profile_id: profile.id } });
     await prisma.providerProfileSpecialization.deleteMany({ where: { provider_profile_id: profile.id } });
-    await prisma.certification.deleteMany({ where: { provider_profile_id: profile.id } });
+    await prisma.credential.deleteMany({ where: { provider_profile_id: profile.id } });
     await prisma.providerProfile.delete({ where: { id: profile.id } });
     await prisma.person.delete({ where: { id: person.id } });
   }

@@ -13,11 +13,11 @@ export type CommunitySignal = {
 export async function getCommunitySignal(personId: string): Promise<CommunitySignal | null> {
   const [threads, posts] = await Promise.all([
     prisma.forumThread.findMany({
-      where: { author_id: personId },
+      where: { author_person_id: personId },
       select: { last_post_at: true, created_at: true, board: { select: { title: true } } },
     }),
     prisma.forumPost.findMany({
-      where: { author_id: personId },
+      where: { author_person_id: personId },
       select: {
         created_at: true,
         marked_helpful_at: true,

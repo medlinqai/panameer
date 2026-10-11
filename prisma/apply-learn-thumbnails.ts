@@ -180,9 +180,9 @@ async function main() {
     "sections",
     plan.sections,
     (id, url) =>
-      prisma.section.update({ where: { id }, data: { thumbnail_url: url } }),
+      prisma.courseSection.update({ where: { id }, data: { thumbnail_url: url } }),
     async (id) =>
-      (await prisma.section.findUnique({ where: { id }, select: { thumbnail_url: true } }))
+      (await prisma.courseSection.findUnique({ where: { id }, select: { thumbnail_url: true } }))
         ?.thumbnail_url ?? null,
     apply,
     force

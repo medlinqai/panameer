@@ -17,12 +17,12 @@ export async function POST(request: Request) {
   // Owner-scoped: the profile comes from the SESSION, never from the request.
   const profile = await prisma.providerProfile.findFirst({
     where: ownedProviderProfile(viewer),
-    select: { id: true, role_type_id: true, pillar_id: true },
+    select: { id: true, role_id: true, pillar_id: true },
   });
   if (!profile) {
     return NextResponse.json({ error: "No provider profile" }, { status: 403 });
   }
-  if (!profile.role_type_id || !profile.pillar_id) {
+  if (!profile.role_id || !profile.pillar_id) {
     return NextResponse.json(
       { error: "Choose your role and domain before adding skills." },
       { status: 400 }
@@ -51,17 +51,17 @@ export async function POST(request: Request) {
     const name = titleCaseSkill(term.slice(0, 120));
     const skill = await prisma.skill.upsert({
       where: {
-        catalog_id_role_type_id_pillar_id_name: {
-          catalog_id: catalogRow.id,
-          role_type_id: profile.role_type_id,
+        business_type_id_role_id_pillar_id_name: {
+          business_type_id: catalogRow.id,
+          role_id: profile.role_id,
           pillar_id: profile.pillar_id,
           name,
         },
       },
       update: {},
       create: {
-        catalog_id: catalogRow.id,
-        role_type_id: profile.role_type_id,
+        business_type_id: catalogRow.id,
+        role_id: profile.role_id,
         pillar_id: profile.pillar_id,
         name,
         is_custom: true,

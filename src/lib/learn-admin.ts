@@ -78,7 +78,7 @@ export async function getLearnStats(): Promise<LearnLibraryStats> {
       prisma.learningPath.count(),
       prisma.learningPath.count({ where: { status: "PUBLISHED" } }),
       prisma.course.count(),
-      prisma.section.count(),
+      prisma.courseSection.count(),
       prisma.lesson.count(),
       prisma.lesson.count({
         where: {
@@ -134,8 +134,8 @@ export async function listPaths(): Promise<AdminPathRow[]> {
       status: true,
       cover_image: true,
       is_custom: true,
-      expert_person_id: true,
-      expert: { select: { first_name: true, last_name: true } },
+      instructor_person_id: true,
+      instructor: { select: { first_name: true, last_name: true } },
       courses: {
         select: {
           id: true,
@@ -160,9 +160,9 @@ export async function listPaths(): Promise<AdminPathRow[]> {
       group: p.group,
       status: p.status,
       coverImage: p.cover_image,
-      expertPersonId: p.expert_person_id,
-      expert: p.expert
-        ? `${p.expert.first_name ?? ""} ${p.expert.last_name ?? ""}`.trim() || null
+      expertPersonId: p.instructor_person_id,
+      expert: p.instructor
+        ? `${p.instructor.first_name ?? ""} ${p.instructor.last_name ?? ""}`.trim() || null
         : null,
       isCustom: p.is_custom,
       counts: {
@@ -250,7 +250,7 @@ export async function createPath(input: PathInput) {
         summary: input.summary?.trim() || null,
         audience: input.audience as never,
         group: input.group?.trim() || null,
-        expert_person_id: input.expertPersonId || null,
+        instructor_person_id: input.expertPersonId || null,
         cover_image: input.coverImage?.trim() || null,
         intro_video_ref: input.introVideoRef?.trim() || null,
         outcome: input.outcome?.trim() || null,
@@ -289,7 +289,7 @@ export async function updatePath(id: string, input: PathInput) {
       summary: input.summary?.trim() || null,
       audience: input.audience as never,
       group: input.group?.trim() || null,
-      expert_person_id: input.expertPersonId || null,
+      instructor_person_id: input.expertPersonId || null,
       cover_image: input.coverImage?.trim() || null,
       intro_video_ref: input.introVideoRef?.trim() || null,
       ...(input.outcome !== undefined ? { outcome: input.outcome?.trim() || null } : {}),
@@ -359,8 +359,8 @@ export async function getPathTree(id: string) {
       intro_video_ref: true,
       outcome: true,
       level: true,
-      expert_person_id: true,
-      expert: { select: { first_name: true, last_name: true } },
+      instructor_person_id: true,
+      instructor: { select: { first_name: true, last_name: true } },
       courses: {
         orderBy: [{ sort_order: "asc" }, { title: "asc" }],
         select: {
@@ -392,8 +392,8 @@ export async function getPathTree(id: string) {
                   production_status: true,
                   retired_at: true,
                   sort_order: true,
-                  expert_person_id: true,
-                  expert: { select: { first_name: true, last_name: true } },
+                  instructor_person_id: true,
+                  instructor: { select: { first_name: true, last_name: true } },
                 },
               },
             },
@@ -419,8 +419,8 @@ export async function getPathTree(id: string) {
     introVideoRef: path.intro_video_ref,
     outcome: path.outcome,
     level: path.level,
-    expertPersonId: path.expert_person_id,
-    expert: name(path.expert),
+    expertPersonId: path.instructor_person_id,
+    expert: name(path.instructor),
     courses: path.courses.map((c) => ({
       id: c.id,
       title: c.title,
@@ -446,8 +446,8 @@ export async function getPathTree(id: string) {
           productionStatus: l.production_status,
           retired: !!l.retired_at,
           sortOrder: l.sort_order,
-          expertPersonId: l.expert_person_id,
-          expert: name(l.expert),
+          expertPersonId: l.instructor_person_id,
+          expert: name(l.instructor),
         })),
       })),
     })),
@@ -469,7 +469,7 @@ async function nextOrder(
           select: { sort_order: true },
         })
       : kind === "section"
-        ? await prisma.section.findFirst({
+        ? await prisma.courseSection.findFirst({
             where: { course_id: parentId },
             orderBy: { sort_order: "desc" },
             select: { sort_order: true },
@@ -558,7 +558,7 @@ export async function createSection(courseId: string, input: SectionInput) {
   });
   if (!course) throw new LearnAdminError("That course no longer exists.", "NOT_FOUND");
 
-  const clash = await prisma.section.findFirst({
+  const clash = await prisma.courseSection.findFirst({
     where: { course_id: courseId, title: input.title.trim() },
     select: { id: true },
   });
@@ -569,7 +569,7 @@ export async function createSection(courseId: string, input: SectionInput) {
     );
   }
 
-  return prisma.section.create({
+  return prisma.courseSection.create({
     data: {
       course_id: courseId,
       title: input.title.trim(),
@@ -583,13 +583,13 @@ export async function createSection(courseId: string, input: SectionInput) {
 }
 
 export async function updateSection(id: string, input: SectionInput) {
-  const existing = await prisma.section.findUnique({
+  const existing = await prisma.courseSection.findUnique({
     where: { id },
     select: { id: true, course_id: true },
   });
   if (!existing) throw new LearnAdminError("That section no longer exists.", "NOT_FOUND");
 
-  const clash = await prisma.section.findFirst({
+  const clash = await prisma.courseSection.findFirst({
     where: { course_id: existing.course_id, title: input.title.trim(), NOT: { id } },
     select: { id: true },
   });
@@ -600,7 +600,7 @@ export async function updateSection(id: string, input: SectionInput) {
     );
   }
 
-  return prisma.section.update({
+  return prisma.courseSection.update({
     where: { id },
     data: {
       title: input.title.trim(),
@@ -630,7 +630,7 @@ export async function deleteCourse(id: string) {
 }
 
 export async function deleteSection(id: string) {
-  const section = await prisma.section.findUnique({
+  const section = await prisma.courseSection.findUnique({
     where: { id },
     select: { id: true, _count: { select: { lessons: true } } },
   });
@@ -641,7 +641,7 @@ export async function deleteSection(id: string) {
       "BLOCKED"
     );
   }
-  await prisma.section.delete({ where: { id } });
+  await prisma.courseSection.delete({ where: { id } });
   return { ok: true as const };
 }
 
@@ -678,7 +678,7 @@ export async function reorder(
   [order[i], order[j]] = [order[j], order[i]];
 
   const table =
-    kind === "course" ? prisma.course : kind === "section" ? prisma.section : prisma.lesson;
+    kind === "course" ? prisma.course : kind === "section" ? prisma.courseSection : prisma.lesson;
   await prisma.$transaction(
     order.map((row, index) =>
       // @ts-expect-error — the three delegates share this shape but not a type
@@ -705,12 +705,12 @@ async function siblingsOf(
     });
   }
   if (kind === "section") {
-    const row = await prisma.section.findUnique({
+    const row = await prisma.courseSection.findUnique({
       where: { id },
       select: { course_id: true },
     });
     if (!row) return [];
-    return prisma.section.findMany({
+    return prisma.courseSection.findMany({
       where: { course_id: row.course_id },
       orderBy: [{ sort_order: "asc" }, { title: "asc" }],
       select: { id: true },
@@ -796,7 +796,7 @@ export async function updateLesson(id: string, input: LessonInput) {
       ...(input.productionStatus
         ? { production_status: input.productionStatus as never }
         : {}),
-      expert_person_id: input.expertPersonId || null,
+      instructor_person_id: input.expertPersonId || null,
       is_custom: true,
     },
     select: { id: true },
@@ -806,7 +806,7 @@ export async function updateLesson(id: string, input: LessonInput) {
 }
 
 export async function createLesson(sectionId: string, input: LessonInput) {
-  const section = await prisma.section.findUnique({
+  const section = await prisma.courseSection.findUnique({
     where: { id: sectionId },
     select: { id: true },
   });
@@ -843,7 +843,7 @@ export async function createLesson(sectionId: string, input: LessonInput) {
       vimeo_ref: vimeo,
       thumbnail_url: input.thumbnailUrl?.trim() || null,
       production_status: (input.productionStatus ?? "IN_CONCEPT") as never,
-      expert_person_id: input.expertPersonId || null,
+      instructor_person_id: input.expertPersonId || null,
       sort_order: await nextOrder("lesson", sectionId),
       is_custom: true,
     },

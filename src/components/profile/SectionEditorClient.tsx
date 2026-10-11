@@ -41,7 +41,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
     { kind: string; label: string; items: { id: string; name: string }[] }[]
   >([]);
   const [skillOpts, setSkillOpts] = useState<
-    { id: string; name: string; roleType: { display: string } | null; pillar?: { id: string; name: string } | null }[]
+    { id: string; name: string; role: { display: string } | null; pillar?: { id: string; name: string } | null }[]
   >([]);
   const [specQuery, setSpecQuery] = useState("");
   const [openSpecTier, setOpenSpecTier] = useState<string | null>(null);

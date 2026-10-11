@@ -62,13 +62,13 @@ export async function loadWoMoney(orderId: string, today = new Date()): Promise<
   if (!o) return null;
   const hourLines = o.lines.filter((l) => pricedByQuantity(l.transaction_type) && (l.uom ?? "HOUR").toUpperCase().startsWith("HOUR"));
   const hourLineIds = new Set(hourLines.map((l) => l.id));
-  const reqs = await prisma.settlementRequest.findMany({
+  const reqs = await prisma.paymentRequest.findMany({
     where: { work_order_id: o.id, status: { in: ["SUBMITTED", "APPROVED", "PAID"] } },
     include: { lines: true },
   });
   const paidByReq = new Map(
-    (await prisma.paymentLine.groupBy({ by: ["settlement_request_id"], where: { settlement_request_id: { in: reqs.map((r) => r.id) } }, _sum: { amount_cents: true } })).map((g) => [
-      g.settlement_request_id,
+    (await prisma.paymentLine.groupBy({ by: ["payment_request_id"], where: { payment_request_id: { in: reqs.map((r) => r.id) } }, _sum: { amount_cents: true } })).map((g) => [
+      g.payment_request_id,
       g._sum.amount_cents ?? 0,
     ])
   );

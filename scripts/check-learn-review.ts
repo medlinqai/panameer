@@ -100,10 +100,10 @@ const unstamped = publishWrites.filter(({ b, at }) => {
   /* A `where` clause reading the status is a FILTER, not a write. */
   if (/where:\s*\{[^}]*status/.test(win) && !/data:\s*\{/.test(win)) return false;
   if (!/data:\s*\{/.test(win)) return false;
-  return !(/reviewed_by/.test(win) && /reviewed_at/.test(win));
+  return !(/reviewed_by_person_id/.test(win) && /reviewed_at/.test(win));
 });
 check(
-  "2 — every write of status PUBLISHED also writes reviewed_by AND reviewed_at",
+  "2 — every write of status PUBLISHED also writes reviewed_by_person_id AND reviewed_at",
   unstamped.length === 0,
   unstamped.map((u) => u.f).join(", ")
 );
@@ -115,7 +115,7 @@ check(
 check(
   "2 — unpublishing does NOT clear the stamps — a review that happened still happened",
   /unpublishAssessment[\s\S]{0,700}data:\s*\{\s*status:\s*"DRAFT"\s*\}/.test(lib) &&
-    !/unpublishAssessment[\s\S]{0,700}reviewed_by:\s*null/.test(lib)
+    !/unpublishAssessment[\s\S]{0,700}reviewed_by_person_id:\s*null/.test(lib)
 );
 
 // ---------------------------------------------------------------------------
@@ -233,7 +233,7 @@ check("5 — and the provenance the reviewer needs", /sourceNote/.test(screen));
 
 async function live() {
   const rows = await prisma.certificationTest.findMany({
-    select: { status: true, reviewed_by: true, reviewed_at: true, learning_path_id: true },
+    select: { status: true, reviewed_by_person_id: true, reviewed_at: true, learning_path_id: true },
   });
   check("live — there are sets to judge", rows.length > 0, `${rows.length}`);
   /*
@@ -241,7 +241,7 @@ async function live() {
     is a certificate nobody signed for. Checked against the real table, not just
     the code that writes it.
   */
-  const bad = rows.filter((r) => r.status === "PUBLISHED" && (!r.reviewed_by || !r.reviewed_at));
+  const bad = rows.filter((r) => r.status === "PUBLISHED" && (!r.reviewed_by_person_id || !r.reviewed_at));
   check(
     "live — no PUBLISHED set is missing its reviewer or its review date",
     bad.length === 0,

@@ -36,11 +36,11 @@ export async function buyerTrackRecord(companyId: string): Promise<TrackRecord |
     members.length ? prisma.workOrder.findMany({ where: { buyer_person_id: { in: members }, status: { in: [...LIVE] } }, select: { status: true } }) : [],
     companyChecklist(companyId),
     c.industry_id ? prisma.specialization.findUnique({ where: { id: c.industry_id }, select: { name: true } }) : null,
-    prisma.paymentLine.findMany({ where: { payment: { p_account_id: c.p_account_id } }, select: { settlement_request_id: true, payment: { select: { received_at: true } } } }),
+    prisma.paymentLine.findMany({ where: { payment: { p_account_id: c.p_account_id } }, select: { payment_request_id: true, payment: { select: { received_at: true } } } }),
   ]);
-  const requests = lines.length ? await prisma.settlementRequest.findMany({ where: { id: { in: lines.map((l) => l.settlement_request_id) } }, select: { id: true, submitted_at: true } }) : [];
+  const requests = lines.length ? await prisma.paymentRequest.findMany({ where: { id: { in: lines.map((l) => l.payment_request_id) } }, select: { id: true, submitted_at: true } }) : [];
   const submitted = new Map(requests.map((r) => [r.id, r.submitted_at]));
-  const days = lines.map((l) => { const s = submitted.get(l.settlement_request_id); return s && l.payment.received_at ? (l.payment.received_at.getTime() - s.getTime()) / DAY : null; }).filter((d): d is number => d != null && d >= 0);
+  const days = lines.map((l) => { const s = submitted.get(l.payment_request_id); return s && l.payment.received_at ? (l.payment.received_at.getTime() - s.getTime()) / DAY : null; }).filter((d): d is number => d != null && d >= 0);
   const a = c.sites[0]?.addresses[0];
   return {
     companyId: c.id,

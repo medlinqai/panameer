@@ -28,15 +28,15 @@ export async function getPublicProviderProfile(
       specializations: {
         include: { specialization: { select: { id: true, name: true, kind: true } } },
       },
-      roles: { select: { role_type_id: true } },
+      roles: { select: { role_id: true } },
       skills: {
         include: {
           skill: {
             select: {
-              role_type_id: true,
+              role_id: true,
               id: true,
               name: true,
-              roleType: { select: { code: true, display: true } },
+              role: { select: { code: true, display: true } },
             },
           },
         },
@@ -55,7 +55,7 @@ export async function getPublicProviderProfile(
   if (!profile) return null;
 
   const certifications = profile.person?.user_id
-    ? await prisma.certification.findMany({
+    ? await prisma.credential.findMany({
         where: { user_id: profile.person.user_id },
         orderBy: [{ issued_on: "desc" }, { year: "desc" }, { name: "asc" }],
         select: {
@@ -110,11 +110,11 @@ export async function getPublicProviderProfile(
     skills: shownSkills(
       selectedRoleIds(profile),
       profile.skills,
-      (ps) => ps.skill.role_type_id
+      (ps) => ps.skill.role_id
     ).map((ps) => ({
       id: ps.skill.id,
       name: ps.skill.name,
-      roleType: roleLong(ps.skill.roleType.display),
+      roleType: roleLong(ps.skill.role.display),
     })),
     // Cross-cutting specializations (brief_R) — systems, processes, industries.
     specializations: profile.specializations.map((s) => ({

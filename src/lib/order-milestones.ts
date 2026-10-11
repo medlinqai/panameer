@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { createSettlement, SettlementError } from "@/lib/settlements";
-import type { PaymentTrigger } from "@prisma/client";
+import type { PaymentEvent } from "@prisma/client";
 import type { Viewer } from "@/lib/access";
 
 // CAT-E007: product triggers — a line's milestones are reported (Delivered / Installed / Downloaded…) to raise each payment request.
-const PRODUCT_TRIGGERS: PaymentTrigger[] = ["ACCEPTANCE", "DOWNLOAD", "INSTALLATION", "ORDER_ACCEPTED"];
+const PRODUCT_TRIGGERS: PaymentEvent[] = ["ACCEPTANCE", "DOWNLOAD", "INSTALLATION", "ORDER_ACCEPTED"];
 
-export const REPORT_LABEL: Record<PaymentTrigger, string> = {
+export const REPORT_LABEL: Record<PaymentEvent, string> = {
   DOWNLOAD: "Report Downloaded",
   INSTALLATION: "Report Installed",
   ACCEPTANCE: "Report Delivered",
@@ -22,22 +22,22 @@ export async function snapshotMilestones(orderId: string) {
   const reqLines = await prisma.workRequestLine.findMany({ where: { id: { in: lines.map((l) => l.work_request_line_id).filter((x): x is string => !!x) } }, select: { id: true, service_product_id: true } });
   const productOf = new Map(reqLines.map((r) => [r.id, r.service_product_id]));
   const productIds = [...reqLines.map((r) => r.service_product_id), ...lines.map((l) => l.service_product_id)].filter((x): x is string => !!x);
-  const products = new Map((await prisma.serviceProduct.findMany({ where: { id: { in: productIds } }, select: { id: true, kind: true, payment_trigger: true, milestones: { orderBy: { sequence: "asc" } } } })).map((p) => [p.id, p]));
+  const products = new Map((await prisma.serviceProduct.findMany({ where: { id: { in: productIds } }, select: { id: true, kind: true, payment_event: true, milestones: { orderBy: { sequence: "asc" } } } })).map((p) => [p.id, p]));
   for (const l of lines) {
     const p = products.get(l.service_product_id ?? (l.work_request_line_id ? productOf.get(l.work_request_line_id) ?? "" : ""));
-    let rows: { label: string; percent: number; trigger: PaymentTrigger }[] = [];
+    let rows: { label: string; percent: number; payment_event: PaymentEvent }[] = [];
     if (p) {
       if (p.kind === "BLANKET" || p.kind === "DEPLOYABLE") continue;
-      const fallback = p.payment_trigger && PRODUCT_TRIGGERS.includes(p.payment_trigger) ? p.payment_trigger : "ACCEPTANCE";
-      rows = p.milestones.length ? p.milestones.map((m) => ({ label: m.label, percent: m.percent, trigger: m.trigger ?? fallback })) : [{ label: "In full", percent: 100, trigger: fallback }];
-    } else if (l.payment_trigger && PRODUCT_TRIGGERS.includes(l.payment_trigger)) {
-      rows = [{ label: "In full", percent: 100, trigger: l.payment_trigger }];
+      const fallback = p.payment_event && PRODUCT_TRIGGERS.includes(p.payment_event) ? p.payment_event : "ACCEPTANCE";
+      rows = p.milestones.length ? p.milestones.map((m) => ({ label: m.label, percent: m.percent, payment_event: m.payment_event ?? fallback })) : [{ label: "In full", percent: 100, payment_event: fallback }];
+    } else if (l.payment_event && PRODUCT_TRIGGERS.includes(l.payment_event)) {
+      rows = [{ label: "In full", percent: 100, payment_event: l.payment_event }];
     }
     if (rows.length) await prisma.workOrderMilestone.createMany({ data: rows.map((r, i) => ({ work_order_line_id: l.id, sequence: i + 1, ...r })), skipDuplicates: true });
   }
 }
 
-export type MilestoneView = { id: string; sequence: number; label: string; percent: number; trigger: PaymentTrigger; amountCents: number; reportedAt: string | null; settlementId: string | null; action: string };
+export type MilestoneView = { id: string; sequence: number; label: string; percent: number; paymentEvent: PaymentEvent; amountCents: number; reportedAt: string | null; settlementId: string | null; action: string };
 
 export async function milestonesFor(lineIds: string[]): Promise<Map<string, MilestoneView[]>> {
   const rows = await prisma.workOrderMilestone.findMany({ where: { work_order_line_id: { in: lineIds } }, orderBy: { sequence: "asc" } });
@@ -45,7 +45,7 @@ export async function milestonesFor(lineIds: string[]): Promise<Map<string, Mile
   const out = new Map<string, MilestoneView[]>();
   for (const m of rows) {
     const list = out.get(m.work_order_line_id) ?? [];
-    list.push({ id: m.id, sequence: m.sequence, label: m.label, percent: m.percent, trigger: m.trigger, amountCents: Math.round(((lines.get(m.work_order_line_id) ?? 0) * m.percent) / 100), reportedAt: m.reported_at?.toISOString().slice(0, 10) ?? null, settlementId: m.settlement_request_id, action: REPORT_LABEL[m.trigger] });
+    list.push({ id: m.id, sequence: m.sequence, label: m.label, percent: m.percent, paymentEvent: m.payment_event, amountCents: Math.round(((lines.get(m.work_order_line_id) ?? 0) * m.percent) / 100), reportedAt: m.reported_at?.toISOString().slice(0, 10) ?? null, settlementId: m.payment_request_id, action: REPORT_LABEL[m.payment_event] });
     out.set(m.work_order_line_id, list);
   }
   return out;
@@ -69,8 +69,8 @@ export async function reportMilestone(viewer: Viewer, milestoneId: string) {
   const claimed = await prisma.workOrderMilestone.updateMany({ where: { id: m.id, reported_at: null }, data: { reported_at: day } });
   if (!claimed.count) throw new SettlementError("This milestone has already been reported", "INVALID");
   try {
-    const s = await createSettlement(viewer, o.id, { periodStart: at, periodEnd: at, lines: [{ workOrderLineId: line.id, amountCents: share, note: `${m.label} · ${REPORT_LABEL[m.trigger].replace(/^Report /, "")}` }] });
-    await prisma.workOrderMilestone.update({ where: { id: m.id }, data: { settlement_request_id: s.id } });
+    const s = await createSettlement(viewer, o.id, { periodStart: at, periodEnd: at, lines: [{ workOrderLineId: line.id, amountCents: share, note: `${m.label} · ${REPORT_LABEL[m.payment_event].replace(/^Report /, "")}` }] });
+    await prisma.workOrderMilestone.update({ where: { id: m.id }, data: { payment_request_id: s.id } });
     return s;
   } catch (e) {
     await prisma.workOrderMilestone.update({ where: { id: m.id }, data: { reported_at: null } });

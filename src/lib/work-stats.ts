@@ -5,7 +5,7 @@ export async function workHeroStats(): Promise<TalentStat[]> {
   const [workRequests, workOrders, settlementRequests] = await Promise.all([
     prisma.workRequest.count(),
     prisma.workOrder.count(),
-    prisma.settlementRequest.count(),
+    prisma.paymentRequest.count(),
   ]);
 
   return [

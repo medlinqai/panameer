@@ -93,7 +93,7 @@ async function main() {
     }
 
     const keys = scored.domains.map((d) => d.key);
-    const resolvable = await prisma.capabilityDomain.findMany({
+    const resolvable = await prisma.domain.findMany({
       where: { key: { in: keys } },
       select: { key: true },
     });
@@ -125,7 +125,7 @@ async function main() {
   console.log(`assessments skipped (already had rows): ${skipped}`);
   console.log(`assessment_domain_results AFTER: ${after}`);
   console.log(
-    `rows with an UNRESOLVABLE domain key (null capability_domain_id): ${nullFk}` +
+    `rows with an UNRESOLVABLE domain key (null domain_id): ${nullFk}` +
       (nullFk > 0 ? ` — ${[...nullFkKeys.entries()].map(([k, c]) => `${k} x${c}`).join(", ")}` : "")
   );
   if (scoreDrift.length > 0) {

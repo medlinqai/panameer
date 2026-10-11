@@ -35,8 +35,8 @@ async function widenThroughBridge(
 ): Promise<string[]> {
   if (!anySuite || skillIds.length === 0) return skillIds;
 
-  const bridged = await prisma.capabilityModuleBridge.findMany({
-    where: { capability: { bridges: { some: { skill_id: { in: skillIds } } } } },
+  const bridged = await prisma.domainModuleBridge.findMany({
+    where: { domain: { bridges: { some: { skill_id: { in: skillIds } } } } },
     select: { skill_id: true },
   });
   const widened = new Set(skillIds);
@@ -93,15 +93,15 @@ export async function matchProvidersForSkills(input: {
       validation_status: true,
       person_id: true,
       person: { select: { first_name: true, last_name: true, title: true, photo_url: true } },
-      roles: { select: { role_type_id: true } },
-      role_type_id: true,
+      roles: { select: { role_id: true } },
+      role_id: true,
       skills: {
         where: { skill_id: { in: skillIds } },
         select: {
           weight: true,
           months_total: true,
           last_used: true,
-          skill: { select: { name: true, role_type_id: true } },
+          skill: { select: { name: true, role_id: true } },
         },
       },
       suiteProfiles: {
@@ -115,7 +115,7 @@ export async function matchProvidersForSkills(input: {
 
   const candidates = rows
     .map((row) => {
-      const shown = shownSkills(selectedRoleIds(row), row.skills, (s) => s.skill.role_type_id);
+      const shown = shownSkills(selectedRoleIds(row), row.skills, (s) => s.skill.role_id);
       const p = { ...row, skills: shown };
       const base = p.skills.reduce((n, s) => n + s.weight, 0);
       const share = requestedSuite

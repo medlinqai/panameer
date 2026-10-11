@@ -34,10 +34,10 @@ import { ensurePathBoard } from "../../src/lib/forums";
  * exactly where it is and the consequence is reported. **Nobody has taken it —
  * `LessonProgress` holds 0 rows — so nothing is lost today.**
  *
- * ⚠⚠ **IT SETS NO `expert_person_id` ON THE NEW PATH.** The four carry two
+ * ⚠⚠ **IT SETS NO `instructor_person_id` ON THE NEW PATH.** The four carry two
  * different experts between them and two carry none; picking one would
  * attribute four people's courses to a single person. ⚠ A null expert is the
- * honest answer, and **`learn_lessons.expert_person_id` is untouched**, so
+ * honest answer, and **`learn_lessons.instructor_person_id` is untouched**, so
  * load-bearing rule 10's protected set is unaffected by this repair.
  *
  * ⚠ **THE TITLE IS THE BRIEF'S OWN WORD, NOT AN INVENTION**, and it is Scott's
@@ -137,7 +137,7 @@ async function main() {
     not_touched: {
       assessment_on_1_background:
         "CertificationTest stays attached to 1. Background, which becomes DRAFT. Its test is then unreachable. Reported, not moved — Scott did not authorise moving a test.",
-      experts: "learn_lessons.expert_person_id untouched (load-bearing rule 10).",
+      experts: "learn_lessons.instructor_person_id untouched (load-bearing rule 10).",
       old_forum_boards: "left in place on the four unpublished paths.",
     },
   };
@@ -201,7 +201,7 @@ async function main() {
         status: "PUBLISHED",
         sort_order: 1,
         /* ⚠⚠ NO EXPERT — see the docblock. */
-        expert_person_id: null,
+        instructor_person_id: null,
         /* ⚠ A human made this, so an XLS re-run must leave it alone. */
         is_custom: true,
       },

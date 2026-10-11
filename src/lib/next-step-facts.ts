@@ -25,7 +25,7 @@ export async function loadMemberFacts(viewer: Viewer): Promise<MemberFacts> {
           work_method: true,
           onboarding_completed_at: true,
           dashboard_seen_at: true,
-          roles: { select: { roleType: { select: { name: true } } } },
+          roles: { select: { role: { select: { name: true } } } },
           employers: { select: { start_date: true, end_date: true, is_current: true } },
           projects: { select: { start_date: true, end_date: true, is_current: true } },
           _count: { select: { skills: true, serviceProducts: true } },
@@ -47,7 +47,7 @@ type Pp = {
   id: string;
   work_method: string | null;
   onboarding_completed_at: Date | null;
-  roles: { roleType: { name: string } }[];
+  roles: { role: { name: string } }[];
   employers: Span[];
   projects: Span[];
   _count: { skills: number; serviceProducts: number };
@@ -58,7 +58,7 @@ async function sellerFacts(viewer: Viewer, pp: Pp): Promise<SellerFacts> {
   const spans = [...pp.employers, ...pp.projects].map((s) => ({ start: s.start_date, end: s.end_date, isCurrent: s.is_current }));
   const dated = spans.some((s) => s.start);
   const [credentials, colleagues, skillIds] = await Promise.all([
-    prisma.certification.count({ where: { user_id: viewer.userId } }),
+    prisma.credential.count({ where: { user_id: viewer.userId } }),
     prisma.connection.count({
       where: { kind: "COLLEAGUE", status: "ACCEPTED", OR: [{ from_user_id: viewer.userId }, { to_user_id: viewer.userId }] },
     }),
@@ -100,7 +100,7 @@ async function sellerFacts(viewer: Viewer, pp: Pp): Promise<SellerFacts> {
     colleagues,
     sellsPackages: pp._count.serviceProducts > 0,
     matchingRequests,
-    roleNames: pp.roles.map((r) => r.roleType.name),
+    roleNames: pp.roles.map((r) => r.role.name),
   };
 }
 

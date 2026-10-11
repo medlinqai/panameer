@@ -91,7 +91,7 @@ export type PublicProviderProfile = {
     endDate: string | null;
     projects: { id: string; name: string; description: string | null }[];
   }[];
-  certifications: {
+  credentials: {
     id: string;
     name: string;
     issuer: string | null;

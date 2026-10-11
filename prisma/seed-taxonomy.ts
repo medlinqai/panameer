@@ -13,7 +13,7 @@ import * as path from "path";
  *   Role   → `RoleType`        (5: Application- / Technology- / Project- /
  *                               Operations-Specific, then AI-Specialist)
  *   Domain → `Pillar`          (28, unique names)
- *   Skill  → `Skill(role_type_id, pillar_id)` — a skill belongs to the PAIR
+ *   Skill  → `Skill(role_id, pillar_id)` — a skill belongs to the PAIR
  *
  * Everything here is REFERENCE data — global, not PAccount-scoped. Fully
  * idempotent: every write is an upsert keyed on a natural unique, and the
@@ -461,14 +461,14 @@ export async function seedTaxonomy(
   // than after→after. A structural reseed is exactly the case where "it ran" is
   // not the same information as "here is what it changed".
   const before = {
-    roles: await prisma.roleType.count(),
+    roles: await prisma.role.count(),
     domains: await prisma.pillar.count(),
     skills: await prisma.skill.count({ where: { is_custom: false } }),
     customSkills: await prisma.skill.count({ where: { is_custom: true } }),
   };
 
   // --- Catalog -------------------------------------------------------------
-  const catalog = await prisma.serviceCatalog.upsert({
+  const catalog = await prisma.businessType.upsert({
     where: { code: CATALOG.code },
     update: { name: CATALOG.name, description: CATALOG.description },
     create: CATALOG,
@@ -486,7 +486,7 @@ export async function seedTaxonomy(
       the catalog still wins; otherwise the suffix is added, not removed.
     */
     const display = role.display ?? `${role.name} Roles`;
-    const row = await prisma.roleType.upsert({
+    const row = await prisma.role.upsert({
       where: { code },
       update: {
         name: role.name,
@@ -516,12 +516,12 @@ export async function seedTaxonomy(
   const renamedDomains: string[] = [];
   for (const [from, to] of Object.entries(DOMAIN_RENAMES)) {
     const existing = await prisma.pillar.findFirst({
-      where: { catalog_id: catalog.id, name: from },
+      where: { business_type_id: catalog.id, name: from },
       select: { id: true },
     });
     if (!existing) continue; // already renamed on an earlier run
     const clash = await prisma.pillar.findFirst({
-      where: { catalog_id: catalog.id, code: toCode(to) },
+      where: { business_type_id: catalog.id, code: toCode(to) },
       select: { id: true },
     });
     if (clash && clash.id !== existing.id) continue;
@@ -540,10 +540,10 @@ export async function seedTaxonomy(
   for (const name of domainNames) {
     const code = toCode(name);
     const row = await prisma.pillar.upsert({
-      where: { catalog_id_code: { catalog_id: catalog.id, code } },
+      where: { business_type_id_code: { business_type_id: catalog.id, code } },
       update: { name, sort_order: DOMAIN_SORT[name] ?? 100 },
       create: {
-        catalog_id: catalog.id,
+        business_type_id: catalog.id,
         code,
         name,
         sort_order: DOMAIN_SORT[name] ?? 100,
@@ -577,18 +577,18 @@ export async function seedTaxonomy(
 
     const rows = await prisma.skill.findMany({
       where: {
-        catalog_id: catalog.id,
+        business_type_id: catalog.id,
         name: from,
         is_custom: false,
-        ...(scopedRoleId ? { role_type_id: scopedRoleId } : {}),
+        ...(scopedRoleId ? { role_id: scopedRoleId } : {}),
       },
-      select: { id: true, role_type_id: true, pillar_id: true },
+      select: { id: true, role_id: true, pillar_id: true },
     });
     for (const row of rows) {
       const clash = await prisma.skill.findFirst({
         where: {
-          catalog_id: catalog.id,
-          role_type_id: row.role_type_id,
+          business_type_id: catalog.id,
+          role_id: row.role_id,
           pillar_id: row.pillar_id,
           name: to,
         },
@@ -662,9 +662,9 @@ export async function seedTaxonomy(
         let id: string | null = null;
         const exact = await prisma.skill.findUnique({
           where: {
-            catalog_id_role_type_id_pillar_id_name: {
-              catalog_id: catalog.id,
-              role_type_id: roleTypeId,
+            business_type_id_role_id_pillar_id_name: {
+              business_type_id: catalog.id,
+              role_id: roleTypeId,
               pillar_id: pillarId,
               name,
             },
@@ -697,8 +697,8 @@ export async function seedTaxonomy(
             ? null // domain is part of this name's identity — see the note above
             : await prisma.skill.findFirst({
                 where: {
-                  catalog_id: catalog.id,
-                  role_type_id: roleTypeId,
+                  business_type_id: catalog.id,
+                  role_id: roleTypeId,
                   name,
                   is_custom: false,
                   NOT: { pillar_id: pillarId },
@@ -715,8 +715,8 @@ export async function seedTaxonomy(
           } else {
             const created = await prisma.skill.create({
               data: {
-                catalog_id: catalog.id,
-                role_type_id: roleTypeId,
+                business_type_id: catalog.id,
+                role_id: roleTypeId,
                 pillar_id: pillarId,
                 name,
                 aliases,
@@ -762,12 +762,12 @@ export async function seedTaxonomy(
   */
   for (const [from, to] of Object.entries(SPECIALIZATION_RENAMES)) {
     const existing = await prisma.specialization.findFirst({
-      where: { catalog_id: catalog.id, name: from },
+      where: { business_type_id: catalog.id, name: from },
       select: { id: true },
     });
     if (!existing) continue;
     const clash = await prisma.specialization.findFirst({
-      where: { catalog_id: catalog.id, name: to },
+      where: { business_type_id: catalog.id, name: to },
       select: { id: true },
     });
     // Already renamed on a previous run, and a row with the new name exists —
@@ -787,11 +787,11 @@ export async function seedTaxonomy(
   */
   for (const [from, into] of Object.entries(SPECIALIZATION_MERGES)) {
     const src = await prisma.specialization.findFirst({
-      where: { catalog_id: catalog.id, name: from },
+      where: { business_type_id: catalog.id, name: from },
       select: { id: true },
     });
     const dst = await prisma.specialization.findFirst({
-      where: { catalog_id: catalog.id, name: into },
+      where: { business_type_id: catalog.id, name: into },
       select: { id: true },
     });
     if (!src || !dst || src.id === dst.id) continue;
@@ -831,10 +831,10 @@ export async function seedTaxonomy(
   for (const [i, raw] of allSpecializations.entries()) {
     const name = raw;
     await prisma.specialization.upsert({
-      where: { catalog_id_name: { catalog_id: catalog.id, name } },
+      where: { business_type_id_name: { business_type_id: catalog.id, name } },
       update: { kind: specializationKind(name), sort_order: i },
       create: {
-        catalog_id: catalog.id,
+        business_type_id: catalog.id,
         name,
         kind: specializationKind(name),
         sort_order: i,
@@ -875,7 +875,7 @@ export async function seedTaxonomy(
       id: { notIn: [...keptSkillIds] },
       origin: "SEED",
     },
-    select: { id: true, name: true, role_type_id: true },
+    select: { id: true, name: true, role_id: true },
   });
   const staleSkillIds = staleSkills.map((s) => s.id);
 
@@ -891,7 +891,7 @@ export async function seedTaxonomy(
   */
   let mergedSkillLinks = 0;
   for (const stale of staleSkills) {
-    const target = keptByRoleAndName.get(`${stale.role_type_id}||${stale.name}`);
+    const target = keptByRoleAndName.get(`${stale.role_id}||${stale.name}`);
     if (!target) continue;
 
     const psLinks = await prisma.providerSkill.findMany({
@@ -948,7 +948,7 @@ export async function seedTaxonomy(
     ? await prisma.providerSkill.findMany({
         where: { skill_id: { in: staleSkillIds } },
         select: {
-          skill: { select: { name: true, roleType: { select: { name: true } } } },
+          skill: { select: { name: true, role: { select: { name: true } } } },
           providerProfile: {
             select: { person: { select: { user: { select: { email: true } } } } },
           },
@@ -962,7 +962,7 @@ export async function seedTaxonomy(
 
   const byLostSkill = new Map<string, number>();
   for (const l of doomedProviderLinks) {
-    const key = `${l.skill.roleType?.name ?? "(no role)"} :: ${l.skill.name}`;
+    const key = `${l.skill.role?.name ?? "(no role)"} :: ${l.skill.name}`;
     byLostSkill.set(key, (byLostSkill.get(key) ?? 0) + 1);
   }
   const orphanedSkillDetail = [...byLostSkill.entries()]
@@ -1048,7 +1048,7 @@ export async function seedTaxonomy(
   const keptRoleTypeIds = [...roleIdByName.values()];
   // A RoleType referenced by a WorkRequest can't be deleted; detach nothing and
   // let the delete skip those. Only unreferenced strays disappear.
-  const strayRoleTypes = await prisma.roleType.findMany({
+  const strayRoleTypes = await prisma.role.findMany({
     where: {
       id: { notIn: keptRoleTypeIds },
       skills: { none: {} },
@@ -1059,7 +1059,7 @@ export async function seedTaxonomy(
   });
   const retiredRoleTypes = strayRoleTypes.length
     ? (
-        await prisma.roleType.deleteMany({
+        await prisma.role.deleteMany({
           where: { id: { in: strayRoleTypes.map((r) => r.id) } },
         })
       ).count
@@ -1167,7 +1167,7 @@ export async function seedTaxonomy(
   const capabilityIdByKey = new Map<string, string>();
   let capabilityCount = 0;
   for (const [i, c] of capabilities.domains.entries()) {
-    const row = await prisma.capabilityDomain.upsert({
+    const row = await prisma.domain.upsert({
       where: { process_name: { process: c.process, name: c.name } },
       update: { sort_order: i },
       create: { process: c.process, name: c.name, sort_order: i },
@@ -1191,7 +1191,7 @@ export async function seedTaxonomy(
     // The module must be a real Skill under a vendor role on that suite.
     const skill = await prisma.skill.findFirst({
       where: {
-        catalog_id: catalog.id,
+        business_type_id: catalog.id,
         name: b.module,
         pillar: { name: b.suite },
       },
@@ -1201,17 +1201,17 @@ export async function seedTaxonomy(
       bridgeUnresolved++;
       bridgeUnresolvedNames.push(`${b.suite} / ${b.module}`);
     }
-    const row = await prisma.capabilityModuleBridge.upsert({
+    const row = await prisma.domainModuleBridge.upsert({
       where: {
-        capability_id_suite_module_name: {
-          capability_id: capabilityId,
+        domain_id_suite_module_name: {
+          domain_id: capabilityId,
           suite: b.suite,
           module_name: b.module,
         },
       },
       update: { skill_id: skill?.id ?? null },
       create: {
-        capability_id: capabilityId,
+        domain_id: capabilityId,
         suite: b.suite,
         module_name: b.module,
         skill_id: skill?.id ?? null,
@@ -1234,7 +1234,7 @@ export async function seedTaxonomy(
     Safe to delete outright, unlike a Skill: nothing references a bridge row,
     it holds no user data, and it is rebuilt from the sheet on every run.
   */
-  const staleBridge = await prisma.capabilityModuleBridge.deleteMany({
+  const staleBridge = await prisma.domainModuleBridge.deleteMany({
     where: { id: { notIn: [...keptBridgeIds] } },
   });
   const bridgeRetired = staleBridge.count;

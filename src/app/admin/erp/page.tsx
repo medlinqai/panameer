@@ -16,7 +16,7 @@ export default async function Page() {
   const connName = new Map(connections.map((c) => [c.id, c.name]));
   const rows = messages.map((m) => ({
     id: m.id, at: m.created_at.toISOString().slice(0, 16).replace("T", " "), connection: connName.get(m.connection_id) ?? "—", direction: m.direction, type: m.type, status: m.status, payloadId: m.payload_id,
-    related: [m.work_request_id && "request", m.work_order_id && "order", m.settlement_request_id && "payment request"].filter(Boolean).join(" · ") || "—",
+    related: [m.work_request_id && "request", m.work_order_id && "order", m.payment_request_id && "payment request"].filter(Boolean).join(" · ") || "—",
     response: m.response, error: m.last_error, body: m.body.slice(0, 20000),
   }));
   return (

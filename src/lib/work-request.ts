@@ -90,7 +90,7 @@ function serialize(wr: Awaited<ReturnType<typeof loadOwned>>) {
     postedAt: wr.posted_at ? wr.posted_at.toISOString() : null,
     title: wr.title,
     description: wr.description ?? "",
-    roleTypeId: wr.role_type_id,
+    roleTypeId: wr.role_id,
     pillarId: wr.pillar_id,
     skillIds: wr.skills.map((s) => s.skill_id),
     specializationIds: wr.specializations.map((s) => s.specialization_id),
@@ -186,15 +186,15 @@ export async function saveSection(
     case "role": {
       const roleTypeId: string | null = data.roleTypeId ?? null;
       if (!roleTypeId) throw new WorkRequestError("Pick a role", "INVALID");
-      const role = await prisma.roleType.findUnique({ where: { id: roleTypeId } });
+      const role = await prisma.role.findUnique({ where: { id: roleTypeId } });
       if (!role) throw new WorkRequestError("Unknown role", "INVALID");
 
-      const changed = wr.role_type_id !== roleTypeId;
+      const changed = wr.role_id !== roleTypeId;
       await prisma.$transaction([
         prisma.workRequest.update({
           where: { id: wr.id },
           data: {
-            role_type_id: roleTypeId,
+            role_id: roleTypeId,
             ...(changed ? { pillar_id: null } : {}),
           },
         }),
@@ -208,13 +208,13 @@ export async function saveSection(
     /* STEP 2 — the domain, within the chosen role. Same clearing rule. */
     case "domain": {
       const pillarId: string | null = data.pillarId ?? null;
-      if (!wr.role_type_id) {
+      if (!wr.role_id) {
         throw new WorkRequestError("Pick a role first", "INVALID");
       }
 
-      const isVendorRole = await prisma.roleType.findFirst({
+      const isVendorRole = await prisma.role.findFirst({
         where: {
-          id: wr.role_type_id,
+          id: wr.role_id,
           name: { in: ["Application-Specific", "Technology-Specific"] },
         },
         select: { id: true },
@@ -233,7 +233,7 @@ export async function saveSection(
         break;
       }
       const inRole = await prisma.skill.findFirst({
-        where: { role_type_id: wr.role_type_id, pillar_id: pillarId },
+        where: { role_id: wr.role_id, pillar_id: pillarId },
         select: { id: true },
       });
       if (!inRole) {
@@ -360,11 +360,11 @@ export async function saveSection(
       const skills = await prisma.skill.findMany({
         // NO `status` FILTER HERE, DELIBERATELY . This
         where: { id: { in: skillIds } },
-        select: { id: true, role_type_id: true, pillar_id: true },
+        select: { id: true, role_id: true, pillar_id: true },
       });
       if (
         skills.length !== skillIds.length ||
-        skills.some((s) => s.role_type_id !== roleTypeId) ||
+        skills.some((s) => s.role_id !== roleTypeId) ||
         (wr.pillar_id && skills.some((s) => s.pillar_id !== wr.pillar_id))
       ) {
         throw new WorkRequestError(
@@ -375,7 +375,7 @@ export async function saveSection(
       await prisma.$transaction([
         prisma.workRequest.update({
           where: { id: wr.id },
-          data: { role_type_id: roleTypeId },
+          data: { role_id: roleTypeId },
         }),
         prisma.workRequestSkill.deleteMany({ where: { work_request_id: wr.id } }),
         prisma.workRequestSkill.createMany({
@@ -482,7 +482,7 @@ export async function saveSection(
 function missingForPost(wr: Awaited<ReturnType<typeof loadOwned>>): string[] {
   const missing: string[] = [];
   if (!wr.title.trim()) missing.push("title");
-  if (!wr.role_type_id) missing.push("category");
+  if (!wr.role_id) missing.push("category");
   if (wr.skills.length === 0) missing.push("skills");
   return missing;
 }

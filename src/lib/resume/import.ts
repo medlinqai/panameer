@@ -462,7 +462,7 @@ export async function applyParsedResume(
       education: { select: { institution: true } },
       languages: { select: { name: true } },
       skills: { select: { skill_id: true } },
-      certifications: { select: { name: true } },
+      credentials: { select: { name: true } },
       person: { select: { id: true, user_id: true, title: true } },
     },
   });
@@ -500,14 +500,14 @@ export async function applyParsedResume(
   );
 
   const catalogId = await activeCatalogId();
-  const inActiveCatalog = catalogId ? { catalog_id: catalogId } : {};
+  const inActiveCatalog = catalogId ? { business_type_id: catalogId } : {};
 
   const vocabRows = await prisma.skill.findMany({
     where: {
       is_custom: false,
       ...OFFERABLE,
       ...inActiveCatalog,
-      roleType: {
+      role: {
         name: { in: ["Application-Specific", "Technology-Specific"] },
       },
     },
@@ -515,13 +515,13 @@ export async function applyParsedResume(
       id: true,
       name: true,
       aliases: true,
-      roleType: { select: { name: true } },
+      role: { select: { name: true } },
       pillar: { select: { name: true } },
     },
   });
   const vocab = buildVocabulary(vocabRows);
   const roleIdByName = new Map(
-    (await prisma.roleType.findMany({ select: { id: true, name: true } })).map(
+    (await prisma.role.findMany({ select: { id: true, name: true } })).map(
       (r) => [r.name, r.id],
     ),
   );
@@ -547,7 +547,7 @@ export async function applyParsedResume(
         is_current: Boolean(e.startDate) && e.isCurrent === true,
         sort_order: i * 10,
         software_suite: found.suite,
-        job_role_type_id: found.role
+        job_role_id: found.role
           ? (roleIdByName.get(found.role) ?? null)
           : null,
         skills: {
@@ -580,7 +580,7 @@ export async function applyParsedResume(
         name: (pr.name || "Untitled project").slice(0, 200),
         description: description?.slice(0, 4000) ?? null,
         client_name: (pr.client ?? "").slice(0, 200),
-        role_type_id: pr.roleText ? (roleIdByName.get(roleNameFromText(pr.roleText) ?? "") ?? null) : null,
+        role_id: pr.roleText ? (roleIdByName.get(roleNameFromText(pr.roleText) ?? "") ?? null) : null,
         start_date: pr.startDate ? new Date(pr.startDate) : null,
         end_date: pr.endDate ? new Date(pr.endDate) : null,
         is_current: Boolean(pr.startDate) && pr.isCurrent === true,
@@ -628,7 +628,7 @@ export async function applyParsedResume(
   const ownerUserId = profile.person?.user_id ?? null;
   if (ownerUserId) {
     const haveCert = new Set(
-      profile.certifications.map((c) => c.name.trim().toLowerCase()),
+      profile.credentials.map((c) => c.name.trim().toLowerCase()),
     );
     for (const c of parsed.certifications) {
       // ONE ROW PER CREDENTIAL WS-3a)
@@ -638,7 +638,7 @@ export async function applyParsedResume(
         haveCert.add(name.toLowerCase());
         const issued = c.issuedOn ? new Date(c.issuedOn) : null;
         const expires = c.expiresOn ? new Date(c.expiresOn) : null;
-        await prisma.certification.create({
+        await prisma.credential.create({
           data: {
             user_id: ownerUserId,
             provider_profile_id: profileId,
@@ -673,7 +673,7 @@ export async function applyParsedResume(
       // — never match a parsed skill onto a retired row.
       where: { ...OFFERABLE, ...inActiveCatalog },
       // six ROLE-SPANNING names resolve to whichever row Postgres returned
-      select: { id: true, name: true, role_type_id: true },
+      select: { id: true, name: true, role_id: true },
     });
     // DEDUPED BEFORE MATCHING — A WALK CAUGHT THIS TOO. `PPM (Certified)` and
     const seenTerm = new Set<string>();

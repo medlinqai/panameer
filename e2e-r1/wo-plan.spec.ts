@@ -11,7 +11,7 @@ test("lane 1: Plan tab shows Time | Dollars from real figures; Overview unchange
   await db().workOrder.update({ where: { id: f!.orderId }, data: { period_start: new Date("2026-10-01"), period_end: new Date("2026-12-31") } });
   const paidId = await createSettlement(f!, "APPROVED");
   await db().payment.create({ data: { payment_number: `PAY-W-${f!.tag}`.slice(0, 40), p_account_id: f!.pAccountId, received_at: new Date(), amount_cents: 50000, status: "ALLOCATED",
-    lines: { create: [{ line_number: 1, settlement_request_id: paidId, amount_cents: 50000 }] } } });
+    lines: { create: [{ line_number: 1, payment_request_id: paidId, amount_cents: 50000 }] } } });
   await createSettlement(f!, "SUBMITTED");
 
   await signIn(page, f!.provider.email);
@@ -72,12 +72,12 @@ test("lane 3: T&E only shows Timesheets; Add a Plan converts in place and keeps 
     await expect(te.getByTestId("timesheets").getByText("2026-09-28")).toBeVisible();
     await expect(te.getByText("Approved")).toBeVisible();
     await page.screenshot({ path: "e2e-r1/.artifacts/wo-plan-board3-1440.png", fullPage: true });
-    const before = await db().settlementRequest.count({ where: { work_order_id: g.orderId } });
+    const before = await db().paymentRequest.count({ where: { work_order_id: g.orderId } });
     await te.getByRole("button", { name: "Add a Plan" }).click();
     await expect(page.getByRole("button", { name: "Use T&E Only" })).toHaveCount(0);
     await page.getByRole("button", { name: "Use the Template" }).click();
     await expect(page.getByTestId("wo-plan").getByText("Kickoff").first()).toBeVisible({ timeout: 30_000 });
-    expect(await db().settlementRequest.count({ where: { work_order_id: g.orderId } })).toBe(before);
+    expect(await db().paymentRequest.count({ where: { work_order_id: g.orderId } })).toBe(before);
   } finally {
     await dropFixture(g);
   }

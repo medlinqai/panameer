@@ -42,7 +42,7 @@ async function main() {
       here. That gap is real and is reported by this brief rather than papered over — see the
       note at the foot of this file.
     */
-    const p2p = await prisma.capabilityDomain.findMany({
+    const p2p = await prisma.domain.findMany({
       where: { process: "Procure-to-Pay" },
       orderBy: { sort_order: "asc" },
       select: { id: true, name: true },
@@ -74,9 +74,9 @@ async function main() {
       "Reviews every Procure-to-Pay capability domain and reports where AI can be applied. Seed row proving the many-to-many shape."
     );
     for (const d of p2p) {
-      await prisma.serviceProductCapabilityDomain.upsert({
-        where: { service_product_id_capability_domain_id: { service_product_id: healthCheck, capability_domain_id: d.id } },
-        create: { service_product_id: healthCheck, capability_domain_id: d.id },
+      await prisma.serviceProductDomain.upsert({
+        where: { service_product_id_domain_id: { service_product_id: healthCheck, domain_id: d.id } },
+        create: { service_product_id: healthCheck, domain_id: d.id },
         update: {},
       });
     }
@@ -90,9 +90,9 @@ async function main() {
       "Contract Price Alert Agent",
       "Watches for off-contract spend and renewal drift. Seed row proving the multi-factor shape."
     );
-    await prisma.serviceProductCapabilityDomain.upsert({
-      where: { service_product_id_capability_domain_id: { service_product_id: alertAgent, capability_domain_id: contracts.id } },
-      create: { service_product_id: alertAgent, capability_domain_id: contracts.id },
+    await prisma.serviceProductDomain.upsert({
+      where: { service_product_id_domain_id: { service_product_id: alertAgent, domain_id: contracts.id } },
+      create: { service_product_id: alertAgent, domain_id: contracts.id },
       update: {},
     });
     /* delete-then-write, scoped to this package only — a factor has no natural key */
@@ -122,9 +122,9 @@ async function main() {
     });
 
     /* ── report ── */
-    const links = await prisma.serviceProductCapabilityDomain.count();
+    const links = await prisma.serviceProductDomain.count();
     const factors = await prisma.serviceProductValueFactor.count();
-    const hcLinks = await prisma.serviceProductCapabilityDomain.count({ where: { service_product_id: healthCheck } });
+    const hcLinks = await prisma.serviceProductDomain.count({ where: { service_product_id: healthCheck } });
     const agentFactors = await prisma.serviceProductValueFactor.findMany({
       where: { service_product_id: alertAgent },
       select: { basis: true, rate: true, applies_below_rung: true },

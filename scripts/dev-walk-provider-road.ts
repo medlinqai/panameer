@@ -40,7 +40,7 @@ async function main() {
   check("provider can sign before validation (buyer validated)", true);
   await refuses("buyer side unchanged: an unvalidated buyer can't sign", async () => { const b2 = await party("BUYER", "Bo"); await assertCanSign(b2.personId, b2.personId, prov.personId); }, "company");
 
-  const p = await prisma.serviceProduct.create({ data: { provider_profile_id: prov.profileId!, title: `Health Check ${tag}`, price_cents: 200000, status: "PUBLISHED", payment_terms: "NET30", payment_trigger: "ACCEPTANCE" } });
+  const p = await prisma.serviceProduct.create({ data: { provider_profile_id: prov.profileId!, title: `Health Check ${tag}`, price_cents: 200000, status: "PUBLISHED", payment_terms: "NET30", payment_event: "ACCEPTANCE" } });
   products.push(p.id);
   await addToCart(buyer.viewer, p.id);
   const [placed] = await placeOrder(buyer.viewer);

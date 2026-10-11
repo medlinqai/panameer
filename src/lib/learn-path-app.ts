@@ -125,7 +125,7 @@ export async function getAppPath(
       summary: true,
       group: true,
       audience: true,
-      expert_person_id: true,
+      instructor_person_id: true,
       assessment: { select: { pass_threshold: true, max_attempts: true, status: true } },
       courses: {
         orderBy: [{ sort_order: "asc" }, { title: "asc" }],
@@ -149,7 +149,7 @@ export async function getAppPath(
                   duration_source: true,
                   vimeo_ref: true,
                   production_status: true,
-                  expert_person_id: true,
+                  instructor_person_id: true,
                 },
               },
             },
@@ -164,7 +164,7 @@ export async function getAppPath(
 
   const [enrolment, progress, directory, enrolledCountRaw, forum, interest, attempts, cert] = await Promise.all([
     userId
-      ? prisma.learnEnrollment.findUnique({
+      ? prisma.enrollment.findUnique({
           where: { user_id_learning_path_id: { user_id: userId, learning_path_id: path.id } },
           select: { id: true },
         })
@@ -172,8 +172,8 @@ export async function getAppPath(
     userId
       ? prisma.lessonProgress.findMany({ where: { user_id: userId }, select: { lesson_id: true } })
       : Promise.resolve([]),
-    loadInstructors(instructorIdsFor(allLessons, path.expert_person_id)),
-    prisma.learnEnrollment.count({ where: { learning_path_id: path.id } }),
+    loadInstructors(instructorIdsFor(allLessons, path.instructor_person_id)),
+    prisma.enrollment.count({ where: { learning_path_id: path.id } }),
     // THE SAME TEASER THE PUBLIC PAGE USED — counts and `canOpen`, nothing
     getPathForumTeaser(viewer, path.id),
     pathInterestFor(userId, path.id),
@@ -184,9 +184,9 @@ export async function getAppPath(
         })
       : Promise.resolve([]),
     userId
-      ? prisma.certification.findFirst({
+      ? prisma.credential.findFirst({
           where: {
-            issued_from: "LEARN",
+            issued_from: "PANAMEER",
             learning_path_id: path.id,
             providerProfile: { person: { user_id: userId } },
           },
@@ -197,7 +197,7 @@ export async function getAppPath(
 
   const done = new Set(progress.map((p) => p.lesson_id));
   const pathInstructors = withoutPlaceholders(
-    resolveInstructors(tallyExperts(allLessons), directory, path.expert_person_id)
+    resolveInstructors(tallyExperts(allLessons), directory, path.instructor_person_id)
   );
 
   /* The first unwatched lesson in running order — what Resume points at, and
@@ -212,7 +212,7 @@ export async function getAppPath(
   const courses: AppCourse[] = path.courses.map((c) => {
     const courseLessons = c.sections.flatMap((s) => s.lessons);
     const courseInstructors = withoutPlaceholders(
-      resolveInstructors(tallyExperts(courseLessons), directory, path.expert_person_id)
+      resolveInstructors(tallyExperts(courseLessons), directory, path.instructor_person_id)
     );
     const sections = c.sections.map((s) => {
       const lessons: AppLessonRow[] = s.lessons.map((l) => {

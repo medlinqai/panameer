@@ -206,8 +206,8 @@ function textFilter(q: string) {
       { overview: like },
       { skills: { some: { skill: { name: like } } } },
       { keywords_text: like },
-      { roleType: { name: like } },
-      { roleType: { display: like } },
+      { role: { name: like } },
+      { role: { display: like } },
       { pillar: { name: like } },
     ],
   };
@@ -256,8 +256,8 @@ export async function browseTalent(
           },
         },
       },
-      roles: { select: { role_type_id: true } },
-      skills: { select: { skill: { select: { name: true, role_type_id: true } } } },
+      roles: { select: { role_id: true } },
+      skills: { select: { skill: { select: { name: true, role_id: true } } } },
       employers: { select: { start_date: true, end_date: true, is_current: true } },
       projects: {
         select: {
@@ -267,7 +267,7 @@ export async function browseTalent(
           industry: { select: { name: true } },
         },
       },
-      _count: { select: { certifications: true } },
+      _count: { select: { credentials: true } },
     },
   });
 
@@ -292,7 +292,7 @@ export async function browseTalent(
     const shown = shownSkills(
       selectedRoleIds(p),
       p.skills,
-      (s) => s.skill.role_type_id
+      (s) => s.skill.role_id
     );
     const spans = spansOf(p);
     const label = experienceLabel(spans);
@@ -311,7 +311,7 @@ export async function browseTalent(
       score: input ? computeProviderCompleteness(input) : 0,
       skills: shown.map((s) => s.skill.name),
       skillCount: shown.length,
-      certificationCount: p._count.certifications,
+      certificationCount: p._count.credentials,
       // ONLY WHERE POPULATED (Scott's answer 6). Measured: 3 of 21 projects
       industries: [
         ...new Set(
@@ -363,11 +363,11 @@ export async function getMaskedProfile(
           },
         },
       },
-      roles: { select: { role_type_id: true } },
+      roles: { select: { role_id: true } },
       /* No verification column exists — see the note on `MaskedProfile`. */
-      skills: { select: { skill: { select: { name: true, role_type_id: true } } } },
+      skills: { select: { skill: { select: { name: true, role_id: true } } } },
       specializations: { select: { specialization: { select: { name: true } } } },
-      certifications: { select: { name: true } },
+      credentials: { select: { name: true } },
       // DEGREE AND FIELD ONLY — `institution` IS NOT IN THIS SELECT.
       education: { select: { id: true, degree: true, field: true } },
       employers: {
@@ -431,7 +431,7 @@ export async function getMaskedProfile(
 
   const addr = p.person.site?.addresses[0];
   const country = countryName(addr?.country_code, addr?.country);
-  const shown = shownSkills(selectedRoleIds(p), p.skills, (s) => s.skill.role_type_id);
+  const shown = shownSkills(selectedRoleIds(p), p.skills, (s) => s.skill.role_id);
   const spans = spansOf(p);
 
   // SOLO PROJECTS — ONES NO EMPLOYER CLAIMS — BECOME THEIR OWN WORK-HISTORY
@@ -453,7 +453,7 @@ export async function getMaskedProfile(
     score: await searchScoreFor(p.id),
     skills: shown.map((s) => s.skill.name),
     skillCount: shown.length,
-    certificationCount: p.certifications.length,
+    certificationCount: p.credentials.length,
     industries: [
       ...new Set(
         [...p.projects, ...p.employers.flatMap((e) => e.projects)]
@@ -464,7 +464,7 @@ export async function getMaskedProfile(
     /* SCRUBBED, AND DROPPED WHOLE IF IT CANNOT BE SCRUBBED (see `scrub`). */
     summary: scrub(p.overview, needles),
     memberSince: p.person.created_at?.getUTCFullYear() ?? null,
-    certifications: p.certifications.map((c) => c.name),
+    certifications: p.credentials.map((c) => c.name),
     /* "Bachelor of Science, Business Administration" — no school. */
     education: p.education
       .map((e) => [e.degree, e.field].filter(Boolean).join(", "))

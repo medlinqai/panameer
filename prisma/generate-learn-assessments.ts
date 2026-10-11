@@ -144,7 +144,7 @@ async function main() {
         /* ⚠ AN UPSERT MUST NOT PROMOTE. A replaced DRAFT is still a DRAFT, and
            any prior review is void because the questions changed. */
         status: "DRAFT",
-        reviewed_by: null,
+        reviewed_by_person_id: null,
         reviewed_at: null,
         source_note: outcome.docSources.join(" ") || null,
       },

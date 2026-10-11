@@ -182,7 +182,7 @@ async function main() {
   /* ── 7 · ⚠⚠⚠ THE FIXTURE DISTINGUISHES WHAT IT COMPARES ────────────────
      ⚠ Two zeros agree. The catalogue must actually contain an enrolled path
      AND a not-enrolled one, or "every enrolled path renders" proves nothing. */
-  const enrolments = await prisma.learnEnrollment.count();
+  const enrolments = await prisma.enrollment.count();
   const publishedPaths = await prisma.learningPath.count({ where: { status: "PUBLISHED" } });
   check(
     "7 — there is at least one enrolment to render (E586)",

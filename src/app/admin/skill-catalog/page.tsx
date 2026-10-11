@@ -73,7 +73,7 @@ export default async function Page({
   const skills = await prisma.skill.findMany({
     orderBy: { name: "asc" },
     select: {
-      id: true, name: true, role_type_id: true, pillar_id: true,
+      id: true, name: true, role_id: true, pillar_id: true,
       status: true, origin: true, aliases: true, visible_to_members: true,
       merged_into_id: true, rejected_at: true, review_pending: true, area: true,
     },
@@ -99,7 +99,7 @@ export default async function Page({
       id: d.id,
       name: d.name,
       mark: RDS_DOMAIN_MARKS[d.code] ?? null,
-      skills: skills.filter((s) => s.role_type_id === r.id && s.pillar_id === d.id && !s.review_pending).map(toSkill),
+      skills: skills.filter((s) => s.role_id === r.id && s.pillar_id === d.id && !s.review_pending).map(toSkill),
     })),
   }));
   const waiting = skills.filter((s) => (s.pillar_id === null || s.review_pending) && !s.merged_into_id && !s.rejected_at && s.status === NEW_SKILL_WHERE.status);
@@ -107,12 +107,12 @@ export default async function Page({
   const claims = await prisma.providerSkill.findMany({ where: { skill_id: { in: waiting.map((s) => s.id) } }, select: { skill_id: true, provider_profile_id: true } });
   const theirs = await prisma.providerSkill.findMany({
     where: { provider_profile_id: { in: [...new Set(claims.map((c) => c.provider_profile_id))] }, skill: { pillar_id: { not: null } } },
-    select: { provider_profile_id: true, skill: { select: { role_type_id: true, pillar_id: true } } },
+    select: { provider_profile_id: true, skill: { select: { role_id: true, pillar_id: true } } },
   });
   const guessOf = (skillId: string) => {
     const who = new Set(claims.filter((c) => c.skill_id === skillId).map((c) => c.provider_profile_id));
     const tally = new Map<string, number>();
-    for (const t of theirs) if (who.has(t.provider_profile_id)) { const k = `${t.skill.role_type_id}:${t.skill.pillar_id}`; tally.set(k, (tally.get(k) ?? 0) + 1); }
+    for (const t of theirs) if (who.has(t.provider_profile_id)) { const k = `${t.skill.role_id}:${t.skill.pillar_id}`; tally.set(k, (tally.get(k) ?? 0) + 1); }
     return [...tally].sort((a, b) => b[1] - a[1])[0]?.[0];
   };
   const hiddenSame = await hiddenSameLetterNames();
@@ -120,7 +120,7 @@ export default async function Page({
   const people = new Map((await waitingTermCounts()).map((t) => [t.id, t.people]));
   const unassigned = waiting.map((s) => ({
     ...toSkill(s),
-    guess: s.pillar_id ? `${s.role_type_id}:${s.pillar_id}` : guessOf(s.id),
+    guess: s.pillar_id ? `${s.role_id}:${s.pillar_id}` : guessOf(s.id),
     hiddenMatch: hiddenSame.get(sameLetters(s.name)),
     members: people.get(s.id) ?? 0,
   })).sort((a, b) => b.members - a.members || a.name.localeCompare(b.name));
@@ -137,8 +137,8 @@ export default async function Page({
   const listRows: ListSkill[] = skills
     .filter((s) => s.status === "ACTIVE" && !s.merged_into_id && !s.rejected_at && s.pillar_id && !s.review_pending)
     .map((s) => {
-      const at = pairLabel.get(`${s.role_type_id}:${s.pillar_id}`);
-      return { id: s.id, name: s.name, aliases: s.aliases, roleTypeId: s.role_type_id, pillarId: s.pillar_id, role: at?.role ?? "—", domain: at?.domain ?? "—", area: s.area, members: skillProviders.get(s.id) ?? 0, hidden: !s.visible_to_members, isNew: s.origin === "PROVIDER" };
+      const at = pairLabel.get(`${s.role_id}:${s.pillar_id}`);
+      return { id: s.id, name: s.name, aliases: s.aliases, roleTypeId: s.role_id, pillarId: s.pillar_id, role: at?.role ?? "—", domain: at?.domain ?? "—", area: s.area, members: skillProviders.get(s.id) ?? 0, hidden: !s.visible_to_members, isNew: s.origin === "PROVIDER" };
     });
   const reviewCards: ReviewCard[] = unassigned.map((u) => {
     const guess = u.guess ?? null;
@@ -190,11 +190,11 @@ export default async function Page({
   for (const f of flat) placeOf.set(`${f.roleId}::${f.domain.id}`, { role: f.role, domain: f.domain.name });
 
   const skillRows = skills.map((s) => {
-    const at = placeOf.get(`${s.role_type_id}::${s.pillar_id}`);
+    const at = placeOf.get(`${s.role_id}::${s.pillar_id}`);
     return [s.name, at?.domain ?? "—", at?.role ?? "—", providersCell(skillProviders.get(s.id))];
   });
   const skillMeta = skills.map((s) => {
-    const at = placeOf.get(`${s.role_type_id}::${s.pillar_id}`);
+    const at = placeOf.get(`${s.role_id}::${s.pillar_id}`);
     return {
       text: `${s.name} ${at?.domain ?? ""} ${at?.role ?? ""}`.toLowerCase(),
       sort: [s.name, at?.domain ?? null, at?.role ?? null, skillProviders.get(s.id) ?? 0] as (

@@ -29,7 +29,7 @@ export default async function Page() {
     take: 12,
     select: {
       id: true, title: true, slug: true, status: true, created_at: true,
-      expert: { select: { first_name: true, last_name: true } },
+      instructor: { select: { first_name: true, last_name: true } },
       courses: { select: { sections: { select: { lessons: { select: { id: true } } } } } },
     },
   });
@@ -87,7 +87,7 @@ export default async function Page() {
           <Link key={r.id} href={`/admin/setup/learn-authoring/${r.id}`} className="font-semibold text-magenta hover:underline">
             {r.title}
           </Link>,
-          r.expert ? `${r.expert.first_name ?? ""} ${r.expert.last_name ?? ""}`.trim() : "—",
+          r.instructor ? `${r.instructor.first_name ?? ""} ${r.instructor.last_name ?? ""}`.trim() : "—",
           <span
             key="s"
             className={

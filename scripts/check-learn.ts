@@ -418,35 +418,35 @@ const dir = new Map<string, Omit<Instructor, "lessons">>([
 check(
   "face: lesson names its own expert → that expert, not inherited",
   (() => {
-    const f = lessonFace({ expert_person_id: "p1" }, dir, [linus], []);
+    const f = lessonFace({ instructor_person_id: "p1" }, dir, [linus], []);
     return f.instructor?.id === "p1" && f.inherited === false;
   })()
 );
 check(
   "face: lesson names NOBODY → inherits the course's dominant instructor",
   (() => {
-    const f = lessonFace({ expert_person_id: null }, dir, [linus], [scott]);
+    const f = lessonFace({ instructor_person_id: null }, dir, [linus], [scott]);
     return f.instructor?.id === "p3" && f.inherited === true;
   })()
 );
 check(
   "face: no lesson expert AND no course expert → the path's declared lead",
   (() => {
-    const f = lessonFace({ expert_person_id: null }, dir, [], [scott]);
+    const f = lessonFace({ instructor_person_id: null }, dir, [], [scott]);
     return f.instructor?.id === "p1" && f.inherited === true;
   })()
 );
 check(
   "face: expert is literally TBD → face AND name omitted",
-  lessonFace({ expert_person_id: "p2" }, dir, [linus], [scott]).instructor === null
+  lessonFace({ instructor_person_id: "p2" }, dir, [linus], [scott]).instructor === null
 );
 check(
   "face: nobody anywhere → null, never an empty circle",
-  lessonFace({ expert_person_id: null }, dir, [], []).instructor === null
+  lessonFace({ instructor_person_id: null }, dir, [], []).instructor === null
 );
 check(
   "face: a named-but-unloadable expert does NOT silently inherit",
-  lessonFace({ expert_person_id: "gone" }, dir, [linus], [scott]).instructor === null
+  lessonFace({ instructor_person_id: "gone" }, dir, [linus], [scott]).instructor === null
 );
 
 // Streak — the timezone case the brief names

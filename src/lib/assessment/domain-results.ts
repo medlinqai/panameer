@@ -29,7 +29,7 @@ export async function resolveCapabilityDomainIds(
 ): Promise<Map<string, string>> {
   const unique = [...new Set(keys.filter(Boolean))];
   if (unique.length === 0) return new Map();
-  const rows = await db.capabilityDomain.findMany({
+  const rows = await db.domain.findMany({
     where: { key: { in: unique } },
     select: { id: true, key: true },
   });
@@ -46,7 +46,7 @@ export function domainRowsFor(
 ): DomainRowInput[] {
   return scored.domains.map((d) => ({
     domain_key: d.key,
-    capability_domain_id: cdIds.get(d.key) ?? null,
+    domain_id: cdIds.get(d.key) ?? null,
     rung: d.rung,
     opportunity_low_cents: BigInt(d.opportunity[0]),
     opportunity_high_cents: BigInt(d.opportunity[1]),
@@ -78,7 +78,7 @@ export async function writeDomainResults(
 
 export type StoredDomainRow = {
   domain_key: string;
-  capability_domain_id: string | null;
+  domain_id: string | null;
   rung: number | null;
   opportunity_low_cents: bigint | null;
   opportunity_high_cents: bigint | null;

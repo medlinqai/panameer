@@ -21,10 +21,10 @@ export function shownSkills<T>(
 }
 
 export function selectedRoleIds(p: {
-  role_type_id?: string | null;
-  roles?: readonly { role_type_id: string }[] | null;
+  role_id?: string | null;
+  roles?: readonly { role_id: string }[] | null;
 }): string[] {
-  const ids = (p.roles ?? []).map((r) => r.role_type_id);
+  const ids = (p.roles ?? []).map((r) => r.role_id);
   if (ids.length > 0) return ids;
-  return p.role_type_id ? [p.role_type_id] : [];
+  return p.role_id ? [p.role_id] : [];
 }

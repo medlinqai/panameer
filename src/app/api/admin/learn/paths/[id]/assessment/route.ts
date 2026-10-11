@@ -21,9 +21,9 @@ export async function GET(
   const { id } = await params;
 
   const row = await prisma.certificationTest.findUnique({ where: { learning_path_id: id } });
-  const reviewer = row?.reviewed_by
+  const reviewer = row?.reviewed_by_person_id
     ? await prisma.person.findUnique({
-        where: { id: row.reviewed_by },
+        where: { id: row.reviewed_by_person_id },
         select: { first_name: true, last_name: true },
       })
     : null;

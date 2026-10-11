@@ -247,11 +247,11 @@ const rows = domainRowsFor(scoredFixture(), new Map([["invoices", "cd-invoices"]
 check("rows: one per domain in the bank", rows.length === P2P_DOMAINS.length, `${rows.length}`);
 check(
   "rows: a resolvable key gets its FK",
-  rows.find((r) => r.domain_key === "invoices")?.capability_domain_id === "cd-invoices"
+  rows.find((r) => r.domain_key === "invoices")?.domain_id === "cd-invoices"
 );
 check(
   "rows: an UNRESOLVABLE key writes the row with a null FK rather than failing",
-  rows.filter((r) => r.capability_domain_id === null).length === P2P_DOMAINS.length - 1
+  rows.filter((r) => r.domain_id === null).length === P2P_DOMAINS.length - 1
 );
 check(
   "rows: a 'Not sure' answer is a ROW with a null rung, not a missing row",

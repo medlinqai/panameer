@@ -11,16 +11,16 @@ test.beforeAll(async () => {
     data: { onboarding_completed_at: new Date() },
     select: { id: true },
   });
-  const roles = await db().roleType.findMany({ select: { id: true }, take: 2, orderBy: { name: "asc" } });
-  await db().providerProfileRole.create({ data: { provider_profile_id: pp.id, role_type_id: roles[0].id } });
+  const roles = await db().role.findMany({ select: { id: true }, take: 2, orderBy: { name: "asc" } });
+  await db().providerProfileRole.create({ data: { provider_profile_id: pp.id, role_id: roles[0].id } });
   // Three skills in the member's role plus one outside it: the profile hides the outsider, so must Usage.
-  const inRole = await db().skill.findMany({ where: { role_type_id: roles[0].id }, select: { id: true }, take: 3 });
-  const outRole = await db().skill.findFirst({ where: { role_type_id: roles[1].id }, select: { id: true } });
+  const inRole = await db().skill.findMany({ where: { role_id: roles[0].id }, select: { id: true }, take: 3 });
+  const outRole = await db().skill.findFirst({ where: { role_id: roles[1].id }, select: { id: true } });
   for (const s of [...inRole, ...(outRole ? [outRole] : [])])
     await db().providerSkill.create({ data: { provider_profile_id: pp.id, skill_id: s.id } });
   const specs = await db().specialization.findMany({ select: { id: true }, take: 2 });
   for (const s of specs) await db().providerProfileSpecialization.create({ data: { provider_profile_id: pp.id, specialization_id: s.id } });
-  await db().certification.create({ data: { user_id: f.provider.userId, provider_profile_id: pp.id, name: "Usage-counts test cert" } });
+  await db().credential.create({ data: { user_id: f.provider.userId, provider_profile_id: pp.id, name: "Usage-counts test cert" } });
 });
 test.afterAll(async () => dropFixture(f));
 

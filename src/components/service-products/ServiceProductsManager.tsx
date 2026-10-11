@@ -85,7 +85,7 @@ export function ServiceProductsManager({
       .then((r) => (r.ok ? r.json() : { packages: [], capabilityDomains: [] }))
       .then((d) => {
         setServiceProducts(d.packages ?? []);
-        setDomains(d.capabilityDomains ?? []);
+        setDomains(d.domains ?? []);
       })
       .catch(() => setError("We couldn't load your service products."))
       .finally(() => setLoading(false));

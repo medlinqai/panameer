@@ -118,7 +118,7 @@ export async function getStatistics(
       }),
       countWindowed(window, "completed_at", "lessonProgress", { user_id: userId }),
       countWindowed(window, "created_at", "learnEnrollment", { user_id: userId }),
-      prisma.certification.count({ where: { user_id: userId } }),
+      prisma.credential.count({ where: { user_id: userId } }),
       prisma.proposalRequest.count({
         where: { provider_person_id: personId, issued_at: { not: null } },
       }),
@@ -148,7 +148,7 @@ export async function getStatistics(
       where: { user_id: userId, completed_at: { gte: since } },
       select: { completed_at: true },
     }),
-    prisma.colleagueInvite.findMany({
+    prisma.invitationToJoin.findMany({
       where: { inviter_person_id: personId, created_at: { gte: since } },
       select: { created_at: true },
     }),
@@ -166,7 +166,7 @@ export async function getStatistics(
   const teaches = pathIds.length > 0;
   const [learners, lessonsByThem, questions, questionsWaiting] = teaches
     ? await Promise.all([
-        prisma.learnEnrollment
+        prisma.enrollment
           .findMany({
             where: { learning_path_id: { in: pathIds } },
             select: { user_id: true },

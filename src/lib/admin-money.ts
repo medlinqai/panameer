@@ -39,7 +39,7 @@ async function names(ids: string[]) {
 
 /** Approved payment requests the buyer still owes on (not yet PAID). */
 export async function openRequests(): Promise<OpenRequest[]> {
-  const rows = await prisma.settlementRequest.findMany({
+  const rows = await prisma.paymentRequest.findMany({
     where: { status: "APPROVED" },
     orderBy: { decided_at: "asc" },
     include: { lines: true },
@@ -55,18 +55,18 @@ export async function openRequests(): Promise<OpenRequest[]> {
   const accountName = new Map(accounts.map((a) => [a.id, a.name]));
   const who = await names(orders.flatMap((o) => [o.buyer_person_id, o.provider_person_id]));
   const alloc = await prisma.paymentLine.groupBy({
-    by: ["settlement_request_id"],
-    where: { settlement_request_id: { in: rows.map((r) => r.id) } },
+    by: ["payment_request_id"],
+    where: { payment_request_id: { in: rows.map((r) => r.id) } },
     _sum: { amount_cents: true },
   });
-  const allocated = new Map(alloc.map((a) => [a.settlement_request_id, a._sum.amount_cents ?? 0]));
+  const allocated = new Map(alloc.map((a) => [a.payment_request_id, a._sum.amount_cents ?? 0]));
   return rows.filter((r) => byOrder.has(r.work_order_id)).map((r) => {
     const o = byOrder.get(r.work_order_id)!;
     const total = r.lines.reduce((n, l) => n + settlementValue(l), 0);
     const got = allocated.get(r.id) ?? 0;
     return {
       id: r.id,
-      settlementNumber: r.settlement_number,
+      settlementNumber: r.payment_request_number,
       orderId: o.id,
       orderNumber: o.order_number,
       pAccountId: o.p_account_id,
@@ -119,9 +119,9 @@ export async function recordPayment(input: RecordPaymentInput): Promise<{ id: st
   const paid: string[] = [];
   const created = await prisma.$transaction(async (tx) => {
     // Re-read inside the transaction so two admins cannot both allocate the same balance.
-    await tx.$executeRaw`SELECT id FROM settlement_requests WHERE id = ANY(${allocations.map((a) => a.settlementId)}::uuid[]) FOR UPDATE`;
+    await tx.$executeRaw`SELECT id FROM payment_requests WHERE id = ANY(${allocations.map((a) => a.settlementId)}::uuid[]) FOR UPDATE`;
     for (const a of allocations) {
-      const done = await tx.paymentLine.aggregate({ where: { settlement_request_id: a.settlementId }, _sum: { amount_cents: true } });
+      const done = await tx.paymentLine.aggregate({ where: { payment_request_id: a.settlementId }, _sum: { amount_cents: true } });
       const r = open.get(a.settlementId)!;
       if ((done._sum.amount_cents ?? 0) + a.amountCents > r.totalCents)
         throw new MoneyError(`${r.settlementNumber} was just paid by another entry`, "OVER_ALLOCATED");
@@ -134,20 +134,20 @@ export async function recordPayment(input: RecordPaymentInput): Promise<{ id: st
         received_at: receivedAt,
         amount_cents: input.amountCents,
         status: paymentStatusFor(input.amountCents, allocations.map((a) => a.amountCents)),
-        lines: { create: allocations.map((a, i) => ({ line_number: i + 1, settlement_request_id: a.settlementId, amount_cents: a.amountCents })) },
+        lines: { create: allocations.map((a, i) => ({ line_number: i + 1, payment_request_id: a.settlementId, amount_cents: a.amountCents })) },
       },
       select: { id: true },
     });
     for (const a of allocations) {
       const r = open.get(a.settlementId)!;
       if (a.amountCents >= r.remainingCents) {
-        await tx.settlementRequest.updateMany({ where: { id: a.settlementId, status: "APPROVED" }, data: { status: "PAID" } });
+        await tx.paymentRequest.updateMany({ where: { id: a.settlementId, status: "APPROVED" }, data: { status: "PAID" } });
         paid.push(a.settlementId);
       }
     }
     return p;
   });
-  const orders = await prisma.settlementRequest.findMany({ where: { id: { in: paid } }, select: { work_order_id: true } });
+  const orders = await prisma.paymentRequest.findMany({ where: { id: { in: paid } }, select: { work_order_id: true } });
   for (const id of new Set(orders.map((o) => o.work_order_id))) await closeIfFullyPaid(id);
   return { id: created.id, paymentNumber, paid };
 }
@@ -168,11 +168,11 @@ export async function listPayments(): Promise<PaymentRow[]> {
   const rows = await prisma.payment.findMany({ orderBy: { received_at: "desc" }, include: { lines: true }, take: 500 });
   const accounts = await prisma.pAccount.findMany({ where: { id: { in: rows.map((r) => r.p_account_id) } }, select: { id: true, name: true } });
   const accountName = new Map(accounts.map((a) => [a.id, a.name]));
-  const reqs = await prisma.settlementRequest.findMany({
-    where: { id: { in: rows.flatMap((r) => r.lines.map((l) => l.settlement_request_id)) } },
-    select: { id: true, settlement_number: true },
+  const reqs = await prisma.paymentRequest.findMany({
+    where: { id: { in: rows.flatMap((r) => r.lines.map((l) => l.payment_request_id)) } },
+    select: { id: true, payment_request_number: true },
   });
-  const num = new Map(reqs.map((r) => [r.id, r.settlement_number]));
+  const num = new Map(reqs.map((r) => [r.id, r.payment_request_number]));
   return rows.map((r) => ({
     id: r.id,
     paymentNumber: r.payment_number,
@@ -182,7 +182,7 @@ export async function listPayments(): Promise<PaymentRow[]> {
     allocatedCents: r.lines.reduce((n, l) => n + l.amount_cents, 0),
     status: r.status,
     externalRef: r.external_ref,
-    requests: r.lines.map((l) => num.get(l.settlement_request_id) ?? "—"),
+    requests: r.lines.map((l) => num.get(l.payment_request_id) ?? "—"),
   }));
 }
 
@@ -199,7 +199,7 @@ export type PayoutRow = {
 };
 
 async function splitFor(settlementIds: string[]) {
-  const lines = await prisma.settlementLine.findMany({ where: { settlement_request_id: { in: settlementIds } } });
+  const lines = await prisma.paymentRequestLine.findMany({ where: { payment_request_id: { in: settlementIds } } });
   const fee = new Map(
     (await prisma.workOrderLine.findMany({ where: { id: { in: lines.map((l) => l.work_order_line_id) } }, select: { id: true, fee_bps: true } })).map(
       (l) => [l.id, l.fee_bps]
@@ -210,9 +210,9 @@ async function splitFor(settlementIds: string[]) {
 
 /** Requests the buyer has paid in full that have not been paid out to the provider yet. */
 export async function payoutQueue(): Promise<PayoutRow[]> {
-  const paid = await prisma.settlementRequest.findMany({ where: { status: "PAID" }, orderBy: { updated_at: "asc" }, select: { id: true, settlement_number: true, work_order_id: true, provider_person_id: true, currency: true, lines: { select: { id: true } } } });
+  const paid = await prisma.paymentRequest.findMany({ where: { status: "PAID" }, orderBy: { updated_at: "asc" }, select: { id: true, payment_request_number: true, work_order_id: true, provider_person_id: true, currency: true, lines: { select: { id: true } } } });
   const done = new Set(
-    (await prisma.providerPayoutLine.findMany({ where: { settlement_line_id: { in: paid.flatMap((p) => p.lines.map((l) => l.id)) } }, select: { settlement_line_id: true } })).map((l) => l.settlement_line_id)
+    (await prisma.providerPayoutLine.findMany({ where: { payment_request_line_id: { in: paid.flatMap((p) => p.lines.map((l) => l.id)) } }, select: { payment_request_line_id: true } })).map((l) => l.payment_request_line_id)
   );
   const todo = paid.filter((p) => p.lines.length > 0 && !p.lines.some((l) => done.has(l.id)));
   if (todo.length === 0) return [];
@@ -220,10 +220,10 @@ export async function payoutQueue(): Promise<PayoutRow[]> {
   const orders = new Map((await prisma.workOrder.findMany({ where: { id: { in: todo.map((t) => t.work_order_id) } }, select: { id: true, order_number: true } })).map((o) => [o.id, o.order_number]));
   const who = await names(todo.map((t) => t.provider_person_id));
   return todo.map((t) => {
-    const mine = split.filter((l) => l.settlement_request_id === t.id);
+    const mine = split.filter((l) => l.payment_request_id === t.id);
     return {
       settlementId: t.id,
-      settlementNumber: t.settlement_number,
+      settlementNumber: t.payment_request_number,
       orderNumber: orders.get(t.work_order_id) ?? "—",
       providerPersonId: t.provider_person_id,
       providerName: who.get(t.provider_person_id) ?? "A provider",
@@ -245,8 +245,8 @@ export async function recordPayout(input: { settlementId: string; method: string
   const lines = await splitFor([row.settlementId]);
   const payoutNumber = `PO-${randomBytes(3).toString("hex").toUpperCase()}`;
   await prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT id FROM settlement_requests WHERE id = ${row.settlementId}::uuid FOR UPDATE`;
-    const already = await tx.providerPayoutLine.count({ where: { settlement_line_id: { in: lines.map((l) => l.id) } } });
+    await tx.$executeRaw`SELECT id FROM payment_requests WHERE id = ${row.settlementId}::uuid FOR UPDATE`;
+    const already = await tx.providerPayoutLine.count({ where: { payment_request_line_id: { in: lines.map((l) => l.id) } } });
     if (already > 0) throw new MoneyError("Already paid out", "INVALID");
     await tx.providerPayout.create({
       data: {
@@ -261,7 +261,7 @@ export async function recordPayout(input: { settlementId: string; method: string
         method: input.method,
         external_ref: input.externalRef?.trim() || null,
         lines: {
-          create: lines.map((l, i) => ({ line_number: i + 1, settlement_line_id: l.id, gross_cents: l.gross_cents, fee_cents: l.fee_cents, net_cents: l.net_cents })),
+          create: lines.map((l, i) => ({ line_number: i + 1, payment_request_line_id: l.id, gross_cents: l.gross_cents, fee_cents: l.fee_cents, net_cents: l.net_cents })),
         },
       },
     });
@@ -305,13 +305,13 @@ export type AdminOrderRow = {
 /** Every work order on the platform, with the money position of each. Admin only. */
 export async function adminWorkOrders(): Promise<AdminOrderRow[]> {
   const orders = await prisma.workOrder.findMany({ orderBy: { created_at: "desc" }, take: 1000, include: { lines: true } });
-  const settlements = await prisma.settlementRequest.findMany({
+  const settlements = await prisma.paymentRequest.findMany({
     where: { work_order_id: { in: orders.map((o) => o.id) }, status: { in: ["APPROVED", "PAID"] } },
     include: { lines: true },
   });
   const paidBy = new Map(
-    (await prisma.paymentLine.groupBy({ by: ["settlement_request_id"], where: { settlement_request_id: { in: settlements.map((s) => s.id) } }, _sum: { amount_cents: true } })).map(
-      (g) => [g.settlement_request_id, g._sum.amount_cents ?? 0]
+    (await prisma.paymentLine.groupBy({ by: ["payment_request_id"], where: { payment_request_id: { in: settlements.map((s) => s.id) } }, _sum: { amount_cents: true } })).map(
+      (g) => [g.payment_request_id, g._sum.amount_cents ?? 0]
     )
   );
   const who = await names(orders.flatMap((o) => [o.buyer_person_id, o.provider_person_id]));
@@ -342,19 +342,19 @@ export type AdminRequestRow = {
 
 /** Every payment request (settlement) on the platform. Admin only. */
 export async function adminSettlements(): Promise<AdminRequestRow[]> {
-  const rows = await prisma.settlementRequest.findMany({ orderBy: { created_at: "desc" }, take: 1000, include: { lines: true } });
+  const rows = await prisma.paymentRequest.findMany({ orderBy: { created_at: "desc" }, take: 1000, include: { lines: true } });
   const orders = new Map(
     (await prisma.workOrder.findMany({ where: { id: { in: rows.map((r) => r.work_order_id) } }, select: { id: true, order_number: true, buyer_person_id: true } })).map((o) => [o.id, o])
   );
   const who = await names([...rows.map((r) => r.provider_person_id), ...[...orders.values()].map((o) => o.buyer_person_id)]);
   const out = new Set(
-    (await prisma.providerPayoutLine.findMany({ where: { settlement_line_id: { in: rows.flatMap((r) => r.lines.map((l) => l.id)) } }, select: { settlement_line_id: true } })).map((l) => l.settlement_line_id)
+    (await prisma.providerPayoutLine.findMany({ where: { payment_request_line_id: { in: rows.flatMap((r) => r.lines.map((l) => l.id)) } }, select: { payment_request_line_id: true } })).map((l) => l.payment_request_line_id)
   );
   return rows.map((r) => {
     const o = orders.get(r.work_order_id);
     return {
       id: r.id,
-      settlementNumber: r.settlement_number,
+      settlementNumber: r.payment_request_number,
       orderNumber: o?.order_number ?? "—",
       status: r.status,
       providerName: who.get(r.provider_person_id) ?? "—",

@@ -1,5 +1,5 @@
 import { assertCanSign, nudgeTaxBanking } from "@/lib/your-path";
-import { BillingCycle, PaymentTerms, PaymentTrigger, Prisma, TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
+import { BillingCycle, PaymentTerms, PaymentEvent, Prisma, TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
 import { notify } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { feeSplit, pricedByQuantity } from "@/lib/transaction-spine";
@@ -379,7 +379,7 @@ export type OrderLineView = {
   feeBps: number;
   billingCycle: BillingCycle | null;
   paymentTerms: PaymentTerms | null;
-  paymentTrigger: PaymentTrigger | null;
+  paymentTrigger: PaymentEvent | null;
 };
 
 export type OrderDetail = {
@@ -523,7 +523,7 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
       feeBps: l.fee_bps,
       billingCycle: l.billing_cycle,
       paymentTerms: l.payment_terms,
-      paymentTrigger: l.payment_trigger,
+      paymentTrigger: l.payment_event,
     };
   });
 
@@ -539,7 +539,7 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
   const hourLines = lines.filter((l) => pricedByQuantity(l.transaction_type) && (l.uom ?? "HOUR").toUpperCase().startsWith("HOUR"));
   const hoursOrdered = hourLines.reduce((n, l) => n + Number(l.quantity ?? 0), 0);
   const hoursClaimed = hourLines.reduce((n, l) => n + Number(l.drawn_quantity ?? 0), 0);
-  const decided = await prisma.settlementRequest.findMany({
+  const decided = await prisma.paymentRequest.findMany({
     where: { work_order_id: o.id, status: { in: ["APPROVED", "PAID"] } },
     select: { id: true, lines: { select: { basis: true, quantity: true, unit_price_cents: true, amount_cents: true } } },
   });
@@ -547,7 +547,7 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     (n, s) => n + s.lines.reduce((m, l) => m + (l.basis === "RATE" ? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0)) : l.amount_cents ?? 0), 0),
     0
   );
-  const paidAgg = await prisma.paymentLine.aggregate({ where: { settlement_request_id: { in: decided.map((s) => s.id) } }, _sum: { amount_cents: true } });
+  const paidAgg = await prisma.paymentLine.aggregate({ where: { payment_request_id: { in: decided.map((s) => s.id) } }, _sum: { amount_cents: true } });
 
   return {
     id: o.id,
@@ -591,7 +591,7 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     controls: availableControls({ ...o, erp: !!o.erp_connection_id }, party),
     frozen: !!o.frozen_at,
     erp: !!o.erp_connection_id,
-    pendingRequests: await prisma.settlementRequest.count({ where: { work_order_id: o.id, status: "SUBMITTED" } }),
+    pendingRequests: await prisma.paymentRequest.count({ where: { work_order_id: o.id, status: "SUBMITTED" } }),
     activationMessage: activationMessage(o.status, party),
     hasChanges: views.some((v) => v.changes.length > 0),
   };
@@ -751,7 +751,7 @@ export async function controlOrder(viewer: Viewer, id: string, action: OrderCont
     case "CLOSE": data = { status: "CLOSED" }; break;
     case "REOPEN": data = { status: "RELEASED" }; break;
     case "FINALLY_CLOSE": {
-      const pending = await prisma.settlementRequest.count({ where: { work_order_id: id, status: "SUBMITTED" } });
+      const pending = await prisma.paymentRequest.count({ where: { work_order_id: id, status: "SUBMITTED" } });
       if (pending > 0) throw new OrderError("Approve or reject the pending payment request first.", "INVALID");
       data = { status: "FINALLY_CLOSED", frozen_at: null };
       break;
@@ -786,9 +786,9 @@ export async function closeIfFullyPaid(orderId: string): Promise<boolean> {
   if (!o || (o.status !== "RELEASED" && o.status !== "ACTIVE")) return false;
   const value = o.lines.reduce((n, l) => n + (l.amount_cents ?? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0))), 0);
   const cap = o.not_to_exceed_cents ?? value;
-  const requests = await prisma.settlementRequest.findMany({ where: { work_order_id: orderId }, select: { id: true, status: true } });
+  const requests = await prisma.paymentRequest.findMany({ where: { work_order_id: orderId }, select: { id: true, status: true } });
   if (requests.some((r) => r.status === "SUBMITTED" || r.status === "APPROVED")) return false;
-  const paid = await prisma.paymentLine.aggregate({ where: { settlement_request_id: { in: requests.map((r) => r.id) } }, _sum: { amount_cents: true } });
+  const paid = await prisma.paymentLine.aggregate({ where: { payment_request_id: { in: requests.map((r) => r.id) } }, _sum: { amount_cents: true } });
   if ((paid._sum.amount_cents ?? 0) < cap || cap <= 0) return false;
   const done = await prisma.workOrder.updateMany({ where: { id: orderId, status: { in: ["RELEASED", "ACTIVE"] } }, data: { status: "CLOSED" } });
   return done.count === 1;

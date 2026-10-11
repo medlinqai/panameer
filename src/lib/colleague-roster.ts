@@ -70,10 +70,10 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       providerProfile: {
         select: {
           id: true,
-          skills: { select: { skill_id: true, skill: { select: { name: true, role_type_id: true } } } },
+          skills: { select: { skill_id: true, skill: { select: { name: true, role_id: true } } } },
           employers: { select: { name: true } },
-          role_type_id: true,
-          roles: { select: { role_type_id: true } },
+          role_id: true,
+          roles: { select: { role_id: true } },
         },
       },
     },
@@ -95,7 +95,7 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
     (mine?.providerProfile?.employers ?? []).map((e) => (e.name ?? "").trim().toLowerCase())
   );
 
-  const enrolments = await prisma.learnEnrollment.findMany({
+  const enrolments = await prisma.enrollment.findMany({
     where: { user_id: { in: [me, ...otherIds] } },
     select: { user_id: true, learning_path_id: true },
   });
@@ -177,7 +177,7 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
         ? shownSkills(
             selectedRoleIds(p.providerProfile),
             p.providerProfile.skills,
-            (s) => s.skill.role_type_id
+            (s) => s.skill.role_id
           ).map((s) => s.skill.name)
         : [],
       reason,

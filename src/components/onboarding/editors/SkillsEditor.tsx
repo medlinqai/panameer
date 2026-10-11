@@ -29,7 +29,7 @@ export type SkillName = {
 export type SkillOpt = {
   id: string;
   name: string;
-  roleType: { display: string } | null;
+  role: { display: string } | null;
   pillar?: { id: string; name: string } | null;
 };
 

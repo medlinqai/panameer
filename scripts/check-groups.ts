@@ -150,7 +150,7 @@ async function main() {
   let lost = 0;
   for (const b of boards.filter((x) => x.learning_path_id)) {
     const [enrolled, taught, members] = await Promise.all([
-      prisma.learnEnrollment.findMany({
+      prisma.enrollment.findMany({
         where: { learning_path_id: b.learning_path_id! },
         select: { user: { select: { person: { select: { id: true } } } } },
       }),
@@ -252,7 +252,7 @@ async function main() {
     const boardForPath = new Map(pathBoards.map((b) => [b.learning_path_id!, b.id]));
 
     /* SIDE A — every enrolled member, as (board, person). */
-    const enrolments = await prisma.learnEnrollment.findMany({
+    const enrolments = await prisma.enrollment.findMany({
       select: {
         learning_path_id: true,
         user: { select: { person: { select: { id: true } } } },

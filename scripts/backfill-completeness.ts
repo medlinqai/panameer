@@ -23,7 +23,7 @@ async function main() {
       status: true,
       paused_at: true,
       completeness: true,
-      role_type_id: true,
+      role_id: true,
       hourly_rate_cents: true,
       rate_min_cents: true,
       rate_max_cents: true,

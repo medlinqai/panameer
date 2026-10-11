@@ -65,7 +65,7 @@ export async function recomputeProviderRollup(
       end_date: true,
       is_current: true,
       software_suite: true,
-      job_role_type_id: true,
+      job_role_id: true,
       skills: { select: { skill_id: true } },
     },
   });
@@ -182,19 +182,19 @@ export async function recomputeProviderRollup(
 
   const roleWeight = new Map<string, number>();
   for (const e of employers) {
-    if (!e.job_role_type_id) continue;
+    if (!e.job_role_id) continue;
     const months = monthsBetween(e.start_date, e.end_date, e.is_current, now);
     if (!months) continue;
     roleWeight.set(
-      e.job_role_type_id,
-      (roleWeight.get(e.job_role_type_id) ?? 0) + months * recency(e.end_date, now)
+      e.job_role_id,
+      (roleWeight.get(e.job_role_id) ?? 0) + months * recency(e.end_date, now)
     );
   }
   const primaryRole = [...roleWeight.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
   if (primaryRole) {
     await tx.providerProfile.update({
       where: { id: providerProfileId },
-      data: { role_type_id: primaryRole },
+      data: { role_id: primaryRole },
     });
   }
 

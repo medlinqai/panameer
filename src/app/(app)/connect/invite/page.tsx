@@ -21,7 +21,7 @@ export default async function JoinPanameerPage() {
 
   const allowance = await inviteAllowance(person.id);
 
-  const sent = await prisma.colleagueInvite.findMany({
+  const sent = await prisma.invitationToJoin.findMany({
     where: { inviter_person_id: person.id },
     orderBy: { created_at: "desc" },
     take: 25,

@@ -74,7 +74,7 @@ export async function getProviderSettings(viewer: Viewer) {
       },
       region: { select: { id: true, name: true } },
       skills: {
-        include: { skill: { select: { id: true, role_type_id: true, name: true } } },
+        include: { skill: { select: { id: true, role_id: true, name: true } } },
       },
       employers: {
         orderBy: [{ sort_order: "asc" }, { start_date: "desc" }],
@@ -82,7 +82,7 @@ export async function getProviderSettings(viewer: Viewer) {
       },
       education: { orderBy: { created_at: "asc" } },
       languages: { orderBy: { created_at: "asc" } },
-      certifications: { orderBy: { created_at: "asc" } },
+      credentials: { orderBy: { created_at: "asc" } },
     },
   });
   if (!profile) {
@@ -96,7 +96,7 @@ export async function getProviderSettings(viewer: Viewer) {
     headline: profile.person.title ?? "",
     overview: profile.overview ?? "",
     workTypes: profile.work_types,
-    roleTypeId: profile.skills[0]?.skill.role_type_id ?? null,
+    roleTypeId: profile.skills[0]?.skill.role_id ?? null,
     skillIds: profile.skills.map((s) => s.skill_id),
     skillNames: profile.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),
     onsiteRateCents: profile.onsite_rate_cents,
@@ -141,7 +141,7 @@ export async function getProviderSettings(viewer: Viewer) {
       proficiency: l.proficiency,
       level: l.level,
     })),
-    certifications: profile.certifications.map((c) => ({
+    certifications: profile.credentials.map((c) => ({
       name: c.name,
       issuer: c.issuer,
       year: c.year,

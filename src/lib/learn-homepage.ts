@@ -58,16 +58,16 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
     prisma.learningPath.findMany({
       where: { status: "PUBLISHED" },
       select: {
-        id: true, title: true, slug: true, group: true, pillar: true, expert_person_id: true,
-        expert: { select: { first_name: true, last_name: true } },
+        id: true, title: true, slug: true, group: true, pillar: true, instructor_person_id: true,
+        instructor: { select: { first_name: true, last_name: true } },
         assessment: { select: { status: true } },
         skills: { select: { skill: { select: { area: true } } } },
         _count: { select: { enrollments: true, credentials: true } },
       },
     }),
-    prisma.learnEnrollment.findMany({ where: { user_id: userId }, select: { learning_path_id: true, created_at: true } }),
+    prisma.enrollment.findMany({ where: { user_id: userId }, select: { learning_path_id: true, created_at: true } }),
     prisma.lessonProgress.findMany({ where: { user_id: userId }, select: { lesson_id: true, completed_at: true } }),
-    prisma.certification.findMany({ where: { user_id: userId, learning_path_id: { not: null } }, select: { learning_path_id: true, issued_on: true, created_at: true } }),
+    prisma.credential.findMany({ where: { user_id: userId, learning_path_id: { not: null } }, select: { learning_path_id: true, issued_on: true, created_at: true } }),
   ]);
   const lessons = await lessonsByPath(paths.map((p) => p.id));
   const beginner = enrollments.length === 0 && (await profileYears(userId)) < 2;
@@ -108,7 +108,7 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
       const completed = p._count.credentials;
       return {
         id: p.id, slug: p.slug, title: p.title, area: areaOf(p), group: p.group,
-        teacher: p.expert ? nameOf(p.expert) : null,
+        teacher: p.instructor ? nameOf(p.instructor) : null,
         lessons: (lessons.get(p.id) ?? []).length,
         length: lengthLabel(lessons.get(p.id) ?? []),
         learners, completed,
@@ -135,7 +135,7 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
     certificates: myCerts.filter((c) => certAt(c) >= monthAgo).length,
     lessonsDone: myProgress.filter((x) => x.completed_at >= monthAgo).length,
   };
-  const teachers = new Set(paths.map((p) => p.expert_person_id).filter(Boolean)).size;
+  const teachers = new Set(paths.map((p) => p.instructor_person_id).filter(Boolean)).size;
   return {
     firstVisit: enrollments.length === 0 && myProgress.length === 0,
     focus: focus
@@ -160,7 +160,7 @@ export type BoardRow = { personId: string; userId: string | null; name: string; 
 async function finishes() {
   const paths = await prisma.learningPath.findMany({
     where: { status: "PUBLISHED" },
-    select: { id: true, expert_person_id: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { id: true, vimeo_ref: true, production_status: true, expert_person_id: true } } } } } } },
+    select: { id: true, instructor_person_id: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { id: true, vimeo_ref: true, production_status: true, instructor_person_id: true } } } } } } },
   });
   const pathOf = new Map<string, string>();
   const total = new Map<string, number>();
@@ -191,7 +191,7 @@ export async function topLearners(window: "month" | "all"): Promise<BoardRow[]> 
   const since = window === "month" ? monthStart() : new Date(0);
   const [{ finished, progress }, certs] = await Promise.all([
     finishes(),
-    prisma.certification.findMany({ where: { learning_path_id: { not: null }, created_at: { gte: since } }, select: { user_id: true, learning_path_id: true } }),
+    prisma.credential.findMany({ where: { learning_path_id: { not: null }, created_at: { gte: since } }, select: { user_id: true, learning_path_id: true } }),
   ]);
   const tally = new Map<string, { paths: Set<string>; certs: number; lessons: number }>();
   const row = (u: string) => tally.get(u) ?? (tally.set(u, { paths: new Set(), certs: 0, lessons: 0 }), tally.get(u)!);
@@ -215,15 +215,15 @@ export async function topTeachers(window: "month" | "all"): Promise<BoardRow[]> 
   // The instructor: the path's expert, else whoever fronts the most lessons.
   const teacherOf = new Map<string, string>();
   for (const p of paths) {
-    let t = p.expert_person_id;
+    let t = p.instructor_person_id;
     if (!t) {
       const c = new Map<string, number>();
-      for (const l of p.courses.flatMap((x) => x.sections.flatMap((s) => s.lessons))) if (l.expert_person_id) c.set(l.expert_person_id, (c.get(l.expert_person_id) ?? 0) + 1);
+      for (const l of p.courses.flatMap((x) => x.sections.flatMap((s) => s.lessons))) if (l.instructor_person_id) c.set(l.instructor_person_id, (c.get(l.instructor_person_id) ?? 0) + 1);
       t = [...c].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
     }
     if (t) teacherOf.set(p.id, t);
   }
-  const enr = await prisma.learnEnrollment.findMany({ where: { learning_path_id: { in: [...teacherOf.keys()] }, created_at: { gte: since } }, select: { learning_path_id: true, user_id: true } });
+  const enr = await prisma.enrollment.findMany({ where: { learning_path_id: { in: [...teacherOf.keys()] }, created_at: { gte: since } }, select: { learning_path_id: true, user_id: true } });
   const ids = [...new Set(teacherOf.values())];
   const stat = new Map(ids.map((id) => [id, { paths: 0, learners: new Set<string>(), done: 0 }]));
   for (const [pathId, t] of teacherOf) stat.get(t)!.paths++;

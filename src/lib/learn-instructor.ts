@@ -4,16 +4,16 @@ import { isPlayable } from "@/lib/learn";
 
 // L-E035..L-E038: the instructor hears when a trainee enrolls and finishes, so they can follow up and get feedback.
 
-/** The path's instructor: `expert_person_id`, else whoever fronts the most lessons in the path. */
+/** The path's instructor: `instructor_person_id`, else whoever fronts the most lessons in the path. */
 export async function pathInstructor(pathId: string): Promise<string | null> {
   const p = await prisma.learningPath.findUnique({
     where: { id: pathId },
-    select: { expert_person_id: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { expert_person_id: true } } } } } } },
+    select: { instructor_person_id: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { instructor_person_id: true } } } } } } },
   });
   if (!p) return null;
-  if (p.expert_person_id) return p.expert_person_id;
+  if (p.instructor_person_id) return p.instructor_person_id;
   const tally = new Map<string, number>();
-  for (const c of p.courses) for (const s of c.sections) for (const l of s.lessons) if (l.expert_person_id) tally.set(l.expert_person_id, (tally.get(l.expert_person_id) ?? 0) + 1);
+  for (const c of p.courses) for (const s of c.sections) for (const l of s.lessons) if (l.instructor_person_id) tally.set(l.instructor_person_id, (tally.get(l.instructor_person_id) ?? 0) + 1);
   return [...tally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 }
 
@@ -76,7 +76,7 @@ export async function teachesEnrolled(userA: string, userB: string): Promise<boo
   const pb = people.find((p) => p.user_id === userB)?.id;
   if (!pa || !pb) return false;
   for (const [teacher, learnerUser] of [[pa, userB], [pb, userA]] as const) {
-    const enrolled = await prisma.learnEnrollment.findMany({ where: { user_id: learnerUser }, select: { learning_path_id: true } });
+    const enrolled = await prisma.enrollment.findMany({ where: { user_id: learnerUser }, select: { learning_path_id: true } });
     for (const e of enrolled) if ((await pathInstructor(e.learning_path_id)) === teacher) return true;
   }
   return false;

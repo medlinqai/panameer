@@ -41,7 +41,7 @@ function routes(dir = "src/app", out: string[] = []): string[] {
     prisma.learningPath.count(),
     prisma.lesson.count(),
     prisma.course.count(),
-    prisma.section.count(),
+    prisma.courseSection.count(),
   ]);
   check("1 — ⚠ the catalogue is non-empty, so these assertions mean something (E586)",
     paths > 0 && lessons > 0, `${paths} paths · ${lessons} lessons`);

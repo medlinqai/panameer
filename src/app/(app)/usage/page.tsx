@@ -46,7 +46,7 @@ export default async function MyStatsPage({
       updated_at: true,
       created_at: true,
       onboarding_completed_at: true,
-      role_type_id: true,
+      role_id: true,
       hourly_rate_cents: true,
       rate_min_cents: true,
       rate_max_cents: true,
@@ -136,7 +136,7 @@ export default async function MyStatsPage({
       prisma.serviceProductOffer.count({
         where: { provider_person_id: profile.person_id },
       }),
-      prisma.settlementRequest.count({
+      prisma.paymentRequest.count({
         where: { provider_person_id: profile.person_id, status: "SUBMITTED" },
       }),
       // Pay (usage v4): settled earnings = the member's payouts, net of fee, in dollars.

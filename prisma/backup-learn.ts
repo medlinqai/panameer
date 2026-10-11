@@ -18,7 +18,7 @@ import { createHash } from "crypto";
  * THREE of `Lesson`'s twelve scalar fields: `id`, `title`, `thumbnail_url`.
  * Measured on 2026-08-30 against the live database, its output contained:
  *
- *   · ZERO occurrences of `expert` — so all 522 lessons' `expert_person_id` is
+ *   · ZERO occurrences of `expert` — so all 522 lessons' `instructor_person_id` is
  *     absent, which is the ONLY irreplaceable data here (Scott 338, Linus 70,
  *     Marelise 33, Eddie 25, 56 unattributed);
  *   · ZERO occurrences of `vimeo` — 305 lessons carry a `vimeo_ref`;
@@ -43,11 +43,11 @@ import { createHash } from "crypto";
  * The parent links (`learning_path_id`, `course_id`, `section_id`) are scalars,
  * so the tree is fully reconstructable from them.
  *
- * ⚠ EXPERTS ARE RESOLVED TO EMAIL AS WELL AS ID. `expert_person_id` is a uuid
+ * ⚠ EXPERTS ARE RESOLVED TO EMAIL AS WELL AS ID. `instructor_person_id` is a uuid
  * that would not survive a rebuild of the Person table; the email is the stable
  * identity the seeder already keys on. Both are stored so a restore can match on
  * whichever still exists. ⚠ This mirrors the standing rule that the protected
- * set is derived from `learn_lessons.expert_person_id` AT RUNTIME rather than
+ * set is derived from `learn_lessons.instructor_person_id` AT RUNTIME rather than
  * from a name list.
  *
  * ⚠ READ-ONLY. There is no create/update/upsert/delete anywhere in this file,
@@ -66,7 +66,7 @@ async function read() {
   const [paths, courses, sections, lessons] = await Promise.all([
     p.learningPath.findMany({ orderBy: { id: "asc" } }),
     p.course.findMany({ orderBy: { id: "asc" } }),
-    p.section.findMany({ orderBy: { id: "asc" } }),
+    p.courseSection.findMany({ orderBy: { id: "asc" } }),
     p.lesson.findMany({ orderBy: { id: "asc" } }),
   ]);
 
@@ -74,8 +74,8 @@ async function read() {
   const ids = [
     ...new Set(
       [
-        ...lessons.map((l) => l.expert_person_id),
-        ...paths.map((x) => x.expert_person_id),
+        ...lessons.map((l) => l.instructor_person_id),
+        ...paths.map((x) => x.instructor_person_id),
       ].filter((x): x is string => !!x)
     ),
   ].sort();
@@ -116,7 +116,7 @@ async function main() {
      so the number reported is provably the number stored. */
   const attribution = new Map<string, number>();
   for (const l of data.lessons) {
-    const k = l.expert_person_id ?? "(unattributed)";
+    const k = l.instructor_person_id ?? "(unattributed)";
     attribution.set(k, (attribution.get(k) ?? 0) + 1);
   }
   const nameOf = (id: string) => {
@@ -179,8 +179,8 @@ async function main() {
 
     /* Attribution, recounted FROM THE FILE — the point of the whole exercise. */
     const fileAttr = new Map<string, number>();
-    for (const l of onDisk.lessons as { expert_person_id: string | null }[]) {
-      const k = l.expert_person_id ?? "(unattributed)";
+    for (const l of onDisk.lessons as { instructor_person_id: string | null }[]) {
+      const k = l.instructor_person_id ?? "(unattributed)";
       fileAttr.set(k, (fileAttr.get(k) ?? 0) + 1);
     }
     console.log("  attribution recovered FROM THE FILE:");

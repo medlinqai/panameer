@@ -88,13 +88,13 @@ export async function helpfulAnswersByPerson(
   if (personIds.length === 0) return new Map();
   // SELECT-THEN-COUNT, NOT A `where` FILTER ON THE COLUMN, AND THAT IS
   const posts = await prisma.forumPost.findMany({
-    where: { author_id: { in: personIds } },
-    select: { author_id: true, marked_helpful_at: true },
+    where: { author_person_id: { in: personIds } },
+    select: { author_person_id: true, marked_helpful_at: true },
   });
   const counts = new Map<string, number>();
   for (const p of posts) {
     if (p.marked_helpful_at === null) continue;
-    counts.set(p.author_id, (counts.get(p.author_id) ?? 0) + 1);
+    counts.set(p.author_person_id, (counts.get(p.author_person_id) ?? 0) + 1);
   }
   return counts;
 }

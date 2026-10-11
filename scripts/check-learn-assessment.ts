@@ -199,7 +199,7 @@ check(
 );
 check(
   "GUARD 2 — replacing a DRAFT voids any prior review",
-  /status: "DRAFT",[\s\S]{0,80}reviewed_by: null/.test(batch)
+  /status: "DRAFT",[\s\S]{0,80}reviewed_by_person_id: null/.test(batch)
 );
 
 // ---------------------------------------------------------------------------

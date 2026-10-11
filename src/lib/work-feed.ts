@@ -146,7 +146,7 @@ export async function getWorkFeed(input: {
       location_country: true,
       worksite: true,
       posted_at: true,
-      roleType: { select: { display: true, name: true } },
+      role: { select: { display: true, name: true } },
       // — the poster, their company and their account. All of it
       company_visibility: true,
       company_code_name: true,
@@ -230,7 +230,7 @@ export async function getWorkFeed(input: {
     duration: pretty(w.duration),
     location: w.location_country,
     worksite: pretty(w.worksite),
-    roleType: roleLong(w.roleType?.display ?? w.roleType?.name ?? null),
+    roleType: roleLong(w.role?.display ?? w.role?.name ?? null),
     companyName: identityFor(w).companyName,
     companyLogoUrl: identityFor(w).companyLogoUrl,
     identity: identityFor(w),

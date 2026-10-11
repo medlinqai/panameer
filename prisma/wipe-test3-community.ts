@@ -73,7 +73,7 @@ async function main() {
     identifiers, the same belt-and-braces the connection-graph wipe uses.
   */
   const hashes = INVITES.map((i) => seedTokenHash(i.email));
-  const invs = await prisma.colleagueInvite.findMany({
+  const invs = await prisma.invitationToJoin.findMany({
     where: { id: { in: madeInvites }, token_hash: { in: hashes } },
     select: { id: true, invitee_email: true },
   });
@@ -85,7 +85,7 @@ async function main() {
   }
 
   await prisma.connection.deleteMany({ where: { id: { in: conns.map((c) => c.id) } } });
-  await prisma.colleagueInvite.deleteMany({ where: { id: { in: invs.map((i) => i.id) } } });
+  await prisma.invitationToJoin.deleteMany({ where: { id: { in: invs.map((i) => i.id) } } });
   unlinkSync(MANIFEST_PATH);
 
   console.log(

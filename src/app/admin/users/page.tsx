@@ -128,7 +128,7 @@ export default async function Page({
   ]);
   const [proposers, requesters] = await Promise.all([
     prisma.proposal.findMany({ where: { submitted_at: { not: null } }, select: { provider_person_id: true }, distinct: ["provider_person_id"] }),
-    prisma.settlementRequest.findMany({ where: { submitted_at: { not: null } }, select: { provider_person_id: true }, distinct: ["provider_person_id"] }),
+    prisma.paymentRequest.findMany({ where: { submitted_at: { not: null } }, select: { provider_person_id: true }, distinct: ["provider_person_id"] }),
   ]);
   const proposed = new Set(proposers.map((x) => x.provider_person_id));
   const requested = new Set(requesters.map((x) => x.provider_person_id));

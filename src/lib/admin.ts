@@ -96,7 +96,7 @@ export async function getAdminDashboard(viewer: Viewer) {
           completeness: true,
           validation_status: true,
           paused_at: true,
-          role_type_id: true,
+          role_id: true,
           hourly_rate_cents: true,
           rate_min_cents: true,
           rate_max_cents: true,

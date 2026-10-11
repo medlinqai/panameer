@@ -249,7 +249,7 @@ type SpecializationGroup = {
 type SkillOpt = {
   id: string;
   name: string;
-  roleType: { display: string } | null;
+  role: { display: string } | null;
   /** The DOMAIN. Still on every row — it disambiguates two skills that share
    *  a label under different domains — even though it left the UI as a tier. */
   pillar?: { id: string; name: string } | null;

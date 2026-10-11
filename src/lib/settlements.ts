@@ -4,7 +4,7 @@ import { queueWorkConfirmation } from "@/lib/erp/settlement";
 import { notify } from "@/lib/notifications";
 import { providerPayReady } from "@/lib/your-path";
 import { randomBytes } from "node:crypto";
-import { LineBasis, Prisma, SettlementStatus, TransactionType } from "@prisma/client";
+import { LineBasis, Prisma, PaymentRequestStatus, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import {
@@ -142,9 +142,9 @@ export async function settleFormFor(viewer: Viewer, orderId: string): Promise<Se
 
 /** Cents already settled against this order, for `E388`'s rule 4 (not-to-exceed). */
 async function settledCentsFor(orderId: string, db: Prisma.TransactionClient = prisma): Promise<number> {
-  const rows = await db.settlementLine.findMany({
+  const rows = await db.paymentRequestLine.findMany({
     where: {
-      settlementRequest: {
+      paymentRequest: {
         work_order_id: orderId,
         // A REJECTED SETTLEMENT DOES NOT CONSUME THE CAP. It was refused, so
         status: { in: ["DRAFT", "SUBMITTED", "APPROVED", "PAID"] },
@@ -202,10 +202,10 @@ export async function createSettlement(
 
   let resubmitsId: string | null = null;
   if (input.resubmitsId) {
-    const prev = await prisma.settlementRequest.findUnique({ where: { id: input.resubmitsId }, select: { id: true, work_order_id: true, status: true } });
+    const prev = await prisma.paymentRequest.findUnique({ where: { id: input.resubmitsId }, select: { id: true, work_order_id: true, status: true } });
     if (!prev || prev.work_order_id !== o.id) throw new SettlementError("That request is not on this work order", "INVALID");
     if (prev.status !== "REJECTED") throw new SettlementError("Only a sent-back request can be resubmitted", "INVALID");
-    if (await prisma.settlementRequest.count({ where: { resubmits_id: prev.id } }))
+    if (await prisma.paymentRequest.count({ where: { resubmits_id: prev.id } }))
       throw new SettlementError("That request has already been resubmitted", "INVALID");
     resubmitsId = prev.id;
   }
@@ -301,9 +301,9 @@ export async function createSettlement(
     });
 
     // THE PERSISTED ROWS ARE THE PROVIDER'S OWN — one per timesheet day, one for
-    const created = await tx.settlementRequest.create({
+    const created = await tx.paymentRequest.create({
       data: {
-        settlement_number: newSettlementNumber(),
+        payment_request_number: newSettlementNumber(),
         work_order_id: o.id,
         provider_person_id: await providerPersonIdOf(o.id),
         period_start: periodStart,
@@ -387,7 +387,7 @@ export async function createSettlement(
 
 /** Hand a submitted request to the customer: their ERP (as a receipt) or a Panameer approval notice. */
 async function announceSettlement(id: string) {
-  const s = await prisma.settlementRequest.findUniqueOrThrow({ where: { id }, include: { lines: true } });
+  const s = await prisma.paymentRequest.findUniqueOrThrow({ where: { id }, include: { lines: true } });
   const o = await prisma.workOrder.findUniqueOrThrow({ where: { id: s.work_order_id }, select: { id: true, order_number: true, buyer_person_id: true, erp_connection_id: true, provider_person_id: true } });
   const prov = await prisma.person.findUnique({ where: { id: o.provider_person_id }, select: { first_name: true, last_name: true } });
   // X-E006: on an ERP order the request goes to the ERP as a receipt; the customer acts there, not in Panameer.
@@ -410,12 +410,12 @@ async function announceSettlement(id: string) {
 
 /** RD-E003: release a provider's held requests once their company has finished tax & banking (payment terms restart now). */
 export async function releaseHeldFor(providerPersonId: string): Promise<number> {
-  const held = await prisma.settlementRequest.findMany({ where: { provider_person_id: providerPersonId, held_for_tax_banking: true }, select: { id: true, submitted_at: true, due_date: true } });
+  const held = await prisma.paymentRequest.findMany({ where: { provider_person_id: providerPersonId, held_for_tax_banking: true }, select: { id: true, submitted_at: true, due_date: true } });
   if (!held.length || !(await providerPayReady(providerPersonId))) return 0;
   const now = new Date();
   for (const h of held) {
     const terms = h.submitted_at && h.due_date ? h.due_date.getTime() - h.submitted_at.getTime() : 0;
-    const moved = await prisma.settlementRequest.updateMany({ where: { id: h.id, held_for_tax_banking: true }, data: { held_for_tax_banking: false, submitted_at: now, due_date: h.due_date ? new Date(now.getTime() + terms) : null } });
+    const moved = await prisma.paymentRequest.updateMany({ where: { id: h.id, held_for_tax_banking: true }, data: { held_for_tax_banking: false, submitted_at: now, due_date: h.due_date ? new Date(now.getTime() + terms) : null } });
     if (moved.count) await announceSettlement(h.id);
   }
   await prisma.notification.updateMany({ where: { person_id: providerPersonId, dedupe_key: `tax_banking.needed:${providerPersonId}`, resolved_at: null }, data: { resolved_at: now } });
@@ -452,7 +452,7 @@ export type SettlementAction = "APPROVE" | "REJECT";
 
 /** THE PARTY RULE, AND IT IS 's, NOT A SECOND ONE. */
 export function settlementActions(
-  settlement: { status: SettlementStatus; held_for_tax_banking?: boolean },
+  settlement: { status: PaymentRequestStatus; held_for_tax_banking?: boolean },
   party: OrderParty,
   erp = false
 ): SettlementAction[] {
@@ -481,7 +481,7 @@ export type SettlementLineView = {
 export type SettlementDetail = {
   id: string;
   settlementNumber: string;
-  status: SettlementStatus;
+  status: PaymentRequestStatus;
   party: OrderParty;
   orderId: string;
   orderNumber: string;
@@ -527,7 +527,7 @@ function lineValue(l: {
 
 /** One settlement, if the viewer is a party to its ORDER. */
 export async function getSettlement(viewer: Viewer, id: string): Promise<SettlementDetail> {
-  const read = () => prisma.settlementRequest.findUnique({ where: { id }, include: { lines: { orderBy: { line_number: "asc" } } } });
+  const read = () => prisma.paymentRequest.findUnique({ where: { id }, include: { lines: { orderBy: { line_number: "asc" } } } });
   let s = await read();
   if (!s) throw new SettlementError("Payment request not found", "NOT_FOUND");
   if (s.held_for_tax_banking && (await releaseHeldFor(s.provider_person_id))) s = (await read())!;
@@ -568,17 +568,17 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
   const totalCents = lines.reduce((n, l) => n + l.valueCents, 0);
   const feeCents = lines.reduce((n, l) => n + l.feeCents, 0);
   const [resubmitOf, resubmittedAs] = await Promise.all([
-    s.resubmits_id ? prisma.settlementRequest.findUnique({ where: { id: s.resubmits_id }, select: { id: true, settlement_number: true } }) : null,
-    prisma.settlementRequest.findFirst({ where: { resubmits_id: s.id }, select: { id: true, settlement_number: true } }),
+    s.resubmits_id ? prisma.paymentRequest.findUnique({ where: { id: s.resubmits_id }, select: { id: true, payment_request_number: true } }) : null,
+    prisma.paymentRequest.findFirst({ where: { resubmits_id: s.id }, select: { id: true, payment_request_number: true } }),
   ]);
   const payoutLine = await prisma.providerPayoutLine.findFirst({
-    where: { settlement_line_id: { in: s.lines.map((l) => l.id) } },
+    where: { payment_request_line_id: { in: s.lines.map((l) => l.id) } },
     select: { providerPayout: { select: { paid_at: true, net_cents: true, method: true } } },
   });
 
   return {
     id: s.id,
-    settlementNumber: s.settlement_number,
+    settlementNumber: s.payment_request_number,
     status: s.status,
     party: order.party,
     orderId: order.id,
@@ -597,8 +597,8 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
     totalCents,
     feeCents,
     netCents: totalCents - feeCents,
-    resubmitOf: resubmitOf ? { id: resubmitOf.id, number: resubmitOf.settlement_number } : null,
-    resubmittedAs: resubmittedAs ? { id: resubmittedAs.id, number: resubmittedAs.settlement_number } : null,
+    resubmitOf: resubmitOf ? { id: resubmitOf.id, number: resubmitOf.payment_request_number } : null,
+    resubmittedAs: resubmittedAs ? { id: resubmittedAs.id, number: resubmittedAs.payment_request_number } : null,
     paidOut: payoutLine
       ? {
           paidAt: payoutLine.providerPayout.paid_at ? payoutLine.providerPayout.paid_at.toISOString().slice(0, 10) : null,
@@ -616,7 +616,7 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
 export type SettlementRow = {
   id: string;
   settlementNumber: string;
-  status: SettlementStatus;
+  status: PaymentRequestStatus;
   party: OrderParty;
   orderId: string;
   orderNumber: string;
@@ -639,7 +639,7 @@ export async function listSettlements(viewer: Viewer): Promise<SettlementRow[]> 
   if (orders.length === 0) return [];
   const byOrder = new Map(orders.map((o) => [o.id, o]));
 
-  const rows = await prisma.settlementRequest.findMany({
+  const rows = await prisma.paymentRequest.findMany({
     where: { work_order_id: { in: orders.map((o) => o.id) } },
     orderBy: [{ created_at: "desc" }],
     include: { lines: true },
@@ -648,16 +648,16 @@ export async function listSettlements(viewer: Viewer): Promise<SettlementRow[]> 
   const outLines = new Set(
     (
       await prisma.providerPayoutLine.findMany({
-        where: { settlement_line_id: { in: rows.flatMap((r) => r.lines.map((l) => l.id)) } },
-        select: { settlement_line_id: true },
+        where: { payment_request_line_id: { in: rows.flatMap((r) => r.lines.map((l) => l.id)) } },
+        select: { payment_request_line_id: true },
       })
-    ).map((l) => l.settlement_line_id)
+    ).map((l) => l.payment_request_line_id)
   );
   return rows.map((s) => {
     const o = byOrder.get(s.work_order_id)!;
     return {
       id: s.id,
-      settlementNumber: s.settlement_number,
+      settlementNumber: s.payment_request_number,
       status: s.status,
       party: o.party,
       orderId: o.id,
@@ -694,7 +694,7 @@ export async function approveSettlement(viewer: Viewer, id: string): Promise<Set
   const order = await prisma.workOrder.findUnique({ where: { id: current.orderId }, select: { status: true } });
   if (order && !PAYABLE.includes(order.status))
     throw new SettlementError(order.status === "ON_HOLD" ? "This work order is on hold. Release the hold before approving." : "This work order can't take approvals", "INVALID");
-  await prisma.settlementRequest.updateMany({
+  await prisma.paymentRequest.updateMany({
     where: { id, status: "SUBMITTED" },
     data: { status: "APPROVED", decided_at: new Date(), decided_by_person_id: await personIdOf(viewer) },
   });
@@ -722,7 +722,7 @@ export async function rejectSettlement(
       "INVALID"
     );
 
-  const done = await prisma.settlementRequest.updateMany({
+  const done = await prisma.paymentRequest.updateMany({
     where: { id, status: "SUBMITTED" },
     data: {
       status: "REJECTED",
@@ -736,15 +736,15 @@ export async function rejectSettlement(
   if (done.count === 1) {
     await returnTheDraw(id);
     // CAT-E007: a rejected milestone request can be reported again.
-    await prisma.workOrderMilestone.updateMany({ where: { settlement_request_id: id }, data: { reported_at: null, settlement_request_id: null } });
+    await prisma.workOrderMilestone.updateMany({ where: { payment_request_id: id }, data: { reported_at: null, payment_request_id: null } });
   }
   return getSettlement(viewer, id);
 }
 
 /** Give back what a rejected settlement had drawn. */
 export async function returnTheDraw(settlementId: string): Promise<void> {
-  const lines = await prisma.settlementLine.findMany({
-    where: { settlement_request_id: settlementId },
+  const lines = await prisma.paymentRequestLine.findMany({
+    where: { payment_request_id: settlementId },
     select: { work_order_line_id: true, basis: true, quantity: true, unit_price_cents: true, amount_cents: true },
   });
   const byLine = new Map<string, { quantity: number; cents: number; basis: LineBasis }>();

@@ -63,7 +63,7 @@ function report(c: Awaited<ReturnType<typeof seedTaxonomy>>) {
     `  specializations${String(c.specializations).padStart(4)}`,
     "",
     "BUYER VOCABULARY (v5)",
-    `  capability domains ${String(c.capabilityDomains).padStart(4)}`,
+    `  capability domains ${String(c.domains).padStart(4)}`,
     `  bridge rows        ${String(c.bridgeRows).padStart(4)}  (capability → module, per suite)`,
     `  stale rows retired ${String(c.bridgeRetired).padStart(4)}`,
     `  unresolved modules ${String(c.bridgeUnresolved).padStart(4)}  (named in the sheet, no matching Skill)`,

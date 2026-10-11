@@ -135,10 +135,10 @@ export async function getGroupsHome(viewer: Viewer): Promise<GroupsHome> {
   const [asked, answered, newMembers] = person
     ? await Promise.all([
         prisma.forumThread.count({
-          where: { author_id: person.id, created_at: { gte: monthStart } },
+          where: { author_person_id: person.id, created_at: { gte: monthStart } },
         }),
         prisma.forumPost.count({
-          where: { author_id: person.id, created_at: { gte: monthStart } },
+          where: { author_person_id: person.id, created_at: { gte: monthStart } },
         }),
         runBoards.length
           ? prisma.groupMembership.count({

@@ -44,7 +44,7 @@ export async function lifecycleFor(personId: string) {
     prisma.providerPayout.count({ where: { provider_person_id: { in: members }, paid_at: { not: null } } }),
     m ? prisma.payment.count({ where: { p_account_id: m.company.p_account_id } }) : 0,
     provider ? prisma.proposal.count({ where: { provider_person_id: personId, submitted_at: { not: null } } }) : 0,
-    provider ? prisma.settlementRequest.count({ where: { provider_person_id: { in: members }, submitted_at: { not: null } } }) : 0,
+    provider ? prisma.paymentRequest.count({ where: { provider_person_id: { in: members }, submitted_at: { not: null } } }) : 0,
   ]);
   const facts: LifecycleFacts = {
     register: !!m,

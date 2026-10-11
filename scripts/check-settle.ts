@@ -67,14 +67,14 @@ check(
   const writers = SRC.filter(
     (f) =>
       f.path.includes(join("app", "api")) &&
-      /prisma\.settlementRequest\.create/.test(f.code)
+      /prisma\.paymentRequest\.create/.test(f.code)
   );
   check(
     "1 — ABSENCE: no API route writes settlementRequest directly",
     writers.length === 0,
     writers.map((w) => w.path).join(", ")
   );
-  const libWriters = SRC.filter((f) => /prisma\.settlementRequest\.create/.test(f.code));
+  const libWriters = SRC.filter((f) => /prisma\.paymentRequest\.create/.test(f.code));
   check(
     "1 — exactly one function in the tree creates a settlement",
     libWriters.length === 1 && libWriters[0].path === join("src", "lib", "settlements.ts"),

@@ -75,7 +75,7 @@ let fx: Fx | null = null;
 
 async function makeFx(): Promise<Fx> {
   const prisma = db();
-  const dom = await prisma.skill.findFirst({ where: { pillar: { name: "Oracle Fusion Cloud" }, status: "ACTIVE" }, select: { catalog_id: true, role_type_id: true, pillar_id: true } });
+  const dom = await prisma.skill.findFirst({ where: { pillar: { name: "Oracle Fusion Cloud" }, status: "ACTIVE" }, select: { business_type_id: true, role_id: true, pillar_id: true } });
   if (!dom) throw new Error("no Fusion domain");
   const co = await createCompanyFixture();
   const out: Fx = { co, persons: [], profiles: [], skills: {}, specs: {} };
@@ -86,7 +86,7 @@ async function makeFx(): Promise<Fx> {
   }
   const mk = async (key: string, name: string, placed: boolean) =>
     (out.skills[key] = (await prisma.skill.create({
-      data: { catalog_id: dom.catalog_id, role_type_id: dom.role_type_id, pillar_id: placed ? dom.pillar_id : null, name, origin: placed ? "ADMIN" : "PROVIDER", is_custom: !placed, visible_to_members: !placed ? true : false },
+      data: { business_type_id: dom.business_type_id, role_id: dom.role_id, pillar_id: placed ? dom.pillar_id : null, name, origin: placed ? "ADMIN" : "PROVIDER", is_custom: !placed, visible_to_members: !placed ? true : false },
       select: { id: true },
     })).id);
   await mk("T", `Purchasing ${Z}`, true);
@@ -96,8 +96,8 @@ async function makeFx(): Promise<Fx> {
   const [A, B] = out.profiles;
   for (const [pp, k] of [[A, "T"], [A, "N1"], [B, "N1"], [A, "N2"], [A, "N3"]] as const)
     await prisma.providerSkill.create({ data: { provider_profile_id: pp, skill_id: out.skills[k], source: "SELF_ADDED", weight: 1 } });
-  out.specs.ST = (await prisma.specialization.create({ data: { catalog_id: dom.catalog_id, name: `Integration Cloud ${Z}`, status: "ACTIVE", origin: "ADMIN" }, select: { id: true } })).id;
-  out.specs.S1 = (await prisma.specialization.create({ data: { catalog_id: dom.catalog_id, name: `Integration Clouds ${Z}`, status: "SUGGESTED", origin: "PROVIDER", is_custom: true }, select: { id: true } })).id;
+  out.specs.ST = (await prisma.specialization.create({ data: { business_type_id: dom.business_type_id, name: `Integration Cloud ${Z}`, status: "ACTIVE", origin: "ADMIN" }, select: { id: true } })).id;
+  out.specs.S1 = (await prisma.specialization.create({ data: { business_type_id: dom.business_type_id, name: `Integration Clouds ${Z}`, status: "SUGGESTED", origin: "PROVIDER", is_custom: true }, select: { id: true } })).id;
   await prisma.providerProfileSpecialization.create({ data: { provider_profile_id: A, specialization_id: out.specs.S1 } });
   return out;
 }

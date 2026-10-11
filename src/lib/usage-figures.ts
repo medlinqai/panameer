@@ -21,13 +21,13 @@ export async function usageFigures(opts: {
   ] = await Promise.all([
     profileId ? prisma.providerSkill.count({ where: { provider_profile_id: profileId } }) : 0,
     profileId ? prisma.providerProfileSpecialization.count({ where: { provider_profile_id: profileId } }) : 0,
-    profileId ? prisma.certification.count({ where: { provider_profile_id: profileId } }) : 0,
+    profileId ? prisma.credential.count({ where: { provider_profile_id: profileId } }) : 0,
     profileId ? searchScoreFor(profileId) : 0,
 
-    prisma.learnEnrollment.count({ where: { user_id: userId } }),
-    prisma.learningPath.count({ where: { expert_person_id: personId } }),
+    prisma.enrollment.count({ where: { user_id: userId } }),
+    prisma.learningPath.count({ where: { instructor_person_id: personId } }),
 
-    prisma.colleagueInvite.count({ where: { inviter_person_id: personId } }),
+    prisma.invitationToJoin.count({ where: { inviter_person_id: personId } }),
     prisma.connection.count({
       where: { kind: "COLLEAGUE", status: "ACCEPTED", OR: [{ from_user_id: userId }, { to_user_id: userId }] },
     }),
@@ -41,8 +41,8 @@ export async function usageFigures(opts: {
     prisma.serviceProductOffer.count({ where: { provider_person_id: personId } }),
     prisma.serviceProductOffer.count({ where: { provider_person_id: personId, status: "ACCEPTED" } }),
 
-    prisma.settlementRequest.count({ where: { provider_person_id: personId } }),
-    prisma.settlementRequest.count({
+    prisma.paymentRequest.count({ where: { provider_person_id: personId } }),
+    prisma.paymentRequest.count({
       where: { provider_person_id: personId, status: { notIn: ["APPROVED", "PAID"] } },
     }),
 
@@ -50,7 +50,7 @@ export async function usageFigures(opts: {
     prisma.workOrder.count({ where: { provider_person_id: personId } }),
   ]);
 
-  const enrollments = await prisma.learnEnrollment.findMany({
+  const enrollments = await prisma.enrollment.findMany({
     where: { user_id: userId },
     select: { learning_path_id: true },
   });

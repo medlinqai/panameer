@@ -16,13 +16,13 @@ export type CertificateView = {
 };
 
 export async function certificateView(credentialId: string): Promise<CertificateView | null> {
-  const c = await prisma.certification.findFirst({
-    where: { credential_id: credentialId, issued_from: "LEARN" },
+  const c = await prisma.credential.findFirst({
+    where: { credential_id: credentialId, issued_from: "PANAMEER" },
     select: {
       name: true, issued_on: true, created_at: true, credential_id: true, user_id: true, learning_path_id: true,
       user: { select: { person: { select: { first_name: true, last_name: true, photo_url: true } } } },
       providerProfile: { select: { id: true } },
-      learningPath: { select: { slug: true, title: true, status: true, expert: { select: { first_name: true, last_name: true } }, courses: { orderBy: { sort_order: "asc" }, select: { title: true } } } },
+      learningPath: { select: { slug: true, title: true, status: true, instructor: { select: { first_name: true, last_name: true } }, courses: { orderBy: { sort_order: "asc" }, select: { title: true } } } },
     },
   });
   if (!c?.credential_id) return null;
@@ -42,13 +42,13 @@ export async function certificateView(credentialId: string): Promise<Certificate
     score: best?.score ?? null,
     correct: best && total ? Math.round((best.score / 100) * total) : null,
     total,
-    path: lp ? { slug: lp.slug, title: lp.title, published: lp.status === "PUBLISHED", courses: lp.courses.map((x) => x.title.replace(/^\s*\d+(\.\d+)*[.)]?\s*[-–]?\s*/, "")), teacher: lp.expert ? `${lp.expert.first_name ?? ""} ${lp.expert.last_name ?? ""}`.trim() : null } : null,
+    path: lp ? { slug: lp.slug, title: lp.title, published: lp.status === "PUBLISHED", courses: lp.courses.map((x) => x.title.replace(/^\s*\d+(\.\d+)*[.)]?\s*[-–]?\s*/, "")), teacher: lp.instructor ? `${lp.instructor.first_name ?? ""} ${lp.instructor.last_name ?? ""}`.trim() : null } : null,
     profileId: c.providerProfile?.id ?? null,
   };
 }
 
 /** A member's Panameer certificates, newest first. */
 export async function myCertificates(userId: string): Promise<CertificateView[]> {
-  const rows = await prisma.certification.findMany({ where: { user_id: userId, issued_from: "LEARN", credential_id: { not: null } }, orderBy: { created_at: "desc" }, select: { credential_id: true } });
+  const rows = await prisma.credential.findMany({ where: { user_id: userId, issued_from: "PANAMEER", credential_id: { not: null } }, orderBy: { created_at: "desc" }, select: { credential_id: true } });
   return (await Promise.all(rows.map((r) => certificateView(r.credential_id!)))).filter((x): x is CertificateView => !!x);
 }

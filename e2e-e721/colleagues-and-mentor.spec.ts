@@ -312,7 +312,7 @@ test("E721 item 1c — inviting an address that is already a member offers the c
 
   /* ⚠⚠ AND NOTHING WAS WRITTEN — no invitation row, no email. `E525`: "NOTHING WAS WRITTEN
      getting here." */
-  const invites = await prisma.colleagueInvite.count({
+  const invites = await prisma.invitationToJoin.count({
     /* ⚠ THE COLUMN IS `invitee_email`, READ OFF THE SCHEMA — `email` does not exist on this
        model and the compiler said so. */
     where: { invitee_email: { equals: target!.email, mode: "insensitive" } },

@@ -25,10 +25,10 @@ const hash = (raw: string) => createHash("sha256").update(raw).digest("hex");
 export async function inviteAllowance(inviterPersonId: string) {
   const now = Date.now();
   const [lastHour, lastDay] = await Promise.all([
-    prisma.colleagueInvite.count({
+    prisma.invitationToJoin.count({
       where: { inviter_person_id: inviterPersonId, created_at: { gte: new Date(now - 3_600_000) } },
     }),
-    prisma.colleagueInvite.count({
+    prisma.invitationToJoin.count({
       where: { inviter_person_id: inviterPersonId, created_at: { gte: new Date(now - 86_400_000) } },
     }),
   ]);
@@ -62,7 +62,7 @@ export async function inviteColleague(input: {
     return { ok: true, outcome: "already_member", member };
   }
 
-  const pending = await prisma.colleagueInvite.findFirst({
+  const pending = await prisma.invitationToJoin.findFirst({
     where: {
       inviter_person_id: input.inviterPersonId,
       invitee_email: email,
@@ -74,7 +74,7 @@ export async function inviteColleague(input: {
   if (pending) return { ok: false, reason: "already_invited" };
 
   const raw = randomBytes(32).toString("hex");
-  const row = await prisma.colleagueInvite.create({
+  const row = await prisma.invitationToJoin.create({
     data: {
       inviter_person_id: input.inviterPersonId,
       invitee_email: email,
@@ -151,7 +151,7 @@ async function sendInviteEmail(input: { inviteId: string; inviterPersonId: strin
 
 /** Resend: a fresh link (earlier links still work), "Invited" moves to now; once per 24 h per invite. Inviter only. */
 export async function resendColleagueInvite(inviterPersonId: string, inviteId: string, origin: string) {
-  const inv = await prisma.colleagueInvite.findFirst({
+  const inv = await prisma.invitationToJoin.findFirst({
     where: { id: inviteId, inviter_person_id: inviterPersonId },
     select: { id: true, status: true, invitee_email: true, invitee_first_name: true, message: true, token_hash: true, prior_token_hashes: true, created_at: true, last_sent_at: true },
   });
@@ -160,7 +160,7 @@ export async function resendColleagueInvite(inviterPersonId: string, inviteId: s
   const last = inv.last_sent_at ?? inv.created_at;
   if (Date.now() - last.getTime() < 86_400_000) return { ok: false as const, error: "Sent today", sentToday: true };
   const raw = randomBytes(32).toString("hex");
-  await prisma.colleagueInvite.update({
+  await prisma.invitationToJoin.update({
     where: { id: inv.id },
     data: { token_hash: hash(raw), prior_token_hashes: [...inv.prior_token_hashes, inv.token_hash], last_sent_at: new Date(), expires_at: new Date(Date.now() + INVITE_TTL_DAYS * 86_400_000) },
   });
@@ -170,14 +170,14 @@ export async function resendColleagueInvite(inviterPersonId: string, inviteId: s
 
 /** Cancel Invite: the inviter withdraws it; its links then say it was cancelled. */
 export async function cancelColleagueInvite(inviterPersonId: string, inviteId: string) {
-  const r = await prisma.colleagueInvite.updateMany({ where: { id: inviteId, inviter_person_id: inviterPersonId, status: "PENDING" }, data: { status: "REVOKED" } });
+  const r = await prisma.invitationToJoin.updateMany({ where: { id: inviteId, inviter_person_id: inviterPersonId, status: "PENDING" }, data: { status: "REVOKED" } });
   return r.count ? { ok: true as const } : { ok: false as const, error: "That invitation isn't yours, or it's already closed." };
 }
 
 /** Look one up by its raw token, for the accept surface. */
 export async function lookupColleagueInvite(rawToken: string) {
   const h = hash(rawToken);
-  const row = await prisma.colleagueInvite.findFirst({
+  const row = await prisma.invitationToJoin.findFirst({
     where: { OR: [{ token_hash: h }, { prior_token_hashes: { has: h } }] },
     select: {
       id: true,
@@ -211,7 +211,7 @@ export async function creditColleagueInvite(
   try {
     const normalized = normalizeEmail(email);
     /* The FIRST still-pending invitation to this address. */
-    const invite = await prisma.colleagueInvite.findFirst({
+    const invite = await prisma.invitationToJoin.findFirst({
       where: { invitee_email: normalized, status: "PENDING" },
       orderBy: { created_at: "asc" },
       select: { id: true, inviter_person_id: true },
@@ -219,7 +219,7 @@ export async function creditColleagueInvite(
     if (!invite) return null;
 
     // THE `status` FILTER IS REPEATED IN THE UPDATE, not just the read.
-    const done = await prisma.colleagueInvite.updateMany({
+    const done = await prisma.invitationToJoin.updateMany({
       where: { id: invite.id, status: "PENDING" },
       data: {
         status: "ACCEPTED",

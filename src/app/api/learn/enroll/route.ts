@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   if (!enroll) {
-    await prisma.learnEnrollment.deleteMany({
+    await prisma.enrollment.deleteMany({
       where: { user_id: viewer.userId, learning_path_id: pathId },
     });
     await removeEnrolmentMembership(viewer.userId, pathId);
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
   }
 
   // Idempotent: enrolling twice is a no-op, not a unique-constraint error.
-  await prisma.learnEnrollment.upsert({
+  await prisma.enrollment.upsert({
     where: {
       user_id_learning_path_id: { user_id: viewer.userId, learning_path_id: pathId },
     },

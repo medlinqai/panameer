@@ -171,18 +171,18 @@ export function buildVocabulary(
     id: string;
     name: string;
     aliases: string[];
-    roleType: { name: string };
+    role: { name: string };
     pillar: { name: string } | null;
   }[]
 ): VocabEntry[] {
   // VENDOR ROLES ONLY, and this is the line that keeps role derivation
   return rows
-    .filter((r) => r.roleType.name === "Application-Specific" || r.roleType.name === "Technology-Specific")
+    .filter((r) => r.role.name === "Application-Specific" || r.role.name === "Technology-Specific")
     .map((r) => ({
       skillId: r.id,
       name: r.name,
       suite: suiteFromPillar(r.pillar?.name),
-      role: r.roleType.name,
+      role: r.role.name,
       aliases: r.aliases ?? [],
     }));
 }

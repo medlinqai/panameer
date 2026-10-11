@@ -51,7 +51,7 @@ async function main() {
     `select id::text as id from certifications where user_id is null`
   );
   const rows = ids.length
-    ? await prisma.certification.findMany({
+    ? await prisma.credential.findMany({
         where: { id: { in: ids.map((r) => r.id) } },
         select: {
           id: true,
@@ -76,11 +76,11 @@ async function main() {
       unresolved.push(`${r.issued_from} "${r.name}" (${r.id})`);
       continue;
     }
-    await prisma.certification.update({ where: { id: r.id }, data: { user_id: userId } });
+    await prisma.credential.update({ where: { id: r.id }, data: { user_id: userId } });
     filled += 1;
   }
 
-  const total = await prisma.certification.count();
+  const total = await prisma.credential.count();
   const after = await prisma.$queryRawUnsafe<{ n: bigint }[]>(
     `select count(*)::bigint as n from certifications where user_id is null`
   );
