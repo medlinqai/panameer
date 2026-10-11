@@ -27,6 +27,8 @@ export type ShopProduct = {
   /** Work order lines bought from it — "Popular with Buyers". */
   orders: number;
   createdAt: string;
+  /** Published in the last 30 days — "New". */
+  fresh: boolean;
 };
 
 const SELECT = {
@@ -78,6 +80,7 @@ function shape(p: Row, orders: number): ShopProduct {
     terms: [scheduleLine(p), p.payment_terms ? TERMS[p.payment_terms] : null].filter(Boolean).join(" · "),
     orders,
     createdAt: p.created_at.toISOString(),
+    fresh: Date.now() - p.created_at.getTime() < 30 * 86_400_000,
   };
 }
 

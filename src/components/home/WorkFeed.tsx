@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
+import { FilterBar, type FilterDef } from "@/components/casing/FilterBar";
 import { relativeDay } from "@/lib/relative-day";
 import { WhoIsAsking } from "@/components/work/WhoIsAsking";
 import { WORK_CARD_IMAGE_ALT, workCardImage } from "@/lib/work-images";
@@ -14,12 +16,13 @@ export function WorkFeed({
   tab,
   query,
   cards,
-  basePath = "/dashboard",
+  filters,
 }: {
   tab: WorkFeedTab;
   query: string;
   cards: WorkCard[];
   basePath?: string;
+  filters?: FilterDef[];
 }) {
 
   return (
@@ -27,37 +30,12 @@ export function WorkFeed({
       {/* WS-E002: the tab row lives in the Work layout; this is the list for one tab. */}
       <h1 className="mb-3 font-display text-[22px] font-bold">{TITLE[tab] ?? "Work Requests"}</h1>
 
-      {/* ---- Search + filters ---------------------------------------------- */}
-      <form
-        action={basePath}
-        className="mb-4 flex flex-wrap items-center gap-2"
-      >
-        <input type="hidden" name="tab" value={tab} />
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-line bg-white px-4 py-2">
-          <input
-            name="q"
-            defaultValue={query}
-            placeholder="Search work requests…"
-            aria-label="Search work requests"
-            className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-ink-2/70"
-          />
-        </div>
-        <button
-          type="submit"
-          className="shrink-0 bg-magenta px-5 py-2 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark"
-        >
-          Search
-        </button>
-        {}
-        <button
-          type="button"
-          disabled
-          title="Filters open when buyers start posting work"
-          className="shrink-0 border-[1.5px] border-line px-5 py-2 text-[14px] font-bold text-ink-2 opacity-50"
-        >
-          Filters
-        </button>
-      </form>
+      {/* WS-E007: search + filters from required fields; state in the URL. */}
+      {filters && (
+        <Suspense>
+          <FilterBar placeholder="Search work requests…" filters={filters} keep={["tab"]} />
+        </Suspense>
+      )}
 
       {/* ---- The list ------------------------------------------------------- */}
       {UNBACKED_TABS[tab] ? (

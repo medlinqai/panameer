@@ -5,6 +5,7 @@ import { ownedProviderProfile } from "@/lib/access";
 import { WorkFeed } from "@/components/home/WorkFeed";
 import { getWorkFeed, WORK_FEED_TABS, type WorkFeedTab } from "@/lib/work-feed";
 import { workHome } from "@/lib/work-home";
+import { workFilterDefs, type WorkFilters } from "@/lib/work-filters";
 import { WorkHome } from "@/components/work/WorkHome";
 
 export const metadata = { title: "Find Work · Panameer" };
@@ -12,7 +13,7 @@ export const metadata = { title: "Find Work · Panameer" };
 export default async function FindWorkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string } & WorkFilters>;
 }) {
   await guardPage("canProvideServices");
   const viewer = await getSessionViewer();
@@ -32,7 +33,7 @@ export default async function FindWorkPage({
     : null;
 
   // WS-E003: no tab = Work Home.
-  if (!sp.tab && !query && profile) {
+  if (!sp.tab && !query && !Object.keys(sp).length && profile) {
     const [home, best] = await Promise.all([workHome(profile.person_id), getWorkFeed({ tab: "best", profileId: profile.id, personId: profile.person_id })]);
     return (
       <div className="mx-auto w-full max-w-6xl">
@@ -46,11 +47,12 @@ export default async function FindWorkPage({
     profileId: profile?.id ?? null,
     query: query || undefined,
     personId: profile?.person_id ?? null,
+    filters: sp,
   });
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <WorkFeed tab={tab} query={query} cards={cards} basePath="/find-work" />
+      <WorkFeed tab={tab} query={query} cards={cards} basePath="/find-work" filters={await workFilterDefs(sp)} />
     </div>
   );
 }

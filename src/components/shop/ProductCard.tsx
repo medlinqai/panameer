@@ -17,9 +17,8 @@ const TONE: Record<string, [string, string]> = {
   BLANKET: ["#2b2219", "#6a4a2f"],
 };
 export const KIND_LABEL: Record<string, string> = { DELIVERABLE: "Deliverable", DEPLOYABLE: "AI Agent", HOURS: "Hours", BLANKET: "Blanket" };
-const NEW_DAYS = 30;
 
-export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "coverCode" | "terms" | "orders" | "createdAt">;
+export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "coverCode" | "terms" | "orders" | "fresh">;
 
 const code = (p: CardProduct) => (p.coverCode || p.title.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("")).toUpperCase().slice(0, 3);
 
@@ -33,8 +32,7 @@ export function ProductCard({ p, signedIn, own = false, inCartLineId = null }: {
   const router = useRouter();
   const { refresh } = useMe();
   const [busy, setBusy] = useState(false);
-  const fresh = Date.now() - new Date(p.createdAt).getTime() < NEW_DAYS * 86_400_000;
-  const tag = inCartLineId ? "In Your Cart" : p.orders > 0 ? "Popular with Buyers" : fresh ? "New" : null;
+  const tag = inCartLineId ? "In Your Cart" : p.orders > 0 ? "Popular with Buyers" : p.fresh ? "New" : null;
   const meta = [p.durationWeeks ? `${p.durationWeeks} week${p.durationWeeks === 1 ? "" : "s"}` : null, KIND_LABEL[p.kind] ?? null].filter(Boolean).join(" · ");
   const remove = async () => {
     setBusy(true);

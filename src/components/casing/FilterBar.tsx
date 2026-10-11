@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 // WS-E007: one filter bar for Work and Shop lists — search + dropdowns, state in the URL, chips for active values, Clear All.
@@ -14,6 +14,7 @@ export type FilterDef = {
   footer?: ReactNode;
 };
 
+const noop = () => () => {};
 const seen = (k: string) => {
   try {
     return localStorage.getItem(k) === "1";
@@ -28,12 +29,11 @@ export function FilterBar({ filters, placeholder, keep = [] }: { filters: Filter
   const params = useSearchParams();
   const [q, setQ] = useState(params?.get("q") ?? "");
   const [open, setOpen] = useState<string | null>(null);
-  const [pulsed, setPulsed] = useState<Record<string, boolean>>({});
+  const [opened, setOpened] = useState<Record<string, boolean>>({});
   const box = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setPulsed(Object.fromEntries(filters.filter((f) => f.pulseKey).map((f) => [f.key, !seen(f.pulseKey!)])));
-  }, [filters]);
+  // Browser-only memory of "opened once"; the server renders no pulse.
+  const hydrated = useSyncExternalStore(noop, () => true, () => false);
+  const pulsing = (f: FilterDef) => hydrated && !!f.pulseKey && !opened[f.key] && !seen(f.pulseKey);
   useEffect(() => {
     if (!open) return;
     const off = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(null); };
@@ -43,7 +43,10 @@ export function FilterBar({ filters, placeholder, keep = [] }: { filters: Filter
 
   const go = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params?.toString() ?? "");
-    for (const [k, v] of Object.entries(patch)) v ? next.set(k, v) : next.delete(k);
+    for (const [k, v] of Object.entries(patch)) {
+      if (v) next.set(k, v);
+      else next.delete(k);
+    }
     next.delete("show");
     const qs = next.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
@@ -52,7 +55,7 @@ export function FilterBar({ filters, placeholder, keep = [] }: { filters: Filter
     setOpen((o) => (o === f.key ? null : f.key));
     if (f.pulseKey) {
       try { localStorage.setItem(f.pulseKey, "1"); } catch {}
-      setPulsed((p) => ({ ...p, [f.key]: false }));
+      setOpened((p) => ({ ...p, [f.key]: true }));
     }
   };
   const active = filters.flatMap((f) => {
@@ -87,7 +90,7 @@ export function FilterBar({ filters, placeholder, keep = [] }: { filters: Filter
                 onClick={() => toggle(f)}
                 className={
                   "h-10 border bg-white px-3 text-[13px] font-semibold " +
-                  (on ? "border-ink text-ink" : pulsed[f.key] ? "border-magenta text-magenta-dark motion-safe:animate-[pm-pulse_1.8s_ease-in-out_infinite]" : "border-line text-ink")
+                  (on ? "border-ink text-ink" : pulsing(f) ? "border-magenta text-magenta-dark motion-safe:animate-[pm-pulse_1.8s_ease-in-out_infinite]" : "border-line text-ink")
                 }
               >
                 {f.label} <span className="text-ink-3">▾</span>

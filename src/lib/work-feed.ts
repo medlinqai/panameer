@@ -1,6 +1,7 @@
 import { roleLong } from "@/lib/role-labels";
 import { prisma } from "@/lib/prisma";
 import { myWorkRequestIds } from "@/lib/work-home";
+import { workFilterWhere, type WorkFilters } from "@/lib/work-filters";
 import { buildBuyerIdentity, scrubTrack, type BuyerIdentity } from "@/lib/work-request-identity";
 import { buyerTrackRecord } from "@/lib/buyer-track-record";
 
@@ -93,6 +94,8 @@ export async function getWorkFeed(input: {
   query?: string;
   /** WS-E002: Invitations / My Proposals read the provider's own rows. */
   personId?: string | null;
+  /** WS-E007: the list's filter values from the URL. */
+  filters?: WorkFilters;
 }): Promise<WorkCard[]> {
   if (input.tab === "saved") return [];
   const mine = input.tab === "invitations" || input.tab === "proposals";
@@ -112,6 +115,7 @@ export async function getWorkFeed(input: {
   const rows = await prisma.workRequest.findMany({
     where: {
       ...(ids ? { id: { in: ids } } : { status: "POSTED" }),
+      AND: workFilterWhere(input.filters ?? {}),
       ...(input.tab === "us" ? { location_country: { in: ["United States", "USA", "US"] } } : {}),
       ...(input.query
         ? {
