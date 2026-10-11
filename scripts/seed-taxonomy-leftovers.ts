@@ -75,10 +75,54 @@ async function vendorPillars() {
   }
 }
 
+/** TL-E004: EPM and GRC pillars → area FIN. */
+async function epmGrc() {
+  const fin = await prisma.area.findUnique({ where: { code: "FIN" } });
+  if (!fin) return note("TL-E004", "skip", "FIN", "area not found");
+  for (const code of ["ENTERPRISE_PERFORMANCE_MGMT_EPM", "GOVERNANCE_RISK_COMPLIANCE_GRC"]) {
+    const p = await prisma.pillar.findFirst({ where: { code } });
+    if (!p) { note("TL-E004", "skip", code, "pillar not found"); continue; }
+    note("TL-E004", "map", p.name, "→ area FIN");
+    writes.push((tx) => tx.pillar.update({ where: { id: p.id }, data: { area_id: fin.id } }));
+  }
+}
+
+/** TL-E005: practice pillars → Roles (match an existing role by name first, else create); their skills move to that role; pillar hidden.
+ *  Domains have no pillar link, so nothing to re-link there. */
+const PRACTICE: Record<string, { name: string; code: string; display: string }> = {
+  DELIVERY_LEADERSHIP: { name: "Project / Delivery Lead", code: "PROJECT_DELIVERY_LEAD", display: "Project / Delivery Lead" },
+  ARCHITECTURE_DESIGN: { name: "Solution Architect", code: "SOLUTION_ARCHITECT", display: "Solution Architect" },
+  TESTING_SUPPORT: { name: "Tester / Support", code: "TESTER_SUPPORT", display: "Tester / Support" },
+  CHANGE_ENABLEMENT: { name: "Change & Enablement Lead", code: "CHANGE_ENABLEMENT_LEAD", display: "Change & Enablement Lead" },
+};
+async function practicePillars() {
+  const roles = await prisma.role.findMany({ select: { id: true, name: true, display: true, code: true } });
+  const norm = (x: string) => x.toLowerCase().replace(/[^a-z]/g, "");
+  for (const [code, want] of Object.entries(PRACTICE)) {
+    const p = await prisma.pillar.findFirst({ where: { code } });
+    if (!p) { note("TL-E005", "skip", code, "pillar not found"); continue; }
+    const hit = roles.find((r) => [r.name, r.display, r.code].some((x) => norm(x) === norm(want.name) || norm(x) === norm(want.code)));
+    const skills = await prisma.skill.findMany({ where: { pillar_id: p.id }, select: { id: true, name: true, role_id: true, business_type_id: true } });
+    note("TL-E005", hit ? "reuse role" : "create role", want.name, `${p.name} pillar`);
+    note("TL-E005", "re-link", p.name, `${skills.length} skills → role ${want.name}; pillar.role_id set`);
+    note("TL-E005", "hide pillar", p.name, "visible_to_members = false");
+    writes.push(async (tx) => {
+      const roleId = hit?.id ?? (await tx.role.upsert({ where: { code: want.code }, create: { code: want.code, name: want.name, display: want.display, sort_order: 50 }, update: {} })).id;
+      for (const sk of skills) {
+        const clash = await tx.skill.findFirst({ where: { business_type_id: sk.business_type_id, role_id: roleId, pillar_id: p.id, name: sk.name, NOT: { id: sk.id } }, select: { id: true } });
+        if (!clash) await tx.skill.update({ where: { id: sk.id }, data: { role_id: roleId } });
+      }
+      await tx.pillar.update({ where: { id: p.id }, data: { role_id: roleId, visible_to_members: false } });
+    });
+  }
+}
+
 async function main() {
   await oldErp();
   await aiAgentSupport();
   await vendorPillars();
+  await epmGrc();
+  await practicePillars();
 
   mkdirSync("scripts/out", { recursive: true });
   const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
