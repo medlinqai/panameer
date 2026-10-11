@@ -2,6 +2,7 @@ import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { estimatesPage, type EstimateListRow } from "@/lib/estimate-requests";
 import { formatCents } from "@/lib/display";
+import { ShopTabs } from "@/components/shop/ShopTabs";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { WithdrawRequest } from "@/components/catalog/WithdrawRequest";
 
@@ -44,7 +45,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
   const d = await estimatesPage(viewer);
   const tab = raw === "sent" || raw === "received" ? raw : d.received.length === 0 && (d.sent.length || d.waiting.length) ? "sent" : "received";
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6">
+    <div className="pm-white-page mx-auto w-full max-w-5xl">
+      <ShopTabs />
       <h1 className="text-[28px] font-bold">Cost Estimates</h1>
       <p className="mt-1 text-[14px] text-ink-2">Quotes for one customer, private to the two of you.</p>
       <PageTabs className="mt-4" current={tab} tabs={[{ label: `Received${d.received.length ? ` (${d.received.length})` : ""}`, href: "/estimates?tab=received", match: "received" }, { label: `Sent${d.sent.length + d.waiting.length ? ` (${d.sent.length + d.waiting.length})` : ""}`, href: "/estimates?tab=sent", match: "sent" }]} />
@@ -65,6 +67,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
           {d.sent.length ? <Rows rows={d.sent} /> : <p className="text-[14px] text-ink-2">No estimates yet.</p>}
         </>
       )}
-    </main>
+    </div>
   );
 }

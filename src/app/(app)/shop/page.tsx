@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { FreeLine } from "@/components/marketing/FreeLine";
 import { memberOrPublicTwin } from "@/lib/public-twin";
-import { canProvideServices } from "@/lib/access";
 import { listShopProducts } from "@/lib/shop";
 import { formatCents } from "@/lib/display";
 import { prisma } from "@/lib/prisma";
+import { ShopTabs } from "@/components/shop/ShopTabs";
 import { BuyButtons } from "@/components/shop/BuyButtons";
 
 export const dynamic = "force-dynamic";
@@ -19,13 +19,7 @@ export default async function Page() {
 
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl">
-      {canProvideServices(viewer) && (
-        <nav aria-label="Selling" className="mb-4 flex flex-wrap items-center gap-2">
-          <Link href="/my-services" className="inline-flex min-h-11 items-center border border-ink bg-surface px-4 text-[14px] font-semibold hover:bg-surface-hover">
-            Sell Your Services
-          </Link>
-        </nav>
-      )}
+      <ShopTabs />
       <h1 className="text-[28px] font-bold">Service Products</h1>
       <FreeLine claim="List the services you sell, free." />
       {products.length === 0 ? (

@@ -4,6 +4,7 @@ import { guardPage } from "@/lib/guard";
 import { getShopProduct } from "@/lib/shop";
 import { formatCents } from "@/lib/display";
 import { prisma } from "@/lib/prisma";
+import { ShopTabs } from "@/components/shop/ShopTabs";
 import { BuyButtons } from "@/components/shop/BuyButtons";
 import { BackLink } from "@/components/console/BackLink";
 
@@ -19,7 +20,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const own = me?.id === p.providerPersonId;
 
   return (
-    <div className="pm-white-page mx-auto w-full max-w-3xl">
+    <div className="pm-white-page mx-auto w-full max-w-5xl">
+      <ShopTabs />
+      <div className="max-w-3xl">
       <BackLink href="/shop" label="Service Products" />
       <h1 className="mt-2 text-[28px] font-bold">{p.title}</h1>
       <p className="mt-1 text-[14px] text-ink-2">
@@ -50,6 +53,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </>
         )}
       </section>
+      </div>
     </div>
   );
 }
