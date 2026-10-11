@@ -20,8 +20,10 @@ export async function taxonomyTree() {
     }),
     prisma.serviceType.findMany({ where: { status: "SUGGESTED", merged_into_id: null }, orderBy: { created_at: "asc" } }),
   ]);
+  // TL-E006: pillars still without an area or role (the AI ones carry an admin note).
+  const homeless = await prisma.pillar.findMany({ where: { visible_to_members: true, area_id: null, role_id: null }, orderBy: { name: "asc" }, select: { id: true, name: true, admin_note: true, _count: { select: { skills: true } } } });
   const used = new Map((await prisma.providerService.groupBy({ by: ["service_type_id"], where: { active: true }, _count: { _all: true } })).map((g) => [g.service_type_id, g._count._all]));
-  return { groups, suggested, used };
+  return { groups, suggested, used, homeless };
 }
 
 export type TypeFields = { pricing_model?: PricingModel | null; units?: ServiceUnit[]; delivery?: ServiceDelivery | null; lead_time_days?: number | null; commodity_code?: string | null; required?: boolean; description?: string | null };

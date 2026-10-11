@@ -711,6 +711,8 @@ model Pillar {
   /// A NEW DOMAIN IS HIDDEN FROM MEMBERS UNTIL SCOTT SWITCHES IT ON. Default
   /// TRUE so every existing domain is unaffected by this column arriving —
   /// a default of false would have hidden the whole catalog on deploy.
+  /// TL-E006: an admin-only note (e.g. why a pillar is left as is).
+  admin_note String?
   visible_to_members Boolean @default(true)
 
   /// Display order for the category picker (brief_P / E013). Lower sorts first,

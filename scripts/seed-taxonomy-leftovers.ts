@@ -117,12 +117,24 @@ async function practicePillars() {
   }
 }
 
+/** TL-E006: the AI pillars stay as they are (future AI Consulting business type) — an admin note on each. */
+const AI_NOTE = "Left as is (Scott 2026-10-11): belongs to a future AI Consulting business type.";
+async function aiPillars() {
+  for (const code of ["AI_GOVERNANCE_TRUST", "AI_CONSULTING_ENABLEMENT", "CREATIVE_CONTENT_GENERATION"]) {
+    const p = await prisma.pillar.findFirst({ where: { code } });
+    if (!p) { note("TL-E006", "skip", code, "pillar not found"); continue; }
+    note("TL-E006", "admin note", p.name, AI_NOTE);
+    writes.push((tx) => tx.pillar.update({ where: { id: p.id }, data: { admin_note: AI_NOTE } }));
+  }
+}
+
 async function main() {
   await oldErp();
   await aiAgentSupport();
   await vendorPillars();
   await epmGrc();
   await practicePillars();
+  await aiPillars();
 
   mkdirSync("scripts/out", { recursive: true });
   const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
