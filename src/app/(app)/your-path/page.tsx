@@ -25,7 +25,7 @@ export default async function YourPathPage() {
         YOUR PATH{current < total ? ` · STEP ${current + 1} OF ${total}` : ""} · {status.toUpperCase()}
         <LifecycleHelp className="text-ink" />
       </p>
-      <h1 className="mt-1.5 text-[30px] font-bold leading-tight">From account to getting paid</h1>
+      <h1 className="mt-1.5 text-[30px] font-bold leading-tight">From Account to Getting Paid</h1>
       {road === "provider" ? (
         <>
           <p className="mt-1.5 max-w-[780px] text-[14.5px] text-ink-2">
@@ -33,7 +33,7 @@ export default async function YourPathPage() {
           </p>
           <div className="mt-4 overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={current} /></div></div>
           <Link href="/join/provider/road" data-detailed-road-link className="mt-2 inline-block text-[13.5px] font-bold text-magenta-dark underline underline-offset-4">
-            See the detailed road (offers, work requests, interviews) →
+            See the Detailed Road →
           </Link>
         </>
       ) : (

@@ -26,7 +26,7 @@ export default async function RegistrationPathPage() {
             Complete My Profile
           </Link>
           <Link href="/join/provider/road" data-detailed-road-link className="text-[14px] font-bold text-magenta-dark underline underline-offset-4">
-            See the detailed road (offers, work requests, interviews) →
+            See the Detailed Road →
           </Link>
         </div>
       </div>

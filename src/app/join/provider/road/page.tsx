@@ -40,8 +40,8 @@ export default function DetailedRoadPage() {
     <main className="min-h-screen bg-surface px-4 py-10 text-ink">
       <div className="mx-auto w-full max-w-[1140px]" data-detailed-road>
         <Logo />
-        <p className="mt-10 text-[11px] font-bold uppercase tracking-[0.14em] text-magenta">Welcome · for providers</p>
-        <h1 className="mt-1.5 text-[36px] font-extrabold leading-[1.1] sm:text-[40px]">The detailed road</h1>
+        <p className="mt-10 text-[11px] font-bold uppercase tracking-[0.14em] text-magenta">Welcome · For Providers</p>
+        <h1 className="mt-1.5 text-[36px] font-extrabold leading-[1.1] sm:text-[40px]">The Detailed Road</h1>
         <p className="mt-2 max-w-[780px] text-[15px] text-ink-2">
           After you add your company, stop 5 <b className="text-ink">splits into two ways to win work</b> — sell a ready-made service product, or propose your rate on a buyer&apos;s work request. Use either or both. They meet again at Add Tax &amp; Banking, before the first work order.
         </p>
@@ -83,7 +83,7 @@ export default function DetailedRoadPage() {
         </ul>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <Link href="/join/provider" className="inline-flex min-h-[48px] items-center bg-ink px-6 text-[15px] font-bold text-surface hover:bg-ink-hover">Complete My Profile</Link>
-          <Link href="/join/provider/path" className="text-[14px] font-bold text-magenta-dark underline underline-offset-4">‹ The simple road</Link>
+          <Link href="/join/provider/path" className="text-[14px] font-bold text-magenta-dark underline underline-offset-4">‹ The Simple Road</Link>
         </div>
       </div>
     </main>
