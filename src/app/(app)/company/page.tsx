@@ -1,4 +1,6 @@
 import { BusinessTypesEditor } from "@/components/company/BusinessTypesEditor";
+import { WhatWeBuyEditor } from "@/components/company/WhatWeBuyEditor";
+import { whatWeBuy } from "@/lib/what-we-buy";
 import { companyBusinessTypeIds, offeredBusinessTypes } from "@/lib/business-types";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -84,7 +86,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
   ]);
   if (!view) redirect("/company");
   const track = await buyerTrackRecord(c.id);
-  const [bizTypes, bizOn] = await Promise.all([offeredBusinessTypes(), companyBusinessTypeIds(c.id)]);
+  const [bizTypes, bizOn, buys] = await Promise.all([offeredBusinessTypes(), companyBusinessTypeIds(c.id), whatWeBuy(c.id)]);
   const elsewhere = await prisma.companyMembership.findFirst({
     where: { person: { user_id: viewer.userId }, status: "PENDING", company_id: { not: c.id } },
     select: { company: { select: { id: true, name: true } } },
@@ -112,6 +114,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
         />
         {track && <BuyerTrackRecord t={track} />}
         {bizTypes.length > 0 && <BusinessTypesEditor types={bizTypes.map((t) => ({ id: t.id, name: t.name, group: t.commodityGroup?.name ?? null }))} initial={bizOn} canEdit={binding.isAdmin} />}
+        {buys.length > 0 && <WhatWeBuyEditor initial={buys} canEdit={binding.isAdmin} />}
         {binding.isAdmin && <PayReadyBox c={view} />}
         {elsewhere ? (
           <PendingJoinLine companyId={elsewhere.company.id} name={elsewhere.company.name} />

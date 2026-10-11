@@ -41,6 +41,8 @@ async function cartRequest(s: PunchoutSessionLive): Promise<string> {
 
 export async function addToCart(s: PunchoutSessionLive, input: { serviceId: string; quantity?: number | null; start?: string | null; end?: string | null }) {
   const svc = await prisma.providerService.findFirst({ where: { id: input.serviceId, active: true, published_at: { not: null } } });
+  // TX-E006: the line carries the type's commodity code (Service Taxonomy), else the service's own, else the default.
+  const typeCode = svc?.service_type_id ? (await prisma.serviceType.findUnique({ where: { id: svc.service_type_id }, select: { commodity_code: true } }))?.commodity_code : null;
   if (!svc?.rate_cents) throw new Error("That service isn't available");
   const profile = await prisma.providerProfile.findUnique({ where: { id: svc.provider_profile_id }, select: { person: { select: { id: true, first_name: true, last_name: true } } } });
   if (!profile) throw new Error("That provider isn't available");
@@ -52,7 +54,7 @@ export async function addToCart(s: PunchoutSessionLive, input: { serviceId: stri
   await prisma.workRequestLine.create({
     data: {
       work_request_id: wrId, line_number: n + 1, transaction_type: svc.service_type, description: `${svc.name} — ${profile.person.first_name} ${profile.person.last_name}`.trim(),
-      unspsc_code: svc.unspsc_code ?? DEFAULT_UNSPSC, uom: byQty ? svc.uom ?? "HOUR" : null, quantity: qty, unit_price_cents: byQty ? svc.rate_cents : null, amount_cents: byQty ? null : svc.rate_cents,
+      unspsc_code: typeCode ?? svc.unspsc_code ?? DEFAULT_UNSPSC, uom: byQty ? svc.uom ?? "HOUR" : null, quantity: qty, unit_price_cents: byQty ? svc.rate_cents : null, amount_cents: byQty ? null : svc.rate_cents,
       provider_person_id: profile.person.id, provider_service_id: svc.id, status: "ASSIGNED",
       service_start: input.start ? new Date(input.start) : null, service_end: input.end ? new Date(input.end) : null,
     },
@@ -74,7 +76,7 @@ export async function searchProducts(q: string): Promise<CartProduct[]> {
 }
 
 export async function addProductToCart(s: PunchoutSessionLive, input: { productId: string; quantity?: number | null }) {
-  const p = await prisma.serviceProduct.findFirst({ where: { id: input.productId, status: "PUBLISHED", price_cents: { not: null } }, select: { id: true, title: true, price_cents: true, pricing_type: true, providerProfile: { select: { person: { select: { id: true, first_name: true, last_name: true } } } } } });
+  const p = await prisma.serviceProduct.findFirst({ where: { id: input.productId, status: "PUBLISHED", price_cents: { not: null } }, select: { id: true, title: true, price_cents: true, pricing_type: true, serviceType: { select: { commodity_code: true } }, providerProfile: { select: { person: { select: { id: true, first_name: true, last_name: true } } } } } });
   if (!p?.price_cents) throw new Error("That service product isn't available");
   const qty = Math.floor(Number(input.quantity ?? 1));
   if (!qty || qty < 1 || qty > 10000) throw new Error("Enter a quantity");
@@ -86,7 +88,7 @@ export async function addProductToCart(s: PunchoutSessionLive, input: { productI
   await prisma.workRequestLine.create({
     data: {
       work_request_id: wrId, line_number: n + 1, transaction_type: byQty ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", description: `${p.title} — ${person.first_name} ${person.last_name}`.trim(),
-      unspsc_code: DEFAULT_UNSPSC, uom: byQty ? "HOUR" : null, quantity: byQty ? qty : null, unit_price_cents: byQty ? p.price_cents : null, amount_cents: byQty ? null : p.price_cents * qty,
+      unspsc_code: p.serviceType?.commodity_code ?? DEFAULT_UNSPSC, uom: byQty ? "HOUR" : null, quantity: byQty ? qty : null, unit_price_cents: byQty ? p.price_cents : null, amount_cents: byQty ? null : p.price_cents * qty,
       provider_person_id: person.id, service_product_id: p.id, status: "ASSIGNED",
     },
   });

@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 // WS-E007: Work list filters from fields every work request has; values live in the URL.
-export type WorkFilters = { skill?: string; rate?: string; location?: string; site?: string; length?: string; start?: string; type?: string };
+export type WorkFilters = { skill?: string; rate?: string; location?: string; site?: string; length?: string; start?: string; type?: string; bt?: string };
 
 const DAY = 86_400_000;
 const RATE: Record<string, { label: string; where: Prisma.WorkRequestWhereInput }> = {
@@ -27,16 +27,19 @@ export function workFilterWhere(f: WorkFilters): Prisma.WorkRequestWhereInput[] 
     and.push({ start_date: { gte: new Date(Date.now() + a * DAY), lte: new Date(Date.now() + b * DAY) } });
   }
   if (f.type) and.push({ role_id: f.type });
+  // TX-E006: Business Type — the request asks for skills of that business type.
+  if (f.bt) and.push({ skills: { some: { skill: { business_type_id: f.bt } } } });
   return and;
 }
 
 /** The filter menus, built from posted requests. Skills shows only when the chosen role's requests use skills. */
 export async function workFilterDefs(f: WorkFilters) {
   const posted: Prisma.WorkRequestWhereInput = { status: "POSTED", ...(f.type ? { role_id: f.type } : {}) };
-  const [skills, countries, types] = await Promise.all([
+  const [skills, countries, types, businessTypes] = await Promise.all([
     prisma.workRequestSkill.findMany({ where: { workRequest: posted }, distinct: ["skill_id"], select: { skill: { select: { id: true, name: true } } }, take: 200 }),
     prisma.workRequest.findMany({ where: { status: "POSTED", location_country: { not: null } }, distinct: ["location_country"], select: { location_country: true } }),
     prisma.workRequest.findMany({ where: { status: "POSTED", role_id: { not: null } }, distinct: ["role_id"], select: { role: { select: { id: true, display: true, name: true } } } }),
+    prisma.businessType.findMany({ where: { hidden: false, uses_skills: true, commodity_group_id: { not: null } }, orderBy: { sort_order: "asc" }, select: { id: true, name: true } }),
   ]);
   const opts = (r: Record<string, string>) => Object.entries(r).map(([value, label]) => ({ value, label }));
   return [
@@ -46,6 +49,7 @@ export async function workFilterDefs(f: WorkFilters) {
     { key: "site", label: "Remote / Onsite", options: opts(SITE) },
     { key: "length", label: "Length", options: opts(LENGTH) },
     { key: "start", label: "Start", options: Object.entries(START).map(([value, r]) => ({ value, label: r.label })) },
+    ...(businessTypes.length ? [{ key: "bt", label: "Business Type", options: businessTypes.map((b) => ({ value: b.id, label: b.name })) }] : []),
     { key: "type", label: "Role", options: types.flatMap((t) => (t.role ? [{ value: t.role.id, label: t.role.display || t.role.name }] : [])) },
   ];
 }

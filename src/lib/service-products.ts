@@ -35,6 +35,8 @@ export type ServiceProductInput = {
   coverCode?: string | null;
   /** WS-E008: the Shop's Service Type. */
   productTypeId?: string | null;
+  /** Resolved from productTypeId when it's a Service Taxonomy type. */
+  serviceTypeId?: string | null;
 };
 
 async function ownedProfileId(viewer: Viewer): Promise<string> {
@@ -67,6 +69,7 @@ const shape = (p: {
   billing_period?: string | null;
   cover_code?: string | null;
   product_type_id?: string | null;
+  service_type_id?: string | null;
   cover_image_url: string | null;
   status: string;
   role_id: string | null;
@@ -91,7 +94,7 @@ const shape = (p: {
   kind: p.kind ?? "DELIVERABLE",
   billingPeriod: p.billing_period ?? null,
   coverCode: p.cover_code ?? null,
-  productTypeId: p.product_type_id ?? null,
+  productTypeId: p.service_type_id ?? p.product_type_id ?? null,
   coverImageUrl: p.cover_image_url,
   status: p.status,
   roleTypeId: p.role_id,
@@ -168,6 +171,13 @@ function normalizeMilestones(input?: MilestoneInput[]) {
   return milestones;
 }
 
+/** TX-E006: a picked type that lives in the Service Taxonomy is saved as service_type_id. */
+async function resolveType(input: ServiceProductInput): Promise<ServiceProductInput> {
+  if (!input.productTypeId) return input;
+  const t = await prisma.serviceType.findFirst({ where: { id: input.productTypeId, kind: "SERVICE_PRODUCT" }, select: { id: true } });
+  return t ? { ...input, serviceTypeId: t.id, productTypeId: undefined } : input;
+}
+
 function serviceProductData(input: ServiceProductInput) {
   const title = clean(input.title, 200);
   if (!title) throw new OnboardingError("A service product needs a title", "INVALID");
@@ -201,7 +211,7 @@ function serviceProductData(input: ServiceProductInput) {
     ...(input.pricingType ? { billing_period: input.pricingType === "RECURRING" ? input.billingPeriod ?? "MONTHLY" : null } : {}),
     ...(input.kind === "DEPLOYABLE" ? { duration_weeks: null } : {}),
     ...(input.coverCode !== undefined ? { cover_code: clean(input.coverCode, 4)?.toUpperCase() ?? null } : {}),
-    ...(input.productTypeId !== undefined ? { product_type_id: input.productTypeId || null } : {}),
+    ...(input.serviceTypeId !== undefined ? { service_type_id: input.serviceTypeId || null } : input.productTypeId !== undefined ? { product_type_id: input.productTypeId || null } : {}),
   };
 }
 
@@ -247,6 +257,7 @@ function requireDomains(resolved: string[], hadBefore: number, isCreate: boolean
 }
 
 export async function createServiceProduct(viewer: Viewer, input: ServiceProductInput) {
+  input = await resolveType(input);
   const profileId = await ownedProfileId(viewer);
   const milestones = normalizeMilestones(input.milestones);
   const skillIds = await validSkillIds(input.skillIds);
@@ -280,6 +291,7 @@ export async function updateServiceProduct(
   serviceProductId: string,
   input: ServiceProductInput
 ) {
+  input = await resolveType(input);
   const profileId = await ownedProfileId(viewer);
   const owned = await prisma.serviceProduct.findFirst({
     where: { id: serviceProductId, provider_profile_id: profileId },
@@ -387,6 +399,7 @@ export async function listPublishedServiceProducts(profileId: string) {
 
 /** CAT-E003/E004: the wizard's save — create or update, then publish when asked (validated company + the product checks). */
 export async function saveServiceProductFromWizard(viewer: Viewer, id: string | null, input: ServiceProductInput, publish: boolean) {
+  input = await resolveType(input);
   if (input.kind) {
     const pricing = input.pricingType ?? (input.kind === "DEPLOYABLE" ? "RECURRING" : input.kind === "BLANKET" ? "NOT_TO_EXCEED" : "FIXED");
     const bad = solutionViolations({ kind: input.kind, pricing_type: pricing, billing_period: pricing === "RECURRING" ? input.billingPeriod ?? "MONTHLY" : null, duration_weeks: input.kind === "DEPLOYABLE" ? null : input.durationWeeks ?? null, milestones: input.kind === "DEPLOYABLE" ? 0 : (input.milestones ?? []).length, deliverables: input.kind === "DEPLOYABLE" ? 0 : (input.deliverables ?? []).length });

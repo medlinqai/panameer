@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/shop/ProductCard";
 import { ShowMore } from "@/components/shop/ShowMore";
 import { FilterBar, type FilterDef } from "@/components/casing/FilterBar";
 import { listProductTypes } from "@/lib/service-product-types";
+import { offBusinessTypeIds } from "@/lib/what-we-buy";
 import { SuggestServiceType } from "@/components/shop/SuggestServiceType";
 import { BILLING, byPopular, DELIVERY, filterProducts, KIND, PRICE, type ShopQuery } from "@/lib/shop-filters";
 
@@ -21,7 +22,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sho
   const [all, me] = await Promise.all([listShopProducts(), prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } })]);
   const cartLines = me ? await prisma.cartLine.findMany({ where: { cart: { buyer_person_id: me.id } }, select: { id: true, service_product_id: true } }) : [];
   const inCart = new Map(cartLines.map((l) => [l.service_product_id, l.id]));
-  const products = filterProducts(all, sp).sort(byPopular);
+  // TX-E006: What We Buy — products from business types the viewer's company switched off are left out.
+  const off = await offBusinessTypeIds(viewer.userId);
+  const products = filterProducts(all, sp).filter((p) => !p.businessTypeId || !off.has(p.businessTypeId)).sort(byPopular);
   const countries = [...new Set(all.map((p) => p.providerCountry).filter((x): x is string => !!x))].sort();
   // WS-E008: Service Type first — grouped Build / Run, live counts, a pulse until this viewer opens it.
   const types = await listProductTypes();

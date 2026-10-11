@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { taxonomyLoaded } from "@/lib/service-product-types";
 import { prisma } from "@/lib/prisma";
 import { listServiceTypes } from "@/lib/my-catalog";
 import { BackLink } from "@/components/console/BackLink";
@@ -8,6 +10,8 @@ export const metadata = { title: "Service Types · Admin · Panameer" };
 
 // CAT-E002: Service Taxonomy › Service Types — the baseline list and the ones providers added.
 export default async function Page() {
+  // TX-E005: once the Service Taxonomy is seeded, suggestions are reviewed there.
+  if (await taxonomyLoaded()) redirect("/admin/service-taxonomy");
   const types = await listServiceTypes();
   const counts = new Map((await prisma.providerService.groupBy({ by: ["service_type_id"], _count: { _all: true } })).map((g) => [g.service_type_id, g._count._all]));
   const reviewed = new Set((await prisma.serviceType.findMany({ where: { reviewed_at: { not: null } }, select: { id: true } })).map((t) => t.id));

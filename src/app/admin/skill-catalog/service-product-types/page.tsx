@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { taxonomyLoaded } from "@/lib/service-product-types";
 import { prisma } from "@/lib/prisma";
 import { listProductTypes } from "@/lib/service-product-types";
 import { BackLink } from "@/components/console/BackLink";
@@ -8,6 +10,8 @@ export const metadata = { title: "Service Product Types · Admin · Panameer" };
 
 // WS-E008: Service Taxonomy › Service Product Types — the Shop's grouped list and the types members suggest.
 export default async function Page() {
+  // TX-E005: once the Service Taxonomy is seeded, suggestions are reviewed there.
+  if (await taxonomyLoaded()) redirect("/admin/service-taxonomy");
   const types = await listProductTypes({ includeUnreviewed: true });
   const counts = new Map((await prisma.serviceProduct.groupBy({ by: ["product_type_id"], _count: { _all: true } })).map((g) => [g.product_type_id, g._count._all]));
   return (
