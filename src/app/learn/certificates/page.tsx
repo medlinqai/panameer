@@ -27,16 +27,12 @@ export default async function CertificatesPage() {
   const badges = certified
     .map((p) => ({ slug: p.slug, title: p.title, at: p.certificate!.earnedOn }))
     .sort((a, b) => a.at.localeCompare(b.at));
-  const newest = badges[badges.length - 1] ?? null;
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const thisMonth = badges.filter((b) => new Date(b.at) >= monthStart).length;
-  const passed = paths.filter((p) => p.test.passed).length;
-  const best = Math.max(0, ...paths.map((p) => p.test.best ?? 0));
   // Up Next = the closest certificate: Ready to Test, else the best Test Out pick, else the next recommended path.
   const ready = paths.find((p) => !p.certificate && p.test.ready && p.mine && p.mine.total > 0 && p.mine.done >= p.mine.total && p.test.used < p.test.maxAttempts);
   const out = !ready ? testOut.find((x) => x.path.test.ready && !x.path.certificate && x.path.test.used < x.path.test.maxAttempts) ?? null : null;
   const up = ready ? { path: ready, label: "Up Next · Ready to Test", test: true } : out ? { path: out.path, label: `Up Next · Test Out · ${out.reason}`, test: true } : rec.picks[0] ? { path: rec.picks[0].path, label: `Up Next · ${rec.picks[0].reason}`, test: false } : null;
-  const when = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" });
   const tests = paths.filter((p) => p.test.ready && (p.mine || p.test.used > 0 || p.certificate));
   const row = "flex flex-wrap items-center justify-between gap-2 border-b border-line py-2.5";
   const BTN = "inline-flex min-h-9 items-center border border-ink px-3.5 text-[13px] font-semibold hover:bg-black/[0.04]";
@@ -49,19 +45,16 @@ export default async function CertificatesPage() {
           picture={
             <div>
               <CertRing certified={certified.length} total={withTest.length} badges={badges} />
-              {newest && <p className="mt-2 text-center text-[12px] text-ink-2" data-newest-certificate>Newest: <b className="text-ink">{newest.title}</b> · {when(newest.at)}</p>}
             </div>
           }
           eyebrow="Certificates"
           title={certified.length ? `${countWord(certified.length)} ${certified.length === 1 ? "Certificate" : "Certificates"} and Counting` : "Earn Your First Certificate"}
           kpis={[
             ...youTotalAverage({ you: certified.length, youLabel: "CERTIFICATES", month: thisMonth, total: withTest.length, totalLabel: "OF PATHS WITH A TEST", average }),
-            { value: passed, label: "TESTS PASSED" },
-            { value: best ? `${best}%` : "—", label: "BEST SCORE" },
           ]}
           paragraph={
             <>
-              <span className="mb-3 block">Certificates show on your profile under <b className="text-ink">Credentials</b>. Pass a path&apos;s test to earn one.</span>
+              <span className="mb-3 block">Certificates show on your profile under <b className="text-ink">Credentials</b>.</span>
               {up && <UpNextCard path={up.path} label={up.label} />}
             </>
           }

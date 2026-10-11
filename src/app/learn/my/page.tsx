@@ -12,7 +12,6 @@ import { BubbleField } from "@/components/casing/BubbleField";
 import { UpNextCard } from "@/components/learn/UpNextCard";
 import { countWord, youTotalAverage } from "@/components/learn/YouTotalAverage";
 import { memberLessonAverage } from "@/lib/learn-averages";
-import { timeLabel } from "@/lib/learn-time";
 
 export const metadata = { title: "My Learning — Panameer", description: "Your learning record: in progress, completed, certificates and tests." };
 export const dynamic = "force-dynamic";
@@ -42,7 +41,6 @@ export default async function MyLearningPage() {
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const lessonsThisMonth = watched.filter((w) => w.completed_at >= monthStart).length;
   const allLessons = paths.reduce((n, p) => n + p.courses.reduce((m, c) => m + c.lessons.filter((l) => l.playable).length, 0), 0);
-  const minutesLearned = paths.reduce((n, p) => n + p.courses.reduce((m, c) => m + c.lessons.filter((l) => l.done).reduce((k, l) => k + (l.minutes ?? 0), 0), 0), 0);
   const up = next.picks[0] ?? null;
   const toNext = nextCert ? nextCert.mine!.total - nextCert.mine!.done : null;
   // One bubble per enrolled path: size = lessons, ink rises with progress, certified = solid ✓, furthest-into = magenta ring.
@@ -90,8 +88,6 @@ export default async function MyLearningPage() {
           title={lessonsDone ? `${countWord(lessonsDone)} ${lessonsDone === 1 ? "Lesson" : "Lessons"} and Counting` : "Start Your First Lesson"}
           kpis={[
             ...youTotalAverage({ you: lessonsDone, youLabel: "LESSONS DONE", month: lessonsThisMonth, total: allLessons, totalLabel: "OF ALL LESSONS", average }),
-            { value: inProgress.length, label: "PATHS IN PROGRESS" },
-            { value: minutesLearned ? timeLabel(minutesLearned) : "0", label: "TIME LEARNING" },
           ]}
           paragraph={
             <>
