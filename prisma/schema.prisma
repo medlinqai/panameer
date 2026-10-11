@@ -416,6 +416,9 @@ model Company {
   @@index([website_domain])
   @@index([tin_digits])
   @@index([email_domain])
+  /// TX-E003 / TX-E006: the company's business types (a provider can have more than one) and What We Buy.
+  businessTypes CompanyBusinessType[]
+  buySettings   BuySetting[]
   @@map("companies")
 }
 
@@ -641,6 +644,15 @@ model BusinessType {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
+  /// TX-E001: the Service Taxonomy — Commodity Group › Business Type › Service Category › Service Type.
+  commodity_group_id String?  @db.Uuid
+  uses_skills        Boolean  @default(true)
+  sort_order         Int      @default(100)
+  hidden             Boolean  @default(false)
+  commodityGroup     CommodityGroup?       @relation(fields: [commodity_group_id], references: [id], onDelete: SetNull)
+  serviceCategories  ServiceCategory[]
+  companies          CompanyBusinessType[]
+  buySettings        BuySetting[]
   pillars         Pillar[]
   skills          Skill[]
   tags            SkillTag[]
@@ -713,6 +725,9 @@ model Pillar {
   workRequests     WorkRequest[]
 
   @@unique([business_type_id, code])
+  /// Decision 4: pillars fold into areas (mapping only; filled by the taxonomy seed).
+  area_id String? @db.Uuid
+  area    Area?   @relation(fields: [area_id], references: [id], onDelete: SetNull)
   @@map("pillars")
 }
 
@@ -726,6 +741,10 @@ model Offering {
 
   pillar       Pillar        @relation(fields: [pillar_id], references: [id], onDelete: Cascade)
   applications Application[]
+
+  /// Decision 4: offerings fold into areas (mapping only).
+  area_id String? @db.Uuid
+  area    Area?   @relation(fields: [area_id], references: [id], onDelete: SetNull)
 
   @@unique([pillar_id, name])
   @@index([pillar_id])
@@ -839,6 +858,9 @@ model Skill {
   /// ⚠ Which learning paths certify this skill (`P2-A4-E701`).
   learningPaths LearningPathSkill[]
 
+  /// Decision 4: many Skills → one Area (filled from `area` by the taxonomy seed).
+  area_id String? @db.Uuid
+  areaRef Area?   @relation(fields: [area_id], references: [id], onDelete: SetNull)
   @@map("skills")
 }
 
@@ -2371,6 +2393,9 @@ model ServiceProduct {
 
   @@index([provider_profile_id])
   @@index([role_id])
+  /// TX-E001: the Service Product Type (service_types, kind SERVICE_PRODUCT); product_type_id is folded into this by the taxonomy seed.
+  service_type_id     String?            @db.Uuid
+  serviceType         ServiceType?       @relation(fields: [service_type_id], references: [id], onDelete: SetNull)
   @@map("service_products")
 }
 
@@ -8185,6 +8210,10 @@ model Area {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  skills    Skill[]
+  pillars   Pillar[]
+  offerings Offering[]
+
   @@map("areas")
 }
 
@@ -8448,6 +8477,22 @@ model ServiceType {
   sort_order           Int       @default(100)
   created_at           DateTime  @default(now())
 
+  /// TX-E001: Level 4 of the Service Taxonomy, with the universal fields.
+  service_category_id String?           @db.Uuid
+  kind                ServiceKind       @default(SERVICE)
+  pricing_model       PricingModel?
+  units               ServiceUnit[]
+  delivery            ServiceDelivery?
+  lead_time_days      Int?
+  /// UNSPSC — only codes Scott approved (naming audit sheet); blank until then.
+  commodity_code      String?
+  /// Stock services every provider of the business type must price.
+  required            Boolean           @default(false)
+  status              ServiceTypeStatus @default(STOCK)
+  description         String?
+  serviceCategory     ServiceCategory?  @relation(fields: [service_category_id], references: [id], onDelete: SetNull)
+  serviceProducts     ServiceProduct[]
+
   @@map("service_types")
 }
 
@@ -8639,4 +8684,99 @@ model ServiceProductType {
   created_at           DateTime  @default(now())
 
   @@map("service_product_types")
+}
+
+/// TX-E001: Level 1 of the Service Taxonomy — UNSPSC-based, the same for every business type, shown to buyers.
+model CommodityGroup {
+  id              String         @id @default(uuid()) @db.Uuid
+  name            String         @unique
+  /// UNSPSC segments, e.g. ["80","81","84"].
+  unspsc_segments String[]
+  sort_order      Int            @default(100)
+  /// Parked groups stay hidden (not offered yet).
+  hidden          Boolean        @default(false)
+  created_at      DateTime       @default(now())
+  businessTypes   BusinessType[]
+  buySettings     BuySetting[]
+
+  @@map("commodity_groups")
+}
+
+/// TX-E001: Level 3 — about five per business type (Consulting · Project Support · … · Build · Run).
+model ServiceCategory {
+  id               String        @id @default(uuid()) @db.Uuid
+  business_type_id String        @db.Uuid
+  name             String
+  kind             ServiceKind
+  sort_order       Int           @default(100)
+  created_at       DateTime      @default(now())
+  businessType     BusinessType  @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  serviceTypes     ServiceType[]
+
+  @@unique([business_type_id, name])
+  @@map("service_categories")
+}
+
+/// TX-E003: a provider company can sell under more than one business type.
+model CompanyBusinessType {
+  id               String       @id @default(uuid()) @db.Uuid
+  company_id       String       @db.Uuid
+  business_type_id String       @db.Uuid
+  created_at       DateTime     @default(now())
+  company          Company      @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  businessType     BusinessType @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+
+  @@unique([company_id, business_type_id])
+  @@map("company_business_types")
+}
+
+/// TX-E006: What We Buy — a buyer company turns commodity groups or business types off (no row = on; parked groups off).
+model BuySetting {
+  id                 String          @id @default(uuid()) @db.Uuid
+  company_id         String          @db.Uuid
+  commodity_group_id String?         @db.Uuid
+  business_type_id   String?         @db.Uuid
+  enabled            Boolean
+  updated_at         DateTime        @updatedAt
+  company            Company         @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  commodityGroup     CommodityGroup? @relation(fields: [commodity_group_id], references: [id], onDelete: Cascade)
+  businessType       BusinessType?   @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+
+  @@unique([company_id, commodity_group_id, business_type_id])
+  @@map("buy_settings")
+}
+
+enum ServiceKind {
+  SERVICE
+  SERVICE_PRODUCT
+}
+
+enum PricingModel {
+  TIME
+  FIXED
+  RECURRING
+  QUOTE
+}
+
+enum ServiceUnit {
+  HOUR
+  DAY
+  WEEK
+  MONTH
+  SESSION
+  VISIT
+  EACH
+}
+
+enum ServiceDelivery {
+  REMOTE
+  ONSITE
+  EITHER
+}
+
+enum ServiceTypeStatus {
+  STOCK
+  SUGGESTED
+  APPROVED
+  MERGED
 }
