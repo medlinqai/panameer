@@ -11,7 +11,8 @@ const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US"
 export function UsageChart({ title, subtitle, points, tabs, unit = "" }: { title: string; subtitle?: string; points: Point[]; tabs?: { label: string; href: string; on: boolean }[]; unit?: string }) {
   const [hover, setHover] = useState<number | null>(null);
   const [table, setTable] = useState(false);
-  const max = Math.max(1, ...points.map((p) => p.n));
+  // Even ceiling so the 0 · ½ · max gridlines are whole numbers (no "1, 1, 0").
+  const max = Math.max(2, Math.ceil(Math.max(0, ...points.map((p) => p.n)) / 2) * 2);
   const x = (i: number) => PAD.l + (points.length <= 1 ? 0 : (i * (W - PAD.l - PAD.r)) / (points.length - 1));
   const y = (n: number) => PAD.t + (1 - n / max) * (H - PAD.t - PAD.b);
   const line = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(p.n).toFixed(1)}`).join(" ");

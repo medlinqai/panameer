@@ -36,7 +36,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
   return (
     <div className="mx-auto w-full max-w-6xl" data-admin-usage>
       <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">ADMIN</p>
-      <h1 className="text-[28px] font-bold">Usage</h1>
+      <h1 className="relative z-10 mb-3 text-[28px] font-bold leading-tight">Usage</h1>
       <PageTabs wrap tabs={TABS.map((t) => ({ label: LABEL[t], href: q({ tab: t, app: null, list: null }), match: t }))} current={tab} />
       <div className="mb-4 flex flex-wrap items-center gap-2" data-usage-filters>
         {RANGES.map((r) => <Link key={r.value} href={q({ range: r.value, list: null })} className={"border px-3 py-1.5 text-[13px] font-semibold " + (r.value === range ? "border-ink bg-ink text-surface" : "border-line hover:border-ink")}>{r.label}</Link>)}
