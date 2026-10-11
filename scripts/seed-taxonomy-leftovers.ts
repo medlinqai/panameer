@@ -45,8 +45,9 @@ async function aiAgentSupport() {
   writes.push((tx) => tx.serviceType.update({ where: { id: from.id }, data: { status: "MERGED", merged_into_id: into.id, reviewed_at: new Date() } }));
 }
 
-/** TL-E003: vendor pillars → Specializations (kind PRODUCT; reuse by name). Skills, skill tags and work requests under them get
- *  specialization_id (pillar_id kept); providers who picked the pillar get the specialization on their profile; the pillar is hidden. */
+/** TL-E003 (Scott, revised): vendor pillars → Specializations (kind PRODUCT; reuse by name). Skills, skill tags and work requests
+ *  under them get specialization_id (pillar_id kept); providers who picked the pillar get the specialization. The pillar is NOT
+ *  hidden — its skills keep their place in the Role › Domain › Skill picker; only the pillar label is retired (retired_at). */
 const VENDOR_PILLARS: Record<string, string> = {
   ORACLE_FUSION_CLOUD: "Oracle Fusion Cloud", ORACLE_E_BUSINESS_SUITE: "Oracle E-Business Suite", PEOPLESOFT: "PeopleSoft",
   WORKDAY: "Workday", SALESFORCE: "Salesforce", CROSS_VENDOR_PLATFORM_NEUTRAL: "Cross-Vendor (Platform-Neutral)",
@@ -66,14 +67,14 @@ async function vendorPillars() {
     ]);
     note("TL-E003", spec ? "reuse specialization" : "create specialization", specName, `${pillar.name} pillar → PRODUCT`);
     note("TL-E003", "re-link", `${pillar.name}`, `${skills} skills, ${tags} skill tags, ${requests} work requests, ${providers.length} provider profiles`);
-    note("TL-E003", "hide pillar", pillar.name, "visible_to_members = false — its skills leave the Role › Domain picker (still searchable; linked to the specialization)");
+    note("TL-E003", "retire pillar label", pillar.name, "retired_at set + admin note; stays visible, so its skills keep their place in the picker");
     writes.push(async (tx) => {
       const id = spec?.id ?? (await tx.specialization.create({ data: { business_type_id: bt.id, name: specName, kind: "PRODUCT", origin: "ADMIN", status: "ACTIVE" } })).id;
       await tx.skill.updateMany({ where: { pillar_id: pillar.id, specialization_id: null }, data: { specialization_id: id } });
       await tx.skillTag.updateMany({ where: { pillar_id: pillar.id, specialization_id: null }, data: { specialization_id: id } });
       await tx.workRequest.updateMany({ where: { pillar_id: pillar.id, specialization_id: null }, data: { specialization_id: id } });
       if (providers.length) await tx.providerProfileSpecialization.createMany({ data: providers.map((p) => ({ provider_profile_id: p.id, specialization_id: id })), skipDuplicates: true });
-      await tx.pillar.update({ where: { id: pillar.id }, data: { visible_to_members: false } });
+      await tx.pillar.update({ where: { id: pillar.id }, data: { retired_at: new Date(), admin_note: `Label retired (TL-E003): the vendor is the Specialization "${specName}"; skills keep their place.` } });
     });
   }
 }
@@ -157,8 +158,15 @@ async function main() {
     const ROLLBACK = new Error("trial rollback");
     try {
       await prisma.$transaction(async (tx) => {
+        // The Role › Domain › Skill picker: active, member-visible ERP Consulting skills under a visible pillar (lib/catalog).
+        const bt = await tx.businessType.findUnique({ where: { code: ERP_CONSULTING }, select: { id: true } });
+        const inPicker = async () => tx.skill.count({ where: { status: "ACTIVE", visible_to_members: true, business_type_id: bt?.id, pillar: { visible_to_members: true } } });
+        const vendorInPicker = async () => tx.skill.count({ where: { status: "ACTIVE", visible_to_members: true, business_type_id: bt?.id, pillar: { visible_to_members: true, code: { in: Object.keys(VENDOR_PILLARS) } } } });
+        const before = { picker: await inPicker(), vendor: await vendorInPicker() };
         for (const w of writes) await w(tx);
-        const left = await tx.pillar.findMany({ where: { visible_to_members: true, area_id: null, role_id: null }, select: { name: true } });
+        const after = { picker: await inPicker(), vendor: await vendorInPicker(), vendorLinked: await tx.skill.count({ where: { pillar: { code: { in: Object.keys(VENDOR_PILLARS) } }, specialization_id: { not: null } } }) };
+        console.log(JSON.stringify({ skillsInPicker: { before, after } }));
+        const left = await tx.pillar.findMany({ where: { visible_to_members: true, area_id: null, role_id: null, retired_at: null }, select: { name: true } });
         const unlinked = await tx.companyBusinessType.count({ where: { company: { NOT: REAL_COMPANY } } });
         console.log(JSON.stringify({ trial: "all writes ran", pillarsNeedingAHome: left.map((p) => p.name), testCompanyLinksLeft: unlinked, erpHidden: (await tx.businessType.findUnique({ where: { code: "ERP" } }))?.hidden }));
         throw ROLLBACK;

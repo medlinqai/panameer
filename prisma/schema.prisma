@@ -712,6 +712,8 @@ model Pillar {
   /// TRUE so every existing domain is unaffected by this column arriving —
   /// a default of false would have hidden the whole catalog on deploy.
   /// TL-E006: an admin-only note (e.g. why a pillar is left as is).
+  /// TL-E003: the pillar is no longer a taxonomy label (vendor → Specialization); its skills keep their place in the picker.
+  retired_at DateTime?
   admin_note String?
   visible_to_members Boolean @default(true)
 
