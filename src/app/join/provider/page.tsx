@@ -9,6 +9,7 @@ import { AiLine } from "@/components/onboarding/AiLine";
 import { formatCents } from "@/lib/display";
 import { Avatar } from "@/components/Avatar";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
+import { RegisterCompany } from "@/components/onboarding/RegisterCompany";
 import {
   canSignUp,
   SignUpForm,
@@ -117,7 +118,7 @@ import { formatPhone, isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/ph
 // Every screen this wizard can RENDER. The counted itinerary is a subset and
 // imported above — the section route names the same steps when it saves, so the
 // It has to ask the question WITHOUT touching `RECRUITER_STEPS`
-type Screen = "signup" | "check_email" | "work_method" | Step;
+type Screen = "signup" | "register_company" | "check_email" | "work_method" | Step;
 
 /** The review screen's in-place editors WS-1). Each value names a */
 type EditSection =
@@ -798,7 +799,8 @@ setScreen(target);
         lastName: acct.lastName,
         address: emptyAddress(acct.country),
       }));
-      goTo("check_email");
+      // RD-E001: company at Register — an invited provider joins the coordinator's company instead.
+      goTo(inviteToken ? "check_email" : "register_company");
     } catch {
       // THERE WAS NO `catch`
       // THIS ONE IS SIGNUP. A silent failure here is A REGISTRATION WALL —
@@ -967,6 +969,14 @@ setScreen(target);
           callbackUrl="/join/provider"
           hideCountry
         />
+      </PlainShell>
+    );
+  }
+
+  if (screen === "register_company") {
+    return (
+      <PlainShell contentWidth="max-w-2xl">
+        <RegisterCompany onDone={() => goTo("check_email")} />
       </PlainShell>
     );
   }
