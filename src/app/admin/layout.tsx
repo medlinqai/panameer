@@ -14,7 +14,7 @@ export default async function AdminLayout({
         {}
         <div>
           {}
-          <div className="mx-auto w-full max-w-[1200px]">{children}</div>
+          <div className="pm-white-page mx-auto w-full max-w-[1200px]">{children}</div>
         </div>
       </AppShell>
     </MeProvider>
