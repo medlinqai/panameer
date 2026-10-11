@@ -1,39 +1,41 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { PROVIDER_ROAD, ROAD_LANES, ROAD_PHASES, type LifecycleStep } from "@/lib/user-levels";
 
 export const metadata = { title: "The Detailed Road · Panameer" };
 
-// The detailed provider road (mockup provider_roadmap_fork 2026-10-07): stop 5 splits into Path A / Path B, then they meet.
-const TRACK = "#E8EAF1";
-const RING = "#C9CDDC";
+// RD-E005: the detailed provider road (mockup detailed_road_v5): 1–4 in one row, stop 5 splits into three lanes that merge at
+// "Work Order Signed", then 6–8. Each phase has its own color on the road, rings, label and band.
 const NUM = "#8A90A8";
 const INK = "#272334";
 const INK2 = "#5b5870";
-const DEEP = "#3A4166";
-const ROADS = [
-  "M60 110 H860",
-  "M860 110 C960 110 960 290 860 290 H200 C100 290 100 590 200 590",
-  "M860 110 C1030 110 1030 430 860 430 H200 C130 430 130 590 200 590",
-  "M200 590 H1030",
+const J = ROAD_PHASES.join, W = ROAD_PHASES.win, P = ROAD_PHASES.paid;
+const by = (k: string) => PROVIDER_ROAD.find((s) => s.key === k)!;
+const MAIN: { s: LifecycleStep; n: string; x: number; y: number }[] = [
+  { s: by("register"), n: "1", x: 130, y: 100 },
+  { s: by("verify"), n: "2", x: 390, y: 100 },
+  { s: by("profile"), n: "3", x: 650, y: 100 },
+  { s: by("list"), n: "4", x: 910, y: 100 },
+  { s: by("validate"), n: "6", x: 360, y: 580 },
+  { s: by("request"), n: "7", x: 640, y: 580 },
+  { s: by("paid"), n: "8", x: 920, y: 580 },
 ];
-type Stop = { x: number; y: number; n: string; t: string; s: string; tm: string; gate?: string; small?: boolean; last?: boolean };
-const STOPS: Stop[] = [
-  { x: 100, y: 110, n: "1", t: "Register", s: "REGISTERED", tm: "1 min" },
-  { x: 290, y: 110, n: "2", t: "Verify", s: "VERIFIED", tm: "1 min" },
-  { x: 480, y: 110, n: "3", t: "Complete Profile", s: "PROFILED", tm: "about 10 min", gate: "GATE" },
-  { x: 670, y: 110, n: "4", t: "Add Company", s: "LINKED", tm: "2 min" },
-  { x: 760, y: 290, n: "A1", t: "Post a Service Product", s: "LISTED", tm: "10 min each", small: true },
-  { x: 520, y: 290, n: "A2", t: "Added to Cart", s: "IN A CART", tm: "buyer's move", small: true },
-  { x: 290, y: 290, n: "A3", t: "Order Placed", s: "ORDERED", tm: "opens at once", small: true },
-  { x: 760, y: 430, n: "B1", t: "Get Invited (or Find a Request)", s: "INVITED", tm: "buyer's move", small: true },
-  { x: 520, y: 430, n: "B2", t: "Propose Your Rate", s: "PROPOSED", tm: "15 min each", small: true },
-  { x: 290, y: 430, n: "B3", t: "Agree on Price", s: "AGREED", tm: "varies", small: true },
-  { x: 330, y: 590, n: "6", t: "Add Tax & Banking", s: "VALIDATED", tm: "8 min · tax form + bank", gate: "GATE · ADMIN" },
-  { x: 560, y: 590, n: "7", t: "Sell or Work", s: "CONTRACTED", tm: "signed work order", gate: "GATE" },
-  { x: 790, y: 590, n: "8", t: "Request Payment", s: "REQUESTED", tm: "5 min each" },
-  { x: 1000, y: 590, n: "9", t: "Get Paid", s: "PAID", tm: "automatic", last: true },
+const LANE_Y = [240, 330, 420];
+const LANE_X = [720, 580, 460];
+const LANE_PATHS = [
+  "M930 330 C860 330 860 240 790 240 H330 C260 240 260 330 200 330",
+  "M930 330 H200",
+  "M930 330 C860 330 860 420 790 420 H330 C260 420 260 330 200 330",
 ];
-const LABEL = { fontWeight: 800, fontSize: 11, letterSpacing: ".14em" } as const;
+
+function Road({ d, color, w = 28 }: { d: string; color: string; w?: number }) {
+  return (
+    <>
+      <path d={d} fill="none" stroke={color} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} fill="none" stroke="#fff" strokeWidth={w > 20 ? 2 : 1.5} strokeDasharray={w > 20 ? "10 12" : "6 8"} />
+    </>
+  );
+}
 
 export default function DetailedRoadPage() {
   return (
@@ -42,44 +44,74 @@ export default function DetailedRoadPage() {
         <Logo />
         <p className="mt-10 text-[11px] font-bold uppercase tracking-[0.14em] text-magenta">Welcome · For Providers</p>
         <h1 className="mt-1.5 text-[36px] font-extrabold leading-[1.1] sm:text-[40px]">The Detailed Road</h1>
-        <p className="mt-2 max-w-[780px] text-[15px] text-ink-2">
-          After you add your company, stop 5 <b className="text-ink">splits into two ways to win work</b> — sell a ready-made service product, or propose your rate on a buyer&apos;s work request. Use either or both. They meet again at Add Tax &amp; Banking, before the first work order.
+        <p className="mt-2 max-w-[780px] text-[15px] leading-relaxed text-ink-2">
+          Eight stops, 10–15 minutes to be found. Build your catalog, then win work at stop 5 in <b className="text-ink">three ways</b>. Add tax and banking once you have a signed work order, so you&apos;re paid on time.
         </p>
         <div className="mt-4 overflow-x-auto">
-          <svg viewBox="0 0 1080 680" role="img" aria-label="Provider road with two paths" className="block h-auto w-full min-w-[640px] font-sans">
-            <g fill="none" stroke={TRACK} strokeWidth={28} strokeLinecap="round" strokeLinejoin="round">{ROADS.map((d) => <path key={d} d={d} />)}</g>
-            <g fill="none" stroke="#fff" strokeWidth={2} strokeDasharray="10 12">{ROADS.map((d) => <path key={d} d={d} />)}</g>
-            <text x={60} y={48} fill={DEEP} style={LABEL}>1 · JOIN &amp; GET FOUND</text>
-            <text x={1060} y={226} fill={DEEP} textAnchor="end" style={LABEL}>5 · SELL PRODUCTS / SERVICES — TWO WAYS</text>
-            <text x={1060} y={250} fill={DEEP} textAnchor="end" fontWeight={800} fontSize={11.5} letterSpacing=".1em">PATH A · SELL A SERVICE PRODUCT</text>
-            <text x={1060} y={390} fill={DEEP} textAnchor="end" fontWeight={800} fontSize={11.5} letterSpacing=".1em">PATH B · PROPOSE ON WORK REQUESTS</text>
-            <text x={200} y={532} fill={DEEP} style={LABEL}>3 · CONTRACT &amp; GET PAID</text>
-            <text x={96} y={440} fill={DEEP} textAnchor="middle" transform="rotate(-90 96 440)" style={LABEL}>PATHS MEET</text>
-            <g>
-              <circle cx={860} cy={110} r={14} fill={DEEP} />
-              <text x={860} y={115} textAnchor="middle" fill="#fff" fontWeight={800} fontSize={12}>⑂</text>
-              <text x={860} y={70} textAnchor="middle" fontSize={10} fontWeight={800} fill={DEEP}>ROAD SPLITS</text>
-            </g>
-            {STOPS.map((s) => (
-              <g key={s.n} data-stop={s.n}>
-                <circle cx={s.x} cy={s.y} r={s.last ? 26 : s.small ? 20 : 22} fill="#fff" stroke={s.last ? DEEP : RING} strokeWidth={3} />
-                <text x={s.x} y={s.y + (s.small ? 5 : 6)} textAnchor="middle" fill={s.last ? DEEP : NUM} fontWeight={800} fontSize={s.small ? 13 : 16}>{s.n}</text>
-                {s.gate && <text x={s.x} y={s.y - 40} textAnchor="middle" fontSize={10} fontWeight={800} fill={INK}>{s.gate}</text>}
-                <text x={s.x} y={s.y + 46} textAnchor="middle" fill={s.last ? INK : INK2} fontWeight={700} fontSize={13}>{s.t}</text>
-                <text x={s.x} y={s.y + 61} textAnchor="middle" fill={NUM} fontWeight={700} fontSize={9.5} letterSpacing=".08em">{s.s}</text>
-                <text x={s.x} y={s.y + 76} textAnchor="middle" fill={INK2} fontWeight={600} fontSize={10.5}>⏱ {s.tm}</text>
-              </g>
+          <svg viewBox="0 0 1080 700" role="img" aria-label="Provider road, eight stops" className="block h-auto w-full min-w-[700px] font-sans">
+            <rect x={20} y={20} width={1040} height={190} rx={18} fill={J.band} />
+            <rect x={20} y={214} width={1040} height={250} rx={18} fill={W.band} />
+            <rect x={20} y={468} width={1040} height={222} rx={18} fill={P.band} />
+            <Road d="M60 100 H930" color={J.track} />
+            <Road d="M930 100 C1030 100 1030 330 930 330" color={W.track} />
+            <Road d="M200 330 C90 330 90 580 200 580 H1020" color={P.track} />
+            {LANE_PATHS.map((d) => <Road key={d} d={d} color={W.track} w={14} />)}
+            <text x={44} y={48} fill={J.color} fontWeight={800} fontSize={11} letterSpacing=".14em">JOIN &amp; GET FOUND · 10–15 MIN</text>
+            <text x={1040} y={246} textAnchor="end" fill={W.color} fontWeight={800} fontSize={11} letterSpacing=".14em">WIN WORK</text>
+            <text x={1040} y={500} textAnchor="end" fill={P.color} fontWeight={800} fontSize={11} letterSpacing=".14em">GET PAID</text>
+            {ROAD_LANES.map((l, i) => (
+              <text key={l.id} x={345} y={LANE_Y[i] - 18} fill={W.color} fontWeight={800} fontSize={10.5} letterSpacing=".1em">{l.id} · {l.name.toUpperCase()}</text>
             ))}
+            {ROAD_LANES.flatMap((l, i) =>
+              l.steps.map((t, j) => (
+                <g key={`${l.id}.${j}`} data-lane-step={`${l.id}.${j + 1}`}>
+                  <circle cx={LANE_X[j]} cy={LANE_Y[i]} r={7} fill="#fff" stroke="#D98ED8" strokeWidth={2.5} />
+                  <text x={LANE_X[j]} y={LANE_Y[i] + 22} textAnchor="middle" fill={INK2} fontWeight={700} fontSize={11.5}>{t}</text>
+                  <text x={LANE_X[j]} y={LANE_Y[i] + 35} textAnchor="middle" fill={NUM} fontWeight={700} fontSize={9}>{l.id}.{j + 1}</text>
+                </g>
+              ))
+            )}
+            {/* Stop 5 splits; the lanes merge at Work Order Signed. */}
+            <g data-stop="5">
+              <circle cx={930} cy={330} r={22} fill={W.color} stroke={W.color} strokeWidth={3} />
+              <text x={930} y={336} textAnchor="middle" fill="#fff" fontWeight={800} fontSize={16}>5</text>
+              <text x={964} y={335} fill={INK} fontWeight={700} fontSize={13}>{by("contract").step}</text>
+            </g>
+            <g data-stop="signed">
+              <circle cx={200} cy={330} r={22} fill="#fff" stroke={W.color} strokeWidth={3} />
+              <text x={200} y={336} textAnchor="middle" fill={W.color} fontWeight={800} fontSize={16}>✓</text>
+              <text x={166} y={329} textAnchor="end" fill={INK} fontWeight={700} fontSize={13}>Work Order Signed</text>
+              <text x={166} y={345} textAnchor="end" fill={NUM} fontWeight={700} fontSize={9.5} letterSpacing=".08em">{by("contract").status.toUpperCase()}</text>
+            </g>
+            {MAIN.map(({ s, n, x, y }) => {
+              const C = ROAD_PHASES[s.phase ?? "join"].color;
+              const last = s.key === "paid";
+              return (
+                <g key={s.key} data-stop={n}>
+                  <circle cx={x} cy={y} r={last ? 26 : 22} fill="#fff" stroke={C} strokeWidth={3} />
+                  <text x={x} y={y + 6} textAnchor="middle" fill={C} fontWeight={800} fontSize={16}>{n}</text>
+                  {s.gate && <text x={x} y={y - 36} textAnchor="middle" fontSize={10} fontWeight={800} fill={INK}>{s.admin ? "GATE · BEFORE PAYMENT" : "GATE"}</text>}
+                  <text x={x} y={y + 46} textAnchor="middle" fill={last ? INK : INK2} fontWeight={700} fontSize={13}>{s.step}</text>
+                  <text x={x} y={y + 61} textAnchor="middle" fill={NUM} fontWeight={700} fontSize={9.5} letterSpacing=".08em">{s.status.toUpperCase()}</text>
+                  {s.time && <text x={x} y={y + 76} textAnchor="middle" fill={INK2} fontWeight={600} fontSize={10.5}>⏱ {s.time}</text>}
+                </g>
+              );
+            })}
           </svg>
         </div>
+        <p className="mt-2 text-[13.5px]">
+          <Link href="/help/road" data-questions-link className="font-bold text-magenta-dark underline underline-offset-4">Questions?</Link>{" "}
+          <span className="text-ink-2">FAQs for each step, or ask us.</span>
+        </p>
         <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-ink-2">
-          <span>A / B = two ways to win work — either or both</span>
+          <span><b style={{ color: J.color }}>{J.label}</b> · <b style={{ color: W.color }}>{W.label}</b> · <b style={{ color: P.color }}>{P.label}</b></span>
           <span><b className="text-[10px] text-ink">GATE</b> = needed before the next stop</span>
         </p>
-        <ul className="mt-5 max-w-[780px] list-disc space-y-1 pl-5 text-[14px] leading-relaxed">
-          <li><b>Path A · Sell a service product:</b> A1 Post a Service Product (Listed) → A2 Added to Cart (In a Cart) → A3 Order Placed (Ordered). Buyers pay your listed price; turn on “I accept orders manually” to review each order first.</li>
-          <li><b>Path B · Propose on work requests:</b> B1 Get Invited, or find a request (Invited) → B2 Propose Your Rate (Proposed) → B3 Agree on Price (Agreed).</li>
-          <li>Add Tax &amp; Banking covers the tax form <b>and</b> a payout account in the company&apos;s legal name; Panameer then validates the company.</li>
+        <ul className="mt-5 max-w-[800px] list-disc space-y-1 pl-5 text-[14px] leading-relaxed">
+          <li><b>5.A · Product Bought:</b> Product Located → Added to Cart → Order Placed. Listed price; orders are accepted automatically (providers can switch to manual). Want something custom? Request an Estimate (5.C).</li>
+          <li><b>5.B · Rate Accepted:</b> Provider Invited → Rate Proposed → Rate Accepted.</li>
+          <li><b>5.C · Estimate Accepted:</b> Estimate Requested → Provider Estimates → Estimate Accepted.</li>
+          <li><b>Add Tax &amp; Banking:</b> the tax form and a payout account in your company&apos;s legal name. We ask when your first work order is signed; payment waits until it&apos;s validated.</li>
         </ul>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <Link href="/join/provider" className="inline-flex min-h-[48px] items-center bg-ink px-6 text-[15px] font-bold text-surface hover:bg-ink-hover">Complete My Profile</Link>
