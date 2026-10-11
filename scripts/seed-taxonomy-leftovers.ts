@@ -42,9 +42,43 @@ async function aiAgentSupport() {
   writes.push((tx) => tx.serviceType.update({ where: { id: from.id }, data: { status: "MERGED", merged_into_id: into.id, reviewed_at: new Date() } }));
 }
 
+/** TL-E003: vendor pillars → Specializations (kind PRODUCT; reuse by name). Skills, skill tags and work requests under them get
+ *  specialization_id (pillar_id kept); providers who picked the pillar get the specialization on their profile; the pillar is hidden. */
+const VENDOR_PILLARS: Record<string, string> = {
+  ORACLE_FUSION_CLOUD: "Oracle Fusion Cloud", ORACLE_E_BUSINESS_SUITE: "Oracle E-Business Suite", PEOPLESOFT: "PeopleSoft",
+  WORKDAY: "Workday", SALESFORCE: "Salesforce", CROSS_VENDOR_PLATFORM_NEUTRAL: "Cross-Vendor (Platform-Neutral)",
+};
+async function vendorPillars() {
+  const bt = await prisma.businessType.findUnique({ where: { code: ERP_CONSULTING } });
+  if (!bt) return note("TL-E003", "skip", "vendor pillars", "ERP Consulting not found");
+  for (const [code, specName] of Object.entries(VENDOR_PILLARS)) {
+    const pillar = await prisma.pillar.findFirst({ where: { code } });
+    if (!pillar) { note("TL-E003", "skip", code, "pillar not found"); continue; }
+    const spec = await prisma.specialization.findFirst({ where: { name: { equals: specName, mode: "insensitive" }, kind: "PRODUCT", merged_into_id: null } });
+    const [skills, tags, requests, providers] = await Promise.all([
+      prisma.skill.count({ where: { pillar_id: pillar.id, specialization_id: null } }),
+      prisma.skillTag.count({ where: { pillar_id: pillar.id, specialization_id: null } }),
+      prisma.workRequest.count({ where: { pillar_id: pillar.id, specialization_id: null } }),
+      prisma.providerProfile.findMany({ where: { pillar_id: pillar.id }, select: { id: true } }),
+    ]);
+    note("TL-E003", spec ? "reuse specialization" : "create specialization", specName, `${pillar.name} pillar → PRODUCT`);
+    note("TL-E003", "re-link", `${pillar.name}`, `${skills} skills, ${tags} skill tags, ${requests} work requests, ${providers.length} provider profiles`);
+    note("TL-E003", "hide pillar", pillar.name, "visible_to_members = false — its skills leave the Role › Domain picker (still searchable; linked to the specialization)");
+    writes.push(async (tx) => {
+      const id = spec?.id ?? (await tx.specialization.create({ data: { business_type_id: bt.id, name: specName, kind: "PRODUCT", origin: "ADMIN", status: "ACTIVE" } })).id;
+      await tx.skill.updateMany({ where: { pillar_id: pillar.id, specialization_id: null }, data: { specialization_id: id } });
+      await tx.skillTag.updateMany({ where: { pillar_id: pillar.id, specialization_id: null }, data: { specialization_id: id } });
+      await tx.workRequest.updateMany({ where: { pillar_id: pillar.id, specialization_id: null }, data: { specialization_id: id } });
+      if (providers.length) await tx.providerProfileSpecialization.createMany({ data: providers.map((p) => ({ provider_profile_id: p.id, specialization_id: id })), skipDuplicates: true });
+      await tx.pillar.update({ where: { id: pillar.id }, data: { visible_to_members: false } });
+    });
+  }
+}
+
 async function main() {
   await oldErp();
   await aiAgentSupport();
+  await vendorPillars();
 
   mkdirSync("scripts/out", { recursive: true });
   const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);

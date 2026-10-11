@@ -852,6 +852,9 @@ model Skill {
   /// "Project Manager" legitimately exists under BOTH Project-Specific/Project
   /// Execution and Operations-Specific/Project Portfolio Management, and a
   /// name-only key silently collapsed them into one row.
+  /// TL-E003: the vendor pillar it sat under, as a Specialization (kind PRODUCT); pillar_id is kept.
+  specialization_id String?         @db.Uuid
+  specialization    Specialization? @relation("skillsAsVendor", fields: [specialization_id], references: [id], onDelete: SetNull)
   @@unique([business_type_id, role_id, pillar_id, name])
   @@index([role_id])
   @@index([pillar_id])
@@ -1002,6 +1005,9 @@ model SkillTag {
   role Role       @relation(fields: [role_id], references: [id])
   pillar   Pillar?        @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
 
+  /// TL-E003: the vendor pillar it sat under, as a Specialization (kind PRODUCT); pillar_id is kept.
+  specialization_id String?         @db.Uuid
+  specialization    Specialization? @relation("skillTagsAsVendor", fields: [specialization_id], references: [id], onDelete: SetNull)
   @@unique([business_type_id, role_id, name])
   @@index([role_id])
   @@map("skill_tags")
@@ -1603,6 +1609,10 @@ model Specialization {
   /// Projects delivered in this sector — only INDUSTRY-kind rows are ever
   /// linked (brief_project_model_v2).
   projectIndustries Project[]
+
+  skillsAsVendor       Skill[]       @relation("skillsAsVendor")
+  skillTagsAsVendor    SkillTag[]    @relation("skillTagsAsVendor")
+  workRequestsAsVendor WorkRequest[] @relation("workRequestsAsVendor")
 
   @@unique([business_type_id, name])
   @@map("specializations")
@@ -3472,6 +3482,9 @@ model WorkRequest {
   skills          WorkRequestSkill[]
   specializations WorkRequestSpecialization[]
 
+  /// TL-E003: the vendor pillar it sat under, as a Specialization (kind PRODUCT); pillar_id is kept.
+  specialization_id String?         @db.Uuid
+  specialization    Specialization? @relation("workRequestsAsVendor", fields: [specialization_id], references: [id], onDelete: SetNull)
   @@index([p_account_id])
   @@index([buyer_person_id])
   @@index([status])
