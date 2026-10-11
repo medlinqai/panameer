@@ -91,7 +91,8 @@ async function epmGrc() {
   }
 }
 
-/** TL-E005: practice pillars → Roles (match an existing role by name first, else create); their skills move to that role; pillar hidden.
+/** TL-E005 (Scott, revised): practice pillars → Roles (match an existing role by name first, else create); their skills move to that
+ *  role and stay in the Role › Domain › Skill picker; only the pillar label is retired (retired_at), the pillar is NOT hidden.
  *  Domains have no pillar link, so nothing to re-link there. */
 const PRACTICE: Record<string, { name: string; code: string; display: string }> = {
   DELIVERY_LEADERSHIP: { name: "Project / Delivery Lead", code: "PROJECT_DELIVERY_LEAD", display: "Project / Delivery Lead" },
@@ -109,14 +110,14 @@ async function practicePillars() {
     const skills = await prisma.skill.findMany({ where: { pillar_id: p.id }, select: { id: true, name: true, role_id: true, business_type_id: true } });
     note("TL-E005", hit ? "reuse role" : "create role", want.name, `${p.name} pillar`);
     note("TL-E005", "re-link", p.name, `${skills.length} skills → role ${want.name}; pillar.role_id set`);
-    note("TL-E005", "hide pillar", p.name, "visible_to_members = false");
+    note("TL-E005", "retire pillar label", p.name, "retired_at set + admin note; stays visible, so its skills stay in the picker under the new role");
     writes.push(async (tx) => {
       const roleId = hit?.id ?? (await tx.role.upsert({ where: { code: want.code }, create: { code: want.code, name: want.name, display: want.display, sort_order: 50 }, update: {} })).id;
       for (const sk of skills) {
         const clash = await tx.skill.findFirst({ where: { business_type_id: sk.business_type_id, role_id: roleId, pillar_id: p.id, name: sk.name, NOT: { id: sk.id } }, select: { id: true } });
         if (!clash) await tx.skill.update({ where: { id: sk.id }, data: { role_id: roleId } });
       }
-      await tx.pillar.update({ where: { id: p.id }, data: { role_id: roleId, visible_to_members: false } });
+      await tx.pillar.update({ where: { id: p.id }, data: { role_id: roleId, retired_at: new Date(), admin_note: `Label retired (TL-E005): its skills belong to the role "${want.name}".` } });
     });
   }
 }
