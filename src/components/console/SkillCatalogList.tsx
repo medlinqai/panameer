@@ -201,7 +201,7 @@ export function SkillCatalogList({ rows, pairs, review, specReviewCount, initial
     <div data-skill-catalog-list>
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="font-display text-[26px] font-bold">Service Taxonomy</h1>
+          <h1 className="font-display text-[26px] font-bold">Areas &amp; Skills</h1>
           <p className="text-[13px] text-ink-2">{rows.length.toLocaleString()} skills · {roles.length} roles · {new Set(pairs.map((p) => p.pillarId)).size} domains</p>
         </div>
         <a href="?view=tree" className="text-[12.5px] font-semibold text-ink-2 underline underline-offset-2">Old tree view</a>

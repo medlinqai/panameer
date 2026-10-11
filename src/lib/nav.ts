@@ -345,7 +345,8 @@ export const ADMIN_NAV: NavGroup[] = [
     items: [
       { label: "Build Plan", href: "/admin/build-plan", icon: "ListChecks" },
       { label: "Users", href: "/admin/users", icon: "ArrowLeftRight" },
-      { label: "Business Type Taxonomy", href: "/admin/skill-catalog", icon: "FolderTree" },
+      { label: "Service Taxonomy", href: "/admin/service-taxonomy", icon: "FolderTree" },
+      { label: "Areas & Skills", href: "/admin/skill-catalog", icon: "FolderTree" },
       { label: "Specializations", href: "/admin/specializations", icon: "Award" },
       { label: "Glossary", href: "/admin/glossary", icon: "BookOpen" },
       { label: "Assessment Rate", href: "/admin/tax-rates", icon: "Percent" },

@@ -11,7 +11,8 @@ const ITEMS: { label: string; href: string; soon?: boolean }[] = [
   { label: "Companies", href: "/admin/companies" },
   { label: "Providers", href: "/admin/providers" },
   { label: "Learn", href: "/admin/learn" },
-  { label: "Service Taxonomy", href: "/admin/skill-catalog" },
+  { label: "Service Taxonomy", href: "/admin/service-taxonomy" },
+  { label: "Areas & Skills", href: "/admin/skill-catalog" },
   { label: "Glossary", href: "/admin/glossary" },
   { label: "Support", href: "/admin/support", soon: true },
 ];

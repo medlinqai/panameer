@@ -13,7 +13,7 @@ export default async function Page() {
   const reviewed = new Set((await prisma.serviceType.findMany({ where: { reviewed_at: { not: null } }, select: { id: true } })).map((t) => t.id));
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <BackLink href="/admin/skill-catalog" label="Service Taxonomy" />
+      <BackLink href="/admin/service-taxonomy" label="Service Taxonomy" />
       <h1 className="mb-1 mt-2 text-[28px] font-bold">Service Types</h1>
       <p className="mb-5 text-[14px] text-ink-2">Panameer&apos;s baseline list plus the types providers add. Approve a new one, or merge it into an existing type (its services move with it).</p>
       <ServiceTypeReview rows={types.map((t) => ({ id: t.id, name: t.name, baseline: t.is_baseline, reviewed: reviewed.has(t.id), services: counts.get(t.id) ?? 0 }))} />
