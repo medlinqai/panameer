@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 // Learn is the content-authoring console (brief_learn_admin_authoring).
 const ITEMS: { label: string; href: string; soon?: boolean }[] = [
   { label: "Dashboard", href: "/admin" },
+  { label: "Usage", href: "/admin/usage" },
   { label: "Companies", href: "/admin/companies" },
   { label: "Providers", href: "/admin/providers" },
   { label: "Learn", href: "/admin/learn" },

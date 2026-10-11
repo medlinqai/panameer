@@ -327,6 +327,7 @@ export const ADMIN_NAV: NavGroup[] = [
   {
     title: "Transaction Data",
     items: [
+      { label: "Usage", href: "/admin/usage", icon: "BarChart3" },
       { label: "Learn", href: "/admin/learn", icon: "GraduationCap" },
       { label: "Work Requests", href: "/admin/work-requests", icon: "ClipboardList" },
       { label: "Work Orders", href: "/admin/work-orders", icon: "ClipboardCheck" },
