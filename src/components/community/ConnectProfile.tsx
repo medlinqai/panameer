@@ -268,7 +268,7 @@ export function ConnectProfile({
   const ESTIMATE_STATUS: Record<string, string> = { DRAFT: "Draft", SENT: "Sent", CHANGES_REQUESTED: "Changes Requested", ACCEPTED: "Accepted", DECLINED: "Declined", EXPIRED: "Expired" };
   const estimatesSection = owner && (
     <CleanSection title="My Cost Estimates" id="my-cost-estimates" count={estimates.length} showWhenEmpty
-      action={<Link href="/catalog/estimates/new" className="text-[13px] font-bold text-magenta-dark hover:underline">+ Create</Link>}>
+      action={<span className="flex gap-3"><Link href="/estimates?tab=sent" className="text-[13px] font-bold text-ink-2 hover:underline">See All</Link><Link href="/catalog/estimates/new" className="text-[13px] font-bold text-magenta-dark hover:underline">+ Create</Link></span>}>
       <p className="-mt-1.5 mb-2 text-[12.5px] text-ink-3">Private to you and each customer — not shown on your profile.</p>
       {estimates.length === 0 ? (
         <p className="text-[13.5px] text-ink-2">No estimates yet. An estimate is a quote for one customer: their scope, their price.</p>

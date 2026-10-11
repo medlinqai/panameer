@@ -202,18 +202,20 @@ export const PROVIDER_NAV: NavItem[] = [
 ];
 
 // export const PERSONA_NAV_PRIMARY: NavItem[] = [
+// EST-E006: "My" on every avatar-menu row; `heading` keeps each page's own title unchanged.
 export const PERSONA_NAV: NavItem[] = [
-  { label: "Profile", href: "/profile" },
-  { label: "Account", href: "/settings/notifications" },
-  { label: "Support", href: "/support/tickets" },
+  { label: "My Profile", heading: "Profile", href: "/profile" },
+  { label: "My Account", heading: "Account", href: "/settings/notifications" },
+  { label: "My Support", heading: "Support", href: "/support/tickets" },
 ];
-export const COMPANY_PERSONA_ITEM: NavItem = { label: "Company", href: "/company" };
+export const COMPANY_PERSONA_ITEM: NavItem = { label: "My Company", heading: "Company", href: "/company" };
 /** Providers' catalog in the My menu, after Profile and Company (Scott 2026-10-10). */
 export const SELLER_PERSONA_ITEMS: NavItem[] = [
-  { label: "Services", href: "/profile#my-services" },
-  { label: "Service Products", href: "/profile#my-service-products" },
-  { label: "Cost Estimates", href: "/profile#my-cost-estimates" },
+  { label: "My Services", href: "/profile#my-services" },
+  { label: "My Service Products", href: "/profile#my-service-products" },
 ];
+/** EST-E004: every member — buyers ask for estimates, providers send them. */
+export const ESTIMATES_PERSONA_ITEM: NavItem = { label: "My Cost Estimates", heading: "Cost Estimates", href: "/estimates" };
 
 export const THEME_BEFORE_HREF = null;
 
@@ -397,6 +399,7 @@ export function pageTitleFor(pathname: string): string | null {
     // The persona-menu pages are real destinations too, reached from the avatar
     // rather than the rail.
     ...PERSONA_NAV,
+    ESTIMATES_PERSONA_ITEM,
   ];
 
   // Longest matching href wins, so /admin/learn beats /admin. Query strings are

@@ -13,6 +13,7 @@ import {
   ADMIN_PERSONA_NAV,
   COMPANY_PERSONA_ITEM,
   SELLER_PERSONA_ITEMS,
+  ESTIMATES_PERSONA_ITEM,
   PERSONA_NAV,
 } from "@/lib/nav";
 import {
@@ -360,7 +361,7 @@ export function AccountMenu({
           {(() => {
             const head = company?.isMember && !isAdmin ? [rows[0], COMPANY_PERSONA_ITEM] : [rows[0]];
             const sell = !isAdmin && me?.person?.roles?.isServiceProvider ? SELLER_PERSONA_ITEMS : [];
-            return [...head, ...sell, ...rows.slice(1)];
+            return [...head, ...sell, ...(isAdmin ? [] : [ESTIMATES_PERSONA_ITEM]), ...rows.slice(1)];
           })().map((item, i, all) => (
             <Fragment key={item.href}>
               <MenuRow
