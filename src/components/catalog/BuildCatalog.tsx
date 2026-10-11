@@ -97,7 +97,7 @@ export function BuildCatalog({ businessTypes, categories, services, products, ga
           </ul>
         </section>
       ))}
-      <button type="button" onClick={() => suggest("SERVICE")} className="mt-3 text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Offer something else? Suggest a Service Type</button>
+      <button type="button" onClick={() => suggest("SERVICE")} className="mt-3 text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Offer Something Else? Suggest a Service Type</button>
 
       {productCats.length > 0 && (
         <>
@@ -123,7 +123,7 @@ export function BuildCatalog({ businessTypes, categories, services, products, ga
               </div>
             </section>
           ))}
-          <button type="button" onClick={() => suggest("SERVICE_PRODUCT")} className="mt-3 text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Don&apos;t see yours? Suggest a Service Product Type</button>
+          <button type="button" onClick={() => suggest("SERVICE_PRODUCT")} className="mt-3 text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Don&apos;t See Yours? Suggest a Service Product Type</button>
         </>
       )}
 
