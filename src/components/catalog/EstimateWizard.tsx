@@ -10,6 +10,8 @@ type Kind = "SERVICE" | "FIXED" | "NOT_TO_EXCEED";
 export type EstLine = { kind: Kind; description: string; providerServiceId: string | null; serviceProductId?: string | null; uom: string; quantity: string; rate: string; amount: string };
 export type EstimateDraft = {
   id: string | null;
+  /** EST-E002: the request this estimate answers. */
+  requestId?: string | null;
   customerPersonId: string;
   customerEmail: string;
   toEmail: boolean;
@@ -54,6 +56,7 @@ export function EstimateWizard({ initial, customers, workRequests, services, sou
     setBusy(true);
     setError(null);
     const estimate = {
+      requestId: d.requestId ?? null,
       customerPersonId: d.toEmail ? null : d.customerPersonId || null,
       customerEmail: d.toEmail ? d.customerEmail : null,
       workRequestId: d.workRequestId || null,

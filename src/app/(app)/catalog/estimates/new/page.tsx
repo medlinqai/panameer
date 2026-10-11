@@ -14,14 +14,17 @@ const toLine = (l: { kind: "SERVICE" | "FIXED" | "NOT_TO_EXCEED"; description: s
 });
 
 // CAT-E006: create or revise (?id=) a cost estimate.
-export default async function Page({ searchParams }: { searchParams: Promise<{ id?: string; to?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ id?: string; to?: string; request?: string }> }) {
   const viewer = await guardPage("canProvideServices");
   const sp = await searchParams;
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, first_name: true, last_name: true } });
   if (!me) return null;
+  // EST-E002: Build Estimate from a request — pre-filled; a draft already started from it reopens.
+  const req = sp.request ? await prisma.costEstimateRequest.findFirst({ where: { id: sp.request, provider_person_id: me.id } }) : null;
+  if (req?.cost_estimate_id && !sp.id) sp.id = req.cost_estimate_id;
   const conns = await prisma.connection.findMany({ where: { kind: "COLLEAGUE", status: "ACCEPTED", OR: [{ from_user_id: viewer.userId }, { to_user_id: viewer.userId }] }, select: { from_user_id: true, to_user_id: true }, take: 500 });
   const others = conns.map((c) => (c.from_user_id === viewer.userId ? c.to_user_id : c.from_user_id));
-  const people = await prisma.person.findMany({ where: { user_id: { in: others } }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } } }, orderBy: { first_name: "asc" } });
+  const people = await prisma.person.findMany({ where: { OR: [{ user_id: { in: others } }, ...(req ? [{ id: req.requester_person_id }] : [])] }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } } }, orderBy: { first_name: "asc" } });
   const proposals = await prisma.proposal.findMany({ where: { provider_person_id: me.id }, select: { work_request_id: true }, take: 200 });
   const wrs = await prisma.workRequest.findMany({ where: { id: { in: proposals.map((p) => p.work_request_id).filter((x): x is string => !!x) }, status: { in: ["POSTED", "ASSIGNED"] } }, select: { id: true, title: true } });
   const [services, products, past] = await Promise.all([
@@ -42,7 +45,20 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
     scope: rev?.scope ?? "", assumptions: rev?.assumptions ?? "", exclusions: rev?.exclusions ?? "", message: rev?.message ?? "",
     paymentTerms: rev?.payment_terms ?? "NET30", billingCycle: rev?.billing_cycle ?? "MONTHLY",
     lines: rev?.lines.map(toLine) ?? [],
+    requestId: req?.id ?? null,
   };
+  if (req && !editing) {
+    const [svc, prod, buyer] = await Promise.all([
+      req.service_id ? prisma.providerService.findUnique({ where: { id: req.service_id }, select: { id: true, name: true, uom: true, rate_cents: true } }) : null,
+      req.service_product_id ? prisma.serviceProduct.findUnique({ where: { id: req.service_product_id }, select: { id: true, title: true, price_cents: true, kind: true } }) : null,
+      prisma.person.findUnique({ where: { id: req.requester_person_id }, select: { first_name: true, last_name: true } }),
+    ]);
+    initial.customerPersonId = req.requester_person_id;
+    initial.scope = req.description;
+    initial.title = svc?.name ?? prod?.title ?? `Estimate for ${[buyer?.first_name, buyer?.last_name].filter(Boolean).join(" ")}`;
+    if (svc?.rate_cents) initial.lines = [{ kind: "SERVICE", description: svc.name, providerServiceId: svc.id, uom: svc.uom ?? "HOUR", quantity: "", rate: (svc.rate_cents / 100).toFixed(2), amount: "" }];
+    else if (prod?.price_cents) initial.lines = [{ kind: prod.kind === "BLANKET" ? "NOT_TO_EXCEED" : "FIXED", description: prod.title, providerServiceId: null, serviceProductId: prod.id, uom: "EACH", quantity: "1", rate: "", amount: (prod.price_cents / 100).toFixed(2) }];
+  }
   const sources = [
     ...products.filter((p) => p.priceCents).map((p) => ({ id: `p:${p.id}`, label: `Copy a service product · ${p.title}`, title: p.title, scope: p.summary ?? "", lines: [{ kind: (p.kind === "BLANKET" ? "NOT_TO_EXCEED" : "FIXED") as EstLine["kind"], description: p.title, providerServiceId: null, serviceProductId: p.id, uom: "EACH", quantity: "1", rate: "", amount: ((p.priceCents ?? 0) / 100).toFixed(2) }] })),
     ...past.filter((e) => e.id !== editing?.id).map((e) => ({ id: `e:${e.id}`, label: `Copy a past estimate · ${e.title}`, title: e.title, scope: e.revisions[0]?.scope ?? "", lines: e.revisions[0]?.lines.map(toLine) ?? [] })),

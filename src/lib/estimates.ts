@@ -8,6 +8,7 @@ import { resolveCommissionBps } from "@/lib/application-commissions";
 import { formatCents } from "@/lib/display";
 import type { Viewer } from "@/lib/access";
 import { snapshotMilestones } from "@/lib/order-milestones";
+import { answerRequestsFor, linkRequest } from "@/lib/estimate-requests";
 
 // CAT-E006: cost estimates — one provider, one customer, private to them. Accept → work order; Ask for Changes → revision n+1.
 export class EstimateError extends Error {
@@ -18,6 +19,8 @@ export class EstimateError extends Error {
 
 export type EstimateLineInput = { kind: CostEstimateLineKind; description: string; providerServiceId?: string | null; serviceProductId?: string | null; uom?: string | null; quantity?: number | null; rateCents?: number | null; amountCents?: number | null };
 export type EstimateInput = {
+  /** EST-E002: the request this estimate answers. */
+  requestId?: string | null;
   customerPersonId?: string | null;
   customerEmail?: string | null;
   workRequestId?: string | null;
@@ -89,6 +92,7 @@ export async function saveEstimate(viewer: Viewer, id: string | null, input: Est
 
   if (!id) {
     const e = await prisma.costEstimate.create({ data: { estimate_number: number(), provider_person_id: p.id, ...head, revisions: { create: { revision_number: 1, ...rev, lines: { create: rows } } } }, select: { id: true } });
+    if (input.requestId) await linkRequest(input.requestId, e.id, p.id);
     return e.id;
   }
   const e = await prisma.costEstimate.findFirst({ where: { id, provider_person_id: p.id } });
@@ -125,6 +129,7 @@ export async function sendEstimate(viewer: Viewer, id: string) {
     prisma.costEstimateRevision.update({ where: { id: rev.id }, data: { sent_at: now } }),
     prisma.costEstimate.update({ where: { id: e.id }, data: { status: "SENT", sent_at: now, customer_person_id: customerId } }),
   ]);
+  await answerRequestsFor(e.id);
   // The provider's "changes requested" item is answered by resubmitting.
   await prisma.notification.updateMany({ where: { person_id: p.id, dedupe_key: { startsWith: `estimate.changes_requested:${e.id}:` }, resolved_at: null }, data: { resolved_at: now } });
   const vars = { estimateId: e.id, estimateNumber: e.estimate_number, title: e.title, providerName: nameOf(p), total: formatCents(rev.total_cents, e.currency), revision: rev.revision_number };
