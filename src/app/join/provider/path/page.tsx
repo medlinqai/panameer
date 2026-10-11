@@ -25,9 +25,10 @@ export default async function RegistrationPathPage() {
           <Link href="/join/provider" className="inline-flex min-h-[48px] items-center bg-ink px-6 text-[15px] font-bold text-surface hover:bg-ink-hover">
             Complete My Profile
           </Link>
-          <Link href="/join/provider/road" data-detailed-road-link className="text-[14px] font-bold text-magenta-dark underline underline-offset-4">
-            See the Detailed Road →
-          </Link>
+          <span className="flex flex-wrap gap-x-5 text-[14px]">
+            <Link href="/help/road" data-questions-link className="font-bold text-magenta-dark underline underline-offset-4">Questions?</Link>
+            <Link href="/join/provider/road" data-detailed-road-link className="font-bold text-magenta-dark underline underline-offset-4">See the Detailed Road →</Link>
+          </span>
         </div>
       </div>
     </main>

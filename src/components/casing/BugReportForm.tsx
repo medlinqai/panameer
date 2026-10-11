@@ -4,11 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import type { SupportApplication } from "@/lib/support-applications";
 
-export function BugReportForm({ applications }: { applications: SupportApplication[] }) {
-  const [title, setTitle] = useState("");
-  const [application, setApplication] = useState("");
+export function BugReportForm({ applications, initial }: { applications: SupportApplication[]; initial?: { title: string; application: string; howFound: string } }) {
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [application, setApplication] = useState(initial?.application ?? "");
   const [description, setDescription] = useState("");
-  const [howFound, setHowFound] = useState("");
+  const [howFound, setHowFound] = useState(initial?.howFound ?? "");
   const [priority, setPriority] = useState("Medium");
   const [file, setFile] = useState<File | null>(null);
 

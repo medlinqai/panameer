@@ -51,7 +51,10 @@ export function LifecycleHelpHost() {
           </p>
           <div className="hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>
           <div className="sm:hidden"><RoadStepper current={path.current} /></div>
-          <a href="/join/provider/road" className="mt-2 inline-block text-[13.5px] font-bold text-magenta-dark underline underline-offset-4">See the Detailed Road →</a>
+          <p className="mt-2 flex flex-wrap gap-x-5 text-[13.5px]">
+            <a href="/join/provider/road" className="font-bold text-magenta-dark underline underline-offset-4">See the Detailed Road →</a>
+            <a href="/help/road" className="font-bold text-magenta-dark underline underline-offset-4">Questions?</a>
+          </p>
         </>
       ) : (
         <>

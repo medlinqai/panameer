@@ -38,6 +38,8 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/join", category: 2, subtree: true },
 
   { route: "/glossary", category: 3 },
+  // RD-E006: provider-road FAQs, linked from the road pages before sign-in.
+  { route: "/help/road", category: 3 },
   { route: "/terms", category: 3 },
   { route: "/user-agreement", category: 3 },
   { route: "/privacy", category: 3 },

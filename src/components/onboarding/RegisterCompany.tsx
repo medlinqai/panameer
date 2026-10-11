@@ -72,7 +72,7 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
   return (
     <div className="mx-auto w-full max-w-2xl" data-register-company>
       <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">Your Company</h1>
-      <p className="mt-2 text-center text-[15px] text-ink-2">Panameer contracts with and pays companies. A one-person business is a company too.</p>
+      <p className="mt-2 text-center text-[15px] text-ink-2">Panameer contracts with and pays companies. A one-person business is a company too. <a href="/help/road#register" target="_blank" rel="noreferrer" className="font-semibold text-magenta-dark underline underline-offset-4">Questions?</a></p>
       {error && <div className="mt-5"><Notice>{error}</Notice></div>}
       <div className="mt-6 space-y-3">
         <Field label="Website" hint="We check whether your company is already on Panameer.">

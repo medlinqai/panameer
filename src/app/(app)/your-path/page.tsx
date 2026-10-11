@@ -32,9 +32,10 @@ export default async function YourPathPage() {
             Eight stops, 10–15 minutes to be found. Win work three ways at stop 5, then add tax and banking so you&apos;re paid on time. Panameer contracts with and pays companies, not individuals.
           </p>
           <div className="mt-4 overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={current} /></div></div>
-          <Link href="/join/provider/road" data-detailed-road-link className="mt-2 inline-block text-[13.5px] font-bold text-magenta-dark underline underline-offset-4">
-            See the Detailed Road →
-          </Link>
+          <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13.5px]">
+            <Link href="/join/provider/road" data-detailed-road-link className="font-bold text-magenta-dark underline underline-offset-4">See the Detailed Road →</Link>
+            <Link href="/help/road" data-questions-link className="font-bold text-magenta-dark underline underline-offset-4">Questions?</Link>
+          </p>
         </>
       ) : (
         <p className="mt-1.5 max-w-[62ch] text-[14.5px] text-ink-2">
@@ -65,6 +66,7 @@ export default async function YourPathPage() {
                 <span className="mt-0.5 block text-[12.5px] text-ink-3">
                   Status after it: <b className="text-ink-2">{s.status}</b>
                   {s.unlocks && ` · Unlocks ${s.unlocks}`}
+                  {road === "provider" && <> · <Link href={`/help/road#${s.key}`} className="font-semibold text-ink-2 underline underline-offset-2">Questions?</Link></>}
                 </span>
               </span>
               <span className="col-start-2 self-center sm:col-start-3">
