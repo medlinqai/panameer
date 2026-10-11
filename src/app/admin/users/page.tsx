@@ -154,7 +154,7 @@ export default async function Page({
       request: prov ? members.some((id) => requested.has(id)) : contract,
       paid: members.some((id) => paidPeople.has(id)) || (!!co && paidAccounts.has(co.p_account_id)),
     }, LIFECYCLE);
-    pathIndex.set(p.id, st.current - 1);
+    pathIndex.set(p.id, Math.max(0, st.current - 1));
   }
   const BOXES = LIFECYCLE.map((s, i) => ({ key: String(i + 1), label: s.status, hint: i < LIFECYCLE.length - 1 ? `Next: ${LIFECYCLE[i + 1].step}` : "Every step done" }));
   const boxCounts = BOXES.map((_, i) => realPeople.filter((p) => pathIndex.get(p.id) === i).length);

@@ -55,7 +55,7 @@ function data(input: ProviderServiceInput) {
   };
 }
 
-/** CAT-E002/E004: save as draft, or publish — publishing needs a validated seller company. */
+/** CAT-E002/E004: save as draft, or publish — publishing needs a linked seller company. */
 export async function saveProviderService(viewer: Viewer, id: string | null, input: ProviderServiceInput, publish = false) {
   const pid = await profileId(viewer);
   if (publish) {

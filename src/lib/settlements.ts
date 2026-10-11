@@ -684,7 +684,7 @@ export async function listSettlements(viewer: Viewer): Promise<SettlementRow[]> 
 /** APPROVING A SETTLEMENT IS ACCEPTING THE WORK. */
 export async function approveSettlement(viewer: Viewer, id: string): Promise<SettlementDetail> {
   const current = await getSettlement(viewer, id);
-  if (!settlementActions({ status: current.status }, current.party, current.erp).includes("APPROVE"))
+  if (!settlementActions({ status: current.status, held_for_tax_banking: current.held }, current.party, current.erp).includes("APPROVE"))
     throw new SettlementError(
       current.party === "PROVIDER"
         ? "Only the buyer can approve a payment request"
@@ -708,7 +708,7 @@ export async function rejectSettlement(
   reason: string
 ): Promise<SettlementDetail> {
   const current = await getSettlement(viewer, id);
-  if (!settlementActions({ status: current.status }, current.party, current.erp).includes("REJECT"))
+  if (!settlementActions({ status: current.status, held_for_tax_banking: current.held }, current.party, current.erp).includes("REJECT"))
     throw new SettlementError(
       current.party === "PROVIDER"
         ? "Only the buyer can reject a payment request"

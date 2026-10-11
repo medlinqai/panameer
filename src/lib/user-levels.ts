@@ -177,5 +177,6 @@ export function lifecycleStatus(f: LifecycleFacts, road: LifecycleStep[] = LIFEC
   const done = road.map((s) => s.key === "account" || !!f[s.key as keyof LifecycleFacts]);
   const first = done.findIndex((d) => !d);
   const current = first === -1 ? road.length : first;
-  return { done, current, status: road[current - 1].status };
+  // A provider with an account but no company is still before stop 1 (Register needs the company).
+  return { done, current, status: current > 0 ? road[current - 1].status : "Signed Up" };
 }
