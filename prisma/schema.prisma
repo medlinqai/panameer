@@ -4979,6 +4979,8 @@ model ForumThread {
   reply_count  Int      @default(0)
   last_post_at DateTime @default(now())
   created_at   DateTime @default(now())
+  /// L-E061: set when the author (or an admin) edits it — shown as "edited".
+  edited_at        DateTime?
   updated_at   DateTime @updatedAt
 
   board  ForumBoard  @relation(fields: [board_id], references: [id], onDelete: Cascade)
@@ -4997,6 +4999,8 @@ model ForumPost {
   author_person_id  String   @db.Uuid
   body       String
   created_at DateTime @default(now())
+  /// L-E061: set when the author (or an admin) edits it — shown as "edited".
+  edited_at        DateTime?
   updated_at DateTime @updatedAt
 
   /**

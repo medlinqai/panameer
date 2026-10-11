@@ -6,6 +6,8 @@ import {
   confirmAnswer,
   createPost,
   createThread,
+  editPost,
+  editThread,
   markHelpful,
   unconfirmAnswer,
   unmarkHelpful,
@@ -24,6 +26,13 @@ const Body = z.discriminatedUnion("action", [
     threadId: z.string().uuid(),
     body: z.string().trim().min(2, "Say something first.").max(8000),
   }),
+  z.object({
+    action: z.literal("editThread"),
+    threadId: z.string().uuid(),
+    title: z.string().trim().min(5, "Give the question a title people can scan.").max(200),
+    body: z.string().trim().min(15, "Add a bit more detail so someone can answer.").max(8000),
+  }),
+  z.object({ action: z.literal("editPost"), postId: z.string().uuid(), body: z.string().trim().min(2, "Say something first.").max(8000) }),
   z.object({ action: z.literal("helpful"), postId: z.string().uuid() }),
   z.object({ action: z.literal("unhelpful"), postId: z.string().uuid() }),
   z.object({ action: z.literal("confirm"), postId: z.string().uuid() }),
@@ -62,6 +71,8 @@ export async function POST(request: Request) {
         instructorConfirmedAt: r.instructorConfirmedAt,
       });
     }
+    if (d.action === "editThread") return NextResponse.json({ ok: true, ...(await editThread(gate, d)) });
+    if (d.action === "editPost") return NextResponse.json({ ok: true, ...(await editPost(gate, d)) });
     const result =
       d.action === "thread" ? await createThread(gate, d) : await createPost(gate, d);
     return NextResponse.json({ ok: true, id: result.id });

@@ -8,6 +8,7 @@ import { communityIdentityGaps } from "@/lib/community-identity";
 import { HelpfulButton } from "@/components/community/HelpfulButton";
 import { ConfirmAnswerButton } from "@/components/community/ConfirmAnswerButton";
 import { BackLink } from "@/components/console/BackLink";
+import { EditableEntry } from "@/components/community/EditableEntry";
 
 /** One thread: the question, every reply oldest-first, and the reply box. */
 export default async function ThreadPage({
@@ -27,6 +28,8 @@ export default async function ThreadPage({
       id: thread.id,
       body: thread.body,
       createdAt: thread.createdAt,
+      editedAt: thread.editedAt,
+      canEdit: thread.canEdit,
       author: thread.author,
       opening: true,
       markedHelpfulAt: null as string | null,
@@ -71,11 +74,7 @@ export default async function ThreadPage({
                 </p>
               </div>
             </div>
-            {/* Author-written prose. Newlines preserved; rendered as TEXT, never
-                as markup — this is user input on a page other users read. */}
-            <p className="mt-3 whitespace-pre-line text-[14.5px] leading-relaxed">
-              {e.body}
-            </p>
+            <EditableEntry kind={e.opening ? "thread" : "post"} id={e.id} title={e.opening ? thread.title : undefined} body={e.body} canEdit={e.canEdit} editedLabel={e.editedAt ? relativeDay(e.editedAt) : null} />
 
             {/* THE MARK IS VISIBLE TO EVERYONE; THE BUTTON IS NOT. */}
             {(e.markedHelpfulAt || e.canMarkHelpful) && (

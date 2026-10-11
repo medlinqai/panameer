@@ -5,7 +5,7 @@ import { notify } from "@/lib/notifications";
 import { canLeaveGroup, ensureEnrolmentMembership, groupOffer, isGroupMember } from "@/lib/group-membership";
 /* `P1-J3-E383` — ONE instructor predicate, extracted rather than copied. */
 import { teachesPathWhere } from "@/lib/learn-home";
-import type { Viewer } from "@/lib/access";
+import { canAdminister, type Viewer } from "@/lib/access";
 import {
   communityIdentityGapsForPerson,
   type CommunityGap,
@@ -245,6 +245,7 @@ export async function getThread(
       title: true,
       body: true,
       created_at: true,
+      edited_at: true,
       author: { select: authorSelect },
       board: { select: { slug: true, title: true } },
       posts: {
@@ -253,6 +254,7 @@ export async function getThread(
           id: true,
           body: true,
           created_at: true,
+          edited_at: true,
           marked_helpful_at: true,
           instructor_confirmed_at: true,
           // WHO CONFIRMED, NOT JUST THAT IT WAS CONFIRMED WS-B).
@@ -267,12 +269,15 @@ export async function getThread(
   /* Only the person who ASKED can say whether an answer answered. */
   const viewerIsThreadAuthor =
     Boolean(viewerPersonId) && thread.author.id === viewerPersonId;
+  const admin = !!viewer && canAdminister(viewer);
 
   return {
     id: thread.id,
     title: thread.title,
     body: thread.body,
     createdAt: thread.created_at.toISOString(),
+    editedAt: thread.edited_at ? thread.edited_at.toISOString() : null,
+    canEdit: viewerIsThreadAuthor || admin,
     author: authorView(thread.author),
     board: thread.board,
     viewerIsThreadAuthor,
@@ -280,6 +285,8 @@ export async function getThread(
       id: p.id,
       body: p.body,
       createdAt: p.created_at.toISOString(),
+      editedAt: p.edited_at ? p.edited_at.toISOString() : null,
+      canEdit: (Boolean(viewerPersonId) && p.author.id === viewerPersonId) || admin,
       author: authorView(p.author),
       markedHelpfulAt: p.marked_helpful_at ? p.marked_helpful_at.toISOString() : null,
       // AND NOT ON THEIR OWN REPLY. A thread author who also answers must not
@@ -295,6 +302,28 @@ export async function getThread(
       canConfirm: viewerTeachesPath && p.author.id !== viewerPersonId,
     })),
   };
+}
+
+/** L-E061: the author edits their own question or reply (admins can edit any). Saves with an "edited" time. */
+async function mayEdit(viewer: Viewer, authorPersonId: string) {
+  if (canAdminister(viewer)) return true;
+  return (await viewerPersonId(viewer)) === authorPersonId;
+}
+
+export async function editThread(viewer: Viewer, input: { threadId: string; title: string; body: string }) {
+  const t = await prisma.forumThread.findUnique({ where: { id: input.threadId }, select: { author_person_id: true } });
+  if (!t) throw new ForumError("That question doesn't exist", "NOT_FOUND");
+  if (!(await mayEdit(viewer, t.author_person_id))) throw new ForumError("You can only edit your own question", "INVALID");
+  await prisma.forumThread.update({ where: { id: input.threadId }, data: { title: input.title.trim(), body: input.body.trim(), edited_at: new Date() } });
+  return { id: input.threadId };
+}
+
+export async function editPost(viewer: Viewer, input: { postId: string; body: string }) {
+  const p = await prisma.forumPost.findUnique({ where: { id: input.postId }, select: { author_person_id: true } });
+  if (!p) throw new ForumError("That reply doesn't exist", "NOT_FOUND");
+  if (!(await mayEdit(viewer, p.author_person_id))) throw new ForumError("You can only edit your own reply", "INVALID");
+  await prisma.forumPost.update({ where: { id: input.postId }, data: { body: input.body.trim(), edited_at: new Date() } });
+  return { id: input.postId };
 }
 
 /** THE CREDIT HOOK POINT (PHASE 3). */
