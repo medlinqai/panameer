@@ -10,7 +10,7 @@ export default async function AdminGlossaryPage() {
   return (
     <div className="mx-auto w-full max-w-6xl">
       <GlossaryAdmin
-        rows={rows.map((r) => ({ id: r.id, term: r.term, category: r.category, type: r.type, definition: r.definition, alsoCalled: r.also_called, dontSay: r.dont_say, visibility: r.visibility, hidden: r.hidden, confirmNote: r.confirm_note }))}
+        rows={rows.map((r) => ({ id: r.id, term: r.term, category: r.category, type: r.type, definition: r.definition, alsoCalled: r.also_called, dontSay: r.dont_say, visibility: r.visibility, hidden: r.hidden, confirmNote: r.confirm_note, systemName: r.system_name }))}
       />
     </div>
   );

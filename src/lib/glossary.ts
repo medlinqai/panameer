@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 
 // The glossary: public page reads PUBLIC + not hidden; admin edits everything. No delete.
 export const termKey = (t: string) => t.trim().toLowerCase().replace(/\s+/g, " ");
-export type GlossaryInput = { term: string; category?: string | null; type?: string | null; definition: string; alsoCalled?: string | null; dontSay?: string | null; visibility?: "PUBLIC" | "ADMIN"; hidden?: boolean; confirmNote?: string | null };
+export type GlossaryInput = { term: string; category?: string | null; type?: string | null; definition: string; alsoCalled?: string | null; dontSay?: string | null; visibility?: "PUBLIC" | "ADMIN"; hidden?: boolean; confirmNote?: string | null; systemName?: string | null };
 const clean = (s: string | null | undefined) => (s ?? "").trim() || null;
 
 export async function publicGlossary() {
@@ -31,6 +31,7 @@ export async function saveTerm(id: string | null, p: GlossaryInput): Promise<{ o
     ...(p.visibility ? { visibility: p.visibility } : {}),
     ...(p.hidden !== undefined ? { hidden: p.hidden } : {}),
     ...(p.confirmNote !== undefined ? { confirm_note: clean(p.confirmNote) } : {}),
+    ...(p.systemName !== undefined ? { system_name: clean(p.systemName) } : {}),
   };
   const row = id ? await prisma.glossaryTerm.update({ where: { id }, data }) : await prisma.glossaryTerm.create({ data });
   return { ok: true, id: row.id };

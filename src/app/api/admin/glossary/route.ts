@@ -17,6 +17,7 @@ const Fields = z.object({
   visibility: z.enum(["PUBLIC", "ADMIN"]).optional(),
   hidden: z.boolean().optional(),
   confirmNote: Str,
+  systemName: Str,
 });
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("add"), fields: Fields }),

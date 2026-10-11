@@ -8208,6 +8208,8 @@ model GlossaryTerm {
   hidden      Boolean            @default(false)
   /// The draft's "Scott to confirm" note, kept for the admin until cleared.
   confirm_note String?
+  /// NM-E013: where the term lives in the system (table, or table.column) — one name front to back.
+  system_name String?
   created_at  DateTime           @default(now())
   updated_at  DateTime           @updatedAt
 

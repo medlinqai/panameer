@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/Modal";
 
 // Admin › Glossary (same look as the Skill Catalog list): search, filters, + Add Term, Edit, Hide/Show, visibility.
-type Row = { id: string; term: string; category: string | null; type: string | null; definition: string; alsoCalled: string | null; dontSay: string | null; visibility: "PUBLIC" | "ADMIN"; hidden: boolean; confirmNote: string | null };
+type Row = { id: string; term: string; category: string | null; type: string | null; definition: string; alsoCalled: string | null; dontSay: string | null; visibility: "PUBLIC" | "ADMIN"; hidden: boolean; confirmNote: string | null; systemName: string | null };
 const BTN = "inline-flex min-h-[32px] items-center border border-ink px-2.5 text-[12.5px] font-bold disabled:opacity-50";
 const BTN_K = "inline-flex min-h-[34px] items-center bg-ink px-3 text-[12.5px] font-bold text-surface disabled:opacity-50";
 const SEL = "h-[34px] border border-line bg-surface px-2 text-[13px]";
-const EMPTY: Row = { id: "", term: "", category: "", type: "Panameer term", definition: "", alsoCalled: "", dontSay: "", visibility: "PUBLIC", hidden: false, confirmNote: "" };
+const EMPTY: Row = { id: "", term: "", category: "", type: "Panameer term", definition: "", alsoCalled: "", dontSay: "", visibility: "PUBLIC", hidden: false, confirmNote: "", systemName: "" };
 
 export function GlossaryAdmin({ rows }: { rows: Row[] }) {
   const router = useRouter();
@@ -25,7 +25,7 @@ export function GlossaryAdmin({ rows }: { rows: Row[] }) {
     return rows.filter((r) => {
       if (cat && r.category !== cat) return false;
       if (show === "hidden" ? !r.hidden : show === "confirm" ? !r.confirmNote : show ? r.visibility !== show : false) return false;
-      return !n || [r.term, r.definition, r.alsoCalled ?? "", r.dontSay ?? ""].some((x) => x.toLowerCase().includes(n));
+      return !n || [r.term, r.definition, r.alsoCalled ?? "", r.dontSay ?? "", r.systemName ?? ""].some((x) => x.toLowerCase().includes(n));
     });
   }, [rows, q, cat, show]);
 
@@ -72,6 +72,7 @@ export function GlossaryAdmin({ rows }: { rows: Row[] }) {
             <tr className="border-b border-ink text-left text-[11px] font-bold uppercase tracking-[0.08em] text-ink-3">
               <th className="px-2 py-2">Term</th>
               <th className="px-2 py-2">Definition</th>
+              <th className="px-2 py-2">System Name</th>
               <th className="px-2 py-2">Category</th>
               <th className="px-2 py-2">Shown to</th>
               <th className="px-2 py-2" />
@@ -86,6 +87,7 @@ export function GlossaryAdmin({ rows }: { rows: Row[] }) {
                   {r.confirmNote && <span className="mt-0.5 block text-[11.5px] font-semibold text-amber-800">To confirm: {r.confirmNote}</span>}
                 </td>
                 <td className="max-w-[420px] px-2 py-2 text-ink-2">{r.definition}{r.dontSay && <span className="mt-0.5 block text-[11.5px] text-ink-3">Don&apos;t say: {r.dontSay}</span>}</td>
+                <td className="px-2 py-2 font-mono text-[12px] text-ink-2" data-system-name>{r.systemName ?? "—"}</td>
                 <td className="px-2 py-2 text-ink-2">{r.category ?? "—"}<span className="block text-[11.5px] text-ink-3">{r.type}</span></td>
                 <td className="px-2 py-2">
                   <button type="button" disabled={busy} onClick={() => post({ action: "flags", id: r.id, visibility: r.visibility === "PUBLIC" ? "ADMIN" : "PUBLIC" }, `"${r.term}" is now ${r.visibility === "PUBLIC" ? "admin only" : "public"}.`)} className="border px-1.5 text-[10.5px] font-bold" title="Click to switch">
@@ -99,7 +101,7 @@ export function GlossaryAdmin({ rows }: { rows: Row[] }) {
                 </td>
               </tr>
             ))}
-            {shown.length === 0 && <tr><td colSpan={5} className="px-3 py-6 text-center text-[13px] text-ink-2">No terms match.</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={6} className="px-3 py-6 text-center text-[13px] text-ink-2">No terms match.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -124,6 +126,7 @@ function TermForm({ row, cats, busy, onClose, onSave }: { row: Row; cats: string
           {field("TYPE", <input value={f.type ?? ""} onChange={(e) => set({ type: e.target.value })} placeholder="Panameer term, Acronym, Status…" className={SEL + " w-full"} />)}
         </div>
         {field("ALSO CALLED (CROSS-REFERENCE)", <input value={f.alsoCalled ?? ""} onChange={(e) => set({ alsoCalled: e.target.value })} placeholder="Other names, separated by ;" className={SEL + " w-full"} />)}
+        {field("SYSTEM NAME (TABLE OR TABLE.COLUMN)", <input value={f.systemName ?? ""} onChange={(e) => set({ systemName: e.target.value })} placeholder="payment_requests" className={SEL + " w-full font-mono"} />)}
         {field("DON'T SAY", <input value={f.dontSay ?? ""} onChange={(e) => set({ dontSay: e.target.value })} className={SEL + " w-full"} />)}
         <div className="grid gap-3 sm:grid-cols-2">
           {field("SHOWN TO", <select value={f.visibility} onChange={(e) => set({ visibility: e.target.value as Row["visibility"] })} className={SEL + " w-full"}><option value="PUBLIC">Public (on /glossary)</option><option value="ADMIN">Admin only</option></select>)}
@@ -135,7 +138,7 @@ function TermForm({ row, cats, busy, onClose, onSave }: { row: Row; cats: string
           <button
             type="button"
             disabled={busy || !f.term.trim() || !f.definition.trim()}
-            onClick={async () => (await onSave({ term: f.term, category: f.category, type: f.type, definition: f.definition, alsoCalled: f.alsoCalled, dontSay: f.dontSay, visibility: f.visibility, hidden: f.hidden, confirmNote: f.confirmNote })) && onClose()}
+            onClick={async () => (await onSave({ term: f.term, category: f.category, type: f.type, definition: f.definition, alsoCalled: f.alsoCalled, dontSay: f.dontSay, visibility: f.visibility, hidden: f.hidden, confirmNote: f.confirmNote, systemName: f.systemName })) && onClose()}
             className={BTN_K}
           >
             Save
