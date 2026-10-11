@@ -235,6 +235,8 @@ the day its writer lands.
 | `learn.path_enrolled.instructor` | the instructor | `Do It` | worklist + email | L-E035. One per learner per path (dedupe on path + learner). Row action: Message {First}; Dismiss to clear |
 | `learn.path_completed` | the learner | `Do It` | in-app | L-E037: every lesson out so far in the path is done (dedupe per path + learner) |
 | `learn.path_completed` | the instructor | `Do It` | worklist + email | L-E037. Row action Message {First}; Dismiss to clear |
+| `estimate.requested` | the provider asked for an estimate | `Send for Approval` | worklist + email | EST-E002. Cleared by sending the estimate, declining, or the buyer withdrawing |
+| `estimate.request_declined` | the buyer who asked | `Send for Approval` | worklist + email | EST-E002. Dismiss to clear |
 | `estimate.received` | the customer the estimate is for | `Send for Approval` | worklist + email | CAT-E006. Cleared by Accept / Ask for Changes / Decline |
 | `estimate.accepted` | the provider who wrote it | `Send for Approval` | worklist + email | CAT-E006. Links to the new work order |
 | `estimate.changes_requested` | the provider who wrote it | `Send for Approval` | worklist + email | CAT-E006. Cleared by resubmitting the revision |

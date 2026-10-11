@@ -45,7 +45,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         {own ? (
           <p className="text-[14px] text-ink-2">This is your service product. Offers on it arrive in <Link href="/services/offers" className="underline">Offers</Link>.</p>
         ) : canBuy ? (
+          <>
           <MakeOffer productId={p.id} priceCents={p.priceCents} providerName={p.providerName} />
+          <Link href={`/estimates/request?provider=${p.providerPersonId}&product=${p.id}`} data-request-estimate-link className="mt-3 inline-flex min-h-11 items-center border border-ink px-5 text-[14px] font-semibold hover:bg-surface-hover">Request an Estimate</Link>
+          </>
         ) : (
           <p className="text-[14px] text-ink-2">Making an offer needs a buyer account. Turn on buying in Settings to make one.</p>
         )}

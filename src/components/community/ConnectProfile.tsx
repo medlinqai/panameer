@@ -219,6 +219,9 @@ export function ConnectProfile({
                       Make an Offer
                     </Link>
                   )}
+                  {!owner && p.person.personId && (
+                    <Link href={`/estimates/request?provider=${p.person.personId}&product=${pk.id}`} data-request-estimate-link className="mt-1 block text-[12.5px] font-semibold underline underline-offset-4">Request an Estimate</Link>
+                  )}
                 </div>
               </div>
             ))}
@@ -254,6 +257,7 @@ export function ConnectProfile({
                 <b className="text-[14px] tabular-nums">{money(s.rateCents, "USD")}</b>
                 <span className="text-[12.5px] text-ink-2"> / {s.uom.toLowerCase()}</span>
                 {owner && <Link href={`/catalog/services/new?id=${s.id}`} className="block text-[12.5px] font-semibold underline">Edit</Link>}
+                {!owner && p.person.personId && <Link href={`/estimates/request?provider=${p.person.personId}&service=${s.id}`} data-request-estimate-link className="block text-[12.5px] font-semibold underline underline-offset-4">Request an Estimate</Link>}
               </div>
             </div>
           ))}
@@ -552,6 +556,7 @@ export function ConnectProfile({
                   Hire
                 </h3>
                 <HireButton providerPersonId={p.person.personId} />
+                <Link href={`/estimates/request?provider=${p.person.personId}`} data-request-estimate-link className="mt-2 flex min-h-[44px] w-full items-center justify-center border border-ink bg-surface text-[14px] font-semibold text-ink hover:bg-surface-hover">Request an Estimate</Link>
                 <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
                   {/* It says what the click DOES, because it creates a row. A control that */}
                   Starts a work request for this provider only. You can complete the

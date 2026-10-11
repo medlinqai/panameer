@@ -366,3 +366,21 @@ export async function signedMessageImageUrl(objectPath: string, expiresInSeconds
   }
   return data?.signedUrl ?? null;
 }
+
+/** EST-E001: a file attached to a cost-estimate request — private (project-docs bucket, estimate-requests/<requestId>/). */
+export async function uploadEstimateRequestFile(requestId: string, file: { name: string; type: string; bytes: ArrayBuffer }): Promise<string> {
+  const safeName = file.name.replace(/[^A-Za-z0-9._-]/g, "_").slice(-80) || "attachment";
+  const objectPath = `estimate-requests/${requestId}/${randomUUID()}-${safeName}`;
+  const { error } = await getStorageClient().from(PROJECT_DOC_BUCKET).upload(objectPath, file.bytes, { contentType: file.type || "application/octet-stream", upsert: false });
+  if (error) {
+    console.error("[storage] estimate request upload failed:", error);
+    throw new StorageError("Could not store that file.", "UPLOAD_FAILED");
+  }
+  return objectPath;
+}
+
+export async function signedEstimateRequestFileUrl(objectPath: string, expiresInSeconds = 300): Promise<string | null> {
+  const { data, error } = await getStorageClient().from(PROJECT_DOC_BUCKET).createSignedUrl(objectPath, expiresInSeconds);
+  if (error) return null;
+  return data?.signedUrl ?? null;
+}

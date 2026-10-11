@@ -8560,3 +8560,34 @@ model LearningPathNext {
   @@index([from_path_id])
   @@map("learning_path_next")
 }
+
+enum CostEstimateRequestStatus {
+  OPEN
+  ANSWERED
+  DECLINED
+  WITHDRAWN
+}
+
+/// EST-E001: a buyer asks a provider for a cost estimate (private to the two). Sending the estimate answers it.
+model CostEstimateRequest {
+  id                  String                    @id @default(uuid()) @db.Uuid
+  requester_person_id String                    @db.Uuid
+  provider_person_id  String                    @db.Uuid
+  service_id          String?                   @db.Uuid
+  service_product_id  String?                   @db.Uuid
+  description         String
+  start_by            DateTime?
+  budget_min_cents    Int?
+  budget_max_cents    Int?
+  /// [{ path, name, size, type }] in the private project-docs bucket under estimate-requests/<id>/
+  attachments         Json?
+  status              CostEstimateRequestStatus @default(OPEN)
+  decline_reason      String?
+  cost_estimate_id    String?                   @db.Uuid
+  created_at          DateTime                  @default(now())
+  updated_at          DateTime                  @updatedAt
+
+  @@index([provider_person_id, status])
+  @@index([requester_person_id])
+  @@map("cost_estimate_requests")
+}

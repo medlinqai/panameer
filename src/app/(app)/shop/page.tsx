@@ -42,6 +42,10 @@ export default async function Page() {
                 <Link href={`/shop/${p.id}`} className="mt-1 inline-block text-[13px] font-semibold text-magenta-dark hover:underline">
                   View and make an offer
                 </Link>
+                {/* EST-E001 */}
+                <Link href={`/estimates/request?provider=${p.providerPersonId}&product=${p.id}`} data-request-estimate-link className="mt-1 block text-[13px] font-semibold text-ink-2 underline underline-offset-4 hover:text-ink">
+                  Request an Estimate
+                </Link>
               </div>
             </li>
           ))}
