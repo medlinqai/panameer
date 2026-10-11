@@ -47,7 +47,7 @@ export function LifecycleHelpHost() {
       {path?.road === "provider" ? (
         <>
           <p className="mb-2 text-[14px] text-ink-2">
-            Nine stops from sign-up to getting paid. You can sell before any company paperwork — that comes right before your first work order. Panameer pays companies, not individuals.
+            Nine stops from sign-up to getting paid. Build your catalog right after your profile; it goes live once your company is validated. Panameer pays companies, not individuals.
           </p>
           <div className="hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>
           <div className="sm:hidden"><RoadStepper current={path.current} /></div>

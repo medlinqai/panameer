@@ -29,7 +29,7 @@ export default async function YourPathPage() {
       {road === "provider" ? (
         <>
           <p className="mt-1.5 max-w-[780px] text-[14.5px] text-ink-2">
-            Nine stops. You can sell before any company paperwork — that comes right before your first work order. Panameer contracts with and pays companies, not individuals.
+            Nine stops. Build your catalog right after your profile; it goes live once your company is validated. Panameer contracts with and pays companies, not individuals.
           </p>
           <div className="mt-4 overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={current} /></div></div>
           <Link href="/join/provider/road" data-detailed-road-link className="mt-2 inline-block text-[13.5px] font-bold text-magenta-dark underline underline-offset-4">
@@ -41,7 +41,7 @@ export default async function YourPathPage() {
           Buyers follow seven steps. You do the first four; your company does the rest. Panameer contracts with and pays companies, not individuals.
         </p>
       )}
-      <div className="mt-6"><LifecycleStrip current={current} /></div>
+      <div className="mt-6"><LifecycleStrip current={current} steps={steps} /></div>
       <ol className="mt-8 border-t border-line">
         {steps.map((s, i) => {
           const here = i === current;

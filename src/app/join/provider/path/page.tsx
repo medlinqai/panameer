@@ -18,7 +18,7 @@ export default async function RegistrationPathPage() {
         <h1 className="mt-10 text-[44px] font-extrabold leading-[1.1] sm:text-[52px]">Welcome to Panameer</h1>
         <p className="mt-3 text-[20px] font-bold leading-snug">Your road from sign-up to getting paid</p>
         <p className="mt-2 max-w-[780px] text-[15px] text-ink-2">
-          <b className="text-ink">Nine stops.</b> About 15 minutes to be found; the rest as work comes in. You can sell before any company paperwork — that comes right before your first work order.
+          <b className="text-ink">Nine stops.</b> About 15 minutes to be found; the rest as work comes in. Build your catalog right after your profile; it goes live once your company is validated.
         </p>
         <div className="mt-4 overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={2} /></div></div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
