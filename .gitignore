@@ -129,3 +129,10 @@ e2e-admin/.artifacts/
 
 # Script output (backups, dry-run CSVs with real data) — never commit
 scripts/out/
+
+# BK-E004: backups (database dump + uploaded files) — default lives outside the repo; never commit one that lands inside.
+Panameer Backups/
+backups/
+*.tar.gz.enc
+*_RESTORE.md
+database.sql
