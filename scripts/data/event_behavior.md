@@ -237,6 +237,8 @@ the day its writer lands.
 | `learn.path_completed` | the instructor | `Do It` | worklist + email | L-E037. Row action Message {First}; Dismiss to clear |
 | `estimate.requested` | the provider asked for an estimate | `Send for Approval` | worklist + email | EST-E002. Cleared by sending the estimate, declining, or the buyer withdrawing |
 | `estimate.request_declined` | the buyer who asked | `Send for Approval` | worklist + email | EST-E002. Dismiss to clear |
+| `shop.order_received` | the provider whose service product was bought | `Send for Approval` | worklist + email | SH-E003. Manual orders clear on acceptance; dismiss to clear |
+| `shop.order_placed` | the buyer who placed the order | `Send for Approval` | worklist + email | SH-E003. Dismiss to clear |
 | `estimate.received` | the customer the estimate is for | `Send for Approval` | worklist + email | CAT-E006. Cleared by Accept / Ask for Changes / Decline |
 | `estimate.accepted` | the provider who wrote it | `Send for Approval` | worklist + email | CAT-E006. Links to the new work order |
 | `estimate.changes_requested` | the provider who wrote it | `Send for Approval` | worklist + email | CAT-E006. Cleared by resubmitting the revision |

@@ -222,6 +222,7 @@ export default async function PublicProviderPage({
           // THE BUYER'S VIEW, ALWAYS. `isOwner` stays true on the view
           // BOTH previews — a peer sees no owner tools either. The rate
           previewAsBuyer
+          signedIn={!!viewer}
           catalogServices={await catalogServicesFor(profile.id, false)}
         />
         </div>

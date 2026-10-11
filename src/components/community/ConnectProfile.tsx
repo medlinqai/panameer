@@ -2,6 +2,7 @@ import { CredentialsBody } from "@/components/profile/CredentialsBody";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
+import { BuyButtons } from "@/components/shop/BuyButtons";
 import { ProfileVisibilityCard } from "@/components/profile/ProfileVisibilityCard";
 import { HireButton } from "@/components/community/HireButton";
 import { ShareBar, HowToWorkWith } from "@/components/community/ProfileFooter";
@@ -79,6 +80,7 @@ export function ConnectProfile({
   previewAsBuyer = false,
   catalogServices = [],
   estimates = [],
+  signedIn = false,
 }: {
   p: ProviderProfileView;
   /** CAT-E001: services — owner sees drafts too; visitors only published. */
@@ -114,6 +116,8 @@ export function ConnectProfile({
   recommend?: ReactNode;
   /** THE BUYER'S VIEW, EVEN WHEN THE OWNER IS LOOKING ( WS-D) */
   previewAsBuyer?: boolean;
+  /** SH-E001: Buy Now / Add to Cart sign a visitor in first. */
+  signedIn?: boolean;
 }) {
   // THE SINGLE `isOwner` POINT WS-B)
   // ( WS-D). That is what makes *"every owner affordance is absent in the
@@ -210,14 +214,8 @@ export function ConnectProfile({
                       {money(pk.priceCents, pk.currency)}
                     </b>
                   )}
-                  {/* THE BUY AFFORDANCE IS DISABLED AND NAMED. Nobody buys */}
-                  {!owner && (
-                    <Link
-                      href={`/shop/${pk.id}`}
-                      className="mt-1.5 inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-semibold text-surface hover:bg-ink-hover"
-                    >
-                      Make an Offer
-                    </Link>
+                  {!owner && pk.priceCents != null && (
+                    <div className="mt-1.5 flex justify-end"><BuyButtons productId={pk.id} signedIn={signedIn} size="sm" /></div>
                   )}
                   {!owner && p.person.personId && (
                     <Link href={`/estimates/request?provider=${p.person.personId}&product=${pk.id}`} data-request-estimate-link className="mt-1 block text-[12.5px] font-semibold underline underline-offset-4">Request an Estimate</Link>

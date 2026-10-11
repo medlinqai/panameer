@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { guardPage } from "@/lib/guard";
-import { viewerCanHire } from "@/lib/rate-visibility";
 import { getShopProduct } from "@/lib/shop";
 import { formatCents } from "@/lib/display";
 import { prisma } from "@/lib/prisma";
-import { MakeOffer } from "@/components/shop/MakeOffer";
+import { BuyButtons } from "@/components/shop/BuyButtons";
 import { BackLink } from "@/components/console/BackLink";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +17,6 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   if (!p) notFound();
   const me = await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true } });
   const own = me?.id === p.providerPersonId;
-  const canBuy = !own && viewerCanHire(viewer);
 
   return (
     <div className="pm-white-page mx-auto w-full max-w-3xl">
@@ -43,14 +41,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       )}
       <section className="mt-6 border-t border-line pt-5">
         {own ? (
-          <p className="text-[14px] text-ink-2">This is your service product. Offers on it arrive in <Link href="/services/offers" className="underline">Offers</Link>.</p>
-        ) : canBuy ? (
-          <>
-          <MakeOffer productId={p.id} priceCents={p.priceCents} providerName={p.providerName} />
-          <Link href={`/estimates/request?provider=${p.providerPersonId}&product=${p.id}`} data-request-estimate-link className="mt-3 inline-flex min-h-11 items-center border border-ink px-5 text-[14px] font-semibold hover:bg-surface-hover">Request an Estimate</Link>
-          </>
+          <p className="text-[14px] text-ink-2">This is your service product. Orders for it arrive in <Link href="/orders" className="underline">Work Orders</Link>.</p>
         ) : (
-          <p className="text-[14px] text-ink-2">Making an offer needs a buyer account. Turn on buying in Settings to make one.</p>
+          <>
+            {p.priceCents != null && <BuyButtons productId={p.id} signedIn />}
+            <Link href={`/estimates/request?provider=${p.providerPersonId}&product=${p.id}`} data-request-estimate-link className="mt-3 inline-block text-[14px] font-semibold underline underline-offset-4">Request an Estimate</Link>
+            <p className="mt-1 text-[13px] text-ink-2">Need something custom? Ask {p.providerName} for an estimate.</p>
+          </>
         )}
       </section>
     </div>

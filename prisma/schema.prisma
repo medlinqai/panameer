@@ -1044,6 +1044,8 @@ model NonOracleApplication {
 model ProviderProfile {
   id                      String             @id @default(uuid()) @db.Uuid
   person_id               String             @unique @db.Uuid
+  /// SH-E003: "I accept orders manually" — off means Shop orders open on placement.
+  accepts_orders_manually Boolean            @default(false)
   region_id               String?            @db.Uuid
   /// ── ⚠⚠⚠ `headline` IS GONE (`P0-E595` WS-B) ───────────────────────────
   ///
@@ -8590,4 +8592,29 @@ model CostEstimateRequest {
   @@index([provider_person_id, status])
   @@index([requester_person_id])
   @@map("cost_estimate_requests")
+}
+
+/// SH-E002: a buyer's shopping cart — one per person; lines snapshot the listed price.
+model Cart {
+  id              String     @id @default(uuid()) @db.Uuid
+  buyer_person_id String     @unique @db.Uuid
+  created_at      DateTime   @default(now())
+  updated_at      DateTime   @updatedAt
+  lines           CartLine[]
+
+  @@map("carts")
+}
+
+model CartLine {
+  id                 String   @id @default(uuid()) @db.Uuid
+  cart_id            String   @db.Uuid
+  service_product_id String   @db.Uuid
+  quantity           Int      @default(1)
+  unit_price_cents   Int
+  currency           String   @default("USD")
+  created_at         DateTime @default(now())
+  cart               Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+
+  @@unique([cart_id, service_product_id])
+  @@map("cart_lines")
 }

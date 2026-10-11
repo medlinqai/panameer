@@ -4,6 +4,8 @@ import { memberOrPublicTwin } from "@/lib/public-twin";
 import { canProvideServices } from "@/lib/access";
 import { listShopProducts } from "@/lib/shop";
 import { formatCents } from "@/lib/display";
+import { prisma } from "@/lib/prisma";
+import { BuyButtons } from "@/components/shop/BuyButtons";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Search Service Products · Panameer" };
@@ -13,7 +15,7 @@ const priceLine = (p: { priceCents: number | null; currency: string; pricingType
 
 export default async function Page() {
   const viewer = await memberOrPublicTwin("/shop");
-  const products = await listShopProducts();
+  const [products, me] = await Promise.all([listShopProducts(), prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } })]);
 
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl">
@@ -39,13 +41,15 @@ export default async function Page() {
               </div>
               <div className="text-right">
                 <p className="text-[15px] font-semibold tabular-nums">{priceLine(p)}</p>
-                <Link href={`/shop/${p.id}`} className="mt-1 inline-block text-[13px] font-semibold text-magenta-dark hover:underline">
-                  View and make an offer
-                </Link>
+                {p.priceCents != null && p.providerPersonId !== me?.id && (
+                  <div className="mt-2 flex justify-end"><BuyButtons productId={p.id} signedIn size="sm" /></div>
+                )}
                 {/* EST-E001 */}
-                <Link href={`/estimates/request?provider=${p.providerPersonId}&product=${p.id}`} data-request-estimate-link className="mt-1 block text-[13px] font-semibold text-ink-2 underline underline-offset-4 hover:text-ink">
-                  Request an Estimate
-                </Link>
+                {p.providerPersonId !== me?.id && (
+                  <Link href={`/estimates/request?provider=${p.providerPersonId}&product=${p.id}`} data-request-estimate-link className="mt-1.5 block text-[13px] font-semibold text-ink-2 underline underline-offset-4 hover:text-ink">
+                    Request an Estimate
+                  </Link>
+                )}
               </div>
             </li>
           ))}
