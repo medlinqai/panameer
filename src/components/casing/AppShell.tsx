@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { themeVars } from "@/lib/dynamic-branding";
 import { LifecycleHelpHost } from "@/components/lifecycle/LifecycleHelp";
 import { TaskPanel } from "@/components/console/TaskPanel";
+import { UsageBeacon } from "@/components/casing/UsageBeacon";
 
 export async function AppShell({ children }: { children: ReactNode }) {
 
@@ -32,6 +33,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
       className="flex min-h-screen flex-col bg-canvas font-body text-ink"
     >
       <LifecycleHelpHost />
+      {viewer && <UsageBeacon />}
       <div className="flex min-w-0 flex-1 flex-col">
         <AppBand />
 

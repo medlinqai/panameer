@@ -1,3 +1,4 @@
+import { recordSignIn } from "@/lib/usage-tracking";
 import type { NextAuthOptions } from "next-auth";
 import type { Provider } from "next-auth/providers/index";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -334,4 +335,13 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: { signIn: "/login" },
+  // A-E001: one SIGN_IN usage row per sign-in; never blocks or fails the sign-in.
+  events: {
+    async signIn({ user }) {
+      // OAuth hands back the provider's id; resolve the Panameer user by email then.
+      const uuid = /^[0-9a-f-]{36}$/i;
+      const id = user?.id && uuid.test(user.id) ? user.id : user?.email ? (await prisma.user.findUnique({ where: { email: user.email.toLowerCase() }, select: { id: true } }).catch(() => null))?.id : null;
+      if (id) await recordSignIn(id).catch(() => {});
+    },
+  },
 };

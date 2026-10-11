@@ -8801,3 +8801,36 @@ enum ServiceTypeStatus {
   APPROVED
   MERGED
 }
+
+/// A-E001: the only new usage data — one VISIT per member per app per day (dedupe_key), one SIGN_IN per sign-in.
+model UsageEvent {
+  id         String    @id @default(uuid()) @db.Uuid
+  user_id    String    @db.Uuid
+  app        UsageApp
+  kind       UsageKind
+  day        DateTime  @db.Date
+  /// VISIT: user|app|VISIT|day (upserted); SIGN_IN: user|SIGN_IN|<ms>.
+  dedupe_key String    @unique
+  created_at DateTime  @default(now())
+
+  @@index([day, app])
+  @@index([user_id])
+  @@map("usage_events")
+}
+
+enum UsageApp {
+  REGISTER
+  PROFILE
+  CONNECT
+  LEARN
+  WORK
+  SHOP
+  ORDERS
+  PAY
+  OTHER
+}
+
+enum UsageKind {
+  SIGN_IN
+  VISIT
+}
