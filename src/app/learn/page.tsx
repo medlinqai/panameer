@@ -83,7 +83,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
             <>
               {next && (
                 <Link href={next.mine?.next ? `/learn/${next.slug}/${next.mine.next.id}` : `/learn/${next.slug}`} data-start-next className={HERO_BTN}>
-                  {next.mine && next.mine.done > 0 ? "Continue" : "Start"} {next.title}
+                  {`${next.mine && next.mine.done > 0 ? "Continue" : "Start"} ${next.title}`}
                 </Link>
               )}
               <Link href="/learn/paths" className={HERO_BTN_W}>Browse Learning Paths</Link>

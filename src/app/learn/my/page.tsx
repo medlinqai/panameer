@@ -103,7 +103,7 @@ export default async function MyLearningPage() {
             <>
               {up ? (
                 <Link href={up.path.mine?.next ? `/learn/${up.path.slug}/${up.path.mine.next.id}` : `/learn/${up.path.slug}`} data-start-next className={HERO_BTN}>
-                  {up.path.mine && up.path.mine.done > 0 ? "Continue" : "Start"} {up.path.title}
+                  {`${up.path.mine && up.path.mine.done > 0 ? "Continue" : "Start"} ${up.path.title}`}
                 </Link>
               ) : (
                 <Link href="/learn/paths" className={HERO_BTN}>Browse Learning Paths</Link>

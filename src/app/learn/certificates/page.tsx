@@ -68,7 +68,7 @@ export default async function CertificatesPage() {
           actions={
             up ? (
               <>
-                {up.test ? <Link href={`/learn/${up.path.slug}/test`} data-take-test className={HERO_BTN}>Take the Test</Link> : <Link href={up.path.mine?.next ? `/learn/${up.path.slug}/${up.path.mine.next.id}` : `/learn/${up.path.slug}`} className={HERO_BTN}>Start {up.path.title}</Link>}
+                {up.test ? <Link href={`/learn/${up.path.slug}/test`} data-take-test className={HERO_BTN}>Take the Test</Link> : <Link href={up.path.mine?.next ? `/learn/${up.path.slug}/${up.path.mine.next.id}` : `/learn/${up.path.slug}`} className={HERO_BTN}>{`Start ${up.path.title}`}</Link>}
                 <Link href="/learn/paths" className={HERO_BTN_W}>Browse Learning Paths</Link>
               </>
             ) : (
