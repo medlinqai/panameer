@@ -23,8 +23,8 @@ const STOPS: Stop[] = [
   { x: 480, y: 110, n: "3", t: "Complete Profile", s: "PROFILED", tm: "about 10 min", gate: "GATE" },
   { x: 670, y: 110, n: "4", t: "Add Company", s: "LINKED", tm: "2 min" },
   { x: 760, y: 290, n: "A1", t: "Post a Service Product", s: "LISTED", tm: "10 min each", small: true },
-  { x: 520, y: 290, n: "A2", t: "Get an Offer", s: "OFFERED", tm: "buyer's move", small: true },
-  { x: 290, y: 290, n: "A3", t: "Accept the Offer", s: "AGREED", tm: "2 min", small: true },
+  { x: 520, y: 290, n: "A2", t: "Added to Cart", s: "IN A CART", tm: "buyer's move", small: true },
+  { x: 290, y: 290, n: "A3", t: "Order Placed", s: "ORDERED", tm: "opens at once", small: true },
   { x: 760, y: 430, n: "B1", t: "Get Invited (or Find a Request)", s: "INVITED", tm: "buyer's move", small: true },
   { x: 520, y: 430, n: "B2", t: "Propose Your Rate", s: "PROPOSED", tm: "15 min each", small: true },
   { x: 290, y: 430, n: "B3", t: "Agree on Price", s: "AGREED", tm: "varies", small: true },
@@ -77,7 +77,7 @@ export default function DetailedRoadPage() {
           <span><b className="text-[10px] text-ink">GATE</b> = needed before the next stop</span>
         </p>
         <ul className="mt-5 max-w-[780px] list-disc space-y-1 pl-5 text-[14px] leading-relaxed">
-          <li><b>Path A · Sell a service product:</b> A1 Post a Service Product (Listed) → A2 Get an Offer (Offered) → A3 Accept the Offer (Agreed). The price is yours up front.</li>
+          <li><b>Path A · Sell a service product:</b> A1 Post a Service Product (Listed) → A2 Added to Cart (In a Cart) → A3 Order Placed (Ordered). Buyers pay your listed price; turn on “I accept orders manually” to review each order first.</li>
           <li><b>Path B · Propose on work requests:</b> B1 Get Invited, or find a request (Invited) → B2 Propose Your Rate (Proposed) → B3 Agree on Price (Agreed).</li>
           <li>Add Tax &amp; Banking covers the tax form <b>and</b> a payout account in the company&apos;s legal name; Panameer then validates the company.</li>
         </ul>

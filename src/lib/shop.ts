@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { memberVisibleWhere } from "@/lib/access";
 
-// R1 Chain C: what a buyer can browse and make an offer on — published service products only.
+// R1 Chain C: what a buyer can browse and buy — published service products only.
 export type ShopProduct = {
   id: string;
   title: string;

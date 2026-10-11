@@ -15,15 +15,15 @@ export const SHOP_STEPS: ShopStepLabel[] = [
   },
   {
     n: 2,
-    summary: "Make Offer to Buy",
+    summary: "Buy Now or Add to Cart",
     description:
-      "You offer against that published price instead of bidding for it, which is the whole of what separates buying a product from commissioning work.",
+      "You buy at the published price, with no bidding. For anything custom, Request an Estimate instead.",
   },
   {
     n: 3,
-    summary: "Accept Work Order",
+    summary: "Order Placed",
     description:
-      "The accepted offer becomes the work order — the one agreement every pathway on Panameer converges on, however the price was reached.",
+      "Place Order makes one work order per provider — the one agreement every pathway on Panameer converges on, however the price was reached.",
   },
   {
     n: 4,

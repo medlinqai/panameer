@@ -46,6 +46,11 @@ const EXTRA: Row[] = [
   { term: "Payment Terms", category: "Company & payment", type: "Panameer term", definition: "How long the customer has to pay once a payment request is submitted — Immediate, Net 15, Net 30, Net 45 or Net 60. Terms start on submission, not approval.", also: "Net terms", dont: null, shown: "Public", confirm: null },
   // EST-E005 (2026-10-10)
   { term: "Cost Estimate Request", category: "Marketplace & work", type: "Panameer term", definition: "A buyer asking a provider for a cost estimate — what they need, when, an optional budget and files. The provider builds the estimate or declines with a reason. Private to the two of them.", also: "Request an Estimate", dont: null, shown: "Public", confirm: null },
+  // SH-E005 (2026-10-11)
+  { term: "Buy Now", category: "Marketplace & work", type: "Panameer term", definition: "Buy a service product at its listed price: it goes into your cart and you go straight to it to place the order.", also: null, dont: "Make an Offer", shown: "Public", confirm: null },
+  { term: "Add to Cart", category: "Marketplace & work", type: "Panameer term", definition: "Put a service product in your cart at its listed price and keep shopping.", also: null, dont: null, shown: "Public", confirm: null },
+  { term: "Cart", category: "Marketplace & work", type: "Panameer term", definition: "The service products you're about to buy, grouped by provider, with each one's payment schedule and the totals. Place Order makes one work order per provider. In a punchout session the cart is returned to your ERP instead.", also: "Shopping cart", dont: null, shown: "Public", confirm: null },
+  { term: "Order Placed", category: "Marketplace & work", type: "Panameer term", definition: "The buyer placed the order from the cart, and a work order exists at the listed price. It opens at once, or waits for the provider's acceptance when they accept orders manually.", also: null, dont: null, shown: "Public", confirm: null },
 ];
 const text = (v: ExcelJS.CellValue) => (v == null ? "" : typeof v === "object" && "richText" in v ? v.richText.map((r) => r.text).join("") : typeof v === "object" && "text" in v ? String(v.text) : String(v)).trim();
 
