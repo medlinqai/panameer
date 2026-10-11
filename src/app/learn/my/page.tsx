@@ -9,6 +9,10 @@ import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { BubbleField } from "@/components/casing/BubbleField";
+import { UpNextCard } from "@/components/learn/UpNextCard";
+import { countWord, youTotalAverage } from "@/components/learn/YouTotalAverage";
+import { memberLessonAverage } from "@/lib/learn-averages";
+import { timeLabel } from "@/lib/learn-time";
 
 export const metadata = { title: "My Learning — Panameer", description: "Your learning record: in progress, completed, certificates and tests." };
 export const dynamic = "force-dynamic";
@@ -28,13 +32,18 @@ export default async function MyLearningPage() {
     const k = w.lesson.section.course.learning_path_id;
     if (!lastBy.get(k) || lastBy.get(k)! < w.completed_at) lastBy.set(k, w.completed_at);
   }
-  const certified = paths.filter((p) => p.certificate);
-  const [next, testPicks, areas] = await Promise.all([recommendNext(viewer.userId, { paths }), testOutPicks(viewer.userId, { paths }), getSkillAreas()]);
+  const [next, testPicks, areas, average] = await Promise.all([recommendNext(viewer.userId, { paths }), testOutPicks(viewer.userId, { paths }), getSkillAreas(), memberLessonAverage()]);
   const labelOf = (code: string | null) => (code === "START" ? "Start Here" : code ? areas.find((a) => a.code === code)?.label ?? code : null);
   const inProgress = paths.filter((p) => p.mine && !p.certificate && p.mine.done < p.mine.total).sort((a, b) => (lastBy.get(b.id)?.getTime() ?? 0) - (lastBy.get(a.id)?.getTime() ?? 0));
   const completed = paths.filter((p) => p.mine && p.mine.total > 0 && p.mine.done >= p.mine.total);
   const nextCert = [...inProgress].sort((a, b) => b.mine!.done / b.mine!.total - a.mine!.done / a.mine!.total)[0] ?? null;
   const lessonsDone = watched.length;
+  // LT-E002: You · Total · Average — lessons done, all lessons out now (with a video), the member average.
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const lessonsThisMonth = watched.filter((w) => w.completed_at >= monthStart).length;
+  const allLessons = paths.reduce((n, p) => n + p.courses.reduce((m, c) => m + c.lessons.filter((l) => l.playable).length, 0), 0);
+  const minutesLearned = paths.reduce((n, p) => n + p.courses.reduce((m, c) => m + c.lessons.filter((l) => l.done).reduce((k, l) => k + (l.minutes ?? 0), 0), 0), 0);
+  const up = next.picks[0] ?? null;
   const toNext = nextCert ? nextCert.mine!.total - nextCert.mine!.done : null;
   // One bubble per enrolled path: size = lessons, ink rises with progress, certified = solid ✓, furthest-into = magenta ring.
   const enrolled = paths.filter((p) => p.mine?.enrolled || p.certificate);
@@ -78,23 +87,28 @@ export default async function MyLearningPage() {
             />
           }
           eyebrow="My Learning"
-          title="Your Learning Record"
+          title={lessonsDone ? `${countWord(lessonsDone)} ${lessonsDone === 1 ? "Lesson" : "Lessons"} and Counting` : "Start Your First Lesson"}
           kpis={[
-            { value: enrolled.length, label: "ENROLLED" },
-            { value: certified.length, label: "CERTIFICATES" },
-            { value: inProgress.length, label: "IN PROGRESS" },
-            { value: lessonsDone, label: "LESSONS DONE" },
+            ...youTotalAverage({ you: lessonsDone, youLabel: "LESSONS DONE", month: lessonsThisMonth, total: allLessons, totalLabel: "OF ALL LESSONS", average }),
+            { value: inProgress.length, label: "PATHS IN PROGRESS" },
+            { value: minutesLearned ? timeLabel(minutesLearned) : "0", label: "TIME LEARNING" },
           ]}
           paragraph={
             <>
-              {nextCert ? <>You&apos;re furthest into <b className="text-ink">{nextCert.title}</b> — {toNext} {toNext === 1 ? "lesson" : "lessons"} from its certificate. </> : null}
-              Your certificates and tests are on <Link href="/learn/certificates" className="font-bold text-ink underline">Certificates</Link>.
+              {nextCert ? <span className="mb-3 block">You&apos;re furthest into <b className="text-ink">{nextCert.title}</b> — {toNext} {toNext === 1 ? "lesson" : "lessons"} from its certificate.</span> : null}
+              {up && <UpNextCard path={up.path} label={`Up Next · ${up.reason}`} />}
             </>
           }
           actions={
             <>
-              {nextCert?.mine?.next ? <Link href={`/learn/${nextCert.slug}/${nextCert.mine.next.id}`} className={HERO_BTN}>Continue Lesson {nextCert.mine.next.index}</Link> : <Link href="/learn/paths" className={HERO_BTN}>Browse Learning Paths</Link>}
-              {nextCert?.test.ready && !nextCert.test.passed && <Link href={`/learn/${nextCert.slug}/test`} className={HERO_BTN_W}>Take the Certification Test</Link>}
+              {up ? (
+                <Link href={up.path.mine?.next ? `/learn/${up.path.slug}/${up.path.mine.next.id}` : `/learn/${up.path.slug}`} data-start-next className={HERO_BTN}>
+                  {up.path.mine && up.path.mine.done > 0 ? "Continue" : "Start"} {up.path.title}
+                </Link>
+              ) : (
+                <Link href="/learn/paths" className={HERO_BTN}>Browse Learning Paths</Link>
+              )}
+              <Link href="#whats-next" className={HERO_BTN_W}>What&apos;s Next?</Link>
             </>
           }
         />
