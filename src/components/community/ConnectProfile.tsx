@@ -3,6 +3,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
 import { BuyButtons } from "@/components/shop/BuyButtons";
+import { ProductCard } from "@/components/shop/ProductCard";
+import type { ShopProduct } from "@/lib/shop";
 import { ManualOrdersToggle } from "@/components/shop/ManualOrdersToggle";
 import { ProfileVisibilityCard } from "@/components/profile/ProfileVisibilityCard";
 import { HireButton } from "@/components/community/HireButton";
@@ -83,6 +85,7 @@ export function ConnectProfile({
   estimates = [],
   signedIn = false,
   ordersManual = null,
+  shopCards = [],
 }: {
   p: ProviderProfileView;
   /** CAT-E001: services — owner sees drafts too; visitors only published. */
@@ -122,6 +125,8 @@ export function ConnectProfile({
   signedIn?: boolean;
   /** SH-E003: owner-only — the "I accept orders manually" setting. */
   ordersManual?: boolean | null;
+  /** WS-E006: a visitor sees the provider's published products as Shop cards. */
+  shopCards?: ShopProduct[];
 }) {
   // THE SINGLE `isOwner` POINT WS-B)
   // ( WS-D). That is what makes *"every owner affordance is absent in the
@@ -193,6 +198,11 @@ export function ConnectProfile({
               Fixed scope, fixed fee.
             </p>
           )}
+          {!owner && shopCards.length > 0 ? (
+            <div data-profile-product-cards className="grid gap-2.5 md:grid-cols-2">
+              {shopCards.map((c) => <ProductCard key={c.id} p={c} signedIn={signedIn} />)}
+            </div>
+          ) : (
           <div className="flex flex-col">
             {p.packages.map((pk) => (
               <div
@@ -228,11 +238,6 @@ export function ConnectProfile({
               </div>
             ))}
           </div>
-          {!owner && (
-            <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
-              Buying isn&rsquo;t open yet. Connect as a colleague to talk to this
-              provider about the work.
-            </p>
           )}
         </>
       )}

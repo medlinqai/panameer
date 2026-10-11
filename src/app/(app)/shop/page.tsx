@@ -1,54 +1,57 @@
+import { Suspense } from "react";
 import Link from "next/link";
-import { FreeLine } from "@/components/marketing/FreeLine";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { listShopProducts } from "@/lib/shop";
-import { formatCents } from "@/lib/display";
 import { prisma } from "@/lib/prisma";
 import { ShopTabs } from "@/components/shop/ShopTabs";
-import { BuyButtons } from "@/components/shop/BuyButtons";
+import { ProductCard } from "@/components/shop/ProductCard";
+import { ShowMore } from "@/components/shop/ShowMore";
+import { FilterBar, type FilterDef } from "@/components/casing/FilterBar";
+import { BILLING, byPopular, DELIVERY, filterProducts, KIND, PRICE, type ShopQuery } from "@/lib/shop-filters";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Search Service Products · Panameer" };
+export const metadata = { title: "Service Products · Panameer" };
 
-const priceLine = (p: { priceCents: number | null; currency: string; pricingType: string }) =>
-  p.priceCents == null ? "Price on request" : `${formatCents(p.priceCents, p.currency)}${p.pricingType === "HOURLY" ? "/hr" : ""}`;
-
-export default async function Page() {
+// WS-E005: Shop lands on Service Products — no hero: Popular Service Products, filters, 2-up cards, Show More, "Don't see it?".
+export default async function Page({ searchParams }: { searchParams: Promise<ShopQuery> }) {
   const viewer = await memberOrPublicTwin("/shop");
-  const [products, me] = await Promise.all([listShopProducts(), prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } })]);
+  const sp = await searchParams;
+  const [all, me] = await Promise.all([listShopProducts(), prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } })]);
+  const cartLines = me ? await prisma.cartLine.findMany({ where: { cart: { buyer_person_id: me.id } }, select: { id: true, service_product_id: true } }) : [];
+  const inCart = new Map(cartLines.map((l) => [l.service_product_id, l.id]));
+  const products = filterProducts(all, sp).sort(byPopular);
+  const countries = [...new Set(all.map((p) => p.providerCountry).filter((x): x is string => !!x))].sort();
+  const filters: FilterDef[] = [
+    { key: "price", label: "Price", options: PRICE.map(({ value, label }) => ({ value, label })) },
+    { key: "billing", label: "Fixed / Monthly", options: BILLING },
+    { key: "kind", label: "Kind", options: KIND },
+    { key: "delivery", label: "Delivery Time", options: DELIVERY.map(({ value, label }) => ({ value, label })) },
+    { key: "location", label: "Provider Location", options: countries.map((c) => ({ value: c, label: c })) },
+  ];
 
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl">
       <ShopTabs />
-      <h1 className="text-[28px] font-bold">Service Products</h1>
-      <FreeLine claim="List the services you sell, free." />
+      <h1 className="mb-3 mt-2 text-[24px] font-bold">Popular Service Products</h1>
+      <Suspense>
+        <FilterBar placeholder="Search service products…" filters={filters} />
+      </Suspense>
       {products.length === 0 ? (
-        <p className="mt-6 border-t border-line py-5 text-[14px] text-ink-2">No service products are published yet.</p>
+        <p className="border-t border-line py-5 text-[14px] text-ink-2">{all.length ? "No service product matches these filters." : "No service products are published yet."}</p>
       ) : (
-        <ul data-testid="shop-list" className="mt-6">
+        <ShowMore className="grid gap-2.5 md:grid-cols-2">
           {products.map((p) => (
-            <li key={p.id} className="flex flex-wrap items-start justify-between gap-3 border-t border-line py-4">
-              <div className="min-w-0">
-                <Link href={`/shop/${p.id}`} className="text-[16px] font-semibold hover:underline">{p.title}</Link>
-                <p className="mt-0.5 text-[13px] text-ink-2">by {p.providerName}</p>
-                {p.summary && <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-2">{p.summary}</p>}
-              </div>
-              <div className="text-right">
-                <p className="text-[15px] font-semibold tabular-nums">{priceLine(p)}</p>
-                {p.priceCents != null && p.providerPersonId !== me?.id && (
-                  <div className="mt-2 flex justify-end"><BuyButtons productId={p.id} signedIn size="sm" /></div>
-                )}
-                {/* EST-E001 */}
-                {p.providerPersonId !== me?.id && (
-                  <Link href={`/estimates/request?provider=${p.providerPersonId}&product=${p.id}`} data-request-estimate-link className="mt-1.5 block text-[13px] font-semibold text-ink-2 underline underline-offset-4 hover:text-ink">
-                    Request an Estimate
-                  </Link>
-                )}
-              </div>
-            </li>
+            <ProductCard key={p.id} p={p} signedIn own={p.providerPersonId === me?.id} inCartLineId={inCart.get(p.id) ?? null} />
           ))}
-        </ul>
+        </ShowMore>
       )}
+      <section data-dont-see-it className="mt-8 flex flex-wrap items-center justify-between gap-4 border border-line bg-white p-5">
+        <p className="text-[14.5px]"><b>Don&apos;t see it?</b> <span className="text-ink-2">Describe what you need and get estimates from providers who do this work.</span></p>
+        <span className="flex flex-wrap gap-2">
+          <Link href="/search" title="Find a provider, then Request an Estimate from their profile" className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover">Request an Estimate</Link>
+          <Link href="/create-work" className="inline-flex min-h-11 items-center border border-ink px-5 text-[14px] font-semibold hover:bg-surface-hover">Post a Work Request</Link>
+        </span>
+      </section>
     </div>
   );
 }
