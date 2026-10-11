@@ -29,7 +29,7 @@ const STOPS: Stop[] = [
   { x: 520, y: 430, n: "B2", t: "Propose Your Rate", s: "PROPOSED", tm: "15 min each", small: true },
   { x: 290, y: 430, n: "B3", t: "Agree on Price", s: "AGREED", tm: "varies", small: true },
   { x: 330, y: 590, n: "6", t: "Validate Company", s: "VALIDATED", tm: "8 min · tax form + bank", gate: "GATE · ADMIN" },
-  { x: 560, y: 590, n: "7", t: "Do Work", s: "CONTRACTED", tm: "signed work order", gate: "GATE" },
+  { x: 560, y: 590, n: "7", t: "Sell or Work", s: "CONTRACTED", tm: "signed work order", gate: "GATE" },
   { x: 790, y: 590, n: "8", t: "Request Payment", s: "REQUESTED", tm: "5 min each" },
   { x: 1000, y: 590, n: "9", t: "Get Paid", s: "PAID", tm: "automatic", last: true },
 ];
