@@ -6,7 +6,7 @@ const AHEAD_RING = "#C9CDDC";
 const AHEAD_NUM = "#8A90A8";
 const TRACK = "#E8EAF1";
 
-const WORDS: Record<number, string> = { 7: "seven", 9: "nine" };
+const WORDS: Record<number, string> = { 7: "seven", 8: "eight", 9: "nine" };
 
 // The compact strip: numbered circles, ✓ when done, "You are here" on the current step.
 export function LifecycleStrip({ current, intro = "you", hereLabel = "You are here", steps = LIFECYCLE }: { current: number; intro?: "you" | "they" | false; hereLabel?: string; steps?: LifecycleStep[] }) {
@@ -27,7 +27,7 @@ export function LifecycleStrip({ current, intro = "you", hereLabel = "You are he
           )}
         </p>
       )}
-      <ol className={"relative grid grid-cols-1 gap-3 sm:gap-0 " + (total === 9 ? "sm:grid-cols-9" : "sm:grid-cols-7")} aria-label="Lifecycle">
+      <ol className={"relative grid grid-cols-1 gap-3 sm:gap-0 " + (total === 9 ? "sm:grid-cols-9" : total === 8 ? "sm:grid-cols-8" : "sm:grid-cols-7")} aria-label="Lifecycle">
         <span aria-hidden className="absolute left-[7%] right-[7%] top-[21px] hidden h-[3px] sm:block" style={{ background: TRACK }} />
         <span aria-hidden className="absolute left-[7%] top-[21px] hidden h-[3px] sm:block" style={{ background: DONE, width: `${pct * 0.86}%` }} />
         {steps.map((s, i) => {

@@ -140,10 +140,11 @@ export default async function Page({
   for (const p of people) {
     const co = coById.get(p.companyMemberships[0]?.company_id ?? "") ?? null;
     const members = co ? co.memberships.map((m) => m.person_id) : [p.id];
-    // Everyone on the provider road's 9 boxes; for buyers, Sell and Request Payment don't apply and count as passed.
+    // Everyone on the provider road's 8 boxes; for buyers, Sell and Request Payment don't apply and count as passed.
     const prov = p.is_service_provider;
     const contract = members.some((id) => signedPeople.has(id));
     const st = lifecycleStatus({
+      register: !!co,
       verify: !!p.user?.email_verified,
       profile: prov ? (p.providerProfile?.completeness ?? 0) >= VISIBILITY_THRESHOLD : !!p.requesterProfile?.completed_at,
       link: !!co,

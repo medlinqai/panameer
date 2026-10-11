@@ -117,7 +117,8 @@ export function passRate(subjects: LevelSubject[], i: number): number | null {
 
 // ── Lifecycle (2026-10-06): 7 steps, 7 statuses, same for buyers and sellers. The one definition.
 export type LifecycleWho = "you" | "company" | "both";
-export type LifecycleStep = { key: string; step: string; status: string; who: LifecycleWho; gate: boolean; admin?: boolean; desc: string; unlocks?: string; href: string; next: string; time?: string };
+export type RoadPhase = "join" | "win" | "paid";
+export type LifecycleStep = { key: string; phase?: RoadPhase; step: string; status: string; who: LifecycleWho; gate: boolean; admin?: boolean; desc: string; unlocks?: string; href: string; next: string; time?: string };
 
 export const LIFECYCLE: LifecycleStep[] = [
   { key: "account", step: "Create Account", status: "Registered", who: "you", gate: false, desc: "One account per email.", href: "/join", next: "Create Your Account" },
@@ -129,17 +130,30 @@ export const LIFECYCLE: LifecycleStep[] = [
   { key: "paid", step: "Get Paid", status: "Paid", who: "both", gate: false, desc: "Paid to a bank account in the company's legal name.", href: "/company/legal#payout", next: "Get Paid" },
 ];
 
-// Provider road (2026-10-07): 9 stops; banking sits in Validate Company. Buyers keep LIFECYCLE.
+// Provider road (RD-E004, 2026-10-11): 8 stops in three phases; company at Register, Tax & Banking before payment. Buyers keep LIFECYCLE.
 export const PROVIDER_ROAD: LifecycleStep[] = [
-  { key: "account", step: "Register", status: "Registered", who: "you", gate: false, desc: "One account per email.", href: "/join", next: "Register", time: "1 min" },
-  { key: "verify", step: "Verify", status: "Verified", who: "you", gate: false, desc: "Click the link sent to your email.", unlocks: "Learn, Connect", href: "/join", next: "Verify Your Account", time: "1 min" },
-  { key: "profile", step: "Complete Profile", status: "Profiled", who: "you", gate: true, desc: "No empty sections: photo, bio, 3 skills, a specialization, rate, language, location.", unlocks: "being found, posting, proposals", href: "/profile", next: "Complete Your Profile", time: "about 10 min" },
-  { key: "link", step: "Add Company", status: "Linked", who: "you", gate: false, desc: "Add your company, or join it by website — a one-person business is a company too.", href: "/company?join=1#join", next: "Add Your Company", time: "2 min" },
-  { key: "list", step: "Build Your Catalog", status: "Listed", who: "you", gate: false, desc: "Set your rates as services and add service products. Draft them now — they go live once your company is validated.", href: "/profile#my-services", next: "Build Your Catalog", time: "10 min each" },
-  { key: "validate", step: "Add Tax & Banking", status: "Validated", who: "company", gate: true, admin: true, desc: "Admin adds legal name, tax ID, W-9 (US) or W-8BEN-E (outside US), and a payout account in the legal name.", unlocks: "signing work orders", href: "/company/legal", next: "Validate Your Company", time: "8 min · tax form + bank" },
-  { key: "contract", step: "Sell or Work", status: "Contracted", who: "both", gate: true, desc: "Get an order — an accepted estimate, a product purchase or your rate accepted — then sign the work order and deliver.", href: "/orders", next: "Sign a Work Order", time: "signed work order" },
-  { key: "request", step: "Request Payment", status: "Requested", who: "you", gate: false, desc: "Send a payment request — a timesheet, a milestone…", href: "/orders", next: "Request Payment", time: "5 min each" },
-  { key: "paid", step: "Get Paid", status: "Paid", who: "both", gate: false, desc: "Paid to the company's bank account in its legal name.", href: "/company/legal#payout", next: "Get Paid", time: "automatic" },
+  { key: "register", phase: "join", step: "Register", status: "Registered", who: "you", gate: false, desc: "You and your company, in one go. A one-person business is a company too.", href: "/company?join=1#join", next: "Add Your Company", time: "about 3 min · you + your company" },
+  { key: "verify", phase: "join", step: "Verify", status: "Verified", who: "you", gate: false, desc: "Click the link sent to your email.", unlocks: "Learn, Connect", href: "/join", next: "Verify Your Account", time: "1 min" },
+  { key: "profile", phase: "join", step: "Complete Profile", status: "Profiled", who: "you", gate: true, desc: "No empty sections: photo, bio, 3 skills, a specialization, rate, language, location.", unlocks: "being found, posting, proposals", href: "/profile", next: "Complete Your Profile", time: "5–10 min" },
+  { key: "list", phase: "join", step: "Build Your Catalog", status: "Listed", who: "you", gate: false, desc: "Set your rates as services and add service products. They go live once your company is linked.", href: "/profile#my-services", next: "Build Your Catalog", time: "10 min each" },
+  { key: "contract", phase: "win", step: "Sell or Work", status: "Contracted", who: "both", gate: false, desc: "Win work three ways: a product bought, your rate accepted, or an estimate accepted. Each ends in a signed work order.", href: "/orders", next: "Sign a Work Order", time: "signed work order" },
+  { key: "validate", phase: "paid", step: "Add Tax & Banking", status: "Validated", who: "company", gate: true, admin: true, desc: "The tax form (W-9 in the US, W-8BEN-E outside it) and a payout account in your company's legal name. Payment waits until it's validated.", unlocks: "payment", href: "/company/legal", next: "Add Tax & Banking", time: "8 min · tax form + bank" },
+  { key: "request", phase: "paid", step: "Request Payment", status: "Requested", who: "you", gate: false, desc: "Send a payment request — a timesheet, a milestone…", href: "/orders", next: "Request Payment", time: "5 min each" },
+  { key: "paid", phase: "paid", step: "Get Paid", status: "Paid", who: "both", gate: false, desc: "Paid to the company's bank account in its legal name.", href: "/company/legal#payout", next: "Get Paid", time: "automatic" },
+];
+
+/** The road's three phases — each its own color on the road, rings, label and band. */
+export const ROAD_PHASES: Record<RoadPhase, { label: string; color: string; band: string; track: string }> = {
+  join: { label: "Join & Get Found", color: "#3A4166", band: "#F6F7FB", track: "#E2E5EF" },
+  win: { label: "Win Work", color: "#A61AA5", band: "#FDF5FD", track: "#F5DDF5" },
+  paid: { label: "Get Paid", color: "#5B2A86", band: "#F8F4FC", track: "#E9DFF3" },
+};
+
+/** Stop 5's three lanes; each ends in "Work Order Signed". */
+export const ROAD_LANES: { id: string; name: string; steps: string[] }[] = [
+  { id: "5.A", name: "Product Bought", steps: ["Product Located", "Added to Cart", "Order Placed"] },
+  { id: "5.B", name: "Rate Accepted", steps: ["Provider Invited", "Rate Proposed", "Rate Accepted"] },
+  { id: "5.C", name: "Estimate Accepted", steps: ["Estimate Requested", "Provider Estimates", "Estimate Accepted"] },
 ];
 
 export const LIFECYCLE_WHO: Record<LifecycleWho, { label: string; bg: string; fg: string }> = {
@@ -155,8 +169,8 @@ export const LIFECYCLE_RULES = [
   { title: "Outside the US", body: "W-8BEN-E on file, as provided by the company. Panameer doesn't verify foreign registrations or file local reporting." },
 ];
 
-/** One fact per step key (account is always done); a road's steps read only their own keys. */
-export type LifecycleFacts = Partial<Record<"verify" | "profile" | "link" | "list" | "validate" | "contract" | "request" | "paid", boolean>>;
+/** One fact per step key (account is always done; the provider's register = a linked company); a road's steps read only their own keys. */
+export type LifecycleFacts = Partial<Record<"register" | "verify" | "profile" | "link" | "list" | "validate" | "contract" | "request" | "paid", boolean>>;
 
 /** done[i] per step; current = first step not done (steps.length = all done); status = the status after the last done step. */
 export function lifecycleStatus(f: LifecycleFacts, road: LifecycleStep[] = LIFECYCLE) {

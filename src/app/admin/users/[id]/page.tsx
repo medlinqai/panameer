@@ -117,10 +117,10 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
   const blocked =
     curKey === "verify" ? { text: "email not verified", sub: verifySent ? `Verification email sent ${d(verifySent.created_at)}` : "No verification email on record", fix: userId ? <><ResendVerification userId={userId} /><MarkVerified personId={person.id} /></> : null }
     : curKey === "profile" ? { text: "profile checklist not complete", sub: missing?.length ? `Missing: ${missing.join(", ")}` : person.providerProfile ? `Score ${score} of 80` : "Buyer profile not finished", fix: person.providerProfile ? <NudgeToFinish personId={person.id} /> : null }
-    : curKey === "link" ? { text: "not linked to a company", sub: pending.length ? `Asked to join ${pending.map((p) => p.company.name).join(", ")}` : "No company and no pending request", fix: <AddToCompany personId={person.id} /> }
+    : curKey === "link" || curKey === "register" ? { text: "not linked to a company", sub: pending.length ? `Asked to join ${pending.map((p) => p.company.name).join(", ")}` : "No company and no pending request", fix: <AddToCompany personId={person.id} /> }
     : curKey === "list" ? { text: "nothing for sale yet", sub: "No published service product and no proposal sent.", fix: null }
     : curKey === "validate" ? { text: "company not validated", sub: check ? `Missing: ${check.items.filter((i) => !i.done).map((i) => i.item).join(", ")}` : "", fix: co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : null }
-    : curKey === "contract" ? { text: "no signed work order yet", sub: "Two validated companies sign a work order.", fix: null }
+    : curKey === "contract" ? { text: "no signed work order yet", sub: "A product bought, a rate accepted or an estimate accepted, then the work order signed.", fix: null }
     : curKey === "request" ? { text: "no payment request yet", sub: "A timesheet or milestone request on a signed work order.", fix: null }
     : curKey === "paid" ? { text: "not paid yet", sub: "Paid to a bank account in the company's legal name.", fix: null }
     : null;
@@ -204,7 +204,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
           )}
         </Step>
 
-        <Step n={nOf("link")} title="Add Company" tag={co ? "DONE" : "NOT YET"} tone={co ? "done" : "wait"} actions={<AddToCompany personId={person.id} />}>
+        <Step n={nOf(steps.some((s) => s.key === "register") ? "register" : "link")} title="Add Company" tag={co ? "DONE" : "NOT YET"} tone={co ? "done" : "wait"} actions={<AddToCompany personId={person.id} />}>
           <Row label="Company" value={co ? <><Link href={`/admin/companies/${co.id}`} className="font-semibold text-magenta-ink underline">{co.name}</Link> · {member!.role === "ADMIN" ? "admin" : "member"}</> : <No>None</No>} />
           <Row label="Join requests" value={pending.length ? pending.map((p) => `${p.company.name} (asked ${d(p.created_at)})`).join(", ") : <No>None</No>} />
         </Step>

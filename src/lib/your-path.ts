@@ -47,6 +47,7 @@ export async function lifecycleFor(personId: string) {
     provider ? prisma.settlementRequest.count({ where: { provider_person_id: { in: members }, submitted_at: { not: null } } }) : 0,
   ]);
   const facts: LifecycleFacts = {
+    register: !!m,
     verify: !!p.user?.email_verified,
     profile: provider ? (p.providerProfile?.completeness ?? 0) >= VISIBILITY_THRESHOLD : !!p.requesterProfile?.completed_at,
     link: !!m,

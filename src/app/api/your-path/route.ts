@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { lifecycleForUser } from "@/lib/your-path";
 
-// Account menu's Your Path block: step N of 9 (providers) or 7, the status, and the next step.
+// Account menu's Your Path block: step N of 8 (providers) or 7, the status, and the next step.
 export async function GET() {
   const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;

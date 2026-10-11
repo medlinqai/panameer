@@ -10,7 +10,7 @@ import { LifecycleStrip } from "@/components/lifecycle/LifecycleStrip";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your Path · Panameer" };
 
-// Your Path: the road (9 stops for providers, 7 for buyers) with "You are here" and one Next button.
+// Your Path: the road (8 stops for providers, 7 for buyers) with "You are here" and one Next button.
 export default async function YourPathPage() {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fyour-path");
@@ -29,7 +29,7 @@ export default async function YourPathPage() {
       {road === "provider" ? (
         <>
           <p className="mt-1.5 max-w-[780px] text-[14.5px] text-ink-2">
-            Nine stops. Build your catalog right after your profile; it goes live once your company is validated. Panameer contracts with and pays companies, not individuals.
+            Eight stops, 10–15 minutes to be found. Win work three ways at stop 5, then add tax and banking so you&apos;re paid on time. Panameer contracts with and pays companies, not individuals.
           </p>
           <div className="mt-4 overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={current} /></div></div>
           <Link href="/join/provider/road" data-detailed-road-link className="mt-2 inline-block text-[13.5px] font-bold text-magenta-dark underline underline-offset-4">
@@ -58,6 +58,10 @@ export default async function YourPathPage() {
                 </span>
                 <b className="block text-[16px]">{s.step}</b>
                 <span className="block text-[13.5px] text-ink-2">{s.desc}</span>
+                {/* RD-E002: a provider registered before company-at-Register has stop 1 open until a company is linked. */}
+                {s.key === "register" && !done[i] && (
+                  <Link href={s.href} data-add-company-todo className="mt-1 inline-block text-[13px] font-bold text-magenta-dark underline underline-offset-4">To do: Add Your Company</Link>
+                )}
                 <span className="mt-0.5 block text-[12.5px] text-ink-3">
                   Status after it: <b className="text-ink-2">{s.status}</b>
                   {s.unlocks && ` · Unlocks ${s.unlocks}`}
@@ -65,7 +69,7 @@ export default async function YourPathPage() {
               </span>
               <span className="col-start-2 self-center sm:col-start-3">
                 {done[i] ? (
-                  <span className="text-[12.5px] font-bold text-[#1f8a5b]">✓ Done</span>
+                  <span className="text-[12.5px] font-bold text-ink">✓ Done</span>
                 ) : here ? (
                   <span className="border border-ink px-2 py-0.5 text-[11px] font-bold tracking-[0.06em]">YOU ARE HERE</span>
                 ) : null}

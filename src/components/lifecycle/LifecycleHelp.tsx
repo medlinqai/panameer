@@ -6,7 +6,7 @@ import { LifecycleGraphic } from "@/components/lifecycle/LifecycleGraphic";
 import { RoadGraphic } from "@/components/lifecycle/RoadGraphic";
 import { RoadStepper } from "@/components/lifecycle/RoadStepper";
 
-// The "?" next to "Your Path · Step N of 9". It signals one host in AppShell, so closing the account menu can't unmount the panel.
+// The "?" next to "Your Path · Step N of 8". It signals one host in AppShell, so closing the account menu can't unmount the panel.
 const EVENT = "pm:lifecycle-help";
 
 export function LifecycleHelp({ className = "", onOpen }: { className?: string; onOpen?: () => void }) {
@@ -47,7 +47,7 @@ export function LifecycleHelpHost() {
       {path?.road === "provider" ? (
         <>
           <p className="mb-2 text-[14px] text-ink-2">
-            Nine stops from sign-up to getting paid. Build your catalog right after your profile; it goes live once your company is validated. Panameer pays companies, not individuals.
+            Eight stops, 10–15 minutes to be found. Win work three ways at stop 5, then add tax and banking so you're paid on time. Panameer pays companies, not individuals.
           </p>
           <div className="hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>
           <div className="sm:hidden"><RoadStepper current={path.current} /></div>
