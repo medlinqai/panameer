@@ -59,6 +59,39 @@ export async function addToCart(s: PunchoutSessionLive, input: { serviceId: stri
   });
 }
 
+export type CartProduct = { id: string; title: string; providerName: string; priceCents: number; byQty: boolean };
+
+/** SH-E004: service products at their listed price, alongside services. */
+export async function searchProducts(q: string): Promise<CartProduct[]> {
+  const term = q.trim();
+  const rows = await prisma.serviceProduct.findMany({
+    where: { status: "PUBLISHED", price_cents: { not: null }, ...(term ? { OR: [{ title: { contains: term, mode: "insensitive" } }, { providerProfile: { person: { OR: [{ first_name: { contains: term, mode: "insensitive" } }, { last_name: { contains: term, mode: "insensitive" } }] } } }] } : {}) },
+    orderBy: { sort_order: "asc" },
+    take: 50,
+    select: { id: true, title: true, price_cents: true, pricing_type: true, providerProfile: { select: { person: { select: { first_name: true, last_name: true } } } } },
+  });
+  return rows.map((r) => ({ id: r.id, title: r.title, providerName: `${r.providerProfile.person.first_name} ${r.providerProfile.person.last_name}`.trim(), priceCents: r.price_cents ?? 0, byQty: r.pricing_type === "HOURLY" || r.pricing_type === "TM" }));
+}
+
+export async function addProductToCart(s: PunchoutSessionLive, input: { productId: string; quantity?: number | null }) {
+  const p = await prisma.serviceProduct.findFirst({ where: { id: input.productId, status: "PUBLISHED", price_cents: { not: null } }, select: { id: true, title: true, price_cents: true, pricing_type: true, providerProfile: { select: { person: { select: { id: true, first_name: true, last_name: true } } } } } });
+  if (!p?.price_cents) throw new Error("That service product isn't available");
+  const qty = Math.floor(Number(input.quantity ?? 1));
+  if (!qty || qty < 1 || qty > 10000) throw new Error("Enter a quantity");
+  const byQty = p.pricing_type === "HOURLY" || p.pricing_type === "TM";
+  const person = p.providerProfile.person;
+  const wrId = await cartRequest(s);
+  const n = await prisma.workRequestLine.count({ where: { work_request_id: wrId } });
+  // An amount line carries only its amount; the quantity is amount ÷ the product's price when returned.
+  await prisma.workRequestLine.create({
+    data: {
+      work_request_id: wrId, line_number: n + 1, transaction_type: byQty ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", description: `${p.title} — ${person.first_name} ${person.last_name}`.trim(),
+      unspsc_code: DEFAULT_UNSPSC, uom: byQty ? "HOUR" : null, quantity: byQty ? qty : null, unit_price_cents: byQty ? p.price_cents : null, amount_cents: byQty ? null : p.price_cents * qty,
+      provider_person_id: person.id, service_product_id: p.id, status: "ASSIGNED",
+    },
+  });
+}
+
 export async function removeFromCart(s: PunchoutSessionLive, lineId: string) {
   if (!s.work_request_id) return;
   await prisma.workRequestLine.deleteMany({ where: { id: lineId, work_request_id: s.work_request_id, work_order_id: null } });
@@ -66,13 +99,20 @@ export async function removeFromCart(s: PunchoutSessionLive, lineId: string) {
 
 export async function cartLines(s: PunchoutSessionLive) {
   if (!s.work_request_id) return [];
-  return prisma.workRequestLine.findMany({ where: { work_request_id: s.work_request_id }, orderBy: { line_number: "asc" } });
+  const lines = await prisma.workRequestLine.findMany({ where: { work_request_id: s.work_request_id }, orderBy: { line_number: "asc" } });
+  const ids = lines.filter((l) => l.service_product_id && l.transaction_type === "SERVICE_BY_AMT").map((l) => l.service_product_id!);
+  const price = new Map((await prisma.serviceProduct.findMany({ where: { id: { in: ids } }, select: { id: true, price_cents: true } })).map((p) => [p.id, p.price_cents ?? 0]));
+  return lines.map((l) => {
+    const unit = l.service_product_id ? price.get(l.service_product_id) : undefined;
+    const ea = unit && l.amount_cents && l.amount_cents % unit === 0 ? l.amount_cents / unit : undefined;
+    return { ...l, eaQuantity: ea };
+  });
 }
 
 /** The PunchOutOrderMessage: one ItemIn per work request line (amount lines as 1 × amount). */
 export function orderMessageXml(
   s: { buyer_cookie: string; connection: { from_domain: string; from_identity: string; to_identity: string; to_domain: string } },
-  lines: { id: string; line_number: number; transaction_type: string; description: string; unspsc_code: string | null; uom: string | null; quantity: unknown; unit_price_cents: number | null; amount_cents: number | null; provider_service_id: string | null; service_product_id?: string | null }[],
+  lines: { id: string; line_number: number; transaction_type: string; description: string; unspsc_code: string | null; uom: string | null; quantity: unknown; unit_price_cents: number | null; amount_cents: number | null; provider_service_id: string | null; service_product_id?: string | null; eaQuantity?: number }[],
   currency = "USD",
   opts?: { payloadId?: string; timestamp?: string }
 ) {
@@ -80,8 +120,8 @@ export function orderMessageXml(
   let total = 0;
   const items = lines.map((l) => {
     const byQty = l.transaction_type !== "SERVICE_BY_AMT";
-    const qty = byQty ? Number(l.quantity ?? 0) : 1;
-    const unit = byQty ? l.unit_price_cents ?? 0 : l.amount_cents ?? 0;
+    const qty = byQty ? Number(l.quantity ?? 0) : l.eaQuantity ?? 1;
+    const unit = byQty ? l.unit_price_cents ?? 0 : Math.round((l.amount_cents ?? 0) / qty);
     total += Math.round(qty * unit);
     return `      <ItemIn quantity="${esc(qty)}" lineNumber="${l.line_number}">
         <ItemID><SupplierPartID>${esc(l.provider_service_id ?? l.service_product_id ?? "")}</SupplierPartID><SupplierPartAuxiliaryID>${esc(l.id)}</SupplierPartAuxiliaryID></ItemID>
@@ -110,7 +150,7 @@ ${items.join("\n")}
 /** Return to ERP: closes the session, marks the request Awarded, logs the message, and hands back what the browser posts. */
 export async function returnCart(s: PunchoutSessionLive): Promise<{ url: string; xml: string }> {
   const lines = await cartLines(s);
-  if (!lines.length) throw new Error("Add a provider before returning to your ERP");
+  if (!lines.length) throw new Error("Add something to the cart before returning it to your ERP");
   const xml = orderMessageXml(s, lines);
   const pid = /payloadID="([^"]+)"/.exec(xml)?.[1] ?? `pom-${Date.now()}`;
   await prisma.$transaction([

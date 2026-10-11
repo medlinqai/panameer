@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { PUNCHOUT_COOKIE, sessionFor } from "@/lib/erp/punchout";
-import { cartLines, searchServices } from "@/lib/erp/cart";
+import { cartLines, searchProducts, searchServices } from "@/lib/erp/cart";
 import { formatCents } from "@/lib/display";
 
 export const dynamic = "force-dynamic";
@@ -21,9 +21,10 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
         <p className="mt-2 text-[15px] text-ink-2">Start again from your ERP requisition to find a provider on Panameer.</p>
       </main>
     );
-  const [me, results, lines] = await Promise.all([
+  const [me, results, products, lines] = await Promise.all([
     prisma.person.findUnique({ where: { id: s.requester_person_id }, select: { first_name: true } }),
     searchServices(sp.q ?? ""),
+    searchProducts(sp.q ?? ""),
     cartLines(s),
   ]);
   const total = lines.reduce((n, l) => n + (l.transaction_type === "SERVICE_BY_AMT" ? l.amount_cents ?? 0 : Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0))), 0);
@@ -31,14 +32,34 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
     <main className="mx-auto w-full max-w-4xl px-4 py-8">
       <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">PUNCHOUT · {s.connection.name.toUpperCase()}</p>
       <h1 className="mt-1 text-[28px] font-bold">Find a Provider{me?.first_name ? `, ${me.first_name}` : ""}</h1>
-      <p className="mt-1 text-[14.5px] text-ink-2">Pick a provider&apos;s service, set the quantity, then return the cart to your ERP. Your ERP approves it and sends the purchase order.</p>
+      <p className="mt-1 text-[14.5px] text-ink-2">Add a service product or a provider&apos;s service, set the quantity, then return the cart to your ERP. Your ERP approves it and sends the purchase order.</p>
       {sp.error && <p role="alert" className="mt-3 text-[14px] font-semibold text-magenta-dark">{sp.error}</p>}
 
       <form method="get" className="mt-5 flex gap-2">
         <input name="q" defaultValue={sp.q ?? ""} placeholder="Search services or providers" aria-label="Search" className={`${INPUT} flex-1`} />
         <button className={BTN_K}>Search</button>
       </form>
-      <ul className="mt-4 grid gap-2">
+      {products.length > 0 && <h2 className="mt-6 text-[18px] font-bold">Service Products</h2>}
+      <ul className="mt-2 grid gap-2">
+        {products.map((p) => (
+          <li key={p.id} data-punchout-product className="border border-line bg-white p-4">
+            <form method="post" action="/punchout/cart" className="flex flex-wrap items-end justify-between gap-3">
+              <input type="hidden" name="action" value="addProduct" />
+              <input type="hidden" name="productId" value={p.id} />
+              <div className="min-w-0">
+                <p className="text-[15px] font-bold">{p.title}</p>
+                <p className="text-[13.5px] text-ink-2">{p.providerName} · {formatCents(p.priceCents, "USD")}{p.byQty ? " / hour" : " each"}</p>
+              </div>
+              <div className="flex flex-wrap items-end gap-2">
+                <label className="text-[12px] font-bold">{p.byQty ? "Hours" : "Quantity"}<input name="quantity" inputMode="numeric" defaultValue={p.byQty ? "" : "1"} required className={`${INPUT} block w-24`} /></label>
+                <button className="inline-flex min-h-10 items-center border border-ink px-4 text-[14px] font-semibold">Add to Cart</button>
+              </div>
+            </form>
+          </li>
+        ))}
+      </ul>
+      {results.length > 0 && <h2 className="mt-6 text-[18px] font-bold">Services</h2>}
+      <ul className="mt-2 grid gap-2">
         {results.map((r) => (
           <li key={r.id} data-punchout-service className="border border-line bg-white p-4">
             <form method="post" action="/punchout/cart" className="flex flex-wrap items-end justify-between gap-3">
@@ -57,7 +78,7 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
             </form>
           </li>
         ))}
-        {results.length === 0 && <li className="text-[14px] text-ink-2">No services match. Try another word.</li>}
+        {results.length === 0 && products.length === 0 && <li className="text-[14px] text-ink-2">Nothing matches. Try another word.</li>}
       </ul>
 
       <section className="mt-8 border-t border-line pt-5">
@@ -68,7 +89,7 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
           <ul className="mt-3 grid gap-2">
             {lines.map((l) => (
               <li key={l.id} data-cart-line className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2 text-[14px]">
-                <span><b>{l.description}</b> · {l.transaction_type === "SERVICE_BY_AMT" ? `up to ${formatCents(l.amount_cents ?? 0, "USD")}` : `${Number(l.quantity)} × ${formatCents(l.unit_price_cents ?? 0, "USD")}`}</span>
+                <span><b>{l.description}</b> · {l.eaQuantity ? `${l.eaQuantity} × ${formatCents((l.amount_cents ?? 0) / l.eaQuantity, "USD")} each` : l.transaction_type === "SERVICE_BY_AMT" ? `up to ${formatCents(l.amount_cents ?? 0, "USD")}` : `${Number(l.quantity)} ${(l.uom ?? "hour").toLowerCase()} × ${formatCents(l.unit_price_cents ?? 0, "USD")}`}</span>
                 <form method="post" action="/punchout/cart"><input type="hidden" name="action" value="remove" /><input type="hidden" name="lineId" value={l.id} /><button className="text-[13px] font-semibold underline">Remove</button></form>
               </li>
             ))}
@@ -77,7 +98,7 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
         <form method="post" action="/punchout/cart" className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <input type="hidden" name="action" value="return" />
           <span className="text-[16px] font-bold">Total {formatCents(total, "USD")}</span>
-          <button disabled={!lines.length} className={`${BTN_K} disabled:opacity-40`}>Return to {s.connection.name}</button>
+          <button disabled={!lines.length} className={`${BTN_K} disabled:opacity-40`}>Return Cart to {s.connection.name}</button>
         </form>
       </section>
     </main>
