@@ -7,6 +7,8 @@ import { ShopTabs } from "@/components/shop/ShopTabs";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ShowMore } from "@/components/shop/ShowMore";
 import { FilterBar, type FilterDef } from "@/components/casing/FilterBar";
+import { listProductTypes } from "@/lib/service-product-types";
+import { SuggestServiceType } from "@/components/shop/SuggestServiceType";
 import { BILLING, byPopular, DELIVERY, filterProducts, KIND, PRICE, type ShopQuery } from "@/lib/shop-filters";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +23,17 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sho
   const inCart = new Map(cartLines.map((l) => [l.service_product_id, l.id]));
   const products = filterProducts(all, sp).sort(byPopular);
   const countries = [...new Set(all.map((p) => p.providerCountry).filter((x): x is string => !!x))].sort();
+  // WS-E008: Service Type first — grouped Build / Run, live counts, a pulse until this viewer opens it.
+  const types = await listProductTypes();
+  const typeCount = (id: string) => all.filter((p) => p.productTypeId === id).length;
   const filters: FilterDef[] = [
+    {
+      key: "type",
+      label: "Service Type",
+      pulseKey: "pm-shop-service-type-opened",
+      options: types.map((t) => ({ value: t.id, label: t.name, count: typeCount(t.id), group: t.group_label ?? "Other" })),
+      footer: <SuggestServiceType />,
+    },
     { key: "price", label: "Price", options: PRICE.map(({ value, label }) => ({ value, label })) },
     { key: "billing", label: "Fixed / Monthly", options: BILLING },
     { key: "kind", label: "Kind", options: KIND },

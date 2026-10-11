@@ -218,12 +218,13 @@ export default async function Page({
     : [];
 
   const customTypes = await prisma.serviceType.count({ where: { is_baseline: false, reviewed_at: null, merged_into_id: null } });
+  const productTypes = await prisma.serviceProductType.count({ where: { is_baseline: false, reviewed_at: null, merged_into_id: null } });
   // A DRILL-IN TAKES OVER THE PAGE
   const isDrillIn = !!view || !!claimedRole;
   if (!isDrillIn && sp.view !== "tree")
     return (
       <div className="mx-auto w-full max-w-6xl">
-        <p className="mb-3 text-[13px]"><a href="/admin/skill-catalog/service-types" className="font-bold text-magenta-dark underline underline-offset-4">Service Types{customTypes ? ` · ${customTypes} to review` : ""} →</a></p>
+        <p className="mb-3 text-[13px]"><a href="/admin/skill-catalog/service-types" className="font-bold text-magenta-dark underline underline-offset-4">Service Types{customTypes ? ` · ${customTypes} to review` : ""} →</a> · <a href="/admin/skill-catalog/service-product-types" className="font-bold text-magenta-dark underline underline-offset-4">Service Product Types{productTypes ? ` · ${productTypes} to review` : ""} →</a></p>
         <SkillCatalogList
           rows={listRows}
           pairs={pairs}

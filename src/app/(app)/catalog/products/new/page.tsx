@@ -4,6 +4,7 @@ import { publishGate } from "@/lib/my-catalog";
 import { listCapabilityDomains, listOwnServiceProducts } from "@/lib/service-products";
 import { ProductWizard, type ProductDraft } from "@/components/catalog/ProductWizard";
 import { BackLink } from "@/components/console/BackLink";
+import { listProductTypes } from "@/lib/service-product-types";
 
 export const metadata = { title: "Create a Service Product · Panameer" };
 export const dynamic = "force-dynamic";
@@ -25,6 +26,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
     included: (p?.deliverables ?? []).map((x) => x.text).join("\n"),
     weeks: p?.durationWeeks != null ? String(p.durationWeeks) : "",
     coverCode: p?.coverCode ?? "",
+    productTypeId: p?.productTypeId ?? "",
     process: p?.process ?? "",
     domainIds: p?.capabilityDomainIds ?? [],
     price: p?.priceCents ? (p.priceCents / 100).toFixed(2) : "",
@@ -38,7 +40,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
     <div className="mx-auto w-full max-w-5xl">
       <BackLink href="/profile#my-service-products" label="My Catalog" />
       <div className="mt-2">
-        <ProductWizard initial={initial} domains={domains.map((x) => ({ id: x.id, process: x.process, name: x.name }))} gate={gate} providerName={[person?.first_name, person?.last_name].filter(Boolean).join(" ")} />
+        <ProductWizard initial={initial} domains={domains.map((x) => ({ id: x.id, process: x.process, name: x.name }))} gate={gate} providerName={[person?.first_name, person?.last_name].filter(Boolean).join(" ")} productTypes={(await listProductTypes()).map((t) => ({ id: t.id, name: t.name, group: t.group_label }))} />
       </div>
     </div>
   );

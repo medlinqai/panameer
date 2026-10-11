@@ -25,14 +25,14 @@ export const DELIVERY = [
 
 export type ShopQuery = { q?: string; type?: string; price?: string; billing?: string; kind?: string; delivery?: string; location?: string };
 
-export function filterProducts(list: ShopProduct[], f: ShopQuery, typeOf: (p: ShopProduct) => string | null = () => null): ShopProduct[] {
+export function filterProducts(list: ShopProduct[], f: ShopQuery): ShopProduct[] {
   const q = f.q?.trim().toLowerCase();
   const price = PRICE.find((x) => x.value === f.price);
   const delivery = DELIVERY.find((x) => x.value === f.delivery);
   return list.filter(
     (p) =>
       (!q || [p.title, p.summary ?? "", p.providerName].some((t) => t.toLowerCase().includes(q))) &&
-      (!f.type || typeOf(p) === f.type) &&
+      (!f.type || p.productTypeId === f.type) &&
       (!price || (p.priceCents != null && price.test(p.priceCents))) &&
       (!f.billing || (f.billing === "monthly" ? p.pricingType === "RECURRING" : p.pricingType !== "RECURRING")) &&
       (!f.kind || p.kind === f.kind) &&

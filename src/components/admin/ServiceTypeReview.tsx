@@ -5,19 +5,19 @@ import { useRouter } from "next/navigation";
 
 type Row = { id: string; name: string; baseline: boolean; reviewed: boolean; services: number };
 
-export function ServiceTypeReview({ rows }: { rows: Row[] }) {
+export function ServiceTypeReview({ rows, endpoint = "/api/admin/service-types", countLabel = "Services" }: { rows: Row[]; endpoint?: string; countLabel?: string }) {
   const router = useRouter();
   const [into, setInto] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const act = async (id: string, action: "approve" | "merge") => {
     setBusy(id);
-    await fetch("/api/admin/service-types", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action, into: into[id] }) });
+    await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action, into: into[id] }) });
     setBusy(null);
     router.refresh();
   };
   return (
     <table className="w-full text-left text-[13.5px]">
-      <thead><tr className="border-b border-line text-ink-2"><th className="py-2">Type</th><th>Source</th><th>Services</th><th /></tr></thead>
+      <thead><tr className="border-b border-line text-ink-2"><th className="py-2">Type</th><th>Source</th><th>{countLabel}</th><th /></tr></thead>
       <tbody>
         {rows.map((r) => (
           <tr key={r.id} className="border-b border-line" data-service-type={r.reviewed ? "reviewed" : "new"}>

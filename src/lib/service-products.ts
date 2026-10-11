@@ -33,6 +33,8 @@ export type ServiceProductInput = {
   pricingType?: "FIXED" | "RECURRING" | "NOT_TO_EXCEED" | null;
   billingPeriod?: "MONTHLY" | "ANNUAL" | null;
   coverCode?: string | null;
+  /** WS-E008: the Shop's Service Type. */
+  productTypeId?: string | null;
 };
 
 async function ownedProfileId(viewer: Viewer): Promise<string> {
@@ -64,6 +66,7 @@ const shape = (p: {
   kind?: string;
   billing_period?: string | null;
   cover_code?: string | null;
+  product_type_id?: string | null;
   cover_image_url: string | null;
   status: string;
   role_type_id: string | null;
@@ -88,6 +91,7 @@ const shape = (p: {
   kind: p.kind ?? "DELIVERABLE",
   billingPeriod: p.billing_period ?? null,
   coverCode: p.cover_code ?? null,
+  productTypeId: p.product_type_id ?? null,
   coverImageUrl: p.cover_image_url,
   status: p.status,
   roleTypeId: p.role_type_id,
@@ -197,6 +201,7 @@ function serviceProductData(input: ServiceProductInput) {
     ...(input.pricingType ? { billing_period: input.pricingType === "RECURRING" ? input.billingPeriod ?? "MONTHLY" : null } : {}),
     ...(input.kind === "DEPLOYABLE" ? { duration_weeks: null } : {}),
     ...(input.coverCode !== undefined ? { cover_code: clean(input.coverCode, 4)?.toUpperCase() ?? null } : {}),
+    ...(input.productTypeId !== undefined ? { product_type_id: input.productTypeId || null } : {}),
   };
 }
 

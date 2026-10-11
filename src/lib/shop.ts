@@ -22,6 +22,7 @@ export type ShopProduct = {
   providerCountry: string | null;
   deliverables: string[];
   coverCode: string | null;
+  productTypeId: string | null;
   /** The product's payment schedule in one line ("50% Kickoff at order · 50% Delivery on delivery · net 30"). */
   terms: string;
   /** Work order lines bought from it — "Popular with Buyers". */
@@ -33,7 +34,7 @@ export type ShopProduct = {
 
 const SELECT = {
   id: true, title: true, summary: true, pricing_type: true, billing_period: true, kind: true, price_cents: true, currency: true, duration_weeks: true, cover_code: true,
-  payment_terms: true, payment_trigger: true, created_at: true,
+  payment_terms: true, payment_trigger: true, product_type_id: true, created_at: true,
   milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, trigger: true } },
   deliverables: { orderBy: { sequence: "asc" as const }, select: { text: true } },
   providerProfile: { select: { id: true, person_id: true, person: { select: { first_name: true, last_name: true, photo_url: true, company: { select: { country: true } } } } } },
@@ -77,6 +78,7 @@ function shape(p: Row, orders: number): ShopProduct {
     providerCountry: person?.company?.country ?? null,
     deliverables: p.deliverables.map((d) => d.text),
     coverCode: p.cover_code,
+    productTypeId: p.product_type_id,
     terms: [scheduleLine(p), p.payment_terms ? TERMS[p.payment_terms] : null].filter(Boolean).join(" · "),
     orders,
     createdAt: p.created_at.toISOString(),

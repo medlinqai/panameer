@@ -16,6 +16,7 @@ export type ProductDraft = {
   included: string;
   weeks: string;
   coverCode: string;
+  productTypeId: string;
   process: string;
   domainIds: string[];
   price: string;
@@ -40,7 +41,7 @@ const kindLabel = (k: Kind) => KINDS.find((x) => x.k === k)!.label;
 const lower = (k: string) => (PAYMENT_TRIGGER_LABEL[k as keyof typeof PAYMENT_TRIGGER_LABEL] ?? k).toLowerCase();
 
 // CAT-E003: Create a Service Product — What · Price · Payment · Review, with the buyer's view beside it.
-export function ProductWizard({ initial, domains, gate, providerName }: { initial: ProductDraft; domains: Domain[]; gate: { ok: boolean; href: string; reason: string | null }; providerName: string }) {
+export function ProductWizard({ initial, domains, gate, providerName, productTypes = [] }: { initial: ProductDraft; domains: Domain[]; gate: { ok: boolean; href: string; reason: string | null }; providerName: string; productTypes?: { id: string; name: string; group: string | null }[] }) {
   const router = useRouter();
   const [d, setD] = useState(initial);
   const [step, setStep] = useState(0);
@@ -67,6 +68,7 @@ export function ProductWizard({ initial, domains, gate, providerName }: { initia
       priceCents: priceCents || null,
       durationWeeks: agent || !d.weeks ? null : Number(d.weeks),
       coverCode: d.coverCode || null,
+      productTypeId: d.productTypeId || null,
       capabilityDomainIds: d.domainIds,
       deliverables: agent ? [] : d.included.split("\n").map((x) => x.replace(/^[•\-*]\s*/, "").trim()).filter(Boolean),
       paymentTerms: d.paymentTerms,
@@ -128,6 +130,17 @@ export function ProductWizard({ initial, domains, gate, providerName }: { initia
                   </div>
                 </div>
               </div>
+              {/* WS-E008: buyers filter the Shop by this. */}
+              <label className={LABEL}>Service Type
+                <select value={d.productTypeId} onChange={(e) => set("productTypeId", e.target.value)} className={INPUT}>
+                  <option value="">Pick a service type</option>
+                  {["Build", "Run", null].map((g) => {
+                    const list = productTypes.filter((t) => t.group === g);
+                    return list.length ? <optgroup key={g ?? "other"} label={g ?? "Other"}>{list.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup> : null;
+                  })}
+                </select>
+                <span className="mt-1 block text-[12px] font-normal text-ink-3">Don&apos;t see yours? Suggest one from the Shop&apos;s Service Type filter.</span>
+              </label>
               {!agent && <label className={LABEL}>What&apos;s included (one per line)<textarea value={d.included} onChange={(e) => set("included", e.target.value)} rows={3} className={AREA} /></label>}
               <div className="grid grid-cols-2 gap-3">
                 {!agent && <label className={LABEL}>Delivery time (weeks)<input inputMode="numeric" value={d.weeks} onChange={(e) => set("weeks", e.target.value)} className={INPUT} /></label>}

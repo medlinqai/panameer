@@ -2349,6 +2349,8 @@ model ServiceProduct {
   status              ServiceProductStatus      @default(DRAFT)
   /// CAT-E003: short code shown faded on the colored cover.
   cover_code          String?
+  /// WS-E008: the Shop's Service Type (Reports, AI Agents…), picked from ServiceProductType.
+  product_type_id     String?            @db.Uuid
   /// O-E004: when the product is paid, and what event triggers the payment request.
   payment_terms       PaymentTerms?
   payment_trigger     PaymentTrigger?
@@ -8619,4 +8621,20 @@ model CartLine {
 
   @@unique([cart_id, service_product_id])
   @@map("cart_lines")
+}
+
+/// WS-E008: Shop › Service Type — Panameer's grouped list (Build / Run) plus types members suggest (admin review, as ServiceType).
+model ServiceProductType {
+  id                   String    @id @default(uuid()) @db.Uuid
+  name                 String    @unique
+  /// "Build" or "Run"; null for a suggestion not yet placed.
+  group_label          String?
+  is_baseline          Boolean   @default(false)
+  created_by_person_id String?   @db.Uuid
+  merged_into_id       String?   @db.Uuid
+  reviewed_at          DateTime?
+  sort_order           Int       @default(100)
+  created_at           DateTime  @default(now())
+
+  @@map("service_product_types")
 }
