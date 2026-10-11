@@ -13,7 +13,7 @@ export function SuggestServiceType() {
     setMsg(r.ok ? (j.existing ? "That type is already on the list." : "Thanks — Panameer reviews it before it's listed.") : j.error ?? "Could not send that.");
     if (r.ok) setName("");
   };
-  if (!open) return <button type="button" data-suggest-service-type onClick={() => setOpen(true)} className="font-semibold text-magenta-dark underline underline-offset-4">Don&apos;t see yours? Suggest a Service Type</button>;
+  if (!open) return <button type="button" data-suggest-service-type onClick={() => setOpen(true)} className="font-semibold text-magenta-dark underline underline-offset-4">Don&apos;t See Yours? Suggest a Service Type</button>;
   return (
     <div className="space-y-2">
       <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Security Reviews" aria-label="Service type name" className="h-9 w-full border border-line px-2 text-[13px]" />
