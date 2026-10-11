@@ -15,7 +15,8 @@ export default async function LearnLayout({
   if (viewer) {
     return (
       <MeProvider>
-        <AppShell>{children}</AppShell>
+        {/* WS-E001: white page, like Connect and Profile. */}
+        <AppShell><div className="pm-white-page">{children}</div></AppShell>
       </MeProvider>
     );
   }
