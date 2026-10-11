@@ -21,47 +21,11 @@ export function WorkFeed({
   cards: WorkCard[];
   basePath?: string;
 }) {
-  const onDashboard = basePath === "/dashboard";
-  const href = (t: WorkFeedTab) =>
-    `${basePath}?tab=${t}${query ? `&q=${encodeURIComponent(query)}` : ""}` +
-    (onDashboard ? "#work-feed" : "");
 
   return (
     <section id="work-feed" className="scroll-mt-6">
-      <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-2">
-        {}
-        {onDashboard ? (
-          <h2 className="font-display text-[19px] font-bold">Find Work</h2>
-        ) : (
-          <h1 className="font-display text-[19px] font-bold">Work Requests</h1>
-        )}
-        {}
-        {}
-      </div>
-
-      {/* ---- Tabs ---------------------------------------------------------- */}
-      {}
-      {}
-      <div
-        data-testid="work-feed-tabs"
-        className="-mx-1 mb-3 flex flex-wrap items-end gap-x-1 gap-y-0 border-b border-line px-1"
-      >
-        {WORK_FEED_TABS.map((t) => (
-          <Link
-            key={t.id}
-            href={href(t.id)}
-            aria-current={tab === t.id ? "page" : undefined}
-            className={
-              "-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-2 text-[14px] font-semibold transition-colors " +
-              (tab === t.id
-                ? "border-magenta text-magenta"
-                : "border-transparent text-ink-2 hover:text-ink")
-            }
-          >
-            {t.label}
-          </Link>
-        ))}
-      </div>
+      {/* WS-E002: the tab row lives in the Work layout; this is the list for one tab. */}
+      <h1 className="mb-3 font-display text-[22px] font-bold">{TITLE[tab] ?? "Work Requests"}</h1>
 
       {/* ---- Search + filters ---------------------------------------------- */}
       <form
@@ -100,12 +64,16 @@ export function WorkFeed({
         <EmptyFeed title={`No ${labelFor(tab)} yet`} detail={UNBACKED_TABS[tab]} />
       ) : cards.length === 0 ? (
         <EmptyFeed
-          title={query ? `Nothing matches “${query}”` : "No work posted yet"}
+          title={query ? `Nothing matches “${query}”` : tab === "invitations" ? "No open invitations" : tab === "proposals" ? "No proposals yet" : "No work posted yet"}
           detail={
             query
               // RULING 18: no promise, no date, no apology. *"when this
               ? "No work request matches that search yet."
-              : "No buyer has posted a work request yet. Your profile is what they find you by, so keep it current."
+              : tab === "invitations"
+                ? "When a buyer invites you to propose your rate, it shows here."
+                : tab === "proposals"
+                  ? "Proposals you send on work requests show here."
+                  : "No buyer has posted a work request yet. Your profile is what they find you by, so keep it current."
           }
         />
       ) : (
@@ -120,6 +88,8 @@ export function WorkFeed({
     </section>
   );
 }
+
+const TITLE: Partial<Record<WorkFeedTab, string>> = { best: "Best Matches for Your Skills", recent: "All Work Requests", us: "Work Requests in the US", saved: "Saved", invitations: "Invitations to Propose", proposals: "My Proposals" };
 
 function labelFor(tab: WorkFeedTab): string {
   return WORK_FEED_TABS.find((t) => t.id === tab)?.label.toLowerCase() ?? "work";

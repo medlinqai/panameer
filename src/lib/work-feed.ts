@@ -1,5 +1,6 @@
 import { roleLong } from "@/lib/role-labels";
 import { prisma } from "@/lib/prisma";
+import { myWorkRequestIds } from "@/lib/work-home";
 import { buildBuyerIdentity, scrubTrack, type BuyerIdentity } from "@/lib/work-request-identity";
 import { buyerTrackRecord } from "@/lib/buyer-track-record";
 
@@ -21,9 +22,7 @@ export const WORK_FEED_TABS: { id: WorkFeedTab; label: string }[] = [
 ];
 
 export const UNBACKED_TABS: Record<string, string> = {
-  saved: "Not listed yet",
-  invitations: "None to show",
-  proposals: "None to show",
+  saved: "Saving work requests isn't open yet.",
 };
 
 export type WorkCard = {
@@ -90,14 +89,14 @@ export async function getWorkFeed(input: {
   tab: WorkFeedTab;
   profileId: string | null;
   query?: string;
+  /** WS-E002: Invitations / My Proposals read the provider's own rows. */
+  personId?: string | null;
 }): Promise<WorkCard[]> {
-  if (
-    input.tab === "saved" ||
-    input.tab === "invitations" ||
-    input.tab === "proposals"
-  ) {
-    return [];
-  }
+  if (input.tab === "saved") return [];
+  const mine = input.tab === "invitations" || input.tab === "proposals";
+  if (mine && !input.personId) return [];
+  const ids = mine ? await myWorkRequestIds(input.personId!, input.tab as "invitations" | "proposals") : null;
+  if (ids && !ids.length) return [];
 
   const skillIds = input.profileId
     ? (
@@ -110,7 +109,7 @@ export async function getWorkFeed(input: {
 
   const rows = await prisma.workRequest.findMany({
     where: {
-      status: "POSTED",
+      ...(ids ? { id: { in: ids } } : { status: "POSTED" }),
       ...(input.tab === "us" ? { location_country: { in: ["United States", "USA", "US"] } } : {}),
       ...(input.query
         ? {

@@ -25,7 +25,7 @@ export default async function FindWorkPage({
   const profile = viewer
     ? await prisma.providerProfile.findFirst({
         where: ownedProviderProfile(viewer),
-        select: { id: true },
+        select: { id: true, person_id: true },
       })
     : null;
 
@@ -33,6 +33,7 @@ export default async function FindWorkPage({
     tab,
     profileId: profile?.id ?? null,
     query: query || undefined,
+    personId: profile?.person_id ?? null,
   });
 
   return (

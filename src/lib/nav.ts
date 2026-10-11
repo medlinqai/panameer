@@ -135,6 +135,15 @@ export type PageTabItem = NavItem & {
 };
 
 export const PAGE_TABS: Record<string, PageTabItem[]> = {
+  // WS-E002: the Work area (providers); tabs are views of /find-work.
+  "/find-work": [
+    { label: "Home", href: "/find-work" },
+    { label: "Best Matches", href: "/find-work?tab=best" },
+    { label: "All Work Requests", href: "/find-work?tab=recent" },
+    { label: "Invitations", href: "/find-work?tab=invitations" },
+    { label: "My Proposals", href: "/find-work?tab=proposals" },
+    { label: "Saved", href: "/find-work?tab=saved" },
+  ],
   "/learn": [
     { label: "Home", href: "/learn" },
     { label: "All Learning Paths", href: "/learn/paths" },
@@ -369,6 +378,7 @@ export const TAB_SEQUENCE: Record<string, "process" | "suggested" | "none"> = {
   "/profile": "none",
   "/connect": "none",
   "/learn": "none",
+  "/find-work": "none",
   "/my-services": "none",
   "/payments": "none",
   "/settings": "none",
