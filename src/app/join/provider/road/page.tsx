@@ -28,7 +28,7 @@ const STOPS: Stop[] = [
   { x: 760, y: 430, n: "B1", t: "Get Invited (or Find a Request)", s: "INVITED", tm: "buyer's move", small: true },
   { x: 520, y: 430, n: "B2", t: "Propose Your Rate", s: "PROPOSED", tm: "15 min each", small: true },
   { x: 290, y: 430, n: "B3", t: "Agree on Price", s: "AGREED", tm: "varies", small: true },
-  { x: 330, y: 590, n: "6", t: "Validate Company", s: "VALIDATED", tm: "8 min · tax form + bank", gate: "GATE · ADMIN" },
+  { x: 330, y: 590, n: "6", t: "Add Tax & Banking", s: "VALIDATED", tm: "8 min · tax form + bank", gate: "GATE · ADMIN" },
   { x: 560, y: 590, n: "7", t: "Sell or Work", s: "CONTRACTED", tm: "signed work order", gate: "GATE" },
   { x: 790, y: 590, n: "8", t: "Request Payment", s: "REQUESTED", tm: "5 min each" },
   { x: 1000, y: 590, n: "9", t: "Get Paid", s: "PAID", tm: "automatic", last: true },
@@ -43,7 +43,7 @@ export default function DetailedRoadPage() {
         <p className="mt-10 text-[11px] font-bold uppercase tracking-[0.14em] text-magenta">Welcome · for providers</p>
         <h1 className="mt-1.5 text-[36px] font-extrabold leading-[1.1] sm:text-[40px]">The detailed road</h1>
         <p className="mt-2 max-w-[780px] text-[15px] text-ink-2">
-          After you add your company, stop 5 <b className="text-ink">splits into two ways to win work</b> — sell a ready-made service product, or propose your rate on a buyer&apos;s work request. Use either or both. They meet again at Validate Company, before the first work order.
+          After you add your company, stop 5 <b className="text-ink">splits into two ways to win work</b> — sell a ready-made service product, or propose your rate on a buyer&apos;s work request. Use either or both. They meet again at Add Tax &amp; Banking, before the first work order.
         </p>
         <div className="mt-4 overflow-x-auto">
           <svg viewBox="0 0 1080 680" role="img" aria-label="Provider road with two paths" className="block h-auto w-full min-w-[640px] font-sans">
@@ -79,7 +79,7 @@ export default function DetailedRoadPage() {
         <ul className="mt-5 max-w-[780px] list-disc space-y-1 pl-5 text-[14px] leading-relaxed">
           <li><b>Path A · Sell a service product:</b> A1 Post a Service Product (Listed) → A2 Get an Offer (Offered) → A3 Accept the Offer (Agreed). The price is yours up front.</li>
           <li><b>Path B · Propose on work requests:</b> B1 Get Invited, or find a request (Invited) → B2 Propose Your Rate (Proposed) → B3 Agree on Price (Agreed).</li>
-          <li>Validate Company covers the tax form <b>and</b> a payout account in the company&apos;s legal name.</li>
+          <li>Add Tax &amp; Banking covers the tax form <b>and</b> a payout account in the company&apos;s legal name; Panameer then validates the company.</li>
         </ul>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <Link href="/join/provider" className="inline-flex min-h-[48px] items-center bg-ink px-6 text-[15px] font-bold text-surface hover:bg-ink-hover">Complete My Profile</Link>

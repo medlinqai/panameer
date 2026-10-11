@@ -30,7 +30,7 @@ export function SignGateModal({ gate, onClose }: { gate: SignGate | null; onClos
             </button>
             {gate.isAdmin ? (
               <Link href="/company/legal" className="inline-flex min-h-[42px] items-center bg-ink px-4 text-[13px] font-bold text-surface">
-                Validate Company
+                Add Tax &amp; Banking
               </Link>
             ) : (
               <span className="inline-flex min-h-[42px] items-center text-[13px] font-semibold text-ink-2">Ask your company admin to validate the company.</span>
