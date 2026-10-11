@@ -10,6 +10,8 @@ import { Connect, connectLists } from "@/components/admin/usage/sections/connect
 import { Learn, learnLists } from "@/components/admin/usage/sections/learn";
 import { Work, workLists } from "@/components/admin/usage/sections/work";
 import { Shop, shopLists } from "@/components/admin/usage/sections/shop";
+import { Orders, ordersLists } from "@/components/admin/usage/sections/orders";
+import { Pay, payLists } from "@/components/admin/usage/sections/pay";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Usage · Admin · Panameer" };
@@ -63,7 +65,8 @@ async function section(tab: Tab, c: Awaited<ReturnType<typeof usageCtx>>, app?: 
     case "learn": return <Learn c={c} />;
     case "work": return <Work c={c} />;
     case "shop": return <Shop c={c} />;
-    default: return <p className="text-[14px] text-ink-2">Coming next.</p>;
+    case "orders": return <Orders c={c} />;
+    case "pay": return <Pay c={c} />;
   }
 }
 
@@ -76,6 +79,7 @@ async function listsFor(tab: Tab, c: Awaited<ReturnType<typeof usageCtx>>): Prom
     case "learn": return learnLists(c);
     case "work": return workLists(c);
     case "shop": return shopLists(c);
-    default: return {};
+    case "orders": return ordersLists(c);
+    case "pay": return payLists(c);
   }
 }
