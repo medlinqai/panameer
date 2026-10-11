@@ -136,7 +136,7 @@ export async function placeOrder(viewer: Viewer): Promise<{ orderId: string; pro
           order_number: `WO-${Date.now().toString(36).toUpperCase()}-${providerPersonId.slice(0, 4)}`,
           origin: "DIRECT", buyer_person_id: p.id, p_account_id: pAccountId, provider_person_id: providerPersonId, currency: group[0].currency,
           status: manual ? "ISSUED" : "RELEASED", buyer_accepted_at: now, provider_accepted_at: manual ? null : now,
-          fee_bps: fees.length === 1 ? fees[0] : null, not_to_exceed_cents: total, external_ref: "Shop",
+          fee_bps: fees.length === 1 ? fees[0] : null, not_to_exceed_cents: total,
           lines: { create: rows },
         },
         select: { id: true },

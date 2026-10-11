@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
 import { BuyButtons } from "@/components/shop/BuyButtons";
+import { ManualOrdersToggle } from "@/components/shop/ManualOrdersToggle";
 import { ProfileVisibilityCard } from "@/components/profile/ProfileVisibilityCard";
 import { HireButton } from "@/components/community/HireButton";
 import { ShareBar, HowToWorkWith } from "@/components/community/ProfileFooter";
@@ -81,6 +82,7 @@ export function ConnectProfile({
   catalogServices = [],
   estimates = [],
   signedIn = false,
+  ordersManual = null,
 }: {
   p: ProviderProfileView;
   /** CAT-E001: services — owner sees drafts too; visitors only published. */
@@ -118,6 +120,8 @@ export function ConnectProfile({
   previewAsBuyer?: boolean;
   /** SH-E001: Buy Now / Add to Cart sign a visitor in first. */
   signedIn?: boolean;
+  /** SH-E003: owner-only — the "I accept orders manually" setting. */
+  ordersManual?: boolean | null;
 }) {
   // THE SINGLE `isOwner` POINT WS-B)
   // ( WS-D). That is what makes *"every owner affordance is absent in the
@@ -232,6 +236,7 @@ export function ConnectProfile({
           )}
         </>
       )}
+      {owner && ordersManual != null && <ManualOrdersToggle initial={ordersManual} />}
     </CleanSection>
   );
 

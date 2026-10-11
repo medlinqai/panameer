@@ -89,6 +89,7 @@ export default async function MyProfilePage() {
         score={await ownerScore(profile.id)}
         catalogServices={await catalogServicesFor(profile.id, true)}
         estimates={await myEstimates(viewer).catch(() => [])}
+        ordersManual={(await prisma.providerProfile.findUnique({ where: { id: profile.id }, select: { accepts_orders_manually: true } }))?.accepts_orders_manually ?? null}
       />
       </div>
     </>
