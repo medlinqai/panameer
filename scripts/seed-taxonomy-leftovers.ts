@@ -30,8 +30,21 @@ async function oldErp() {
   writes.push((tx) => tx.businessType.update({ where: { id: erp.id }, data: { hidden: true } }));
 }
 
+/** TL-E002: AI Agent Support → merged into Managed Services (AMS); services and products using it are repointed. */
+async function aiAgentSupport() {
+  const [from, into] = await Promise.all([prisma.serviceType.findFirst({ where: { name: "AI Agent Support" } }), prisma.serviceType.findFirst({ where: { name: "Managed Services (AMS)", merged_into_id: null } })]);
+  if (!from || !into) return note("TL-E002", "skip", "AI Agent Support", "type not found");
+  if (from.status === "MERGED") return note("TL-E002", "skip", "AI Agent Support", "already merged");
+  const [svc, prod] = await Promise.all([prisma.providerService.count({ where: { service_type_id: from.id } }), prisma.serviceProduct.count({ where: { service_type_id: from.id } })]);
+  note("TL-E002", "merge", "AI Agent Support → Managed Services (AMS)", `${svc} services, ${prod} service products repointed; marked MERGED`);
+  writes.push((tx) => tx.providerService.updateMany({ where: { service_type_id: from.id }, data: { service_type_id: into.id } }));
+  writes.push((tx) => tx.serviceProduct.updateMany({ where: { service_type_id: from.id }, data: { service_type_id: into.id } }));
+  writes.push((tx) => tx.serviceType.update({ where: { id: from.id }, data: { status: "MERGED", merged_into_id: into.id, reviewed_at: new Date() } }));
+}
+
 async function main() {
   await oldErp();
+  await aiAgentSupport();
 
   mkdirSync("scripts/out", { recursive: true });
   const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
