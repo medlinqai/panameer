@@ -220,7 +220,7 @@ export const PERSONA_NAV: NavItem[] = [
 export const COMPANY_PERSONA_ITEM: NavItem = { label: "My Company", heading: "Company", href: "/company" };
 /** Providers' catalog in the My menu, after Profile and Company (Scott 2026-10-10). */
 export const SELLER_PERSONA_ITEMS: NavItem[] = [
-  { label: "My Services", href: "/profile#my-services" },
+  { label: "My Services", href: "/catalog/build" },
   { label: "My Service Products", href: "/profile#my-service-products" },
 ];
 /** EST-E004: every member — buyers ask for estimates, providers send them. */

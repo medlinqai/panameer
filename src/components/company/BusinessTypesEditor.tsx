@@ -14,7 +14,7 @@ export function BusinessTypesEditor({ types, initial, canEdit }: { types: { id: 
     else setError(j.error ?? "Could not save that");
   };
   return (
-    <section data-business-types className="mt-8 border-t border-line pt-5">
+    <section id="business-types" data-business-types className="mt-8 border-t border-line pt-5">
       <h2 className="text-[19px] font-bold">Business Types</h2>
       <p className="mt-1 text-[13.5px] text-ink-2">What your company sells. Each one brings its own Service Catalog to Build Your Catalog.</p>
       <div className="mt-3 flex flex-wrap gap-2">

@@ -10,9 +10,9 @@ export const metadata = { title: "Create a Service Product · Panameer" };
 export const dynamic = "force-dynamic";
 
 // CAT-E003: Create (or edit, ?id=) a service product in My Catalog.
-export default async function Page({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ id?: string; type?: string }> }) {
   const viewer = await guardPage("canProvideServices");
-  const { id } = await searchParams;
+  const { id, type } = await searchParams;
   const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, first_name: true, last_name: true } });
   const [domains, gate, mine] = await Promise.all([listCapabilityDomains(), person ? publishGate(person.id) : { ok: false, href: "/company", reason: null }, id ? listOwnServiceProducts(viewer).catch(() => []) : Promise.resolve([])]);
   const p = id ? mine.find((x) => x.id === id) : undefined;
@@ -26,7 +26,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
     included: (p?.deliverables ?? []).map((x) => x.text).join("\n"),
     weeks: p?.durationWeeks != null ? String(p.durationWeeks) : "",
     coverCode: p?.coverCode ?? "",
-    productTypeId: p?.productTypeId ?? "",
+    productTypeId: p?.productTypeId ?? type ?? "",
     process: p?.process ?? "",
     domainIds: p?.capabilityDomainIds ?? [],
     price: p?.priceCents ? (p.priceCents / 100).toFixed(2) : "",
