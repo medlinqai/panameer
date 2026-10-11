@@ -38,6 +38,7 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "estimate.received",
   "estimate.requested",
   "shop.order_received",
+  "work.tax_banking_needed",
   "shop.order_placed",
   "estimate.request_declined",
   "estimate.accepted",

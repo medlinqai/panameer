@@ -6288,6 +6288,8 @@ enum SettlementStatus {
 model SettlementRequest {
   id                String @id @default(uuid()) @db.Uuid
   settlement_number String @unique
+  /// RD-E003: raised before the provider's company finished tax & banking — held from the buyer until it does.
+  held_for_tax_banking Boolean @default(false)
 
   work_order_id      String @db.Uuid
   provider_person_id String @db.Uuid

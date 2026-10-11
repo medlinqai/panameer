@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { releaseHeldForViewer } from "@/lib/settlements";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { addCompanyPayout, removeCompanyPayout, setPayeeType } from "@/lib/company-pay";
@@ -26,7 +27,11 @@ export async function POST(request: Request) {
   const b = parsed.data;
   try {
     if (b.action === "payee") return NextResponse.json(await setPayeeType(viewer, b.type));
-    if (b.action === "add") return NextResponse.json(await addCompanyPayout(viewer, b));
+    if (b.action === "add") {
+      const out = await addCompanyPayout(viewer, b);
+      await releaseHeldForViewer(viewer);
+      return NextResponse.json(out);
+    }
     return NextResponse.json(await removeCompanyPayout(viewer, b.id));
   } catch (e) {
     if (e instanceof OnboardingError) return NextResponse.json({ error: e.message }, { status: e.code === "GATE_UNMET" ? 403 : 400 });

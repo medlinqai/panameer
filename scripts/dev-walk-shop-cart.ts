@@ -48,7 +48,7 @@ async function main() {
   check("buyer side turned on", !!(await prisma.requesterProfile.findUnique({ where: { person_id: buyer.personId } })));
   await refuses("someone else can't touch the line", () => setQuantity(auto.viewer, l2.id, 5), "isn't in your cart");
 
-  await refuses("Place Order needs both companies validated", () => placeOrder(buyer.viewer), "Validate");
+  await refuses("Place Order needs the buyer company validated", () => placeOrder(buyer.viewer), "company");
   for (const x of [buyer, auto, man]) await validate(x.personId);
   const placed = await placeOrder(buyer.viewer);
   check("Place Order → two work orders, cart emptied", placed.length === 2 && (await cartFor(buyer.viewer)).groups.length === 0);

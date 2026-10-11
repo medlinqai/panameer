@@ -239,6 +239,7 @@ the day its writer lands.
 | `estimate.request_declined` | the buyer who asked | `Send for Approval` | worklist + email | EST-E002. Dismiss to clear |
 | `shop.order_received` | the provider whose service product was bought | `Send for Approval` | worklist + email | SH-E003. Manual orders clear on acceptance; dismiss to clear |
 | `shop.order_placed` | the buyer who placed the order | `Send for Approval` | worklist + email | SH-E003. Dismiss to clear |
+| `work.tax_banking_needed` | the provider whose company hasn't added tax & banking | `Send for Approval` | worklist + email | RD-E003. First signed work order; cleared when held payment requests are released |
 | `estimate.received` | the customer the estimate is for | `Send for Approval` | worklist + email | CAT-E006. Cleared by Accept / Ask for Changes / Decline |
 | `estimate.accepted` | the provider who wrote it | `Send for Approval` | worklist + email | CAT-E006. Links to the new work order |
 | `estimate.changes_requested` | the provider who wrote it | `Send for Approval` | worklist + email | CAT-E006. Cleared by resubmitting the revision |

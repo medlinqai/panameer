@@ -730,6 +730,17 @@ export const NOTIFICATION_EVENTS = {
     // The provider's own route, for the reason recorded on the interview
     href: (v) => `/find-work/${str(v, "requestId", "")}`,
   },
+  "work.tax_banking_needed": {
+    event: "work.tax_banking_needed",
+    recipient: "the provider whose company hasn't added tax & banking",
+    category: "work_order.status",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: () => "Add Tax & Banking to get paid",
+    body: () => "Your first work order is signed. Payment requests wait until your company adds its tax form and a payout account.",
+    href: () => "/company/legal",
+  },
   "work.order_offered": {
     event: "work.order_offered",
     recipient: "the provider offered the work",

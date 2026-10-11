@@ -343,7 +343,7 @@ export async function setServiceProductStatus(
     }
     // CAT-E004: no Panameer review — a validated seller company is the gate.
     const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
-    if (!me || !(await publishGate(me.id)).ok) throw new OnboardingError("You can publish once your company is validated.", "GATE_UNMET");
+    if (!me || !(await publishGate(me.id)).ok) throw new OnboardingError("Add your company to publish.", "GATE_UNMET");
 
     const missing: string[] = [];
     if (!pkg.title.trim()) missing.push("a title");
@@ -392,7 +392,7 @@ export async function saveServiceProductFromWizard(viewer: Viewer, id: string | 
   if (publish) {
     const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
     const gate = person ? await publishGate(person.id) : null;
-    if (!gate?.ok) throw new OnboardingError("You can publish once your company is validated.", "GATE_UNMET");
+    if (!gate?.ok) throw new OnboardingError("Add your company to publish.", "GATE_UNMET");
     await setServiceProductStatus(viewer, savedId, "PUBLISHED");
   } else if (id) await setServiceProductStatus(viewer, savedId, "DRAFT");
   return savedId;

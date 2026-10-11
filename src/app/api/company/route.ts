@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { releaseHeldForViewer } from "@/lib/settlements";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import {
@@ -59,6 +60,7 @@ export async function PATCH(request: Request) {
 
   try {
     const result = await updateCompanyDetails(gate, parsed.data);
+    await releaseHeldForViewer(gate);
     return NextResponse.json({ ok: true, ...result });
   } catch (e) {
     if (e instanceof CompanyMatchError) {

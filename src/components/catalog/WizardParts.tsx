@@ -42,7 +42,7 @@ export function PaidStrip({ steps }: { steps: string[] }) {
   );
 }
 
-/** CAT-E004: Save Draft always; Publish only when the seller's company is validated. */
+/** CAT-E004: Save Draft always; Publish once the seller has a linked company. */
 export function PublishBar({ canPublish, gateHref, gateReason, busy, onSave, publishLabel = "Publish" }: { canPublish: boolean; gateHref: string; gateReason: string | null; busy: boolean; onSave: (publish: boolean) => void; publishLabel?: string }) {
   return (
     <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-line pt-4" data-publish-bar>
@@ -50,7 +50,7 @@ export function PublishBar({ canPublish, gateHref, gateReason, busy, onSave, pub
       <button type="button" disabled={busy || !canPublish} onClick={() => onSave(true)} data-publish className={BTN_K}>{publishLabel}</button>
       {!canPublish && (
         <p className="w-full text-[13px] text-ink-2">
-          You can publish once your company is validated. {gateReason} <Link href={gateHref} className="font-bold text-magenta-dark underline underline-offset-4">Go to That Step</Link>
+          You can publish once your company is linked. {gateReason} <Link href={gateHref} className="font-bold text-magenta-dark underline underline-offset-4">Go to That Step</Link>
         </p>
       )}
     </div>

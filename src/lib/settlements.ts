@@ -2,6 +2,7 @@ import { formatCents } from "@/lib/display";
 import { dueDate } from "@/lib/billing-terms";
 import { queueWorkConfirmation } from "@/lib/erp/settlement";
 import { notify } from "@/lib/notifications";
+import { providerPayReady } from "@/lib/your-path";
 import { randomBytes } from "node:crypto";
 import { LineBasis, Prisma, SettlementStatus, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -269,6 +270,8 @@ export async function createSettlement(
   }
 
   const submittedAt = new Date();
+  // RD-E003: created either way; held from the buyer until the provider's company finishes tax & banking.
+  const held = !(await providerPayReady(await providerPersonIdOf(o.id)));
   // THE SPINE'S FIVE RULES, RUN AS ONE. Nothing above re-implements them —
   // Check and draw in one transaction, with the order row locked, so two requests cannot both pass the cap.
   const created = await prisma.$transaction(async (tx) => {
@@ -307,6 +310,7 @@ export async function createSettlement(
         period_end: periodEnd,
         currency: o.currency,
         status: "SUBMITTED",
+        held_for_tax_banking: held,
         submitted_at: submittedAt,
         due_date: dueDate(submittedAt, orderLineById.get(rows[0].workOrderLineId)?.paymentTerms),
         resubmits_id: resubmitsId,
@@ -377,28 +381,58 @@ export async function createSettlement(
   });
 
   const detail = await getSettlement(viewer, created.id);
-  const buyer = await prisma.workOrder.findUnique({ where: { id: o.id }, select: { buyer_person_id: true, erp_connection_id: true } });
-  // X-E006: on an ERP order the request goes to the ERP as a receipt; the customer acts there, not in Panameer.
-  if (buyer?.erp_connection_id) {
-    await queueWorkConfirmation(created.id);
-    return getSettlement(viewer, created.id);
-  }
-  if (buyer)
-    await notify({
-      event: "work.settlement_approval",
-      personId: buyer.buyer_person_id,
-      entityType: "settlement",
-      entityId: created.id,
-      dedupeKey: `settlement-approval:${created.id}`,
-      vars: {
-        settlementId: created.id,
-        orderId: o.id,
-        orderNumber: o.orderNumber,
-        providerName: o.providerName,
-        amount: formatCents(detail.totalCents, detail.currency),
-      },
-    });
+  if (!held) await announceSettlement(created.id);
   return detail;
+}
+
+/** Hand a submitted request to the customer: their ERP (as a receipt) or a Panameer approval notice. */
+async function announceSettlement(id: string) {
+  const s = await prisma.settlementRequest.findUniqueOrThrow({ where: { id }, include: { lines: true } });
+  const o = await prisma.workOrder.findUniqueOrThrow({ where: { id: s.work_order_id }, select: { id: true, order_number: true, buyer_person_id: true, erp_connection_id: true, provider_person_id: true } });
+  const prov = await prisma.person.findUnique({ where: { id: o.provider_person_id }, select: { first_name: true, last_name: true } });
+  // X-E006: on an ERP order the request goes to the ERP as a receipt; the customer acts there, not in Panameer.
+  if (o.erp_connection_id) return void (await queueWorkConfirmation(id));
+  await notify({
+    event: "work.settlement_approval",
+    personId: o.buyer_person_id,
+    entityType: "settlement",
+    entityId: id,
+    dedupeKey: `settlement-approval:${id}`,
+    vars: {
+      settlementId: id,
+      orderId: o.id,
+      orderNumber: o.order_number,
+      providerName: prov ? `${prov.first_name} ${prov.last_name}`.trim() : "The provider",
+      amount: formatCents(s.lines.reduce((n, l) => n + lineValue(l), 0), s.currency),
+    },
+  });
+}
+
+/** RD-E003: release a provider's held requests once their company has finished tax & banking (payment terms restart now). */
+export async function releaseHeldFor(providerPersonId: string): Promise<number> {
+  const held = await prisma.settlementRequest.findMany({ where: { provider_person_id: providerPersonId, held_for_tax_banking: true }, select: { id: true, submitted_at: true, due_date: true } });
+  if (!held.length || !(await providerPayReady(providerPersonId))) return 0;
+  const now = new Date();
+  for (const h of held) {
+    const terms = h.submitted_at && h.due_date ? h.due_date.getTime() - h.submitted_at.getTime() : 0;
+    const moved = await prisma.settlementRequest.updateMany({ where: { id: h.id, held_for_tax_banking: true }, data: { held_for_tax_banking: false, submitted_at: now, due_date: h.due_date ? new Date(now.getTime() + terms) : null } });
+    if (moved.count) await announceSettlement(h.id);
+  }
+  await prisma.notification.updateMany({ where: { person_id: providerPersonId, dedupe_key: `tax_banking.needed:${providerPersonId}`, resolved_at: null }, data: { resolved_at: now } });
+  return held.length;
+}
+
+/** Route hook: the signed-in member's company changed its tax, legal or payout details. */
+export async function releaseHeldForViewer(viewer: Viewer) {
+  const p = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+  if (p) await releaseHeldForCompanyOf(p.id).catch((e) => console.error("[settlements] release held failed:", e));
+}
+
+/** After a company's tax, legal or payout details change: release every member's held requests. */
+export async function releaseHeldForCompanyOf(personId: string) {
+  const m = await prisma.companyMembership.findFirst({ where: { person_id: personId, status: "APPROVED" }, select: { company_id: true } });
+  const members = m ? await prisma.companyMembership.findMany({ where: { company_id: m.company_id, status: "APPROVED" }, select: { person_id: true } }) : [{ person_id: personId }];
+  for (const x of members) await releaseHeldFor(x.person_id);
 }
 
 async function providerPersonIdOf(orderId: string): Promise<string> {
@@ -418,11 +452,11 @@ export type SettlementAction = "APPROVE" | "REJECT";
 
 /** THE PARTY RULE, AND IT IS 's, NOT A SECOND ONE. */
 export function settlementActions(
-  settlement: { status: SettlementStatus },
+  settlement: { status: SettlementStatus; held_for_tax_banking?: boolean },
   party: OrderParty,
   erp = false
 ): SettlementAction[] {
-  if (erp) return [];
+  if (erp || settlement.held_for_tax_banking) return [];
   if (party === "BUYER") return settlement.status === "SUBMITTED" ? ["APPROVE", "REJECT"] : [];
   return [];
 }
@@ -474,6 +508,8 @@ export type SettlementDetail = {
   hasTimesheet: boolean;
   /** X-E006: the order came from the customer's ERP; approval happens there. */
   erp: boolean;
+  /** RD-E003: "Waiting on Tax & Banking" — the provider's company hasn't finished it yet. */
+  held: boolean;
   actions: SettlementAction[];
 };
 
@@ -491,11 +527,10 @@ function lineValue(l: {
 
 /** One settlement, if the viewer is a party to its ORDER. */
 export async function getSettlement(viewer: Viewer, id: string): Promise<SettlementDetail> {
-  const s = await prisma.settlementRequest.findUnique({
-    where: { id },
-    include: { lines: { orderBy: { line_number: "asc" } } },
-  });
+  const read = () => prisma.settlementRequest.findUnique({ where: { id }, include: { lines: { orderBy: { line_number: "asc" } } } });
+  let s = await read();
   if (!s) throw new SettlementError("Payment request not found", "NOT_FOUND");
+  if (s.held_for_tax_banking && (await releaseHeldFor(s.provider_person_id))) s = (await read())!;
 
   let order;
   try {
@@ -573,6 +608,7 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
       : null,
     hasTimesheet: lines.some((l) => l.basis === "RATE"),
     erp: order.erp,
+    held: s.held_for_tax_banking,
     actions: settlementActions(s, order.party, order.erp),
   };
 }
@@ -594,6 +630,7 @@ export type SettlementRow = {
   dueDate: string | null;
   paidOut: boolean;
   erp: boolean;
+  held: boolean;
 };
 
 /** Every settlement the viewer is a party to — both scopes, one function. */
@@ -634,6 +671,7 @@ export async function listSettlements(viewer: Viewer): Promise<SettlementRow[]> 
       submittedAt: s.submitted_at ? s.submitted_at.toISOString() : null,
       dueDate: s.due_date ? s.due_date.toISOString().slice(0, 10) : null,
       erp: o.erp,
+      held: s.held_for_tax_banking,
       paidOut: s.lines.some((l) => outLines.has(l.id)),
     };
   });

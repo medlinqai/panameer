@@ -4,7 +4,7 @@ import { notify } from "@/lib/notifications";
 import { formatCents } from "@/lib/display";
 import { resolveCommissionBps } from "@/lib/application-commissions";
 import { snapshotMilestones } from "@/lib/order-milestones";
-import { assertCanSign } from "@/lib/your-path";
+import { assertCanSign, nudgeTaxBanking } from "@/lib/your-path";
 import type { Viewer } from "@/lib/access";
 
 // SH-E002/E003: the Shop cart — service products at the listed price; Place Order makes one work order per provider.
@@ -154,6 +154,7 @@ export async function placeOrder(viewer: Viewer): Promise<{ orderId: string; pro
     // Manual orders share the offered key, so the provider's acceptance clears the item.
     await notify({ event: "shop.order_received", personId: providerPersonId, entityType: "work_order", entityId: order.id, dedupeKey: manual ? `work.order_offered:${order.id}` : `shop.order_received:${order.id}`, vars: { orderId: order.id, product, buyerName, amount, manual: manual ? 1 : 0 } });
     await notify({ event: "shop.order_placed", personId: p.id, entityType: "work_order", entityId: order.id, dedupeKey: `shop.order_placed:${order.id}`, vars: { orderId: order.id, providerName, product, amount, manual: manual ? 1 : 0 } });
+    if (!manual) await nudgeTaxBanking(providerPersonId);
     placed.push({ orderId: order.id, providerName, open: !manual });
   }
   return placed;

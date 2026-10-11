@@ -50,8 +50,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             </Link>
           </p>
         </div>
-        <SettlementStatusPill status={s.status} paidOut={s.party === "PROVIDER" ? !!s.paidOut : undefined} erp={s.erp} />
+        <SettlementStatusPill status={s.status} paidOut={s.party === "PROVIDER" ? !!s.paidOut : undefined} erp={s.erp} held={s.held} />
       </div>
+      {s.held && (
+        <p data-held-note className="mt-4 border-l-2 border-magenta py-1 pl-3 text-[14px]">
+          {s.party === "PROVIDER" ? (
+            <>This request goes to {s.buyerName} once your company adds tax and banking. <Link href="/company/legal" className="font-bold text-magenta-dark underline underline-offset-4">Add Tax &amp; Banking</Link></>
+          ) : (
+            <>Waiting on {s.providerName}&apos;s company to add tax and banking. You can approve it once they do.</>
+          )}
+        </p>
+      )}
 
       <dl className="mt-6 grid gap-x-8 gap-y-3.5 rounded-brand border border-line bg-white p-5 sm:grid-cols-3">
         <Fact label="Period">{s.periodStart} → {s.periodEnd}</Fact>

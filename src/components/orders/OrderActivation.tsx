@@ -18,10 +18,13 @@ export function OrderActivation({
   orderId,
   actions,
   message,
+  payNote = false,
 }: {
   orderId: string;
   actions: OrderAction[];
   message: string;
+  /** RD-E003: the provider's company hasn't finished tax & banking — signing is open, payment waits. */
+  payNote?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<OrderAction | null>(null);
@@ -52,6 +55,11 @@ export function OrderActivation({
   return (
     <div className="rounded-brand border border-line bg-white p-5">
       <SignGateModal gate={gate} onClose={() => setGate(null)} />
+      {payNote && (
+        <p data-tax-banking-note className="mb-3 border-l-2 border-magenta py-1 pl-3 text-[14px]">
+          Add tax and banking now so you&apos;re paid on time. <a href="/company/legal" className="font-bold text-magenta-dark underline underline-offset-4">Add Tax &amp; Banking</a>
+        </p>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="min-w-0 flex-1 text-[14.5px] leading-relaxed text-ink-2">{message}</p>
         {/* THE ONLY PLACE EITHER BUTTON CAN COME FROM. */}

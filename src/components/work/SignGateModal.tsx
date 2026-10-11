@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Modal } from "@/components/Modal";
 
-// Lifecycle step 6 (Get Contracted) needs both companies Validated (step 5) before a work order is awarded or signed.
+// RD-E003: a work order needs the buyer's company Validated and the provider's company linked.
 export type SignGate = { items: { company: string; item: string; done: boolean }[]; isAdmin: boolean };
 
 export function SignGateModal({ gate, onClose }: { gate: SignGate | null; onClose: () => void }) {
@@ -11,8 +11,8 @@ export function SignGateModal({ gate, onClose }: { gate: SignGate | null; onClos
     <Modal open={!!gate} onClose={onClose} title="Before you sign">
       {gate && (
         <div data-sign-gate>
-          <p className="text-[16px] font-bold">Validate your company to sign this work order</p>
-          <p className="mt-1 text-[13.5px] text-ink-2">A work order is a contract between two Validated companies. The other side sees only &ldquo;Validated&rdquo;.</p>
+          <p className="text-[16px] font-bold">Finish your company details to sign this work order</p>
+          <p className="mt-1 text-[13.5px] text-ink-2">A work order is a contract between two companies: the buyer&apos;s is Validated, the provider&apos;s is linked. Provider tax and banking can follow before payment.</p>
           <ul className="mt-3 border-t border-line">
             {gate.items.map((i) => (
               <li key={`${i.company}-${i.item}`} className="flex items-center justify-between gap-3 border-b border-line/60 py-2 text-[14px]">

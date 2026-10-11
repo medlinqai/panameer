@@ -22,6 +22,8 @@ import { changeBlocked, describeChanges, revisionsFor } from "@/lib/change-order
 import { BuyerCard } from "@/components/orders/BuyerCard";
 import { WORK_ORDER_LINE_LABEL } from "@/lib/oracle-status";
 import { termsLine } from "@/lib/billing-terms";
+import { providerPayReady } from "@/lib/your-path";
+import { prisma } from "@/lib/prisma";
 
 export const metadata = { title: "Work Order · Panameer" };
 
@@ -96,7 +98,7 @@ export default async function Page({
 
       {}
       <div className="mt-6">
-        <OrderActivation orderId={o.id} actions={o.actions} message={o.activationMessage} />
+        <OrderActivation orderId={o.id} actions={o.actions} message={o.activationMessage} payNote={o.party === "PROVIDER" && !(await providerPayReady((await prisma.workOrder.findUniqueOrThrow({ where: { id: o.id }, select: { provider_person_id: true } })).provider_person_id))} />
       </div>
 
       {}

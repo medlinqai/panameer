@@ -1,4 +1,4 @@
-import { assertCanSign } from "@/lib/your-path";
+import { assertCanSign, nudgeTaxBanking } from "@/lib/your-path";
 import { BillingCycle, PaymentTerms, PaymentTrigger, Prisma, TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
 import { notify } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
@@ -657,6 +657,7 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
   if (parties && actor) await assertCanSign(actor.id, parties.buyer_person_id, parties.provider_person_id);
   if (party === "PROVIDER" && order.buyer_accepted_at) {
     await acknowledgeErpOrder(order);
+    await nudgeTaxBanking(order.provider_person_id);
     return getOrderDetail(viewer, id);
   }
   if (party === "PROVIDER") {
@@ -664,6 +665,7 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
       where: { id: order.id, status: "ISSUED" },
       data: { status: "ACCEPTED", provider_accepted_at: new Date() },
     });
+    await nudgeTaxBanking(order.provider_person_id);
     return getOrderDetail(viewer, id);
   }
 

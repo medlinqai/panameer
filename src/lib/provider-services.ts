@@ -61,7 +61,7 @@ export async function saveProviderService(viewer: Viewer, id: string | null, inp
   if (publish) {
     const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
     const gate = person ? await publishGate(person.id) : { ok: false, reason: null };
-    if (!gate.ok) throw new OnboardingError("You can publish once your company is validated.", "INVALID");
+    if (!gate.ok) throw new OnboardingError("Add your company to publish.", "INVALID");
   }
   const d = { ...data(input), published_at: publish ? new Date() : null };
   if (!id) return prisma.providerService.create({ data: { provider_profile_id: pid, ...d }, select: { id: true } });
@@ -76,7 +76,7 @@ export async function retireProviderService(viewer: Viewer, id: string) {
   await prisma.providerService.updateMany({ where: { id, provider_profile_id: pid }, data: { active: false } });
 }
 
-/** CAT-E001: "Turn My Rates Into Services" — on the provider's click only. Published when the company is validated, else drafts. */
+/** CAT-E001: "Turn My Rates Into Services" — on the provider's click only. Published when a company is linked, else drafts. */
 export async function servicesFromRates(viewer: Viewer) {
   const prof = await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { id: true, person_id: true, onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true } });
   if (!prof) throw new OnboardingError("No provider profile for this user", "NOT_A_PROVIDER");

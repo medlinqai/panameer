@@ -1,16 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { companyChecklist } from "@/lib/your-path";
 import { termsLine } from "@/lib/billing-terms";
 
 // My Catalog (2026-10-09): what a provider sells — services, service products, cost estimates.
 export const BASELINE_SERVICE_TYPES = ["Onsite Consulting", "Offsite Consulting", "Mentoring", "Training", "Staff Augmentation", "AI Agent Support"];
 
-/** CAT-E004: publishing needs no Panameer review, only a validated seller company. */
+/** CAT-E004 / RD-E003: publishing needs no Panameer review, only a linked company (validation waits until payment). */
 export async function publishGate(personId: string): Promise<{ ok: boolean; href: string; reason: string | null }> {
   const m = await prisma.companyMembership.findFirst({ where: { person_id: personId, status: "APPROVED" }, select: { company_id: true } });
-  if (!m) return { ok: false, href: "/company?join=1#join", reason: "Add your company first." };
-  const c = await companyChecklist(m.company_id, { payout: true });
-  return c?.ready ? { ok: true, href: "", reason: null } : { ok: false, href: "/company/legal", reason: `Finish ${c?.items.filter((i) => !i.done).map((i) => i.item.toLowerCase()).join(", ") || "your company details"}.` };
+  return m ? { ok: true, href: "", reason: null } : { ok: false, href: "/company?join=1#join", reason: "Add your company first." };
 }
 
 /** CAT-E002: baseline types (created on first read) plus the ones providers added, merged ones folded away. */

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { releaseHeldForViewer } from "@/lib/settlements";
 import { guardApi } from "@/lib/guard";
 import { uploadCompanyTaxForm } from "@/lib/company-pay";
 import { OnboardingError } from "@/lib/onboarding";
@@ -11,7 +12,9 @@ export async function POST(request: Request) {
   const entry = (await request.formData().catch(() => null))?.get("file");
   if (!(entry instanceof File)) return NextResponse.json({ error: "Choose a file." }, { status: 400 });
   try {
-    return NextResponse.json(await uploadCompanyTaxForm(viewer, { name: entry.name, type: entry.type, size: entry.size, bytes: await entry.arrayBuffer() }));
+    const out = await uploadCompanyTaxForm(viewer, { name: entry.name, type: entry.type, size: entry.size, bytes: await entry.arrayBuffer() });
+    await releaseHeldForViewer(viewer);
+    return NextResponse.json(out);
   } catch (e) {
     if (e instanceof OnboardingError) return NextResponse.json({ error: e.message }, { status: e.code === "GATE_UNMET" ? 403 : 400 });
     if (e instanceof StorageError) return NextResponse.json({ error: e.message }, { status: 503 });
