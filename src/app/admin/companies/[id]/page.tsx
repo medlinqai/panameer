@@ -81,7 +81,7 @@ export default function AdminCompanyDetailPage({
                     <td className="px-4 py-3 text-ink-2">
                       {p.email ?? "—"}
                       {p.email && !p.emailVerified && (
-                        <span className="ml-1 text-amber-600">(unverified)</span>
+                        <span className="ml-1 text-amber-600">(email not verified yet)</span>
                       )}
                     </td>
                     <td className="px-4 py-3">

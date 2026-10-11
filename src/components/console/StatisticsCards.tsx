@@ -197,7 +197,7 @@ export function StatisticsCards({
                   hint="Bids you submitted — a draft is not a proposal"
                 />
                 <StatFigureRow
-                  label="Invitations to Propose"
+                  label="Proposal Requests"
                   figure={s.work.invitationsToPropose}
                 />
                 <StatFigureRow label="Interviews" figure={s.work.interviews} />

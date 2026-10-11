@@ -1,6 +1,6 @@
 "use client";
 
-import { PAYMENT_TERMS_LABEL, PAYMENT_TRIGGER_LABEL } from "@/lib/billing-terms";
+import { PAYMENT_TERMS_LABEL, PAYMENT_EVENT_LABEL } from "@/lib/billing-terms";
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 import {
@@ -24,7 +24,7 @@ export type ProviderServiceProduct = {
   priceCents: number | null;
   currency: string;
   paymentTerms?: string | null;
-  paymentTrigger?: string | null;
+  paymentEvent?: string | null;
   coverImageUrl: string | null;
   status: string;
   deliverables: ServiceProductDeliverable[];
@@ -57,7 +57,7 @@ const emptyForm = () => ({
   durationWeeks: "",
   priceDollars: "",
   paymentTerms: "NET30",
-  paymentTrigger: "PAYMENT_REQUEST",
+  paymentEvent: "PAYMENT_REQUEST",
   coverImageUrl: null as string | null,
   deliverables: [""],
   milestones: DEFAULT_MILESTONES.map((m) => ({ ...m })),
@@ -127,7 +127,7 @@ export function ServiceProductsManager({
       durationWeeks: p.durationWeeks != null ? String(p.durationWeeks) : "",
       priceDollars: centsToDollarInput(p.priceCents),
       paymentTerms: p.paymentTerms ?? "NET30",
-      paymentTrigger: p.paymentTrigger ?? "PAYMENT_REQUEST",
+      paymentEvent: p.paymentEvent ?? "PAYMENT_REQUEST",
       coverImageUrl: p.coverImageUrl,
       deliverables: p.deliverables.length
         ? p.deliverables.map((d) => d.text)
@@ -163,7 +163,7 @@ export function ServiceProductsManager({
       durationWeeks: form.durationWeeks ? Number(form.durationWeeks) : null,
       priceCents: dollarsToCents(form.priceDollars),
       paymentTerms: form.paymentTerms,
-      paymentTrigger: form.paymentTrigger,
+      paymentEvent: form.paymentEvent,
       coverImageUrl: form.coverImageUrl,
       deliverables: form.deliverables.map((d) => d.trim()).filter(Boolean),
       milestones: form.milestones
@@ -491,9 +491,9 @@ export function ServiceProductsManager({
                 {Object.entries(PAYMENT_TERMS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </Field>
-            <Field label="Payment Trigger">
-              <select value={form.paymentTrigger} onChange={(e) => setForm({ ...form, paymentTrigger: e.target.value })} className="h-11 w-full border border-line bg-surface px-3 text-[14.5px]">
-                {(["PAYMENT_REQUEST", "DOWNLOAD", "INSTALLATION", "INVOICE"] as const).map((k) => <option key={k} value={k}>{PAYMENT_TRIGGER_LABEL[k]}</option>)}
+            <Field label="Payment Event">
+              <select value={form.paymentEvent} onChange={(e) => setForm({ ...form, paymentEvent: e.target.value })} className="h-11 w-full border border-line bg-surface px-3 text-[14.5px]">
+                {(["PAYMENT_REQUEST", "DOWNLOAD", "INSTALLATION", "INVOICE"] as const).map((k) => <option key={k} value={k}>{PAYMENT_EVENT_LABEL[k]}</option>)}
               </select>
             </Field>
             <Field label="Duration (Weeks)">

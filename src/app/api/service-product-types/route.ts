@@ -6,7 +6,7 @@ import { suggestProductType } from "@/lib/service-product-types";
 
 const BODY = z.object({ name: z.string().trim().min(3).max(60) });
 
-// WS-E008: "Don't see yours? Suggest a Service Type" — goes to admin review (Business Type Taxonomy).
+// WS-E008: "Don't see yours? Suggest a Service Type" — goes to admin review (Service Taxonomy).
 export async function POST(req: Request) {
   const viewer = await guardApi("authenticated");
   if (viewer instanceof NextResponse) return viewer;

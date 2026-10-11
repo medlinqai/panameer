@@ -4,7 +4,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS } from "@/lib/nav";
 
-// WS-E002: WORK | Home · Best Matches · All Work Requests · Invitations (count) · My Proposals · Saved.
+// WS-E002: WORK | Home · Best Matches · All Work Requests · Proposal Requests (count) · My Proposals · Saved.
 export function WorkTabs({ invitations }: { invitations: number }) {
   const pathname = usePathname() ?? "";
   const tab = useSearchParams()?.get("tab");

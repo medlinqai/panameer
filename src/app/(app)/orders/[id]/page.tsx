@@ -258,8 +258,8 @@ function LineCard({ line, currency, showFee, milestones }: { line: OrderLineView
             {showFee && <> · fee {bpsToPercentLabel(line.feeBps)}</>}
           </p>
           <p className="mt-1 text-[16px] font-bold">{line.description}</p>
-          {termsLine({ billing_cycle: line.billingCycle, payment_terms: line.paymentTerms, payment_event: line.paymentTrigger }) && (
-            <p data-line-terms className="mt-0.5 text-[13px] text-ink-2">{termsLine({ billing_cycle: line.billingCycle, payment_terms: line.paymentTerms, payment_event: line.paymentTrigger })}</p>
+          {termsLine({ billing_cycle: line.billingCycle, payment_terms: line.paymentTerms, payment_event: line.paymentEvent }) && (
+            <p data-line-terms className="mt-0.5 text-[13px] text-ink-2">{termsLine({ billing_cycle: line.billingCycle, payment_terms: line.paymentTerms, payment_event: line.paymentEvent })}</p>
           )}
           {(line.serviceStart || line.serviceEnd) && (
             <p className="mt-1 text-[13.5px] text-ink-2">

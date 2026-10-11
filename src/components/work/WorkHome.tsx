@@ -34,7 +34,7 @@ function Funnel({ f, invitations }: { f: Home["funnel"]; invitations: number }) 
 export function WorkHome({ home, best }: { home: Home; best: WorkCard[] }) {
   const matches = best.filter((c) => c.matched > 0);
   const waiting = home.invitations
-    ? `${home.invitations} invitation${home.invitations === 1 ? " is" : "s are"} waiting on your rate.${home.newest ? ` The newest: ${home.newest.title}, from ${home.newest.from}.` : ""}`
+    ? `${home.invitations} proposal request${home.invitations === 1 ? " is" : "s are"} waiting on your rate.${home.newest ? ` The newest: ${home.newest.title}, from ${home.newest.from}.` : ""}`
     : home.proposalsOut
       ? `Nothing is waiting on you. ${home.proposalsOut} proposal${home.proposalsOut === 1 ? " is" : "s are"} with buyers.`
       : "Nothing is waiting on you. Propose your rate on a Best Match to get started.";
@@ -46,14 +46,14 @@ export function WorkHome({ home, best }: { home: Home; best: WorkCard[] }) {
         title="Find Your Next Engagement"
         kpis={[
           { value: matches.length, label: "Best Matches" },
-          { value: home.invitations, label: "Invitations" },
+          { value: home.invitations, label: "Proposal Requests" },
           { value: home.proposalsOut, label: "Proposals Out" },
           { value: home.openOrders, label: "Open Work Orders" },
         ]}
         paragraph={<p>{waiting}</p>}
         actions={
           <>
-            {home.invitations > 0 && <Link href="/find-work?tab=invitations" className={HERO_BTN}>Answer Invitations</Link>}
+            {home.invitations > 0 && <Link href="/find-work?tab=invitations" className={HERO_BTN}>Answer Proposal Requests</Link>}
             <Link href="/find-work?tab=best" className={home.invitations > 0 ? HERO_BTN_W : HERO_BTN}>See Best Matches</Link>
           </>
         }

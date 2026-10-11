@@ -42,13 +42,13 @@ export function WorkFeed({
         <EmptyFeed title={`No ${labelFor(tab)} yet`} detail={UNBACKED_TABS[tab]} />
       ) : cards.length === 0 ? (
         <EmptyFeed
-          title={query ? `Nothing matches “${query}”` : tab === "invitations" ? "No open invitations" : tab === "proposals" ? "No proposals yet" : "No work posted yet"}
+          title={query ? `Nothing matches “${query}”` : tab === "invitations" ? "No open proposal requests" : tab === "proposals" ? "No proposals yet" : "No work posted yet"}
           detail={
             query
               // RULING 18: no promise, no date, no apology. *"when this
               ? "No work request matches that search yet."
               : tab === "invitations"
-                ? "When a buyer invites you to propose your rate, it shows here."
+                ? "When a buyer asks you to propose your rate, it shows here."
                 : tab === "proposals"
                   ? "Proposals you send on work requests show here."
                   : "No buyer has posted a work request yet. Your profile is what they find you by, so keep it current."
@@ -67,7 +67,7 @@ export function WorkFeed({
   );
 }
 
-const TITLE: Partial<Record<WorkFeedTab, string>> = { best: "Best Matches for Your Skills", recent: "All Work Requests", us: "Work Requests in the US", saved: "Saved", invitations: "Invitations to Propose", proposals: "My Proposals" };
+const TITLE: Partial<Record<WorkFeedTab, string>> = { best: "Best Matches for Your Skills", recent: "All Work Requests", us: "Work Requests in the US", saved: "Saved", invitations: "Proposal Requests", proposals: "My Proposals" };
 
 function labelFor(tab: WorkFeedTab): string {
   return WORK_FEED_TABS.find((t) => t.id === tab)?.label.toLowerCase() ?? "work";

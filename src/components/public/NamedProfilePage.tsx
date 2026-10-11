@@ -141,7 +141,7 @@ export async function NamedProfilePage({
           )}
 
           {p.certifications.length > 0 && (
-            <Section label="Certifications" count={p.certifications.length}>
+            <Section label="Credentials" count={p.certifications.length}>
               <div className="flex flex-wrap gap-1.5 pb-5">
                 {p.certifications.map((c, i) => (
                   <Chip key={`${c}-${i}`}>{c}</Chip>

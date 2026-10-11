@@ -32,7 +32,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
     price: p?.priceCents ? (p.priceCents / 100).toFixed(2) : "",
     billingPeriod: p?.billingPeriod === "ANNUAL" ? "ANNUAL" : "MONTHLY",
     paymentTerms: p?.paymentTerms ?? "IMMEDIATE",
-    paymentTrigger: p?.paymentTrigger ?? "INSTALLATION",
+    paymentEvent: p?.paymentEvent ?? "INSTALLATION",
     schedule: ms.length > 1,
     milestones: ms.length > 1 ? ms.map((m) => ({ label: m.label, trigger: m.trigger ?? "ACCEPTANCE", percent: String(m.percent) })) : [{ label: "Kickoff", trigger: "ORDER_ACCEPTED", percent: "50" }, { label: "Installed in test pod", trigger: "INSTALLATION", percent: "50" }],
   };

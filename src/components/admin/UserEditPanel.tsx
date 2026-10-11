@@ -103,7 +103,7 @@ export function UserEditPanel({ state }: { state: UserEditState }) {
             type="button"
             className={BTN_2 + " self-end"}
             disabled={disabled || email.trim().toLowerCase() === state.email.toLowerCase()}
-            onClick={() => void call("email", { email }, "Email changed — verification sent, and the address is now unverified.")}
+            onClick={() => void call("email", { email }, "Email changed — verification sent, and the address needs verifying again.")}
           >
             Change Email
           </button>

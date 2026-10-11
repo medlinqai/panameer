@@ -44,7 +44,7 @@ export function MaskedProfileView({
 
   if (p.certifications.length > 0) {
     sections.push({
-      label: "Certifications",
+      label: "Credentials",
       count: p.certifications.length,
       body: (
         <div className="flex flex-wrap gap-1.5 pb-5">

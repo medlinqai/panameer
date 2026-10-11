@@ -13,7 +13,7 @@ const SERVICE = z.object({
   rateCents: z.number().int().positive().max(1_000_000_000).nullable(),
   billingCycle: z.enum(["WEEKLY", "BIWEEKLY", "MONTHLY", "EVERY_90_DAYS"]),
   paymentTerms: z.enum(["IMMEDIATE", "NET15", "NET30", "NET45", "NET60"]),
-  paymentTrigger: z.enum(["TIMESHEET", "PAYMENT_REQUEST", "INVOICE", "DOWNLOAD", "INSTALLATION"]),
+  paymentEvent: z.enum(["TIMESHEET", "PAYMENT_REQUEST", "INVOICE", "DOWNLOAD", "INSTALLATION"]),
   serviceTypeId: z.string().uuid().optional().nullable(),
   description: z.string().max(4000).optional().nullable(),
   minimumQuantity: z.number().nonnegative().max(100000).optional().nullable(),

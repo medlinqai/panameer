@@ -34,7 +34,7 @@ async function main() {
   const co = await prisma.companyMembership.findFirst({ where: { person_id: prov.personId, status: "APPROVED" }, select: { company: { select: { name: true, website: true, industry_id: true, description: true } } } });
   check("Register with company → membership + company (website, industry, description); stop 1 done", !!co && co.company.industry_id === (industry?.id ?? null) && co.company.description === "One-person consultancy" && path.done[0]);
 
-  const svc = await saveProviderService(prov.viewer, null, { name: "Oracle Procurement Help", serviceType: "SERVICE_BY_QTY", uom: "HOUR", rateCents: 15000, billingCycle: "WEEKLY", paymentTerms: "NET30", paymentTrigger: "TIMESHEET" }, true);
+  const svc = await saveProviderService(prov.viewer, null, { name: "Oracle Procurement Help", serviceType: "SERVICE_BY_QTY", uom: "HOUR", rateCents: 15000, billingCycle: "WEEKLY", paymentTerms: "NET30", paymentEvent: "TIMESHEET" }, true);
   check("publish with a linked, unvalidated company", !!(await prisma.providerService.findUnique({ where: { id: svc.id } }))?.published_at);
   await assertCanSign(prov.personId, buyer.personId, prov.personId);
   check("provider can sign before validation (buyer validated)", true);

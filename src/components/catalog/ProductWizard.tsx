@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PAYMENT_TERMS_LABEL, PAYMENT_TRIGGER_LABEL } from "@/lib/billing-terms";
+import { PAYMENT_TERMS_LABEL, PAYMENT_EVENT_LABEL } from "@/lib/billing-terms";
 import { CoverBand } from "@/components/casing/CoverBand";
 import { AREA, BTN, BTN_K, INPUT, LABEL, PaidStrip, PublishBar, Steps, money } from "@/components/catalog/WizardParts";
 
@@ -22,7 +22,7 @@ export type ProductDraft = {
   price: string;
   billingPeriod: "MONTHLY" | "ANNUAL";
   paymentTerms: string;
-  paymentTrigger: string;
+  paymentEvent: string;
   schedule: boolean;
   milestones: Milestone[];
 };
@@ -36,9 +36,9 @@ const KINDS: { k: Kind; label: string; line: string }[] = [
 const PRICING: Record<Kind, string> = { DELIVERABLE: "Fixed price — one price for the whole product.", DEPLOYABLE: "Recurring — per month or per year.", BLANKET: "Not-to-exceed — a cap, paid only for what's drawn." };
 const TERMS = ["IMMEDIATE", "NET15", "NET30", "NET60"] as const;
 const TRIGGERS = ["DOWNLOAD", "INSTALLATION", "ACCEPTANCE", "PAYMENT_REQUEST"] as const;
-const M_TRIGGERS = ["ORDER_ACCEPTED", ...TRIGGERS] as const;
+const M_EVENTS = ["ORDER_ACCEPTED", ...TRIGGERS] as const;
 const kindLabel = (k: Kind) => KINDS.find((x) => x.k === k)!.label;
-const lower = (k: string) => (PAYMENT_TRIGGER_LABEL[k as keyof typeof PAYMENT_TRIGGER_LABEL] ?? k).toLowerCase();
+const lower = (k: string) => (PAYMENT_EVENT_LABEL[k as keyof typeof PAYMENT_EVENT_LABEL] ?? k).toLowerCase();
 
 // CAT-E003: Create a Service Product — What · Price · Payment · Review, with the buyer's view beside it.
 export function ProductWizard({ initial, domains, gate, providerName, productTypes = [] }: { initial: ProductDraft; domains: Domain[]; gate: { ok: boolean; href: string; reason: string | null }; providerName: string; productTypes?: { id: string; name: string; group: string | null }[] }) {
@@ -72,8 +72,8 @@ export function ProductWizard({ initial, domains, gate, providerName, productTyp
       capabilityDomainIds: d.domainIds,
       deliverables: agent ? [] : d.included.split("\n").map((x) => x.replace(/^[•\-*]\s*/, "").trim()).filter(Boolean),
       paymentTerms: d.paymentTerms,
-      paymentTrigger: d.paymentTrigger,
-      milestones: agent ? [] : useSchedule ? d.milestones.map((m) => ({ label: m.label, percent: Number(m.percent), trigger: m.trigger })) : [{ label: "In full", percent: 100, trigger: d.paymentTrigger }],
+      paymentEvent: d.paymentEvent,
+      milestones: agent ? [] : useSchedule ? d.milestones.map((m) => ({ label: m.label, percent: Number(m.percent), trigger: m.trigger })) : [{ label: "In full", percent: 100, trigger: d.paymentEvent }],
     };
     const r = await fetch("/api/provider/packages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "wizard", serviceProductId: d.id, package: pkg, publish }) });
     const j = (await r.json().catch(() => ({}))) as { error?: string };
@@ -89,7 +89,7 @@ export function ProductWizard({ initial, domains, gate, providerName, productTyp
       ? ["Order accepted", "Submit a payment request as work is done", "Customer approves", `Paid ${PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL].toLowerCase()}`]
       : useSchedule
         ? [...d.milestones.map((m) => `${m.percent || 0}% on ${lower(m.trigger)}`), `Each paid ${PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL].toLowerCase()}`]
-        : ["Order accepted", `Report ${lower(d.paymentTrigger)}`, "Customer approves", `Paid ${PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL].toLowerCase()}`];
+        : ["Order accepted", `Report ${lower(d.paymentEvent)}`, "Customer approves", `Paid ${PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL].toLowerCase()}`];
 
   const setM = (i: number, k: keyof Milestone, v: string) => set("milestones", d.milestones.map((m, j) => (j === i ? { ...m, [k]: v } : m)));
 
@@ -161,22 +161,22 @@ export function ProductWizard({ initial, domains, gate, providerName, productTyp
             <>
               <div className="grid grid-cols-2 gap-3">
                 <label className={LABEL}>Payment terms<select value={d.paymentTerms} onChange={(e) => set("paymentTerms", e.target.value)} className={INPUT}>{TERMS.map((k) => <option key={k} value={k}>{PAYMENT_TERMS_LABEL[k]}</option>)}</select></label>
-                <label className={LABEL}>Payment trigger<select value={d.paymentTrigger} onChange={(e) => set("paymentTrigger", e.target.value)} className={INPUT}>{TRIGGERS.map((k) => <option key={k} value={k}>{PAYMENT_TRIGGER_LABEL[k]}</option>)}</select></label>
+                <label className={LABEL}>Payment Event<select value={d.paymentEvent} onChange={(e) => set("paymentEvent", e.target.value)} className={INPUT}>{TRIGGERS.map((k) => <option key={k} value={k}>{PAYMENT_EVENT_LABEL[k]}</option>)}</select></label>
               </div>
               {!agent && d.kind !== "BLANKET" && (
                 <fieldset>
                   <legend className={LABEL}>How it&apos;s paid</legend>
-                  <label className="mt-1.5 flex items-center gap-2 text-[14px]"><input type="radio" checked={!d.schedule} onChange={() => set("schedule", false)} /> In full — paid once, when the trigger happens.</label>
+                  <label className="mt-1.5 flex items-center gap-2 text-[14px]"><input type="radio" checked={!d.schedule} onChange={() => set("schedule", false)} /> In full — paid once, when the payment event happens.</label>
                   <label className="mt-1 flex items-center gap-2 text-[14px]"><input type="radio" checked={d.schedule} onChange={() => set("schedule", true)} /> Payment schedule — paid in parts that add up to 100%.</label>
                 </fieldset>
               )}
               {useSchedule && d.kind !== "BLANKET" && (
                 <div data-schedule>
-                  <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_64px_84px_24px] gap-2 text-[11.5px] font-bold text-ink-3"><span>Milestone</span><span>Trigger</span><span>%</span><span className="text-right">Amount</span><span /></div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_64px_84px_24px] gap-2 text-[11.5px] font-bold text-ink-3"><span>Milestone</span><span>Payment Event</span><span>%</span><span className="text-right">Amount</span><span /></div>
                   {d.milestones.map((m, i) => (
                     <div key={i} className="mt-1.5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_64px_84px_24px] items-center gap-2">
                       <input value={m.label} onChange={(e) => setM(i, "label", e.target.value)} aria-label="Milestone" className={INPUT + " mt-0"} />
-                      <select value={m.trigger} onChange={(e) => setM(i, "trigger", e.target.value)} aria-label="Trigger" className={INPUT + " mt-0"}>{M_TRIGGERS.map((k) => <option key={k} value={k}>{PAYMENT_TRIGGER_LABEL[k]}</option>)}</select>
+                      <select value={m.trigger} onChange={(e) => setM(i, "trigger", e.target.value)} aria-label="Payment Event" className={INPUT + " mt-0"}>{M_EVENTS.map((k) => <option key={k} value={k}>{PAYMENT_EVENT_LABEL[k]}</option>)}</select>
                       <input inputMode="numeric" value={m.percent} onChange={(e) => setM(i, "percent", e.target.value)} aria-label="Percent" className={INPUT + " mt-0"} />
                       <span className="text-right text-[13px]">{money(Math.round((priceCents * (Number(m.percent) || 0)) / 100))}</span>
                       <button type="button" aria-label="Remove milestone" onClick={() => set("milestones", d.milestones.filter((_, j) => j !== i))} className="text-ink-3">×</button>
@@ -194,7 +194,7 @@ export function ProductWizard({ initial, domains, gate, providerName, productTyp
             <dl className="grid grid-cols-[120px_minmax(0,1fr)] gap-y-2 text-[14px]">
               <dt className="font-semibold text-ink-3">Kind</dt><dd>{kindLabel(d.kind)}{!agent && d.weeks ? ` · ${d.weeks} weeks` : ""}</dd>
               <dt className="font-semibold text-ink-3">Price</dt><dd>{money(priceCents)} {agent ? `per ${d.billingPeriod === "ANNUAL" ? "year" : "month"}` : d.kind === "BLANKET" ? "not to exceed" : "fixed"}</dd>
-              <dt className="font-semibold text-ink-3">Payment</dt><dd>{useSchedule ? d.milestones.map((m) => `${m.percent}% on ${lower(m.trigger)}`).join(" · ") : agent ? "Each period" : `In full on ${lower(d.paymentTrigger)}`} · {PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL]}</dd>
+              <dt className="font-semibold text-ink-3">Payment</dt><dd>{useSchedule ? d.milestones.map((m) => `${m.percent}% on ${lower(m.trigger)}`).join(" · ") : agent ? "Each period" : `In full on ${lower(d.paymentEvent)}`} · {PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL]}</dd>
             </dl>
           )}
         </div>

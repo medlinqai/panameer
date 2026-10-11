@@ -85,7 +85,7 @@ export default function AdminLearnPage() {
                 { label: "Courses", value: String(data.courses) },
                 { label: "Lessons", value: String(data.lessons) },
                 { label: "Tests", value: "—" },
-                { label: "Certifications", value: "—" },
+                { label: "Certificates", value: "—" },
               ].map((t) => (
                 <div key={t.label} className="rounded-brand border border-line bg-white p-4">
                   <p className="text-[12px] font-semibold text-ink-2">{t.label}</p>

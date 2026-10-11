@@ -180,7 +180,7 @@ export default async function Page() {
           /* REAL NUMBERS NOW — the review screen made them meaningful. */
           { label: "Tests", value: publishedTests },
           { label: "Tests in draft", value: draftTests },
-          { label: "Certifications" },
+          { label: "Certificates" },
         ])}
       />
     </div>

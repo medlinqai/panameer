@@ -208,7 +208,7 @@ export function computeProfileScore(p: CompletenessInput): ProfileScore {
       state(has(p.education), p.declaredNoEducationAt), true),
     // Required: "I have none" doesn't count here.
     L("specializations", "Specializations", W.specializations, "find", state(has(p.specializations))),
-    L("certifications", "Certifications", W.certifications, "done",
+    L("certifications", "Credentials", W.certifications, "done",
       state(has(p.certifications), p.declaredNoCertificationsAt), true),
     L("soloProjects", "Solo Projects", W.soloProjects, "done",
       state(has(p.soloProjects), p.declaredNoSoloProjectsAt), true),

@@ -140,7 +140,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Home", href: "/find-work" },
     { label: "Best Matches", href: "/find-work?tab=best" },
     { label: "All Work Requests", href: "/find-work?tab=recent" },
-    { label: "Invitations", href: "/find-work?tab=invitations" },
+    { label: "Proposal Requests", href: "/find-work?tab=invitations" },
     { label: "My Proposals", href: "/find-work?tab=proposals" },
     { label: "Saved", href: "/find-work?tab=saved" },
   ],
@@ -181,7 +181,7 @@ export const WORK_FEED_EXTRA_TITLES: NavItem[] = [
   { label: "Find Work", href: "/find-work" },
   { label: "Best Matches", href: "/find-work/for-my-skills" },
   { label: "My Work Requests (Saved)", href: "/find-work/saved" },
-  { label: "Invitations to Propose My Rate", href: "/find-work/invitations" },
+  { label: "Proposal Requests", href: "/find-work/invitations" },
   { label: "My Proposals", href: "/find-work/proposals" },
 ];
 

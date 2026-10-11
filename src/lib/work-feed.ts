@@ -18,7 +18,7 @@ export const WORK_FEED_TABS: { id: WorkFeedTab; label: string }[] = [
   { id: "recent", label: "Most Recent" },
   { id: "us", label: "US Only" },
   { id: "saved", label: "Saved Work" },
-  { id: "invitations", label: "Invitations" },
+  { id: "invitations", label: "Proposal Requests" },
   { id: "proposals", label: "My Proposals" },
 ];
 

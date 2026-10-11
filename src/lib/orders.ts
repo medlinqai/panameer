@@ -379,7 +379,7 @@ export type OrderLineView = {
   feeBps: number;
   billingCycle: BillingCycle | null;
   paymentTerms: PaymentTerms | null;
-  paymentTrigger: PaymentEvent | null;
+  paymentEvent: PaymentEvent | null;
 };
 
 export type OrderDetail = {
@@ -523,7 +523,7 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
       feeBps: l.fee_bps,
       billingCycle: l.billing_cycle,
       paymentTerms: l.payment_terms,
-      paymentTrigger: l.payment_event,
+      paymentEvent: l.payment_event,
     };
   });
 

@@ -24,7 +24,7 @@ export function AttentionStrip({
   const live = cards.filter((c) => !dismissed.includes(c.id));
 
   if (live.length === 0) {
-    // Calm mode (caught up / Earnings / Profile Strength) hidden on the dashboard — the road says it.
+    // Calm mode (caught up / Earnings / Score) hidden on the dashboard — the road says it.
     void CalmStrip;
     return null;
   }
@@ -173,7 +173,7 @@ function CalmStrip({
             className="w-[210px] shrink-0 rounded-brand border border-line bg-white p-4 transition-colors hover:border-magenta/40"
           >
             <p className="text-[12px] font-bold uppercase tracking-[0.07em] text-ink-2">
-              Profile Strength
+              Score
             </p>
             <p className="mt-1 font-display text-[24px] font-bold leading-none">
               {completeness}%

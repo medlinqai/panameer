@@ -30,7 +30,7 @@ export function workFilterWhere(f: WorkFilters): Prisma.WorkRequestWhereInput[] 
   return and;
 }
 
-/** The filter menus, built from posted requests. Skills shows only when the chosen business type's requests use skills. */
+/** The filter menus, built from posted requests. Skills shows only when the chosen role's requests use skills. */
 export async function workFilterDefs(f: WorkFilters) {
   const posted: Prisma.WorkRequestWhereInput = { status: "POSTED", ...(f.type ? { role_id: f.type } : {}) };
   const [skills, countries, types] = await Promise.all([
@@ -46,6 +46,6 @@ export async function workFilterDefs(f: WorkFilters) {
     { key: "site", label: "Remote / Onsite", options: opts(SITE) },
     { key: "length", label: "Length", options: opts(LENGTH) },
     { key: "start", label: "Start", options: Object.entries(START).map(([value, r]) => ({ value, label: r.label })) },
-    { key: "type", label: "Business Type", options: types.flatMap((t) => (t.role ? [{ value: t.role.id, label: t.role.display || t.role.name }] : [])) },
+    { key: "type", label: "Role", options: types.flatMap((t) => (t.role ? [{ value: t.role.id, label: t.role.display || t.role.name }] : [])) },
   ];
 }

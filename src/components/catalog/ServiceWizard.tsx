@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BILLING_CYCLE_LABEL, PAYMENT_TERMS_LABEL, PAYMENT_TRIGGER_LABEL } from "@/lib/billing-terms";
+import { BILLING_CYCLE_LABEL, PAYMENT_TERMS_LABEL, PAYMENT_EVENT_LABEL } from "@/lib/billing-terms";
 import { CoverBand } from "@/components/casing/CoverBand";
 import { AREA, BTN, BTN_K, INPUT, LABEL, PaidStrip, PublishBar, Steps, money } from "@/components/catalog/WizardParts";
 
@@ -18,7 +18,7 @@ export type ServiceDraft = {
   expenses: "AT_COST" | "INCLUDED" | "NOT_APPLICABLE";
   billingCycle: string;
   paymentTerms: string;
-  paymentTrigger: string;
+  paymentEvent: string;
 };
 
 const UOMS = ["HOUR", "DAY", "WEEK", "MONTH"];
@@ -73,7 +73,7 @@ export function ServiceWizard({ initial, types: initialTypes, gate, providerName
           expenses: d.expenses,
           billingCycle: d.billingCycle,
           paymentTerms: d.paymentTerms,
-          paymentTrigger: d.paymentTrigger,
+          paymentEvent: d.paymentEvent,
         },
       }),
     });
@@ -86,7 +86,7 @@ export function ServiceWizard({ initial, types: initialTypes, gate, providerName
 
   const paid = [
     "Order accepted",
-    `Submit a ${PAYMENT_TRIGGER_LABEL[d.paymentTrigger as keyof typeof PAYMENT_TRIGGER_LABEL].toLowerCase()} each ${BILLING_CYCLE_LABEL[d.billingCycle as keyof typeof BILLING_CYCLE_LABEL].toLowerCase().replace("every ", "")} cycle`,
+    `Submit a ${PAYMENT_EVENT_LABEL[d.paymentEvent as keyof typeof PAYMENT_EVENT_LABEL].toLowerCase()} each ${BILLING_CYCLE_LABEL[d.billingCycle as keyof typeof BILLING_CYCLE_LABEL].toLowerCase().replace("every ", "")} cycle`,
     "Customer approves",
     `Paid ${PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL].toLowerCase()}`,
   ];
@@ -115,7 +115,7 @@ export function ServiceWizard({ initial, types: initialTypes, gate, providerName
                   <input value={newType} onChange={(e) => setNewType(e.target.value)} placeholder="Add your own type" aria-label="Add your own service type" className={INPUT + " mt-0"} />
                   <button type="button" disabled={newType.trim().length < 3} onClick={addType} className={BTN}>Add</button>
                 </div>
-                <p className="mt-1 text-[12px] text-ink-3">From the Business Type Taxonomy. Types you add are reviewed and may be merged with an existing one.</p>
+                <p className="mt-1 text-[12px] text-ink-3">From the Service Catalog. Types you add are reviewed and may be merged with an existing one.</p>
               </div>
               <label className={LABEL}>Name<input value={d.name} onChange={(e) => set("name", e.target.value)} placeholder="Oracle Cloud Procurement Consulting — Onsite" className={INPUT} /></label>
               <label className={LABEL}>Description<textarea value={d.description} onChange={(e) => set("description", e.target.value)} rows={4} placeholder="What you do, for whom, and where." className={AREA} /></label>
@@ -143,8 +143,8 @@ export function ServiceWizard({ initial, types: initialTypes, gate, providerName
             <>
               <label className={LABEL}>Billing cycle<select value={d.billingCycle} onChange={(e) => set("billingCycle", e.target.value)} className={INPUT}>{Object.entries(BILLING_CYCLE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
               <label className={LABEL}>Payment terms<select value={d.paymentTerms} onChange={(e) => set("paymentTerms", e.target.value)} className={INPUT}>{Object.entries(PAYMENT_TERMS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-              <label className={LABEL}>Payment trigger<select value={d.paymentTrigger} onChange={(e) => set("paymentTrigger", e.target.value)} className={INPUT}>{(["TIMESHEET", "PAYMENT_REQUEST", "INVOICE"] as const).map((k) => <option key={k} value={k}>{PAYMENT_TRIGGER_LABEL[k]}</option>)}</select></label>
-              <p className="text-[13.5px] text-ink-2">You submit a {PAYMENT_TRIGGER_LABEL[d.paymentTrigger as keyof typeof PAYMENT_TRIGGER_LABEL].toLowerCase()} at the end of each cycle. Terms start the day you submit, so a slow approval doesn&apos;t delay your pay. ERP buyers approve it in their own system.</p>
+              <label className={LABEL}>Payment Event<select value={d.paymentEvent} onChange={(e) => set("paymentEvent", e.target.value)} className={INPUT}>{(["TIMESHEET", "PAYMENT_REQUEST", "INVOICE"] as const).map((k) => <option key={k} value={k}>{PAYMENT_EVENT_LABEL[k]}</option>)}</select></label>
+              <p className="text-[13.5px] text-ink-2">You submit a {PAYMENT_EVENT_LABEL[d.paymentEvent as keyof typeof PAYMENT_EVENT_LABEL].toLowerCase()} at the end of each cycle. Terms start the day you submit, so a slow approval doesn&apos;t delay your pay. ERP buyers approve it in their own system.</p>
             </>
           )}
           {step === 3 && (
@@ -152,7 +152,7 @@ export function ServiceWizard({ initial, types: initialTypes, gate, providerName
               <dt className="font-semibold text-ink-3">Type</dt><dd>{typeName}</dd>
               <dt className="font-semibold text-ink-3">Name</dt><dd>{d.name || typeName}</dd>
               <dt className="font-semibold text-ink-3">Rate</dt><dd>{money(rateCents)} / {unit(d.uom)}{d.minimum ? ` · min ${d.minimum} ${unit(d.uom, Number(d.minimum))}` : ""}</dd>
-              <dt className="font-semibold text-ink-3">Billing</dt><dd>{BILLING_CYCLE_LABEL[d.billingCycle as keyof typeof BILLING_CYCLE_LABEL]} · {PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL]} · {PAYMENT_TRIGGER_LABEL[d.paymentTrigger as keyof typeof PAYMENT_TRIGGER_LABEL]}</dd>
+              <dt className="font-semibold text-ink-3">Billing</dt><dd>{BILLING_CYCLE_LABEL[d.billingCycle as keyof typeof BILLING_CYCLE_LABEL]} · {PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL]} · {PAYMENT_EVENT_LABEL[d.paymentEvent as keyof typeof PAYMENT_EVENT_LABEL]}</dd>
               <dt className="font-semibold text-ink-3">Expenses</dt><dd>{EXPENSES[d.expenses]}</dd>
             </dl>
           )}
@@ -177,7 +177,7 @@ export function ServiceWizard({ initial, types: initialTypes, gate, providerName
             <span className="block text-[12.5px] text-ink-3">{providerName}</span>
             {d.description && <p className="mt-2 line-clamp-3 text-[13px] text-ink-2">{d.description}</p>}
             <p className="mt-3 text-[22px] font-bold">{rateCents ? money(rateCents).replace(/\.00$/, "") : "$—"} <span className="text-[13px] font-normal text-ink-2">/ {unit(d.uom)}</span></p>
-            <p className="text-[12.5px] text-ink-2">Billed {BILLING_CYCLE_LABEL[d.billingCycle as keyof typeof BILLING_CYCLE_LABEL].toLowerCase()} · {PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL]} · {PAYMENT_TRIGGER_LABEL[d.paymentTrigger as keyof typeof PAYMENT_TRIGGER_LABEL]}</p>
+            <p className="text-[12.5px] text-ink-2">Billed {BILLING_CYCLE_LABEL[d.billingCycle as keyof typeof BILLING_CYCLE_LABEL].toLowerCase()} · {PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL]} · {PAYMENT_EVENT_LABEL[d.paymentEvent as keyof typeof PAYMENT_EVENT_LABEL]}</p>
             {d.expenses === "AT_COST" && <p className="text-[12.5px] text-ink-2">Expenses at cost, capped per order</p>}
           </div>
         </div>

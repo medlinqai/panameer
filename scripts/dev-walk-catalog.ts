@@ -21,7 +21,7 @@ async function validate(personId: string, payout: boolean) {
 async function main() {
   const prov = await party("PROVIDER", "Pia");
   const buyer = await party("BUYER", "Ben");
-  const svc = { name: "Procurement Consulting — Onsite", serviceType: "SERVICE_BY_QTY" as const, uom: "HOUR", rateCents: 12500, billingCycle: "MONTHLY" as const, paymentTerms: "NET30" as const, paymentTrigger: "TIMESHEET" as const, expenses: "AT_COST" as const };
+  const svc = { name: "Procurement Consulting — Onsite", serviceType: "SERVICE_BY_QTY" as const, uom: "HOUR", rateCents: 12500, billingCycle: "MONTHLY" as const, paymentTerms: "NET30" as const, paymentEvent: "TIMESHEET" as const, expenses: "AT_COST" as const };
   await refuses("publishing a service before the company is validated is refused", () => saveProviderService(prov.viewer, null, svc, true), "validated");
   const draft = await saveProviderService(prov.viewer, null, svc, false);
   check("Save Draft works without validation", !!draft.id && !(await prisma.providerService.findUnique({ where: { id: draft.id } }))!.published_at);
@@ -32,7 +32,7 @@ async function main() {
   const domain = await prisma.domain.findFirstOrThrow({ select: { id: true } });
   const productId = await saveServiceProductFromWizard(prov.viewer, null, {
     title: "Procurement Spend Dashboard (OTBI)", summary: "A ready-to-use OTBI dashboard.", kind: "DELIVERABLE", pricingType: "FIXED", priceCents: 100000, durationWeeks: 2,
-    capabilityDomainIds: [domain.id], deliverables: ["6 analyses + 1 dashboard page"], paymentTerms: "IMMEDIATE", paymentTrigger: "INSTALLATION", coverCode: "DSH",
+    capabilityDomainIds: [domain.id], deliverables: ["6 analyses + 1 dashboard page"], paymentTerms: "IMMEDIATE", paymentEvent: "INSTALLATION", coverCode: "DSH",
     milestones: [{ label: "Kickoff", percent: 50, trigger: "ORDER_ACCEPTED" }, { label: "Installed in test pod", percent: 50, trigger: "INSTALLATION" }],
   }, false);
   const ms = await prisma.serviceProductMilestone.findMany({ where: { service_product_id: productId }, orderBy: { sequence: "asc" } });

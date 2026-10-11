@@ -26,7 +26,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
     expenses: s?.expenses ?? "AT_COST",
     billingCycle: s?.billingCycle ?? "MONTHLY",
     paymentTerms: s?.paymentTerms ?? "NET30",
-    paymentTrigger: s?.paymentTrigger ?? "TIMESHEET",
+    paymentEvent: s?.paymentEvent ?? "TIMESHEET",
   };
   return (
     <div className="mx-auto w-full max-w-5xl">

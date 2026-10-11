@@ -28,7 +28,7 @@ export function ProviderServices({ initial }: { initial: ProviderServiceRow[] })
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-[18px] font-bold">Services &amp; Billing Terms</h2>
-          <p className="mt-1 max-w-2xl text-[14px] text-ink-2">Price = rate × quantity, and that is the not-to-exceed. At the end of each billing cycle you submit the trigger to the customer; payment terms start on submission.</p>
+          <p className="mt-1 max-w-2xl text-[14px] text-ink-2">Price = rate × quantity, and that is the not-to-exceed. At the end of each billing cycle you submit the payment event to the customer; payment terms start on submission.</p>
         </div>
         <a href="/catalog/services/new" className={BTN}>Create a Service</a>
       </div>
@@ -40,7 +40,7 @@ export function ProviderServices({ initial }: { initial: ProviderServiceRow[] })
             <div className="min-w-0">
               <p className="truncate text-[15px] font-bold">{s.name} {!s.published && <span className="ml-1 border border-line px-1.5 text-[11px] font-semibold text-ink-3">Draft</span>}</p>
               <p className="text-[13px] text-ink-2">
-                {s.serviceType === "SERVICE_BY_QTY" ? `$${((s.rateCents ?? 0) / 100).toFixed(2)} / ${(s.uom ?? "HOUR").toLowerCase()}` : `Up to $${((s.rateCents ?? 0) / 100).toFixed(2)} · drawn down`} · {termsLine({ billing_cycle: s.billingCycle, payment_terms: s.paymentTerms, payment_event: s.paymentTrigger })}
+                {s.serviceType === "SERVICE_BY_QTY" ? `$${((s.rateCents ?? 0) / 100).toFixed(2)} / ${(s.uom ?? "HOUR").toLowerCase()}` : `Up to $${((s.rateCents ?? 0) / 100).toFixed(2)} · drawn down`} · {termsLine({ billing_cycle: s.billingCycle, payment_terms: s.paymentTerms, payment_event: s.paymentEvent })}
               </p>
             </div>
             <span className="flex gap-3 text-[13px] font-semibold">

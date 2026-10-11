@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { PaymentTerms, PaymentEvent } from "@prisma/client";
-import { PAYMENT_TERMS_LABEL, PAYMENT_TRIGGER_LABEL } from "@/lib/billing-terms";
+import { PAYMENT_TERMS_LABEL, PAYMENT_EVENT_LABEL } from "@/lib/billing-terms";
 import { publishGate } from "@/lib/my-catalog";
 import { solutionViolations } from "@/lib/catalog/solution-types";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
@@ -27,7 +27,7 @@ export type ServiceProductInput = {
   milestones?: MilestoneInput[];
   capabilityDomainIds?: string[];
   paymentTerms?: PaymentTerms | null;
-  paymentTrigger?: PaymentEvent | null;
+  paymentEvent?: PaymentEvent | null;
   /** CAT-E003 wizard fields. */
   kind?: "DELIVERABLE" | "DEPLOYABLE" | "BLANKET" | null;
   pricingType?: "FIXED" | "RECURRING" | "NOT_TO_EXCEED" | null;
@@ -87,7 +87,7 @@ const shape = (p: {
   priceCents: p.price_cents,
   currency: p.currency,
   paymentTerms: p.payment_terms ?? null,
-  paymentTrigger: p.payment_event ?? null,
+  paymentEvent: p.payment_event ?? null,
   kind: p.kind ?? "DELIVERABLE",
   billingPeriod: p.billing_period ?? null,
   coverCode: p.cover_code ?? null,
@@ -146,7 +146,7 @@ function normalizeMilestones(input?: MilestoneInput[]) {
     label: clean(m.label, 120)!,
     percent: Math.round(Number(m.percent)),
     sequence: i,
-    payment_event: (m as MilestoneInput).trigger && (m as MilestoneInput).trigger! in PAYMENT_TRIGGER_LABEL ? (m as MilestoneInput).trigger! : null,
+    payment_event: (m as MilestoneInput).trigger && (m as MilestoneInput).trigger! in PAYMENT_EVENT_LABEL ? (m as MilestoneInput).trigger! : null,
   }));
 
   for (const m of milestones) {
@@ -195,7 +195,7 @@ function serviceProductData(input: ServiceProductInput) {
     cover_image_url: clean(input.coverImageUrl, 1000),
     role_id: input.roleTypeId || null,
     payment_terms: input.paymentTerms && input.paymentTerms in PAYMENT_TERMS_LABEL ? input.paymentTerms : null,
-    payment_event: input.paymentTrigger && input.paymentTrigger in PAYMENT_TRIGGER_LABEL ? input.paymentTrigger : null,
+    payment_event: input.paymentEvent && input.paymentEvent in PAYMENT_EVENT_LABEL ? input.paymentEvent : null,
     ...(input.kind ? { kind: input.kind } : {}),
     ...(input.pricingType ? { pricing_type: input.pricingType } : {}),
     ...(input.pricingType ? { billing_period: input.pricingType === "RECURRING" ? input.billingPeriod ?? "MONTHLY" : null } : {}),
