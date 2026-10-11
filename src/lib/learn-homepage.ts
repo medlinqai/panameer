@@ -157,7 +157,7 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
 export type BoardRow = { personId: string; userId: string | null; name: string; title: string | null; photoUrl: string | null; n: number; sub?: string };
 
 /** Every published path's lessons with a video, and who has finished which (every one done) — and when. */
-async function finishes() {
+export async function finishes() {
   const paths = await prisma.learningPath.findMany({
     where: { status: "PUBLISHED" },
     select: { id: true, instructor_person_id: true, courses: { select: { sections: { select: { lessons: { where: { retired_at: null }, select: { id: true, vimeo_ref: true, production_status: true, instructor_person_id: true } } } } } } },

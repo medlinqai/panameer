@@ -6,6 +6,8 @@ import { DataTable } from "@/components/admin/usage/parts";
 import { Overview, overviewLists } from "@/components/admin/usage/sections/overview";
 import { Register, registerLists } from "@/components/admin/usage/sections/register";
 import { Profile, profileLists } from "@/components/admin/usage/sections/profile";
+import { Connect, connectLists } from "@/components/admin/usage/sections/connect";
+import { Learn, learnLists } from "@/components/admin/usage/sections/learn";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Usage · Admin · Panameer" };
@@ -55,6 +57,8 @@ async function section(tab: Tab, c: Awaited<ReturnType<typeof usageCtx>>, app?: 
     case "overview": return <Overview c={c} app={app} />;
     case "register": return <Register c={c} />;
     case "profile": return <Profile c={c} />;
+    case "connect": return <Connect c={c} />;
+    case "learn": return <Learn c={c} />;
     default: return <p className="text-[14px] text-ink-2">Coming next.</p>;
   }
 }
@@ -64,6 +68,8 @@ async function listsFor(tab: Tab, c: Awaited<ReturnType<typeof usageCtx>>): Prom
     case "overview": return overviewLists(c);
     case "register": return registerLists(c);
     case "profile": return profileLists(c);
+    case "connect": return connectLists(c);
+    case "learn": return learnLists(c);
     default: return {};
   }
 }
