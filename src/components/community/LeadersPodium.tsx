@@ -13,7 +13,7 @@ const SLOT: Record<1 | 2 | 3, { x: number; top: number; r: number; num: number }
 const BASE = 240;
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("");
 
-export function LeadersPodium({ top, viewerId, scorers, viewerRank }: { top: GrowthRow[]; viewerId: string; scorers: number; viewerRank: number | null }) {
+export function LeadersPodium({ top, viewerId, scorers, viewerRank, unit = (n) => `${n} pts`, caption }: { top: Pick<GrowthRow, "personId" | "name" | "photoUrl" | "points">[]; viewerId: string; scorers: number; viewerRank: number | null; unit?: (n: number) => string; caption?: string }) {
   return (
     <div data-leaders-podium>
       <svg viewBox="0 0 340 280" width="100%" className="mx-auto block max-w-[320px]" role="img" aria-label="Top three this month">
@@ -48,15 +48,15 @@ export function LeadersPodium({ top, viewerId, scorers, viewerRank }: { top: Gro
               <rect x={s.x - w / 2} y={s.top} width={w} height={BASE - s.top} fill={INK} />
               {you && <rect x={s.x - w / 2} y={s.top} width={w} height={6} fill={MAG} />}
               <text x={s.x} y={s.top + (BASE - s.top) / 2 + (rank === 1 ? 4 : 2)} textAnchor="middle" fontSize={s.num} fontWeight={800} fill="#fff">{rank}</text>
-              <text x={s.x} y={s.top + (BASE - s.top) / 2 + (rank === 1 ? 32 : 26)} textAnchor="middle" fontSize={12} fontWeight={600} fill={OFF}>{row.points} pts</text>
-              <title>{`${row.name} · ${row.points} points`}</title>
+              <text x={s.x} y={s.top + (BASE - s.top) / 2 + (rank === 1 ? 32 : 26)} textAnchor="middle" fontSize={12} fontWeight={600} fill={OFF}>{unit(row.points)}</text>
+              <title>{`${row.name} · ${unit(row.points)}`}</title>
             </g>
           );
         })}
         <line x1={10} y1={BASE} x2={330} y2={BASE} stroke={OFF} strokeWidth={2} />
       </svg>
       <p className="mt-2 text-center text-[11px] text-ink-2">
-        This month · {scorers} {scorers === 1 ? "member" : "members"} with a score
+        {caption ?? `This month · ${scorers} ${scorers === 1 ? "member" : "members"} with a score`}
         {viewerRank && viewerRank > 3 ? ` · You're #${viewerRank} this month` : ""}
       </p>
     </div>

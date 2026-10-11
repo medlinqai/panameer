@@ -51,18 +51,20 @@ function Board({ rows, meUserId, empty, unit }: { rows: BoardRow[]; meUserId: st
   );
 }
 
-export function LearnBoards({ learners, teachers, lb, tb, meUserId, createHref, teaches = false }: { learners: BoardRow[]; teachers: BoardRow[]; lb: "month" | "all"; tb: "month" | "all"; meUserId: string; createHref: string | null; teaches?: boolean }) {
+export function LearnBoards({ learners, teachers, lb, tb, meUserId, createHref, teaches = false, seeAll }: { learners: BoardRow[]; teachers: BoardRow[]; lb: "month" | "all"; tb: "month" | "all"; meUserId: string; createHref: string | null; teaches?: boolean; seeAll?: { learners: string | null; teachers: string | null } }) {
   return (
     <div className="grid md:grid-cols-2">
-      <section data-top-learners className="min-w-0 py-6 md:pr-7">
+      <section id="top-learners" data-top-learners className="min-w-0 py-6 md:pr-7">
         <h2 className="text-[20px] font-bold">Top Learners <small className="ml-1 text-[12px] font-medium text-ink-3">paths finished {lb === "month" ? "this month" : "all time"}</small></h2>
         <Switch param="lb" value={lb} other={tb === "all" ? "tb=all" : ""} />
         <Board rows={learners} meUserId={meUserId} empty="Be the first to take this spot" unit="paths" />
+        {seeAll?.learners && <Link href={seeAll.learners} data-see-all-learners className="mt-3 inline-block text-[13.5px] font-bold text-magenta-dark">See All Learners →</Link>}
       </section>
-      <section data-top-teachers className="min-w-0 border-t border-line py-6 md:border-l md:border-t-0 md:pl-7">
+      <section id="top-teachers" data-top-teachers className="min-w-0 border-t border-line py-6 md:border-l md:border-t-0 md:pl-7">
         <h2 className="text-[20px] font-bold">Top Teachers <small className="ml-1 text-[12px] font-medium text-ink-3">learners {tb === "month" ? "this month" : "all time"}</small></h2>
         <Switch param="tb" value={tb} other={lb === "all" ? "lb=all" : ""} />
         <Board rows={teachers} meUserId={meUserId} empty="Teach what you know — publish a learning path" unit="learners" />
+        {seeAll?.teachers && <Link href={seeAll.teachers} data-see-all-teachers className="mt-3 block text-[13.5px] font-bold text-magenta-dark">See All Teachers →</Link>}
         {/* L-E051: creating a path is for admins and existing instructors; everyone else asks. */}
         {createHref ? <Link href={createHref} className="mt-4 inline-flex min-h-11 items-center border border-ink bg-surface px-5 text-[14px] font-semibold hover:bg-surface-hover">Create a Learning Path</Link> : teaches ? <WantToTeach label="Create a Learning Path" topic="New learning path proposal" prompt="What's the new path about?" /> : <WantToTeach />}
       </section>

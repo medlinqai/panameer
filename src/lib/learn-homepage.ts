@@ -187,7 +187,12 @@ async function finishes() {
 }
 
 /** L-E049: Top Learners — paths finished (every lesson with a video, certified counts too), then certificates, then lessons watched. */
-export async function topLearners(window: "month" | "all"): Promise<BoardRow[]> {
+export async function topLearners(window: "month" | "all", limit = 5): Promise<BoardRow[]> {
+  return (await rankLearners(window)).slice(0, limit);
+}
+
+/** LT-E001: the whole Top Learners ranking (real members only) — for the podium, your rank and the month's totals. */
+export async function rankLearners(window: "month" | "all"): Promise<BoardRow[]> {
   const since = window === "month" ? monthStart() : new Date(0);
   const [{ finished, progress }, certs] = await Promise.all([
     finishes(),
@@ -198,18 +203,23 @@ export async function topLearners(window: "month" | "all"): Promise<BoardRow[]> 
   for (const f of finished) if (f.at >= since) row(f.userId).paths.add(f.pathId);
   for (const c of certs) { row(c.user_id).paths.add(c.learning_path_id!); row(c.user_id).certs++; }
   for (const p of progress) if (p.completed_at >= since && tally.has(p.user_id)) row(p.user_id).lessons++;
-  const ranked = [...tally].filter(([, t]) => t.paths.size > 0).sort((a, b) => b[1].paths.size - a[1].paths.size || b[1].certs - a[1].certs || b[1].lessons - a[1].lessons).slice(0, 10);
+  const ranked = [...tally].filter(([, t]) => t.paths.size > 0).sort((a, b) => b[1].paths.size - a[1].paths.size || b[1].certs - a[1].certs || b[1].lessons - a[1].lessons);
   const people = await prisma.person.findMany({ where: { user_id: { in: ranked.map(([u]) => u) }, user: { is: { is_test: false } } }, select: { id: true, user_id: true, first_name: true, last_name: true, title: true, photo_url: true } });
   return ranked
     .flatMap(([u, t]) => {
       const p = people.find((x) => x.user_id === u);
       return p ? [{ personId: p.id, userId: p.user_id, name: nameOf(p), title: p.title, photoUrl: p.photo_url, n: t.paths.size, sub: `${t.paths.size} path${t.paths.size === 1 ? "" : "s"} finished · ${t.certs} certificate${t.certs === 1 ? "" : "s"}` }] : [];
-    })
-    .slice(0, 5);
+    });
+}
+
+/** LT-E001: real members who watched at least one lesson this month. */
+export async function learnersThisMonth(): Promise<number> {
+  const rows = await prisma.lessonProgress.groupBy({ by: ["user_id"], where: { completed_at: { gte: monthStart() } } });
+  return prisma.user.count({ where: { id: { in: rows.map((r) => r.user_id) }, is_test: false } });
 }
 
 /** L-E050: Top Teachers — every instructor of a published path (even with 0 learners), learners in the window, and how many finished. */
-export async function topTeachers(window: "month" | "all"): Promise<BoardRow[]> {
+export async function topTeachers(window: "month" | "all", limit = 5): Promise<BoardRow[]> {
   const since = window === "month" ? monthStart() : new Date(0);
   const { paths, finished } = await finishes();
   // The instructor: the path's expert, else whoever fronts the most lessons.
@@ -238,5 +248,5 @@ export async function topTeachers(window: "month" | "all"): Promise<BoardRow[]> 
     })
     .sort((a, b) => b.n - a.n || b.taught - a.taught || a.name.localeCompare(b.name))
     .map(({ taught, ...r }) => (void taught, r))
-    .slice(0, 5);
+    .slice(0, limit);
 }
