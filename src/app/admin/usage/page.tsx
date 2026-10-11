@@ -4,6 +4,8 @@ import type { Lists } from "@/lib/admin-usage/lists";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { DataTable } from "@/components/admin/usage/parts";
 import { Overview, overviewLists } from "@/components/admin/usage/sections/overview";
+import { Register, registerLists } from "@/components/admin/usage/sections/register";
+import { Profile, profileLists } from "@/components/admin/usage/sections/profile";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Usage · Admin · Panameer" };
@@ -51,6 +53,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
 async function section(tab: Tab, c: Awaited<ReturnType<typeof usageCtx>>, app?: string) {
   switch (tab) {
     case "overview": return <Overview c={c} app={app} />;
+    case "register": return <Register c={c} />;
+    case "profile": return <Profile c={c} />;
     default: return <p className="text-[14px] text-ink-2">Coming next.</p>;
   }
 }
@@ -58,6 +62,8 @@ async function section(tab: Tab, c: Awaited<ReturnType<typeof usageCtx>>, app?: 
 async function listsFor(tab: Tab, c: Awaited<ReturnType<typeof usageCtx>>): Promise<Lists> {
   switch (tab) {
     case "overview": return overviewLists(c);
+    case "register": return registerLists(c);
+    case "profile": return profileLists(c);
     default: return {};
   }
 }
