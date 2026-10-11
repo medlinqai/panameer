@@ -44,6 +44,8 @@ const EXTRA: Row[] = [
   { term: "Payment Trigger", category: "Company & payment", type: "Panameer term", definition: "The event that raises a payment request: a timesheet, a payment request, an invoice, or for products a download, installation or the customer's acceptance.", also: null, dont: null, shown: "Public", confirm: null },
   { term: "Billing Cycle", category: "Company & payment", type: "Panameer term", definition: "How often a service is billed: weekly, every 2 weeks, monthly or every 90 days. At the end of each cycle the provider submits the trigger.", also: null, dont: null, shown: "Public", confirm: null },
   { term: "Payment Terms", category: "Company & payment", type: "Panameer term", definition: "How long the customer has to pay once a payment request is submitted — Immediate, Net 15, Net 30, Net 45 or Net 60. Terms start on submission, not approval.", also: "Net terms", dont: null, shown: "Public", confirm: null },
+  // EST-E005 (2026-10-10)
+  { term: "Cost Estimate Request", category: "Marketplace & work", type: "Panameer term", definition: "A buyer asking a provider for a cost estimate — what they need, when, an optional budget and files. The provider builds the estimate or declines with a reason. Private to the two of them.", also: "Request an Estimate", dont: null, shown: "Public", confirm: null },
 ];
 const text = (v: ExcelJS.CellValue) => (v == null ? "" : typeof v === "object" && "richText" in v ? v.richText.map((r) => r.text).join("") : typeof v === "object" && "text" in v ? String(v.text) : String(v)).trim();
 
