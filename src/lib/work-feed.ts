@@ -40,6 +40,8 @@ export type WorkCard = {
   skills: string[];
   postedAt: string | null;
   identity: BuyerIdentity;
+  /** How many of the viewer's skills the request asks for. */
+  matched: number;
 };
 
 function money(cents: number | null, currency: string): string | null {
@@ -237,8 +239,5 @@ export async function getWorkFeed(input: {
     cards.sort((a, b) => b._overlap - a._overlap);
   }
 
-  return cards.map(({ _overlap, ...card }) => {
-    void _overlap;
-    return card;
-  });
+  return cards.map(({ _overlap, ...card }) => ({ ...card, matched: _overlap }));
 }

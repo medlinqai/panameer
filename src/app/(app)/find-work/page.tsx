@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile } from "@/lib/access";
 import { WorkFeed } from "@/components/home/WorkFeed";
 import { getWorkFeed, WORK_FEED_TABS, type WorkFeedTab } from "@/lib/work-feed";
+import { workHome } from "@/lib/work-home";
+import { WorkHome } from "@/components/work/WorkHome";
 
 export const metadata = { title: "Find Work · Panameer" };
 
@@ -28,6 +30,16 @@ export default async function FindWorkPage({
         select: { id: true, person_id: true },
       })
     : null;
+
+  // WS-E003: no tab = Work Home.
+  if (!sp.tab && !query && profile) {
+    const [home, best] = await Promise.all([workHome(profile.person_id), getWorkFeed({ tab: "best", profileId: profile.id, personId: profile.person_id })]);
+    return (
+      <div className="mx-auto w-full max-w-6xl">
+        <WorkHome home={home} best={best} />
+      </div>
+    );
+  }
 
   const cards = await getWorkFeed({
     tab,
