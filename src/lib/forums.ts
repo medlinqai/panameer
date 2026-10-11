@@ -118,7 +118,7 @@ function authorView(a: {
 
 /** One board and its threads, newest activity first. */
 /** TAKES A VIEWER AS OF , BECAUSE A PATH BOARD IS CLOSED. */
-export async function getBoard(slug: string, viewer: Viewer | null = null) {
+export async function getBoard(slug: string, viewer: Viewer | null = null, filter: { q?: string | null; lessonId?: string | null } = {}) {
   await ensureBoards();
   const gate = await prisma.forumBoard.findUnique({
     where: { slug },
@@ -148,10 +148,16 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
       hostPerson: { select: { id: true, first_name: true, last_name: true } },
       _count: { select: { members: { where: { state: "ACTIVE" } } } },
       threads: {
+        // L-E062: the group is the one home for Q&A — filter to a lesson, and search before asking.
+        where: {
+          ...(filter.lessonId ? { lesson_id: filter.lessonId } : {}),
+          ...(filter.q?.trim() ? { OR: [{ title: { contains: filter.q.trim(), mode: "insensitive" as const } }, { body: { contains: filter.q.trim(), mode: "insensitive" as const } }] } : {}),
+        },
         orderBy: { last_post_at: "desc" },
         select: {
           id: true,
           title: true,
+          lesson_id: true,
           reply_count: true,
           last_post_at: true,
           created_at: true,
@@ -161,6 +167,8 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
     },
   });
   if (!board) return null;
+  const lessonIds = [...new Set(board.threads.map((t) => t.lesson_id).filter((x): x is string => !!x))];
+  const lessonTitle = new Map((await prisma.lesson.findMany({ where: { id: { in: lessonIds } }, select: { id: true, title: true } })).map((l) => [l.id, l.title]));
   const member = await isGroupMember(
     viewer,
     { id: board.id, learning_path_id: board.learning_path_id },
@@ -202,6 +210,7 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
       id: t.id,
       title: t.title,
       replyCount: t.reply_count,
+      lesson: t.lesson_id ? lessonTitle.get(t.lesson_id) ?? null : null,
       lastPostAt: t.last_post_at.toISOString(),
       author: authorView(t.author),
     })),

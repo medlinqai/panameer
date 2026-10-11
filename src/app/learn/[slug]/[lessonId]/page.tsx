@@ -12,7 +12,6 @@ import { LessonPlayer } from "@/components/learn/LessonPlayer";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { StatusMark } from "@/components/learn/StatusMark";
 import { LessonStep } from "@/components/learn/LessonStep";
-import { LessonAsk } from "@/components/learn/LessonAsk";
 import { ConnectControls, type Relation } from "@/components/community/ConnectControls";
 import { canMessage } from "@/lib/messages";
 
@@ -69,9 +68,11 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const questions = await prisma.forumThread.findMany({
     where: { lesson_id: lessonId },
     orderBy: { created_at: "desc" },
-    take: 10,
+    take: 3,
     select: { id: true, title: true, reply_count: true, posts: { where: { marked_helpful_at: { not: null } }, take: 1, select: { author: { select: { first_name: true, last_name: true } } } } },
   });
+  // L-E062: the path group is the one home for Q&A — up to 3 of this lesson's questions here, the rest in the group.
+  const questionCount = await prisma.forumThread.count({ where: { lesson_id: lessonId } });
 
   const outline = (
     <aside data-lesson-outline className="border border-line lg:sticky lg:self-start" style={{ top: "calc(var(--pm-band-h) + 1.5rem)" }}>
@@ -173,9 +174,9 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
             <p className="mt-2 whitespace-pre-line text-[14.5px] leading-relaxed text-ink-2">{lesson.description || "No notes for this lesson yet."}</p>
           </section>
           <section className="min-w-0 border-t border-line py-6 md:border-l md:border-t-0 md:pl-7" data-lesson-questions>
-            <h2 className="text-[18px] font-bold">Questions on This Lesson <small className="ml-1 text-[12px] font-medium text-ink-3">{questions.length}</small></h2>
+            <h2 className="text-[18px] font-bold">Questions on This Lesson <small className="ml-1 text-[12px] font-medium text-ink-3">{questionCount}</small></h2>
             {questions.length === 0 ? (
-              <p className="mt-2 text-[13.5px] text-ink-2">No questions yet. Ask the first one — it goes to the path group too.</p>
+              <p className="mt-2 text-[13.5px] text-ink-2">No questions on this lesson yet. Ask the first one in the path&apos;s group.</p>
             ) : (
               <ul className="mt-1">
                 {questions.map((q) => {
@@ -191,7 +192,12 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
                 })}
               </ul>
             )}
-            {board && <LessonAsk boardSlug={board.slug} lessonId={lessonId} />}
+            {board && (
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <Link href={`/connect/groups/${board.slug}?lesson=${lessonId}&ask=1#ask`} data-lesson-ask className="inline-flex min-h-10 items-center border border-ink px-4 text-[13.5px] font-semibold hover:bg-black/[0.04]">Ask a Question</Link>
+                <Link href={`/connect/groups/${board.slug}?lesson=${lessonId}`} data-see-all-questions className="text-[13px] font-bold text-magenta-dark">{`See All Questions in the ${p.title} Group →`}</Link>
+              </div>
+            )}
           </section>
         </div>
       </div>

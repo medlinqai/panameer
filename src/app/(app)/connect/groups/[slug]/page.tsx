@@ -9,16 +9,22 @@ import { GroupJoin } from "@/components/community/GroupJoin";
 import { GROUP_OFFER_COPY } from "@/lib/group-membership";
 import { communityIdentityGaps } from "@/lib/community-identity";
 import { BackLink } from "@/components/console/BackLink";
+import { prisma } from "@/lib/prisma";
 
 /** One board: its threads, newest activity first, plus the composer (WS2-C). */
 export default async function BoardPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ q?: string; lesson?: string; ask?: string }>;
 }) {
   const gate = await guardPage("authenticated");
   const { slug } = await params;
-  const board = await getBoard(slug, gate);
+  // L-E062: ?lesson= shows that lesson's questions and tags a new one; ?ask=1 comes from the lesson's Ask a Question.
+  const { q, lesson: lessonId, ask } = await searchParams;
+  const lesson = lessonId && /^[0-9a-f-]{36}$/.test(lessonId) ? await prisma.lesson.findUnique({ where: { id: lessonId }, select: { id: true, title: true } }) : null;
+  const board = await getBoard(slug, gate, { q, lessonId: lesson?.id ?? null });
   if (!board) notFound();
 
   const identityGaps = await communityIdentityGaps(gate.userId);
@@ -59,9 +65,24 @@ export default async function BoardPage({
         </div>
       </header>
 
+      {/* L-E062: search the group before you ask. */}
+      <form method="get" data-group-search className="flex flex-wrap items-center gap-2">
+        {lesson && <input type="hidden" name="lesson" value={lesson.id} />}
+        {ask && <input type="hidden" name="ask" value="1" />}
+        <input name="q" defaultValue={q ?? ""} placeholder="Search the group before you ask" aria-label="Search the group before you ask" className="h-10 min-w-[220px] flex-1 border border-line bg-white px-3 text-[14px] outline-none focus:border-ink" />
+        <button className="inline-flex min-h-10 items-center border border-ink px-4 text-[13.5px] font-semibold hover:bg-surface-hover">Search</button>
+      </form>
+      {(lesson || q) && (
+        <p className="flex flex-wrap items-center gap-2 text-[13px]" data-group-filter>
+          {lesson && <span className="border border-magenta px-2 py-0.5 font-semibold text-magenta-dark">{`About: ${lesson.title}`}</span>}
+          {q && <span className="border border-ink px-2 py-0.5 font-semibold">{`Search: ${q}`}</span>}
+          <Link href={`/connect/groups/${board.slug}`} className="font-semibold underline underline-offset-4">Show All Questions</Link>
+        </p>
+      )}
+
       {board.threads.length === 0 ? (
         <div className="rounded-brand border border-dashed border-line px-4 py-8 text-center">
-          <p className="text-[15px] font-semibold">No questions here yet.</p>
+          <p className="text-[15px] font-semibold">{q || lesson ? "No questions match yet." : "No questions here yet."}</p>
           {/* CREDITS COPY PARKED 2026-09-03 — AND THIS IS */}
           <p className="mx-auto mt-1 max-w-md text-[13.5px] leading-relaxed text-ink-2">
             Someone has to go first.
@@ -86,6 +107,7 @@ export default async function BoardPage({
                   <p className="font-semibold group-hover:text-magenta">
                     {t.title}
                   </p>
+                  {t.lesson && <p className="text-[11.5px] font-semibold text-magenta-dark">{`About: ${t.lesson}`}</p>}
                   <p className="mt-0.5 text-[13px] text-ink-2">
                     {t.author.name}
                     {t.author.title ? ` · ${t.author.title}` : ""} ·{" "}
@@ -101,7 +123,7 @@ export default async function BoardPage({
         </ul>
       )}
 
-      <ForumComposer mode="thread" boardSlug={board.slug} identityGaps={identityGaps} />
+      <ForumComposer mode="thread" boardSlug={board.slug} identityGaps={identityGaps} lesson={lesson} />
     </div>
   );
 }

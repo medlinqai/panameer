@@ -9,10 +9,13 @@ export function ForumComposer({
   boardSlug,
   threadId,
   identityGaps = [],
+  lesson = null,
 }: {
   mode: "thread" | "reply";
   boardSlug?: string;
   threadId?: string;
+  /** L-E062: asked from a lesson — the question is tagged to it. */
+  lesson?: { id: string; title: string } | null;
   identityGaps?: { key: string; field: string; reason: string; href: string }[];
 }) {
   const blocked = identityGaps.length > 0;
@@ -32,7 +35,7 @@ export function ForumComposer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
           mode === "thread"
-            ? { action: "thread", boardSlug, title, body }
+            ? { action: "thread", boardSlug, title, body, ...(lesson ? { lessonId: lesson.id } : {}) }
             : { action: "reply", threadId, body }
         ),
       });
@@ -54,10 +57,11 @@ export function ForumComposer({
   };
 
   return (
-    <form onSubmit={submit} className="border-t border-line py-5">
+    <form id={mode === "thread" ? "ask" : undefined} onSubmit={submit} className="scroll-mt-24 border-t border-line py-5">
       <h2 className="font-display text-[16px] font-bold">
-        {mode === "thread" ? "Ask A Question" : "Reply"}
+        {mode === "thread" ? "Ask a Question" : "Reply"}
       </h2>
+      {mode === "thread" && lesson && <p data-about-lesson className="mt-1 text-[12.5px] font-semibold text-magenta-dark">{`About: ${lesson.title}`}</p>}
       {/* CREDITS COPY PARKED 2026-09-03 — the feature is commented */}
       {/* {mode === "thread" && ( */}
 
