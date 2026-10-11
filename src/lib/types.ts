@@ -11,6 +11,8 @@ export type Me = {
   /** Unread messages, and notifications that need the person (messages excluded) — the avatar count is their sum. */
   messagesUnread: number;
   notificationsNeedAction: number;
+  /** SH-E002: items in the Shop cart (the band's cart icon; absent at zero). */
+  cartCount: number;
   person: {
     id: string;
     firstName: string;

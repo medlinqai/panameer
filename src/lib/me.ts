@@ -64,16 +64,18 @@ export async function getMe(viewer: Viewer) {
 
   // Messages have their own count, so message notifications are left out of the notification counts.
   const notMessages = { person_id: person.id, delivered_in_app_at: { not: null }, read_at: null, NOT: { event_key: "message.received" } };
-  const [notificationsUnread, notificationsNeedAction, messagesUnread] = await Promise.all([
+  const [notificationsUnread, notificationsNeedAction, messagesUnread, cartCount] = await Promise.all([
     prisma.notification.count({ where: notMessages }),
     prisma.notification.count({ where: { ...notMessages, requires_action: true, resolved_at: null } }),
     prisma.message.count({ where: { to_user_id: viewer.userId, read_at: null } }),
+    prisma.cartLine.aggregate({ where: { cart: { buyer_person_id: person.id } }, _sum: { quantity: true } }).then((r) => r._sum.quantity ?? 0),
   ]);
 
   return {
     notificationsUnread,
     notificationsNeedAction,
     messagesUnread,
+    cartCount,
     person: {
       id: person.id,
       firstName: person.first_name,

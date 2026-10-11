@@ -109,6 +109,18 @@ export function AppHeader() {
             drops below sm — a glyph nobody taps on a phone. */}
         {/* Bug icon removed (Scott 2026-10-07): Report a Problem lives under Support in the avatar menu. */}
 
+        {/* SH-E002: the cart, once something is in it. */}
+        {(me?.cartCount ?? 0) > 0 && (
+          <IconLink href="/cart" label="Cart" active={pathname === "/cart"}>
+            <span className="relative inline-flex" data-cart-count={me?.cartCount}>
+              <CartIcon />
+              <span aria-label={`${me?.cartCount} in your cart`} className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-magenta px-1 text-[10px] font-bold text-white">
+                {(me?.cartCount ?? 0) > 9 ? "9+" : me?.cartCount}
+              </span>
+            </span>
+          </IconLink>
+        )}
+
         {/* THE BADGE SHIPS WITH THE FEED, IN ONE CHANGE (`P1-ALL`, 2026-09-01). */}
         <IconLink
           href={NOTIFICATIONS_NAV.href}
@@ -168,6 +180,16 @@ function IconLink({
 
 /* One inline SVG rather than an icon dependency. */
 const S = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+
+function CartIcon() {
+  return (
+    <svg {...S} className="shrink-0">
+      <circle cx="9" cy="20" r="1.4" />
+      <circle cx="18" cy="20" r="1.4" />
+      <path d="M2.5 3.5h2.6l2.4 11.2h11.3l2.2-8H6.3" />
+    </svg>
+  );
+}
 
 function SearchIcon() {
   return (

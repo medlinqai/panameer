@@ -13,11 +13,11 @@ export function BuyButtons({ productId, signedIn, size = "md" }: { productId: st
   const primary = size === "sm" ? "inline-flex min-h-9 items-center justify-center bg-ink px-4 text-[13px] font-semibold text-surface hover:bg-ink-hover disabled:opacity-40" : "inline-flex min-h-11 items-center justify-center bg-ink px-6 text-[14px] font-semibold text-surface hover:bg-ink-hover disabled:opacity-40";
   const secondary = size === "sm" ? "inline-flex min-h-9 items-center justify-center border border-ink bg-surface px-4 text-[13px] font-semibold hover:bg-surface-hover disabled:opacity-40" : "inline-flex min-h-11 items-center justify-center border border-ink bg-surface px-6 text-[14px] font-semibold hover:bg-surface-hover disabled:opacity-40";
   if (!signedIn) {
-    const back = (buy: boolean) => `/login?callbackUrl=${encodeURIComponent(`/cart?add=${productId}${buy ? "" : "&stay=1"}`)}`;
+    const back = `/login?callbackUrl=${encodeURIComponent(`/cart?add=${productId}`)}`;
     return (
       <div data-buy-buttons className="flex flex-wrap items-center gap-2">
-        <Link href={back(true)} className={primary}>Buy Now</Link>
-        <Link href={back(false)} className={secondary}>Add to Cart</Link>
+        <Link href={back} className={primary}>Buy Now</Link>
+        <Link href={back} className={secondary}>Add to Cart</Link>
       </div>
     );
   }
