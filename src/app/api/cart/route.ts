@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { addToCart, CartError, placeOrder, removeLine, setQuantity } from "@/lib/cart";
+import { SignGateError } from "@/lib/your-path";
 
 const BODY = z.discriminatedUnion("action", [
   z.object({ action: z.literal("add"), productId: z.string().uuid(), quantity: z.number().int().min(1).max(99).optional() }),
@@ -24,6 +25,10 @@ export async function POST(req: Request) {
     else return NextResponse.json({ ok: true, orders: await placeOrder(viewer) });
     return NextResponse.json({ ok: true });
   } catch (e) {
+    if (e instanceof SignGateError) {
+      const todo = e.gate.items.filter((i) => !i.done).map((i) => `${i.company}: ${i.item}`).join(" · ");
+      return NextResponse.json({ error: `Both companies need to be validated before ordering. Still to do: ${todo}`, code: "SIGN_GATE" }, { status: 409 });
+    }
     if (e instanceof CartError) return NextResponse.json({ error: e.message, code: e.code }, { status: e.code === "NOT_FOUND" ? 404 : 400 });
     throw e;
   }

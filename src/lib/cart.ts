@@ -4,6 +4,7 @@ import { notify } from "@/lib/notifications";
 import { formatCents } from "@/lib/display";
 import { resolveCommissionBps } from "@/lib/application-commissions";
 import { snapshotMilestones } from "@/lib/order-milestones";
+import { assertCanSign } from "@/lib/your-path";
 import type { Viewer } from "@/lib/access";
 
 // SH-E002/E003: the Shop cart — service products at the listed price; Place Order makes one work order per provider.
@@ -110,6 +111,8 @@ export async function placeOrder(viewer: Viewer): Promise<{ orderId: string; pro
     const k = products.get(l.service_product_id)!.providerProfile.person_id;
     byProvider.set(k, [...(byProvider.get(k) ?? []), l]);
   }
+  // Placing signs the order for the buyer, so both companies are validated first, as for any work order.
+  for (const providerPersonId of byProvider.keys()) await assertCanSign(p.id, p.id, providerPersonId);
   const buyerName = `${p.first_name} ${p.last_name}`.trim();
   const placed: { orderId: string; providerName: string; open: boolean }[] = [];
   for (const [providerPersonId, group] of byProvider) {
