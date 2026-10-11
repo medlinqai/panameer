@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 
+/** TL-E007: a real company — not a "MyCo Test…" fixture, and with at least one approved member whose sign-in isn't a test account. */
+export const REAL_COMPANY = { NOT: { name: { startsWith: "MyCo Test" } }, memberships: { some: { status: "APPROVED" as const, person: { user: { is: { is_test: false } } } } } };
+
 // TX-E003: business types a provider company sells under (more than one allowed). Only seeded, visible types are offered.
 export async function offeredBusinessTypes() {
   return prisma.businessType.findMany({

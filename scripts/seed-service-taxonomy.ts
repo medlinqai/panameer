@@ -6,6 +6,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import type { PricingModel, ServiceDelivery, ServiceKind, ServiceUnit } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { REAL_COMPANY } from "@/lib/business-types";
 
 const APPLY = process.argv.includes("--apply");
 
@@ -111,7 +112,7 @@ async function main() {
     const a = areas.find((x) => x.label.toLowerCase().startsWith(o.name.toLowerCase()));
     note("7 offerings → areas", a ? "map" : "needs Scott", o.name, a ? `→ ${a.code}` : "no clear area");
   }
-  const providerCos = await prisma.company.findMany({ where: { archived_at: null, memberships: { some: { status: "APPROVED", person: { is_service_provider: true } } }, businessTypes: { none: {} } }, select: { id: true, name: true } });
+  const providerCos = await prisma.company.findMany({ where: { AND: [{ archived_at: null, memberships: { some: { status: "APPROVED", person: { is_service_provider: true } } }, businessTypes: { none: {} } }, REAL_COMPANY] }, select: { id: true, name: true } });
   note("8 provider business types", "link ERP Consulting", `${providerCos.length} provider companies with none yet`, providerCos.slice(0, 8).map((c) => c.name).join(", "));
 
   mkdirSync("scripts/out", { recursive: true });

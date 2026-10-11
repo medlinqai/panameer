@@ -1,11 +1,14 @@
 // Taxonomy leftovers (Scott OK 2026-10-11): the rows the Service Taxonomy seed left for Scott. No deletes — retired rows are
 // hidden or marked. Dry run by default: writes scripts/out/taxonomy_leftovers_dryrun.csv. Scott runs it with --apply.
-// Run: npx tsx --env-file=.env.local scripts/seed-taxonomy-leftovers.ts [--apply]
+// Run: npx tsx --env-file=.env.local scripts/seed-taxonomy-leftovers.ts [--trial | --apply]
 import { mkdirSync, writeFileSync } from "node:fs";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { REAL_COMPANY } from "@/lib/business-types";
 
 const APPLY = process.argv.includes("--apply");
+// --trial: run every write inside a transaction, check the result, then roll back (proves --apply without keeping anything).
+const TRIAL = process.argv.includes("--trial");
 type Tx = Prisma.TransactionClient;
 type Row = { step: string; action: string; target: string; detail: string };
 const plan: Row[] = [];
@@ -128,6 +131,13 @@ async function aiPillars() {
   }
 }
 
+/** TL-E007: test companies come off ERP Consulting (link rows only; the companies are untouched). Future seeds use REAL_COMPANY. */
+async function testCompanies() {
+  const links = await prisma.companyBusinessType.findMany({ where: { company: { NOT: REAL_COMPANY } }, select: { id: true, company: { select: { name: true } }, businessType: { select: { name: true } } } });
+  for (const l of links) note("TL-E007", "unlink", l.company.name, `from ${l.businessType.name} (test company)`);
+  if (links.length) writes.push((tx) => tx.companyBusinessType.deleteMany({ where: { id: { in: links.map((l) => l.id) } } }));
+}
+
 async function main() {
   await oldErp();
   await aiAgentSupport();
@@ -135,6 +145,7 @@ async function main() {
   await epmGrc();
   await practicePillars();
   await aiPillars();
+  await testCompanies();
 
   mkdirSync("scripts/out", { recursive: true });
   const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
@@ -142,6 +153,22 @@ async function main() {
   const tally: Record<string, number> = {};
   for (const r of plan) tally[`${r.step} · ${r.action}`] = (tally[`${r.step} · ${r.action}`] ?? 0) + 1;
   console.log(JSON.stringify({ applied: APPLY, rows: plan.length, writes: writes.length, ...tally, csv: "scripts/out/taxonomy_leftovers_dryrun.csv" }, null, 1));
+  if (TRIAL) {
+    const ROLLBACK = new Error("trial rollback");
+    try {
+      await prisma.$transaction(async (tx) => {
+        for (const w of writes) await w(tx);
+        const left = await tx.pillar.findMany({ where: { visible_to_members: true, area_id: null, role_id: null }, select: { name: true } });
+        const unlinked = await tx.companyBusinessType.count({ where: { company: { NOT: REAL_COMPANY } } });
+        console.log(JSON.stringify({ trial: "all writes ran", pillarsNeedingAHome: left.map((p) => p.name), testCompanyLinksLeft: unlinked, erpHidden: (await tx.businessType.findUnique({ where: { code: "ERP" } }))?.hidden }));
+        throw ROLLBACK;
+      }, { timeout: 180_000 });
+    } catch (e) {
+      if (e !== ROLLBACK) throw e;
+      console.log("trial rolled back — nothing kept");
+    }
+    return;
+  }
   if (!APPLY) return;
   await prisma.$transaction(async (tx) => { for (const w of writes) await w(tx); }, { timeout: 180_000 });
   console.log("applied");
