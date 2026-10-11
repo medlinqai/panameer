@@ -106,3 +106,25 @@ export async function answerRequestsFor(estimateId: string) {
   await prisma.costEstimateRequest.updateMany({ where: { id: { in: rows.map((r) => r.id) } }, data: { status: "ANSWERED" } });
   await prisma.notification.updateMany({ where: { dedupe_key: { in: rows.map((r) => `estimate.requested:${r.id}`) }, resolved_at: null }, data: { resolved_at: new Date() } });
 }
+
+export type EstimateListRow = { kind: "estimate" | "request"; id: string; href: string; number: string; other: string; title: string; totalCents: number | null; status: string; updated: Date };
+
+/** EST-E003: both sides of My › Cost Estimates. */
+export async function estimatesPage(viewer: Viewer) {
+  const p = await me(viewer);
+  const [asCustomer, asProvider, myRequests, waiting] = await Promise.all([
+    prisma.costEstimate.findMany({ where: { customer_person_id: p.id, status: { not: "DRAFT" } }, orderBy: { updated_at: "desc" }, take: 100, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, select: { total_cents: true } } } }),
+    prisma.costEstimate.findMany({ where: { provider_person_id: p.id }, orderBy: { updated_at: "desc" }, take: 100, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, select: { total_cents: true } } } }),
+    prisma.costEstimateRequest.findMany({ where: { requester_person_id: p.id }, orderBy: { updated_at: "desc" }, take: 100 }),
+    prisma.costEstimateRequest.findMany({ where: { provider_person_id: p.id, status: "OPEN" }, orderBy: { created_at: "asc" }, take: 100 }),
+  ]);
+  const ids = [...new Set([...asCustomer.map((e) => e.provider_person_id), ...asProvider.map((e) => e.customer_person_id), ...myRequests.map((r) => r.provider_person_id), ...waiting.map((r) => r.requester_person_id)].filter((x): x is string => !!x))];
+  const names = new Map((await prisma.person.findMany({ where: { id: { in: ids } }, select: { id: true, first_name: true, last_name: true } })).map((x) => [x.id, nameOf(x)]));
+  const est = (e: (typeof asCustomer)[number], other: string | null): EstimateListRow => ({ kind: "estimate", id: e.id, href: `/estimates/${e.id}`, number: e.estimate_number, other: other ?? "—", title: e.title, totalCents: e.revisions[0]?.total_cents ?? null, status: e.status, updated: e.updated_at });
+  const req = (r: (typeof myRequests)[number], other: string): EstimateListRow => ({ kind: "request", id: r.id, href: `/estimates/requests/${r.id}`, number: "Request", other, title: firstLine(r.description), totalCents: null, status: `REQUEST_${r.status}`, updated: r.updated_at });
+  return {
+    received: [...asCustomer.map((e) => est(e, names.get(e.provider_person_id) ?? null)), ...myRequests.filter((r) => r.status !== "ANSWERED").map((r) => req(r, names.get(r.provider_person_id) ?? "—"))].sort((a, b) => b.updated.getTime() - a.updated.getTime()),
+    waiting: waiting.map((r) => req(r, names.get(r.requester_person_id) ?? "—")),
+    sent: asProvider.map((e) => est(e, (e.customer_person_id && names.get(e.customer_person_id)) || e.customer_email)),
+  };
+}
