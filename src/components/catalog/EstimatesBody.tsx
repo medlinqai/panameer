@@ -34,43 +34,39 @@ function Rows({ rows, withdraw = false }: { rows: EstimateListRow[]; withdraw?: 
   );
 }
 
-// EST-E003: My › Estimates — Received (buyer) and Sent (provider). Private to the two parties of each.
-export async function EstimatesBody({ viewer, raw, base, tabs }: { viewer: Viewer; raw?: string; base: string; tabs: React.ReactNode }) {
+// Scott 2026-10-12: one side per page. My Catalog › Estimates = the seller's (requests waiting on you + estimates you sent);
+// My Estimates (Shop / My menu) = the buyer's (estimates and requests you've received or made). Private to the two parties of each.
+export async function EstimatesBody({ viewer, side, tabs, seller = false }: { viewer: Viewer; side: "seller" | "buyer"; tabs: React.ReactNode; seller?: boolean }) {
   const d = await estimatesPage(viewer);
-  const tab = raw === "sent" || raw === "received" ? raw : d.received.length === 0 && (d.sent.length || d.waiting.length) ? "sent" : "received";
+  if (side === "seller") {
+    return (
+      <div className="pm-white-page mx-auto w-full max-w-5xl" data-estimates-side="seller">
+        {tabs}
+        <h1 className="mt-1 text-[28px] font-bold">Estimates</h1>
+        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[14px] text-ink-2">Quotes you send to one customer, private to the two of you.</p>
+          <Link href="/catalog/estimates/new" data-create-estimate className="inline-flex min-h-10 shrink-0 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover">Create an Estimate</Link>
+        </div>
+        <section data-requests-waiting className="mt-6">
+          <h2 className="mb-2 text-[17px] font-bold">Requests Waiting on You{d.waiting.length > 0 && <small className="ml-1.5 text-[12px] font-medium text-ink-3">{d.waiting.length}</small>}</h2>
+          {d.waiting.length ? <Rows rows={d.waiting} /> : <p className="border-t border-line pt-3 text-[14px] text-ink-2">No requests right now. Buyers ask from your profile, your services and your Service Products.</p>}
+        </section>
+        <section data-estimates-sent className="mt-8">
+          <h2 className="mb-2 text-[17px] font-bold">Sent Estimates{d.sent.length > 0 && <small className="ml-1.5 text-[12px] font-medium text-ink-3">{d.sent.length}</small>}</h2>
+          {d.sent.length ? <Rows rows={d.sent} /> : <p className="border-t border-line pt-3 text-[14px] text-ink-2">None yet.</p>}
+        </section>
+      </div>
+    );
+  }
   return (
-    <div className="pm-white-page mx-auto w-full max-w-5xl">
+    <div className="pm-white-page mx-auto w-full max-w-5xl" data-estimates-side="buyer">
       {tabs}
-      <h1 className="mt-1 text-[28px] font-bold">Estimates</h1>
-      <p className="mt-1 text-[14px] text-ink-2">Quotes for one customer, private to the two of you.</p>
-      {/* Inner Received · Sent switch: a plain underline row, flush with the heading (PageTabs is the full-bleed area bar and painted over the subtitle). */}
-      <nav data-estimate-tabs className="mt-5 mb-5 flex gap-6 border-b border-line">
-        {[
-          { key: "received", label: `Received${d.received.length ? ` (${d.received.length})` : ""}` },
-          { key: "sent", label: `Sent${d.sent.length + d.waiting.length ? ` (${d.sent.length + d.waiting.length})` : ""}` },
-        ].map((t) => (
-          <Link key={t.key} href={`${base}?tab=${t.key}`} aria-current={tab === t.key ? "page" : undefined} className={tab === t.key ? "-mb-px border-b-2 border-magenta pb-2.5 text-[14px] font-semibold text-ink" : "-mb-px border-b-2 border-transparent pb-2.5 text-[14px] font-semibold text-ink-2 hover:text-ink"}>
-            {t.label}
-          </Link>
-        ))}
-      </nav>
-      {tab === "received" ? (
-        d.received.length ? <Rows rows={d.received} withdraw /> : <p className="text-[14px] text-ink-2">Nothing yet. Ask a provider from their profile or a service: <b>Request an Estimate</b>.</p>
-      ) : (
-        <>
-          {d.waiting.length > 0 && (
-            <section data-requests-waiting className="mb-6">
-              <h2 className="mb-2 text-[17px] font-bold">Requests Waiting on Me <small className="ml-1 text-[12px] font-medium text-ink-3">{d.waiting.length}</small></h2>
-              <Rows rows={d.waiting} />
-            </section>
-          )}
-          <div className="mb-2 flex items-baseline justify-between gap-2">
-            <h2 className="text-[17px] font-bold">Estimates</h2>
-            <Link href="/catalog/estimates/new" className="text-[13px] font-bold text-magenta-dark underline underline-offset-4">+ Create</Link>
-          </div>
-          {d.sent.length ? <Rows rows={d.sent} /> : <p className="text-[14px] text-ink-2">No estimates yet.</p>}
-        </>
-      )}
+      <h1 className="mt-1 text-[28px] font-bold">My Estimates</h1>
+      <p className="mt-1 text-[14px] text-ink-2">Estimates providers have sent you, and the ones you've asked for.</p>
+      <div className="mt-6">
+        {d.received.length ? <Rows rows={d.received} withdraw /> : <p className="border-t border-line pt-3 text-[14px] text-ink-2">Nothing yet. Ask a provider from their profile or a service: <b>Request an Estimate</b>.</p>}
+      </div>
+      {seller && <p className="mt-6 text-[13.5px] text-ink-2">Estimates you send to customers are in <Link href="/catalog/estimates" className="font-bold text-magenta-dark underline underline-offset-4">My Catalog › Estimates</Link>.</p>}
     </div>
   );
 }

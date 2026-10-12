@@ -1,12 +1,16 @@
 import { guardPage } from "@/lib/guard";
 import { ShopTabs } from "@/components/shop/ShopTabs";
 import { EstimatesBody } from "@/components/catalog/EstimatesBody";
+import { canProvideServices } from "@/lib/access";
+import { redirect } from "next/navigation";
 
 export const metadata = { title: "Estimates · Panameer" };
 export const dynamic = "force-dynamic";
 
-// EST-E003: My › Estimates — Received (buyer) and Sent (provider). Sellers reach the same list under My Catalog.
+// My Estimates = the buyer side (Scott 2026-10-12). Sellers' sent estimates live in My Catalog › Estimates; old ?tab=sent links go there.
 export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const viewer = await guardPage("authenticated");
-  return <EstimatesBody viewer={viewer} raw={(await searchParams).tab} base="/estimates" tabs={<ShopTabs />} />;
+  const seller = canProvideServices(viewer);
+  if ((await searchParams).tab === "sent" && seller) redirect("/catalog/estimates");
+  return <EstimatesBody viewer={viewer} side="buyer" seller={seller} tabs={<ShopTabs />} />;
 }
