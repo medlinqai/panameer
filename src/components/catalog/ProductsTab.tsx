@@ -30,26 +30,44 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
   const [f, setF] = useState<ProductForm>(start?.form ?? (preset ? { ...EMPTY, serviceTypeId: preset.id, pricing: pricingFor(preset.pricing_model), delivery: (preset.delivery as ProductForm["delivery"]) ?? null, leadTimeDays: preset.lead_time_days } : EMPTY));
   const [price, setPrice] = useState(start?.form.priceCents != null ? String(start.form.priceCents / 100) : "");
   const [open, setOpen] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(!!start || !!preset);
+  const [allTypes, setAllTypes] = useState(types);
+  const [newType, setNewType] = useState<string | null>(null);
   const [drag, setDrag] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
   const set = <K extends keyof ProductForm>(k: K, v: ProductForm[K]) => setF((x) => ({ ...x, [k]: v }));
-  const type = types.find((t) => t.id === f.serviceTypeId) ?? null;
+  const type = allTypes.find((t) => t.id === f.serviceTypeId) ?? null;
   const processes = [...new Set(domains.map((d) => d.process))];
-  const groups = [...new Set(types.map((t) => t.serviceCategory?.name ?? "Other"))];
+  const groups = [...new Set(allTypes.map((t) => t.serviceCategory?.name ?? "Other"))];
 
   const edit = (p: Product | null) => {
     setId(p?.id ?? null);
     setF(p?.form ?? EMPTY);
     setPrice(p?.form.priceCents != null ? String(p.form.priceCents / 100) : "");
     setMsg(null);
-    formRef.current?.scrollIntoView({ behavior: "smooth" });
+    setShowForm(true);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
   };
   const pickType = (tid: string) => {
-    const t = types.find((x) => x.id === tid);
+    if (tid === "__new__") { setNewType(""); return; }
+    const t = allTypes.find((x) => x.id === tid);
     setF((x) => ({ ...x, serviceTypeId: tid || null, ...(t && !id ? { pricing: pricingFor(t.pricing_model), delivery: (t.delivery as ProductForm["delivery"]) ?? x.delivery, leadTimeDays: t.lead_time_days ?? x.leadTimeDays } : {}) }));
+  };
+  const addType = async () => {
+    const name = (newType ?? "").trim();
+    if (name.length < 3) return;
+    setBusy("type");
+    const r = await fetch("/api/catalog/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "addType", name }) });
+    const j = await r.json().catch(() => ({}));
+    setBusy(null);
+    if (!r.ok) return setMsg(j.error ?? "Could not add that type");
+    const t = { id: j.type.id as string, name: j.type.name as string, pricing_model: "FIXED", units: ["EACH"], delivery: "OFFSITE", lead_time_days: null, serviceCategory: { name: "Your Types" } } as unknown as PType;
+    setAllTypes((xs) => (xs.some((x) => x.id === t.id) ? xs : [...xs, t]));
+    setNewType(null);
+    setF((x) => ({ ...x, serviceTypeId: t.id }));
   };
   const upload = async (files: FileList | null) => {
     for (const file of Array.from(files ?? []).slice(0, 5 - f.images.length)) {
@@ -86,9 +104,11 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
 
   return (
     <div data-products-tab>
-      <div className="mt-2 flex justify-end">
-        <button type="button" onClick={() => edit(null)} className="inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-bold text-surface">+ Create a Service Product</button>
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[14px] text-ink-2">Fixed-price and monthly offers buyers can buy in Shop.</p>
+        <button type="button" data-add-product onClick={() => edit(null)} className="inline-flex min-h-10 shrink-0 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover">Add a Service Product</button>
       </div>
+      {products.length === 0 && !showForm && <p className="mt-6 border border-dashed border-line p-4 text-center text-[13.5px] text-ink-3">No Service Products yet. Click Add a Service Product to create your first one.</p>}
       {products.length > 0 && (
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {products.map((p) => (
@@ -109,9 +129,8 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
           ))}
         </div>
       )}
-      <p className="mt-3 text-[12.5px] text-ink-3">{types.map((t) => t.name).join(" · ")}</p>
 
-      <div ref={formRef} id="create" className="mt-5 scroll-mt-24 border-2 border-ink" data-product-form>
+      {showForm && <div ref={formRef} id="create" className="mt-5 scroll-mt-24 border-2 border-ink" data-product-form>
         <div className="flex flex-wrap items-center justify-between gap-2 bg-ink px-4 py-3 text-white">
           <b className="text-[15px]">{id ? `Edit ${f.title || "Service Product"}` : "Create a Service Product"}</b>
           <span className="text-[12px] text-[#B9BDD0]">Saves as Draft · nothing goes live until you publish</span>
@@ -124,8 +143,15 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
             <label className={LBL}>Type
               <select value={f.serviceTypeId ?? ""} onChange={(e) => pickType(e.target.value)} className={INPUT} aria-label="Type">
                 <option value="">Choose a type</option>
-                {groups.map((g) => <optgroup key={g} label={g}>{types.filter((t) => (t.serviceCategory?.name ?? "Other") === g).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup>)}
+                {groups.map((g) => <optgroup key={g} label={g}>{allTypes.filter((t) => (t.serviceCategory?.name ?? "Other") === g).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup>)}
+                <option value="__new__">+ Add a Type…</option>
               </select>
+              {newType !== null && (
+                <span data-add-type className="mt-1 flex gap-2">
+                  <input autoFocus value={newType} onChange={(e) => setNewType(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addType(); } if (e.key === "Escape") setNewType(null); }} placeholder="New type, e.g. Data Migration Toolkit" maxLength={60} className={INPUT} aria-label="New type name" />
+                  <button type="button" disabled={(newType ?? "").trim().length < 3 || busy === "type"} onClick={addType} className="shrink-0 bg-ink px-3 text-[13px] font-semibold text-surface disabled:opacity-40">Add</button>
+                </span>
+              )}
             </label>
           </div>
           <label className={`${LBL} mt-3`}>Description<textarea value={f.summary} onChange={(e) => set("summary", e.target.value)} className={`${INPUT} min-h-16`} aria-label="Description" /></label>
@@ -223,7 +249,7 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
           </span>
         </div>
         {msg && <p role="status" className="px-4 pb-3 text-right text-[13px] font-semibold">{msg}</p>}
-      </div>
+      </div>}
     </div>
   );
 }

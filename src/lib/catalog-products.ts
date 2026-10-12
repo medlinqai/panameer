@@ -4,6 +4,7 @@ import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { gapSentence, sellGaps } from "@/lib/gate-reads";
 import { publishGate } from "@/lib/my-catalog";
 import { LIVE_TYPE } from "@/lib/build-catalog";
+const OWN_PRODUCT_TYPE = { merged_into_id: null, hidden: false, status: "SUGGESTED" as const, kind: "SERVICE_PRODUCT" as const };
 import { personBusinessTypes } from "@/lib/business-types";
 import { companyIdForProfile } from "@/lib/company-catalog";
 
@@ -33,11 +34,33 @@ async function me(viewer: Viewer) {
 export async function productTypes(personId: string) {
   const bts = await personBusinessTypes(personId);
   if (!bts.length) return [];
-  return prisma.serviceType.findMany({
+  // Stock types + the provider's own (Scott 2026-10-12: no waiting on the admin; they also land in the admin's suggestions).
+  const stock = await prisma.serviceType.findMany({
     where: { kind: "SERVICE_PRODUCT", ...LIVE_TYPE, serviceCategory: { business_type_id: { in: bts.map((b) => b.id) }, hidden: false } },
     orderBy: [{ serviceCategory: { sort_order: "asc" } }, { sort_order: "asc" }],
-    select: { id: true, name: true, pricing_model: true, units: true, delivery: true, lead_time_days: true, serviceCategory: { select: { name: true } } },
+    select: TYPE_SELECT,
   });
+  const own = await prisma.serviceType.findMany({
+    where: { ...OWN_PRODUCT_TYPE, OR: [{ created_by_person_id: personId }, { serviceProducts: { some: { providerProfile: { person_id: personId } } } }] },
+    orderBy: { created_at: "asc" },
+    select: TYPE_SELECT,
+  });
+  return [...stock, ...own.map((t) => ({ ...t, serviceCategory: { name: "Your Types" } }))];
+}
+const TYPE_SELECT = { id: true, name: true, pricing_model: true, units: true, delivery: true, lead_time_days: true, serviceCategory: { select: { name: true } } } as const;
+
+/** "+ Add a Type…" in the Type dropdown — live for this provider at once; queued in Admin › Service Taxonomy suggestions. */
+export async function addProductType(viewer: Viewer, rawName: string) {
+  const p = await me(viewer);
+  const name = rawName.trim().replace(/\s+/g, " ").slice(0, 60);
+  if (name.length < 3) throw new Error("Give it a name");
+  const hit = await prisma.serviceType.findFirst({ where: { name: { equals: name, mode: "insensitive" } } });
+  if (hit && hit.status !== "SUGGESTED") throw new Error(`"${hit.name}" is already a type — pick it from the list`);
+  if (hit) return { id: hit.id, name: hit.name };
+  const bts = await personBusinessTypes(p.person_id);
+  const cat = await prisma.serviceCategory.findFirst({ where: { business_type_id: { in: bts.map((b) => b.id) }, kind: "SERVICE_PRODUCT", hidden: false }, orderBy: { sort_order: "asc" }, select: { id: true } });
+  const t = await prisma.serviceType.create({ data: { name, kind: "SERVICE_PRODUCT", status: "SUGGESTED", created_by_person_id: p.person_id, service_category_id: cat?.id ?? null, pricing_model: "FIXED", units: ["EACH"], delivery: "OFFSITE", sort_order: 900 } });
+  return { id: t.id, name: t.name };
 }
 
 export async function catalogProductsPage(viewer: Viewer) {
@@ -78,7 +101,7 @@ export async function saveCatalogProduct(viewer: Viewer, id: string | null, f: P
   const p = await me(viewer);
   const title = f.title.trim().slice(0, 200);
   if (!title) throw new Error("Give it a name");
-  if (f.serviceTypeId && !(await prisma.serviceType.findFirst({ where: { id: f.serviceTypeId, kind: "SERVICE_PRODUCT", ...LIVE_TYPE }, select: { id: true } }))) throw new Error("Pick a type from the list");
+  if (f.serviceTypeId && !(await prisma.serviceType.findFirst({ where: { id: f.serviceTypeId, kind: "SERVICE_PRODUCT", OR: [LIVE_TYPE, OWN_PRODUCT_TYPE] }, select: { id: true } }))) throw new Error("Pick a type from the list");
   if (f.images.length > MAX_IMAGES) throw new Error(`Up to ${MAX_IMAGES} pictures`);
   if (f.priceCents != null && (!Number.isFinite(f.priceCents) || f.priceCents < 0)) throw new Error("That price isn't valid");
   if (publish) {
