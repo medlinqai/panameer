@@ -4,7 +4,7 @@ import { uploadEstimateRequestFile } from "@/lib/storage";
 import { formatCents } from "@/lib/display";
 import type { Viewer } from "@/lib/access";
 
-// EST-E001..E003: a buyer asks a provider for a cost estimate; the provider builds one (or declines). Private to the two.
+// EST-E001..E003: a buyer asks a provider for an estimate; the provider builds one (or declines). Private to the two.
 export class EstimateRequestError extends Error {
   constructor(message: string, public code: "NOT_FOUND" | "FORBIDDEN" | "INVALID") {
     super(message);
@@ -109,7 +109,7 @@ export async function answerRequestsFor(estimateId: string) {
 
 export type EstimateListRow = { kind: "estimate" | "request"; id: string; href: string; number: string; other: string; title: string; totalCents: number | null; status: string; updated: Date };
 
-/** EST-E003: both sides of My › Cost Estimates. */
+/** EST-E003: both sides of My › Estimates. */
 export async function estimatesPage(viewer: Viewer) {
   const p = await me(viewer);
   const [asCustomer, asProvider, myRequests, waiting] = await Promise.all([

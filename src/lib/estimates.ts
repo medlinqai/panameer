@@ -10,7 +10,7 @@ import type { Viewer } from "@/lib/access";
 import { snapshotMilestones } from "@/lib/order-milestones";
 import { answerRequestsFor, linkRequest } from "@/lib/estimate-requests";
 
-// CAT-E006: cost estimates — one provider, one customer, private to them. Accept → work order; Ask for Changes → revision n+1.
+// CAT-E006: estimates — one provider, one customer, private to them. Accept → work order; Ask for Changes → revision n+1.
 export class EstimateError extends Error {
   constructor(message: string, public code: "NOT_FOUND" | "FORBIDDEN" | "INVALID") {
     super(message);
@@ -138,11 +138,11 @@ export async function sendEstimate(viewer: Viewer, id: string) {
   } else if (e.customer_email) {
     const url = `${appUrl()}/estimates/${e.id}`;
     const body = [
-      paragraph(`${escapeHtml(nameOf(p))} sent you a cost estimate on Panameer: <b>${escapeHtml(e.title)}</b> — ${escapeHtml(vars.total)}.`),
+      paragraph(`${escapeHtml(nameOf(p))} sent you an estimate on Panameer: <b>${escapeHtml(e.title)}</b> — ${escapeHtml(vars.total)}.`),
       paragraph("Join Panameer with your name and company to open it, then accept it, ask for changes or decline. It's free."),
       primaryButton(url, "Open the Estimate"),
     ].join("");
-    await sendEmail({ to: e.customer_email, subject: `${nameOf(p)} sent you an estimate: ${e.title}`, html: emailShell({ bodyHtml: body }), text: `${nameOf(p)} sent you a cost estimate: ${e.title} (${vars.total}). Open it: ${url}`, template: "cost-estimate", subjectType: "CostEstimate", subjectId: e.id }).catch(() => {});
+    await sendEmail({ to: e.customer_email, subject: `${nameOf(p)} sent you an estimate: ${e.title}`, html: emailShell({ bodyHtml: body }), text: `${nameOf(p)} sent you an estimate: ${e.title} (${vars.total}). Open it: ${url}`, template: "cost-estimate", subjectType: "CostEstimate", subjectId: e.id }).catch(() => {});
   }
 }
 
@@ -229,7 +229,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
 
 export type EstimateRow = { id: string; number: string; title: string; status: string; totalCents: number; currency: string; counterpart: string; validUntil: string; revision: number };
 
-/** My Cost Estimates (owner-only) — the estimates you've written. */
+/** My Estimates (owner-only) — the estimates you've written. */
 export async function myEstimates(viewer: Viewer): Promise<EstimateRow[]> {
   const p = await me(viewer);
   const rows = await prisma.costEstimate.findMany({ where: { provider_person_id: p.id }, orderBy: { updated_at: "desc" }, take: 100, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, select: { total_cents: true } } } });

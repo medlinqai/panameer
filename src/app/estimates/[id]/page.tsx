@@ -7,7 +7,7 @@ import { BILLING_CYCLE_LABEL, PAYMENT_TERMS_LABEL } from "@/lib/billing-terms";
 import { CoverBand } from "@/components/casing/CoverBand";
 import { EstimateActions } from "@/components/catalog/EstimateActions";
 
-export const metadata = { title: "Cost Estimate · Panameer" };
+export const metadata = { title: "Estimate · Panameer" };
 export const dynamic = "force-dynamic";
 
 const STATUS: Record<string, string> = { DRAFT: "Draft", SENT: "Sent", CHANGES_REQUESTED: "Changes Requested", ACCEPTED: "Accepted", DECLINED: "Declined", EXPIRED: "Expired" };
@@ -21,7 +21,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   if (!viewer)
     return (
       <main className="mx-auto max-w-xl px-4 py-16 text-center">
-        <h1 className="text-[26px] font-bold">You&apos;ve Been Sent a Cost Estimate</h1>
+        <h1 className="text-[26px] font-bold">You&apos;ve Been Sent an Estimate</h1>
         <p className="mt-2 text-[15px] text-ink-2">Join Panameer with your name and company to open it — then accept it, ask for changes or decline. It&apos;s free. After you join, open this link again.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link href="/join/requester" className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-semibold text-surface">Join Panameer</Link>

@@ -6,7 +6,7 @@ import { RequestEstimateForm } from "@/components/catalog/RequestEstimateForm";
 export const metadata = { title: "Request an Estimate · Panameer" };
 export const dynamic = "force-dynamic";
 
-// EST-E001: ask a provider for a cost estimate — pre-filled with the service or product it came from.
+// EST-E001: ask a provider for an estimate — pre-filled with the service or product it came from.
 export default async function Page({ searchParams }: { searchParams: Promise<{ provider?: string; service?: string; product?: string }> }) {
   const sp = await searchParams;
   const viewer = await getSessionViewer();

@@ -18,7 +18,7 @@ export const ROAD_FAQ: Record<string, { q: string; a: string }[]> = {
     { q: "When do they go live?", a: "As soon as you publish, once your company is linked. No Panameer review." },
   ],
   contract: [
-    { q: "What are the three ways to win work?", a: "5.A a buyer buys your service product; 5.B a buyer accepts the rate you proposed on their work request; 5.C a buyer accepts the cost estimate you sent. Each ends in a signed work order." },
+    { q: "What are the three ways to win work?", a: "5.A a buyer buys your service product; 5.B a buyer accepts the rate you proposed on their work request; 5.C a buyer accepts the estimate you sent. Each ends in a signed work order." },
     { q: "Do I have to accept every product order?", a: "No. Orders open automatically by default; turn on \"I accept orders manually\" under My Service Products to review each one first." },
     { q: "Can I sign before my company is validated?", a: "Yes. You can sign now; add tax and banking so your payment requests can go out." },
   ],

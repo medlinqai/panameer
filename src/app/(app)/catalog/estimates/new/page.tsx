@@ -5,7 +5,7 @@ import { listOwnServiceProducts } from "@/lib/service-products";
 import { EstimateWizard, type EstLine, type EstimateDraft } from "@/components/catalog/EstimateWizard";
 import { BackLink } from "@/components/console/BackLink";
 
-export const metadata = { title: "Create a Cost Estimate · Panameer" };
+export const metadata = { title: "Create an Estimate · Panameer" };
 export const dynamic = "force-dynamic";
 
 const toLine = (l: { kind: "SERVICE" | "FIXED" | "NOT_TO_EXCEED"; description: string; provider_service_id: string | null; service_product_id?: string | null; uom: string | null; quantity: unknown; rate_cents: number | null; amount_cents: number | null }): EstLine => ({
@@ -13,7 +13,7 @@ const toLine = (l: { kind: "SERVICE" | "FIXED" | "NOT_TO_EXCEED"; description: s
   quantity: l.quantity == null ? "" : String(Number(l.quantity)), rate: l.rate_cents ? (l.rate_cents / 100).toFixed(2) : "", amount: l.amount_cents ? (l.amount_cents / 100).toFixed(2) : "",
 });
 
-// CAT-E006: create or revise (?id=) a cost estimate.
+// CAT-E006: create or revise (?id=) an estimate.
 export default async function Page({ searchParams }: { searchParams: Promise<{ id?: string; to?: string; request?: string }> }) {
   const viewer = await guardPage("canProvideServices");
   const sp = await searchParams;

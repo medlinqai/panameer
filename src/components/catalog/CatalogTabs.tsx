@@ -6,7 +6,7 @@ const TABS = [
   { label: "Home", href: "/catalog", match: "home" },
   { label: "Services", href: "/catalog/services", match: "services" },
   { label: "Service Products", href: "/catalog/products", match: "products" },
-  { label: "Cost Estimates", href: "/catalog/estimates", match: "estimates" },
+  { label: "Estimates", href: "/catalog/estimates", match: "estimates" },
 ];
 
 export function CatalogTabs({ current }: { current: CatalogTab }) {

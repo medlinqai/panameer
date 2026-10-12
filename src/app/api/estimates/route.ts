@@ -25,7 +25,7 @@ const BODY = z.discriminatedUnion("action", [
   z.object({ action: z.literal("decide"), id: z.string().uuid(), decision: z.enum(["ACCEPT", "CHANGES", "DECLINE"]), comment: z.string().max(2000).optional().nullable() }),
 ]);
 
-// CAT-E006: cost estimates — provider saves/sends; the customer accepts, asks for changes or declines. Owner-scoped in the lib.
+// CAT-E006: estimates — provider saves/sends; the customer accepts, asks for changes or declines. Owner-scoped in the lib.
 export async function POST(req: Request) {
   const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;

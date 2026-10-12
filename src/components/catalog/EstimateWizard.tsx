@@ -33,7 +33,7 @@ type Source = { id: string; label: string; title: string; scope: string; lines: 
 const amountOf = (l: EstLine) => (l.kind === "SERVICE" ? Math.round(Number(l.quantity || 0) * Number(l.rate || 0) * 100) : Math.round(Number(l.amount || 0) * 100));
 const KIND_LABEL: Record<Kind, string> = { SERVICE: "Service", FIXED: "Fixed", NOT_TO_EXCEED: "Not-to-exceed" };
 
-// CAT-E006: Create a Cost Estimate — Customer · Scope · Price · Payment · Send, with what the customer sees beside it.
+// CAT-E006: Create an Estimate — Customer · Scope · Price · Payment · Send, with what the customer sees beside it.
 export function EstimateWizard({ initial, customers, workRequests, services, sources, providerName }: { initial: EstimateDraft; customers: Opt[]; workRequests: Opt[]; services: Svc[]; sources: Source[]; providerName: string }) {
   const router = useRouter();
   const [d, setD] = useState(initial);
@@ -78,7 +78,7 @@ export function EstimateWizard({ initial, customers, workRequests, services, sou
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]" data-estimate-wizard>
       <div className="min-w-0">
-        <h1 className="text-[28px] font-bold">{d.id ? "Revise Cost Estimate" : "Create a Cost Estimate"}</h1>
+        <h1 className="text-[28px] font-bold">{d.id ? "Revise Estimate" : "Create an Estimate"}</h1>
         <p className="mt-1 text-[14px] text-ink-2">Like a service product, but for one customer — their scope, their price.</p>
         <PaidStrip steps={paid} />
         <Steps labels={["Customer", "Scope", "Price", "Payment", "Send"]} at={step} onPick={setStep} />

@@ -28,7 +28,7 @@ export default async function Page() {
           <div className="mt-3 flex flex-wrap gap-7">
             <div><b className="block text-[30px] font-extrabold leading-none" data-rates-live>{h.ratesLive}</b><span className="text-[12px] text-ink-3">{`Rates live of ${h.rates.length}`}</span></div>
             <div><b className="block text-[30px] font-extrabold leading-none" data-products-live>{h.productsLive}</b><span className="text-[12px] text-ink-3">Service Products live</span></div>
-            <div><b className="block text-[30px] font-extrabold leading-none">{h.waiting}</b><span className="text-[12px] text-ink-3">Cost Estimates waiting on you</span></div>
+            <div><b className="block text-[30px] font-extrabold leading-none">{h.waiting}</b><span className="text-[12px] text-ink-3">Estimates waiting on you</span></div>
           </div>
           <p className="mt-4 text-[13px] text-ink-2">Buyers see your catalog on your profile, in Shop and in Work matches.</p>
         </section>
@@ -70,7 +70,7 @@ export default async function Page() {
           )}
         </section>
         <section className="border border-line p-3.5" data-tile="estimates">
-          <h3 className="mb-2 flex justify-between text-[14px] font-bold">Cost Estimates <Link href="/catalog/estimates" className="text-[12px] text-magenta-dark underline">Open</Link></h3>
+          <h3 className="mb-2 flex justify-between text-[14px] font-bold">Estimates <Link href="/catalog/estimates" className="text-[12px] text-magenta-dark underline">Open</Link></h3>
           <ul className="text-[13px]">
             {([["Received", h.estimates.received], ["Sent", h.estimates.sent], ["Accepted", h.estimates.accepted]] as const).map(([l, n]) => <li key={l} className="flex justify-between border-t border-[#ECEEF4] py-1.5"><span>{l}</span><span>{n}</span></li>)}
           </ul>

@@ -56,7 +56,7 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
     "/messages",
     "/notifications",
     "/worklist",
-    // My Catalog + My Cost Estimates live in the My menu (MC-E001, 2026-10-12).
+    // My Catalog + My Estimates live in the My menu (MC-E001, 2026-10-12).
     "/catalog",
     "/estimates",
   ],
@@ -222,10 +222,10 @@ export const PERSONA_NAV: NavItem[] = [
 ];
 export const COMPANY_PERSONA_ITEM: NavItem = { label: "My Company", heading: "Company", href: "/company" };
 /** Providers' catalog in the My menu, after Profile and Company (Scott 2026-10-10). */
-// MC-E001: sellers get one My Catalog (Home · Services · Service Products · Cost Estimates) in place of three rows.
+// MC-E001: sellers get one My Catalog (Home · Services · Service Products · Estimates) in place of three rows.
 export const SELLER_PERSONA_ITEMS: NavItem[] = [{ label: "My Catalog", heading: "My Catalog", href: "/catalog" }];
 /** EST-E004: every member — buyers ask for estimates, providers send them. */
-export const ESTIMATES_PERSONA_ITEM: NavItem = { label: "My Cost Estimates", heading: "Cost Estimates", href: "/estimates" };
+export const ESTIMATES_PERSONA_ITEM: NavItem = { label: "My Estimates", heading: "Estimates", href: "/estimates" };
 
 export const THEME_BEFORE_HREF = null;
 

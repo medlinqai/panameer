@@ -61,7 +61,7 @@ async function main() {
 
   // MC-E003: Home starts at 1/3 (rates set from registration).
   const home1 = await api("/catalog");
-  check("Home: Your Catalog, eyebrow COMPANY · BUSINESS TYPE, tabs", home1.text.includes("Your Catalog") && home1.text.includes(`MC ERP ${tag}`.toUpperCase()) && home1.text.includes("Cost Estimates") && home1.text.includes("Service Products"), `status ${home1.status}`);
+  check("Home: Your Catalog, eyebrow COMPANY · BUSINESS TYPE, tabs", home1.text.includes("Your Catalog") && home1.text.includes(`MC ERP ${tag}`.toUpperCase()) && home1.text.includes("Estimates") && home1.text.includes("Service Products"), `status ${home1.status}`);
   check("Home ring 1/3, next step Add Your First Service Product", home1.text.includes(">1/3<") && home1.text.includes("Add Your First Service Product"));
 
   // MC-E005: Services — both registration rates on, with the tag.

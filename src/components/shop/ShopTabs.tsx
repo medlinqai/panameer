@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { useMe } from "@/components/MeProvider";
 
-// WS-E004: SHOP | Service Products · My Cost Estimates · Cart (count), and a black Sell on Panameer menu at the right.
+// WS-E004: SHOP | Service Products · My Estimates · Cart (count), and a black Sell on Panameer menu at the right.
 export function ShopTabs() {
   const pathname = usePathname() ?? "";
   const { me } = useMe();
@@ -14,7 +14,7 @@ export function ShopTabs() {
   const current = pathname.startsWith("/cart") ? "/cart" : pathname.startsWith("/estimates") ? "/estimates" : "/shop";
   const tabs = [
     { label: "Service Products", href: "/shop" },
-    { label: "My Cost Estimates", href: "/estimates" },
+    { label: "My Estimates", href: "/estimates" },
     { label: "Cart", href: "/cart", badge: cart },
   ];
   return (
@@ -47,7 +47,7 @@ function SellMenu({ sells }: { sells: boolean }) {
             <span className="text-[12.5px] text-ink-2">A fixed-price offer buyers can buy now</span>
           </Link>
           <Link role="menuitem" href="/catalog/estimates/new" className="block px-4 py-3 hover:bg-surface-hover">
-            <b className="block text-[14px]">Create a Cost Estimate</b>
+            <b className="block text-[14px]">Create an Estimate</b>
             <span className="text-[12.5px] text-ink-2">A custom quote for one customer</span>
           </Link>
         </div>

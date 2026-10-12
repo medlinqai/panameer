@@ -35,14 +35,14 @@ function Rows({ rows, withdraw = false }: { rows: EstimateListRow[]; withdraw?: 
   );
 }
 
-// EST-E003: My › Cost Estimates — Received (buyer) and Sent (provider). Private to the two parties of each.
+// EST-E003: My › Estimates — Received (buyer) and Sent (provider). Private to the two parties of each.
 export async function EstimatesBody({ viewer, raw, base, tabs }: { viewer: Viewer; raw?: string; base: string; tabs: React.ReactNode }) {
   const d = await estimatesPage(viewer);
   const tab = raw === "sent" || raw === "received" ? raw : d.received.length === 0 && (d.sent.length || d.waiting.length) ? "sent" : "received";
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl">
       {tabs}
-      <h1 className="text-[28px] font-bold">Cost Estimates</h1>
+      <h1 className="text-[28px] font-bold">Estimates</h1>
       <p className="mt-1 text-[14px] text-ink-2">Quotes for one customer, private to the two of you.</p>
       <PageTabs className="mt-4" current={tab} tabs={[{ label: `Received${d.received.length ? ` (${d.received.length})` : ""}`, href: `${base}?tab=received`, match: "received" }, { label: `Sent${d.sent.length + d.waiting.length ? ` (${d.sent.length + d.waiting.length})` : ""}`, href: `${base}?tab=sent`, match: "sent" }]} />
       {tab === "received" ? (
