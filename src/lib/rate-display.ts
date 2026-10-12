@@ -44,5 +44,5 @@ export function buyersSee(r: { rateCents: number | null; unit: string | null; de
   if (!r.rateCents) return null;
   const where = r.delivery ? WHERE[r.delivery] : undefined;
   const hrs = r.unit === "MONTH" && r.hoursIncluded ? ` for ${r.hoursIncluded} hrs` : "";
-  return `${formatCents(r.rateCents)}/${UNIT[r.unit ?? "HOUR"] ?? "hr"}${where ? ` ${where}` : ""}${hrs}${expensesSuffix(r.expenses)}`;
+  return `${formatCents(r.rateCents).replace(/\.00$/, "")}/${UNIT[r.unit ?? "HOUR"] ?? "hr"}${where ? ` ${where}` : ""}${hrs}${expensesSuffix(r.expenses)}`;
 }
