@@ -10,6 +10,7 @@ const Form = z.object({
   leadTimeDays: z.number().int().min(0).max(365).nullable(), durationWeeks: z.number().int().min(0).max(520).nullable(),
   domainIds: z.array(z.string().uuid()).max(40), skillIds: z.array(z.string().uuid()).max(40), deliverables: z.array(z.string().max(300)).max(20),
   payPlan: z.enum(["ON_DELIVERY", "SPLIT", "MONTHLY_ADVANCE"]),
+  coverStyle: z.enum(["A", "B", "C", "D"]).nullable().default("A"),
 });
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("save"), id: z.string().uuid().nullable(), form: Form, publish: z.boolean() }),

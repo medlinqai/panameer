@@ -1,7 +1,7 @@
 import type { PaymentEvent, ServiceDelivery } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
-import { gapSentence, sellGaps } from "@/lib/gate-reads";
+import { sellGaps } from "@/lib/gate-reads";
 import { publishGate } from "@/lib/my-catalog";
 import { LIVE_TYPE } from "@/lib/build-catalog";
 const OWN_PRODUCT_TYPE = { merged_into_id: null, hidden: false, status: "SUGGESTED" as const, kind: "SERVICE_PRODUCT" as const };
@@ -14,7 +14,7 @@ export type PayPlan = "ON_DELIVERY" | "SPLIT" | "MONTHLY_ADVANCE";
 export type ProductForm = {
   title: string; serviceTypeId: string | null; summary: string; images: string[]; pricing: Pricing; priceCents: number | null;
   delivery: ServiceDelivery | null; leadTimeDays: number | null; durationWeeks: number | null; domainIds: string[]; skillIds: string[];
-  deliverables: string[]; payPlan: PayPlan;
+  deliverables: string[]; payPlan: PayPlan; coverStyle: string | null;
 };
 export const MAX_IMAGES = 5;
 const PRICING_ROW = { FIXED: { pricing_type: "FIXED", kind: "DELIVERABLE", billing_period: null }, MONTHLY: { pricing_type: "RECURRING", kind: "DEPLOYABLE", billing_period: "MONTHLY" }, HOURLY: { pricing_type: "HOURLY", kind: "HOURS", billing_period: null } } as const;
@@ -75,7 +75,7 @@ export async function catalogProductsPage(viewer: Viewer) {
     prisma.providerSkill.findMany({ where: { provider_profile_id: p.id }, select: { skill: { select: { id: true, name: true } } }, take: 40 }),
     sellGaps(viewer.userId),
   ]);
-  return { types, products: rows.map(toForm), domains, skills: skills.map((s) => s.skill), sellGaps: gaps };
+  return { types, products: rows.map((r) => toForm(r)), domains, skills: skills.map((s) => s.skill), sellGaps: gaps };
 }
 
 type Row = Awaited<ReturnType<typeof prisma.serviceProduct.findMany<{ include: { images: true; serviceType: { select: { name: true } }; domains: { select: { domain_id: true } }; skills: { select: { skill_id: true } }; deliverables: true; milestones: true } }>>>[number];
@@ -85,15 +85,15 @@ function toForm(r: Row) {
   const images = r.images.length ? r.images.map((i) => i.url) : r.cover_image_url ? [r.cover_image_url] : [];
   return {
     id: r.id, status: r.status, typeName: r.serviceType?.name ?? null,
-    form: { title: r.title, serviceTypeId: r.service_type_id, summary: r.summary ?? "", images, pricing, priceCents: r.price_cents, delivery: r.delivery, leadTimeDays: r.lead_time_days, durationWeeks: r.duration_weeks, domainIds: r.domains.map((d) => d.domain_id), skillIds: r.skills.map((s) => s.skill_id), deliverables: r.deliverables.map((d) => d.text), payPlan } satisfies ProductForm,
+    form: { coverStyle: r.cover_style ?? null, title: r.title, serviceTypeId: r.service_type_id, summary: r.summary ?? "", images, pricing, priceCents: r.price_cents, delivery: r.delivery, leadTimeDays: r.lead_time_days, durationWeeks: r.duration_weeks, domainIds: r.domains.map((d) => d.domain_id), skillIds: r.skills.map((s) => s.skill_id), deliverables: r.deliverables.map((d) => d.text), payPlan } satisfies ProductForm,
   };
 }
 
-/** What still blocks publishing: name, type, description, cover picture, price, delivery. */
+/** What still blocks publishing: name, type, description, a cover (picture or Panameer cover), price, delivery. */
 export function publishMissing(f: ProductForm): string[] {
   return [
     !f.title.trim() && "a name", !f.serviceTypeId && "a type", !f.summary.trim() && "a description",
-    !f.images.length && "a cover picture", f.priceCents == null && "a price", !f.delivery && "delivery",
+    !f.images.length && !f.coverStyle && "a cover (a picture or a Panameer cover)", f.priceCents == null && "a price", !f.delivery && "delivery",
   ].filter((x): x is string => !!x);
 }
 
@@ -107,8 +107,7 @@ export async function saveCatalogProduct(viewer: Viewer, id: string | null, f: P
   if (publish) {
     const missing = publishMissing(f);
     if (missing.length) throw new Error(`To publish, add ${missing.join(", ")}.`);
-    const gaps = await sellGaps(viewer.userId);
-    if (gaps.length) throw new Error(gapSentence(gaps));
+    // Same gate as Publish My Rates: a linked company. Tax & Banking is the road's gate before payment, not before publishing (Scott 2026-10-11/12).
     if (!(await publishGate(p.person_id)).ok) throw new Error("Add your company to publish.");
   }
   const [domainIds, skillIds] = await Promise.all([
@@ -121,7 +120,7 @@ export async function saveCatalogProduct(viewer: Viewer, id: string | null, f: P
   const data = {
     title, summary: f.summary.trim().slice(0, 4000) || null, service_type_id: f.serviceTypeId, price_cents: f.priceCents,
     ...PRICING_ROW[f.pricing], delivery: f.delivery, lead_time_days: f.leadTimeDays, duration_weeks: f.durationWeeks,
-    cover_image_url: f.images[0] ?? null, payment_terms: "NET30" as const, payment_event: (f.pricing === "MONTHLY" ? "ORDER_ACCEPTED" : "ACCEPTANCE") as PaymentEvent,
+    cover_image_url: f.images[0] ?? null, cover_style: f.coverStyle && ["A", "B", "C", "D"].includes(f.coverStyle) ? f.coverStyle : null, payment_terms: "NET30" as const, payment_event: (f.pricing === "MONTHLY" ? "ORDER_ACCEPTED" : "ACCEPTANCE") as PaymentEvent,
     status: publish ? ("PUBLISHED" as const) : owned?.status === "PUBLISHED" ? ("PUBLISHED" as const) : ("DRAFT" as const),
   };
   const children = {

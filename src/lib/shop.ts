@@ -22,6 +22,9 @@ export type ShopProduct = {
   providerCountry: string | null;
   deliverables: string[];
   coverCode: string | null;
+  coverUrl: string | null;
+  coverStyle: string | null;
+  typeName: string | null;
   productTypeId: string | null;
   /** The Service Taxonomy business type of its type (What We Buy). */
   businessTypeId: string | null;
@@ -35,8 +38,8 @@ export type ShopProduct = {
 };
 
 const SELECT = {
-  id: true, title: true, summary: true, pricing_type: true, billing_period: true, kind: true, price_cents: true, currency: true, duration_weeks: true, cover_code: true,
-  payment_terms: true, payment_event: true, product_type_id: true, service_type_id: true, serviceType: { select: { serviceCategory: { select: { business_type_id: true } } } }, created_at: true,
+  id: true, title: true, summary: true, pricing_type: true, billing_period: true, kind: true, price_cents: true, currency: true, duration_weeks: true, cover_code: true, cover_image_url: true, cover_style: true,
+  payment_terms: true, payment_event: true, product_type_id: true, service_type_id: true, serviceType: { select: { name: true, serviceCategory: { select: { business_type_id: true } } } }, created_at: true,
   milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, payment_event: true } },
   deliverables: { orderBy: { sequence: "asc" as const }, select: { text: true } },
   providerProfile: { select: { id: true, person_id: true, person: { select: { first_name: true, last_name: true, photo_url: true, company: { select: { country: true } } } } } },
@@ -80,6 +83,9 @@ function shape(p: Row, orders: number): ShopProduct {
     providerCountry: person?.company?.country ?? null,
     deliverables: p.deliverables.map((d) => d.text),
     coverCode: p.cover_code,
+    coverUrl: p.cover_image_url,
+    coverStyle: p.cover_style,
+    typeName: p.serviceType?.name ?? null,
     productTypeId: p.service_type_id ?? p.product_type_id,
     businessTypeId: p.serviceType?.serviceCategory?.business_type_id ?? null,
     terms: [scheduleLine(p), p.payment_terms ? TERMS[p.payment_terms] : null].filter(Boolean).join(" · "),

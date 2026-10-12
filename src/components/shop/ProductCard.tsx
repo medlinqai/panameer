@@ -1,5 +1,7 @@
 "use client";
 
+
+import { DefaultCover } from "@/components/catalog/DefaultCover";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -18,7 +20,7 @@ const TONE: Record<string, [string, string]> = {
 };
 export const KIND_LABEL: Record<string, string> = { DELIVERABLE: "Deliverable", DEPLOYABLE: "AI Agent", HOURS: "Hours", BLANKET: "Blanket" };
 
-export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "coverCode" | "terms" | "orders" | "fresh">;
+export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "coverCode" | "coverUrl" | "coverStyle" | "typeName" | "terms" | "orders" | "fresh">;
 
 const code = (p: CardProduct) => (p.coverCode || p.title.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("")).toUpperCase().slice(0, 3);
 
@@ -44,9 +46,19 @@ export function ProductCard({ p, signedIn, own = false, inCartLineId = null }: {
   const tone = TONE[p.kind] ?? TONE.DELIVERABLE;
   return (
     <article data-product-card className="grid grid-cols-[72px_1fr] gap-3 border border-line bg-white p-3">
-      <Link href={`/shop/${p.id}`} aria-hidden tabIndex={-1} className="grid h-[72px] w-[72px] place-items-center text-[20px] font-extrabold text-white/85" style={{ background: `linear-gradient(135deg, ${tone[0]}, ${tone[1]})` }}>
+      {/* Uploaded cover first; otherwise the provider's Panameer cover for the type (2026-10-12); older rows keep the code tile. */}
+      {p.coverUrl ? (
+        <Link href={`/shop/${p.id}`} aria-hidden tabIndex={-1} className="block h-[72px] w-[72px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={p.coverUrl} alt="" className="h-full w-full object-cover" />
+        </Link>
+      ) : p.coverStyle || p.typeName ? (
+        <Link href={`/shop/${p.id}`} aria-hidden tabIndex={-1} className="block h-[72px] w-[72px]"><DefaultCover typeName={p.typeName} style={p.coverStyle} size={72} /></Link>
+      ) : (
+        <Link href={`/shop/${p.id}`} aria-hidden tabIndex={-1} className="grid h-[72px] w-[72px] place-items-center text-[20px] font-extrabold text-white/85" style={{ background: `linear-gradient(135deg, ${tone[0]}, ${tone[1]})` }}>
         {code(p)}
-      </Link>
+        </Link>
+      )}
       <div className="min-w-0">
         {tag && <span className="text-[10.5px] font-bold tracking-[0.12em] text-magenta-dark">{tag.toUpperCase()}</span>}
         <h3 className="text-[15px] font-bold leading-snug"><Link href={`/shop/${p.id}`} className="hover:underline">{p.title}</Link></h3>

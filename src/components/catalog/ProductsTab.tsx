@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { COVER_STYLES, COVER_STYLE_LABEL, DefaultCover } from "@/components/catalog/DefaultCover";
 import { useRef, useState } from "react";
 import { formatCents } from "@/lib/display";
 import type { PayPlan, Pricing, ProductForm } from "@/lib/catalog-products";
@@ -9,14 +10,13 @@ import type { PayPlan, Pricing, ProductForm } from "@/lib/catalog-products";
 type PType = { id: string; name: string; pricing_model: string | null; units: string[]; delivery: string | null; lead_time_days: number | null; serviceCategory: { name: string } | null };
 type Product = { id: string; status: string; typeName: string | null; form: ProductForm };
 type Domain = { id: string; process: string; name: string };
-const EMPTY: ProductForm = { title: "", serviceTypeId: null, summary: "", images: [], pricing: "FIXED", priceCents: null, delivery: null, leadTimeDays: null, durationWeeks: null, domainIds: [], skillIds: [], deliverables: [], payPlan: "ON_DELIVERY" };
+const EMPTY: ProductForm = { title: "", serviceTypeId: null, summary: "", images: [], pricing: "FIXED", priceCents: null, delivery: null, leadTimeDays: null, durationWeeks: null, domainIds: [], skillIds: [], deliverables: [], payPlan: "ON_DELIVERY", coverStyle: "A" };
 const PRICING: [Pricing, string, string][] = [["FIXED", "Fixed", "Each"], ["MONTHLY", "Monthly", "Month"], ["HOURLY", "Hourly", "Hour"]];
 const PER: Record<Pricing, string> = { FIXED: "", MONTHLY: "/month", HOURLY: "/hr" };
 const DELIVERY: Record<string, string> = { OFFSITE: "Offsite", ONSITE: "Onsite", EITHER: "Either" };
 const PLANS: [PayPlan, string][] = [["ON_DELIVERY", "On delivery"], ["SPLIT", "50% start · 50% delivery"], ["MONTHLY_ADVANCE", "Monthly in advance"]];
 const SHORT: Record<string, string> = { "Procure-to-Pay": "P2P", "Order-to-Cash": "O2C", "Record-to-Report": "R2R", "Hire-to-Retire": "H2R", "Plan-to-Produce": "Plan to Produce" };
 const pricingFor = (m: string | null): Pricing => (m === "RECURRING" ? "MONTHLY" : m === "TIME" ? "HOURLY" : "FIXED");
-const initials = (s: string) => s.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "SP";
 const LBL = "flex flex-col gap-1.5 text-[12px] font-bold text-ink-2";
 const INPUT = "w-full border border-line bg-surface px-2.5 py-2 text-[13px] font-normal text-ink";
 const SEC = "border-b border-[#ECEEF4] p-4";
@@ -114,7 +114,7 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
             <div key={p.id} data-product={p.form.title} className="flex gap-3 border border-line p-3">
               {p.form.images[0]
                 ? <img src={p.form.images[0]} alt="" className="h-[72px] w-[72px] flex-none object-cover" />
-                : <span className="grid h-[72px] w-[72px] flex-none place-items-center bg-gradient-to-br from-ink to-[#6b2f6a] text-[11px] font-extrabold text-white">{initials(p.typeName ?? p.form.title)}</span>}
+                : <DefaultCover typeName={p.typeName} style={p.form.coverStyle} size={72} />}
               <span className="min-w-0 flex-1">
                 <b className="text-[14px]">{p.form.title}</b>
                 <span className={p.status === "PUBLISHED" ? "ml-1.5 inline-block border border-ink px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em]" : "ml-1.5 inline-block border border-dashed border-line px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em] text-ink-2"}>{p.status === "PUBLISHED" ? "LIVE" : "DRAFT"}</span>
@@ -174,6 +174,18 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
               </button>
             )}
             <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
+          </div>
+          {/* No picture yet? Pick a Panameer cover — it shows in Shop until you add a picture (Scott 2026-10-12). */}
+          <div className={f.images.length ? "mt-3 opacity-60" : "mt-3"} data-cover-styles>
+            <p className="mb-1.5 text-[12px] font-bold text-ink-2">{f.images.length ? "Panameer cover (used if you remove your pictures)" : "No picture yet? Pick a Panameer cover"}</p>
+            <div className="flex flex-wrap gap-2.5">
+              {COVER_STYLES.map((cs) => (
+                <button key={cs} type="button" data-cover-style={cs} aria-pressed={f.coverStyle === cs} onClick={() => set("coverStyle", cs)} className={f.coverStyle === cs ? "flex flex-col items-center gap-1 outline outline-2 outline-offset-2 outline-ink" : "flex flex-col items-center gap-1 opacity-80 hover:opacity-100"}>
+                  <DefaultCover typeName={type?.name} style={cs} size={72} />
+                  <span className="text-[11px] font-semibold text-ink-2">{COVER_STYLE_LABEL[cs]}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -241,7 +253,7 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
         </section>
 
         <div className="flex flex-wrap items-center justify-between gap-2.5 bg-[#FAFAFC] px-4 py-3.5">
-          <span className="text-[12.5px] text-ink-2">Publish needs: name, type, description, cover picture, price, delivery.{sellGaps.length > 0 && " Finish your seller setup first."}</span>
+          <span className="text-[12.5px] text-ink-2">Publish needs: name, type, description, a cover, price, delivery.</span>
           <span className="flex gap-2">
             <button type="button" disabled={!!busy} onClick={() => save(false)} className="inline-flex min-h-10 items-center border border-ink px-4 text-[13.5px] font-bold disabled:opacity-40">{busy === "save" ? "Saving…" : "Save Draft"}</button>
             <button type="button" disabled={!!busy} onClick={() => save(true)} data-publish-product className="inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-bold text-surface disabled:opacity-40">{busy === "publish" ? "Publishing…" : "Publish"}</button>

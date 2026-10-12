@@ -2390,6 +2390,8 @@ model ServiceProduct {
   status              ServiceProductStatus      @default(DRAFT)
   /// CAT-E003: short code shown faded on the colored cover.
   cover_code          String?
+  /// Default cover look (A Dark · B Light · C Color · D Labeled) used until a picture is uploaded (2026-10-12).
+  cover_style         String?
   /// WS-E008: the Shop's Service Type (Reports, AI Agents…), picked from ServiceProductType.
   product_type_id     String?            @db.Uuid
   /// O-E004: when the product is paid, and what event triggers the payment request.
