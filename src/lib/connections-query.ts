@@ -29,7 +29,7 @@ export function parseFilters(sp: Record<string, string | undefined>): ConnFilter
     pastco: (sp.pastco ?? "").trim(),
     skills: list(sp.skills),
     roles: list(sp.roles),
-    modes: list(sp.modes),
+    modes: [...new Set(list(sp.modes).map((m) => (m === "remote" ? "offsite" : m)))], // old ?modes=remote links still work
     rmin: num(sp.rmin),
     rmax: num(sp.rmax),
     loc: (sp.loc ?? "").trim(),
@@ -73,7 +73,7 @@ export const LABELS: Record<string, string> = {
   colleague: "Colleagues", mentor: "My Mentors", mentee: "I Mentor", connected: "Connected", invin: "Invites received", invout: "Invites sent",
   worked: "Worked together", samecompany: "Same company now", course: "Same course (Learn)", team: "Same team",
   func: "Functional", tech: "Technical", techfunc: "Techno-Functional", pm: "Project / PM",
-  onsite: "Onsite", hybrid: "Hybrid", remote: "Remote",
+  onsite: "Onsite", hybrid: "Hybrid", offsite: "Offsite",
   verified: "Validated company", score70: "Search Score 70+", creds: "Has credentials (Learn)", work: "Has done work on Panameer",
   week: "Active this week", month: "Joined this month", quiet: "Haven't talked in 90 days",
 };

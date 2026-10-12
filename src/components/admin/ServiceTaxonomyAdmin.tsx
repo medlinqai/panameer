@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 // TX-E005: Commodity Group › Business Type › Service Category › Service Type, with the universal fields and the Suggested queue.
 type Unit = "HOUR" | "DAY" | "WEEK" | "MONTH" | "SESSION" | "VISIT" | "EACH";
+const DELIVERY = [["REMOTE", "Offsite"], ["ONSITE", "Onsite"], ["EITHER", "Either"]] as const;
 export type TType = { id: string; name: string; pricing_model: string | null; units: Unit[]; delivery: string | null; lead_time_days: number | null; commodity_code: string | null; required: boolean; used: number };
 export type TCat = { id: string; name: string; kind: string; types: TType[] };
 export type TBt = { id: string; name: string; hidden: boolean; uses_skills: boolean; categories: TCat[] };
@@ -93,7 +94,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
                               <label key={u} className="inline-flex items-center gap-0.5"><input type="checkbox" checked={t.units.includes(u)} onChange={(e) => call({ action: "update", id: t.id, fields: { units: e.target.checked ? [...t.units, u] : t.units.filter((x) => x !== u) } })} />{u[0] + u.slice(1).toLowerCase()}</label>
                             ))}</span>
                           </td>
-                          <td><select aria-label="Delivery" value={t.delivery ?? ""} onChange={(e) => call({ action: "update", id: t.id, fields: { delivery: e.target.value || null } })} className={SEL}><option value="">—</option>{["REMOTE", "ONSITE", "EITHER"].map((x) => <option key={x} value={x}>{x[0] + x.slice(1).toLowerCase()}</option>)}</select></td>
+                          <td><select aria-label="Delivery" value={t.delivery ?? ""} onChange={(e) => call({ action: "update", id: t.id, fields: { delivery: e.target.value || null } })} className={SEL}><option value="">—</option>{DELIVERY.map(([x, l]) => <option key={x} value={x}>{l}</option>)}</select></td>
                           <td><input defaultValue={t.lead_time_days ?? ""} aria-label="Lead time days" inputMode="numeric" onBlur={(e) => call({ action: "update", id: t.id, fields: { lead_time_days: e.target.value ? Number(e.target.value) : null } })} className={SEL + " w-14"} /></td>
                           <td><input defaultValue={t.commodity_code ?? ""} aria-label="Commodity code" maxLength={8} onBlur={(e) => e.target.value !== (t.commodity_code ?? "") && call({ action: "update", id: t.id, fields: { commodity_code: e.target.value.trim() || null } })} className={SEL + " w-24 font-mono"} /></td>
                           <td><input type="checkbox" aria-label="Required" checked={t.required} onChange={(e) => call({ action: "update", id: t.id, fields: { required: e.target.checked } })} /></td>

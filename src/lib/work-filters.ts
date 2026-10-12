@@ -11,7 +11,7 @@ const RATE: Record<string, { label: string; where: Prisma.WorkRequestWhereInput 
   o125: { label: "Over $125/hr", where: { budget_type: "HOURLY", OR: [{ budget_max_cents: { gt: 12500 } }, { budget_amount_cents: { gt: 12500 } }] } },
   fixed: { label: "Fixed price", where: { budget_type: "FIXED" } },
 };
-const SITE: Record<string, string> = { REMOTE: "Remote", ONSITE: "Onsite", HYBRID: "Hybrid" };
+const SITE: Record<string, string> = { REMOTE: "Offsite", ONSITE: "Onsite", HYBRID: "Hybrid" };
 const LENGTH: Record<string, string> = { LT_1_MONTH: "Under 1 month", ONE_TO_3_MONTHS: "1–3 months", THREE_TO_6_MONTHS: "3–6 months", GT_6_MONTHS: "Over 6 months" };
 const START: Record<string, { label: string; days: [number, number] }> = { "2w": { label: "Within 2 weeks", days: [-3650, 14] }, "30d": { label: "Within 30 days", days: [-3650, 30] }, later: { label: "Later", days: [30, 3650] } };
 
@@ -46,7 +46,7 @@ export async function workFilterDefs(f: WorkFilters) {
     ...(skills.length ? [{ key: "skill", label: "Skills", options: skills.map((s) => ({ value: s.skill.id, label: s.skill.name })).sort((a, b) => a.label.localeCompare(b.label)) }] : []),
     { key: "rate", label: "Rate", options: Object.entries(RATE).map(([value, r]) => ({ value, label: r.label })) },
     { key: "location", label: "Location", options: countries.map((c) => ({ value: c.location_country!, label: c.location_country! })).sort((a, b) => a.label.localeCompare(b.label)) },
-    { key: "site", label: "Remote / Onsite", options: opts(SITE) },
+    { key: "site", label: "Onsite / Offsite", options: opts(SITE) },
     { key: "length", label: "Length", options: opts(LENGTH) },
     { key: "start", label: "Start", options: Object.entries(START).map(([value, r]) => ({ value, label: r.label })) },
     ...(businessTypes.length ? [{ key: "bt", label: "Business Type", options: businessTypes.map((b) => ({ value: b.id, label: b.name })) }] : []),

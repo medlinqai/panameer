@@ -257,7 +257,7 @@ function FiltersPanel({ f, tree, scope = "connections", onClose }: { f: ConnFilt
             <div className="mt-2 flex flex-wrap gap-1.5">{["func", "tech", "techfunc", "pm"].map((v) => pill("roles", v))}</div>
           </G>
           <G n={4} title="Availability & work">
-            <div className="flex flex-wrap gap-1.5">{["onsite", "hybrid", "remote"].map((v) => pill("modes", v))}</div>
+            <div className="flex flex-wrap gap-1.5">{["onsite", "offsite", "hybrid"].map((v) => pill("modes", v))}</div>
             <div className="mt-2 flex items-center gap-2 text-[13px]">
               Rate $<input inputMode="numeric" value={d.rmin ?? ""} onChange={(e) => setD({ ...d, rmin: /^\d+$/.test(e.target.value) ? Number(e.target.value) : null })} aria-label="Minimum rate" className={`${INPUT} w-20`} />
               to $<input inputMode="numeric" value={d.rmax ?? ""} onChange={(e) => setD({ ...d, rmax: /^\d+$/.test(e.target.value) ? Number(e.target.value) : null })} aria-label="Maximum rate" className={`${INPUT} w-20`} /> / hr

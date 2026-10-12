@@ -62,7 +62,7 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
     editorSlug: "bio",
   },
   location: {
-    why: "Buyers filter by where you are, even for remote work",
+    why: "Buyers filter by where you are, even for offsite work",
     action: "Say Where You're Based",
     href: "/settings/contact",
     minutes: 1,

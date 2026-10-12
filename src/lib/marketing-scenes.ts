@@ -115,7 +115,7 @@ export const WR_SKILLS = ["Oracle Cloud", "Procurement Contracts", "P2P", "Suppl
 export const WR_TERMS: readonly (readonly [string, string])[] = [
   ["Engagement", "Hourly, ~80 hrs"],
   ["Start", "Week of 1 Sep 2026"],
-  ["Location", "Remote, US hours"],
+  ["Location", "Offsite, US hours"],
   ["Budget guide", "$140–$190 / hr"],
 ];
 

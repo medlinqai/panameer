@@ -5,7 +5,7 @@ export function WorkRequestDraftShot() {
     { label: "Title", value: "Oracle Cloud Procurement rollout support" },
     { label: "Dates", value: "6 Oct 2026 – 19 Feb 2027" },
     { label: "Budget", value: "Range, fixed price" },
-    { label: "Location", value: "United States · Remote" },
+    { label: "Location", value: "United States · Offsite" },
   ];
   return (
     <ShotCard>

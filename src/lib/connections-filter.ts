@@ -144,8 +144,8 @@ async function loadPeople(viewer: Viewer, scope: "connections" | "members" = "co
     if (roles.has("func") && roles.has("tech")) roles.add("techfunc");
     const modes = new Set<string>();
     if (pp?.onsite_rate_cents != null) modes.add("onsite");
-    if (pp?.remote_rate_cents != null) modes.add("remote");
-    if (modes.has("onsite") && modes.has("remote")) modes.add("hybrid");
+    if (pp?.remote_rate_cents != null) modes.add("offsite");
+    if (modes.has("onsite") && modes.has("offsite")) modes.add("hybrid");
     const rates = [pp?.onsite_rate_cents, pp?.remote_rate_cents, pp?.hourly_rate_cents, pp?.rate_min_cents].filter((x): x is number => x != null);
     const trust = new Set<string>();
     if (p.companyMemberships[0] && okCompany.get(p.companyMemberships[0].company_id)) trust.add("verified");

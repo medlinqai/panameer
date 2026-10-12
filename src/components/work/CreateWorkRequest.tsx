@@ -674,8 +674,8 @@ export function CreateWorkRequest({
             <Field label="How is the work performed?">
               <div className="flex flex-wrap gap-2">
                 {[
-                  { v: "REMOTE", l: "Remote" },
-                  { v: "ONSITE", l: "On site" },
+                  { v: "REMOTE", l: "Offsite" },
+                  { v: "ONSITE", l: "Onsite" },
                   { v: "HYBRID", l: "Hybrid" },
                 ].map((o) => (
                   <Chip
