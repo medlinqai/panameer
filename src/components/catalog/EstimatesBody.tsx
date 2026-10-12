@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Viewer } from "@/lib/access";
 import { estimatesPage, type EstimateListRow } from "@/lib/estimate-requests";
 import { formatCents } from "@/lib/display";
-import { PageTabs } from "@/components/casing/PageTabs";
 import { WithdrawRequest } from "@/components/catalog/WithdrawRequest";
 
 
@@ -42,9 +41,19 @@ export async function EstimatesBody({ viewer, raw, base, tabs }: { viewer: Viewe
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl">
       {tabs}
-      <h1 className="text-[28px] font-bold">Estimates</h1>
+      <h1 className="mt-1 text-[28px] font-bold">Estimates</h1>
       <p className="mt-1 text-[14px] text-ink-2">Quotes for one customer, private to the two of you.</p>
-      <PageTabs className="mt-4" current={tab} tabs={[{ label: `Received${d.received.length ? ` (${d.received.length})` : ""}`, href: `${base}?tab=received`, match: "received" }, { label: `Sent${d.sent.length + d.waiting.length ? ` (${d.sent.length + d.waiting.length})` : ""}`, href: `${base}?tab=sent`, match: "sent" }]} />
+      {/* Inner Received · Sent switch: a plain underline row, flush with the heading (PageTabs is the full-bleed area bar and painted over the subtitle). */}
+      <nav data-estimate-tabs className="mt-5 mb-5 flex gap-6 border-b border-line">
+        {[
+          { key: "received", label: `Received${d.received.length ? ` (${d.received.length})` : ""}` },
+          { key: "sent", label: `Sent${d.sent.length + d.waiting.length ? ` (${d.sent.length + d.waiting.length})` : ""}` },
+        ].map((t) => (
+          <Link key={t.key} href={`${base}?tab=${t.key}`} aria-current={tab === t.key ? "page" : undefined} className={tab === t.key ? "-mb-px border-b-2 border-magenta pb-2.5 text-[14px] font-semibold text-ink" : "-mb-px border-b-2 border-transparent pb-2.5 text-[14px] font-semibold text-ink-2 hover:text-ink"}>
+            {t.label}
+          </Link>
+        ))}
+      </nav>
       {tab === "received" ? (
         d.received.length ? <Rows rows={d.received} withdraw /> : <p className="text-[14px] text-ink-2">Nothing yet. Ask a provider from their profile or a service: <b>Request an Estimate</b>.</p>
       ) : (
