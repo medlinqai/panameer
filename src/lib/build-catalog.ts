@@ -6,7 +6,7 @@ import { publishGate } from "@/lib/my-catalog";
 import { personBusinessTypes } from "@/lib/business-types";
 
 // TX-E004: Build Your Catalog (road stop 4) — the stock Service Types of the provider's business type(s), each a toggle + rate.
-export const LIVE_TYPE = { merged_into_id: null, status: { in: ["STOCK" as const, "APPROVED" as const] } };
+export const LIVE_TYPE = { merged_into_id: null, hidden: false, status: { in: ["STOCK" as const, "APPROVED" as const] } };
 export const UNIT_SHORT: Record<ServiceUnit, string> = { HOUR: "hr", DAY: "day", WEEK: "wk", MONTH: "mo", SESSION: "session", VISIT: "visit", EACH: "each" };
 
 async function me(viewer: Viewer) {

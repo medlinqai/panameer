@@ -2409,9 +2409,13 @@ model ServiceProduct {
   /// How this product's value is estimated. MANY: a product can save contract value
   /// AND avoid a fixed risk, so these are rows, not columns.
   valueFactors      ServiceProductValueFactor[]
+  images            ServiceProductImage[]
 
   /// BT-E005: the company owns the catalog.
   company_id String? @db.Uuid
+  /// MC-E006: where the work happens, and days before the provider can start.
+  delivery       ServiceDelivery?
+  lead_time_days Int?
 
   @@index([provider_profile_id])
   @@index([company_id])
@@ -2420,6 +2424,20 @@ model ServiceProduct {
   service_type_id     String?            @db.Uuid
   serviceType         ServiceType?       @relation(fields: [service_type_id], references: [id], onDelete: SetNull)
   @@map("service_products")
+}
+
+/// MC-E006: up to five pictures per Service Product; sort_order 0 is the cover (mirrored to cover_image_url).
+model ServiceProductImage {
+  id                 String         @id @default(uuid()) @db.Uuid
+  service_product_id String         @db.Uuid
+  url                String
+  sort_order         Int            @default(0)
+  alt                String?
+  created_at         DateTime       @default(now())
+  serviceProduct     ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
+
+  @@index([service_product_id, sort_order])
+  @@map("service_product_images")
 }
 
 /// ⚠ WHAT YOU ARE BUYING — NOT HOW IT BILLS. That is `PackagePricingType`, and the
@@ -8390,6 +8408,8 @@ model ProviderService {
   published_at        DateTime?
   /// BT-E005: the company owns the catalog; the provider row stays as who set it up.
   company_id          String?         @db.Uuid
+  /// MC-E005: Monthly Retainer — the block of hours the monthly price buys.
+  hours_included      Int?
   created_at          DateTime        @default(now())
   updated_at          DateTime        @updatedAt
 
@@ -8545,6 +8565,10 @@ model ServiceType {
   required            Boolean           @default(false)
   status              ServiceTypeStatus @default(STOCK)
   description         String?
+  /// MC-E004: rate types switched on for a new provider (Onsite / Offsite Hourly).
+  default_on          Boolean           @default(false)
+  /// MC-E004/E007: retired or hidden by an admin — kept, never offered.
+  hidden              Boolean           @default(false)
   serviceCategory     ServiceCategory?  @relation(fields: [service_category_id], references: [id], onDelete: SetNull)
   serviceProducts     ServiceProduct[]
 
@@ -8764,6 +8788,8 @@ model ServiceCategory {
   name             String
   kind             ServiceKind
   sort_order       Int           @default(100)
+  /// MC-E004/E007: hidden by an admin (e.g. emptied by the rate-types fold).
+  hidden           Boolean       @default(false)
   created_at       DateTime      @default(now())
   businessType     BusinessType  @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
   serviceTypes     ServiceType[]

@@ -1,6 +1,6 @@
 // TX-E002: the Service Taxonomy seed — Commodity Group › Business Type › Service Category › Service Type — plus the folds
 // Scott approved (naming audit "Scott decisions"): service_product_types → service_types (kind), skills → areas,
-// pillars/offerings → areas, existing provider companies → ERP Consulting. Only approved UNSPSC codes load.
+// pillars/offerings → areas, existing provider companies → ERP Related. Only approved UNSPSC codes load.
 // Dry run by default: prints the plan and writes scripts/out/service_taxonomy_dryrun.csv. Scott runs it with --apply.
 // Run: npx tsx --env-file=.env.local scripts/seed-service-taxonomy.ts [--apply]
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -24,21 +24,12 @@ type T = { name: string; units: ServiceUnit[]; pricing: PricingModel; delivery?:
 type C = { name: string; kind: ServiceKind; types: T[] };
 // Commodity codes: only the ones Scott approved (naming audit › UNSPSC, decision 10). Build/Run proposals stay blank.
 const ERP: C[] = [
-  { name: "Consulting", kind: "SERVICE", types: [
-    { name: "Offsite Consulting", units: ["HOUR", "DAY"], pricing: "TIME", delivery: "OFFSITE", required: true, code: "80101500", was: ["Remote Consulting", "Offsite Consulting"], description: "Working from your location" },
-    { name: "Onsite Consulting", units: ["HOUR", "DAY"], pricing: "TIME", delivery: "ONSITE", code: "80101500", description: "At the customer's site; travel billed separately" },
-  ] },
-  { name: "Project Support", kind: "SERVICE", types: [
-    { name: "Go-Live & Hypercare", units: ["DAY", "WEEK"], pricing: "TIME", delivery: "EITHER", code: "81111500", description: "Short, intense support around cutover" },
-    { name: "Staff Augmentation", units: ["HOUR"], pricing: "TIME", delivery: "EITHER", code: "80111600" },
-  ] },
-  { name: "Ongoing Support", kind: "SERVICE", types: [
-    { name: "Monthly Retainer", units: ["MONTH"], pricing: "RECURRING", delivery: "EITHER", code: "81112200", description: "Ongoing support, up to an hour cap" },
-    { name: "Managed Services (AMS)", units: ["MONTH"], pricing: "RECURRING", delivery: "EITHER", code: "81112200", description: "Application management with response levels" },
-  ] },
-  { name: "Knowledge", kind: "SERVICE", types: [
-    { name: "Training & Workshops", units: ["DAY", "SESSION"], pricing: "TIME", delivery: "EITHER", code: "86130000", was: ["Training"], description: "Key-user or end-user sessions" },
-    { name: "Mentoring", units: ["HOUR"], pricing: "TIME", delivery: "OFFSITE", code: "86130000", description: "One-to-one guidance for other consultants" },
+  // MC-E004 (2026-10-12): Services are four rate types; Go-Live, Staff Aug, AMS and Training are retired (scripts/my-catalog-rates.ts).
+  { name: "Rates", kind: "SERVICE", types: [
+    { name: "Onsite Hourly", units: ["HOUR"], pricing: "TIME", delivery: "ONSITE", code: "80101500", was: ["Onsite Consulting"], description: "At the buyer's site" },
+    { name: "Offsite Hourly", units: ["HOUR"], pricing: "TIME", delivery: "OFFSITE", code: "80101500", was: ["Remote Consulting", "Offsite Consulting"], description: "From your location" },
+    { name: "Monthly Retainer", units: ["MONTH"], pricing: "RECURRING", delivery: "EITHER", code: "81112200", description: "A set price each month for a block of hours" },
+    { name: "Mentoring", units: ["HOUR"], pricing: "TIME", delivery: "OFFSITE", code: "86132000", description: "One-to-one guidance, usually a lower rate" },
   ] },
   { name: "Build", kind: "SERVICE_PRODUCT", types: [
     { name: "Reports", units: ["EACH"], pricing: "FIXED" },
@@ -80,13 +71,13 @@ async function main() {
   ]);
   for (const g of GROUPS) note("1 groups", groups.some((x) => x.name === g.name) ? "update" : "create", g.name, `segments ${g.unspsc_segments.join(",")}${g.hidden ? " · parked (hidden)" : ""}`);
   const erp = [...bts].sort((a, b) => b._count.skills - a._count.skills)[0];
-  note("2 business types", "rename + link", `${erp?.code} "${erp?.name}" → "ERP Consulting"`, `holds ${erp?._count.skills ?? 0} skills (the active one)`);
+  note("2 business types", "rename + link", `${erp?.code} "${erp?.name}" → "ERP Related"`, `holds ${erp?._count.skills ?? 0} skills (the active one)`);
   for (const b of bts.filter((b) => b.id !== erp?.id)) note("2 business types", "leave", `${b.code} "${b.name}"`, `${b._count.skills} skills — not touched; Scott to decide`);
   const saas = bts.find((b) => b.code === "SOFTWARE_SAAS");
   note("2 business types", saas ? "update" : "create", "Software & SaaS", "SOFTWARE_SAAS · uses_skills false");
   const byName = new Map(types.map((t) => [t.name, t]));
   const seen = new Set<string>();
-  for (const [bt, list] of [["ERP Consulting", ERP], ["Software & SaaS", SAAS]] as const)
+  for (const [bt, list] of [["ERP Related", ERP], ["Software & SaaS", SAAS]] as const)
     for (const c of list) {
       note("3 categories", cats.some((x) => x.name === c.name) ? "update" : "create", `${bt} › ${c.name}`, c.kind);
       for (const t of c.types) {
@@ -113,7 +104,7 @@ async function main() {
     note("7 offerings → areas", a ? "map" : "needs Scott", o.name, a ? `→ ${a.code}` : "no clear area");
   }
   const providerCos = await prisma.company.findMany({ where: { AND: [{ archived_at: null, memberships: { some: { status: "APPROVED", person: { is_service_provider: true } } }, businessTypes: { none: {} } }, REAL_COMPANY] }, select: { id: true, name: true } });
-  note("8 provider business types", "link ERP Consulting", `${providerCos.length} provider companies with none yet`, providerCos.slice(0, 8).map((c) => c.name).join(", "));
+  note("8 provider business types", "link ERP Related", `${providerCos.length} provider companies with none yet`, providerCos.slice(0, 8).map((c) => c.name).join(", "));
 
   mkdirSync("scripts/out", { recursive: true });
   const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
@@ -128,7 +119,7 @@ async function main() {
     const g: Record<string, string> = {};
     for (const x of GROUPS) g[x.name] = (await tx.commodityGroup.upsert({ where: { name: x.name }, create: x, update: x, select: { id: true } })).id;
     const prof = g["Professional & Technology Services"];
-    await tx.businessType.update({ where: { id: erp.id }, data: { name: "ERP Consulting", commodity_group_id: prof, uses_skills: true, sort_order: 1, hidden: false } });
+    await tx.businessType.update({ where: { id: erp.id }, data: { name: "ERP Related", commodity_group_id: prof, uses_skills: true, sort_order: 1, hidden: false } });
     const saasId = (await tx.businessType.upsert({ where: { code: "SOFTWARE_SAAS" }, create: { code: "SOFTWARE_SAAS", name: "Software & SaaS", commodity_group_id: prof, uses_skills: false, sort_order: 2 }, update: { name: "Software & SaaS", commodity_group_id: prof, uses_skills: false } })).id;
     const typeIds = new Map<string, string>();
     for (const [btId, list] of [[erp.id, ERP], [saasId, SAAS]] as const) {

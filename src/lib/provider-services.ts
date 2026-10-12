@@ -85,8 +85,8 @@ export async function servicesFromRates(viewer: Viewer) {
   const typeId = (n: string) => types.find((t) => t.name === n)?.id ?? null;
   const onsite = prof.onsite_rate_cents ?? (prof.remote_rate_cents == null ? prof.hourly_rate_cents : null);
   const wanted = [
-    onsite ? { name: "Onsite Consulting", rate: onsite } : null,
-    prof.remote_rate_cents ? { name: "Offsite Consulting", rate: prof.remote_rate_cents } : null,
+    onsite ? { name: "Onsite Hourly", rate: onsite } : null,
+    prof.remote_rate_cents ? { name: "Offsite Hourly", rate: prof.remote_rate_cents } : null,
   ].filter((x): x is { name: string; rate: number } => !!x);
   if (!wanted.length) throw new OnboardingError("Add your rates first", "INVALID");
   const gate = await publishGate(prof.person_id);
@@ -94,6 +94,6 @@ export async function servicesFromRates(viewer: Viewer) {
   const companyId = await companyIdForProfile(prof.id);
   for (const w of wanted) {
     if (existing.some((e) => e.name === w.name)) continue;
-    await prisma.providerService.create({ data: { provider_profile_id: prof.id, company_id: companyId, name: w.name, service_type: "SERVICE_BY_QTY", service_type_id: typeId(w.name), uom: "HOUR", rate_cents: w.rate, billing_cycle: "MONTHLY", payment_terms: "NET30", payment_event: "TIMESHEET", expenses: w.name === "Onsite Consulting" ? "AT_COST" : "NOT_APPLICABLE", published_at: gate.ok ? new Date() : null } });
+    await prisma.providerService.create({ data: { provider_profile_id: prof.id, company_id: companyId, name: w.name, service_type: "SERVICE_BY_QTY", service_type_id: typeId(w.name), uom: "HOUR", rate_cents: w.rate, billing_cycle: "MONTHLY", payment_terms: "NET30", payment_event: "TIMESHEET", expenses: w.name === "Onsite Hourly" ? "AT_COST" : "NOT_APPLICABLE", published_at: gate.ok ? new Date() : null } });
   }
 }
