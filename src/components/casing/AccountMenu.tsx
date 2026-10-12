@@ -361,7 +361,7 @@ export function AccountMenu({
           {(() => {
             const head = company?.isMember && !isAdmin ? [rows[0], COMPANY_PERSONA_ITEM] : [rows[0]];
             const sell = !isAdmin && me?.person?.roles?.isServiceProvider ? SELLER_PERSONA_ITEMS : [];
-            return [...head, ...sell, ...(isAdmin ? [] : [ESTIMATES_PERSONA_ITEM]), ...rows.slice(1)];
+            return [...head, ...sell, ...(isAdmin || sell.length ? [] : [ESTIMATES_PERSONA_ITEM]), ...rows.slice(1)];
           })().map((item, i, all) => (
             <Fragment key={item.href}>
               <MenuRow

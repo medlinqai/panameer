@@ -219,10 +219,8 @@ export const PERSONA_NAV: NavItem[] = [
 ];
 export const COMPANY_PERSONA_ITEM: NavItem = { label: "My Company", heading: "Company", href: "/company" };
 /** Providers' catalog in the My menu, after Profile and Company (Scott 2026-10-10). */
-export const SELLER_PERSONA_ITEMS: NavItem[] = [
-  { label: "My Services", href: "/catalog/build" },
-  { label: "My Service Products", href: "/profile#my-service-products" },
-];
+// MC-E001: sellers get one My Catalog (Home · Services · Service Products · Cost Estimates) in place of three rows.
+export const SELLER_PERSONA_ITEMS: NavItem[] = [{ label: "My Catalog", heading: "My Catalog", href: "/catalog" }];
 /** EST-E004: every member — buyers ask for estimates, providers send them. */
 export const ESTIMATES_PERSONA_ITEM: NavItem = { label: "My Cost Estimates", heading: "Cost Estimates", href: "/estimates" };
 
@@ -412,6 +410,7 @@ export function pageTitleFor(pathname: string): string | null {
     // rather than the rail.
     ...PERSONA_NAV,
     ESTIMATES_PERSONA_ITEM,
+    ...SELLER_PERSONA_ITEMS,
   ];
 
   // Longest matching href wins, so /admin/learn beats /admin. Query strings are
