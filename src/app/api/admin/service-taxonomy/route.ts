@@ -2,13 +2,19 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { writeAudit } from "@/lib/admin/audit";
-import { approve, merge, move, rename, setHidden, updateType } from "@/lib/service-taxonomy-admin";
+import { addBusinessType, addCategory, addType, approve, merge, move, removeAt, rename, renameAt, setDefaultOn, setHidden, updateType } from "@/lib/service-taxonomy-admin";
 
 const UNITS = ["HOUR", "DAY", "WEEK", "MONTH", "SESSION", "VISIT", "EACH"] as const;
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("update"), id: z.string().uuid(), fields: z.object({ pricing_model: z.enum(["TIME", "FIXED", "RECURRING", "QUOTE"]).nullable().optional(), units: z.array(z.enum(UNITS)).optional(), delivery: z.enum(["OFFSITE", "ONSITE", "EITHER"]).nullable().optional(), lead_time_days: z.number().int().min(0).max(365).nullable().optional(), commodity_code: z.string().trim().max(8).nullable().optional(), required: z.boolean().optional(), description: z.string().trim().max(200).nullable().optional() }) }),
   z.object({ action: z.literal("move"), level: z.enum(["group", "businessType", "category", "type"]), id: z.string().uuid(), dir: z.union([z.literal(-1), z.literal(1)]) }),
-  z.object({ action: z.literal("hide"), level: z.enum(["group", "businessType"]), id: z.string().uuid(), hidden: z.boolean() }),
+  z.object({ action: z.literal("hide"), level: z.enum(["group", "businessType", "category", "type"]), id: z.string().uuid(), hidden: z.boolean() }),
+  z.object({ action: z.literal("renameAt"), level: z.enum(["businessType", "category", "type"]), id: z.string().uuid(), name: z.string().min(2).max(60) }),
+  z.object({ action: z.literal("delete"), level: z.enum(["businessType", "category", "type"]), id: z.string().uuid() }),
+  z.object({ action: z.literal("defaultOn"), id: z.string().uuid(), on: z.boolean() }),
+  z.object({ action: z.literal("addBusinessType"), id: z.string().uuid(), name: z.string().min(2).max(60) }),
+  z.object({ action: z.literal("addCategory"), id: z.string().uuid(), name: z.string().min(2).max(60), kind: z.enum(["SERVICE", "SERVICE_PRODUCT"]) }),
+  z.object({ action: z.literal("addType"), id: z.string().uuid(), to: z.enum(["category", "businessType"]), name: z.string().min(2).max(60) }),
   z.object({ action: z.literal("approve"), id: z.string().uuid(), categoryId: z.string().uuid() }),
   z.object({ action: z.literal("rename"), id: z.string().uuid(), name: z.string().min(3).max(60) }),
   z.object({ action: z.literal("merge"), id: z.string().uuid(), into: z.string().uuid() }),
@@ -27,6 +33,12 @@ export async function POST(req: Request) {
     else if (d.action === "hide") await setHidden(d.level, d.id, d.hidden);
     else if (d.action === "approve") await approve(d.id, d.categoryId);
     else if (d.action === "rename") await rename(d.id, d.name);
+    else if (d.action === "renameAt") await renameAt(d.level, d.id, d.name);
+    else if (d.action === "delete") await removeAt(d.level, d.id);
+    else if (d.action === "defaultOn") await setDefaultOn(d.id, d.on);
+    else if (d.action === "addBusinessType") await addBusinessType(d.id, d.name);
+    else if (d.action === "addCategory") await addCategory(d.id, d.name, d.kind);
+    else if (d.action === "addType") await addType(d.to === "category" ? { categoryId: d.id } : { businessTypeId: d.id }, d.name);
     else await merge(d.id, d.into);
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });

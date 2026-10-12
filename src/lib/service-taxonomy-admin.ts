@@ -10,6 +10,7 @@ export async function taxonomyTree() {
         businessTypes: {
           orderBy: { sort_order: "asc" },
           include: {
+            _count: { select: { companies: true } },
             serviceCategories: {
               orderBy: { sort_order: "asc" },
               include: { serviceTypes: { where: { merged_into_id: null, status: { in: ["STOCK", "APPROVED"] } }, orderBy: { sort_order: "asc" }, include: { _count: { select: { serviceProducts: true } } } } },
@@ -58,9 +59,87 @@ export async function move(level: Level, id: string, dir: -1 | 1) {
   for (const [k, rid] of list.entries()) await model.update({ where: { id: rid }, data: { sort_order: k + 1 } });
 }
 
-export async function setHidden(level: "group" | "businessType", id: string, hidden: boolean) {
+export async function setHidden(level: Level, id: string, hidden: boolean) {
   if (level === "group") await prisma.commodityGroup.update({ where: { id }, data: { hidden } });
-  else await prisma.businessType.update({ where: { id }, data: { hidden } });
+  else if (level === "businessType") await prisma.businessType.update({ where: { id }, data: { hidden } });
+  else if (level === "category") await prisma.serviceCategory.update({ where: { id }, data: { hidden } });
+  else await prisma.serviceType.update({ where: { id }, data: { hidden } });
+}
+
+// MC-E007: Add · Rename · Hide · Delete at Business Type, Category and Type. Delete only when nothing uses it; otherwise Hide.
+const cleanName = (name: string) => {
+  const n = name.trim().replace(/\s+/g, " ").slice(0, 60);
+  if (n.length < 2) throw new Error("Give it a name");
+  return n;
+};
+const nextSort = (rows: { sort_order: number }[]) => rows.reduce((m, r) => Math.max(m, r.sort_order), 0) + 1;
+
+export async function addBusinessType(groupId: string, name: string) {
+  const n = cleanName(name);
+  const code = `${n.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 40)}_${Date.now().toString(36).toUpperCase()}`;
+  const sibs = await prisma.businessType.findMany({ where: { commodity_group_id: groupId }, select: { sort_order: true } });
+  await prisma.businessType.create({ data: { code, name: n, commodity_group_id: groupId, uses_skills: false, sort_order: nextSort(sibs) } });
+}
+export async function addCategory(businessTypeId: string, name: string, kind: "SERVICE" | "SERVICE_PRODUCT") {
+  const n = cleanName(name);
+  const sibs = await prisma.serviceCategory.findMany({ where: { business_type_id: businessTypeId }, select: { sort_order: true, name: true } });
+  if (sibs.some((c) => c.name.toLowerCase() === n.toLowerCase())) throw new Error("That category already exists here");
+  return prisma.serviceCategory.create({ data: { business_type_id: businessTypeId, name: n, kind, sort_order: nextSort(sibs) } });
+}
+/** A Rate Type goes into the business type's SERVICE category (created as "Rates" when it has none). */
+export async function addType(target: { categoryId: string } | { businessTypeId: string }, name: string) {
+  const n = cleanName(name);
+  if (await prisma.serviceType.findFirst({ where: { name: { equals: n, mode: "insensitive" } }, select: { id: true } })) throw new Error("A type with that name already exists");
+  const cat = "categoryId" in target
+    ? await prisma.serviceCategory.findUniqueOrThrow({ where: { id: target.categoryId }, select: { id: true, kind: true } })
+    : (await prisma.serviceCategory.findFirst({ where: { business_type_id: target.businessTypeId, kind: "SERVICE" }, orderBy: { sort_order: "asc" }, select: { id: true, kind: true } })) ?? (await addCategory(target.businessTypeId, "Rates", "SERVICE"));
+  const sibs = await prisma.serviceType.findMany({ where: { service_category_id: cat.id }, select: { sort_order: true } });
+  await prisma.serviceType.create({
+    data: { name: n, kind: cat.kind, status: "STOCK", is_baseline: true, service_category_id: cat.id, sort_order: nextSort(sibs), ...(cat.kind === "SERVICE" ? { pricing_model: "TIME", units: ["HOUR"], delivery: "OFFSITE" } : { pricing_model: "FIXED", units: ["EACH"], delivery: "OFFSITE" }) },
+  });
+}
+export async function renameAt(level: Exclude<Level, "group">, id: string, name: string) {
+  const n = cleanName(name);
+  if (level === "businessType") await prisma.businessType.update({ where: { id }, data: { name: n } });
+  else if (level === "category") await prisma.serviceCategory.update({ where: { id }, data: { name: n } });
+  else {
+    if (await prisma.serviceType.findFirst({ where: { name: { equals: n, mode: "insensitive" }, NOT: { id } }, select: { id: true } })) throw new Error("A type with that name already exists");
+    await prisma.serviceType.update({ where: { id }, data: { name: n } });
+  }
+}
+export async function setDefaultOn(id: string, on: boolean) {
+  await prisma.serviceType.update({ where: { id }, data: { default_on: on } });
+}
+
+/** Everything that points at these types — services (active or not), service products, résumé suggestions. */
+async function typeUse(ids: string[]) {
+  if (!ids.length) return 0;
+  const [a, b, c] = await Promise.all([
+    prisma.providerService.count({ where: { service_type_id: { in: ids } } }),
+    prisma.serviceProduct.count({ where: { service_type_id: { in: ids } } }),
+    prisma.catalogSuggestion.count({ where: { service_type_id: { in: ids } } }),
+  ]);
+  return a + b + c;
+}
+export async function removeAt(level: Exclude<Level, "group">, id: string) {
+  const inUse = () => new Error("It's in use — hide it instead");
+  if (level === "type") {
+    if (await typeUse([id])) throw inUse();
+    await prisma.serviceType.delete({ where: { id } });
+    return;
+  }
+  const catIds = level === "category" ? [id] : (await prisma.serviceCategory.findMany({ where: { business_type_id: id }, select: { id: true } })).map((c) => c.id);
+  const typeIds = (await prisma.serviceType.findMany({ where: { service_category_id: { in: catIds } }, select: { id: true } })).map((t) => t.id);
+  if (await typeUse(typeIds)) throw inUse();
+  if (level === "businessType") {
+    const b = await prisma.businessType.findUniqueOrThrow({ where: { id }, select: { _count: { select: { companies: true, skills: true, pillars: true, specializations: true, tags: true, buySettings: true } } } });
+    if (Object.values(b._count).some((n) => n > 0)) throw inUse();
+  }
+  await prisma.$transaction([
+    prisma.serviceType.deleteMany({ where: { id: { in: typeIds } } }),
+    prisma.serviceCategory.deleteMany({ where: { id: { in: catIds } } }),
+    ...(level === "businessType" ? [prisma.businessType.delete({ where: { id } })] : []),
+  ]);
 }
 
 /** Suggested queue: approve into a category, rename, or merge into an existing type (its services and products move over). */

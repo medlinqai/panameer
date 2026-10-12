@@ -12,7 +12,7 @@ export default async function Page() {
     <div className="mx-auto w-full max-w-6xl">
       <h1 className="text-[28px] font-bold">Service Taxonomy</h1>
       <p className="mb-5 mt-1 text-[14px] text-ink-2">
-        Commodity Group › Business Type › Service Category › Service Type, the same for every business type. Areas and Skills: <Link href="/admin/skill-catalog" className="font-semibold underline">Areas &amp; Skills</Link>.
+        Commodity Group › Business Type › Rate Types (Services) and Service Product Types. Delete works only when nothing uses the item; otherwise use Hide. Areas and Skills: <Link href="/admin/skill-catalog" className="font-semibold underline">Areas &amp; Skills</Link>.
       </p>
       {homeless.length > 0 && (
         <section data-homeless-pillars className="mb-6 border border-line bg-white p-4">
@@ -32,10 +32,10 @@ export default async function Page() {
           groups={groups.map((g) => ({
             id: g.id, name: g.name, segments: g.unspsc_segments, hidden: g.hidden,
             businessTypes: g.businessTypes.map((b) => ({
-              id: b.id, name: b.name, hidden: b.hidden, uses_skills: b.uses_skills,
+              id: b.id, name: b.name, hidden: b.hidden, uses_skills: b.uses_skills, companies: b._count.companies,
               categories: b.serviceCategories.map((c) => ({
-                id: c.id, name: c.name, kind: c.kind,
-                types: c.serviceTypes.map((t) => ({ id: t.id, name: t.name, pricing_model: t.pricing_model, units: t.units, delivery: t.delivery, lead_time_days: t.lead_time_days, commodity_code: t.commodity_code, required: t.required, used: (used.get(t.id) ?? 0) + t._count.serviceProducts })),
+                id: c.id, name: c.name, kind: c.kind, hidden: c.hidden,
+                types: c.serviceTypes.map((t) => ({ id: t.id, name: t.name, description: t.description, pricing_model: t.pricing_model, units: t.units, delivery: t.delivery, lead_time_days: t.lead_time_days, commodity_code: t.commodity_code, default_on: t.default_on, hidden: t.hidden, used: (used.get(t.id) ?? 0) + t._count.serviceProducts })),
               })),
             })),
           }))}
