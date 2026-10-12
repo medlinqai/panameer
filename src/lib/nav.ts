@@ -56,6 +56,9 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
     "/messages",
     "/notifications",
     "/worklist",
+    // My Catalog + My Cost Estimates live in the My menu (MC-E001, 2026-10-12).
+    "/catalog",
+    "/estimates",
   ],
   [MESSAGES_BAND_HREF]: [],
   [BELL_BAND_HREF]: [],
