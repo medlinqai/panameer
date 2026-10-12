@@ -419,6 +419,8 @@ model Company {
   /// TX-E003 / TX-E006: the company's business types (a provider can have more than one) and What We Buy.
   businessTypes CompanyBusinessType[]
   buySettings   BuySetting[]
+  /// BT-E001: a seller company's "Industries You Serve" (buyers keep the single industry_id).
+  industriesServed CompanyIndustry[]
   @@map("companies")
 }
 
@@ -1618,6 +1620,7 @@ model Specialization {
   skillTagsAsVendor    SkillTag[]    @relation("skillTagsAsVendor")
   workRequestsAsVendor WorkRequest[] @relation("workRequestsAsVendor")
 
+  companiesServed CompanyIndustry[]
   @@unique([business_type_id, name])
   @@map("specializations")
 }
@@ -8833,4 +8836,17 @@ enum UsageApp {
 enum UsageKind {
   SIGN_IN
   VISIT
+}
+
+/// BT-E001: Industries You Serve — a seller company's industries (multi).
+model CompanyIndustry {
+  id                String         @id @default(uuid()) @db.Uuid
+  company_id        String         @db.Uuid
+  specialization_id String         @db.Uuid
+  created_at        DateTime       @default(now())
+  company           Company        @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  specialization    Specialization @relation(fields: [specialization_id], references: [id], onDelete: Cascade)
+
+  @@unique([company_id, specialization_id])
+  @@map("company_industries")
 }

@@ -44,3 +44,27 @@ export async function personBusinessTypes(personId: string) {
   if (!m) return [];
   return prisma.businessType.findMany({ where: { companies: { some: { company_id: m.company_id } } }, orderBy: { sort_order: "asc" }, select: { id: true, name: true } });
 }
+
+/** BT-E001: a seller company — it has a business type, or a member who sells. Sellers get Industries You Serve; buyers keep Industry. */
+export async function companyIsSeller(companyId: string): Promise<boolean> {
+  const [bt, provider] = await Promise.all([
+    prisma.companyBusinessType.count({ where: { company_id: companyId } }),
+    prisma.companyMembership.count({ where: { company_id: companyId, status: "APPROVED", person: { is_service_provider: true } } }),
+  ]);
+  return bt + provider > 0;
+}
+
+export async function industriesServed(companyId: string): Promise<string[]> {
+  return (await prisma.companyIndustry.findMany({ where: { company_id: companyId }, select: { specialization_id: true } })).map((r) => r.specialization_id);
+}
+
+export async function setIndustryServed(viewer: Viewer, specializationId: string, on: boolean) {
+  const co = await myCompany(viewer);
+  if (!co) throw new Error("Add your company first");
+  if (!co.isAdmin) throw new Error("Only a company admin can change this");
+  const ind = await prisma.specialization.findFirst({ where: { id: specializationId, kind: "INDUSTRY", status: "ACTIVE" }, select: { id: true } });
+  if (!ind) throw new Error("Pick an industry from the list");
+  if (on) await prisma.companyIndustry.upsert({ where: { company_id_specialization_id: { company_id: co.companyId, specialization_id: ind.id } }, create: { company_id: co.companyId, specialization_id: ind.id }, update: {} });
+  else await prisma.companyIndustry.deleteMany({ where: { company_id: co.companyId, specialization_id: ind.id } });
+  return industriesServed(co.companyId);
+}

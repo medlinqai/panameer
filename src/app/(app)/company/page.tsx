@@ -1,7 +1,8 @@
 import { BusinessTypesEditor } from "@/components/company/BusinessTypesEditor";
 import { WhatWeBuyEditor } from "@/components/company/WhatWeBuyEditor";
 import { whatWeBuy } from "@/lib/what-we-buy";
-import { companyBusinessTypeIds, offeredBusinessTypes } from "@/lib/business-types";
+import { companyBusinessTypeIds, companyIsSeller, industriesServed, offeredBusinessTypes } from "@/lib/business-types";
+import { IndustriesServedEditor } from "@/components/company/IndustriesServedEditor";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
@@ -78,6 +79,12 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
   }
 
   const editing = edit === "details" && binding.isAdmin;
+  // BT-E001: seller companies list Industries You Serve (multi) further down; buyers keep the single Industry.
+  const [seller, served, allIndustries] = await Promise.all([
+    companyIsSeller(c.id),
+    industriesServed(c.id),
+    prisma.specialization.findMany({ where: { kind: "INDUSTRY", status: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  ]);
   const [view, industries] = await Promise.all([
     loadCompanyView(c.id),
     editing
@@ -103,7 +110,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
             editing ? (
               <CompanyDetailsEditor
                 industries={industries}
-                fields={OVERVIEW_FIELDS}
+                fields={seller ? OVERVIEW_FIELDS.filter((f) => f !== "industryId") : OVERVIEW_FIELDS}
                 initial={{
                   name: view.name, legalName: view.legalName, taxType: view.taxTypeCode, country: view.country, stateOfFiling: view.stateOfFiling,
                   ein: null, industryId: view.industryId, website: view.website, description: view.description, sizeBand: view.sizeBand, erpUsed: view.erpUsed,
@@ -114,6 +121,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
         />
         {track && <BuyerTrackRecord t={track} />}
         {bizTypes.length > 0 && <BusinessTypesEditor types={bizTypes.map((t) => ({ id: t.id, name: t.name, group: t.commodityGroup?.name ?? null }))} initial={bizOn} canEdit={binding.isAdmin} />}
+        {seller && <IndustriesServedEditor industries={allIndustries} initial={served} canEdit={binding.isAdmin} />}
         {buys.length > 0 && <WhatWeBuyEditor initial={buys} canEdit={binding.isAdmin} />}
         {binding.isAdmin && <PayReadyBox c={view} />}
         {elsewhere ? (

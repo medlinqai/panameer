@@ -11,11 +11,9 @@ const COMPANY_DESCRIPTION_MAX = 600;
 export function RegisterCompany({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   const [website, setWebsite] = useState("");
-  const [industryId, setIndustryId] = useState("");
   const [description, setDescription] = useState("");
   const [attestation, setAttestation] = useState(false);
   const [companyTos, setCompanyTos] = useState(false);
-  const [industries, setIndustries] = useState<{ id: string; name: string }[]>([]);
   const [businessTypes, setBusinessTypes] = useState<{ id: string; name: string }[]>([]);
   const [businessTypeId, setBusinessTypeId] = useState("");
   const [match, setMatch] = useState<Match>(null);
@@ -23,7 +21,7 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/company/industries").then((r) => (r.ok ? r.json() : { industries: [] })).then((b) => { setIndustries(b.industries ?? []); setBusinessTypes(b.businessTypes ?? []); if (b.businessTypes?.length === 1) setBusinessTypeId(b.businessTypes[0].id); }).catch(() => {});
+    fetch("/api/company/industries").then((r) => (r.ok ? r.json() : { industries: [] })).then((b) => { setBusinessTypes(b.businessTypes ?? []); if (b.businessTypes?.length === 1) setBusinessTypeId(b.businessTypes[0].id); }).catch(() => {});
   }, []);
 
   const lookUp = async () => {
@@ -60,7 +58,7 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
     setError(null);
     try {
       await post("/api/company/define", "POST", { name: name.trim(), website: website.trim(), attestation, companyTos });
-      await post("/api/company", "PATCH", { industryId, ...(description.trim() ? { description: description.trim() } : {}) });
+      if (description.trim()) await post("/api/company", "PATCH", { description: description.trim() });
       if (businessTypeId) await post("/api/company/business-types", "POST", { businessTypeId, on: true });
       onDone();
     } catch (e) {
@@ -70,7 +68,7 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
     }
   };
 
-  const ready = name.trim().length >= 2 && website.trim().length >= 3 && !!industryId && (!businessTypes.length || !!businessTypeId) && attestation && companyTos;
+  const ready = name.trim().length >= 2 && website.trim().length >= 3 && (!businessTypes.length || !!businessTypeId) && attestation && companyTos;
 
   return (
     <div className="mx-auto w-full max-w-2xl" data-register-company>
@@ -99,19 +97,14 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
               <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Your business name" autoComplete="organization" />
             </Field>
             {businessTypes.length > 0 && (
-              <Field label="Business Type" hint="What your company sells. You can add more later on your company page.">
+              <Field label="Business Type" hint="What your company sells — it sets up your Service Catalog. You can add more later.">
                 <select value={businessTypeId} onChange={(e) => setBusinessTypeId(e.target.value)} className="w-full border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta">
                   <option value="">Pick a business type</option>
                   {businessTypes.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </Field>
             )}
-            <Field label="Industry">
-              <select value={industryId} onChange={(e) => setIndustryId(e.target.value)} className="w-full border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta">
-                <option value="">Pick an industry</option>
-                {industries.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-              </select>
-            </Field>
+            {/* BT-E001: a seller picks its Business Type (it selects the Service Catalog); Industries You Serve comes later on the company page. */}
             <Field label="Description (optional)" hint={`What the company does, in a sentence or two. Up to ${COMPANY_DESCRIPTION_MAX} characters.`}>
               <TextArea value={description} maxLength={COMPANY_DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} className="min-h-24" />
             </Field>

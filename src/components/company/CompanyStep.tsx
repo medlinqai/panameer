@@ -128,6 +128,23 @@ export function CompanyStep({
   // both
   const [attestation, setAttestation] = useState(false);
 
+  // BT-E001: a seller defining a new company picks its Business Type (it selects the Service Catalog).
+  const [seller, setSeller] = useState(false);
+  const [businessTypes, setBusinessTypes] = useState<{ id: string; name: string }[]>([]);
+  const [businessTypeId, setBusinessTypeId] = useState("");
+  useEffect(() => {
+    fetch("/api/company/industries")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((b) => {
+        if (!b) return;
+        setSeller(!!b.seller);
+        setBusinessTypes(b.businessTypes ?? []);
+        if (b.businessTypes?.length === 1) setBusinessTypeId(b.businessTypes[0].id);
+      })
+      .catch(() => {});
+  }, []);
+  const needsBusinessType = seller && businessTypes.length > 0;
+
   // THE DOMAIN NUDGE (E167 enhancement).
   useEffect(() => {
     let cancelled = false;
@@ -170,6 +187,7 @@ export function CompanyStep({
         // WHAT CONTINUE NOW REQUIRES ( WS-1)
         // COUNTRY IS THE REQUIRED PART OF THE ADDRESS, and the street/city are
         !!country &&
+        (!needsBusinessType || !!businessTypeId) &&
         attestation &&
         companyTos;
 
@@ -240,6 +258,8 @@ export function CompanyStep({
         setError(body.error ?? "Could not save that.");
         return;
       }
+      if (mode === "define" && needsBusinessType && businessTypeId)
+        await fetch("/api/company/business-types", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessTypeId, on: true }) }).catch(() => null);
       onDone(body as CompanyOutcome);
     } finally {
       setBusy(false);
@@ -423,6 +443,15 @@ export function CompanyStep({
               ))}
             </select>
           </Field>
+
+          {needsBusinessType && (
+            <Field label="Business Type" hint="What your company sells — it sets up your Service Catalog.">
+              <select value={businessTypeId} onChange={(e) => setBusinessTypeId(e.target.value)} className="w-full border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta" data-business-type>
+                <option value="">Pick a business type</option>
+                {businessTypes.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </Field>
+          )}
 
           {/* OPTIONAL, AND THE HINT SAYS SO IN WORDS. Scott: *"most small */}
           <Field label="Website" hint="Optional — leave it blank if you don't have one.">
