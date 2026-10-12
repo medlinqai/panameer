@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { buyersSee, EXPENSES_LABEL } from "@/lib/rate-display";
 
 // MC-E005: My Catalog › Services — the business type's rate types; toggle, rate, expenses. Saves as you go; draft until published.
 type Unit = "HOUR" | "DAY" | "WEEK" | "MONTH" | "SESSION" | "VISIT" | "EACH";
-export type RateType = { id: string; name: string; description: string | null; units: Unit[]; delivery: string | null };
+export type RateType = { id: string; name: string; description: string | null; units: Unit[]; delivery: string | null; custom?: boolean };
 export type RateRow = { id: string; serviceTypeId: string; rateCents: number | null; unit: string | null; published: boolean; expenses: string | null; hoursIncluded: number | null; overrideCents?: number | null };
 const PER: Record<string, string> = { HOUR: "/hr", DAY: "/day", WEEK: "/wk", MONTH: "/mo", SESSION: "/session", VISIT: "/visit", EACH: "each" };
 const DELIVERY: Record<string, string> = { ONSITE: "Onsite", OFFSITE: "Offsite", EITHER: "Either" };
 const EXPENSES = ["AT_COST", "INCLUDED", "NOT_APPLICABLE"] as const;
 const COLS = "md:grid-cols-[56px_minmax(0,1.5fr)_minmax(0,1.15fr)_minmax(0,1fr)_72px_minmax(0,1.3fr)]";
+export const ADD_RATE_EVENT = "pm:add-rate";
 const dollars = (c: number | null | undefined) => (c != null ? String(c / 100) : "");
 
 export function RatesTable({ types, rows, registration, gate, multiProvider = false }: { types: RateType[]; rows: RateRow[]; registration: { ONSITE: number | null; OFFSITE: number | null }; gate: { ok: boolean; reason: string | null; href: string }; multiProvider?: boolean }) {
@@ -20,6 +22,15 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
   const [hrs, setHrs] = useState<Record<string, string>>(Object.fromEntries(rows.map((r) => [r.serviceTypeId, r.hoursIncluded ? String(r.hoursIncluded) : ""])));
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const router = useRouter();
+  const [adding, setAdding] = useState(false);
+  const [nw, setNw] = useState({ name: "", unit: "HOUR", delivery: "OFFSITE" });
+  // The "+ Add a Rate Type" button sits at the top of the page (beside the subtitle) and opens the form here.
+  useEffect(() => {
+    const open = () => setAdding(true);
+    window.addEventListener(ADD_RATE_EVENT, open);
+    return () => window.removeEventListener(ADD_RATE_EVENT, open);
+  }, []);
 
   const post = async (body: object) => {
     const r = await fetch("/api/catalog/build", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -50,6 +61,16 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
     if (!r.ok) return setMsg(j.error ?? "Could not save that");
     setSvc((m) => ({ ...m, [t.id]: { ...s, overrideCents: cents } }));
   };
+  const addRate = async () => {
+    setMsg(null);
+    setBusy(true);
+    const j = await post({ action: "addRate", ...nw });
+    setBusy(false);
+    if (!j) return;
+    setAdding(false);
+    setNw({ name: "", unit: "HOUR", delivery: "OFFSITE" });
+    router.refresh();
+  };
   const publish = async () => {
     setBusy(true);
     const j = await post({ action: "publish" });
@@ -65,6 +86,25 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
 
   return (
     <div data-rates-table>
+      {adding && (
+        <div data-add-rate className="mt-3 flex flex-wrap items-end gap-3 border border-line p-3">
+          <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-[12px] font-bold text-ink-2">Rate Type Name
+            <input autoFocus value={nw.name} onChange={(e) => setNw({ ...nw, name: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter" && nw.name.trim().length >= 3) addRate(); if (e.key === "Escape") setAdding(false); }} placeholder="e.g. Weekend Hourly" maxLength={60} className="border border-line px-2 py-2 text-[13.5px] font-normal text-ink" />
+          </label>
+          <label className="flex flex-col gap-1 text-[12px] font-bold text-ink-2">Per
+            <select value={nw.unit} onChange={(e) => setNw({ ...nw, unit: e.target.value })} className="border border-line bg-surface px-2 py-2 text-[13px] font-normal text-ink">
+              {(["HOUR", "DAY", "WEEK", "MONTH", "SESSION", "EACH"] as const).map((u) => <option key={u} value={u}>{u[0] + u.slice(1).toLowerCase()}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[12px] font-bold text-ink-2">Delivery
+            <select value={nw.delivery} onChange={(e) => setNw({ ...nw, delivery: e.target.value })} className="border border-line bg-surface px-2 py-2 text-[13px] font-normal text-ink">
+              {Object.entries(DELIVERY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </label>
+          <button type="button" disabled={busy || nw.name.trim().length < 3} onClick={addRate} className="min-h-10 bg-ink px-4 text-[13.5px] font-semibold text-surface disabled:opacity-40">Add</button>
+          <button type="button" onClick={() => setAdding(false)} className="min-h-10 px-2 text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Cancel</button>
+        </div>
+      )}
       <div className={`mt-5 hidden border-b border-line pb-2 text-[10.5px] font-bold tracking-[0.1em] text-ink-3 md:grid md:gap-3 ${COLS}`}>
         <span>OFFER</span><span>RATE TYPE</span><span>YOUR RATE</span><span>EXPENSES</span><span>DELIVERY</span><span>BUYERS SEE</span>
       </div>
@@ -84,6 +124,7 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
               </button>
               <span className={on ? "min-w-0" : "min-w-0 text-ink-3"}>
                 <b className="text-[14px]">{t.name}</b>
+                {t.custom && <span data-custom-rate title="Your own rate type — Panameer may add it for everyone" className="ml-1.5 inline-block border border-dashed border-ink-3 px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em] text-ink-2">CUSTOM</span>}
                 {fromReg && <span data-from-registration className="ml-1.5 inline-block border border-magenta px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em] text-magenta-dark">FROM REGISTRATION</span>}
                 {t.description && <small className="block text-[12px] text-ink-3">{t.description}</small>}
               </span>

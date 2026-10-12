@@ -7,6 +7,8 @@ import { personBusinessTypes } from "@/lib/business-types";
 
 // TX-E004: Build Your Catalog (road stop 4) — the stock Service Types of the provider's business type(s), each a toggle + rate.
 export const LIVE_TYPE = { merged_into_id: null, hidden: false, status: { in: ["STOCK" as const, "APPROVED" as const] } };
+/** A provider-added rate type: usable by providers who offer it while it waits in Admin › Service Taxonomy's suggestions. */
+export const OWN_CUSTOM = { merged_into_id: null, hidden: false, status: "SUGGESTED" as const, kind: "SERVICE" as const };
 export const UNIT_SHORT: Record<ServiceUnit, string> = { HOUR: "hr", DAY: "day", WEEK: "wk", MONTH: "mo", SESSION: "session", VISIT: "visit", EACH: "each" };
 
 async function me(viewer: Viewer) {
@@ -18,11 +20,14 @@ async function me(viewer: Viewer) {
 export async function buildCatalogData(viewer: Viewer) {
   const p = await me(viewer);
   const types = await personBusinessTypes(p.person_id);
+  // Custom rate types (Scott 2026-10-12, option 2): a provider's own SUGGESTED types show for them right away.
+  const mine = (await prisma.providerService.findMany({ where: { provider_profile_id: p.id, service_type_id: { not: null } }, select: { service_type_id: true } })).map((r) => r.service_type_id!);
+  const typeWhere = { OR: [LIVE_TYPE, { ...OWN_CUSTOM, OR: [{ id: { in: mine } }, { created_by_person_id: p.person_id }] }] };
   const cats = types.length
     ? await prisma.serviceCategory.findMany({
         where: { business_type_id: { in: types.map((t) => t.id) }, hidden: false },
         orderBy: [{ sort_order: "asc" }],
-        select: { id: true, name: true, kind: true, business_type_id: true, serviceTypes: { where: LIVE_TYPE, orderBy: { sort_order: "asc" }, select: { id: true, name: true, description: true, units: true, required: true, pricing_model: true, delivery: true, default_on: true } } },
+        select: { id: true, name: true, kind: true, business_type_id: true, serviceTypes: { where: typeWhere, orderBy: [{ sort_order: "asc" }, { created_at: "asc" }], select: { id: true, name: true, description: true, units: true, required: true, pricing_model: true, delivery: true, default_on: true, status: true } } },
       })
     : [];
   const [services, products, gate] = await Promise.all([
@@ -40,7 +45,7 @@ export const defaultExpenses = (delivery: string | null | undefined): Expenses =
 
 export async function saveCatalogService(viewer: Viewer, input: ServiceInput) {
   const p = await me(viewer);
-  const t = await prisma.serviceType.findFirst({ where: { id: input.serviceTypeId, kind: "SERVICE", ...LIVE_TYPE }, select: { id: true, name: true, units: true, commodity_code: true, delivery: true } });
+  const t = await prisma.serviceType.findFirst({ where: { id: input.serviceTypeId, kind: "SERVICE", OR: [LIVE_TYPE, OWN_CUSTOM] }, select: { id: true, name: true, units: true, commodity_code: true, delivery: true } });
   if (!t) throw new Error("That service type isn't in your Service Catalog");
   const existing = await prisma.providerService.findFirst({ where: { provider_profile_id: p.id, service_type_id: t.id }, orderBy: { created_at: "desc" } });
   if (!input.on) {
@@ -90,6 +95,20 @@ export async function publishCatalog(viewer: Viewer) {
   if (!gate.ok) throw new Error(gate.reason ?? "Add your company to publish");
   const r = await prisma.providerService.updateMany({ where: { provider_profile_id: p.id, active: true, rate_cents: { not: null }, published_at: null }, data: { published_at: new Date() } });
   return r.count;
+}
+
+/** "+ Add a Rate Type" (Scott 2026-10-12): live for this provider at once; also lands in the admin's suggestions to approve, merge or rename. */
+export async function addCustomRate(viewer: Viewer, input: { name: string; unit: ServiceUnit; delivery: "ONSITE" | "OFFSITE" | "EITHER" }) {
+  const p = await me(viewer);
+  const name = input.name.trim().replace(/\s+/g, " ").slice(0, 60);
+  if (name.length < 3) throw new Error("Give it a name");
+  const bts = await personBusinessTypes(p.person_id);
+  if (!bts.length) throw new Error("Pick your company's business type first");
+  const hit = await prisma.serviceType.findFirst({ where: { name: { equals: name, mode: "insensitive" } } });
+  if (hit && hit.status !== "SUGGESTED") throw new Error(`"${hit.name}" is already a rate type — turn it on above`);
+  const cat = await prisma.serviceCategory.findFirst({ where: { business_type_id: { in: bts.map((b) => b.id) }, kind: "SERVICE", hidden: false }, orderBy: { sort_order: "asc" }, select: { id: true } });
+  const t = hit ?? (await prisma.serviceType.create({ data: { name, kind: "SERVICE", status: "SUGGESTED", created_by_person_id: p.person_id, service_category_id: cat?.id ?? null, units: [input.unit], delivery: input.delivery, pricing_model: input.unit === "MONTH" ? "RECURRING" : "TIME", sort_order: 900 } }));
+  return saveCatalogService(viewer, { serviceTypeId: t.id, on: true });
 }
 
 /** "Suggest a Service Type" / "Suggest a Service Product Type" — goes to Admin › Service Taxonomy as SUGGESTED. */

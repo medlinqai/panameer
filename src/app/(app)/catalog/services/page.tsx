@@ -3,6 +3,7 @@ import { guardPage } from "@/lib/guard";
 import { buildCatalogData, ensureDefaultRates } from "@/lib/build-catalog";
 import { CatalogTabs } from "@/components/catalog/CatalogTabs";
 import { RatesTable, type RateType } from "@/components/catalog/RatesTable";
+import { AddRateButton } from "@/components/catalog/AddRateButton";
 import { ResumeSuggestions } from "@/components/catalog/ResumeSuggestions";
 import { openSuggestions, pendingImport } from "@/lib/catalog-suggestions";
 import { ownedProviderProfile } from "@/lib/access";
@@ -23,7 +24,7 @@ export default async function Page() {
   const overrides = new Map(multiProvider && me ? (await prisma.providerRateOverride.findMany({ where: { person_id: me.person_id }, select: { service_id: true, rate_cents: true } })).map((o) => [o.service_id, o.rate_cents]) : []);
   const [sugs, pending] = me && d.categories.length ? await Promise.all([openSuggestions(me.id), pendingImport(me.id)]) : [[], null];
   const typeName = new Map(d.categories.flatMap((c) => c.serviceTypes.map((t) => [t.id, t.name] as const)));
-  const types: RateType[] = d.categories.filter((c) => c.kind === "SERVICE").flatMap((c) => c.serviceTypes.map((t) => ({ id: t.id, name: t.name, description: t.description, units: t.units, delivery: t.delivery })));
+  const types: RateType[] = d.categories.filter((c) => c.kind === "SERVICE").flatMap((c) => c.serviceTypes.map((t) => ({ id: t.id, name: t.name, description: t.description, units: t.units, delivery: t.delivery, custom: t.status === "SUGGESTED" })));
   const rateIds = new Set(types.map((t) => t.id));
   const haveIds = new Set(d.services.map((x) => x.service_type_id));
   const bt = d.businessTypes.map((b) => b.name).join(" · ");
@@ -31,7 +32,10 @@ export default async function Page() {
     <div className="pm-white-page mx-auto w-full max-w-5xl" data-catalog-services>
       <CatalogTabs current="services" />
       <h1 className="mt-1 text-[28px] font-bold">Services</h1>
-      <p className="mt-1 max-w-[70ch] text-[14px] text-ink-2">Your rates. Turn on the ones you offer. Changes save as you go.</p>
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-[70ch] text-[14px] text-ink-2">Your rates. Turn on the ones you offer. Changes save as you go.</p>
+        {d.businessTypes.length > 0 && <AddRateButton />}
+      </div>
       {!d.businessTypes.length ? (
         <p className="mt-6 border-l-2 border-magenta py-1 pl-3 text-[14.5px]">
           Pick your company&apos;s business type first. <Link href="/company#business-types" className="font-bold text-magenta-dark underline underline-offset-4">Choose a Business Type</Link>
