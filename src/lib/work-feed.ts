@@ -1,5 +1,6 @@
 import { roleLong } from "@/lib/role-labels";
 import { prisma } from "@/lib/prisma";
+import { meansOffsite, OFFSITE_WORKSITE, searchVariants } from "@/lib/search-synonyms";
 import { myWorkRequestIds } from "@/lib/work-home";
 import { workFilterWhere, type WorkFilters } from "@/lib/work-filters";
 import { buildBuyerIdentity, scrubTrack, type BuyerIdentity } from "@/lib/work-request-identity";
@@ -120,8 +121,11 @@ export async function getWorkFeed(input: {
       ...(input.query
         ? {
             OR: [
-              { title: { contains: input.query, mode: "insensitive" } },
-              { description: { contains: input.query, mode: "insensitive" } },
+              ...searchVariants(input.query).flatMap((v) => [
+                { title: { contains: v, mode: "insensitive" as const } },
+                { description: { contains: v, mode: "insensitive" as const } },
+              ]),
+              ...(meansOffsite(input.query) ? [{ worksite: OFFSITE_WORKSITE }] : []),
             ],
           }
         : {}),

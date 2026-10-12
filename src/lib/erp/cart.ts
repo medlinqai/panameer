@@ -1,3 +1,4 @@
+import { searchVariants } from "@/lib/search-synonyms";
 import { prisma } from "@/lib/prisma";
 import { effectiveRates } from "@/lib/company-catalog";
 import { cxmlDoc, cxmlUom, esc, payloadId, timestamp } from "@/lib/erp/cxml";
@@ -15,7 +16,7 @@ export async function searchServices(q: string): Promise<CartService[]> {
     ? (await prisma.providerProfile.findMany({ where: { person: { OR: [{ first_name: { contains: term, mode: "insensitive" } }, { last_name: { contains: term, mode: "insensitive" } }] } }, select: { id: true }, take: 200 })).map((p) => p.id)
     : [];
   const raw = await prisma.providerService.findMany({
-    where: { active: true, published_at: { not: null }, rate_cents: { not: null }, ...(term ? { OR: [{ name: { contains: term, mode: "insensitive" } }, { provider_profile_id: { in: byPerson } }] } : {}) },
+    where: { active: true, published_at: { not: null }, rate_cents: { not: null }, ...(term ? { OR: [...searchVariants(term).map((v) => ({ name: { contains: v, mode: "insensitive" as const } })), { provider_profile_id: { in: byPerson } }] } : {}) },
     orderBy: { created_at: "desc" },
     take: 50,
   });
@@ -70,7 +71,7 @@ export type CartProduct = { id: string; title: string; providerName: string; pri
 export async function searchProducts(q: string): Promise<CartProduct[]> {
   const term = q.trim();
   const rows = await prisma.serviceProduct.findMany({
-    where: { status: "PUBLISHED", price_cents: { not: null }, ...(term ? { OR: [{ title: { contains: term, mode: "insensitive" } }, { providerProfile: { person: { OR: [{ first_name: { contains: term, mode: "insensitive" } }, { last_name: { contains: term, mode: "insensitive" } }] } } }] } : {}) },
+    where: { status: "PUBLISHED", price_cents: { not: null }, ...(term ? { OR: [...searchVariants(term).map((v) => ({ title: { contains: v, mode: "insensitive" as const } })), { providerProfile: { person: { OR: [{ first_name: { contains: term, mode: "insensitive" } }, { last_name: { contains: term, mode: "insensitive" } }] } } }] } : {}) },
     orderBy: { sort_order: "asc" },
     take: 50,
     select: { id: true, title: true, price_cents: true, pricing_type: true, providerProfile: { select: { person: { select: { first_name: true, last_name: true } } } } },

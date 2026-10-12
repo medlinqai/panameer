@@ -1,3 +1,4 @@
+import { searchVariants } from "@/lib/search-synonyms";
 import type { ShopProduct } from "@/lib/shop";
 
 // WS-E005/E007: Shop filters from fields every product has. Values live in the URL; one predicate per filter.
@@ -26,12 +27,12 @@ export const DELIVERY = [
 export type ShopQuery = { q?: string; type?: string; price?: string; billing?: string; kind?: string; delivery?: string; location?: string };
 
 export function filterProducts(list: ShopProduct[], f: ShopQuery): ShopProduct[] {
-  const q = f.q?.trim().toLowerCase();
+  const qs = f.q?.trim() ? searchVariants(f.q.trim().toLowerCase()) : null;
   const price = PRICE.find((x) => x.value === f.price);
   const delivery = DELIVERY.find((x) => x.value === f.delivery);
   return list.filter(
     (p) =>
-      (!q || [p.title, p.summary ?? "", p.providerName].some((t) => t.toLowerCase().includes(q))) &&
+      (!qs || [p.title, p.summary ?? "", p.providerName].some((t) => qs.some((q) => t.toLowerCase().includes(q)))) &&
       (!f.type || p.productTypeId === f.type) &&
       (!price || (p.priceCents != null && price.test(p.priceCents))) &&
       (!f.billing || (f.billing === "monthly" ? p.pricingType === "RECURRING" : p.pricingType !== "RECURRING")) &&

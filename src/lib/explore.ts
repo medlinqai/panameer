@@ -1,3 +1,4 @@
+import { meansOffsite, OFFSITE_WORKSITE, searchVariants } from "@/lib/search-synonyms";
 import { prisma } from "@/lib/prisma";
 import { buyerDisplay } from "@/lib/buyer-display";
 import { viewerIsPlus } from "@/lib/plus";
@@ -188,9 +189,9 @@ export async function searchWorkTeaser(
     ...(term
       ? {
           OR: [
-            { title: like },
-            { description: like },
+            ...searchVariants(term).flatMap((v) => [{ title: { contains: v, mode: "insensitive" as const } }, { description: { contains: v, mode: "insensitive" as const } }]),
             { skills: { some: { skill: { name: like } } } },
+            ...(meansOffsite(term) ? [{ worksite: OFFSITE_WORKSITE }] : []),
           ],
         }
       : {}),
