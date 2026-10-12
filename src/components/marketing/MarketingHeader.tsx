@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { MeProvider, useMe } from "@/components/MeProvider";
 import { AccountMenu } from "@/components/casing/AccountMenu";
+import { LifecycleHelpHost } from "@/components/lifecycle/LifecycleHelp";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -38,6 +39,8 @@ export function MarketingHeader() {
     return (
       <MeProvider>
         <MarketingHeaderInner signedIn />
+        {/* The "?" in the My menu opens this panel; AppShell isn't on marketing pages. */}
+        <LifecycleHelpHost />
       </MeProvider>
     );
   }

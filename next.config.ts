@@ -100,8 +100,9 @@ const nextConfig: NextConfig = {
       // C-E003: Colleagues became Connections.
 
       // C-E002: status.panameer.com serves only the status page; everything else 308s to the app.
+      // APIs stay on the host (2026-10-12): a 308 to app.panameer.com broke /api/me etc. → "?" avatar on status.
       {
-        source: "/:path((?!status(?:/|$)|api/status/|api/auth/|_next/|brand/|favicon|.*\\.[a-z0-9]+$).+)",
+        source: "/:path((?!status(?:/|$)|api/|_next/|brand/|favicon|.*\\.[a-z0-9]+$).+)",
         has: [{ type: "host" as const, value: "status.panameer.com" }],
         destination: "https://app.panameer.com/:path",
         permanent: true,
