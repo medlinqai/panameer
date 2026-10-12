@@ -1,3 +1,4 @@
+import { expensesSuffix } from "@/lib/rate-display";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { PUNCHOUT_COOKIE, sessionFor } from "@/lib/erp/punchout";
@@ -67,7 +68,7 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
               <input type="hidden" name="serviceId" value={r.id} />
               <div className="min-w-0">
                 <p className="text-[15px] font-bold">{r.name}</p>
-                <p className="text-[13.5px] text-ink-2">{r.providerName} · {r.type === "SERVICE_BY_QTY" ? `${formatCents(r.rateCents, "USD")} / ${(r.uom ?? "hour").toLowerCase()}` : `up to ${formatCents(r.rateCents, "USD")}`}</p>
+                <p className="text-[13.5px] text-ink-2">{r.providerName} · {r.type === "SERVICE_BY_QTY" ? `${formatCents(r.rateCents, "USD")} / ${(r.uom ?? "hour").toLowerCase()}${expensesSuffix(r.expenses)}` : `up to ${formatCents(r.rateCents, "USD")}`}</p>
               </div>
               <div className="flex flex-wrap items-end gap-2">
                 {r.type === "SERVICE_BY_QTY" && <label className="text-[12px] font-bold">Quantity<input name="quantity" inputMode="decimal" required className={`${INPUT} block w-24`} /></label>}

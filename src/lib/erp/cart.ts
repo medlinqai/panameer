@@ -8,7 +8,7 @@ import type { PunchoutSessionLive } from "@/lib/erp/punchout";
 // X-E003: shop in a punchout session — attach a provider's service to the session's work request, then return the cart.
 const DEFAULT_UNSPSC = "80101500"; // Business and corporate management consultation services
 
-export type CartService = { id: string; name: string; providerName: string; providerPersonId: string; type: "SERVICE_BY_QTY" | "SERVICE_BY_AMT"; uom: string | null; rateCents: number };
+export type CartService = { id: string; name: string; providerName: string; providerPersonId: string; type: "SERVICE_BY_QTY" | "SERVICE_BY_AMT"; uom: string | null; rateCents: number; expenses: string | null };
 
 export async function searchServices(q: string): Promise<CartService[]> {
   const term = q.trim();
@@ -25,7 +25,7 @@ export async function searchServices(q: string): Promise<CartService[]> {
   const rows = (await Promise.all(raw.map((r) => effectiveRates(byId.get(r.provider_profile_id)?.id ?? null, [r])))).flat();
   return rows.flatMap((r) => {
     const p = byId.get(r.provider_profile_id);
-    return p ? [{ id: r.id, name: r.name, providerName: `${p.first_name} ${p.last_name}`.trim(), providerPersonId: p.id, type: r.service_type === "SERVICE_BY_AMT" ? ("SERVICE_BY_AMT" as const) : ("SERVICE_BY_QTY" as const), uom: r.uom, rateCents: r.rate_cents ?? 0 }] : [];
+    return p ? [{ id: r.id, name: r.name, providerName: `${p.first_name} ${p.last_name}`.trim(), providerPersonId: p.id, type: r.service_type === "SERVICE_BY_AMT" ? ("SERVICE_BY_AMT" as const) : ("SERVICE_BY_QTY" as const), uom: r.uom, rateCents: r.rate_cents ?? 0, expenses: r.expenses }] : [];
   });
 }
 

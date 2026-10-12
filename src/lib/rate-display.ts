@@ -30,3 +30,19 @@ export function rateDisplay(r: RateFields): string | null {
 export function hasPublishedRate(r: RateFields): boolean {
   return rateDisplay(r) !== null;
 }
+
+// MC-E005: how a rate reads to buyers — "$150/hr onsite + expenses at cost", "$4,000/mo for 20 hrs".
+export const EXPENSES_LABEL: Record<string, string> = { AT_COST: "Billed at cost", INCLUDED: "Included in rate", NOT_APPLICABLE: "None" };
+const UNIT: Record<string, string> = { HOUR: "hr", DAY: "day", WEEK: "wk", MONTH: "mo", SESSION: "session", VISIT: "visit", EACH: "each" };
+const WHERE: Record<string, string> = { ONSITE: "onsite", OFFSITE: "offsite" };
+
+export function expensesSuffix(expenses: string | null | undefined): string {
+  return expenses === "AT_COST" ? " + expenses at cost" : expenses === "INCLUDED" ? " · expenses included" : "";
+}
+
+export function buyersSee(r: { rateCents: number | null; unit: string | null; delivery?: string | null; expenses?: string | null; hoursIncluded?: number | null }): string | null {
+  if (!r.rateCents) return null;
+  const where = r.delivery ? WHERE[r.delivery] : undefined;
+  const hrs = r.unit === "MONTH" && r.hoursIncluded ? ` for ${r.hoursIncluded} hrs` : "";
+  return `${formatCents(r.rateCents)}/${UNIT[r.unit ?? "HOUR"] ?? "hr"}${where ? ` ${where}` : ""}${hrs}${expensesSuffix(r.expenses)}`;
+}

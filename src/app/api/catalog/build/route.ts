@@ -5,7 +5,7 @@ import { publishCatalog, saveCatalogService, suggestType } from "@/lib/build-cat
 
 const UNITS = ["HOUR", "DAY", "WEEK", "MONTH", "SESSION", "VISIT", "EACH"] as const;
 const Body = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("service"), serviceTypeId: z.string().uuid(), on: z.boolean(), rateCents: z.number().int().min(0).max(100_000_000).nullable().optional(), unit: z.enum(UNITS).nullable().optional() }),
+  z.object({ action: z.literal("service"), serviceTypeId: z.string().uuid(), on: z.boolean(), rateCents: z.number().int().min(0).max(100_000_000).nullable().optional(), unit: z.enum(UNITS).nullable().optional(), expenses: z.enum(["AT_COST", "INCLUDED", "NOT_APPLICABLE"]).nullable().optional(), hoursIncluded: z.number().int().min(0).max(1000).nullable().optional() }),
   z.object({ action: z.literal("publish") }),
   z.object({ action: z.literal("suggest"), name: z.string().trim().min(3).max(60), kind: z.enum(["SERVICE", "SERVICE_PRODUCT"]) }),
 ]);

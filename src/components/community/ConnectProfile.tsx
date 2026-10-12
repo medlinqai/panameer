@@ -30,6 +30,7 @@ import type { Testimonial } from "@/lib/recommendations";
 import type { CommunitySignal } from "@/lib/community-signal";
 import type { ProfileScore } from "@/lib/completeness";
 import type { MessagePermission } from "@/lib/messages";
+import { expensesSuffix } from "@/lib/rate-display";
 import type { CatalogService } from "@/lib/my-catalog";
 import type { EstimateRow } from "@/lib/estimates";
 import { TurnRatesIntoServices } from "@/components/catalog/TurnRatesIntoServices";
@@ -264,6 +265,9 @@ export function ConnectProfile({
               <div className="shrink-0 text-right">
                 <b className="text-[14px] tabular-nums">{money(s.rateCents, "USD")}</b>
                 <span className="text-[12.5px] text-ink-2"> / {s.uom.toLowerCase()}</span>
+                {(s.expenses === "AT_COST" || s.expenses === "INCLUDED" || (s.uom === "MONTH" && s.hoursIncluded)) && (
+                  <span data-expenses className="block text-[12px] text-ink-2">{`${s.uom === "MONTH" && s.hoursIncluded ? `for ${s.hoursIncluded} hrs` : ""}${expensesSuffix(s.expenses)}`.replace(/^ \+ /, "+ ").replace(/^ · /, "")}</span>
+                )}
                 {owner && <Link href={`/catalog/services/new?id=${s.id}`} className="block text-[12.5px] font-semibold underline">Edit</Link>}
                 {!owner && p.person.personId && <Link href={`/estimates/request?provider=${p.person.personId}&service=${s.id}`} data-request-estimate-link className="block text-[12.5px] font-semibold underline underline-offset-4">Request an Estimate</Link>}
               </div>

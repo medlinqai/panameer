@@ -20,22 +20,27 @@ export async function buildCatalogData(viewer: Viewer) {
   const types = await personBusinessTypes(p.person_id);
   const cats = types.length
     ? await prisma.serviceCategory.findMany({
-        where: { business_type_id: { in: types.map((t) => t.id) } },
+        where: { business_type_id: { in: types.map((t) => t.id) }, hidden: false },
         orderBy: [{ sort_order: "asc" }],
-        select: { id: true, name: true, kind: true, business_type_id: true, serviceTypes: { where: LIVE_TYPE, orderBy: { sort_order: "asc" }, select: { id: true, name: true, description: true, units: true, required: true, pricing_model: true } } },
+        select: { id: true, name: true, kind: true, business_type_id: true, serviceTypes: { where: LIVE_TYPE, orderBy: { sort_order: "asc" }, select: { id: true, name: true, description: true, units: true, required: true, pricing_model: true, delivery: true, default_on: true } } },
       })
     : [];
   const [services, products, gate] = await Promise.all([
-    prisma.providerService.findMany({ where: { provider_profile_id: p.id, active: true, service_type_id: { not: null } }, select: { id: true, service_type_id: true, rate_cents: true, uom: true, published_at: true } }),
+    prisma.providerService.findMany({ where: { provider_profile_id: p.id, active: true, service_type_id: { not: null } }, select: { id: true, service_type_id: true, rate_cents: true, uom: true, published_at: true, expenses: true, hours_included: true } }),
     prisma.serviceProduct.findMany({ where: { provider_profile_id: p.id, service_type_id: { not: null } }, orderBy: { created_at: "asc" }, select: { service_type_id: true, title: true, status: true } }),
     publishGate(p.person_id),
   ]);
   return { businessTypes: types, categories: cats, services, products, gate };
 }
 
-export async function saveCatalogService(viewer: Viewer, input: { serviceTypeId: string; on: boolean; rateCents?: number | null; unit?: ServiceUnit | null }) {
+export type ServiceInput = { serviceTypeId: string; on: boolean; rateCents?: number | null; unit?: ServiceUnit | null; expenses?: Expenses | null; hoursIncluded?: number | null };
+export type Expenses = "AT_COST" | "INCLUDED" | "NOT_APPLICABLE";
+/** MC-E005: Onsite defaults to expenses billed at cost; everything else to none. */
+export const defaultExpenses = (delivery: string | null | undefined): Expenses => (delivery === "ONSITE" ? "AT_COST" : "NOT_APPLICABLE");
+
+export async function saveCatalogService(viewer: Viewer, input: ServiceInput) {
   const p = await me(viewer);
-  const t = await prisma.serviceType.findFirst({ where: { id: input.serviceTypeId, kind: "SERVICE", ...LIVE_TYPE }, select: { id: true, name: true, units: true, commodity_code: true } });
+  const t = await prisma.serviceType.findFirst({ where: { id: input.serviceTypeId, kind: "SERVICE", ...LIVE_TYPE }, select: { id: true, name: true, units: true, commodity_code: true, delivery: true } });
   if (!t) throw new Error("That service type isn't in your Service Catalog");
   const existing = await prisma.providerService.findFirst({ where: { provider_profile_id: p.id, service_type_id: t.id }, orderBy: { created_at: "desc" } });
   if (!input.on) {
@@ -44,11 +49,38 @@ export async function saveCatalogService(viewer: Viewer, input: { serviceTypeId:
   }
   const unit = input.unit && t.units.includes(input.unit) ? input.unit : t.units[0] ?? "HOUR";
   const rate = input.rateCents != null && input.rateCents > 0 ? Math.round(input.rateCents) : null;
-  const data = { name: t.name, uom: unit, rate_cents: rate ?? existing?.rate_cents ?? null, active: true, unspsc_code: t.commodity_code ?? existing?.unspsc_code ?? null, company_id: existing?.company_id ?? (await companyIdForProfile(p.id)) };
+  const data = {
+    name: t.name, uom: unit, rate_cents: rate ?? existing?.rate_cents ?? null, active: true, unspsc_code: t.commodity_code ?? existing?.unspsc_code ?? null, company_id: existing?.company_id ?? (await companyIdForProfile(p.id)),
+    expenses: input.expenses ?? existing?.expenses ?? defaultExpenses(t.delivery),
+    hours_included: unit === "MONTH" ? (input.hoursIncluded !== undefined ? (input.hoursIncluded && input.hoursIncluded > 0 ? Math.round(input.hoursIncluded) : null) : existing?.hours_included ?? null) : null,
+  };
   const row = existing
     ? await prisma.providerService.update({ where: { id: existing.id }, data })
     : await prisma.providerService.create({ data: { ...data, provider_profile_id: p.id, service_type_id: t.id, service_type: "SERVICE_BY_QTY", payment_event: "TIMESHEET" } });
-  return { id: row.id, rateCents: row.rate_cents, unit: row.uom, published: !!row.published_at };
+  return { id: row.id, rateCents: row.rate_cents, unit: row.uom, published: !!row.published_at, expenses: row.expenses, hoursIncluded: row.hours_included };
+}
+
+/** MC-E005: rate types "on by default" start on for a new provider, filled from the onsite/offsite rate given at registration.
+ *  Runs once per type — a provider who turns one off keeps it off (the row stays, inactive). */
+export async function ensureDefaultRates(viewer: Viewer) {
+  const p = await me(viewer);
+  const bts = await personBusinessTypes(p.person_id);
+  if (!bts.length) return;
+  const [types, have, prof] = await Promise.all([
+    prisma.serviceType.findMany({ where: { kind: "SERVICE", default_on: true, ...LIVE_TYPE, serviceCategory: { business_type_id: { in: bts.map((b) => b.id) }, hidden: false } }, select: { id: true, units: true, delivery: true } }),
+    prisma.providerService.findMany({ where: { provider_profile_id: p.id, service_type_id: { not: null } }, select: { service_type_id: true } }),
+    prisma.providerProfile.findUniqueOrThrow({ where: { id: p.id }, select: { onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true } }),
+  ]);
+  const seen = new Set(have.map((h) => h.service_type_id));
+  for (const t of types.filter((t) => !seen.has(t.id))) {
+    const rate = registrationRate(prof, t.delivery);
+    await saveCatalogService(viewer, { serviceTypeId: t.id, on: true, rateCents: rate, unit: t.units[0] ?? "HOUR" });
+  }
+}
+
+/** The rate a provider gave at registration for this delivery (onsite / offsite), if any. */
+export function registrationRate(prof: { onsite_rate_cents: number | null; remote_rate_cents: number | null; hourly_rate_cents: number | null }, delivery: string | null) {
+  return delivery === "ONSITE" ? prof.onsite_rate_cents : delivery === "OFFSITE" ? prof.remote_rate_cents ?? prof.hourly_rate_cents : null;
 }
 
 /** Publish My Catalog: every active, priced service goes live (needs a linked company). */
