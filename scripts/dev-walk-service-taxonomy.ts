@@ -40,7 +40,7 @@ async function main() {
   const saved = await saveCatalogService(prov.viewer, { serviceTypeId: remote.id, on: true, rateCents: 15000, unit: "HOUR" });
   const svc = await prisma.providerService.findUniqueOrThrow({ where: { id: saved!.id } });
   check("Remote rate saves a draft Service carrying the commodity code", svc.rate_cents === 15000 && svc.uom === "HOUR" && !svc.published_at && svc.unspsc_code === "80101500");
-  check("Publish My Catalog publishes it", (await publishCatalog(prov.viewer)) === 1 && !!(await prisma.providerService.findUnique({ where: { id: svc.id } }))?.published_at);
+  check("Publish My Rates publishes it", (await publishCatalog(prov.viewer)) === 1 && !!(await prisma.providerService.findUnique({ where: { id: svc.id } }))?.published_at);
   await suggestType(prov.viewer, `TX Suggested ${tag}`, "SERVICE");
   const sug = await prisma.serviceType.findFirst({ where: { name: `TX Suggested ${tag}` } });
   if (sug) ids.types.push(sug.id);

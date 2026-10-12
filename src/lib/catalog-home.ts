@@ -23,7 +23,7 @@ export async function catalogHome(viewer: Viewer) {
   const steps = [
     { done: priced > 0, label: "Set your Onsite and Offsite rates", title: "Set Your Rates", sub: "What buyers pay you by the hour", cta: "Set Your Rates", href: "/catalog/services" },
     { done: products.length > 0, label: "Add a Service Product", title: "Add Your First Service Product", sub: "A fixed-price offer buyers can buy now", cta: "Create a Service Product", href: "/catalog/products#create" },
-    { done: rates.some((r) => r.live) || products.some((x) => x.status === "PUBLISHED"), label: "Publish your catalog", title: "Publish Your Catalog", sub: "Drafts go live on your profile and in Shop", cta: "Publish My Catalog", href: "/catalog/services" },
+    { done: rates.some((r) => r.live) || products.some((x) => x.status === "PUBLISHED"), label: "Publish your rates", title: "Publish Your Rates", sub: "Drafts go live on your profile and in Shop", cta: "Publish My Rates", href: "/catalog/services" },
   ];
   return {
     eyebrow: [p?.person.companyMemberships[0]?.company.name, d.businessTypes.map((b) => b.name).join(" · ")].filter(Boolean).join(" · ").toUpperCase(),

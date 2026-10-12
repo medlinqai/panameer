@@ -84,7 +84,7 @@ async function main() {
   check("pictures stored in order, first = cover_image_url; delivery + lead saved", prod?.images.length === 2 && prod.cover_image_url === "https://example.test/a.png" && prod.delivery === "OFFSITE" && prod.lead_time_days === 10 && prod.domains.length === 1 && prod.milestones.length === 2 && prod.status === "PUBLISHED" && prod.company_id === companyId);
   check("Products tab lists it as Live", (await api("/catalog/products")).text.includes(`Walk Open PO Report ${tag}`));
   const pub = await api("/api/catalog/build", { action: "publish" });
-  check("Publish My Catalog publishes the rates", pub.status === 200 && pub.json.published === 3, JSON.stringify(pub.json));
+  check("Publish My Rates publishes the rates", pub.status === 200 && pub.json.published === 3, JSON.stringify(pub.json));
 
   const home2 = await api("/catalog");
   const live = /data-rates-live[^>]*>(\d+)</.exec(home2.text)?.[1];

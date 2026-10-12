@@ -54,9 +54,14 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
     setBusy(true);
     const j = await post({ action: "publish" });
     setBusy(false);
-    if (j) setMsg(j.published ? `Published ${j.published} rate${j.published === 1 ? "" : "s"}.` : "Everything priced is already live.");
+    if (j) {
+      setMsg(j.published ? `Published ${j.published} rate${j.published === 1 ? "" : "s"}.` : "Everything priced is already live.");
+      // Rows flip to LIVE in place (the server published every priced, active rate).
+      setSvc((m) => Object.fromEntries(Object.entries(m).map(([k, v]) => [k, v.rateCents != null ? { ...v, published: true } : v])));
+    }
   };
   const ready = Object.values(svc).filter((s) => s.rateCents != null).length;
+  const drafts = Object.values(svc).filter((s) => s.rateCents != null && !s.published).length;
 
   return (
     <div data-rates-table>
@@ -102,7 +107,7 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
               <span className="col-start-2 text-[13px] text-ink-2 md:col-start-auto">{t.delivery ? DELIVERY[t.delivery] : "—"}</span>
               <span data-buyers-see className={on ? "col-start-2 text-[13px] md:col-start-auto" : "col-start-2 text-[13px] text-ink-3 md:col-start-auto"}>
                 {on ? see ?? "Add a rate" : "Hidden until on"}
-                {s?.published && <span className="ml-1.5 inline-block border border-ink px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em]">LIVE</span>}
+                {s?.published ? <span className="ml-1.5 inline-block border border-ink px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em]">LIVE</span> : on && s?.rateCents != null ? <span data-draft className="ml-1.5 inline-block border border-dashed border-ink-3 px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em] text-ink-2">DRAFT</span> : null}
                 {multiProvider && s && (
                   <button type="button" onClick={() => override(t, s)} data-override-rate className="block text-[12px] font-semibold text-magenta-dark underline underline-offset-4">
                     {s.overrideCents != null ? `Your rate $${s.overrideCents / 100}` : "Override My Rate"}
@@ -116,10 +121,10 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
       <p className="mt-4 text-[13.5px] text-ink-2">Fixed-price work — reports, dashboards, AI agents, integrations — goes in <Link href="/catalog/products" className="font-bold text-magenta-dark underline underline-offset-4">Service Products</Link>.</p>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink pt-4">
         <span className="text-[13.5px] text-ink-2">
-          {ready} rate{ready === 1 ? "" : "s"} set · drafts go live on your profile and in Shop when you publish.
+          Saved as you go. {drafts ? <>Publish makes {drafts === 1 ? "your draft rate" : `your ${drafts} draft rates`} live; after that, changes go live right away.</> : <>All your rates are live; changes go live right away.</>} Service Products publish on their own tab.
           {!gate.ok && <> <Link href={gate.href} className="font-semibold text-magenta-dark underline">{gate.reason}</Link></>}
         </span>
-        <button type="button" disabled={busy || !gate.ok || !ready} onClick={publish} data-publish-catalog className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover disabled:opacity-40">{busy ? "Publishing…" : "Publish My Catalog"}</button>
+        <button type="button" disabled={busy || !gate.ok || !drafts} onClick={publish} data-publish-catalog className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover disabled:opacity-40">{busy ? "Publishing…" : "Publish My Rates"}</button>
       </div>
       {msg && <p role="status" className="mt-2 text-right text-[13.5px] font-semibold">{msg}</p>}
     </div>
