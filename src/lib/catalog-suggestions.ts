@@ -31,7 +31,7 @@ export async function pendingImport(profileId: string) {
 
 // ---- fallback rules: keyword → stock type name, with the résumé line as the "why" ----
 const RULES: { type: string; re: RegExp }[] = [
-  { type: "Remote Consulting", re: /\b(consult(ant|ing)?|advis(or|ory))\b/i },
+  { type: "Offsite Consulting", re: /\b(consult(ant|ing)?|advis(or|ory))\b/i },
   { type: "Onsite Consulting", re: /\b(on[- ]?site|client site|travel(ed|led)? to)\b/i },
   { type: "Go-Live & Hypercare", re: /\b(go[- ]live|hypercare|cut[- ]?over)\b/i },
   { type: "Staff Augmentation", re: /\b(staff aug(mentation)?|contract(or)? role|backfill)\b/i },
@@ -78,7 +78,7 @@ async function byAi(text: string, types: StockType[]): Promise<{ proposals: Prop
 Services (stock types): ${services.join("; ")}.
 Service products (stock types): ${products.join("; ")}.
 Rules:
-- Propose a service only when the résumé shows that kind of work (consulting history → Remote Consulting, and Onsite Consulting if they worked at client sites; training others → Training & Workshops; support/AMS roles → Managed Services (AMS); mentoring → Mentoring).
+- Propose a service only when the résumé shows that kind of work (consulting history → Offsite Consulting, and Onsite Consulting if they worked at client sites; training others → Training & Workshops; support/AMS roles → Managed Services (AMS); mentoring → Mentoring).
 - Fill rate (in whole dollars) and unit (hour/day/week/month) ONLY when the résumé states a rate. Otherwise null. Never guess.
 - Propose a service product only when the résumé clearly names a deliverable (e.g. "built 40 BIP reports" → Reports); give it a short title from the résumé.
 - "why" is one short line quoting or closely paraphrasing the résumé.`;
@@ -107,6 +107,19 @@ Rules:
   return { proposals, model: r.model };
 }
 
+/** Scott 2026-10-12: a rate stated on the résumé fills Offsite Consulting only; any other drafted service starts at $100 (per hour where allowed) for the provider to change. Products keep no price. */
+const RATE_FROM_RESUME_TYPE = "Offsite Consulting";
+const DEFAULT_RATE_CENTS = 100_00;
+function applyRatePolicy(proposals: Proposal[], types: StockType[]): Proposal[] {
+  return proposals.map((x) => {
+    const t = types.find((y) => y.id === x.typeId);
+    if (!t || t.kind !== "SERVICE") return x;
+    if (t.name === RATE_FROM_RESUME_TYPE && x.rateCents && x.unit) return x;
+    const unit: ServiceUnit = t.units.includes("HOUR") ? "HOUR" : (t.units[0] as ServiceUnit);
+    return { ...x, rateCents: DEFAULT_RATE_CENTS, unit };
+  });
+}
+
 /** Read the newest résumé for suggestions (once per import). Skips types the provider already offers or was offered. */
 export async function proposeFromResume(viewer: Viewer): Promise<{ proposed: number; source: string } | null> {
   const p = await me(viewer);
@@ -125,6 +138,7 @@ export async function proposeFromResume(viewer: Viewer): Promise<{ proposed: num
     prisma.catalogSuggestion.findMany({ where: { provider_profile_id: p.id }, select: { service_type_id: true } }),
   ]);
   const skip = new Set([...svc, ...prod, ...seen].map((x) => x.service_type_id!));
+  proposals = applyRatePolicy(proposals, types);
   const fresh = proposals.filter((x, i) => !skip.has(x.typeId) && proposals.findIndex((y) => y.typeId === x.typeId) === i);
   const kindOf = new Map(types.map((t) => [t.id, t.kind]));
   await prisma.$transaction([

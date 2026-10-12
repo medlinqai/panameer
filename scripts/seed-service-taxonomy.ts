@@ -25,7 +25,7 @@ type C = { name: string; kind: ServiceKind; types: T[] };
 // Commodity codes: only the ones Scott approved (naming audit › UNSPSC, decision 10). Build/Run proposals stay blank.
 const ERP: C[] = [
   { name: "Consulting", kind: "SERVICE", types: [
-    { name: "Remote Consulting", units: ["HOUR", "DAY"], pricing: "TIME", delivery: "REMOTE", required: true, code: "80101500", was: ["Offsite Consulting"], description: "Working from your location" },
+    { name: "Offsite Consulting", units: ["HOUR", "DAY"], pricing: "TIME", delivery: "REMOTE", required: true, code: "80101500", was: ["Remote Consulting", "Offsite Consulting"], description: "Working from your location" },
     { name: "Onsite Consulting", units: ["HOUR", "DAY"], pricing: "TIME", delivery: "ONSITE", code: "80101500", description: "At the customer's site; travel billed separately" },
   ] },
   { name: "Project Support", kind: "SERVICE", types: [
