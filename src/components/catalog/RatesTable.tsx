@@ -88,7 +88,7 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
     <div data-rates-table>
       {adding && (
         <div data-add-rate className="mt-3 flex flex-wrap items-end gap-3 border border-line p-3">
-          <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-[12px] font-bold text-ink-2">Rate Type Name
+          <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-[12px] font-bold text-ink-2">Service Name
             <input autoFocus value={nw.name} onChange={(e) => setNw({ ...nw, name: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter" && nw.name.trim().length >= 3) addRate(); if (e.key === "Escape") setAdding(false); }} placeholder="e.g. Weekend Hourly" maxLength={60} className="border border-line px-2 py-2 text-[13.5px] font-normal text-ink" />
           </label>
           <label className="flex flex-col gap-1 text-[12px] font-bold text-ink-2">Per

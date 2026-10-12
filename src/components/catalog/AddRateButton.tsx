@@ -6,7 +6,7 @@ import { ADD_RATE_EVENT } from "@/components/catalog/RatesTable";
 export function AddRateButton() {
   return (
     <button type="button" data-add-rate-open onClick={() => window.dispatchEvent(new Event(ADD_RATE_EVENT))} className="inline-flex min-h-10 shrink-0 items-center border border-ink px-4 text-[13.5px] font-semibold hover:bg-ink hover:text-surface">
-      + Add a Rate Type
+      Add a Service
     </button>
   );
 }
