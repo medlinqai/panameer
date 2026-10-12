@@ -66,7 +66,7 @@ export function buildProfileCriteria(
       action:
         p.counts.serviceProducts > 0
           ? null
-          : { label: "Add a Service Product", href: "/my-services" },
+          : { label: "Add a Service Product", href: "/catalog/products" },
     },
     {
       label: "Identity validated by Panameer",

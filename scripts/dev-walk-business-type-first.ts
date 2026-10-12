@@ -63,7 +63,7 @@ async function main() {
   check("Looks Right clears the markers", !(await prisma.providerProfile.findUniqueOrThrow({ where: { id: prov.profileId! }, select: { resume_prefill: true } })).resume_prefill);
 
   // BT-E003: Build Your Catalog suggestions.
-  const page1 = await api("/catalog/build");
+  const page1 = await api("/catalog/services");
   check("Build Your Catalog reads the résumé (pending)", page1.text.includes("Reading your résumé"), `status ${page1.status}`);
   const t0 = Date.now();
   const ref = await api("/api/catalog/suggestions", { action: "refresh" });
@@ -74,7 +74,7 @@ async function main() {
   const services = sugs.filter((s) => s.kind === "SERVICE");
   check("drafts proposed with a why; services from stock types; a product for the named deliverable", services.length >= 2 && sugs.every((s) => s.why.length > 0) && sugs.some((s) => s.kind === "SERVICE_PRODUCT"));
   check("nothing published automatically", (await prisma.providerService.count({ where: { provider_profile_id: prov.profileId! } })) === 0);
-  const page2 = await api("/catalog/build");
+  const page2 = await api("/catalog/services");
   check("\"Suggested from your résumé\" shows Keep / Remove", page2.text.includes("SUGGESTED FROM YOUR RÉSUMÉ") && page2.text.includes("data-keep"));
   check("second refresh proposes nothing new (once per résumé)", (await api("/api/catalog/suggestions", { action: "refresh" })).json.proposed === 0);
 
@@ -93,11 +93,11 @@ async function main() {
   // BT-E005: Override My Rate only with >1 provider; buyers see the override.
   const target = kept.find((k) => k.rate_cents)!;
   check("Override refused for a one-provider company", (await api("/api/catalog/rate-override", { serviceId: target.id, rateCents: 20000, unit: "HOUR" })).status === 400);
-  check("Override My Rate hidden for a one-provider company", !(await api("/catalog/build")).text.includes("data-override-rate"));
+  check("Override My Rate hidden for a one-provider company", !(await api("/catalog/services")).text.includes("data-override-rate"));
   const second = await party("PROVIDER", "Sam");
   await prisma.person.update({ where: { id: second.personId }, data: { is_service_provider: true } });
   await prisma.companyMembership.create({ data: { person_id: second.personId, company_id: companyId, role: "MEMBER", status: "APPROVED" } });
-  check("Override My Rate shows with two providers", (await api("/catalog/build")).text.includes("data-override-rate"));
+  check("Override My Rate shows with two providers", (await api("/catalog/services")).text.includes("data-override-rate"));
   check("Override saves", (await api("/api/catalog/rate-override", { serviceId: target.id, rateCents: 20000, unit: "HOUR" })).status === 200);
   const seen = await catalogServicesFor(prov.profileId!, false);
   check("buyers see the override, else the company rate", seen.some((s) => s.id === target.id && s.rateCents === 20000), JSON.stringify(seen.map((s) => [s.name, s.rateCents, s.published])));

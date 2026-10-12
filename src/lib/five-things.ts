@@ -69,7 +69,7 @@ export async function fiveThings(viewer: Viewer) {
     { key: "connect", icon: "people", title: "Connect with colleagues", line: "People you've worked with make you easier to trust.", chips: ["Free"], time: "2 min", cta: { label: "Find Colleagues", href: "/connect/community" } },
     { key: "work", icon: "search", title: "Browse open work", line: "Requests posted by buyers right now.", chips: [], time: "", cta: { label: "Browse Work", href: "/find-work" } },
     pp
-      ? { key: "service", icon: "tag", title: "List a service", line: "A fixed-price package buyers can order today.", chips: [], time: "10 min", cta: { label: "List a Service", href: "/my-services" } }
+      ? { key: "service", icon: "tag", title: "List a service", line: "A fixed-price package buyers can order today.", chips: [], time: "10 min", cta: { label: "List a Service", href: "/catalog/products" } }
       : { key: "post", icon: "send", title: "Post work", line: "Describe the job; providers send proposals.", chips: ["Free"], time: "5 min", cta: { label: "Post Work", href: "/create-work" } },
   ];
   if (pp && !hasCompany) {

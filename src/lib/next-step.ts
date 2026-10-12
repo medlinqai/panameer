@@ -151,7 +151,7 @@ const RULES: Rule[] = [
       const n = s.matchingRequests;
       return [
         { rule: 4, title: "Browse open work", line: n ? `${plural(n, "open request")} ${n === 1 ? "matches" : "match"} your skills.` : "See what buyers are asking for.", link: "Find Work", href: "/find-work" },
-        ...(s.sellsPackages ? [{ rule: 4, title: "List a service you sell", line: "Package your expertise at a fixed price.", link: "Shop", href: "/my-services" }] : []),
+        ...(s.sellsPackages ? [{ rule: 4, title: "List a service you sell", line: "Package your expertise at a fixed price.", link: "Shop", href: "/catalog/products" }] : []),
       ];
     },
   },

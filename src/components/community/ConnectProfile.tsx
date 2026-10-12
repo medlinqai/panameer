@@ -181,7 +181,7 @@ export function ConnectProfile({
               Nothing listed yet. A service product is what a buyer actually
               buys.{" "}
               <Link
-                href="/my-services"
+                href="/catalog/products"
                 className="font-bold text-magenta hover:underline"
               >
                 Add a Service Product

@@ -219,7 +219,7 @@ export function StatisticsCards({
                 note="An invitation counts whether or not you bid — a buyer asking you directly is the signal."
                 links={[
                   { label: "Find Work", href: "/find-work" },
-                  { label: "Manage Service Products", href: "/my-services" },
+                  { label: "Manage Service Products", href: "/catalog/products" },
                   { label: "See Your Orders", href: "/orders" },
                 ]}
               />

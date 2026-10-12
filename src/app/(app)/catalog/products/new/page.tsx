@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
   };
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <BackLink href="/profile#my-service-products" label="My Catalog" />
+      <BackLink href="/catalog/products" label="Service Products" />
       <div className="mt-2">
         <ProductWizard initial={initial} domains={domains.map((x) => ({ id: x.id, process: x.process, name: x.name }))} gate={gate} providerName={[person?.first_name, person?.last_name].filter(Boolean).join(" ")} productTypes={(await listProductTypes()).map((t) => ({ id: t.id, name: t.name, group: t.group_label }))} />
       </div>

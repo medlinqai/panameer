@@ -79,7 +79,7 @@ export function ProductWizard({ initial, domains, gate, providerName, productTyp
     const j = (await r.json().catch(() => ({}))) as { error?: string };
     setBusy(false);
     if (!r.ok) return setError(j.error ?? "Could not save the product");
-    router.push("/profile#my-service-products");
+    router.push("/catalog/products");
     router.refresh();
   };
 

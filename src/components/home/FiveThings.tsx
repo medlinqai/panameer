@@ -47,7 +47,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
     { key: "learn", code: "LRN", tone: ["#272334", "#4b3e6e"] as [string, string], title: "Learn", line: "Free courses and certification tests.", cta: "Start Learning", href: "/learn" },
     { key: "connect", code: "CON", tone: ["#272334", "#6b2f6a"] as [string, string], title: "Connect", line: "Find colleagues and mentors.", cta: "Find People", href: "/connect/community" },
     { key: "services", code: "SVC", tone: ["#1d2a3a", "#36506e"] as [string, string], title: "Sell My Services", line: "Browse open work and get invited to propose.", cta: "Browse Work", href: "/find-work" },
-    { key: "products", code: "PRD", tone: ["#1f2b28", "#3e5f55"] as [string, string], title: "Sell Service Products", line: "List a fixed-price package buyers can order.", cta: "List a Service", href: "/my-services" },
+    { key: "products", code: "PRD", tone: ["#1f2b28", "#3e5f55"] as [string, string], title: "Sell Service Products", line: "List a fixed-price package buyers can order.", cta: "List a Service", href: "/catalog/products" },
   ];
   return (
     <section data-five-things className="mb-8 font-body text-ink">
