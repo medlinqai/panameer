@@ -41,7 +41,6 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
   const set = <K extends keyof ProductForm>(k: K, v: ProductForm[K]) => setF((x) => ({ ...x, [k]: v }));
   const type = allTypes.find((t) => t.id === f.serviceTypeId) ?? null;
   const processes = [...new Set(domains.map((d) => d.process))];
-  const groups = [...new Set(allTypes.map((t) => t.serviceCategory?.name ?? "Other"))];
 
   const edit = (p: Product | null) => {
     setId(p?.id ?? null);
@@ -143,7 +142,7 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
             <label className={LBL}>Type
               <select value={f.serviceTypeId ?? ""} onChange={(e) => pickType(e.target.value)} className={INPUT} aria-label="Type">
                 <option value="">Choose a type</option>
-                {groups.map((g) => <optgroup key={g} label={g}>{allTypes.filter((t) => (t.serviceCategory?.name ?? "Other") === g).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup>)}
+                {allTypes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                 <option value="__new__">+ Add a Type…</option>
               </select>
               {newType !== null && (
