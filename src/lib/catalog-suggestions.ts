@@ -21,7 +21,8 @@ async function me(viewer: Viewer) {
 async function stockTypes(personId: string): Promise<StockType[]> {
   const bts = await personBusinessTypes(personId);
   if (!bts.length) return [];
-  return prisma.serviceType.findMany({ where: { serviceCategory: { business_type_id: { in: bts.map((b) => b.id) } }, ...LIVE_TYPE }, orderBy: { sort_order: "asc" }, select: { id: true, name: true, kind: true, units: true } });
+  const all = await prisma.serviceType.findMany({ where: { serviceCategory: { business_type_id: { in: bts.map((b) => b.id) }, hidden: false }, ...LIVE_TYPE }, orderBy: { sort_order: "asc" }, select: { id: true, name: true, kind: true, units: true } });
+  return all.filter((t) => t.kind === "SERVICE_PRODUCT" || rateTypeName(t.name));
 }
 
 /** The newest parsed résumé not yet read for suggestions. */
@@ -29,15 +30,16 @@ export async function pendingImport(profileId: string) {
   return prisma.profileImport.findFirst({ where: { provider_profile_id: profileId, status: "PARSED", catalog_suggested_at: null, raw_text: { not: null } }, orderBy: { created_at: "desc" }, select: { id: true, raw_text: true } });
 }
 
+// MC-E008: services are the four rate types only (old names until scripts/my-catalog-rates.ts is applied).
+const RATE_TYPES: Record<string, string[]> = { "Onsite Hourly": ["Onsite Consulting"], "Offsite Hourly": ["Offsite Consulting", "Remote Consulting"], "Monthly Retainer": [], Mentoring: [] };
+const rateTypeName = (name: string) => Object.entries(RATE_TYPES).find(([k, v]) => k === name || v.includes(name))?.[0] ?? null;
+const byName = (types: StockType[], name: string) => types.find((t) => t.name === name || rateTypeName(t.name) === name);
+
 // ---- fallback rules: keyword → stock type name, with the résumé line as the "why" ----
 const RULES: { type: string; re: RegExp }[] = [
-  { type: "Offsite Consulting", re: /\b(consult(ant|ing)?|advis(or|ory))\b/i },
-  { type: "Onsite Consulting", re: /\b(on[- ]?site|client site|travel(ed|led)? to)\b/i },
-  { type: "Go-Live & Hypercare", re: /\b(go[- ]live|hypercare|cut[- ]?over)\b/i },
-  { type: "Staff Augmentation", re: /\b(staff aug(mentation)?|contract(or)? role|backfill)\b/i },
-  { type: "Managed Services (AMS)", re: /\b(AMS|managed services|application (management|support)|production support|L[23] support)\b/i },
-  { type: "Monthly Retainer", re: /\bretainer\b/i },
-  { type: "Training & Workshops", re: /\b(train(ed|ing)? (users|staff|teams|key users|end users)|workshops?|train[- ]the[- ]trainer)\b/i },
+  { type: "Offsite Hourly", re: /\b(consult(ant|ing)?|advis(or|ory))\b/i },
+  { type: "Onsite Hourly", re: /\b(on[- ]?site|client site|travel(ed|led)? to)\b/i },
+  { type: "Monthly Retainer", re: /\b(retainer|AMS|managed services|production support)\b/i },
   { type: "Mentoring", re: /\b(mentor(ed|ing)?|coach(ed|ing)?)\b/i },
   { type: "Reports", re: /\b\d+\+?\s+(BIP|OTBI|BI Publisher|custom)?\s*reports?\b|\b(BIP|OTBI|BI Publisher) reports?\b/i },
   { type: "Dashboards & Analytics", re: /\b(dashboards?|analytics|FAW|OAC)\b/i },
@@ -56,7 +58,7 @@ function byRules(text: string, types: StockType[]): Proposal[] {
   const rate = RATE.exec(text);
   const out: Proposal[] = [];
   for (const r of RULES) {
-    const t = types.find((x) => x.name === r.type);
+    const t = byName(types, r.type);
     const line = t && lines.find((l) => r.re.test(l));
     if (!t || !line) continue;
     const isService = t.kind === "SERVICE";
@@ -78,7 +80,7 @@ async function byAi(text: string, types: StockType[]): Promise<{ proposals: Prop
 Services (stock types): ${services.join("; ")}.
 Service products (stock types): ${products.join("; ")}.
 Rules:
-- Propose a service only when the résumé shows that kind of work (consulting history → Offsite Consulting, and Onsite Consulting if they worked at client sites; training others → Training & Workshops; support/AMS roles → Managed Services (AMS); mentoring → Mentoring).
+- Services are rates. Propose one only when the résumé shows that kind of work (consulting history → ${services.find((n) => rateTypeName(n) === "Offsite Hourly") ?? "Offsite Hourly"}; worked at client sites → ${services.find((n) => rateTypeName(n) === "Onsite Hourly") ?? "Onsite Hourly"}; ongoing support/AMS → Monthly Retainer; mentoring or coaching → Mentoring). Training, go-live and support projects are not services.
 - Fill rate (in whole dollars) and unit (hour/day/week/month) ONLY when the résumé states a rate. Otherwise null. Never guess.
 - Propose a service product only when the résumé clearly names a deliverable (e.g. "built 40 BIP reports" → Reports); give it a short title from the résumé.
 - "why" is one short line quoting or closely paraphrasing the résumé.`;
@@ -107,14 +109,14 @@ Rules:
   return { proposals, model: r.model };
 }
 
-/** Scott 2026-10-12: a rate stated on the résumé fills Offsite Consulting only; any other drafted service starts at $100 (per hour where allowed) for the provider to change. Products keep no price. */
-const RATE_FROM_RESUME_TYPE = "Offsite Consulting";
+/** MC-E008: a rate stated on the résumé fills Offsite Hourly only; any other drafted rate starts at $100 for the provider to change. Products keep no price. */
+const RATE_FROM_RESUME_TYPE = "Offsite Hourly";
 const DEFAULT_RATE_CENTS = 100_00;
 function applyRatePolicy(proposals: Proposal[], types: StockType[]): Proposal[] {
   return proposals.map((x) => {
     const t = types.find((y) => y.id === x.typeId);
     if (!t || t.kind !== "SERVICE") return x;
-    if (t.name === RATE_FROM_RESUME_TYPE && x.rateCents && x.unit) return x;
+    if (rateTypeName(t.name) === RATE_FROM_RESUME_TYPE && x.rateCents && x.unit) return x;
     const unit: ServiceUnit = t.units.includes("HOUR") ? "HOUR" : (t.units[0] as ServiceUnit);
     return { ...x, rateCents: DEFAULT_RATE_CENTS, unit };
   });
