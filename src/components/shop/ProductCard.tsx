@@ -70,6 +70,12 @@ export function ProductCard({ p, signedIn, own = false, inCartLineId = null }: {
           <b className="text-[16px] tabular-nums">{priceLabel(p)}</b>
           {p.terms && <span className="text-[11.5px] text-ink-2">{p.terms}</span>}
         </p>
+        {own && (
+          <p data-own-product className="mt-2 text-[12.5px] text-ink-2">
+            Your Service Product — buyers see Buy Now, Add to Cart and Request an Estimate here.{" "}
+            <Link href={`/catalog/products?edit=${p.id}`} className="font-bold text-magenta-dark underline underline-offset-4">Edit</Link>
+          </p>
+        )}
         {!own && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {inCartLineId ? (
