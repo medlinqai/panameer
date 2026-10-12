@@ -1,6 +1,7 @@
 import type { CredentialKind } from "@prisma/client";
 import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
 import { creditInviteForNewUser } from "@/lib/colleague-invite";
+import type { ResumePrefill } from "@/lib/resume/prefill";
 import { prisma } from "@/lib/prisma";
 /* THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
 import { countryColumns } from "@/lib/country";
@@ -643,6 +644,8 @@ export async function getOnboardingState(viewer: Viewer) {
   });
 
   const address = p.site?.addresses?.[0] ?? null;
+  // BT-E004: no saved address yet → pre-fill the one the résumé names; it saves when the provider saves Contact.
+  const resumeLoc = (pp.resume_prefill as ResumePrefill | null)?.location ?? null;
 
   // WS-A — what THIS provider's own skills imply. Computed for the
   const derived = await deriveRolesFromSkills(pp.id);
@@ -755,7 +758,9 @@ export async function getOnboardingState(viewer: Viewer) {
             postalCode: address.postal_code,
             country: address.country,
           }
-        : null,
+        : resumeLoc
+          ? { line1: "", line2: null, city: resumeLoc.city, state: resumeLoc.state, postalCode: null, country: resumeLoc.country }
+          : null,
       // brief_U / E042 — Employer is the single work-history model; the
       // "Your Employers" step and the review page both read this.
       employers: pp.employers.map((e) => ({

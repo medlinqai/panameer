@@ -18,6 +18,8 @@ import { growthBoard, growthScore, rankFor } from "@/lib/growth-score";
 import { prisma } from "@/lib/prisma";
 import { buyerProfileFor } from "@/lib/buyer-profile";
 import { BuyerProfileEditor } from "@/components/buyer/BuyerProfileEditor";
+import { ResumePrefillBanner } from "@/components/profile/ResumePrefillBanner";
+import type { ResumePrefill } from "@/lib/resume/prefill";
 
 export default async function MyProfilePage() {
   const viewer = await getSessionViewer();
@@ -47,6 +49,7 @@ export default async function MyProfilePage() {
   ]);
 
   const slug = await ensureSlug(profile.id);
+  const prefill = (await prisma.providerProfile.findUnique({ where: { id: profile.id }, select: { resume_prefill: true } }))?.resume_prefill as ResumePrefill | null;
   const publicUrl = slug
     ? `${(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100").replace(/\/$/, "")}/pro/${slug}`
     : null;
@@ -71,6 +74,7 @@ export default async function MyProfilePage() {
       {/* WS-B). Scott's page rule: *"No growth numbers, usage */}
       {/* THE CLEAN SURFACE STARTS HERE, BELOW THE MENUING WS-A) */}
       <div className="account-surface">
+      {prefill?.fields?.length ? <ResumePrefillBanner fields={prefill.fields} /> : null}
       <ConnectProfile
         // above. The view model carries `null` for every other surface.
         p={{ ...profile, publicUrl }}

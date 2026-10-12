@@ -1325,6 +1325,8 @@ model ProviderProfile {
   // acceptance of a coordinator invite.
   /// The member's résumé-review fixes, re-applied after any re-read: { removed: {kind: [names]}, switches: {company: choice} }.
   resume_fixes            Json?
+  /// BT-E004: fields filled from the résumé, marked "from your résumé" until confirmed — {fields: string[], location?: {city,state,country}}.
+  resume_prefill          Json?
   /// Terms the catalog doesn't know, kept exactly as the member typed them.
   keywords                String[]           @default([])
   /// Lower-cased keywords joined, for the search text filter.

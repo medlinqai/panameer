@@ -7,6 +7,7 @@ import { OFFERABLE, OFFERABLE_BASE, activeCatalogId } from "@/lib/catalog";
 import { jobKey } from "@/lib/resume/job-key";
 import { readTimeRemaining, READ_BUDGET_MS } from "@/lib/resume/budget";
 import { splitCertificationName } from "@/lib/resume/certification-names";
+import { markResumePrefill } from "@/lib/resume/prefill";
 import { prisma } from "@/lib/prisma";
 import { extractText, ExtractError } from "@/lib/resume/extract";
 import { parseResume, type ParsedResume } from "@/lib/resume/parse";
@@ -171,7 +172,7 @@ export async function importProfileDocument({
   // 3. Structure → profile, non-destructively.
   // THE ONE BRANCH THAT DECIDES WHETHER ANYTHING IS WRITTEN item 2).
   const applied = apply
-    ? await applyParsedResume(profileId, parsed, source)
+    ? await applyParsedResume(profileId, parsed, source, text)
     : emptyApplied();
   // Terms the catalog didn't match as skills: specializations link, the rest become keywords.
   if (apply && applied.skillsUnmatched.length) await addTerms(profileId, applied.skillsUnmatched);
@@ -452,6 +453,7 @@ export async function applyParsedResume(
   profileId: string,
   parsed: ParsedResume,
   source: "RESUME",
+  text?: string,
 ): Promise<ImportResult["applied"]> {
   const applied = emptyApplied();
 
@@ -758,5 +760,6 @@ export async function applyParsedResume(
     applied.languages++;
   }
 
+  await markResumePrefill(profileId, applied, text);
   return applied;
 }
