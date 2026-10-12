@@ -2977,6 +2977,8 @@ model ProfileImport {
   read_passes         Json?
   route_ms            Int?
   error               String?
+  /// BT-E003: when this résumé was read for My Catalog suggestions (null = not yet).
+  catalog_suggested_at DateTime?
   created_at          DateTime            @default(now())
   updated_at          DateTime            @updatedAt
 
@@ -8849,4 +8851,34 @@ model CompanyIndustry {
 
   @@unique([company_id, specialization_id])
   @@map("company_industries")
+}
+
+/// BT-E003: Suggested from your résumé — draft My Catalog items the AI (or the fallback rules) proposed, and what the
+/// provider did with each (the log used for tuning). Nothing is published from here.
+model CatalogSuggestion {
+  id                  String                  @id @default(uuid()) @db.Uuid
+  provider_profile_id String                  @db.Uuid
+  profile_import_id   String?                 @db.Uuid
+  service_type_id     String                  @db.Uuid
+  kind                ServiceKind
+  /// One line from the résumé: why this was suggested.
+  why                 String
+  rate_cents          Int?
+  unit                ServiceUnit?
+  /// Service products: the deliverable named in the résumé.
+  title               String?
+  status              CatalogSuggestionStatus @default(PROPOSED)
+  /// "ai:<model>" or "rules".
+  source              String
+  created_at          DateTime                @default(now())
+  decided_at          DateTime?
+
+  @@index([provider_profile_id, status])
+  @@map("catalog_suggestions")
+}
+
+enum CatalogSuggestionStatus {
+  PROPOSED
+  KEPT
+  REMOVED
 }

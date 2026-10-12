@@ -2,6 +2,10 @@ import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { buildCatalogData } from "@/lib/build-catalog";
 import { BuildCatalog } from "@/components/catalog/BuildCatalog";
+import { ResumeSuggestions } from "@/components/catalog/ResumeSuggestions";
+import { openSuggestions, pendingImport } from "@/lib/catalog-suggestions";
+import { ownedProviderProfile } from "@/lib/access";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Build Your Catalog · Panameer" };
@@ -10,6 +14,9 @@ export const metadata = { title: "Build Your Catalog · Panameer" };
 export default async function Page() {
   const viewer = await guardPage("canProvideServices");
   const d = await buildCatalogData(viewer);
+  const me = await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { id: true } });
+  const [sugs, pending] = me && d.categories.length ? await Promise.all([openSuggestions(me.id), pendingImport(me.id)]) : [[], null];
+  const typeName = new Map(d.categories.flatMap((c) => c.serviceTypes.map((t) => [t.id, t.name] as const)));
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl" data-build-your-catalog>
       <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">YOUR PATH · STEP 4 OF 8 · BUILD YOUR CATALOG</p>
@@ -22,13 +29,20 @@ export default async function Page() {
       ) : !d.categories.length ? (
         <p className="mt-6 border-l-2 border-magenta py-1 pl-3 text-[14.5px]">The Service Catalog for {d.businessTypes.map((b) => b.name).join(" and ")} isn&apos;t loaded yet. Meanwhile, <Link href="/catalog/services/new" className="font-bold underline">create a service</Link> or <Link href="/catalog/products/new" className="font-bold underline">a service product</Link>.</p>
       ) : (
+        <>
+        <ResumeSuggestions
+          pending={!!pending}
+          items={sugs.map((s) => ({ id: s.id, kind: s.kind, typeName: typeName.get(s.service_type_id) ?? "Service", why: s.why, rateCents: s.rate_cents, unit: s.unit, title: s.title }))}
+        />
         <BuildCatalog
+          key={`${d.services.map((s) => s.service_type_id).join()}|${d.products.length}`}
           businessTypes={d.businessTypes}
           categories={d.categories.map((c) => ({ id: c.id, name: c.name, kind: c.kind, types: c.serviceTypes }))}
           services={d.services.map((s) => ({ serviceTypeId: s.service_type_id!, rateCents: s.rate_cents, unit: s.uom, published: !!s.published_at }))}
           products={d.products.map((p) => ({ serviceTypeId: p.service_type_id!, title: p.title }))}
           gate={d.gate}
         />
+        </>
       )}
     </div>
   );
