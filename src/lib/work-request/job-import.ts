@@ -13,7 +13,7 @@ export const AI_JOB_SCHEMA = z.object({
   startDate: z.string().nullable(),
   endDate: z.string().nullable(),
   locationCountry: z.string().nullable(),
-  worksite: z.enum(["REMOTE", "ONSITE", "HYBRID"]).nullable(),
+  worksite: z.enum(["OFFSITE", "ONSITE", "HYBRID"]).nullable(),
 });
 export type AiJob = z.infer<typeof AI_JOB_SCHEMA>;
 
@@ -70,7 +70,7 @@ const TOOL_SCHEMA = {
     },
     worksite: {
       type: ["string", "null"],
-      enum: ["REMOTE", "ONSITE", "HYBRID", null],
+      enum: ["OFFSITE", "ONSITE", "HYBRID", null],
       description: "Null unless the posting is explicit.",
     },
   },

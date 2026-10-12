@@ -25,7 +25,7 @@ type C = { name: string; kind: ServiceKind; types: T[] };
 // Commodity codes: only the ones Scott approved (naming audit › UNSPSC, decision 10). Build/Run proposals stay blank.
 const ERP: C[] = [
   { name: "Consulting", kind: "SERVICE", types: [
-    { name: "Offsite Consulting", units: ["HOUR", "DAY"], pricing: "TIME", delivery: "REMOTE", required: true, code: "80101500", was: ["Remote Consulting", "Offsite Consulting"], description: "Working from your location" },
+    { name: "Offsite Consulting", units: ["HOUR", "DAY"], pricing: "TIME", delivery: "OFFSITE", required: true, code: "80101500", was: ["Remote Consulting", "Offsite Consulting"], description: "Working from your location" },
     { name: "Onsite Consulting", units: ["HOUR", "DAY"], pricing: "TIME", delivery: "ONSITE", code: "80101500", description: "At the customer's site; travel billed separately" },
   ] },
   { name: "Project Support", kind: "SERVICE", types: [
@@ -38,7 +38,7 @@ const ERP: C[] = [
   ] },
   { name: "Knowledge", kind: "SERVICE", types: [
     { name: "Training & Workshops", units: ["DAY", "SESSION"], pricing: "TIME", delivery: "EITHER", code: "86130000", was: ["Training"], description: "Key-user or end-user sessions" },
-    { name: "Mentoring", units: ["HOUR"], pricing: "TIME", delivery: "REMOTE", code: "86130000", description: "One-to-one guidance for other consultants" },
+    { name: "Mentoring", units: ["HOUR"], pricing: "TIME", delivery: "OFFSITE", code: "86130000", description: "One-to-one guidance for other consultants" },
   ] },
   { name: "Build", kind: "SERVICE_PRODUCT", types: [
     { name: "Reports", units: ["EACH"], pricing: "FIXED" },

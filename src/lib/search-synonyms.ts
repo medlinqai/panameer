@@ -2,7 +2,7 @@ import type { WorksiteType } from "@prisma/client";
 
 // OF-E003: people still type "remote" — search treats remote and offsite as the same word.
 const PAIRS: [RegExp, string][] = [[/\bremote\b/gi, "offsite"], [/\boff-?site\b/gi, "remote"]];
-export const OFFSITE_WORKSITE: WorksiteType = "REMOTE";
+export const OFFSITE_WORKSITE: WorksiteType = "OFFSITE";
 
 /** The query plus its remote/offsite twin (when it has one). */
 export function searchVariants(q: string): string[] {

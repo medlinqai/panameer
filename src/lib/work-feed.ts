@@ -61,7 +61,7 @@ const TITLE_CASE: Record<string, string> = {
   EXPERT: "Expert",
   HOURLY: "Hourly",
   FIXED: "Fixed price",
-  REMOTE: "Offsite",
+  OFFSITE: "Offsite",
   ONSITE: "Onsite",
   HYBRID: "Hybrid",
 };

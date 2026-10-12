@@ -24,7 +24,7 @@ async function main() {
   const consulting = await prisma.serviceCategory.create({ data: { business_type_id: erp.id, name: "Consulting", kind: "SERVICE", sort_order: 1 } });
   const build = await prisma.serviceCategory.create({ data: { business_type_id: erp.id, name: "Build", kind: "SERVICE_PRODUCT", sort_order: 2 } });
   const subs = await prisma.serviceCategory.create({ data: { business_type_id: saas.id, name: "Subscriptions", kind: "SERVICE_PRODUCT", sort_order: 1 } });
-  const remote = await prisma.serviceType.create({ data: { name: `TX Remote Consulting ${tag}`, service_category_id: consulting.id, kind: "SERVICE", pricing_model: "TIME", units: ["HOUR", "DAY"], delivery: "REMOTE", required: true, commodity_code: "80101500", is_baseline: true } });
+  const remote = await prisma.serviceType.create({ data: { name: `TX Remote Consulting ${tag}`, service_category_id: consulting.id, kind: "SERVICE", pricing_model: "TIME", units: ["HOUR", "DAY"], delivery: "OFFSITE", required: true, commodity_code: "80101500", is_baseline: true } });
   const reports = await prisma.serviceType.create({ data: { name: `TX Reports ${tag}`, service_category_id: build.id, kind: "SERVICE_PRODUCT", pricing_model: "FIXED", units: ["EACH"], commodity_code: "81111504", is_baseline: true } });
   const app = await prisma.serviceType.create({ data: { name: `TX App Subscription ${tag}`, service_category_id: subs.id, kind: "SERVICE_PRODUCT", pricing_model: "RECURRING", units: ["MONTH"], is_baseline: true } });
   ids.types.push(remote.id, reports.id, app.id);

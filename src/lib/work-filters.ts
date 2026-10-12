@@ -11,7 +11,9 @@ const RATE: Record<string, { label: string; where: Prisma.WorkRequestWhereInput 
   o125: { label: "Over $125/hr", where: { budget_type: "HOURLY", OR: [{ budget_max_cents: { gt: 12500 } }, { budget_amount_cents: { gt: 12500 } }] } },
   fixed: { label: "Fixed price", where: { budget_type: "FIXED" } },
 };
-const SITE: Record<string, string> = { REMOTE: "Offsite", ONSITE: "Onsite", HYBRID: "Hybrid" };
+const SITE: Record<string, string> = { OFFSITE: "Offsite", ONSITE: "Onsite", HYBRID: "Hybrid" };
+/** Old ?site=remote / REMOTE links still work. */
+export const siteKey = (v?: string) => { const k = v?.toUpperCase() === "REMOTE" ? "OFFSITE" : v?.toUpperCase(); return k && SITE[k] ? k : null; };
 const LENGTH: Record<string, string> = { LT_1_MONTH: "Under 1 month", ONE_TO_3_MONTHS: "1–3 months", THREE_TO_6_MONTHS: "3–6 months", GT_6_MONTHS: "Over 6 months" };
 const START: Record<string, { label: string; days: [number, number] }> = { "2w": { label: "Within 2 weeks", days: [-3650, 14] }, "30d": { label: "Within 30 days", days: [-3650, 30] }, later: { label: "Later", days: [30, 3650] } };
 
@@ -20,7 +22,8 @@ export function workFilterWhere(f: WorkFilters): Prisma.WorkRequestWhereInput[] 
   if (f.skill) and.push({ skills: { some: { skill_id: f.skill } } });
   if (f.rate && RATE[f.rate]) and.push(RATE[f.rate].where);
   if (f.location) and.push({ location_country: f.location });
-  if (f.site && SITE[f.site]) and.push({ worksite: f.site as "REMOTE" | "ONSITE" | "HYBRID" });
+  const site = siteKey(f.site);
+  if (site) and.push({ worksite: site as "OFFSITE" | "ONSITE" | "HYBRID" });
   if (f.length && LENGTH[f.length]) and.push({ duration: f.length as "LT_1_MONTH" });
   if (f.start && START[f.start]) {
     const [a, b] = START[f.start].days;

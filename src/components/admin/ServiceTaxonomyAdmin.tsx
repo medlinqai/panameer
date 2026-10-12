@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 // TX-E005: Commodity Group › Business Type › Service Category › Service Type, with the universal fields and the Suggested queue.
 type Unit = "HOUR" | "DAY" | "WEEK" | "MONTH" | "SESSION" | "VISIT" | "EACH";
-const DELIVERY = [["REMOTE", "Offsite"], ["ONSITE", "Onsite"], ["EITHER", "Either"]] as const;
+const DELIVERY = [["OFFSITE", "Offsite"], ["ONSITE", "Onsite"], ["EITHER", "Either"]] as const;
 export type TType = { id: string; name: string; pricing_model: string | null; units: Unit[]; delivery: string | null; lead_time_days: number | null; commodity_code: string | null; required: boolean; used: number };
 export type TCat = { id: string; name: string; kind: string; types: TType[] };
 export type TBt = { id: string; name: string; hidden: boolean; uses_skills: boolean; categories: TCat[] };

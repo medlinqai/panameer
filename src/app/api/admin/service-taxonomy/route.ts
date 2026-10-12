@@ -6,7 +6,7 @@ import { approve, merge, move, rename, setHidden, updateType } from "@/lib/servi
 
 const UNITS = ["HOUR", "DAY", "WEEK", "MONTH", "SESSION", "VISIT", "EACH"] as const;
 const Body = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("update"), id: z.string().uuid(), fields: z.object({ pricing_model: z.enum(["TIME", "FIXED", "RECURRING", "QUOTE"]).nullable().optional(), units: z.array(z.enum(UNITS)).optional(), delivery: z.enum(["REMOTE", "ONSITE", "EITHER"]).nullable().optional(), lead_time_days: z.number().int().min(0).max(365).nullable().optional(), commodity_code: z.string().trim().max(8).nullable().optional(), required: z.boolean().optional(), description: z.string().trim().max(200).nullable().optional() }) }),
+  z.object({ action: z.literal("update"), id: z.string().uuid(), fields: z.object({ pricing_model: z.enum(["TIME", "FIXED", "RECURRING", "QUOTE"]).nullable().optional(), units: z.array(z.enum(UNITS)).optional(), delivery: z.enum(["OFFSITE", "ONSITE", "EITHER"]).nullable().optional(), lead_time_days: z.number().int().min(0).max(365).nullable().optional(), commodity_code: z.string().trim().max(8).nullable().optional(), required: z.boolean().optional(), description: z.string().trim().max(200).nullable().optional() }) }),
   z.object({ action: z.literal("move"), level: z.enum(["group", "businessType", "category", "type"]), id: z.string().uuid(), dir: z.union([z.literal(-1), z.literal(1)]) }),
   z.object({ action: z.literal("hide"), level: z.enum(["group", "businessType"]), id: z.string().uuid(), hidden: z.boolean() }),
   z.object({ action: z.literal("approve"), id: z.string().uuid(), categoryId: z.string().uuid() }),

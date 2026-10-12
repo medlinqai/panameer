@@ -11,7 +11,7 @@ import {
 
 const EXPERIENCE_LEVELS = ["BEGINNER", "MID_CAREER", "EXPERT"] as const;
 const BUDGET_TYPES = ["FIXED", "HOURLY"] as const;
-const WORKSITES = ["REMOTE", "ONSITE", "HYBRID"] as const;
+const WORKSITES = ["OFFSITE", "ONSITE", "HYBRID"] as const;
 const DURATIONS = [
   "LT_1_MONTH",
   "ONE_TO_3_MONTHS",
@@ -427,7 +427,7 @@ export async function saveSection(
     }
 
     case "location": {
-      const worksite = data.worksite ?? null;
+      const worksite = data.worksite === "REMOTE" ? "OFFSITE" : data.worksite ?? null; // a tab open across the OF-E002 deploy
       if (worksite && !WORKSITES.includes(worksite)) {
         throw new WorkRequestError("Invalid worksite", "INVALID");
       }

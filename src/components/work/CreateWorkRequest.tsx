@@ -650,7 +650,7 @@ export function CreateWorkRequest({
             onContinue: () =>
               saveAnd("location", {
                 locationCountry,
-                worksite: worksite ?? "REMOTE",
+                worksite: worksite ?? "OFFSITE",
               }),
           })}
         >
@@ -674,13 +674,13 @@ export function CreateWorkRequest({
             <Field label="How is the work performed?">
               <div className="flex flex-wrap gap-2">
                 {[
-                  { v: "REMOTE", l: "Offsite" },
+                  { v: "OFFSITE", l: "Offsite" },
                   { v: "ONSITE", l: "Onsite" },
                   { v: "HYBRID", l: "Hybrid" },
                 ].map((o) => (
                   <Chip
                     key={o.v}
-                    selected={(worksite ?? "REMOTE") === o.v}
+                    selected={(worksite ?? "OFFSITE") === o.v}
                     onClick={() => setWorksite(o.v)}
                   >
                     {o.l}
