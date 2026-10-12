@@ -24,6 +24,8 @@ export default async function Page() {
   const [sugs, pending] = me && d.categories.length ? await Promise.all([openSuggestions(me.id), pendingImport(me.id)]) : [[], null];
   const typeName = new Map(d.categories.flatMap((c) => c.serviceTypes.map((t) => [t.id, t.name] as const)));
   const types: RateType[] = d.categories.filter((c) => c.kind === "SERVICE").flatMap((c) => c.serviceTypes.map((t) => ({ id: t.id, name: t.name, description: t.description, units: t.units, delivery: t.delivery })));
+  const rateIds = new Set(types.map((t) => t.id));
+  const haveIds = new Set(d.services.map((x) => x.service_type_id));
   const bt = d.businessTypes.map((b) => b.name).join(" · ");
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl" data-catalog-services>
@@ -40,10 +42,7 @@ export default async function Page() {
             Business Type: <b className="text-ink">{bt}</b>
             <Link href="/company#business-types" className="font-bold text-magenta-dark underline underline-offset-4">Change</Link>
           </p>
-          <ResumeSuggestions
-            pending={!!pending}
-            items={sugs.map((s) => ({ id: s.id, kind: s.kind, typeName: typeName.get(s.service_type_id) ?? "Service", why: s.why, rateCents: s.rate_cents, unit: s.unit, title: s.title }))}
-          />
+
           {types.length ? (
             <RatesTable
               key={`${d.services.map((s) => s.service_type_id).join()}`}
@@ -56,6 +55,11 @@ export default async function Page() {
           ) : (
             <p className="mt-6 text-[14px] text-ink-2">The rate types for {bt} aren&apos;t loaded yet.</p>
           )}
+          {/* Résumé drafts for rates you don't have yet — below the table (mockup C). Product drafts live on Service Products. */}
+          <ResumeSuggestions
+            pending={!!pending}
+            items={sugs.filter((x) => x.kind === "SERVICE" && rateIds.has(x.service_type_id) && !haveIds.has(x.service_type_id)).map((s) => ({ id: s.id, kind: s.kind, typeName: typeName.get(s.service_type_id) ?? "Service", why: s.why, rateCents: s.rate_cents, unit: s.unit, title: s.title }))}
+          />
         </>
       )}
     </div>
