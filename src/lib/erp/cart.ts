@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { effectiveRates } from "@/lib/company-catalog";
 import { cxmlDoc, cxmlUom, esc, payloadId, timestamp } from "@/lib/erp/cxml";
 import { logMessage } from "@/lib/erp/connections";
 import type { PunchoutSessionLive } from "@/lib/erp/punchout";
@@ -13,13 +14,14 @@ export async function searchServices(q: string): Promise<CartService[]> {
   const byPerson = term
     ? (await prisma.providerProfile.findMany({ where: { person: { OR: [{ first_name: { contains: term, mode: "insensitive" } }, { last_name: { contains: term, mode: "insensitive" } }] } }, select: { id: true }, take: 200 })).map((p) => p.id)
     : [];
-  const rows = await prisma.providerService.findMany({
+  const raw = await prisma.providerService.findMany({
     where: { active: true, published_at: { not: null }, rate_cents: { not: null }, ...(term ? { OR: [{ name: { contains: term, mode: "insensitive" } }, { provider_profile_id: { in: byPerson } }] } : {}) },
     orderBy: { created_at: "desc" },
     take: 50,
   });
-  const profiles = await prisma.providerProfile.findMany({ where: { id: { in: rows.map((r) => r.provider_profile_id) } }, select: { id: true, person: { select: { id: true, first_name: true, last_name: true } } } });
+  const profiles = await prisma.providerProfile.findMany({ where: { id: { in: raw.map((r) => r.provider_profile_id) } }, select: { id: true, person: { select: { id: true, first_name: true, last_name: true } } } });
   const byId = new Map(profiles.map((p) => [p.id, p.person]));
+  const rows = (await Promise.all(raw.map((r) => effectiveRates(byId.get(r.provider_profile_id)?.id ?? null, [r])))).flat();
   return rows.flatMap((r) => {
     const p = byId.get(r.provider_profile_id);
     return p ? [{ id: r.id, name: r.name, providerName: `${p.first_name} ${p.last_name}`.trim(), providerPersonId: p.id, type: r.service_type === "SERVICE_BY_AMT" ? ("SERVICE_BY_AMT" as const) : ("SERVICE_BY_QTY" as const), uom: r.uom, rateCents: r.rate_cents ?? 0 }] : [];
@@ -40,7 +42,8 @@ async function cartRequest(s: PunchoutSessionLive): Promise<string> {
 }
 
 export async function addToCart(s: PunchoutSessionLive, input: { serviceId: string; quantity?: number | null; start?: string | null; end?: string | null }) {
-  const svc = await prisma.providerService.findFirst({ where: { id: input.serviceId, active: true, published_at: { not: null } } });
+  const found = await prisma.providerService.findFirst({ where: { id: input.serviceId, active: true, published_at: { not: null } } });
+  const svc = found ? (await effectiveRates((await prisma.providerProfile.findUnique({ where: { id: found.provider_profile_id }, select: { person_id: true } }))?.person_id ?? null, [found]))[0] : null;
   // TX-E006: the line carries the type's commodity code (Service Taxonomy), else the service's own, else the default.
   const typeCode = svc?.service_type_id ? (await prisma.serviceType.findUnique({ where: { id: svc.service_type_id }, select: { commodity_code: true } }))?.commodity_code : null;
   if (!svc?.rate_cents) throw new Error("That service isn't available");

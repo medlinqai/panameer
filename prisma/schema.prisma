@@ -2410,7 +2410,11 @@ model ServiceProduct {
   /// AND avoid a fixed risk, so these are rows, not columns.
   valueFactors      ServiceProductValueFactor[]
 
+  /// BT-E005: the company owns the catalog.
+  company_id String? @db.Uuid
+
   @@index([provider_profile_id])
+  @@index([company_id])
   @@index([role_id])
   /// TX-E001: the Service Product Type (service_types, kind SERVICE_PRODUCT); product_type_id is folded into this by the taxonomy seed.
   service_type_id     String?            @db.Uuid
@@ -8384,11 +8388,34 @@ model ProviderService {
   /// AT_COST (billed separately, capped per order) · INCLUDED · NOT_APPLICABLE
   expenses            String?
   published_at        DateTime?
+  /// BT-E005: the company owns the catalog; the provider row stays as who set it up.
+  company_id          String?         @db.Uuid
   created_at          DateTime        @default(now())
   updated_at          DateTime        @updatedAt
 
+  rateOverrides ProviderRateOverride[]
+
   @@index([provider_profile_id])
+  @@index([company_id])
   @@map("provider_services")
+}
+
+/// BT-E005: one provider's own rate for a company Service; buyers see it instead of the company rate.
+model ProviderRateOverride {
+  id         String   @id @default(uuid()) @db.Uuid
+  company_id String   @db.Uuid
+  person_id  String   @db.Uuid
+  service_id String   @db.Uuid
+  rate_cents Int
+  unit       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  service ProviderService @relation(fields: [service_id], references: [id], onDelete: Cascade)
+
+  @@unique([person_id, service_id])
+  @@index([company_id])
+  @@map("provider_rate_overrides")
 }
 
 enum ErpKind {

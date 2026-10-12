@@ -1,5 +1,6 @@
 import type { ServiceKind, ServiceUnit } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { companyIdForProfile } from "@/lib/company-catalog";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { publishGate } from "@/lib/my-catalog";
 import { personBusinessTypes } from "@/lib/business-types";
@@ -43,7 +44,7 @@ export async function saveCatalogService(viewer: Viewer, input: { serviceTypeId:
   }
   const unit = input.unit && t.units.includes(input.unit) ? input.unit : t.units[0] ?? "HOUR";
   const rate = input.rateCents != null && input.rateCents > 0 ? Math.round(input.rateCents) : null;
-  const data = { name: t.name, uom: unit, rate_cents: rate ?? existing?.rate_cents ?? null, active: true, unspsc_code: t.commodity_code ?? existing?.unspsc_code ?? null };
+  const data = { name: t.name, uom: unit, rate_cents: rate ?? existing?.rate_cents ?? null, active: true, unspsc_code: t.commodity_code ?? existing?.unspsc_code ?? null, company_id: existing?.company_id ?? (await companyIdForProfile(p.id)) };
   const row = existing
     ? await prisma.providerService.update({ where: { id: existing.id }, data })
     : await prisma.providerService.create({ data: { ...data, provider_profile_id: p.id, service_type_id: t.id, service_type: "SERVICE_BY_QTY", payment_event: "TIMESHEET" } });

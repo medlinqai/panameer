@@ -1,5 +1,6 @@
 import type { ServiceKind, ServiceUnit } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { companyIdForProfile } from "@/lib/company-catalog";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { personBusinessTypes } from "@/lib/business-types";
 import { LIVE_TYPE, saveCatalogService } from "@/lib/build-catalog";
@@ -146,7 +147,7 @@ export async function keepSuggestion(viewer: Viewer, id: string, input: { rateCe
     await saveCatalogService(viewer, { serviceTypeId: s.service_type_id, on: true, rateCents: input.rateCents ?? s.rate_cents, unit: input.unit ?? s.unit });
   } else {
     const t = await prisma.serviceType.findUniqueOrThrow({ where: { id: s.service_type_id }, select: { name: true, pricing_model: true } });
-    await prisma.serviceProduct.create({ data: { provider_profile_id: p.id, title: s.title || t.name, status: "DRAFT", service_type_id: s.service_type_id, pricing_type: t.pricing_model === "RECURRING" ? "RECURRING" : "FIXED", ...(t.pricing_model === "RECURRING" ? { billing_period: "MONTHLY", kind: "DEPLOYABLE" } : {}) } });
+    await prisma.serviceProduct.create({ data: { provider_profile_id: p.id, company_id: await companyIdForProfile(p.id), title: s.title || t.name, status: "DRAFT", service_type_id: s.service_type_id, pricing_type: t.pricing_model === "RECURRING" ? "RECURRING" : "FIXED", ...(t.pricing_model === "RECURRING" ? { billing_period: "MONTHLY", kind: "DEPLOYABLE" } : {}) } });
   }
   await prisma.catalogSuggestion.update({ where: { id: s.id }, data: { status: "KEPT", decided_at: new Date() } });
 }

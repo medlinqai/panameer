@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { companyIdForProfile } from "@/lib/company-catalog";
 import type { PaymentTerms, PaymentEvent } from "@prisma/client";
 import { PAYMENT_TERMS_LABEL, PAYMENT_EVENT_LABEL } from "@/lib/billing-terms";
 import { publishGate } from "@/lib/my-catalog";
@@ -270,6 +271,7 @@ export async function createServiceProduct(viewer: Viewer, input: ServiceProduct
   const row = await prisma.serviceProduct.create({
     data: {
       provider_profile_id: profileId,
+      company_id: await companyIdForProfile(profileId),
       sort_order: count * 10,
       // New packages start as DRAFT so nothing half-written is ever public.
       status: "DRAFT",

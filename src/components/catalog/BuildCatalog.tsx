@@ -8,13 +8,13 @@ import { formatCents } from "@/lib/display";
 type Unit = "HOUR" | "DAY" | "WEEK" | "MONTH" | "SESSION" | "VISIT" | "EACH";
 type SType = { id: string; name: string; description: string | null; units: Unit[]; required: boolean };
 type Cat = { id: string; name: string; kind: "SERVICE" | "SERVICE_PRODUCT"; types: SType[] };
-type Svc = { serviceTypeId: string; rateCents: number | null; unit: string | null; published: boolean };
+type Svc = { id?: string; serviceTypeId: string; rateCents: number | null; unit: string | null; published: boolean; overrideCents?: number | null };
 type Prod = { serviceTypeId: string; title: string };
 const SHORT: Record<Unit, string> = { HOUR: "hr", DAY: "day", WEEK: "wk", MONTH: "mo", SESSION: "session", VISIT: "visit", EACH: "each" };
 const LABEL = (u: Unit) => u[0] + u.slice(1).toLowerCase();
 const code = (n: string) => n.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
-export function BuildCatalog({ businessTypes, categories, services, products, gate }: { businessTypes: { id: string; name: string }[]; categories: Cat[]; services: Svc[]; products: Prod[]; gate: { ok: boolean; reason: string | null; href: string } }) {
+export function BuildCatalog({ businessTypes, categories, services, products, gate, multiProvider = false }: { businessTypes: { id: string; name: string }[]; categories: Cat[]; services: Svc[]; products: Prod[]; gate: { ok: boolean; reason: string | null; href: string }; multiProvider?: boolean }) {
   const [svc, setSvc] = useState<Record<string, Svc>>(Object.fromEntries(services.map((s) => [s.serviceTypeId, s])));
   const [rates, setRates] = useState<Record<string, string>>(Object.fromEntries(services.map((s) => [s.serviceTypeId, s.rateCents != null ? String(s.rateCents / 100) : ""])));
   const [msg, setMsg] = useState<string | null>(null);
@@ -33,10 +33,20 @@ export function BuildCatalog({ businessTypes, categories, services, products, ga
     if (!j) return;
     setSvc((s) => {
       const n = { ...s };
-      if (on && j.service) n[t.id] = { serviceTypeId: t.id, rateCents: j.service.rateCents, unit: j.service.unit, published: j.service.published };
+      if (on && j.service) n[t.id] = { ...n[t.id], id: j.service.id, serviceTypeId: t.id, rateCents: j.service.rateCents, unit: j.service.unit, published: j.service.published };
       else delete n[t.id];
       return n;
     });
+  };
+  // BT-E005: only when the company has more than one provider.
+  const override = async (t: SType, s: Svc) => {
+    const v = window.prompt(`Your own rate for ${t.name} (blank uses the company rate)`, s.overrideCents != null ? String(s.overrideCents / 100) : "");
+    if (v === null || !s.id) return;
+    const n = Number(v);
+    const r = await fetch("/api/catalog/rate-override", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId: s.id, rateCents: v.trim() && n > 0 ? Math.round(n * 100) : null, unit: s.unit }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return setMsg(j.error ?? "Could not save that");
+    setSvc((m) => ({ ...m, [t.id]: { ...s, overrideCents: v.trim() && n > 0 ? Math.round(n * 100) : null } }));
   };
   const publish = async () => {
     setBusy(true);
@@ -90,6 +100,11 @@ export function BuildCatalog({ businessTypes, categories, services, products, ga
                   <span className="col-start-2 text-[12.5px] text-ink-2 sm:col-start-auto" data-buyers-see>
                     {s && rate > 0 ? `${t.name} · ${formatCents(Math.round(rate * 100))}/${SHORT[unit]}` : "—"}
                     {s?.published && <span className="ml-1 text-ink">· live</span>}
+                    {multiProvider && s?.id && (
+                      <button type="button" onClick={() => override(t, s)} data-override-rate className="ml-2 font-semibold text-magenta-dark underline underline-offset-4">
+                        {s.overrideCents != null ? `Your rate ${formatCents(s.overrideCents)}` : "Override My Rate"}
+                      </button>
+                    )}
                   </span>
                 </li>
               );

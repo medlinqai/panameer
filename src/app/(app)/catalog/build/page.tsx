@@ -6,6 +6,7 @@ import { ResumeSuggestions } from "@/components/catalog/ResumeSuggestions";
 import { openSuggestions, pendingImport } from "@/lib/catalog-suggestions";
 import { ownedProviderProfile } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
+import { companyIdForProfile, companyProviderCount } from "@/lib/company-catalog";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Build Your Catalog · Panameer" };
@@ -14,7 +15,10 @@ export const metadata = { title: "Build Your Catalog · Panameer" };
 export default async function Page() {
   const viewer = await guardPage("canProvideServices");
   const d = await buildCatalogData(viewer);
-  const me = await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { id: true } });
+  const me = await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { id: true, person_id: true } });
+  const companyId = me ? await companyIdForProfile(me.id) : null;
+  const multiProvider = companyId ? (await companyProviderCount(companyId)) > 1 : false;
+  const overrides = new Map(multiProvider && me ? (await prisma.providerRateOverride.findMany({ where: { person_id: me.person_id }, select: { service_id: true, rate_cents: true } })).map((o) => [o.service_id, o.rate_cents]) : []);
   const [sugs, pending] = me && d.categories.length ? await Promise.all([openSuggestions(me.id), pendingImport(me.id)]) : [[], null];
   const typeName = new Map(d.categories.flatMap((c) => c.serviceTypes.map((t) => [t.id, t.name] as const)));
   return (
@@ -38,9 +42,10 @@ export default async function Page() {
           key={`${d.services.map((s) => s.service_type_id).join()}|${d.products.length}`}
           businessTypes={d.businessTypes}
           categories={d.categories.map((c) => ({ id: c.id, name: c.name, kind: c.kind, types: c.serviceTypes }))}
-          services={d.services.map((s) => ({ serviceTypeId: s.service_type_id!, rateCents: s.rate_cents, unit: s.uom, published: !!s.published_at }))}
+          services={d.services.map((s) => ({ id: s.id, serviceTypeId: s.service_type_id!, rateCents: s.rate_cents, unit: s.uom, published: !!s.published_at, overrideCents: overrides.get(s.id) ?? null }))}
           products={d.products.map((p) => ({ serviceTypeId: p.service_type_id!, title: p.title }))}
           gate={d.gate}
+          multiProvider={multiProvider}
         />
         </>
       )}
