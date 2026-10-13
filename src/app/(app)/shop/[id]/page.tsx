@@ -47,9 +47,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <p className="text-[14px] text-ink-2">This is your service product. Orders for it arrive in <Link href="/orders" className="underline">Work Orders</Link>.</p>
         ) : (
           <>
-            {p.priceCents != null && <BuyButtons productId={p.id} signedIn />}
-            <Link href={`/estimates/request?provider=${p.providerPersonId}&product=${p.id}`} data-request-estimate-link className="mt-3 inline-block text-[14px] font-semibold underline underline-offset-4">Request an Estimate</Link>
-            <p className="mt-1 text-[13px] text-ink-2">Need something custom? Ask {p.providerName} for an estimate.</p>
+            {p.priceCents != null && <BuyButtons productId={p.id} signedIn openToOffers={p.openToOffers} />}
           </>
         )}
       </section>

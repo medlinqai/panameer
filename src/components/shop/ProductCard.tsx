@@ -20,7 +20,7 @@ const TONE: Record<string, [string, string]> = {
 };
 export const KIND_LABEL: Record<string, string> = { DELIVERABLE: "Deliverable", DEPLOYABLE: "AI Agent", HOURS: "Hours", BLANKET: "Blanket" };
 
-export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "coverCode" | "coverUrl" | "coverStyle" | "typeName" | "terms" | "orders" | "fresh">;
+export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "coverCode" | "coverUrl" | "coverStyle" | "typeName" | "terms" | "orders" | "fresh"> & { openToOffers?: boolean };
 
 const code = (p: CardProduct) => (p.coverCode || p.title.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("")).toUpperCase().slice(0, 3);
 
@@ -72,7 +72,7 @@ export function ProductCard({ p, signedIn, own = false, inCartLineId = null }: {
         </p>
         {own && (
           <p data-own-product className="mt-2 text-[12.5px] text-ink-2">
-            Your Service Product — buyers see Buy Now, Add to Cart and Request an Estimate here.{" "}
+            Your Service Product — buyers see Buy Now and Add to Cart here{p.openToOffers ? ", and Make an Offer" : ""}.{" "}
             <Link href={`/catalog/products?edit=${p.id}`} className="font-bold text-magenta-dark underline underline-offset-4">Edit</Link>
           </p>
         )}
@@ -84,9 +84,8 @@ export function ProductCard({ p, signedIn, own = false, inCartLineId = null }: {
                 <button type="button" disabled={busy} onClick={remove} className="inline-flex min-h-9 items-center border border-ink px-4 text-[13px] font-semibold hover:bg-surface-hover disabled:opacity-40">Remove</button>
               </>
             ) : (
-              p.priceCents != null && <BuyButtons productId={p.id} signedIn={signedIn} size="sm" />
+              p.priceCents != null && <BuyButtons productId={p.id} signedIn={signedIn} size="sm" openToOffers={p.openToOffers} />
             )}
-            <Link href={`/estimates/request?provider=${p.providerPersonId}&product=${p.id}`} data-request-estimate-link className="text-[12.5px] font-semibold text-magenta-dark underline underline-offset-4">Request an Estimate</Link>
           </div>
         )}
       </div>

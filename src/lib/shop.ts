@@ -11,6 +11,8 @@ export type ShopProduct = {
   billingPeriod: string | null;
   kind: string;
   priceCents: number | null;
+  /** MO-E002: buyers may Make an Offer (the floor stays private). */
+  openToOffers: boolean;
   currency: string;
   durationWeeks: number | null;
   providerName: string;
@@ -38,7 +40,7 @@ export type ShopProduct = {
 };
 
 const SELECT = {
-  id: true, title: true, summary: true, pricing_type: true, billing_period: true, kind: true, price_cents: true, currency: true, duration_weeks: true, cover_code: true, cover_image_url: true, cover_style: true,
+  id: true, title: true, summary: true, pricing_type: true, billing_period: true, kind: true, price_cents: true, open_to_offers: true, currency: true, duration_weeks: true, cover_code: true, cover_image_url: true, cover_style: true,
   payment_terms: true, payment_event: true, product_type_id: true, service_type_id: true, serviceType: { select: { name: true, serviceCategory: { select: { business_type_id: true } } } }, created_at: true,
   milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, payment_event: true } },
   deliverables: { orderBy: { sequence: "asc" as const }, select: { text: true } },
@@ -72,6 +74,7 @@ function shape(p: Row, orders: number): ShopProduct {
     billingPeriod: p.billing_period,
     kind: p.kind,
     priceCents: p.price_cents,
+    openToOffers: p.open_to_offers,
     currency: p.currency,
     durationWeeks: p.duration_weeks,
     providerName: person ? `${person.first_name} ${person.last_name}`.trim() : "A provider",
