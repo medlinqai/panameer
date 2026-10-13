@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { decideEstimate, EstimateError, saveEstimate, sendEstimate } from "@/lib/estimates";
+import { SignGateError } from "@/lib/your-path";
 
 const LINE = z.object({ kind: z.enum(["SERVICE", "FIXED", "NOT_TO_EXCEED"]), description: z.string().max(300), providerServiceId: z.string().uuid().optional().nullable(), serviceProductId: z.string().uuid().optional().nullable(), uom: z.string().max(16).optional().nullable(), quantity: z.number().nonnegative().max(1e6).optional().nullable(), rateCents: z.number().int().nonnegative().max(1e9).optional().nullable(), amountCents: z.number().int().nonnegative().max(1e10).optional().nullable() });
 const EST = z.object({
@@ -44,6 +45,10 @@ export async function POST(req: Request) {
     return NextResponse.json(await decideEstimate(gate, b.data.id, b.data.decision, b.data.comment));
   } catch (e) {
     if (e instanceof EstimateError) return NextResponse.json({ error: e.message }, { status: e.code === "NOT_FOUND" ? 404 : e.code === "FORBIDDEN" ? 403 : 400 });
+    if (e instanceof SignGateError) {
+      const todo = e.gate.items.filter((i) => !i.done).map((i) => `${i.company}: ${i.item}`).join(" · ");
+      return NextResponse.json({ error: `Before accepting, finish: ${todo}`, code: "SIGN_GATE", gate: e.gate }, { status: 409 });
+    }
     console.error("[estimates]", e);
     return NextResponse.json({ error: "Could not save that estimate" }, { status: 500 });
   }

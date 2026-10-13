@@ -216,34 +216,7 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
     storedLegalName: company.legal_name ?? name,
   });
 
-  const reg = input.registeredAddress;
-  if (reg && (reg.country || reg.line1 || reg.city)) {
-    const data = {
-      line1: reg.line1?.trim() || "",
-      city: reg.city?.trim() || null,
-      state: reg.state?.trim() || null,
-      postal_code: reg.postalCode?.trim() || null,
-      ...countryColumns(reg.country),
-    };
-    const site =
-      (await prisma.site.findFirst({
-        where: { company_id: company.id, name: REGISTERED_SITE_NAME },
-        select: { id: true },
-      })) ??
-      (await prisma.site.create({
-        data: { company_id: company.id, name: REGISTERED_SITE_NAME },
-        select: { id: true },
-      }));
-    const existing = await prisma.address.findFirst({
-      where: { site_id: site.id },
-      select: { id: true },
-    });
-    if (existing) {
-      await prisma.address.update({ where: { id: existing.id }, data });
-    } else {
-      await prisma.address.create({ data: { site_id: site.id, ...data } });
-    }
-  }
+  await saveRegisteredAddress(company.id, input.registeredAddress);
 
   await syncPAccountName(company.p_account_id, name);
 
@@ -827,4 +800,35 @@ export async function adminAddToCompany(personId: string, companyId: string) {
   });
   await moveInto(personId, companyId, person.company_id);
   await leaveOldCompanies(personId, companyId);
+}
+
+/** The company's registered (billing) address — one address on the "Registered" site, created or updated. */
+export async function saveRegisteredAddress(companyId: string, reg: { line1?: string | null; city?: string | null; state?: string | null; postalCode?: string | null; country?: string | null } | null | undefined) {
+  if (reg && (reg.country || reg.line1 || reg.city)) {
+    const data = {
+      line1: reg.line1?.trim() || "",
+      city: reg.city?.trim() || null,
+      state: reg.state?.trim() || null,
+      postal_code: reg.postalCode?.trim() || null,
+      ...countryColumns(reg.country),
+    };
+    const site =
+      (await prisma.site.findFirst({
+        where: { company_id: companyId, name: REGISTERED_SITE_NAME },
+        select: { id: true },
+      })) ??
+      (await prisma.site.create({
+        data: { company_id: companyId, name: REGISTERED_SITE_NAME },
+        select: { id: true },
+      }));
+    const existing = await prisma.address.findFirst({
+      where: { site_id: site.id },
+      select: { id: true },
+    });
+    if (existing) {
+      await prisma.address.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.address.create({ data: { site_id: site.id, ...data } });
+    }
+  }
 }

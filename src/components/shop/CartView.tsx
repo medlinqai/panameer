@@ -15,14 +15,17 @@ export function CartView({ groups, totalCents, currency, hasCompany }: { groups:
   const { refresh } = useMe();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [gate, setGate] = useState<{ items: { company: string; item: string; done: boolean; href?: string }[]; isAdmin: boolean } | null>(null);
   const [placed, setPlaced] = useState<{ orderId: string; providerName: string; open: boolean }[] | null>(null);
 
   const post = async (body: object) => {
     setBusy(true);
     setError(null);
+    setGate(null);
     const r = await fetch("/api/cart", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const j = (await r.json().catch(() => ({}))) as { error?: string; orders?: { orderId: string; providerName: string; open: boolean }[] };
+    const j = (await r.json().catch(() => ({}))) as { error?: string; gate?: typeof gate; orders?: { orderId: string; providerName: string; open: boolean }[] };
     setBusy(false);
+    if (!r.ok && j.gate) return setGate(j.gate);
     if (!r.ok) return setError(j.error ?? "Something went wrong. Try again.");
     if (j.orders) setPlaced(j.orders);
     refresh();
@@ -94,6 +97,19 @@ export function CartView({ groups, totalCents, currency, hasCompany }: { groups:
       </div>
       {groups.length > 1 && <p className="mt-2 text-right text-[12.5px] text-ink-2">One work order per provider.</p>}
       {error && <p role="alert" className="mt-2 text-right text-[13.5px] font-semibold text-magenta-dark">{error}</p>}
+      {gate && (
+        <div role="alert" data-order-gate className="mt-3 border-l-2 border-magenta py-1 pl-3 text-[13.5px]">
+          <b>Before you order, add your company&apos;s billing details:</b>
+          <ul className="mt-1">
+            {gate.items.filter((i) => !i.done).map((i) => (
+              <li key={`${i.company}-${i.item}`}>
+                {i.href && gate.isAdmin ? <a href={i.href} className="font-semibold text-magenta-dark underline underline-offset-2">{`Add ${i.item}`}</a> : <span>{`${i.company}: ${i.item}`}</span>}
+              </li>
+            ))}
+          </ul>
+          {!gate.isAdmin && <p className="mt-1 text-ink-2">Ask your company admin to add them.</p>}
+        </div>
+      )}
     </div>
   );
 }

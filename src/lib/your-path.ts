@@ -77,30 +77,47 @@ export async function lifecycleForUser(userId: string) {
   return p ? lifecycleFor(p.id) : null;
 }
 
+/** WN-E001: what a buyer's company needs to place an order — legal name, billing address, invoice email. Never tax forms. */
+export async function buyerOrderChecklist(companyId: string) {
+  const c = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { name: true, legal_name: true, invoice_email: true, sites: { select: { addresses: { select: { line1: true }, take: 1 } } } },
+  });
+  if (!c) return null;
+  const items = [
+    { item: "Legal name", done: !!(c.legal_name ?? c.name)?.trim(), href: "/company/legal?edit=legal#legal-tax" },
+    { item: "Billing address", done: c.sites.some((s) => s.addresses.some((a) => a.line1.trim())), href: "/company/legal#billing" },
+    { item: "Invoice email", done: !!c.invoice_email?.trim(), href: "/company/legal#billing" },
+  ];
+  return { company: c.name, items, ready: items.every((i) => i.done) };
+}
+
+export type SignGateItem = { company: string; item: string; done: boolean; href?: string };
 export class SignGateError extends Error {
-  constructor(public gate: { items: { company: string; item: string; done: boolean }[]; isAdmin: boolean }) {
+  constructor(public gate: { items: SignGateItem[]; isAdmin: boolean }) {
     super("Finish your company details to sign this work order");
     this.name = "SignGateError";
   }
 }
 
-/** A work order needs the buyer's company Validated and the provider's company linked (RD-E003: provider tax & banking waits until payment). */
+/** WN-E001: an order / work order needs the buyer's company with legal name + billing address + invoice email, and the
+ *  provider's company linked. No Tax ID, W-9 or W-8 for either side here — those wait for the payout (WN-E002). */
 export async function assertCanSign(actingPersonId: string, buyerPersonId: string, providerPersonId: string) {
   const companyOf = async (personId: string) =>
     (await prisma.companyMembership.findFirst({ where: { person_id: personId, status: "APPROVED" }, select: { company_id: true, role: true } })) ?? null;
   const [b, s] = await Promise.all([companyOf(buyerPersonId), companyOf(providerPersonId)]);
-  const bc = b ? await companyChecklist(b.company_id) : null;
+  const bc = b ? await buyerOrderChecklist(b.company_id) : null;
   if (bc?.ready && s) return;
   const buyerActs = actingPersonId === buyerPersonId;
   const providerCo = s ? (await prisma.company.findUnique({ where: { id: s.company_id }, select: { name: true } }))?.name ?? "The provider" : null;
-  const items = buyerActs
+  const items: SignGateItem[] = buyerActs
     ? [
-        ...(bc ? bc.items.map((i) => ({ company: bc.company, ...i })) : [{ company: "Your company", item: "Add Company", done: false }]),
+        ...(bc ? bc.items.map((i) => ({ company: bc.company, ...i })) : [{ company: "Your company", item: "Add Company", done: false, href: "/company?join=1#join" }]),
         { company: providerCo ?? "The provider", item: "Linked", done: !!s },
       ]
     : [
-        ...(s ? [] : [{ company: "Your company", item: "Add Company", done: false }]),
-        { company: bc?.company ?? "The buyer", item: "Validated", done: !!bc?.ready },
+        ...(s ? [] : [{ company: "Your company", item: "Add Company", done: false, href: "/company?join=1#join" }]),
+        { company: bc?.company ?? "The buyer", item: "Billing details", done: !!bc?.ready },
       ];
   throw new SignGateError({ items, isAdmin: (buyerActs ? b : s)?.role === "ADMIN" });
 }

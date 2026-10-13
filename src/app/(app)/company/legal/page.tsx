@@ -11,6 +11,8 @@ import { taxFormLabel } from "@/components/company/CompanyOverview";
 import { CompanyPayouts } from "@/components/company/CompanyPayouts";
 import { companyPayouts } from "@/lib/company-pay";
 import { payoutChecklist } from "@/lib/payout-requirements";
+import { BillingDetails } from "@/components/company/BillingDetails";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Legal, Tax & Banking · Panameer" };
@@ -26,6 +28,11 @@ export default async function CompanyLegalPage({ searchParams }: { searchParams:
   const { edit } = await searchParams;
   const payouts = await companyPayouts(c.id);
   const payRule = (await payoutChecklist(c.id))!.rule;
+  const [billSite, billCo] = await Promise.all([
+    prisma.site.findFirst({ where: { company_id: c.id, addresses: { some: {} } }, orderBy: { created_at: "asc" }, select: { addresses: { take: 1, select: { line1: true, city: true, state: true, postal_code: true, country: true } } } }),
+    prisma.company.findUnique({ where: { id: c.id }, select: { invoice_email: true } }),
+  ]);
+  const bill = billSite?.addresses[0];
   const taxLabel = "Tax ID (EIN)";
   const form = taxFormLabel(c.country);
   const r = c.payReady!;
@@ -83,6 +90,10 @@ export default async function CompanyLegalPage({ searchParams }: { searchParams:
           canAdd={c.ein || !payRule.needs_tax_id ? null : "Add the tax ID in Legal & Tax first."}
           legalName={c.legalName ?? c.name}
         />
+      </CompanySection>
+      <CompanySection id="billing" title="Billing (When You Buy)">
+        <p className="mt-2 text-[13.5px] text-ink-2">To place an order: the legal name above, a billing address and an invoice email. No tax forms for buying.</p>
+        <BillingDetails initial={{ line1: bill?.line1 ?? "", city: bill?.city ?? "", state: bill?.state ?? "", postalCode: bill?.postal_code ?? "", country: bill?.country ?? c.country ?? "" }} invoiceEmail={billCo?.invoice_email ?? ""} />
       </CompanySection>
     </div>
   );

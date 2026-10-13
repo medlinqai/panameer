@@ -1,3 +1,4 @@
+import { assertCanSign } from "@/lib/your-path";
 import { randomBytes } from "node:crypto";
 import { Prisma, type BillingCycle, type CostEstimateLineKind, type PaymentTerms } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -176,6 +177,8 @@ export async function decideEstimate(viewer: Viewer, id: string, decision: "ACCE
   if (e.status !== "SENT") throw new EstimateError(e.status === "EXPIRED" ? "This estimate has expired. Ask the provider to send a new one." : "This estimate isn't waiting on you", "INVALID");
   const note = clean(comment, 2000);
   if (decision === "CHANGES" && (!note || note.length < 3)) throw new EstimateError("Say what you'd like changed", "INVALID");
+  // WN-E001: accepting needs the buyer's billing details and the provider's company linked (no tax forms).
+  if (decision === "ACCEPT" && e.customer_person_id) await assertCanSign(e.customer_person_id, e.customer_person_id, e.provider_person_id);
   const rev = e.revisions[0];
   const now = new Date();
   const status = decision === "ACCEPT" ? "ACCEPTED" : decision === "CHANGES" ? "CHANGES_REQUESTED" : "DECLINED";

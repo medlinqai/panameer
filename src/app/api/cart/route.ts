@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   } catch (e) {
     if (e instanceof SignGateError) {
       const todo = e.gate.items.filter((i) => !i.done).map((i) => `${i.company}: ${i.item}`).join(" · ");
-      return NextResponse.json({ error: `Before ordering, finish: ${todo}`, code: "SIGN_GATE" }, { status: 409 });
+      return NextResponse.json({ error: `Before ordering, finish: ${todo}`, code: "SIGN_GATE", gate: e.gate }, { status: 409 });
     }
     if (e instanceof CartError) return NextResponse.json({ error: e.message, code: e.code }, { status: e.code === "NOT_FOUND" ? 404 : 400 });
     throw e;

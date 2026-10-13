@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { Modal } from "@/components/Modal";
 
-// RD-E003: a work order needs the buyer's company Validated and the provider's company linked.
-export type SignGate = { items: { company: string; item: string; done: boolean }[]; isAdmin: boolean };
+// WN-E001: a work order needs the buyer's billing details (legal name, billing address, invoice email) and the provider's company linked.
+export type SignGate = { items: { company: string; item: string; done: boolean; href?: string }[]; isAdmin: boolean };
 
 export function SignGateModal({ gate, onClose }: { gate: SignGate | null; onClose: () => void }) {
   return (
@@ -12,12 +12,12 @@ export function SignGateModal({ gate, onClose }: { gate: SignGate | null; onClos
       {gate && (
         <div data-sign-gate>
           <p className="text-[16px] font-bold">Finish your company details to sign this work order</p>
-          <p className="mt-1 text-[13.5px] text-ink-2">A work order is a contract between two companies: the buyer&apos;s is Validated, the provider&apos;s is linked. Provider tax and banking can follow before payment.</p>
+          <p className="mt-1 text-[13.5px] text-ink-2">A work order is a contract between two companies: the buyer&apos;s billing details are on file and the provider&apos;s company is linked. No tax forms here — payout details come later, before the provider is paid.</p>
           <ul className="mt-3 border-t border-line">
             {gate.items.map((i) => (
               <li key={`${i.company}-${i.item}`} className="flex items-center justify-between gap-3 border-b border-line/60 py-2 text-[14px]">
                 <span>
-                  {i.company} · {i.item.toLowerCase()}
+                  {i.company} · {i.href && !i.done && gate.isAdmin ? <Link href={i.href} className="font-semibold text-magenta-dark underline underline-offset-2">{i.item.toLowerCase()}</Link> : i.item.toLowerCase()}
                 </span>
                 <span className={"text-[12px] font-bold " + (i.done ? "text-[#1f8a5b]" : "text-[#b26b00]")}>{i.done ? "✓ Done" : "Needed"}</span>
               </li>
@@ -29,11 +29,11 @@ export function SignGateModal({ gate, onClose }: { gate: SignGate | null; onClos
               Later
             </button>
             {gate.isAdmin ? (
-              <Link href="/company/legal" className="inline-flex min-h-[42px] items-center bg-ink px-4 text-[13px] font-bold text-surface">
-                Add Tax &amp; Banking
+              <Link href={gate.items.find((i) => !i.done && i.href)?.href ?? "/company/legal#billing"} className="inline-flex min-h-[42px] items-center bg-ink px-4 text-[13px] font-bold text-surface">
+                Add the Missing Details
               </Link>
             ) : (
-              <span className="inline-flex min-h-[42px] items-center text-[13px] font-semibold text-ink-2">Ask your company admin to validate the company.</span>
+              <span className="inline-flex min-h-[42px] items-center text-[13px] font-semibold text-ink-2">Ask your company admin to add them.</span>
             )}
           </div>
         </div>
