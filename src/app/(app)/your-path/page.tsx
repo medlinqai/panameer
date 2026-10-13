@@ -6,6 +6,7 @@ import { lifecycleForUser } from "@/lib/your-path";
 import { LIFECYCLE_WHO, ROAD_TITLE } from "@/lib/user-levels";
 import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
 import { RoadGraphic } from "@/components/lifecycle/RoadGraphic";
+import { RoadStepper } from "@/components/lifecycle/RoadStepper";
 import { LifecycleStrip } from "@/components/lifecycle/LifecycleStrip";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,8 @@ export default async function YourPathPage() {
           <p className="mt-1.5 max-w-[780px] text-[14.5px] text-ink-2">
             Eight stops, 10–15 minutes to be found. Win work three ways at stop 5, deliver it, request payment. Before the first payout we ask for a payout account, plus a tax form where your country needs one. Panameer contracts with and pays companies, not individuals.
           </p>
-          <div className="mt-4 overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={current} /></div></div>
+          <div className="mt-4 hidden sm:block"><RoadGraphic current={current} /></div>
+          <div className="mt-4 sm:hidden"><RoadStepper current={current} /></div>
           <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13.5px]">
             <Link href="/join/provider/road" data-detailed-road-link className="font-bold text-magenta-dark underline underline-offset-4">See the Detailed Road →</Link>
             <Link href="/help/road" data-questions-link className="font-bold text-magenta-dark underline underline-offset-4">Questions?</Link>
@@ -43,7 +45,8 @@ export default async function YourPathPage() {
           Buyers follow seven steps. You do the first four; your company does the rest. Panameer contracts with and pays companies, not individuals.
         </p>
       )}
-      <div className="mt-6"><LifecycleStrip current={current} steps={steps} /></div>
+      {/* Providers already see the road above; the strip is the buyer's graphic only (Scott 10-13: no second copy). */}
+      {road !== "provider" && <div className="mt-6"><LifecycleStrip current={current} steps={steps} /></div>}
       <ol className="mt-8 border-t border-line">
         {steps.map((s, i) => {
           const here = i === current;
