@@ -10,6 +10,7 @@ import { TaxFormUpload } from "@/components/company/TaxFormUpload";
 import { taxFormLabel } from "@/components/company/CompanyOverview";
 import { CompanyPayouts } from "@/components/company/CompanyPayouts";
 import { companyPayouts } from "@/lib/company-pay";
+import { payoutChecklist } from "@/lib/payout-requirements";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Legal, Tax & Banking · Panameer" };
@@ -24,6 +25,7 @@ export default async function CompanyLegalPage({ searchParams }: { searchParams:
   if (!c) notFound();
   const { edit } = await searchParams;
   const payouts = await companyPayouts(c.id);
+  const payRule = (await payoutChecklist(c.id))!.rule;
   const taxLabel = "Tax ID (EIN)";
   const form = taxFormLabel(c.country);
   const r = c.payReady!;
@@ -78,7 +80,7 @@ export default async function CompanyLegalPage({ searchParams }: { searchParams:
       <CompanySection id="payout" title="3 · Payout Account">
         <CompanyPayouts
           methods={payouts.map((m) => ({ id: m.id, kind: m.kind, label: m.label, last4: m.last4, country: m.country, isDefault: m.is_default }))}
-          canAdd={c.ein ? null : "Add the tax ID in Legal & Tax first."}
+          canAdd={c.ein || !payRule.needs_tax_id ? null : "Add the tax ID in Legal & Tax first."}
           legalName={c.legalName ?? c.name}
         />
       </CompanySection>

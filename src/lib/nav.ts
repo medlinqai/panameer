@@ -351,6 +351,7 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: "Areas & Skills", href: "/admin/skill-catalog", icon: "FolderTree" },
       { label: "Specializations", href: "/admin/specializations", icon: "Award" },
       { label: "Glossary", href: "/admin/glossary", icon: "BookOpen" },
+      { label: "Payout Requirements", href: "/admin/payout-requirements", icon: "ShieldCheck" },
       { label: "Assessment Rate", href: "/admin/tax-rates", icon: "Percent" },
       { label: "Commission Rate", href: "/admin/application-commissions", icon: "Percent" },
     ],

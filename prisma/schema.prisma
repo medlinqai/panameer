@@ -332,6 +332,8 @@ model Company {
   /// issue with no stated reason is an accusation.
   entity_status_detail         String?
   vertical                     String?
+  /// WN-E001: where the buyer's invoices go (asked at Place Order).
+  invoice_email                String?
   website                      String?
   /// JURISDICTION — Scott, 2026-08-30: *"Jurisdiction is just country. do
   /// this."* (`P1-J1.1-E260`). Captured on the requester wizard's company
@@ -2418,6 +2420,9 @@ model ServiceProduct {
   /// MC-E006: where the work happens, and days before the provider can start.
   delivery       ServiceDelivery?
   lead_time_days Int?
+  /// MO-E001: buyers may Make an Offer; offers below the floor (private to the provider) are declined automatically.
+  open_to_offers    Boolean @default(false)
+  offer_floor_cents Int?
 
   @@index([provider_profile_id])
   @@index([company_id])
@@ -7512,6 +7517,8 @@ enum ServiceProductOfferStatus {
   /// ⚠ The BUYER pulling their own offer. Not a counter and not a seller action —
   /// removing it from the cart is Scott's own second option on a deny.
   WITHDRAWN
+  /// MO-E003: the provider countered once (counter_amount_cents); the buyer accepts or declines.
+  COUNTERED
 }
 
 model ServiceProductOffer {
@@ -7581,6 +7588,10 @@ model ServiceProductOffer {
    * ⚠ Null on a first offer, which is the common case.
    */
   cleared_floor_cents Int?
+  /// MO-E003: the buyer's optional note, and the provider's one counter.
+  note                 String?
+  counter_amount_cents Int?
+  countered_at         DateTime?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -8744,6 +8755,8 @@ model CartLine {
   quantity           Int      @default(1)
   unit_price_cents   Int
   currency           String   @default("USD")
+  /// MO-E003: set when the price is an accepted offer (the agreed price, not the list price).
+  offer_id           String?  @db.Uuid
   created_at         DateTime @default(now())
   cart               Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
 
@@ -8938,4 +8951,19 @@ enum CatalogSuggestionStatus {
   PROPOSED
   KEPT
   REMOVED
+}
+
+/// RV-E004: what a provider's company needs before Panameer pays it out, by country (ISO-2; "*" = everyone else).
+/// R1 default: US = Tax ID + W-9 + payout account; everyone else = payout account. Only the payout reads this.
+model PayoutRequirement {
+  id                   String   @id @default(uuid()) @db.Uuid
+  country_code         String   @unique
+  needs_tax_id         Boolean  @default(false)
+  needs_tax_form       Boolean  @default(false)
+  tax_form_label       String?
+  needs_payout_account Boolean  @default(true)
+  updated_at           DateTime @updatedAt
+  updated_by           String?  @db.Uuid
+
+  @@map("payout_requirements")
 }

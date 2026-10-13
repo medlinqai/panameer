@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
+import { payoutChecklist } from "@/lib/payout-requirements";
 import { LIFECYCLE, PROVIDER_ROAD, lifecycleStatus, type LifecycleFacts } from "@/lib/user-levels";
 
 // Lifecycle loader for one person; the work-order gate reads the same Validate Company check.
@@ -104,10 +105,10 @@ export async function assertCanSign(actingPersonId: string, buyerPersonId: strin
   throw new SignGateError({ items, isAdmin: (buyerActs ? b : s)?.role === "ADMIN" });
 }
 
-/** RD-E003: has the provider's company finished tax & banking (validated, with a payout account)? */
+/** RV-E004 / WN-E002: can the provider's company be paid out? Its country's Payout Requirements — the only place they're read. */
 export async function providerPayReady(providerPersonId: string): Promise<boolean> {
   const m = await prisma.companyMembership.findFirst({ where: { person_id: providerPersonId, status: "APPROVED" }, select: { company_id: true } });
-  return !!m && !!(await companyChecklist(m.company_id, { payout: true }))?.ready;
+  return !!m && !!(await payoutChecklist(m.company_id))?.ready;
 }
 
 /** RD-E003: the provider signed a work order before tax & banking — ask once (bell + worklist + email). */
