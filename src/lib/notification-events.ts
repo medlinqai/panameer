@@ -737,9 +737,9 @@ export const NOTIFICATION_EVENTS = {
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: true,
-    title: () => "Add Tax & Banking to get paid",
-    body: () => "Your first work order is signed. Payment requests wait until your company adds its tax form and a payout account.",
-    href: () => "/company/legal",
+    title: () => "Add payout details to get paid",
+    body: () => "Your first work order is signed. Before the first payout, add a payout account — plus the tax form if your country needs one.",
+    href: () => "/company/legal#payout",
   },
   "work.order_offered": {
     event: "work.order_offered",

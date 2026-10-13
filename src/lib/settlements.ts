@@ -2,7 +2,6 @@ import { formatCents } from "@/lib/display";
 import { dueDate } from "@/lib/billing-terms";
 import { queueWorkConfirmation } from "@/lib/erp/settlement";
 import { notify } from "@/lib/notifications";
-import { providerPayReady } from "@/lib/your-path";
 import { randomBytes } from "node:crypto";
 import { LineBasis, Prisma, PaymentRequestStatus, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -270,8 +269,8 @@ export async function createSettlement(
   }
 
   const submittedAt = new Date();
-  // RD-E003: created either way; held from the buyer until the provider's company finishes tax & banking.
-  const held = !(await providerPayReady(await providerPersonIdOf(o.id)));
+  // WN-E002: a payment request goes to the buyer straight away; payout details are checked only at the payout.
+  const held = false;
   // THE SPINE'S FIVE RULES, RUN AS ONE. Nothing above re-implements them —
   // Check and draw in one transaction, with the order row locked, so two requests cannot both pass the cap.
   const created = await prisma.$transaction(async (tx) => {
@@ -411,7 +410,8 @@ async function announceSettlement(id: string) {
 /** RD-E003: release a provider's held requests once their company has finished tax & banking (payment terms restart now). */
 export async function releaseHeldFor(providerPersonId: string): Promise<number> {
   const held = await prisma.paymentRequest.findMany({ where: { provider_person_id: providerPersonId, held_for_tax_banking: true }, select: { id: true, submitted_at: true, due_date: true } });
-  if (!held.length || !(await providerPayReady(providerPersonId))) return 0;
+  // WN-E002: requests held under the old rule are released; nothing new is held.
+  if (!held.length) return 0;
   const now = new Date();
   for (const h of held) {
     const terms = h.submitted_at && h.due_date ? h.due_date.getTime() - h.submitted_at.getTime() : 0;

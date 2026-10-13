@@ -1,3 +1,4 @@
+import { payoutChecklist } from "@/lib/payout-requirements";
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { assertAllocation, feeSplit, paymentStatusFor, SpineError } from "@/lib/transaction-spine";
@@ -239,6 +240,10 @@ export async function payoutQueue(): Promise<PayoutRow[]> {
 export async function recordPayout(input: { settlementId: string; method: string; externalRef?: string | null; paidAt: string }): Promise<{ payoutNumber: string; netCents: number }> {
   const row = (await payoutQueue()).find((r) => r.settlementId === input.settlementId);
   if (!row) throw new MoneyError("That request is not paid by the buyer yet, or is already paid out", "NOT_FOUND");
+  // RV-E004 / WN-E002: the payout is the one place the country's Payout Requirements apply.
+  const m = await prisma.companyMembership.findFirst({ where: { person_id: row.providerPersonId, status: "APPROVED" }, select: { company_id: true } });
+  const check = m ? await payoutChecklist(m.company_id) : null;
+  if (!check?.ready) throw new MoneyError(`Not paid out yet — the provider's company still needs: ${check ? check.items.filter((i) => !i.done).map((i) => i.item).join(", ") : "a company"}`, "INVALID");
   const paidAt = new Date(input.paidAt);
   if (Number.isNaN(paidAt.getTime())) throw new MoneyError("Enter the payout date", "INVALID");
   if (!["ACH", "WIRE", "OTHER"].includes(input.method)) throw new MoneyError("Pick how it was paid", "INVALID");
