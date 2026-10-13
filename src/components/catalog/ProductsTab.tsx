@@ -10,7 +10,7 @@ import type { PayPlan, Pricing, ProductForm } from "@/lib/catalog-products";
 type PType = { id: string; name: string; pricing_model: string | null; units: string[]; delivery: string | null; lead_time_days: number | null; serviceCategory: { name: string } | null };
 type Product = { id: string; status: string; typeName: string | null; form: ProductForm };
 type Domain = { id: string; process: string; name: string };
-const EMPTY: ProductForm = { title: "", serviceTypeId: null, summary: "", images: [], pricing: "FIXED", priceCents: null, delivery: null, leadTimeDays: null, durationWeeks: null, domainIds: [], skillIds: [], deliverables: [], payPlan: "ON_DELIVERY", coverStyle: "A" };
+const EMPTY: ProductForm = { title: "", serviceTypeId: null, summary: "", images: [], pricing: "FIXED", priceCents: null, delivery: null, leadTimeDays: null, durationWeeks: null, domainIds: [], skillIds: [], deliverables: [], payPlan: "ON_DELIVERY", coverStyle: "A", openToOffers: false, offerFloorCents: null };
 const PRICING: [Pricing, string, string][] = [["FIXED", "Fixed", "Each"], ["MONTHLY", "Monthly", "Month"], ["HOURLY", "Hourly", "Hour"]];
 const PER: Record<Pricing, string> = { FIXED: "", MONTHLY: "/month", HOURLY: "/hr" };
 const DELIVERY: Record<string, string> = { OFFSITE: "Offsite", ONSITE: "Onsite", EITHER: "Either" };
@@ -201,6 +201,20 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
               <span className="inline-flex items-center border border-line bg-surface"><span className="px-2 text-ink-3">$</span><input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full border-0 px-1 py-2 text-[13px] font-normal outline-none" aria-label="Price" /></span>
             </label>
             <label className={LBL}>Unit<input readOnly value={PRICING.find(([k]) => k === f.pricing)![2]} className={`${INPUT} bg-[#FAFAFC]`} aria-label="Unit" /></label>
+          </div>
+          {/* MO-E001: Open to Offers, with an optional private floor. */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2" data-open-to-offers>
+            <button type="button" role="switch" aria-checked={!!f.openToOffers} aria-label="Open to Offers" onClick={() => set("openToOffers", !f.openToOffers)} className={f.openToOffers ? "relative h-[22px] w-[38px] rounded-full bg-ink" : "relative h-[22px] w-[38px] rounded-full bg-[#C9CDDC]"}>
+              <span className={f.openToOffers ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white"} />
+            </button>
+            <span className="text-[13px] font-bold">Open to Offers <span className="font-normal text-ink-3">· buyers can Make an Offer</span></span>
+            {f.openToOffers && (
+              <label className="inline-flex items-center gap-1.5 text-[12.5px] text-ink-2">
+                Decline offers below
+                <span className="inline-flex items-center border border-line bg-surface"><span className="px-1.5 text-ink-3">$</span><input inputMode="decimal" aria-label="Offer floor" value={f.offerFloorCents != null ? String(f.offerFloorCents / 100) : ""} onChange={(e) => set("offerFloorCents", e.target.value.trim() && Number(e.target.value) > 0 ? Math.round(Number(e.target.value) * 100) : null)} className="w-20 border-0 py-1.5 text-[13px] outline-none" /></span>
+                automatically <span className="text-ink-3">(only you see this)</span>
+              </label>
+            )}
           </div>
         </section>
 

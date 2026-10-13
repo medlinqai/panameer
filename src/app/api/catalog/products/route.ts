@@ -11,6 +11,8 @@ const Form = z.object({
   domainIds: z.array(z.string().uuid()).max(40), skillIds: z.array(z.string().uuid()).max(40), deliverables: z.array(z.string().max(300)).max(20),
   payPlan: z.enum(["ON_DELIVERY", "SPLIT", "MONTHLY_ADVANCE"]),
   coverStyle: z.enum(["A", "B", "C", "D"]).nullable().default("A"),
+  openToOffers: z.boolean().default(false),
+  offerFloorCents: z.number().int().min(0).max(1_000_000_000).nullable().default(null),
 });
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("save"), id: z.string().uuid().nullable(), form: Form, publish: z.boolean() }),

@@ -15,6 +15,8 @@ export type ProductForm = {
   title: string; serviceTypeId: string | null; summary: string; images: string[]; pricing: Pricing; priceCents: number | null;
   delivery: ServiceDelivery | null; leadTimeDays: number | null; durationWeeks: number | null; domainIds: string[]; skillIds: string[];
   deliverables: string[]; payPlan: PayPlan; coverStyle: string | null;
+  /** MO-E001: buyers may Make an Offer; offers below the floor (private) are declined automatically. */
+  openToOffers?: boolean; offerFloorCents?: number | null;
 };
 export const MAX_IMAGES = 5;
 const PRICING_ROW = { FIXED: { pricing_type: "FIXED", kind: "DELIVERABLE", billing_period: null }, MONTHLY: { pricing_type: "RECURRING", kind: "DEPLOYABLE", billing_period: "MONTHLY" }, HOURLY: { pricing_type: "HOURLY", kind: "HOURS", billing_period: null } } as const;
@@ -85,7 +87,7 @@ function toForm(r: Row) {
   const images = r.images.length ? r.images.map((i) => i.url) : r.cover_image_url ? [r.cover_image_url] : [];
   return {
     id: r.id, status: r.status, typeName: r.serviceType?.name ?? null,
-    form: { coverStyle: r.cover_style ?? null, title: r.title, serviceTypeId: r.service_type_id, summary: r.summary ?? "", images, pricing, priceCents: r.price_cents, delivery: r.delivery, leadTimeDays: r.lead_time_days, durationWeeks: r.duration_weeks, domainIds: r.domains.map((d) => d.domain_id), skillIds: r.skills.map((s) => s.skill_id), deliverables: r.deliverables.map((d) => d.text), payPlan } satisfies ProductForm,
+    form: { openToOffers: r.open_to_offers, offerFloorCents: r.offer_floor_cents, coverStyle: r.cover_style ?? null, title: r.title, serviceTypeId: r.service_type_id, summary: r.summary ?? "", images, pricing, priceCents: r.price_cents, delivery: r.delivery, leadTimeDays: r.lead_time_days, durationWeeks: r.duration_weeks, domainIds: r.domains.map((d) => d.domain_id), skillIds: r.skills.map((s) => s.skill_id), deliverables: r.deliverables.map((d) => d.text), payPlan } satisfies ProductForm,
   };
 }
 
@@ -120,7 +122,7 @@ export async function saveCatalogProduct(viewer: Viewer, id: string | null, f: P
   const data = {
     title, summary: f.summary.trim().slice(0, 4000) || null, service_type_id: f.serviceTypeId, price_cents: f.priceCents,
     ...PRICING_ROW[f.pricing], delivery: f.delivery, lead_time_days: f.leadTimeDays, duration_weeks: f.durationWeeks,
-    cover_image_url: f.images[0] ?? null, cover_style: f.coverStyle && ["A", "B", "C", "D"].includes(f.coverStyle) ? f.coverStyle : null, payment_terms: "NET30" as const, payment_event: (f.pricing === "MONTHLY" ? "ORDER_ACCEPTED" : "ACCEPTANCE") as PaymentEvent,
+    cover_image_url: f.images[0] ?? null, cover_style: f.coverStyle && ["A", "B", "C", "D"].includes(f.coverStyle) ? f.coverStyle : null, open_to_offers: !!f.openToOffers, offer_floor_cents: f.openToOffers && f.offerFloorCents != null && f.offerFloorCents > 0 ? f.offerFloorCents : null, payment_terms: "NET30" as const, payment_event: (f.pricing === "MONTHLY" ? "ORDER_ACCEPTED" : "ACCEPTANCE") as PaymentEvent,
     status: publish ? ("PUBLISHED" as const) : owned?.status === "PUBLISHED" ? ("PUBLISHED" as const) : ("DRAFT" as const),
   };
   const children = {
