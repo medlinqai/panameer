@@ -151,6 +151,9 @@ export default async function Page({
       list: prov ? (p.providerProfile?._count.serviceProducts ?? 0) > 0 || proposed.has(p.id) : true,
       validate: !!co && !!(co.legal_name ?? co.name)?.trim() && !!co.tin?.trim() && !!co.tax_form_uploaded_at && (!prov || co._count.payoutMethods > 0),
       contract,
+      sell: contract,
+      // Approximation for the funnel: a submitted payment request means work was delivered.
+      deliver: prov ? members.some((id) => requested.has(id)) : contract,
       request: prov ? members.some((id) => requested.has(id)) : contract,
       paid: members.some((id) => paidPeople.has(id)) || (!!co && paidAccounts.has(co.p_account_id)),
     }, LIFECYCLE);

@@ -3,7 +3,7 @@ export const ROAD_FAQ: Record<string, { q: string; a: string }[]> = {
   register: [
     { q: "Why do I add a company when I sign up?", a: "Panameer contracts with and pays companies, not individuals. A one-person business is a company too: use your business name, website and industry." },
     { q: "My company is already on Panameer. What do I do?", a: "Enter its website. If it's already here, ask to join and an admin there approves you." },
-    { q: "Do I need tax details now?", a: "No. Tax and banking come later, once you have a signed work order (stop 6)." },
+    { q: "Do I need tax details now?", a: "No. Payout details come last — just before Get Paid, and only what your country needs." },
   ],
   verify: [
     { q: "I didn't get the email.", a: "Check spam, then use Resend on the Check Your Email screen. The link works once." },
@@ -17,20 +17,21 @@ export const ROAD_FAQ: Record<string, { q: string; a: string }[]> = {
     { q: "What's the difference between a service and a service product?", a: "A service is your rate for a kind of work (say, Onsite Consulting per hour). A service product is a fixed scope at a listed price that buyers can buy right away." },
     { q: "When do they go live?", a: "As soon as you publish, once your company is linked. No Panameer review." },
   ],
-  contract: [
+  sell: [
     { q: "What are the three ways to win work?", a: "5.A a buyer buys your service product; 5.B a buyer accepts the rate you proposed on their work request; 5.C a buyer accepts the estimate you sent. Each ends in a signed work order." },
     { q: "Do I have to accept every product order?", a: "No. Orders open automatically by default; turn on \"I accept orders manually\" under My Service Products to review each one first." },
-    { q: "Can I sign before my company is validated?", a: "Yes. You can sign now; add tax and banking so your payment requests can go out." },
+    { q: "Do I need a W-9 or tax ID to sell?", a: "No. Selling, signing work orders and requesting payment only need a linked company. Payout details are asked for just before you get paid." },
   ],
-  validate: [
-    { q: "What's needed?", a: "Your company's legal name and tax ID, the tax form (W-9 in the US, W-8BEN-E outside it) and a payout account in the company's legal name." },
-    { q: "What happens to payment requests before this is done?", a: "They're saved and marked Waiting on Tax & Banking. They go to the buyer automatically once your company is validated." },
+  deliver: [
+    { q: "When is a work order delivered?", a: "When the buyer accepts the deliverable or approves your timesheet. Keep the tracker up to date on the work order as you go." },
+    { q: "What if the buyer asks for changes?", a: "Make them and send the update from the work order; the buyer accepts when it's done." },
   ],
   request: [
     { q: "How do I request payment?", a: "From the work order: submit a timesheet for rate work, or report a milestone (delivered, installed…) for a service product." },
     { q: "When is the buyer due to pay?", a: "Payment terms start when the request goes to the buyer, for example Net 30." },
   ],
   paid: [
+    { q: "What does the lock before Get Paid mean?", a: "Before the first payout we need a payout account in your company's legal name, plus Tax ID and tax form where your country's rule needs them (US: W-9 + Tax ID). Requests made before that wait, then go out automatically." },
     { q: "Where does the money go?", a: "To your company's bank account in its legal name, after the buyer pays Panameer." },
     { q: "What does Panameer keep?", a: "The fee shown on your work order. The rest is paid out to your company." },
   ],

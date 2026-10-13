@@ -1,3 +1,4 @@
+import { ROAD_TITLE } from "@/lib/user-levels";
 import Link from "next/link";
 import { Eye, TrendingUp, BadgeCheck, BookOpen, FolderPlus, Users, Search, Tag, Send, MessageSquare, UserPlus, AlertTriangle } from "lucide-react";
 import type { Viewer } from "@/lib/access";
@@ -55,7 +56,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
       {onRoad && (
         <div data-path-road className="mt-4 border border-line bg-surface px-4 py-4 sm:px-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="flex items-center gap-1.5 text-[17px] font-bold">How Panameer works <LifecycleHelp /></h2>
+            <h2 className="flex items-center gap-1.5 text-[17px] font-bold">{ROAD_TITLE} <LifecycleHelp /></h2>
             <span className="text-[11px] font-bold tracking-[0.1em] text-ink-2">STEP {path.current + 1} OF {path.steps.length}</span>
           </div>
           <div className="mt-3 hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>

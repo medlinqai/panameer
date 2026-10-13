@@ -47,7 +47,7 @@ export function LifecycleHelpHost() {
       {path?.road === "provider" ? (
         <>
           <p className="mb-2 text-[14px] text-ink-2">
-            Eight stops, 10–15 minutes to be found. Win work three ways at stop 5, then add tax and banking so you're paid on time. Panameer pays companies, not individuals.
+            Eight stops, 10–15 minutes to be found. Win work three ways at stop 5, deliver it, request payment, get paid. Payout details come last, only what your country needs. Panameer pays companies, not individuals.
           </p>
           <div className="hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>
           <div className="sm:hidden"><RoadStepper current={path.current} /></div>

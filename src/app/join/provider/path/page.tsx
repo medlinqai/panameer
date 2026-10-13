@@ -18,7 +18,7 @@ export default async function RegistrationPathPage() {
         <h1 className="mt-10 text-[44px] font-extrabold leading-[1.1] sm:text-[52px]">Welcome to Panameer</h1>
         <p className="mt-3 text-[20px] font-bold leading-snug">Your road from sign-up to getting paid</p>
         <p className="mt-2 max-w-[780px] text-[15px] text-ink-2">
-          <b className="text-ink">Eight stops, 10–15 minutes to be found.</b> The rest as work comes in: win work three ways at stop 5, then add tax and banking so you&apos;re paid on time.
+          <b className="text-ink">Eight stops, 10–15 minutes to be found.</b> The rest as work comes in: win work three ways at stop 5, deliver it, request payment, get paid. Payout details come last — only what your country needs.
         </p>
         <div className="mt-4 overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={2} /></div></div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4">

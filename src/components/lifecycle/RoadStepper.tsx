@@ -1,6 +1,6 @@
 import { PROVIDER_ROAD, ROAD_PHASES } from "@/lib/user-levels";
 
-// M-E008 / RD-E004: the 8-stop road as a vertical stepper on phones — phase colors, magenta now, gate + time per stop.
+// M-E008 / RV-E001: the 8-stop road as a vertical stepper on phones — phase colors, magenta now, the lock before Get Paid.
 export function RoadStepper({ current }: { current: number }) {
   const here = Math.min(Math.max(current, 0), PROVIDER_ROAD.length);
   return (
@@ -15,6 +15,11 @@ export function RoadStepper({ current }: { current: number }) {
           <li key={s.key} data-stop={i + 1} data-done={done || undefined} data-here={now || undefined} aria-current={now ? "step" : undefined} className="grid grid-cols-[28px_1fr] gap-x-3">
             {firstOfPhase && (
               <span className="col-span-2 pb-2 text-[10.5px] font-extrabold tracking-[0.12em]" style={{ color: ph.color }}>{ph.label.toUpperCase()}</span>
+            )}
+            {s.lockBefore && (
+              <span data-road-lock className="col-span-2 flex items-center gap-1.5 pb-2 text-[11px] font-bold" style={{ color: ph.color }}>
+                <span aria-hidden>🔒</span> Payout details · {s.lockBefore}
+              </span>
             )}
             <span className="flex flex-col items-center">
               <span

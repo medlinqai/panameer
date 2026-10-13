@@ -120,7 +120,8 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
     : curKey === "link" || curKey === "register" ? { text: "not linked to a company", sub: pending.length ? `Asked to join ${pending.map((p) => p.company.name).join(", ")}` : "No company and no pending request", fix: <AddToCompany personId={person.id} /> }
     : curKey === "list" ? { text: "nothing for sale yet", sub: "No published service product and no proposal sent.", fix: null }
     : curKey === "validate" ? { text: "company not validated", sub: check ? `Missing: ${check.items.filter((i) => !i.done).map((i) => i.item).join(", ")}` : "", fix: co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : null }
-    : curKey === "contract" ? { text: "no signed work order yet", sub: "A product bought, a rate accepted or an estimate accepted, then the work order signed.", fix: null }
+    : curKey === "deliver" ? { text: "nothing delivered yet", sub: "The buyer hasn't accepted a deliverable or approved a timesheet.", fix: null }
+    : curKey === "contract" || curKey === "sell" ? { text: "no signed work order yet", sub: "A product bought, a rate accepted or an estimate accepted, then the work order signed.", fix: null }
     : curKey === "request" ? { text: "no payment request yet", sub: "A timesheet or milestone request on a signed work order.", fix: null }
     : curKey === "paid" ? { text: "not paid yet", sub: "Paid to a bank account in the company's legal name.", fix: null }
     : null;
@@ -209,7 +210,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
           <Row label="Join requests" value={pending.length ? pending.map((p) => `${p.company.name} (asked ${d(p.created_at)})`).join(", ") : <No>None</No>} />
         </Step>
 
-        <Step n={nOf("validate")} title="Validate Company" tag={!co ? "—" : check?.ready ? "VALIDATED" : "WAITING"} tone={!co ? "none" : check?.ready ? "done" : "wait"} actions={co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : undefined}>
+        <Step n={steps.some((s) => s.key === "validate") ? nOf("validate") : "🔒"} title={steps.some((s) => s.key === "validate") ? "Validate Company" : "Payout Details (if required)"} tag={!co ? "—" : check?.ready ? "VALIDATED" : "WAITING"} tone={!co ? "none" : check?.ready ? "done" : "wait"} actions={co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : undefined}>
           {co ? (
             <>
               <Row label="Legal name" value={co.legal_name ?? <No>{co.name} (no separate legal name)</No>} />
@@ -225,7 +226,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
           )}
         </Step>
 
-        <Step n={`${nOf("contract")}–${nOf("paid")}`} title="Contracts & Payments" tag={payouts + payments > 0 ? "PAID" : signed > 0 ? "CONTRACTED" : "—"} tone={signed > 0 ? "done" : "none"}>
+        <Step n={`${nOf(steps.some((s) => s.key === "sell") ? "sell" : "contract")}–${nOf("paid")}`} title="Contracts & Payments" tag={payouts + payments > 0 ? "PAID" : signed > 0 ? "CONTRACTED" : "—"} tone={signed > 0 ? "done" : "none"}>
           <Row label="Work requests · proposals" value={`${workRequests} · ${proposals}`} />
           <Row label="Signed work orders" value={signed} />
           <Row label="Payouts · payments" value={`${payouts} · ${payments}`} />

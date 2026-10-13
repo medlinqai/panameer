@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
 
 // Account menu top block: "Your Path · Step N of 8" (7 for buyers) + "?", a segment bar and "Next: … Go".
@@ -50,11 +50,16 @@ export function PathMenuBlock({ onNavigate, rowClass }: { onNavigate: () => void
                 <Link href="/your-path" onClick={onNavigate} className="hover:underline">YOUR PATH · STEP {path.current + 1} OF {path.done.length}</Link>
                 <LifecycleHelp onOpen={onNavigate} />
               </p>
-              <div className={"mt-1.5 grid gap-1 " + (path.done.length === 8 ? "grid-cols-8" : "grid-cols-7")} aria-hidden>
+              <div className="mt-1.5 flex items-center gap-1" aria-hidden>
                 {path.done.map((d, i) => (
-                  <span key={i} className={"h-1.5 " + (d ? "bg-magenta" : i === path.current ? "bg-ink" : "bg-line")} />
+                  <Fragment key={i}>
+                    {/* RV-E003: provider road — payout details are a gate before Get Paid, if required. */}
+                    {path.done.length === 8 && i === 7 && <span data-road-lock title="Payout details, if required" className="text-[10px] leading-none">🔒</span>}
+                    <span className={d ? "h-1.5 flex-1 bg-magenta" : i === path.current ? "h-1.5 flex-1 bg-ink" : "h-1.5 flex-1 bg-line"} />
+                  </Fragment>
                 ))}
               </div>
+              {path.done.length === 8 && <p className="mt-0.5 text-right text-[10px] text-ink-3">🔒 before Get Paid · if required</p>}
               <p className="mt-2 flex items-center justify-between gap-3 text-[13px]">
                 <span className="min-w-0 truncate">Next: {path.next.label}</span>
                 <Link href={path.next.href} onClick={onNavigate} className="shrink-0 font-bold text-magenta-dark underline underline-offset-2">

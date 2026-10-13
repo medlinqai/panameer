@@ -16,7 +16,7 @@ const MAIN: { s: LifecycleStep; n: string; x: number; y: number }[] = [
   { s: by("verify"), n: "2", x: 390, y: 100 },
   { s: by("profile"), n: "3", x: 650, y: 100 },
   { s: by("list"), n: "4", x: 910, y: 100 },
-  { s: by("validate"), n: "6", x: 360, y: 580 },
+  { s: by("deliver"), n: "6", x: 360, y: 580 },
   { s: by("request"), n: "7", x: 640, y: 580 },
   { s: by("paid"), n: "8", x: 920, y: 580 },
 ];
@@ -45,7 +45,7 @@ export default function DetailedRoadPage() {
         <p className="mt-10 text-[11px] font-bold uppercase tracking-[0.14em] text-magenta">Welcome · For Providers</p>
         <h1 className="mt-1.5 text-[36px] font-extrabold leading-[1.1] sm:text-[40px]">The Detailed Road</h1>
         <p className="mt-2 max-w-[780px] text-[15px] leading-relaxed text-ink-2">
-          Eight stops, 10–15 minutes to be found. Build your catalog, then win work at stop 5 in <b className="text-ink">three ways</b>. Add tax and banking once you have a signed work order, so you&apos;re paid on time.
+          Eight stops, 10–15 minutes to be found. Add your services and products, win work at stop 5 in <b className="text-ink">three ways</b>, deliver it and request payment. Payout details come last, only when money leaves Panameer.
         </p>
         <div className="mt-4 overflow-x-auto">
           <svg viewBox="0 0 1080 700" role="img" aria-label="Provider road, eight stops" className="block h-auto w-full min-w-[700px] font-sans">
@@ -57,7 +57,7 @@ export default function DetailedRoadPage() {
             <Road d="M200 330 C90 330 90 580 200 580 H1020" color={P.track} />
             {LANE_PATHS.map((d) => <Road key={d} d={d} color={W.track} w={14} />)}
             <text x={44} y={48} fill={J.color} fontWeight={800} fontSize={11} letterSpacing=".14em">JOIN &amp; GET FOUND · 10–15 MIN</text>
-            <text x={1040} y={246} textAnchor="end" fill={W.color} fontWeight={800} fontSize={11} letterSpacing=".14em">WIN WORK</text>
+            <text x={1040} y={246} textAnchor="end" fill={W.color} fontWeight={800} fontSize={11} letterSpacing=".14em">{W.label.toUpperCase()}</text>
             <text x={1040} y={500} textAnchor="end" fill={P.color} fontWeight={800} fontSize={11} letterSpacing=".14em">GET PAID</text>
             {ROAD_LANES.map((l, i) => (
               <text key={l.id} x={345} y={LANE_Y[i] - 18} fill={W.color} fontWeight={800} fontSize={10.5} letterSpacing=".1em">{l.id} · {l.name.toUpperCase()}</text>
@@ -75,13 +75,13 @@ export default function DetailedRoadPage() {
             <g data-stop="5">
               <circle cx={930} cy={330} r={22} fill={W.color} stroke={W.color} strokeWidth={3} />
               <text x={930} y={336} textAnchor="middle" fill="#fff" fontWeight={800} fontSize={16}>5</text>
-              <text x={964} y={335} fill={INK} fontWeight={700} fontSize={13}>{by("contract").step}</text>
+              <text x={964} y={335} fill={INK} fontWeight={700} fontSize={13}>{by("sell").step}</text>
             </g>
             <g data-stop="signed">
               <circle cx={200} cy={330} r={22} fill="#fff" stroke={W.color} strokeWidth={3} />
               <text x={200} y={336} textAnchor="middle" fill={W.color} fontWeight={800} fontSize={16}>✓</text>
               <text x={166} y={329} textAnchor="end" fill={INK} fontWeight={700} fontSize={13}>Work Order Signed</text>
-              <text x={166} y={345} textAnchor="end" fill={NUM} fontWeight={700} fontSize={9.5} letterSpacing=".08em">{by("contract").status.toUpperCase()}</text>
+              <text x={166} y={345} textAnchor="end" fill={NUM} fontWeight={700} fontSize={9.5} letterSpacing=".08em">{by("sell").status.toUpperCase()}</text>
             </g>
             {MAIN.map(({ s, n, x, y }) => {
               const C = ROAD_PHASES[s.phase ?? "join"].color;
@@ -97,6 +97,12 @@ export default function DetailedRoadPage() {
                 </g>
               );
             })}
+            {/* RV-E003: payout details are a gate before Get Paid, if required. */}
+            <g data-road-lock transform="translate(770 538)">
+              <rect x={2} y={9} width={16} height={12} rx={2} fill="#fff" stroke={P.color} strokeWidth={2} />
+              <path d="M6 9V6a4 4 0 0 1 8 0v3" fill="none" stroke={P.color} strokeWidth={2} />
+              <text x={10} y={-2} textAnchor="middle" fill={P.color} fontWeight={700} fontSize={10.5}>if required</text>
+            </g>
           </svg>
         </div>
         <p className="mt-2 text-[13.5px]">
@@ -105,13 +111,14 @@ export default function DetailedRoadPage() {
         </p>
         <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-ink-2">
           <span><b style={{ color: J.color }}>{J.label}</b> · <b style={{ color: W.color }}>{W.label}</b> · <b style={{ color: P.color }}>{P.label}</b></span>
-          <span><b className="text-[10px] text-ink">GATE</b> = needed before the next stop</span>
+          <span><b className="text-[10px] text-ink">GATE</b> = needed before the next stop · 🔒 = payout details, if required</span>
         </p>
         <ul className="mt-5 max-w-[800px] list-disc space-y-1 pl-5 text-[14px] leading-relaxed">
           <li><b>5.A · Product Bought:</b> Product Located → Added to Cart → Order Placed. Listed price; orders are accepted automatically (providers can switch to manual). Want something custom? Request an Estimate (5.C).</li>
           <li><b>5.B · Rate Accepted:</b> Provider Invited → Rate Proposed → Rate Accepted.</li>
           <li><b>5.C · Estimate Accepted:</b> Estimate Requested → Provider Estimates → Estimate Accepted.</li>
-          <li><b>Add Tax &amp; Banking:</b> the tax form and a payout account in your company&apos;s legal name. We ask when your first work order is signed; payment waits until it&apos;s validated.</li>
+          <li><b>6 · Deliver Services &amp; Products:</b> Work Order Signed → tracker updates → the buyer accepts the deliverable or the timesheet.</li>
+          <li><b>🔒 Payout details (if required), before 8 · Get Paid:</b> a payout account in your company&apos;s legal name (everyone), plus Tax ID and tax form where your country&apos;s rule needs them (US: W-9 + Tax ID). Ordering, signing work orders and requesting payment never ask for them — only the payout does.</li>
         </ul>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <Link href="/join/provider" className="inline-flex min-h-[48px] items-center bg-ink px-6 text-[15px] font-bold text-surface hover:bg-ink-hover">Complete My Profile</Link>

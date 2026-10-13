@@ -29,7 +29,7 @@ export async function lifecycleFor(personId: string) {
     select: {
       is_service_provider: true,
       user: { select: { email_verified: true } },
-      providerProfile: { select: { completeness: true, _count: { select: { serviceProducts: { where: { status: "PUBLISHED" } } } } } },
+      providerProfile: { select: { id: true, completeness: true, _count: { select: { serviceProducts: { where: { status: "PUBLISHED" } } } } } },
       requesterProfile: { select: { completed_at: true } },
       companyMemberships: { where: { status: "APPROVED" }, select: { company_id: true, role: true, company: { select: { p_account_id: true } } }, take: 1 },
     },
@@ -39,21 +39,31 @@ export async function lifecycleFor(personId: string) {
   const provider = p.is_service_provider;
   const check = m ? await companyChecklist(m.company_id, { payout: provider }) : null;
   const members = m ? (await prisma.companyMembership.findMany({ where: { company_id: m.company_id, status: "APPROVED" }, select: { person_id: true } })).map((x) => x.person_id) : [personId];
-  const [contracts, payouts, payments, proposals, requests] = await Promise.all([
+  const [contracts, delivered, payouts, payments, proposals, requests] = await Promise.all([
     prisma.workOrder.count({ where: { status: { in: [...SIGNED] }, OR: [{ buyer_person_id: { in: members } }, { provider_person_id: { in: members } }] } }),
+    // RV-E002: Deliver — the buyer accepted a deliverable or a timesheet (an approved payment request), or the work order closed.
+    provider
+      ? Promise.all([
+          prisma.workOrder.count({ where: { provider_person_id: { in: members }, status: { in: ["CLOSED", "FINALLY_CLOSED"] } } }),
+          prisma.paymentRequest.count({ where: { provider_person_id: { in: members }, status: { in: ["APPROVED", "PAID"] } } }),
+        ]).then(([a, b]) => a + b)
+      : 0,
     prisma.providerPayout.count({ where: { provider_person_id: { in: members }, paid_at: { not: null } } }),
     m ? prisma.payment.count({ where: { p_account_id: m.company.p_account_id } }) : 0,
     provider ? prisma.proposal.count({ where: { provider_person_id: personId, submitted_at: { not: null } } }) : 0,
     provider ? prisma.paymentRequest.count({ where: { provider_person_id: { in: members }, submitted_at: { not: null } } }) : 0,
   ]);
+  const liveRates = provider && p.providerProfile ? await prisma.providerService.count({ where: { provider_profile_id: p.providerProfile.id, active: true, published_at: { not: null }, rate_cents: { not: null } } }) : 0;
   const facts: LifecycleFacts = {
     register: !!m,
     verify: !!p.user?.email_verified,
     profile: provider ? (p.providerProfile?.completeness ?? 0) >= VISIBILITY_THRESHOLD : !!p.requesterProfile?.completed_at,
     link: !!m,
-    list: (p.providerProfile?._count.serviceProducts ?? 0) + proposals > 0,
+    list: (p.providerProfile?._count.serviceProducts ?? 0) + liveRates + proposals > 0,
     validate: !!check?.ready,
     contract: contracts > 0,
+    sell: contracts > 0,
+    deliver: delivered > 0,
     request: requests > 0,
     paid: payouts + payments > 0,
   };
