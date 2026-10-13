@@ -65,7 +65,8 @@ export async function addToCart(viewer: Viewer, productId: string, quantity = 1)
 export async function setQuantity(viewer: Viewer, lineId: string, quantity: number) {
   const p = await me(viewer);
   if (!Number.isFinite(quantity) || quantity < 1 || quantity > MAX_QTY) throw new CartError(`Quantity is 1 to ${MAX_QTY}`);
-  const n = await prisma.cartLine.updateMany({ where: { id: lineId, cart: { buyer_person_id: p.id } }, data: { quantity: Math.floor(quantity) } });
+  // MO-E003: an agreed-price (offer) line is for one.
+  const n = await prisma.cartLine.updateMany({ where: { id: lineId, cart: { buyer_person_id: p.id }, offer_id: null }, data: { quantity: Math.floor(quantity) } });
   if (!n.count) throw new CartError("That line isn't in your cart", "NOT_FOUND");
 }
 

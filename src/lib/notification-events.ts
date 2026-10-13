@@ -945,7 +945,7 @@ export const NOTIFICATION_EVENTS = {
       if (!amount) return title;
       return title ? `${title} — offered ${amount}` : `Offered ${amount}`;
     },
-    href: () => "/services/offers",
+    href: () => "/catalog/estimates#offers",
   },
   "shop.offer_accepted": {
     event: "shop.offer_accepted",
@@ -966,8 +966,39 @@ export const NOTIFICATION_EVENTS = {
         : `${what} is on your cart at the amount you offered.`;
     },
     // THE CART IS A `WorkRequest` IN `DRAFT` — there is no cart table (ruling
-    href: (v) =>
-      str(v, "workRequestId") ? `/work-requests/${str(v, "workRequestId")}` : null,
+    href: () => "/cart",
+  },
+  // MO-E003: the provider's one counter, and the buyer's answer to it.
+  "shop.offer_countered": {
+    event: "shop.offer_countered",
+    recipient: "the buyer who made the offer",
+    category: "buyer.offers.answered",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: true,
+    title: () => "The seller countered your offer",
+    body: (v) => {
+      const title = str(v, "productTitle");
+      const amount = str(v, "amount");
+      if (!amount) return title || null;
+      return `${title || "The service product"} — they'd accept ${amount}${str(v, "offered") ? ` (you offered ${str(v, "offered")})` : ""}. Accept or decline.`;
+    },
+    href: () => "/estimates#offers",
+  },
+  "shop.offer_counter_answered": {
+    event: "shop.offer_counter_answered",
+    recipient: "the seller who countered",
+    category: "service_product.offers",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => (str(v, "accepted") === "1" ? "Your counter was accepted" : "Your counter was declined"),
+    body: (v) => {
+      const title = str(v, "productTitle");
+      const amount = str(v, "amount");
+      return str(v, "accepted") === "1" ? `${title || "Your service product"} is on the buyer's cart at ${amount || "your counter"}.` : title || null;
+    },
+    href: () => "/catalog/estimates#offers",
   },
   "shop.offer_denied": {
     event: "shop.offer_denied",
