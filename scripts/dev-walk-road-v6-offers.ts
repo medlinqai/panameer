@@ -15,7 +15,7 @@ import { check, cleanup, done, made, party, refuses } from "./lib/dev-fixture";
 const productIds: string[] = [];
 
 async function main() {
-  check("road v6: title + 8 stops, Deliver at 6, lock before Get Paid", ROAD_TITLE === "From Creating an Account to Getting Paid" && PROVIDER_ROAD.map((s) => s.step).join("|") === "Create Account|Validate Email|Complete Profile|Add Services & Products|Sell Services & Products|Deliver Services & Products|Request Payment|Get Paid" && PROVIDER_ROAD[7].lockBefore === "if required" && !PROVIDER_ROAD.some((s) => s.step === "Add Tax & Banking"));
+  check("road v6: title + 8 stops, Deliver at 6, lock before Get Paid", ROAD_TITLE === "From Creating Your Account to Getting Paid" && PROVIDER_ROAD.map((s) => s.step).join("|") === "Create Account|Validate Email|Complete Profile|Add Services & Products|Sell Services & Products|Deliver Services & Products|Request Payment|Get Paid" && PROVIDER_ROAD[7].lockBefore === "if required" && !PROVIDER_ROAD.some((s) => s.step === "Add Tax & Banking"));
 
   const buyer = await party("BUYER", "Bo");
   const prov = await party("PROVIDER", "Pia");
