@@ -1,5 +1,6 @@
 import type { ServiceKind, ServiceUnit } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { sellerCategoryWhere } from "@/lib/business-types";
 import { companyIdForProfile } from "@/lib/company-catalog";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { personBusinessTypes } from "@/lib/business-types";
@@ -21,7 +22,7 @@ async function me(viewer: Viewer) {
 async function stockTypes(personId: string): Promise<StockType[]> {
   const bts = await personBusinessTypes(personId);
   if (!bts.length) return [];
-  const all = await prisma.serviceType.findMany({ where: { serviceCategory: { business_type_id: { in: bts.map((b) => b.id) }, hidden: false }, ...LIVE_TYPE }, orderBy: { sort_order: "asc" }, select: { id: true, name: true, kind: true, units: true } });
+  const all = await prisma.serviceType.findMany({ where: { serviceCategory: { AND: [await sellerCategoryWhere(personId), { hidden: false }] }, ...LIVE_TYPE }, orderBy: { sort_order: "asc" }, select: { id: true, name: true, kind: true, units: true } });
   return all.filter((t) => t.kind === "SERVICE_PRODUCT" || rateTypeName(t.name));
 }
 

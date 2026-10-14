@@ -13,7 +13,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
   const viewer = await guardPage("canProvideServices");
   const { id } = await searchParams;
   const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, first_name: true, last_name: true } });
-  const [types, gate, mine] = await Promise.all([listServiceTypes(), person ? publishGate(person.id) : { ok: false, href: "/company", reason: null }, listProviderServices(viewer).catch(() => [])]);
+  const [types, gate, mine] = await Promise.all([listServiceTypes(person?.id), person ? publishGate(person.id) : { ok: false, href: "/company", reason: null }, listProviderServices(viewer).catch(() => [])]);
   const s = id ? mine.find((x) => x.id === id) : undefined;
   const initial: ServiceDraft = {
     id: s?.id ?? null,

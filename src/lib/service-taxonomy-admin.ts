@@ -7,6 +7,8 @@ export async function taxonomyTree() {
     prisma.commodityGroup.findMany({
       orderBy: { sort_order: "asc" },
       include: {
+        // TX2-E003: the commodity's own Rates (commodity-level categories).
+        serviceCategories: { orderBy: { sort_order: "asc" }, include: { serviceTypes: { where: { merged_into_id: null, status: { in: ["STOCK", "APPROVED"] } }, orderBy: { sort_order: "asc" }, include: { _count: { select: { serviceProducts: true } } } } }, },
         businessTypes: {
           orderBy: { sort_order: "asc" },
           include: {
@@ -42,8 +44,8 @@ async function siblings(level: Level, id: string) {
     return prisma.businessType.findMany({ where: { commodity_group_id: b.commodity_group_id }, orderBy: { sort_order: "asc" }, select: { id: true } });
   }
   if (level === "category") {
-    const c = await prisma.serviceCategory.findUniqueOrThrow({ where: { id }, select: { business_type_id: true } });
-    return prisma.serviceCategory.findMany({ where: { business_type_id: c.business_type_id }, orderBy: { sort_order: "asc" }, select: { id: true } });
+    const c = await prisma.serviceCategory.findUniqueOrThrow({ where: { id }, select: { business_type_id: true, commodity_group_id: true } });
+    return prisma.serviceCategory.findMany({ where: c.business_type_id ? { business_type_id: c.business_type_id } : { commodity_group_id: c.commodity_group_id }, orderBy: { sort_order: "asc" }, select: { id: true } });
   }
   const t = await prisma.serviceType.findUniqueOrThrow({ where: { id }, select: { service_category_id: true } });
   return prisma.serviceType.findMany({ where: { service_category_id: t.service_category_id, merged_into_id: null }, orderBy: { sort_order: "asc" }, select: { id: true } });
@@ -87,10 +89,13 @@ export async function addCategory(businessTypeId: string, name: string, kind: "S
   return prisma.serviceCategory.create({ data: { business_type_id: businessTypeId, name: n, kind, sort_order: nextSort(sibs) } });
 }
 /** A Rate Type goes into the business type's SERVICE category (created as "Rates" when it has none). */
-export async function addType(target: { categoryId: string } | { businessTypeId: string }, name: string) {
+export async function addType(target: { categoryId: string } | { businessTypeId: string } | { commodityGroupId: string }, name: string) {
   const n = cleanName(name);
   const cat = "categoryId" in target
     ? await prisma.serviceCategory.findUniqueOrThrow({ where: { id: target.categoryId }, select: { id: true, kind: true } })
+    : "commodityGroupId" in target
+    ? (await prisma.serviceCategory.findFirst({ where: { commodity_group_id: target.commodityGroupId, kind: "SERVICE" }, orderBy: { sort_order: "asc" }, select: { id: true, kind: true } })) ??
+      (await prisma.serviceCategory.create({ data: { commodity_group_id: target.commodityGroupId, name: "Rates", kind: "SERVICE", sort_order: 1 }, select: { id: true, kind: true } }))
     : (await prisma.serviceCategory.findFirst({ where: { business_type_id: target.businessTypeId, kind: "SERVICE" }, orderBy: { sort_order: "asc" }, select: { id: true, kind: true } })) ?? (await addCategory(target.businessTypeId, "Rates", "SERVICE"));
   // TX2-E001: names are unique within a category.
   if (await prisma.serviceType.findFirst({ where: { service_category_id: cat.id, name: { equals: n, mode: "insensitive" } }, select: { id: true } })) throw new Error("A type with that name already exists here");
@@ -109,6 +114,13 @@ export async function renameAt(level: Exclude<Level, "group">, id: string, name:
     await prisma.serviceType.update({ where: { id }, data: { name: n } });
   }
 }
+/** TX2-E004: the plain-words description (examples) behind the ? on a commodity or business type. */
+export async function setDescription(level: "group" | "businessType", id: string, text: string) {
+  const description = text.trim().slice(0, 300) || null;
+  if (level === "group") await prisma.commodityGroup.update({ where: { id }, data: { description } });
+  else await prisma.businessType.update({ where: { id }, data: { description } });
+}
+
 export async function setDefaultOn(id: string, on: boolean) {
   await prisma.serviceType.update({ where: { id }, data: { default_on: on } });
 }

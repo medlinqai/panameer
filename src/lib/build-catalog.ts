@@ -1,6 +1,6 @@
 import type { ServiceKind, ServiceUnit } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { sellerTypeByName } from "@/lib/business-types";
+import { sellerCategoryWhere, sellerTypeByName } from "@/lib/business-types";
 import { companyIdForProfile } from "@/lib/company-catalog";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { publishGate } from "@/lib/my-catalog";
@@ -24,11 +24,12 @@ export async function buildCatalogData(viewer: Viewer) {
   // Custom rate types (Scott 2026-10-12, option 2): a provider's own SUGGESTED types show for them right away.
   const mine = (await prisma.providerService.findMany({ where: { provider_profile_id: p.id, service_type_id: { not: null } }, select: { service_type_id: true } })).map((r) => r.service_type_id!);
   const typeWhere = { OR: [LIVE_TYPE, { ...OWN_CUSTOM, OR: [{ id: { in: mine } }, { created_by_person_id: p.person_id }] }] };
+  // TX2-E003: the commodity's Rates first, then the business types' own categories.
   const cats = types.length
     ? await prisma.serviceCategory.findMany({
-        where: { business_type_id: { in: types.map((t) => t.id) }, hidden: false },
-        orderBy: [{ sort_order: "asc" }],
-        select: { id: true, name: true, kind: true, business_type_id: true, serviceTypes: { where: typeWhere, orderBy: [{ sort_order: "asc" }, { created_at: "asc" }], select: { id: true, name: true, description: true, units: true, required: true, pricing_model: true, delivery: true, default_on: true, status: true } } },
+        where: { AND: [await sellerCategoryWhere(p.person_id), { hidden: false }] },
+        orderBy: [{ commodity_group_id: { sort: "asc", nulls: "last" } }, { sort_order: "asc" }],
+        select: { id: true, name: true, kind: true, business_type_id: true, commodity_group_id: true, serviceTypes: { where: typeWhere, orderBy: [{ sort_order: "asc" }, { created_at: "asc" }], select: { id: true, name: true, description: true, units: true, required: true, pricing_model: true, delivery: true, default_on: true, status: true } } },
       })
     : [];
   const [services, products, gate] = await Promise.all([
@@ -73,7 +74,7 @@ export async function ensureDefaultRates(viewer: Viewer) {
   const bts = await personBusinessTypes(p.person_id);
   if (!bts.length) return;
   const [types, have, prof] = await Promise.all([
-    prisma.serviceType.findMany({ where: { kind: "SERVICE", default_on: true, ...LIVE_TYPE, serviceCategory: { business_type_id: { in: bts.map((b) => b.id) }, hidden: false } }, select: { id: true, units: true, delivery: true } }),
+    prisma.serviceType.findMany({ where: { kind: "SERVICE", default_on: true, ...LIVE_TYPE, serviceCategory: { AND: [await sellerCategoryWhere(p.person_id), { hidden: false }] } }, select: { id: true, units: true, delivery: true } }),
     prisma.providerService.findMany({ where: { provider_profile_id: p.id, service_type_id: { not: null } }, select: { service_type_id: true } }),
     prisma.providerProfile.findUniqueOrThrow({ where: { id: p.id }, select: { onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true } }),
   ]);
@@ -107,7 +108,7 @@ export async function addCustomRate(viewer: Viewer, input: { name: string; unit:
   if (!bts.length) throw new Error("Pick your company's business type first");
   const hit = await sellerTypeByName(p.person_id, name);
   if (hit && hit.status !== "SUGGESTED") throw new Error(`"${hit.name}" is already a rate type — turn it on above`);
-  const cat = await prisma.serviceCategory.findFirst({ where: { business_type_id: { in: bts.map((b) => b.id) }, kind: "SERVICE", hidden: false }, orderBy: { sort_order: "asc" }, select: { id: true } });
+  const cat = await prisma.serviceCategory.findFirst({ where: { AND: [await sellerCategoryWhere(p.person_id), { kind: "SERVICE", hidden: false }] }, orderBy: [{ commodity_group_id: { sort: "asc", nulls: "last" } }, { sort_order: "asc" }], select: { id: true } });
   const t = hit ?? (await prisma.serviceType.create({ data: { name, kind: "SERVICE", status: "SUGGESTED", created_by_person_id: p.person_id, service_category_id: cat?.id ?? null, units: [input.unit], delivery: input.delivery, pricing_model: input.unit === "MONTH" ? "RECURRING" : "TIME", sort_order: 900 } }));
   return saveCatalogService(viewer, { serviceTypeId: t.id, on: true });
 }

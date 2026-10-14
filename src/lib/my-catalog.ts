@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { sellerTypeByName } from "@/lib/business-types";
+import { sellerCategoryWhere, sellerTypeByName } from "@/lib/business-types";
 import { effectiveRates } from "@/lib/company-catalog";
 import { termsLine } from "@/lib/billing-terms";
 
@@ -12,8 +12,10 @@ export async function publishGate(personId: string): Promise<{ ok: boolean; href
 }
 
 /** CAT-E002 / TX-E002: the services' types — stock (seeded by scripts/seed-service-taxonomy.ts) plus provider-added, merged ones folded away. */
-export async function listServiceTypes() {
-  return prisma.serviceType.findMany({ where: { merged_into_id: null, kind: "SERVICE" }, orderBy: [{ is_baseline: "desc" }, { sort_order: "asc" }, { name: "asc" }], select: { id: true, name: true, is_baseline: true } });
+export async function listServiceTypes(personId?: string) {
+  // TX2-E003: for a seller, only their commodity's Rates + their business types' service categories (+ their own suggestions).
+  const scope = personId ? { OR: [{ serviceCategory: await sellerCategoryWhere(personId) }, { service_category_id: null, created_by_person_id: personId }] } : {};
+  return prisma.serviceType.findMany({ where: { merged_into_id: null, kind: "SERVICE", ...scope }, orderBy: [{ is_baseline: "desc" }, { sort_order: "asc" }, { name: "asc" }], select: { id: true, name: true, is_baseline: true } });
 }
 
 /** "Add your own" — reused if the name already exists (case-insensitive). */

@@ -81,7 +81,7 @@ export async function retireProviderService(viewer: Viewer, id: string) {
 export async function servicesFromRates(viewer: Viewer) {
   const prof = await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { id: true, person_id: true, onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true } });
   if (!prof) throw new OnboardingError("No provider profile for this user", "NOT_A_PROVIDER");
-  const types = await listServiceTypes();
+  const types = await listServiceTypes(prof.person_id);
   const typeId = (n: string) => types.find((t) => t.name === n)?.id ?? null;
   const onsite = prof.onsite_rate_cents ?? (prof.remote_rate_cents == null ? prof.hourly_rate_cents : null);
   const wanted = [

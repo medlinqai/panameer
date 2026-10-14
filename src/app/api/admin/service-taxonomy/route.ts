@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { writeAudit } from "@/lib/admin/audit";
-import { addBusinessType, addCategory, addType, approve, merge, move, removeAt, rename, renameAt, setDefaultOn, setHidden, updateType } from "@/lib/service-taxonomy-admin";
+import { addBusinessType, addCategory, addType, approve, merge, move, removeAt, rename, renameAt, setDefaultOn, setDescription, setHidden, updateType } from "@/lib/service-taxonomy-admin";
 
 const UNITS = ["HOUR", "DAY", "WEEK", "MONTH", "SESSION", "VISIT", "EACH"] as const;
 const Body = z.discriminatedUnion("action", [
@@ -14,7 +14,8 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("defaultOn"), id: z.string().uuid(), on: z.boolean() }),
   z.object({ action: z.literal("addBusinessType"), id: z.string().uuid(), name: z.string().min(2).max(60) }),
   z.object({ action: z.literal("addCategory"), id: z.string().uuid(), name: z.string().min(2).max(60), kind: z.enum(["SERVICE", "SERVICE_PRODUCT"]) }),
-  z.object({ action: z.literal("addType"), id: z.string().uuid(), to: z.enum(["category", "businessType"]), name: z.string().min(2).max(60) }),
+  z.object({ action: z.literal("addType"), id: z.string().uuid(), to: z.enum(["category", "businessType", "commodity"]), name: z.string().min(2).max(60) }),
+  z.object({ action: z.literal("describe"), level: z.enum(["group", "businessType"]), id: z.string().uuid(), description: z.string().max(300) }),
   z.object({ action: z.literal("approve"), id: z.string().uuid(), categoryId: z.string().uuid() }),
   z.object({ action: z.literal("rename"), id: z.string().uuid(), name: z.string().min(3).max(60) }),
   z.object({ action: z.literal("merge"), id: z.string().uuid(), into: z.string().uuid() }),
@@ -38,7 +39,8 @@ export async function POST(req: Request) {
     else if (d.action === "defaultOn") await setDefaultOn(d.id, d.on);
     else if (d.action === "addBusinessType") await addBusinessType(d.id, d.name);
     else if (d.action === "addCategory") await addCategory(d.id, d.name, d.kind);
-    else if (d.action === "addType") await addType(d.to === "category" ? { categoryId: d.id } : { businessTypeId: d.id }, d.name);
+    else if (d.action === "addType") await addType(d.to === "category" ? { categoryId: d.id } : d.to === "commodity" ? { commodityGroupId: d.id } : { businessTypeId: d.id }, d.name);
+    else if (d.action === "describe") await setDescription(d.level, d.id, d.description);
     else await merge(d.id, d.into);
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });
