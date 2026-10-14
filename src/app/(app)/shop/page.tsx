@@ -4,6 +4,7 @@ import { memberOrPublicTwin } from "@/lib/public-twin";
 import { listShopProducts } from "@/lib/shop";
 import { prisma } from "@/lib/prisma";
 import { ShopTabs } from "@/components/shop/ShopTabs";
+import { taxonomyV2 } from "@/lib/platform-settings";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ShowMore } from "@/components/shop/ShowMore";
 import { FilterBar, type FilterDef } from "@/components/casing/FilterBar";
@@ -46,7 +47,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sho
 
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl">
-      <ShopTabs />
+      <ShopTabs services={await taxonomyV2()} />
       <h1 className="mb-3 mt-2 text-[24px] font-bold">Popular Service Products</h1>
       <Suspense>
         <FilterBar placeholder="Search service products…" filters={filters} />

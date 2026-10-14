@@ -348,6 +348,7 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: "Build Plan", href: "/admin/build-plan", icon: "ListChecks" },
       { label: "Users", href: "/admin/users", icon: "ArrowLeftRight" },
       { label: "Service Taxonomy", href: "/admin/service-taxonomy", icon: "FolderTree" },
+      { label: "Global Taxonomy", href: "/admin/global-taxonomy", icon: "FolderTree" },
       { label: "Areas & Skills", href: "/admin/skill-catalog", icon: "FolderTree" },
       { label: "Specializations", href: "/admin/specializations", icon: "Award" },
       { label: "Glossary", href: "/admin/glossary", icon: "BookOpen" },

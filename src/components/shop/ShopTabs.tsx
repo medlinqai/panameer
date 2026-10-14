@@ -7,13 +7,15 @@ import { PageTabs } from "@/components/casing/PageTabs";
 import { useMe } from "@/components/MeProvider";
 
 // WS-E004: SHOP | Service Products · My Estimates · Cart (count), and a black Sell on Panameer menu at the right.
-export function ShopTabs() {
+export function ShopTabs({ services = false }: { services?: boolean } = {}) {
   const pathname = usePathname() ?? "";
   const { me } = useMe();
   const cart = me?.cartCount ?? 0;
-  const current = pathname.startsWith("/cart") ? "/cart" : pathname.startsWith("/estimates") ? "/estimates" : "/shop";
+  const current = pathname.startsWith("/cart") ? "/cart" : pathname.startsWith("/estimates") ? "/estimates" : pathname.startsWith("/shop/services") ? "/shop/services" : "/shop";
+  // GT-E005: Services tab only while taxonomy_v2 is on (the server page passes it).
   const tabs = [
     { label: "Service Products", href: "/shop" },
+    ...(services ? [{ label: "Services", href: "/shop/services" }] : []),
     { label: "My Estimates", href: "/estimates" },
     { label: "Cart", href: "/cart", badge: cart },
   ];
