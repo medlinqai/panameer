@@ -1,4 +1,5 @@
 import { catalogServicesFor } from "@/lib/my-catalog";
+import { CapabilityLines } from "@/components/profile/CapabilityLines";
 import { RecommendMe } from "@/components/community/RecommendMe";
 import { followState } from "@/lib/follow";
 import { FollowButton } from "@/components/community/FollowButton";
@@ -209,6 +210,7 @@ export default async function PublicProviderPage({
         {/* name card carries name, title and location only. */}
         {/* THE SAME CLEAN SURFACE, BECAUSE THE COMPONENT IS SHARED */}
         <div className="account-surface">
+        <CapabilityLines profileId={profile.id} owner={false} />
         <ConnectProfile
           p={profile}
           taughtPaths={taughtPaths}

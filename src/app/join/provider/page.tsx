@@ -1,6 +1,7 @@
 "use client";
 
 import { roleLong } from "@/lib/role-labels";
+import { CapabilitiesEditor } from "@/components/profile/CapabilitiesEditor";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -1716,6 +1717,8 @@ setScreen(target);
           })}
         >
           {error && <Notice>{error}</Notice>}
+          {/* GT-E004: renders nothing while taxonomy_v2 is off. */}
+          <CapabilitiesEditor />
           {ed.body}
         </WizardShell>
       );

@@ -8,6 +8,7 @@ import { jobKey } from "@/lib/resume/job-key";
 import { readTimeRemaining, READ_BUDGET_MS } from "@/lib/resume/budget";
 import { splitCertificationName } from "@/lib/resume/certification-names";
 import { markResumePrefill } from "@/lib/resume/prefill";
+import { capabilitiesFromSkills } from "@/lib/capabilities";
 import { prisma } from "@/lib/prisma";
 import { extractText, ExtractError } from "@/lib/resume/extract";
 import { parseResume, type ParsedResume } from "@/lib/resume/parse";
@@ -469,6 +470,7 @@ export async function applyParsedResume(
     },
   });
   if (!profile) return applied;
+  const capPicks: { skillIds: string[]; text: string }[] = [];
 
   // --- Headline + bio: fill only when empty (never overwrite typed text) ---
   const data: Prisma.ProviderProfileUpdateInput = {};
@@ -561,6 +563,7 @@ export async function applyParsedResume(
     if (e.employer) employerIdByName.set(e.employer, employer.id);
     applied.experiences++;
     applied.jobSkills += found.skillIds.length;
+    capPicks.push({ skillIds: found.skillIds, text: block });
     if (found.needsSuite) applied.needsSuite++;
   }
 
@@ -696,6 +699,7 @@ export async function applyParsedResume(
     applied.skillsUnmatched = skillUnmatched;
     applied.skillSuggestions = suggestableSkills(skillUnmatched);
     applied.skillsMatchedNames = matched.map((m) => m.name);
+    capPicks.push({ skillIds: matched.map((m) => m.id), text: text ?? "" });
 
     const have = new Set(profile.skills.map((s) => s.skill_id));
     const toAdd = matched.filter((m) => !have.has(m.id));
@@ -760,6 +764,8 @@ export async function applyParsedResume(
     applied.languages++;
   }
 
+  // GT-E004: matching above is unchanged; behind taxonomy_v2 the matched skills also become unconfirmed capabilities.
+  await capabilitiesFromSkills(profileId, capPicks).catch(() => 0);
   await markResumePrefill(profileId, applied, text);
   return applied;
 }
