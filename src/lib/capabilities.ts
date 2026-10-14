@@ -37,7 +37,13 @@ export function capabilityLine(c: Row): string {
 
 export async function capabilitiesFor(profileId: string) {
   const rows = await prisma.providerCapability.findMany({ where: { provider_profile_id: profileId }, include: INCLUDE, orderBy: [{ confirmed_at: { sort: "desc", nulls: "last" } }, { created_at: "asc" }] });
-  return rows.map((c) => ({ id: c.id, line: capabilityLine(c), mode: c.mode, source: c.source, confirmed: !!c.confirmed_at || c.source === "SELF" }));
+  return rows.map((c) => ({
+    id: c.id, line: capabilityLine(c), mode: c.mode, source: c.source, confirmed: !!c.confirmed_at || c.source === "SELF",
+    // For grouped display: "Implements · Oracle Fusion Cloud" › Procure-to-Pay › Purchase Orders.
+    system: c.systemItem ? `${c.systemItem.product.vendor.name === "Cross-Vendor" ? "" : `${c.systemItem.product.vendor.name} `}${c.systemItem.product.name}`.trim() : null,
+    process: c.domain?.process ?? null,
+    label: c.systemItem?.name ?? c.workRole?.name ?? [c.domain?.name, c.knowledgeSkill?.name].filter(Boolean).join(" › ") ?? "",
+  }));
 }
 
 /** The three pickers' options: processes › domains › skills, vendors › products › items (with domain), roles by mode. */

@@ -1,5 +1,6 @@
 import { catalogServicesFor } from "@/lib/my-catalog";
 import { CapabilityLines } from "@/components/profile/CapabilityLines";
+import { taxonomyV2 } from "@/lib/platform-settings";
 import { myEstimates } from "@/lib/estimates";
 import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
@@ -76,8 +77,8 @@ export default async function MyProfilePage() {
       {/* THE CLEAN SURFACE STARTS HERE, BELOW THE MENUING WS-A) */}
       <div className="account-surface">
       {prefill?.fields?.length ? <ResumePrefillBanner fields={prefill.fields} /> : null}
-      <CapabilityLines profileId={profile.id} owner />
       <ConnectProfile
+        whatIDo={(await taxonomyV2()) ? <CapabilityLines profileId={profile.id} owner /> : undefined}
         // above. The view model carries `null` for every other surface.
         p={{ ...profile, publicUrl }}
         // per viewer per day, counted all time — the `Counters` decision, not a

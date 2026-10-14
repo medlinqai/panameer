@@ -65,6 +65,7 @@ import {
 /** NO DIVIDER LINES INSIDE A CARD WS-B item 4) */
 export function ConnectProfile({
   p,
+  whatIDo,
   taughtPaths = [],
   takenPaths = [],
   // HERE WS-B), and that is THE PAGE RULE, not an omission.
@@ -89,6 +90,8 @@ export function ConnectProfile({
   shopCards = [],
 }: {
   p: ProviderProfileView;
+  /** Global Taxonomy on (Scott 10-14): "What I Do" replaces the Skills card. */
+  whatIDo?: ReactNode;
   /** CAT-E001: services — owner sees drafts too; visitors only published. */
   catalogServices?: CatalogService[];
   /** CAT-E001: owner-only — never passed for a visitor. */
@@ -782,7 +785,8 @@ export function ConnectProfile({
         {!owner && servicesSection}
         {!owner && serviceProducts}
 
-        {/* SKILLS AND SPECIALIZATIONS ARE TWO CARDS AGAIN (WS-B) */}
+        {/* SKILLS AND SPECIALIZATIONS ARE TWO CARDS AGAIN (WS-B) — Global Taxonomy on: What I Do instead of Skills */}
+        {whatIDo ? <div id="skills">{whatIDo}</div> : (<>
         <CleanSection
           id="skills"
           // CLOSED AT LOAD , Scott 2026-09-30)
@@ -813,6 +817,7 @@ export function ConnectProfile({
             </p>
           )}
         </CleanSection>
+        </>)}
 
         {/* SPECIALIZATIONS SPANS THE PAGE WS-C 1 + 3) */}
         <CleanSection
