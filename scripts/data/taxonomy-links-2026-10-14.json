@@ -964,11 +964,11 @@
     "Procure-to-Pay",
     "Requisitioning & Demand Management"
    ],
-   "action": "merge",
-   "into": {
+   "action": "move",
+   "rename": "Purchase Requisitions",
+   "to": {
     "vendor": "Oracle",
-    "product": "Fusion Cloud",
-    "item": "Requisitions"
+    "product": "Fusion Cloud"
    }
   },
   {
@@ -1959,7 +1959,7 @@
    "into": {
     "vendor": "Oracle",
     "product": "Fusion Cloud",
-    "item": "BIP Reporting"
+    "item": "BI Publisher"
    }
   },
   {
@@ -2254,7 +2254,7 @@
    "into": {
     "vendor": "Oracle",
     "product": "Fusion Cloud",
-    "item": "Cash Mgt"
+    "item": "Cash Management"
    }
   },
   {
@@ -2272,11 +2272,11 @@
     "Record-to-Report",
     "Fixed Assets & Lease Accounting"
    ],
-   "action": "merge",
-   "into": {
+   "action": "move",
+   "rename": "Fixed Assets",
+   "to": {
     "vendor": "Oracle",
-    "product": "Fusion Cloud",
-    "item": "Fixed Assets"
+    "product": "Fusion Cloud"
    }
   },
   {
@@ -2387,11 +2387,11 @@
     "Procure-to-Pay",
     "Contract Management"
    ],
-   "action": "merge",
-   "into": {
+   "action": "move",
+   "rename": "Purchase Agreements",
+   "to": {
     "vendor": "Oracle",
-    "product": "Fusion Cloud",
-    "item": "Purchase Agreements"
+    "product": "Fusion Cloud"
    }
   },
   {
@@ -2471,7 +2471,7 @@
    "into": {
     "vendor": "Oracle",
     "product": "Fusion Cloud",
-    "item": "Sourcing/Negotiations"
+    "item": "Sourcing"
    }
   },
   {
@@ -2499,11 +2499,11 @@
     "Plan-to-Produce",
     "Product Lifecycle & Item Management"
    ],
-   "action": "merge",
-   "into": {
+   "action": "move",
+   "rename": "Product Information Management",
+   "to": {
     "vendor": "Oracle",
-    "product": "Fusion Cloud",
-    "item": "Product Information Management"
+    "product": "Fusion Cloud"
    }
   },
   {
