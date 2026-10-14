@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Field } from "@/components/onboarding/controls";
+import { HelpTip } from "@/components/ui/HelpTip";
 
-export type BT = { id: string; name: string; group: string };
+export type BT = { id: string; name: string; group: string; description?: string | null; groupDescription?: string | null };
+const LABEL = "mb-1.5 flex items-center text-[14px] font-bold text-ink";
 const SELECT = "w-full border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta";
 
 // Scott 10-14: two steps — Commodity Group (by name), then the Business Types in it. Only groups that hold a
@@ -19,23 +20,27 @@ export function BusinessTypePicker({ types, commodities = [], value, onChange, h
   return (
     <>
       {groups.length > 0 && (
-        <Field label="Commodity" hint="What kind of services your company sells.">
+        <div>
+          <span className={LABEL}>Commodity<HelpTip label={group || "Commodity"} text={group ? inGroup[0]?.groupDescription ?? "What kind of services your company sells." : "What kind of services your company sells — pick one to see examples."} /></span>
           <select value={group} onChange={(e) => { setPicked(e.target.value); onChange(""); }} className={SELECT} data-commodity-group>
             <option value="">Pick a commodity</option>
             {groups.map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
-        </Field>
+          <span className="mt-1 block text-[13px] text-ink-2">What kind of services your company sells.</span>
+        </div>
       )}
       {group && inGroup.length === 0 && (
         <p className="-mt-2 mb-4 text-[13px] text-ink-2" data-commodity-empty>Business Types for {group} are coming soon. Pick another commodity for now.</p>
       )}
       {group && inGroup.length > 0 && (
-        <Field label="Business Type" hint={hint}>
+        <div>
+          <span className={LABEL}>Business Type<HelpTip label={inGroup.find((b) => b.id === value)?.name ?? "Business Type"} text={inGroup.find((b) => b.id === value)?.description ?? inGroup.map((b) => b.name).join(" · ")} /></span>
           <select value={value} onChange={(e) => onChange(e.target.value)} className={SELECT} data-business-type>
             <option value="">Pick a business type</option>
             {inGroup.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
-        </Field>
+          <span className="mt-1 block text-[13px] text-ink-2">{hint}</span>
+        </div>
       )}
     </>
   );

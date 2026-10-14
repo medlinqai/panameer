@@ -10,7 +10,7 @@ export async function offeredBusinessTypes() {
   const rows = await prisma.businessType.findMany({
     where: { hidden: false, commodity_group_id: { not: null } },
     orderBy: [{ sort_order: "asc" }, { name: "asc" }],
-    select: { id: true, name: true, uses_skills: true, commodityGroup: { select: { name: true, sort_order: true } } },
+    select: { id: true, name: true, description: true, uses_skills: true, commodityGroup: { select: { name: true, sort_order: true, description: true } } },
   });
   // Group order first (stable sort keeps type order inside a group).
   return rows.sort((a, b) => (a.commodityGroup?.sort_order ?? 0) - (b.commodityGroup?.sort_order ?? 0));
