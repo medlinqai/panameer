@@ -76,6 +76,21 @@ export async function addCapability(viewer: Viewer, input: { mode: WorkMode; dom
   await prisma.providerCapability.create({ data: { provider_profile_id: p.id, domain_id: d.id, knowledge_skill_id: ks?.id ?? null, system_item_id: item?.id ?? null, work_role_id: role?.id ?? null, mode: input.mode, source: "SELF", confirmed_at: new Date() } });
 }
 
+/** Scott 10-14: tick many at once. One capability per system item (its own domain if it has one among the picks,
+ *  else the first picked domain), plus one per picked domain no item covers. Already-there rows are skipped, not errors. */
+export async function addCapabilities(viewer: Viewer, input: { mode: WorkMode; domainIds: string[]; systemItemIds: string[]; workRoleId?: string | null }) {
+  if (!input.domainIds.length) throw new CapabilityError("Pick what you know");
+  const items = await prisma.systemItem.findMany({ where: { id: { in: input.systemItemIds } }, select: { id: true, domain_id: true } });
+  const pairs: { domainId: string; systemItemId: string | null }[] = items.map((i) => ({ domainId: i.domain_id && input.domainIds.includes(i.domain_id) ? i.domain_id : i.domain_id ?? input.domainIds[0], systemItemId: i.id }));
+  for (const d of input.domainIds) if (!pairs.some((x) => x.domainId === d)) pairs.push({ domainId: d, systemItemId: null });
+  let added = 0;
+  for (const x of pairs) {
+    try { await addCapability(viewer, { mode: input.mode, domainId: x.domainId, systemItemId: x.systemItemId, workRoleId: input.workRoleId }); added++; }
+    catch (e) { if (!(e instanceof CapabilityError) || !/already/.test(e.message)) throw e; }
+  }
+  return added;
+}
+
 /** "Confirm" on a LEGACY / résumé capability — optionally correcting the mode. */
 export async function confirmCapability(viewer: Viewer, id: string, mode?: WorkMode) {
   const p = await me(viewer);

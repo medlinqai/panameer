@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { taxonomyV2 } from "@/lib/platform-settings";
-import { CapabilityError, addCapability, capabilityOptions, confirmCapability, myCapabilities, removeCapability } from "@/lib/capabilities";
+import { CapabilityError, addCapability, addCapabilities, capabilityOptions, confirmCapability, myCapabilities, removeCapability } from "@/lib/capabilities";
 
 const MODE = z.enum(["IMPLEMENT", "SUPPORT", "OPERATE"]);
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("add"), mode: MODE, domainId: z.string().uuid(), knowledgeSkillId: z.string().uuid().nullable().optional(), systemItemId: z.string().uuid().nullable().optional(), workRoleId: z.string().uuid().nullable().optional() }),
+  z.object({ action: z.literal("addMany"), mode: MODE, domainIds: z.array(z.string().uuid()).max(200), systemItemIds: z.array(z.string().uuid()).max(500), workRoleId: z.string().uuid().nullable().optional() }),
   z.object({ action: z.literal("confirm"), id: z.string().uuid(), mode: MODE.optional() }),
   z.object({ action: z.literal("remove"), id: z.string().uuid() }),
 ]);
@@ -27,10 +28,12 @@ export async function POST(req: Request) {
   if (!b.success) return NextResponse.json({ error: "Bad request" }, { status: 400 });
   try {
     const d = b.data;
+    let added: number | undefined;
     if (d.action === "add") await addCapability(viewer, d);
+    else if (d.action === "addMany") added = await addCapabilities(viewer, d);
     else if (d.action === "confirm") await confirmCapability(viewer, d.id, d.mode);
     else await removeCapability(viewer, d.id);
-    return NextResponse.json({ ok: true, capabilities: await myCapabilities(viewer) });
+    return NextResponse.json({ ok: true, added, capabilities: await myCapabilities(viewer) });
   } catch (e) {
     if (e instanceof CapabilityError) return NextResponse.json({ error: e.message }, { status: 400 });
     throw e;
