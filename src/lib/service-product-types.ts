@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { sellerTypeByName } from "@/lib/business-types";
 
 // WS-E008 / TX-E006: Shop › Service Type. Reads the Service Taxonomy once seeded; before that, the WS-E008 list.
 export const BASELINE_PRODUCT_TYPES: { name: string; group: "Build" | "Run" }[] = [
@@ -44,7 +45,7 @@ export async function suggestProductType(name: string, personId: string) {
   const clean = name.trim().replace(/\s+/g, " ").slice(0, 60);
   if (clean.length < 3) throw new Error("Give the service type a name");
   if (await taxonomyLoaded()) {
-    const t = await prisma.serviceType.findFirst({ where: { name: { equals: clean, mode: "insensitive" } } });
+    const t = await sellerTypeByName(personId, clean);
     if (t) return { id: t.merged_into_id ?? t.id, existing: true };
     const row = await prisma.serviceType.create({ data: { name: clean, kind: "SERVICE_PRODUCT", status: "SUGGESTED", created_by_person_id: personId }, select: { id: true } });
     return { id: row.id, existing: false };

@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 
@@ -45,6 +46,19 @@ export async function personBusinessTypes(personId: string) {
   const m = await prisma.companyMembership.findFirst({ where: { person_id: personId, status: "APPROVED" }, select: { company_id: true } });
   if (!m) return [];
   return prisma.businessType.findMany({ where: { companies: { some: { company_id: m.company_id } } }, orderBy: { sort_order: "asc" }, select: { id: true, name: true } });
+}
+
+/** TX2-E001: the service categories a seller can use — its business types' own plus their commodities' Rates. */
+export async function sellerCategoryWhere(personId: string): Promise<Prisma.ServiceCategoryWhereInput> {
+  const bts = await personBusinessTypes(personId);
+  const groups = (await prisma.businessType.findMany({ where: { id: { in: bts.map((b) => b.id) } }, select: { commodity_group_id: true } })).map((b) => b.commodity_group_id).filter((x): x is string => !!x);
+  return { OR: [{ business_type_id: { in: bts.map((b) => b.id) } }, { commodity_group_id: { in: groups } }] };
+}
+
+/** TX2-E001: names are unique per category, so a name lookup is scoped to the seller's categories (or their own uncategorised suggestions). */
+export async function sellerTypeByName(personId: string, name: string) {
+  const cats = await sellerCategoryWhere(personId);
+  return prisma.serviceType.findFirst({ where: { name: { equals: name, mode: "insensitive" }, OR: [{ serviceCategory: cats }, { service_category_id: null, created_by_person_id: personId }] } });
 }
 
 /** BT-E001: a seller company — it has a business type, or a member who sells. Sellers get Industries You Serve; buyers keep Industry. */

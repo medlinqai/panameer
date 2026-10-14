@@ -1,5 +1,6 @@
 import type { ServiceKind, ServiceUnit } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { sellerTypeByName } from "@/lib/business-types";
 import { companyIdForProfile } from "@/lib/company-catalog";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { publishGate } from "@/lib/my-catalog";
@@ -104,7 +105,7 @@ export async function addCustomRate(viewer: Viewer, input: { name: string; unit:
   if (name.length < 3) throw new Error("Give it a name");
   const bts = await personBusinessTypes(p.person_id);
   if (!bts.length) throw new Error("Pick your company's business type first");
-  const hit = await prisma.serviceType.findFirst({ where: { name: { equals: name, mode: "insensitive" } } });
+  const hit = await sellerTypeByName(p.person_id, name);
   if (hit && hit.status !== "SUGGESTED") throw new Error(`"${hit.name}" is already a rate type — turn it on above`);
   const cat = await prisma.serviceCategory.findFirst({ where: { business_type_id: { in: bts.map((b) => b.id) }, kind: "SERVICE", hidden: false }, orderBy: { sort_order: "asc" }, select: { id: true } });
   const t = hit ?? (await prisma.serviceType.create({ data: { name, kind: "SERVICE", status: "SUGGESTED", created_by_person_id: p.person_id, service_category_id: cat?.id ?? null, units: [input.unit], delivery: input.delivery, pricing_model: input.unit === "MONTH" ? "RECURRING" : "TIME", sort_order: 900 } }));
@@ -116,7 +117,7 @@ export async function suggestType(viewer: Viewer, name: string, kind: ServiceKin
   const p = await me(viewer);
   const clean = name.trim().replace(/\s+/g, " ").slice(0, 60);
   if (clean.length < 3) throw new Error("Give it a name");
-  const hit = await prisma.serviceType.findFirst({ where: { name: { equals: clean, mode: "insensitive" } } });
+  const hit = await sellerTypeByName(p.person_id, clean);
   if (hit) return { existing: true };
   await prisma.serviceType.create({ data: { name: clean, kind, status: "SUGGESTED", created_by_person_id: p.person_id } });
   return { existing: false };

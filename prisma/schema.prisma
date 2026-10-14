@@ -8556,7 +8556,8 @@ model PunchoutSession {
 /// CAT-E002: service types — Panameer's baseline list plus ones providers add (reviewed in Admin › Business Type Taxonomy).
 model ServiceType {
   id                   String    @id @default(uuid()) @db.Uuid
-  name                 String    @unique
+  /// TX2-E001: unique within its category ("Onsite Hourly" lives in Professional Services and Technology).
+  name                 String
   is_baseline          Boolean   @default(false)
   created_by_person_id String?   @db.Uuid
   /// Set when an admin folds a custom type into another (merge).
@@ -8585,6 +8586,7 @@ model ServiceType {
   serviceCategory     ServiceCategory?  @relation(fields: [service_category_id], references: [id], onDelete: SetNull)
   serviceProducts     ServiceProduct[]
 
+  @@unique([service_category_id, name])
   @@map("service_types")
 }
 
@@ -8789,9 +8791,12 @@ model CommodityGroup {
   sort_order      Int            @default(100)
   /// Parked groups stay hidden (not offered yet).
   hidden          Boolean        @default(false)
+  /// TX2-E001: plain-words examples shown behind the ? in the Business Type picker.
+  description     String?
   created_at      DateTime       @default(now())
   businessTypes   BusinessType[]
   buySettings     BuySetting[]
+  serviceCategories ServiceCategory[]
 
   @@map("commodity_groups")
 }
@@ -8799,17 +8804,21 @@ model CommodityGroup {
 /// TX-E001: Level 3 — about five per business type (Consulting · Project Support · … · Build · Run).
 model ServiceCategory {
   id               String        @id @default(uuid()) @db.Uuid
-  business_type_id String        @db.Uuid
+  /// TX2-E001: exactly one of business_type_id / commodity_group_id is set; commodity-level = that commodity's Rates.
+  business_type_id   String?        @db.Uuid
+  commodity_group_id String?        @db.Uuid
   name             String
   kind             ServiceKind
   sort_order       Int           @default(100)
   /// MC-E004/E007: hidden by an admin (e.g. emptied by the rate-types fold).
   hidden           Boolean       @default(false)
   created_at       DateTime      @default(now())
-  businessType     BusinessType  @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  businessType     BusinessType?  @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  commodityGroup   CommodityGroup? @relation(fields: [commodity_group_id], references: [id], onDelete: Cascade)
   serviceTypes     ServiceType[]
 
   @@unique([business_type_id, name])
+  @@unique([commodity_group_id, name])
   @@map("service_categories")
 }
 

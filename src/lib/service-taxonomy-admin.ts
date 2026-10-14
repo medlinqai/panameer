@@ -89,10 +89,11 @@ export async function addCategory(businessTypeId: string, name: string, kind: "S
 /** A Rate Type goes into the business type's SERVICE category (created as "Rates" when it has none). */
 export async function addType(target: { categoryId: string } | { businessTypeId: string }, name: string) {
   const n = cleanName(name);
-  if (await prisma.serviceType.findFirst({ where: { name: { equals: n, mode: "insensitive" } }, select: { id: true } })) throw new Error("A type with that name already exists");
   const cat = "categoryId" in target
     ? await prisma.serviceCategory.findUniqueOrThrow({ where: { id: target.categoryId }, select: { id: true, kind: true } })
     : (await prisma.serviceCategory.findFirst({ where: { business_type_id: target.businessTypeId, kind: "SERVICE" }, orderBy: { sort_order: "asc" }, select: { id: true, kind: true } })) ?? (await addCategory(target.businessTypeId, "Rates", "SERVICE"));
+  // TX2-E001: names are unique within a category.
+  if (await prisma.serviceType.findFirst({ where: { service_category_id: cat.id, name: { equals: n, mode: "insensitive" } }, select: { id: true } })) throw new Error("A type with that name already exists here");
   const sibs = await prisma.serviceType.findMany({ where: { service_category_id: cat.id }, select: { sort_order: true } });
   await prisma.serviceType.create({
     data: { name: n, kind: cat.kind, status: "STOCK", is_baseline: true, service_category_id: cat.id, sort_order: nextSort(sibs), ...(cat.kind === "SERVICE" ? { pricing_model: "TIME", units: ["HOUR"], delivery: "OFFSITE" } : { pricing_model: "FIXED", units: ["EACH"], delivery: "OFFSITE" }) },
@@ -103,7 +104,8 @@ export async function renameAt(level: Exclude<Level, "group">, id: string, name:
   if (level === "businessType") await prisma.businessType.update({ where: { id }, data: { name: n } });
   else if (level === "category") await prisma.serviceCategory.update({ where: { id }, data: { name: n } });
   else {
-    if (await prisma.serviceType.findFirst({ where: { name: { equals: n, mode: "insensitive" }, NOT: { id } }, select: { id: true } })) throw new Error("A type with that name already exists");
+    const cur = await prisma.serviceType.findUniqueOrThrow({ where: { id }, select: { service_category_id: true } });
+    if (await prisma.serviceType.findFirst({ where: { service_category_id: cur.service_category_id, name: { equals: n, mode: "insensitive" }, NOT: { id } }, select: { id: true } })) throw new Error("A type with that name already exists here");
     await prisma.serviceType.update({ where: { id }, data: { name: n } });
   }
 }

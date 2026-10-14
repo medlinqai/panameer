@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { sellerTypeByName } from "@/lib/business-types";
 import { effectiveRates } from "@/lib/company-catalog";
 import { termsLine } from "@/lib/billing-terms";
 
@@ -19,7 +20,7 @@ export async function listServiceTypes() {
 export async function addServiceType(name: string, personId: string) {
   const clean = name.trim().replace(/\s+/g, " ").slice(0, 60);
   if (clean.length < 3) throw new Error("Give the service type a name");
-  const hit = await prisma.serviceType.findFirst({ where: { name: { equals: clean, mode: "insensitive" } } });
+  const hit = await sellerTypeByName(personId, clean);
   if (hit) return hit.merged_into_id ? (await prisma.serviceType.findUnique({ where: { id: hit.merged_into_id } }))! : hit;
   return prisma.serviceType.create({ data: { name: clean, created_by_person_id: personId, status: "SUGGESTED" } });
 }

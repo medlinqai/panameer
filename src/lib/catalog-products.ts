@@ -1,5 +1,6 @@
 import type { PaymentEvent, ServiceDelivery } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { sellerTypeByName } from "@/lib/business-types";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { sellGaps } from "@/lib/gate-reads";
 import { publishGate } from "@/lib/my-catalog";
@@ -56,7 +57,7 @@ export async function addProductType(viewer: Viewer, rawName: string) {
   const p = await me(viewer);
   const name = rawName.trim().replace(/\s+/g, " ").slice(0, 60);
   if (name.length < 3) throw new Error("Give it a name");
-  const hit = await prisma.serviceType.findFirst({ where: { name: { equals: name, mode: "insensitive" } } });
+  const hit = await sellerTypeByName(p.person_id, name);
   if (hit && hit.status !== "SUGGESTED") throw new Error(`"${hit.name}" is already a type — pick it from the list`);
   if (hit) return { id: hit.id, name: hit.name };
   const bts = await personBusinessTypes(p.person_id);
