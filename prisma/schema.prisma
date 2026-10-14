@@ -662,6 +662,8 @@ model BusinessType {
   tags            SkillTag[]
   specializations Specialization[]
 
+  processes         BusinessTypeProcess[]
+
   @@map("business_types")
 }
 
@@ -950,6 +952,11 @@ model Domain {
 
   bridges  DomainModuleBridge[]
   serviceProducts ServiceProductDomain[]
+  /// GT-E002: set on rows the Global Taxonomy added ("GT_2026_10_14"); null = existing rows (never touched).
+  origin             String?
+  knowledgeSkills    KnowledgeSkill[]
+  systemItems        SystemItem[]
+  providerCapabilities ProviderCapability[]
 
   @@unique([process, name])
   /// One key per process — the join the value model depends on.
@@ -1372,6 +1379,7 @@ model ProviderProfile {
   @@index([pillar_id])
   @@index([role_id])
   @@map("provider_profiles")
+  capabilities      ProviderCapability[]
 }
 
 /// ── ⚠⚠ THE PERSONAL PUBLIC URL — `/in/<slug>` (`P2-A1.1-E738`) ────────────
@@ -8975,4 +8983,157 @@ model PayoutRequirement {
   updated_by           String?  @db.Uuid
 
   @@map("payout_requirements")
+}
+
+/// GT-E001: platform switches (Admin › Settings). key → JSON value; a missing row means the default.
+model PlatformSetting {
+  key        String   @id
+  value      Json
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@map("platform_settings")
+}
+
+// ── GT-E002: Global Taxonomy (Scott 2026-10-14) — four lists, behind `taxonomy_v2`, fully reversible ──────────────
+// Knowledge = Process › Capability Domain (`domains`) › KnowledgeSkill · Systems = Vendor › Product › Item ·
+// Way of Working = WorkMode › WorkRole. Every row carries `origin`; rollback deletes origin = 'GT_2026_10_14' only.
+
+enum WorkMode {
+  IMPLEMENT
+  SUPPORT
+  OPERATE
+}
+
+enum SystemItemKind {
+  MODULE
+  TOOL
+}
+
+enum CapabilitySource {
+  LEGACY
+  SELF
+}
+
+model KnowledgeSkill {
+  id              String   @id @default(uuid()) @db.Uuid
+  domain_id       String   @db.Uuid
+  name            String
+  legacy_skill_id String?  @unique @db.Uuid
+  hidden          Boolean  @default(false)
+  sort_order      Int      @default(100)
+  origin          String   @default("GT_2026_10_14")
+  created_at      DateTime @default(now())
+  domain          Domain   @relation(fields: [domain_id], references: [id], onDelete: Cascade)
+  capabilities    ProviderCapability[]
+
+  @@unique([domain_id, name])
+  @@map("knowledge_skills")
+}
+
+model SystemVendor {
+  id         String          @id @default(uuid()) @db.Uuid
+  name       String          @unique
+  hidden     Boolean         @default(false)
+  sort_order Int             @default(100)
+  origin     String          @default("GT_2026_10_14")
+  created_at DateTime        @default(now())
+  products   SystemProduct[]
+
+  @@map("system_vendors")
+}
+
+model SystemProduct {
+  id         String       @id @default(uuid()) @db.Uuid
+  vendor_id  String       @db.Uuid
+  name       String
+  hidden     Boolean      @default(false)
+  sort_order Int          @default(100)
+  origin     String       @default("GT_2026_10_14")
+  created_at DateTime     @default(now())
+  vendor     SystemVendor @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+  items      SystemItem[]
+
+  @@unique([vendor_id, name])
+  @@map("system_products")
+}
+
+model SystemItem {
+  id              String         @id @default(uuid()) @db.Uuid
+  product_id      String         @db.Uuid
+  name            String
+  kind            SystemItemKind
+  /// The Knowledge domain this module/tool belongs to (re-linkable in admin).
+  domain_id       String?        @db.Uuid
+  legacy_skill_id String?        @unique @db.Uuid
+  hidden          Boolean        @default(false)
+  sort_order      Int            @default(100)
+  origin          String         @default("GT_2026_10_14")
+  created_at      DateTime       @default(now())
+  product         SystemProduct  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  domain          Domain?        @relation(fields: [domain_id], references: [id], onDelete: SetNull)
+  capabilities    ProviderCapability[]
+
+  @@unique([product_id, name])
+  @@index([domain_id])
+  @@map("system_items")
+}
+
+model WorkRole {
+  id              String   @id @default(uuid()) @db.Uuid
+  mode            WorkMode
+  name            String
+  legacy_skill_id String?  @unique @db.Uuid
+  hidden          Boolean  @default(false)
+  sort_order      Int      @default(100)
+  origin          String   @default("GT_2026_10_14")
+  created_at      DateTime @default(now())
+  capabilities    ProviderCapability[]
+
+  @@unique([mode, name])
+  @@map("work_roles")
+}
+
+/// A provider capability: Domain (+ optional Skill) + optional System item + Mode (+ optional Role).
+/// LEGACY rows come from today's ProviderSkill (unconfirmed until the provider confirms the mode).
+model ProviderCapability {
+  id                  String           @id @default(uuid()) @db.Uuid
+  provider_profile_id String           @db.Uuid
+  /// Null only for a LEGACY role-only skill (e.g. "Solution Architect") that names no domain.
+  domain_id           String?          @db.Uuid
+  knowledge_skill_id  String?          @db.Uuid
+  system_item_id      String?          @db.Uuid
+  mode                WorkMode
+  work_role_id        String?          @db.Uuid
+  source              CapabilitySource
+  /// The ProviderSkill's skill this came from (LEGACY backfill / résumé translation).
+  legacy_skill_id     String?          @db.Uuid
+  confirmed_at        DateTime?
+  origin              String           @default("GT_2026_10_14")
+  created_at          DateTime         @default(now())
+  updated_at          DateTime         @updatedAt
+  providerProfile     ProviderProfile  @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  domain              Domain?          @relation(fields: [domain_id], references: [id], onDelete: Cascade)
+  knowledgeSkill      KnowledgeSkill?  @relation(fields: [knowledge_skill_id], references: [id], onDelete: SetNull)
+  systemItem          SystemItem?      @relation(fields: [system_item_id], references: [id], onDelete: SetNull)
+  workRole            WorkRole?        @relation(fields: [work_role_id], references: [id], onDelete: SetNull)
+
+  @@unique([provider_profile_id, legacy_skill_id])
+  @@index([provider_profile_id])
+  @@index([domain_id])
+  @@index([system_item_id])
+  @@map("provider_capabilities")
+}
+
+/// Which Knowledge processes a business type uses (e.g. Corporate Systems → all ERP processes).
+model BusinessTypeProcess {
+  id               String       @id @default(uuid()) @db.Uuid
+  business_type_id String       @db.Uuid
+  process          String
+  origin           String       @default("GT_2026_10_14")
+  created_at       DateTime     @default(now())
+  businessType     BusinessType @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+
+  @@unique([business_type_id, process])
+  @@map("business_type_processes")
 }
