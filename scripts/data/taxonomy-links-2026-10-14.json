@@ -472,11 +472,11 @@
     "Technology & Integration",
     "Development & Extensibility"
    ],
-   "action": "merge",
-   "into": {
+   "action": "move",
+   "rename": "Visual Builder Studio",
+   "to": {
     "vendor": "Oracle",
-    "product": "Fusion Cloud",
-    "item": "VBCS"
+    "product": "Fusion Cloud"
    }
   },
   {
