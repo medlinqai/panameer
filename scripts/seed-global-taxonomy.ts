@@ -1,7 +1,7 @@
 // GT-E003: Global Taxonomy seed from scripts/data/global-taxonomy-2026-10-14.json (Scott 10-14).
 // Additive only: new Domain rows (origin GT), KnowledgeSkills, Systems (vendor › product › item), WorkRoles, and one LEGACY
-// ProviderCapability per live ProviderSkill. Existing rows are never changed. Items with no domain get a proposed one
-// (best name match inside their process, else anywhere) — CSV column link = proposed. Old business type "ERP" skills: noted, untouched.
+// ProviderCapability per live ProviderSkill. Existing rows are never changed. Only "given" item → domain links load (Scott 10-14);
+// a proposed one (best name match) is listed in the CSVs but saved as no domain. Old business type "ERP" skills: noted, untouched.
 // Dry run by default: writes scripts/out/global_taxonomy_dryrun.csv. Scott runs it with --apply. Undo: scripts/rollback-global-taxonomy.ts.
 // Run: npx tsx --env-file=.env.local scripts/seed-global-taxonomy.ts [--apply]
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -64,6 +64,7 @@ async function main() {
   for (const p of products) note("3 system product", "create", p);
   const allDomains = [...dom.values()];
   const linkStats = { given: 0, proposed: 0, none: 0 };
+  const unlinked: { vendor: string; product: string; item: string; kind: string; proposed: string }[] = [];
   const items: { key: string; vendor: string; product: string; name: string; kind: SystemItemKind; domain: string | null; legacy: string | null }[] = [];
   const seenItem = new Set<string>();
   for (const s of DATA.systems) {
@@ -87,9 +88,11 @@ async function main() {
       else { linkStats.none++; link = "none"; }
     }
     const dd = d ? dom.get(d)! : null;
-    items.push({ key, vendor: s.vendor, product: s.product, name: s.item, kind: s.kind === "Tool" ? "TOOL" : "MODULE", domain: d, legacy: s.legacy_skill_ids[0] ?? null });
+    const saved = link === "given" ? d : null;
+    if (link !== "given") unlinked.push({ vendor: s.vendor, product: s.product, item: s.item, kind: s.kind, proposed: dd ? `${dd.process} › ${dd.name}` : "" });
+    items.push({ key, vendor: s.vendor, product: s.product, name: s.item, kind: s.kind === "Tool" ? "TOOL" : "MODULE", domain: saved, legacy: s.legacy_skill_ids[0] ?? null });
     note("3 system item", "create", `${s.vendor} › ${s.product} › ${s.item}`, `${s.kind}${dd ? ` → ${dd.process} › ${dd.name}` : " → no domain"}`, link);
-    for (const id of s.legacy_skill_ids) claim(id, { kind: "system", domain: d, item: key, mode: "IMPLEMENT" }, `Systems ${s.item}`);
+    for (const id of s.legacy_skill_ids) claim(id, { kind: "system", domain: saved, item: key, mode: "IMPLEMENT" }, `Systems ${s.item}`);
   }
 
   // 4 · Way of Working roles.
@@ -112,10 +115,11 @@ async function main() {
   const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
   mkdirSync("scripts/out", { recursive: true });
   writeFileSync("scripts/out/global_taxonomy_dryrun.csv", ["step,action,target,detail,link", ...rows.map((r) => [r.step, r.action, r.target, r.detail, r.link].map(esc).join(","))].join("\n") + "\n");
+  writeFileSync("scripts/out/global_taxonomy_unlinked.csv", ["vendor,product,item,kind,proposed_domain", ...unlinked.map((u) => [u.vendor, u.product, u.item, u.kind, u.proposed].map(esc).join(","))].join("\n") + "\n");
   const summary = {
     applied: APPLY, newDomains: [...dom.values()].filter((d) => !d.id).length, knowledgeSkills: kskills.length, vendors: vendors.length, products: products.length, items: items.length, links: linkStats,
     workRoles: DATA.way_of_working.length, legacyMapped: map.size, duplicates: dups.length, capabilities: caps.length, unmappedProviderSkills: unmapped.length, oldErpSkills: erpSkills.length,
-    csv: "scripts/out/global_taxonomy_dryrun.csv",
+    unlinked: unlinked.length, csv: "scripts/out/global_taxonomy_dryrun.csv", unlinkedCsv: "scripts/out/global_taxonomy_unlinked.csv",
   };
   console.log(JSON.stringify(summary));
   if (!APPLY) return;
