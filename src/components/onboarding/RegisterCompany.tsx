@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Field, Notice, TextArea, TextInput } from "@/components/onboarding/controls";
 import { LegalLink } from "@/components/legal/LegalLink";
+import { BusinessTypePicker, type BT } from "@/components/company/BusinessTypePicker";
 
 type Match = { id: string; name: string } | null;
 const COMPANY_DESCRIPTION_MAX = 600;
@@ -14,7 +15,7 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
   const [description, setDescription] = useState("");
   const [attestation, setAttestation] = useState(false);
   const [companyTos, setCompanyTos] = useState(false);
-  const [businessTypes, setBusinessTypes] = useState<{ id: string; name: string }[]>([]);
+  const [businessTypes, setBusinessTypes] = useState<BT[]>([]);
   const [businessTypeId, setBusinessTypeId] = useState("");
   const [match, setMatch] = useState<Match>(null);
   const [busy, setBusy] = useState(false);
@@ -97,12 +98,7 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
               <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Your business name" autoComplete="organization" />
             </Field>
             {businessTypes.length > 0 && (
-              <Field label="Business Type" hint="What your company sells — it sets up your Service Catalog. You can add more later.">
-                <select value={businessTypeId} onChange={(e) => setBusinessTypeId(e.target.value)} className="w-full border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta">
-                  <option value="">Pick a business type</option>
-                  {businessTypes.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
-              </Field>
+              <BusinessTypePicker types={businessTypes} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog. You can add more later." />
             )}
             {/* BT-E001: a seller picks its Business Type (it selects the Service Catalog); Industries You Serve comes later on the company page. */}
             <Field label="Description (optional)" hint={`What the company does, in a sentence or two. Up to ${COMPANY_DESCRIPTION_MAX} characters.`}>

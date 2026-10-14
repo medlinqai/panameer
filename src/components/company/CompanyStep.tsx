@@ -6,6 +6,7 @@ import { Field, TextInput, Notice, OptionCard } from "@/components/onboarding/co
 /* THE ONE CANONICAL LIST (`E729` WS-C). */
 import { ALL_COUNTRIES } from "@/lib/country";
 import { CompanyLogoTile } from "@/components/company/CompanyLogoTile";
+import { BusinessTypePicker, type BT } from "@/components/company/BusinessTypePicker";
 /* IMPORTS KEPT FOR THE COMMENTED FIELD BLOCKS BELOW (`E408` / `E164`). */
 // } from "@/components/onboarding/LocationFields"
 
@@ -130,7 +131,7 @@ export function CompanyStep({
 
   // BT-E001: a seller defining a new company picks its Business Type (it selects the Service Catalog).
   const [seller, setSeller] = useState(false);
-  const [businessTypes, setBusinessTypes] = useState<{ id: string; name: string }[]>([]);
+  const [businessTypes, setBusinessTypes] = useState<BT[]>([]);
   const [businessTypeId, setBusinessTypeId] = useState("");
   useEffect(() => {
     fetch("/api/company/industries")
@@ -445,12 +446,7 @@ export function CompanyStep({
           </Field>
 
           {needsBusinessType && (
-            <Field label="Business Type" hint="What your company sells — it sets up your Service Catalog.">
-              <select value={businessTypeId} onChange={(e) => setBusinessTypeId(e.target.value)} className="w-full border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta" data-business-type>
-                <option value="">Pick a business type</option>
-                {businessTypes.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
-            </Field>
+            <BusinessTypePicker types={businessTypes} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog." />
           )}
 
           {/* OPTIONAL, AND THE HINT SAYS SO IN WORDS. Scott: *"most small */}

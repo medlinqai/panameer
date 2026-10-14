@@ -8,7 +8,7 @@ export const REAL_COMPANY = { NOT: { name: { startsWith: "MyCo Test" } }, member
 export async function offeredBusinessTypes() {
   return prisma.businessType.findMany({
     where: { hidden: false, commodity_group_id: { not: null } },
-    orderBy: [{ sort_order: "asc" }, { name: "asc" }],
+    orderBy: [{ commodityGroup: { sort_order: "asc" } }, { sort_order: "asc" }, { name: "asc" }],
     select: { id: true, name: true, uses_skills: true, commodityGroup: { select: { name: true } } },
   });
 }

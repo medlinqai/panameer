@@ -8,7 +8,7 @@ export async function GET() {
   const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;
   const industries = await prisma.specialization.findMany({ where: { kind: "INDUSTRY", status: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true } });
-  const businessTypes = (await offeredBusinessTypes()).map((b) => ({ id: b.id, name: b.name }));
+  const businessTypes = (await offeredBusinessTypes()).map((b) => ({ id: b.id, name: b.name, group: b.commodityGroup?.name ?? "" }));
   const seller = !!(await prisma.person.findUnique({ where: { user_id: gate.userId }, select: { is_service_provider: true } }))?.is_service_provider;
   return NextResponse.json({ industries, businessTypes, seller });
 }
