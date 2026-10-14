@@ -1,0 +1,2550 @@
+{
+ "source": "Panameer_Taxonomy_Links_2026-10-14.xlsx (Scott reviewed 10-14 19:13)",
+ "new_domains": [
+  [
+   "Procure-to-Pay",
+   "Travel & Expense Management"
+  ],
+  [
+   "Student Administration",
+   "Admissions & Recruiting"
+  ],
+  [
+   "Student Administration",
+   "Campus Community & Engagement"
+  ],
+  [
+   "Student Administration",
+   "Student Financials & Financial Aid"
+  ],
+  [
+   "Student Administration",
+   "Student Records & Advising"
+  ]
+ ],
+ "actions": [
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Advanced Supply Chain Planning",
+   "domain": [
+    "Plan-to-Produce",
+    "Supply & Inventory Planning"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Approvals Management",
+   "domain": [
+    "Technology & Integration",
+    "Workflow & Approvals"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Bills of Material",
+   "domain": [
+    "Plan-to-Produce",
+    "Product Lifecycle & Item Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Complex MRO",
+   "domain": [
+    "Plan-to-Produce",
+    "Maintenance & Asset Management (EAM)"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Configurator",
+   "domain": [
+    "Order-to-Cash",
+    "Pricing, Quoting & Proposal Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Cost Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Inventory & Warehouse Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Demantra",
+   "domain": [
+    "Plan-to-Produce",
+    "Demand Planning & Forecasting"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Engineering",
+   "domain": [
+    "Plan-to-Produce",
+    "Product Lifecycle & Item Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Enterprise Asset Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Maintenance & Asset Management (EAM)"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Flow Manufacturing",
+   "domain": [
+    "Plan-to-Produce",
+    "Manufacturing & Production Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Grants Accounting",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Grants Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Incentive Compensation",
+   "domain": [
+    "Customer Experience (CX)",
+    "Sales Force Automation"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Install Base",
+   "domain": [
+    "Customer Experience (CX)",
+    "Field Service Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Landed Cost Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Logistics & Transportation Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Manufacturing Execution System",
+   "domain": [
+    "Plan-to-Produce",
+    "Manufacturing & Production Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Material Requirements Planning",
+   "domain": [
+    "Plan-to-Produce",
+    "Supply & Inventory Planning"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Mobile Supply Chain Applications",
+   "domain": [
+    "Plan-to-Produce",
+    "Inventory & Warehouse Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Process Execution",
+   "domain": [
+    "Plan-to-Produce",
+    "Manufacturing & Production Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Process Financials",
+   "domain": [
+    "Plan-to-Produce",
+    "Manufacturing & Production Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Process Planning",
+   "domain": [
+    "Plan-to-Produce",
+    "Supply & Inventory Planning"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Product Development",
+   "domain": [
+    "Plan-to-Produce",
+    "Product Lifecycle & Item Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Product Information Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Product Lifecycle & Item Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Project Billing",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Billing & Revenue Recognition"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Project Contracts",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Billing & Revenue Recognition"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Project Costing",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Costing"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Project Management",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Portfolio & Program Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Project Manufacturing",
+   "domain": [
+    "Plan-to-Produce",
+    "Manufacturing & Production Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Project Resource Management",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Resource Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Property Manager",
+   "domain": [
+    "Record-to-Report",
+    "Fixed Assets & Lease Accounting"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Quality",
+   "domain": [
+    "Plan-to-Produce",
+    "Quality Management & Compliance"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "R12 Architecture (MOAC / Ledger Sets / XLA-IBY-ZX)",
+   "domain": [
+    "Technology & Integration",
+    "Security & Administration"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Self-Service HR",
+   "domain": [
+    "Hire-to-Retire",
+    "HR Operations & Employee Self-Service"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Service Contracts",
+   "domain": [
+    "Order-to-Cash",
+    "Order & Contract Execution Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Shipping Execution",
+   "domain": [
+    "Plan-to-Produce",
+    "Order Fulfillment & Distribution"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Trade Management",
+   "domain": [
+    "Order-to-Cash",
+    "Dispute & Deduction Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Transportation Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Logistics & Transportation Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Treasury",
+   "domain": [
+    "Record-to-Report",
+    "Transaction Processing & Journal Entry Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Warehouse Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Inventory & Warehouse Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Work in Process",
+   "domain": [
+    "Plan-to-Produce",
+    "Manufacturing & Production Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Workflow",
+   "domain": [
+    "Technology & Integration",
+    "Workflow & Approvals"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "iStore",
+   "domain": [
+    "Customer Experience (CX)",
+    "Digital Commerce & Self-Service"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "BIP Reporting",
+   "domain": [
+    "Technology & Integration",
+    "Reporting & Analytics"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "Fusion",
+   "domain": null,
+   "action": "hide"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "VBCS",
+   "domain": [
+    "Technology & Integration",
+    "Development & Extensibility"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud"
+   }
+  },
+  {
+   "vendor": "Oracle",
+   "product": "E-Business Suite",
+   "item": "VBS",
+   "domain": [
+    "Technology & Integration",
+    "Development & Extensibility"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "VBCS"
+   }
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Absence Management",
+   "domain": [
+    "Hire-to-Retire",
+    "Payroll & Time Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Advanced HCM Controls",
+   "domain": [
+    "Governance, Risk & Compliance (GRC)",
+    "Access Controls & Segregation of Duties"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "B2B Messaging",
+   "domain": [
+    "Technology & Integration",
+    "Integration"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Backlog Management",
+   "domain": [
+    "Order-to-Cash",
+    "Order & Contract Execution Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Bill Management",
+   "domain": [
+    "Order-to-Cash",
+    "Customer Experience & Self-Service"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Budgetary Control",
+   "domain": [
+    "Record-to-Report",
+    "Management Reporting & FP&A"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Business Process Design",
+   "domain": [
+    "Technology & Integration",
+    "Workflow & Approvals"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Career Development",
+   "domain": [
+    "Hire-to-Retire",
+    "Learning, Development & Skills Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Catalogs",
+   "domain": [
+    "Procure-to-Pay",
+    "Requisitioning & Demand Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Channel Revenue Management",
+   "domain": [
+    "Order-to-Cash",
+    "Dispute & Deduction Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Commerce",
+   "domain": [
+    "Customer Experience (CX)",
+    "Digital Commerce & Self-Service"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Configurator",
+   "domain": [
+    "Order-to-Cash",
+    "Pricing, Quoting & Proposal Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Cost Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Inventory & Warehouse Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Customer Data Management",
+   "domain": [
+    "Customer Experience (CX)",
+    "Customer Data & Master Data Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Demand Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Demand Planning & Forecasting"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Digital Sales",
+   "domain": [
+    "Customer Experience (CX)",
+    "Sales Force Automation"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Enterprise Data Management",
+   "domain": [
+    "Enterprise Performance Mgmt (EPM)",
+    "Enterprise Data Management (Master Data)"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Expenses",
+   "domain": [
+    "Procure-to-Pay",
+    "Travel & Expense Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Financial Reporting Compliance",
+   "domain": [
+    "Governance, Risk & Compliance (GRC)",
+    "Financial Reporting Compliance"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Free Form",
+   "domain": null,
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Fusion CX Analytics",
+   "domain": [
+    "Technology & Integration",
+    "Reporting & Analytics"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Fusion ERP Analytics",
+   "domain": [
+    "Technology & Integration",
+    "Reporting & Analytics"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Fusion HCM Analytics",
+   "domain": [
+    "Hire-to-Retire",
+    "Workforce Analytics & People Intelligence"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Fusion SCM Analytics",
+   "domain": [
+    "Technology & Integration",
+    "Reporting & Analytics"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Global Human Resources",
+   "domain": [
+    "Hire-to-Retire",
+    "HR Operations & Employee Self-Service"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Global Order Promising",
+   "domain": [
+    "Plan-to-Produce",
+    "Order Fulfillment & Distribution"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Global Trade Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Logistics & Transportation Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Grants Management",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Grants Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Health & Safety",
+   "domain": [
+    "Plan-to-Produce",
+    "Quality Management & Compliance"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Incentive Compensation",
+   "domain": [
+    "Customer Experience (CX)",
+    "Sales Force Automation"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Innovation Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Product Lifecycle & Item Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "IoT Intelligent Applications",
+   "domain": [
+    "Plan-to-Produce",
+    "Maintenance & Asset Management (EAM)"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Joint Venture Management",
+   "domain": [
+    "Record-to-Report",
+    "Intercompany Accounting"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Knowledge Management",
+   "domain": [
+    "Customer Experience (CX)",
+    "Customer Service & Contact Center"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Maintenance",
+   "domain": [
+    "Plan-to-Produce",
+    "Maintenance & Asset Management (EAM)"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Manufacturing",
+   "domain": [
+    "Plan-to-Produce",
+    "Manufacturing & Production Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "My Receipts",
+   "domain": [
+    "Procure-to-Pay",
+    "Goods & Services Receipt"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Negotiations",
+   "domain": [
+    "Procure-to-Pay",
+    "Sourcing & Supplier Selection"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Oracle Business Network",
+   "domain": [
+    "Procure-to-Pay",
+    "Purchase Order Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Oracle ME",
+   "domain": [
+    "Hire-to-Retire",
+    "Employee Engagement & Retention"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Partner Relationship Management",
+   "domain": [
+    "Customer Experience (CX)",
+    "Partner & Channel Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Product Lifecycle Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Product Lifecycle & Item Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Production Scheduling",
+   "domain": [
+    "Plan-to-Produce",
+    "Manufacturing & Production Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Project Billing",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Billing & Revenue Recognition"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Project Contracts",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Billing & Revenue Recognition"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Project Control",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Financial Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Project Costing",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Costing"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Project Management",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Portfolio & Program Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Purchase Requisitons",
+   "domain": [
+    "Procure-to-Pay",
+    "Requisitioning & Demand Management"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Requisitions"
+   }
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Quality Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Quality Management & Compliance"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Replenishment Planning",
+   "domain": [
+    "Plan-to-Produce",
+    "Supply & Inventory Planning"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Resource Management",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Resource Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Sales & Operations Planning",
+   "domain": [
+    "Plan-to-Produce",
+    "Demand Planning & Forecasting"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Service Logistics",
+   "domain": [
+    "Customer Experience (CX)",
+    "Field Service Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Spend Classification",
+   "domain": [
+    "Procure-to-Pay",
+    "Data, Analytics & AI Governance"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Subledger Accounting",
+   "domain": [
+    "Record-to-Report",
+    "Transaction Processing & Journal Entry Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Subscription Management",
+   "domain": [
+    "Customer Experience (CX)",
+    "Subscription & Renewals Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Succession Management",
+   "domain": [
+    "Hire-to-Retire",
+    "Performance Management & Goal Setting"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Supplier Management",
+   "domain": [
+    "Procure-to-Pay",
+    "Supplier Risk & Compliance"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Supplier Qualifications",
+   "domain": [
+    "Procure-to-Pay",
+    "Supplier Risk & Compliance"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Supplier Registration",
+   "domain": [
+    "Procure-to-Pay",
+    "Sourcing & Supplier Selection"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Supply Chain",
+   "domain": null,
+   "action": "hide"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Supply Chain Collaboration",
+   "domain": [
+    "Plan-to-Produce",
+    "Supply & Inventory Planning"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Supply Chain Orchestration",
+   "domain": [
+    "Plan-to-Produce",
+    "Order Fulfillment & Distribution"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Supply Planning",
+   "domain": [
+    "Plan-to-Produce",
+    "Supply & Inventory Planning"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Transportation Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Logistics & Transportation Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "U.S. Federal Financials",
+   "domain": [
+    "Record-to-Report",
+    "Statutory & Regulatory Reporting"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Unity Customer Data Platform",
+   "domain": [
+    "Customer Experience (CX)",
+    "Customer Data & Master Data Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Warehouse Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Inventory & Warehouse Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Workforce Scheduling",
+   "domain": [
+    "Hire-to-Retire",
+    "Payroll & Time Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "OIC",
+   "domain": [
+    "Technology & Integration",
+    "Integration"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Absence Management",
+   "domain": [
+    "Hire-to-Retire",
+    "Payroll & Time Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Academic Advisement",
+   "domain": [
+    "Student Administration",
+    "Student Records & Advising"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Base Benefits",
+   "domain": [
+    "Hire-to-Retire",
+    "Compensation, Benefits & Total Rewards"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Benefits Administration",
+   "domain": [
+    "Hire-to-Retire",
+    "Compensation, Benefits & Total Rewards"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Call Center",
+   "domain": [
+    "Customer Experience (CX)",
+    "Customer Service & Contact Center"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Campus Community",
+   "domain": [
+    "Student Administration",
+    "Campus Community & Engagement"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Commitment Control",
+   "domain": [
+    "Record-to-Report",
+    "Management Reporting & FP&A"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Cost Management",
+   "domain": [
+    "Plan-to-Produce",
+    "Inventory & Warehouse Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Elasticsearch",
+   "domain": [
+    "Technology & Integration",
+    "Security & Administration"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Engineering",
+   "domain": [
+    "Plan-to-Produce",
+    "Product Lifecycle & Item Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Expenses",
+   "domain": [
+    "Procure-to-Pay",
+    "Travel & Expense Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "FieldService",
+   "domain": [
+    "Customer Experience (CX)",
+    "Field Service Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Financial Aid",
+   "domain": [
+    "Student Administration",
+    "Student Financials & Financial Aid"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Global Payroll",
+   "domain": [
+    "Hire-to-Retire",
+    "Payroll & Time Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Grants",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Grants Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Manufacturing",
+   "domain": [
+    "Plan-to-Produce",
+    "Manufacturing & Production Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Marketing",
+   "domain": [
+    "Customer Experience (CX)",
+    "Marketing & Campaign Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Order Capture",
+   "domain": [
+    "Order-to-Cash",
+    "Order & Contract Execution Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "PS Query",
+   "domain": [
+    "Technology & Integration",
+    "Reporting & Analytics"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Payroll Interface",
+   "domain": [
+    "Hire-to-Retire",
+    "Payroll & Time Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Program Management",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Portfolio & Program Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Project Costing",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Costing"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Quality",
+   "domain": [
+    "Plan-to-Produce",
+    "Quality Management & Compliance"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Recruiting & Admissions",
+   "domain": [
+    "Student Administration",
+    "Admissions & Recruiting"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Resource Management",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Resource Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Sales",
+   "domain": [
+    "Customer Experience (CX)",
+    "Sales Force Automation"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Services Procurement",
+   "domain": [
+    "Procure-to-Pay",
+    "Requisitioning & Demand Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Student Financials",
+   "domain": [
+    "Student Administration",
+    "Student Financials & Financial Aid"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Student Records",
+   "domain": [
+    "Student Administration",
+    "Student Records & Advising"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Supply Planning",
+   "domain": [
+    "Plan-to-Produce",
+    "Supply & Inventory Planning"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "Variable Compensation",
+   "domain": [
+    "Hire-to-Retire",
+    "Compensation, Benefits & Total Rewards"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "eBenefits",
+   "domain": [
+    "Hire-to-Retire",
+    "Compensation, Benefits & Total Rewards"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "ePay",
+   "domain": [
+    "Hire-to-Retire",
+    "Payroll & Time Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "PeopleSoft",
+   "item": "eProfile",
+   "domain": [
+    "Hire-to-Retire",
+    "HR Operations & Employee Self-Service"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Agentforce",
+   "domain": [
+    "Artificial Intelligence",
+    "Core Technical & Development"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Automotive Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Sales Force Automation"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Commerce Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Digital Commerce & Self-Service"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Communications Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Subscription & Renewals Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Consumer Goods Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Sales Force Automation"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Education Cloud",
+   "domain": [
+    "Student Administration",
+    "Student Records & Advising"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Einstein",
+   "domain": [
+    "Artificial Intelligence",
+    "Core Technical & Development"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Energy & Utilities Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Customer Service & Contact Center"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Experience Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Digital Commerce & Self-Service"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Financial Services Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Sales Force Automation"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Flow",
+   "domain": [
+    "Technology & Integration",
+    "Workflow & Approvals"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Health Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Customer Service & Contact Center"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Life Sciences Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Sales Force Automation"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Loyalty Management",
+   "domain": [
+    "Customer Experience (CX)",
+    "Loyalty & Retention Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Manufacturing Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Sales Force Automation"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Maps",
+   "domain": [
+    "Customer Experience (CX)",
+    "Field Service Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Marketing Cloud Account Engagement",
+   "domain": [
+    "Customer Experience (CX)",
+    "Marketing & Campaign Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Marketing Cloud Engagement",
+   "domain": [
+    "Customer Experience (CX)",
+    "Marketing & Campaign Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Marketing Cloud Intelligence",
+   "domain": [
+    "Customer Experience (CX)",
+    "Marketing & Campaign Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Marketing Cloud Personalization",
+   "domain": [
+    "Customer Experience (CX)",
+    "Marketing & Campaign Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Media Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Subscription & Renewals Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "MuleSoft",
+   "domain": [
+    "Technology & Integration",
+    "Integration"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Net Zero Cloud",
+   "domain": [
+    "Governance, Risk & Compliance (GRC)",
+    "Regulatory & Policy Compliance"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Nonprofit Cloud",
+   "domain": [
+    "Customer Experience (CX)",
+    "Customer Data & Master Data Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Public Sector Solutions",
+   "domain": [
+    "Customer Experience (CX)",
+    "Customer Service & Contact Center"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Quip",
+   "domain": [
+    "Technology & Integration",
+    "Development & Extensibility"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Revenue Lifecycle Management",
+   "domain": [
+    "Order-to-Cash",
+    "Revenue Recognition & Reporting"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Sales Engagement",
+   "domain": [
+    "Customer Experience (CX)",
+    "Sales Force Automation"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Scheduler",
+   "domain": [
+    "Customer Experience (CX)",
+    "Field Service Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Slack",
+   "domain": [
+    "Technology & Integration",
+    "Integration"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Subscription Management",
+   "domain": [
+    "Customer Experience (CX)",
+    "Subscription & Renewals Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "AI",
+   "domain": [
+    "Artificial Intelligence",
+    "Core Technical & Development"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Excel ,RTF,Matrix and Text Template",
+   "domain": [
+    "Technology & Integration",
+    "Reporting & Analytics"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "FDD Documentation",
+   "domain": null,
+   "action": "hide"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Fats Formulas",
+   "domain": [
+    "Technology & Integration",
+    "Development & Extensibility"
+   ],
+   "action": "move",
+   "rename": "Fast Formulas",
+   "to": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "HCM Data Loader",
+   "domain": [
+    "Technology & Integration",
+    "Data Management & Conversion"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "HCM Extract",
+   "domain": [
+    "Technology & Integration",
+    "Integration"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "HTML , CSS and Javascritp",
+   "domain": [
+    "Technology & Integration",
+    "Development & Extensibility"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Cross-Vendor",
+    "product": "Platform-Neutral"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "MS Office",
+   "domain": null,
+   "action": "hide"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Oracle Apex",
+   "domain": [
+    "Technology & Integration",
+    "Development & Extensibility"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Oracle Fusion BI Reports",
+   "domain": [
+    "Technology & Integration",
+    "Reporting & Analytics"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "BIP Reporting"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Oracle Fusion Dashboard",
+   "domain": [
+    "Technology & Integration",
+    "Reporting & Analytics"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Oracle Fusion HCM",
+   "domain": null,
+   "action": "hide"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Oracle Fusion OTBI Report",
+   "domain": [
+    "Technology & Integration",
+    "Reporting & Analytics"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Oracle Time & Labor",
+   "domain": [
+    "Hire-to-Retire",
+    "Payroll & Time Management"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Power BI",
+   "domain": [
+    "Technology & Integration",
+    "Reporting & Analytics"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Cross-Vendor",
+    "product": "Platform-Neutral"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Problem Solving",
+   "domain": null,
+   "action": "hide"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Python",
+   "domain": [
+    "Technology & Integration",
+    "Development & Extensibility"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Cross-Vendor",
+    "product": "Platform-Neutral"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Recruiting Cloud",
+   "domain": [
+    "Hire-to-Retire",
+    "Talent Acquisition & Recruitment"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "SIT/UAT Testing",
+   "domain": [
+    "Technology & Integration",
+    "Testing & Automation"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Cross-Vendor",
+    "product": "Platform-Neutral"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "SQL",
+   "domain": [
+    "Technology & Integration",
+    "Development & Extensibility"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Cross-Vendor",
+    "product": "Platform-Neutral"
+   }
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Security Management",
+   "domain": [
+    "Technology & Integration",
+    "Security & Administration"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Salesforce",
+   "product": "Salesforce Platform",
+   "item": "Talent Management",
+   "domain": [
+    "Hire-to-Retire",
+    "Performance Management & Goal Setting"
+   ],
+   "action": "move",
+   "to": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud"
+   }
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Absence Management",
+   "domain": [
+    "Hire-to-Retire",
+    "Payroll & Time Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Advanced Compensation",
+   "domain": [
+    "Hire-to-Retire",
+    "Compensation, Benefits & Total Rewards"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Contingent Worker Management",
+   "domain": [
+    "Procure-to-Pay",
+    "Requisitioning & Demand Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Employee Experience",
+   "domain": [
+    "Hire-to-Retire",
+    "Employee Engagement & Retention"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Expenses",
+   "domain": [
+    "Procure-to-Pay",
+    "Travel & Expense Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Extend",
+   "domain": [
+    "Technology & Integration",
+    "Development & Extensibility"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Global Payroll",
+   "domain": [
+    "Hire-to-Retire",
+    "Payroll & Time Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Grants Management",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Grants Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "HR Service Delivery",
+   "domain": [
+    "Hire-to-Retire",
+    "HR Operations & Employee Self-Service"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Integrations",
+   "domain": [
+    "Technology & Integration",
+    "Integration"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Oracle Fusion Accounts Payables",
+   "domain": [
+    "Procure-to-Pay",
+    "Invoice Processing & Matching"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Payables"
+   }
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Oracle Fusion Accounts Receivables",
+   "domain": [
+    "Order-to-Cash",
+    "Collections & Receivables Management"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Receivables"
+   }
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Oracle Fusion Cash Management",
+   "domain": [
+    "Order-to-Cash",
+    "Cash Application & Reconciliation"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Cash Mgt"
+   }
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Oracle Fusion Cloud",
+   "domain": null,
+   "action": "hide"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Oracle Fusion Fixed Assets",
+   "domain": [
+    "Record-to-Report",
+    "Fixed Assets & Lease Accounting"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Fixed Assets"
+   }
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Oracle Fusion General Ledger",
+   "domain": [
+    "Record-to-Report",
+    "Transaction Processing & Journal Entry Management"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "General Ledger"
+   }
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Paradox",
+   "domain": [
+    "Hire-to-Retire",
+    "Talent Acquisition & Recruitment"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Peakon Employee Voice",
+   "domain": [
+    "Hire-to-Retire",
+    "Employee Engagement & Retention"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Professional Services Automation",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Resource Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Projects",
+   "domain": [
+    "Project Portfolio Mgmt (PPM)",
+    "Project Foundation & Setup"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Scheduling",
+   "domain": [
+    "Hire-to-Retire",
+    "Payroll & Time Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "Student",
+   "domain": [
+    "Student Administration",
+    "Student Records & Advising"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Workday",
+   "product": "Workday Enterprise",
+   "item": "VNDLY",
+   "domain": [
+    "Procure-to-Pay",
+    "Requisitioning & Demand Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Accounts Receivable",
+   "domain": [
+    "Order-to-Cash",
+    "Collections & Receivables Management"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Receivables"
+   }
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Agreements",
+   "domain": [
+    "Procure-to-Pay",
+    "Contract Management"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Purchase Agreements"
+   }
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Contracts",
+   "domain": [
+    "Procure-to-Pay",
+    "Contract Management"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Procurement Contracts"
+   }
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Cost Accounting",
+   "domain": [
+    "Record-to-Report",
+    "Transaction Processing & Journal Entry Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Inventory",
+   "domain": [
+    "Plan-to-Produce",
+    "Inventory & Warehouse Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Inventory Mgt",
+   "domain": [
+    "Plan-to-Produce",
+    "Inventory & Warehouse Management"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Inventory"
+   }
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Invoices",
+   "domain": [
+    "Procure-to-Pay",
+    "Invoice Processing & Matching"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Payables"
+   }
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Negotiations/Sourcing",
+   "domain": [
+    "Procure-to-Pay",
+    "Sourcing & Supplier Selection"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Sourcing/Negotiations"
+   }
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "OTBI Dashboards",
+   "domain": [
+    "Technology & Integration",
+    "Reporting & Analytics"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Oracle Cloud",
+   "domain": null,
+   "action": "hide"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "PIM",
+   "domain": [
+    "Plan-to-Produce",
+    "Product Lifecycle & Item Management"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Product Information Management"
+   }
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Payments",
+   "domain": [
+    "Procure-to-Pay",
+    "Payments & Cash Management"
+   ],
+   "action": "link"
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Supplier Registration & Qualification",
+   "domain": [
+    "Procure-to-Pay",
+    "Supplier Risk & Compliance"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Supplier Registration"
+   }
+  },
+  {
+   "vendor": "Oracle",
+   "product": "Fusion Cloud",
+   "item": "Supply Orchestration",
+   "domain": [
+    "Plan-to-Produce",
+    "Order Fulfillment & Distribution"
+   ],
+   "action": "merge",
+   "into": {
+    "vendor": "Oracle",
+    "product": "Fusion Cloud",
+    "item": "Supply Chain Orchestration"
+   }
+  }
+ ]
+}
