@@ -8,6 +8,8 @@ export const SETTINGS = {
 export type SettingKey = keyof typeof SETTINGS;
 
 export async function getSetting(key: SettingKey): Promise<boolean> {
+  // Local walks only (never in production): TAXONOMY_V2_FORCE=1 tests the "on" paths without flipping the shared switch.
+  if (key === "taxonomy_v2" && process.env.TAXONOMY_V2_FORCE === "1" && process.env.NODE_ENV !== "production") return true;
   const row = await prisma.platformSetting.findUnique({ where: { key } }).catch(() => null);
   return typeof row?.value === "boolean" ? row.value : SETTINGS[key].default;
 }
