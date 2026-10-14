@@ -132,6 +132,7 @@ export function CompanyStep({
   // BT-E001: a seller defining a new company picks its Business Type (it selects the Service Catalog).
   const [seller, setSeller] = useState(false);
   const [businessTypes, setBusinessTypes] = useState<BT[]>([]);
+  const [commodities, setCommodities] = useState<string[]>([]);
   const [businessTypeId, setBusinessTypeId] = useState("");
   useEffect(() => {
     fetch("/api/company/industries")
@@ -139,7 +140,7 @@ export function CompanyStep({
       .then((b) => {
         if (!b) return;
         setSeller(!!b.seller);
-        setBusinessTypes(b.businessTypes ?? []);
+        setBusinessTypes(b.businessTypes ?? []); setCommodities(b.commodities ?? []);
         if (b.businessTypes?.length === 1) setBusinessTypeId(b.businessTypes[0].id);
       })
       .catch(() => {});
@@ -446,7 +447,7 @@ export function CompanyStep({
           </Field>
 
           {needsBusinessType && (
-            <BusinessTypePicker types={businessTypes} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog." />
+            <BusinessTypePicker types={businessTypes} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog." />
           )}
 
           {/* OPTIONAL, AND THE HINT SAYS SO IN WORDS. Scott: *"most small */}

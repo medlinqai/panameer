@@ -501,7 +501,7 @@ setScreen(target);
         }
         hydrate(s);
         if (!s.emailVerified) {
-          setScreen("check_email");
+          setScreen(s.hasCompany || token ? "check_email" : "register_company");
         } else if (!s.profile?.workMethod) {
           // Only if the silent save failed.
           setScreen("work_method");

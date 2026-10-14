@@ -10,5 +10,7 @@ export async function GET() {
   const industries = await prisma.specialization.findMany({ where: { kind: "INDUSTRY", status: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true } });
   const businessTypes = (await offeredBusinessTypes()).map((b) => ({ id: b.id, name: b.name, group: b.commodityGroup?.name ?? "" }));
   const seller = !!(await prisma.person.findUnique({ where: { user_id: gate.userId }, select: { is_service_provider: true } }))?.is_service_provider;
-  return NextResponse.json({ industries, businessTypes, seller });
+  // Scott 10-14: the whole commodity list shows, even groups with no Business Types yet.
+  const commodities = (await prisma.commodityGroup.findMany({ where: { hidden: false }, orderBy: { sort_order: "asc" }, select: { name: true } })).map((g) => g.name);
+  return NextResponse.json({ industries, businessTypes, commodities, seller });
 }

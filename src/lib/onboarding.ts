@@ -653,6 +653,8 @@ export async function getOnboardingState(viewer: Viewer) {
   return {
     email: p.user?.email ?? "",
     emailVerified,
+    // Scott 10-14: a refresh before verify returns to Your Company if it wasn't saved yet.
+    hasCompany: p.companyMemberships.length > 0,
     resumeStep: emailVerified ? computeResumeStep(p) : ("verify" as const),
     // WS1 — the client no longer hard-codes the step list: a recruiter walks a
     // shorter journey, and the server is the only place that knows which.

@@ -1,0 +1,1614 @@
+{
+ "source": "2. Claude Sub-Files/Panameer_Business_Types_Draft_2026-10-14.xlsx (Scott approved 10-14)",
+ "commodities": [
+  {
+   "name": "Professional Services",
+   "was": [],
+   "description": "Expert advice and work from trained professionals. Examples: consulting, accounting, legal, HR, engineering.",
+   "hidden": false,
+   "sort_order": 1,
+   "rates": [
+    {
+     "name": "Onsite Hourly",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Offsite Hourly",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "OFFSITE"
+    },
+    {
+     "name": "Day Rate",
+     "unit": "DAY",
+     "pricing": "TIME",
+     "delivery": "EITHER"
+    },
+    {
+     "name": "Monthly Retainer",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "EITHER"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "MANAGEMENT_CONSULTING",
+     "name": "Management Consulting",
+     "was": [],
+     "description": "Strategy, process improvement, project management.",
+     "products": [
+      {
+       "name": "Process Assessment",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Strategy Workshop (Half Day)",
+       "unit": "SESSION",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Project Management",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "Business Case",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "ACCOUNTING",
+     "name": "Accounting",
+     "was": [],
+     "description": "Bookkeeping, close support, tax, audit prep.",
+     "products": [
+      {
+       "name": "Monthly Bookkeeping",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "Year-End Close Support",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Tax Return Preparation",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Audit Prep Package",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "LEGAL",
+     "name": "Legal",
+     "was": [],
+     "description": "Contracts, compliance, company filings.",
+     "products": [
+      {
+       "name": "Contract Review",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Standard Agreement / NDA",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Entity Formation",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Compliance Review",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "HUMAN_RESOURCES",
+     "name": "Human Resources",
+     "was": [],
+     "description": "Policies, job descriptions, pay studies, HR help.",
+     "products": [
+      {
+       "name": "Employee Handbook",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Job Description Package",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "HR Policy Review",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Compensation Study",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "ENGINEERING",
+     "name": "Engineering",
+     "was": [],
+     "description": "Design, drafting, technical review.",
+     "products": [
+      {
+       "name": "Site Assessment",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Design Drawings Package",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Technical Review",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Feasibility Study",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Technology",
+   "was": [
+    "Professional & Technology Services"
+   ],
+   "description": "Business systems, software and IT. Examples: Oracle / SAP / Workday, help desk, cybersecurity, data & AI.",
+   "hidden": false,
+   "sort_order": 2,
+   "rates": [
+    {
+     "name": "Onsite Hourly",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Offsite Hourly",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "OFFSITE"
+    },
+    {
+     "name": "Monthly Retainer",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "EITHER"
+    },
+    {
+     "name": "Mentoring",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "OFFSITE"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "PANAMEER_V1",
+     "name": "Corporate Systems",
+     "was": [
+      "ERP Related",
+      "ERP Consulting"
+     ],
+     "description": "ERP and enterprise apps \u2014 Oracle, SAP, Workday: consulting, support, reports, conversions. (Was ERP Related.)",
+     "products": [
+      {
+       "name": "Reports",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Dashboards & Analytics",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Integrations & Interfaces",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Conversions (Data Loads)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Extensions & Workflows",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "IT_SERVICES_SUPPORT",
+     "name": "IT Services & Support",
+     "was": [],
+     "description": "Help desk, devices, networks, cloud setup.",
+     "products": [
+      {
+       "name": "Laptop / Device Setup",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Network Assessment",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Microsoft 365 / Google Setup",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Managed Help Desk (per user)",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    },
+    {
+     "code": "SOFTWARE_SAAS",
+     "name": "Software & SaaS",
+     "was": [],
+     "description": "Software sold as a subscription or license.",
+     "products": [
+      {
+       "name": "Subscription (per user)",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "Implementation Package",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "License",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "CYBERSECURITY",
+     "name": "Cybersecurity",
+     "was": [],
+     "description": "Security reviews, testing, compliance readiness.",
+     "products": [
+      {
+       "name": "Security Assessment",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Penetration Test",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Security Awareness Training (per seat)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Compliance Readiness (e.g. SOC 2)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "DATA_AI",
+     "name": "Data & AI",
+     "was": [],
+     "description": "Analytics, dashboards, AI build and adoption.",
+     "products": [
+      {
+       "name": "Dashboard Build",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Data Cleanup",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "AI Readiness Assessment",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Custom AI Assistant",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Staffing & Contingent Labor",
+   "was": [],
+   "description": "People supplied to work for you. Examples: contract staff, temp workers, recruiting, payroll services.",
+   "hidden": false,
+   "sort_order": 3,
+   "rates": [
+    {
+     "name": "Hourly Bill Rate",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "EITHER"
+    },
+    {
+     "name": "Weekly Rate",
+     "unit": "WEEK",
+     "pricing": "TIME",
+     "delivery": "EITHER"
+    },
+    {
+     "name": "Monthly Service Fee",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "EITHER"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "CONTRACT_STAFFING",
+     "name": "Contract Staffing",
+     "was": [],
+     "description": "Contract and temporary workers placed with you.",
+     "products": [
+      {
+       "name": "Background Check",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Worker Onboarding Package",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "RECRUITING",
+     "name": "Recruiting",
+     "was": [],
+     "description": "Finding and hiring permanent employees.",
+     "products": [
+      {
+       "name": "Direct-Hire Placement",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Executive Search",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Job Posting Package",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "PAYROLL_EMPLOYER_SERVICES",
+     "name": "Payroll & Employer Services",
+     "was": [],
+     "description": "Payroll, employer of record, benefits admin.",
+     "products": [
+      {
+       "name": "Payroll Setup",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Monthly Payroll (per employee)",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "Employer of Record (per worker)",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Marketing & Creative",
+   "was": [
+    "Marketing, Creative & Media"
+   ],
+   "description": "Getting the word out and making it look good. Examples: digital ads, design, video, content, websites, printing.",
+   "hidden": false,
+   "sort_order": 4,
+   "rates": [
+    {
+     "name": "Hourly",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "OFFSITE"
+    },
+    {
+     "name": "Day Rate",
+     "unit": "DAY",
+     "pricing": "TIME",
+     "delivery": "EITHER"
+    },
+    {
+     "name": "Monthly Retainer",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "EITHER"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "DIGITAL_MARKETING",
+     "name": "Digital Marketing",
+     "was": [],
+     "description": "SEO, paid ads, email, social media.",
+     "products": [
+      {
+       "name": "SEO Audit",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Monthly SEO",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "Paid Ads Setup",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Social Media Management",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    },
+    {
+     "code": "ADVERTISING_PR",
+     "name": "Advertising & PR",
+     "was": [],
+     "description": "Campaigns, media buying, press.",
+     "products": [
+      {
+       "name": "Press Release",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Campaign Plan",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Media Buy Management",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    },
+    {
+     "code": "DESIGN_BRANDING",
+     "name": "Design & Branding",
+     "was": [],
+     "description": "Logos, brand kits, presentation and print design.",
+     "products": [
+      {
+       "name": "Logo Design",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Brand Kit",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Presentation Template",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Trade Show Booth Graphics",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "VIDEO_PHOTOGRAPHY",
+     "name": "Video & Photography",
+     "was": [],
+     "description": "Production, editing, event and product shoots.",
+     "products": [
+      {
+       "name": "60-Second Promo Video",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Event Shoot (Half Day)",
+       "unit": "SESSION",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Product Photos (10)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "How-To / Training Video",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "CONTENT_COPYWRITING",
+     "name": "Content & Copywriting",
+     "was": [],
+     "description": "Articles, web copy, case studies.",
+     "products": [
+      {
+       "name": "Blog Article",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Case Study",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Website Copy (per page)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "White Paper",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "WEB_DESIGN_DEVELOPMENT",
+     "name": "Web Design & Development",
+     "was": [],
+     "description": "Websites, landing pages, site care.",
+     "products": [
+      {
+       "name": "Landing Page",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "5-Page Website",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Website Care",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    },
+    {
+     "code": "PRINT_PROMOTIONAL",
+     "name": "Print & Promotional",
+     "was": [],
+     "description": "Business cards, brochures, signs, branded items.",
+     "products": [
+      {
+       "name": "Business Cards (500)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Brochure Print Run",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Sign / Banner",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Branded Merchandise",
+       "unit": "EACH",
+       "pricing": "QUOTE"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Facilities & Property",
+   "was": [
+    "Facilities & Trades"
+   ],
+   "description": "Keeping buildings and grounds running. Examples: cleaning, landscaping, HVAC, electrical, plumbing, repairs, pest control.",
+   "hidden": false,
+   "sort_order": 5,
+   "rates": [
+    {
+     "name": "Hourly Labor",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Per Visit",
+     "unit": "VISIT",
+     "pricing": "FIXED",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Monthly Service Contract",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Emergency Call-Out",
+     "unit": "VISIT",
+     "pricing": "FIXED",
+     "delivery": "ONSITE"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "JANITORIAL_CLEANING",
+     "name": "Janitorial & Cleaning",
+     "was": [],
+     "description": "Office cleaning, deep cleans, carpets, windows.",
+     "products": [
+      {
+       "name": "Office Cleaning (Weekly)",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "Deep Clean",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Carpet Cleaning",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Window Washing",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "LANDSCAPING_GROUNDS",
+     "name": "Landscaping & Grounds",
+     "was": [],
+     "description": "Lawn care, cleanups, irrigation, snow removal.",
+     "products": [
+      {
+       "name": "Weekly Mow",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "Spring / Fall Cleanup",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Irrigation Check",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Snow Removal",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "HVAC",
+     "name": "HVAC",
+     "was": [],
+     "description": "Heating and cooling install, repair, maintenance.",
+     "products": [
+      {
+       "name": "Seasonal Tune-Up",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Preventive Maintenance",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "Filter Replacement",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Diagnostic Visit",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "ELECTRICAL",
+     "name": "Electrical",
+     "was": [],
+     "description": "Wiring, lighting, panels.",
+     "products": [
+      {
+       "name": "Diagnostic Visit",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Light Fixture Install",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Panel Inspection",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "PLUMBING",
+     "name": "Plumbing",
+     "was": [],
+     "description": "Repairs, installs, drains.",
+     "products": [
+      {
+       "name": "Diagnostic Visit",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Drain Clearing",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Water Heater Install",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "GENERAL_CONTRACTING_REPAIRS",
+     "name": "General Contracting & Repairs",
+     "was": [],
+     "description": "Build-outs, renovation, handyman work.",
+     "products": [
+      {
+       "name": "Handyman Visit (2 Hours)",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Drywall / Paint Repair",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Office Build-Out",
+       "unit": "EACH",
+       "pricing": "QUOTE"
+      }
+     ]
+    },
+    {
+     "code": "PEST_CONTROL",
+     "name": "Pest Control",
+     "was": [],
+     "description": "Inspections, treatment, prevention plans.",
+     "products": [
+      {
+       "name": "Inspection",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Initial Treatment",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Quarterly Service",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Security",
+   "was": [],
+   "description": "Protecting people and property. Examples: guards, alarms, cameras, access control.",
+   "hidden": false,
+   "sort_order": 6,
+   "rates": [
+    {
+     "name": "Guard Hourly",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Per Visit",
+     "unit": "VISIT",
+     "pricing": "FIXED",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Monthly Monitoring",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "OFFSITE"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "GUARD_SERVICES",
+     "name": "Guard Services",
+     "was": [],
+     "description": "Standing guards and event security.",
+     "products": [
+      {
+       "name": "Event Security",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Standing Guard Post",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    },
+    {
+     "code": "ALARMS_MONITORING",
+     "name": "Alarms & Monitoring",
+     "was": [],
+     "description": "Alarm systems and 24/7 monitoring.",
+     "products": [
+      {
+       "name": "Alarm Install",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Monthly Monitoring",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    },
+    {
+     "code": "CAMERAS_ACCESS_CONTROL",
+     "name": "Cameras & Access Control",
+     "was": [],
+     "description": "Cameras, badge readers, door access.",
+     "products": [
+      {
+       "name": "Camera Install (per camera)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Door Access Install (per door)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Annual Inspection",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Logistics & Transportation",
+   "was": [],
+   "description": "Moving goods and people. Examples: freight, courier, warehousing, moving.",
+   "hidden": false,
+   "sort_order": 7,
+   "rates": [
+    {
+     "name": "Per Load / Shipment",
+     "unit": "EACH",
+     "pricing": "FIXED",
+     "delivery": "EITHER"
+    },
+    {
+     "name": "Hourly with Vehicle",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Monthly Storage",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "OFFSITE"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "FREIGHT_TRUCKING",
+     "name": "Freight & Trucking",
+     "was": [],
+     "description": "Truckload and less-than-truckload shipping.",
+     "products": [
+      {
+       "name": "Full Truckload",
+       "unit": "EACH",
+       "pricing": "QUOTE"
+      },
+      {
+       "name": "LTL Shipment",
+       "unit": "EACH",
+       "pricing": "QUOTE"
+      }
+     ]
+    },
+    {
+     "code": "COURIER_DELIVERY",
+     "name": "Courier & Delivery",
+     "was": [],
+     "description": "Same-day, local and scheduled delivery.",
+     "products": [
+      {
+       "name": "Same-Day Delivery",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Scheduled Route",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    },
+    {
+     "code": "WAREHOUSING_FULFILLMENT",
+     "name": "Warehousing & Fulfillment",
+     "was": [],
+     "description": "Storage and order fulfillment.",
+     "products": [
+      {
+       "name": "Pallet Storage",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "Pick-Pack-Ship (per order)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "MOVING_RELOCATION",
+     "name": "Moving & Relocation",
+     "was": [],
+     "description": "Office moves and employee relocation.",
+     "products": [
+      {
+       "name": "Office Move",
+       "unit": "EACH",
+       "pricing": "QUOTE"
+      },
+      {
+       "name": "Employee Relocation Package",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Fleet & Vehicles",
+   "was": [],
+   "description": "Keeping company vehicles on the road. Examples: maintenance, rentals, leasing.",
+   "hidden": false,
+   "sort_order": 8,
+   "rates": [
+    {
+     "name": "Hourly Shop Labor",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "EITHER"
+    },
+    {
+     "name": "Daily Rental",
+     "unit": "DAY",
+     "pricing": "TIME",
+     "delivery": "EITHER"
+    },
+    {
+     "name": "Monthly Lease",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "EITHER"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "FLEET_MAINTENANCE",
+     "name": "Fleet Maintenance",
+     "was": [],
+     "description": "Routine and mobile vehicle service.",
+     "products": [
+      {
+       "name": "Oil Change",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Preventive Maintenance",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Mobile Repair Visit",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "VEHICLE_RENTAL_LEASING",
+     "name": "Vehicle Rental & Leasing",
+     "was": [],
+     "description": "Short-term rentals and long-term leases.",
+     "products": [
+      {
+       "name": "Daily Rental",
+       "unit": "DAY",
+       "pricing": "TIME"
+      },
+      {
+       "name": "Monthly Lease",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Travel & Events",
+   "was": [],
+   "description": "Meetings, events and business travel. Examples: event planning, venues, catering, travel management.",
+   "hidden": false,
+   "sort_order": 9,
+   "rates": [
+    {
+     "name": "Hourly Planning",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "OFFSITE"
+    },
+    {
+     "name": "Day Rate (Onsite)",
+     "unit": "DAY",
+     "pricing": "TIME",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Monthly Program Fee",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "EITHER"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "EVENT_PLANNING",
+     "name": "Event Planning",
+     "was": [],
+     "description": "Planning and running meetings and events.",
+     "products": [
+      {
+       "name": "Event Plan",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Day-of Coordination",
+       "unit": "DAY",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Virtual Event Production",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "VENUES_CATERING",
+     "name": "Venues & Catering",
+     "was": [],
+     "description": "Rooms, spaces and food for events.",
+     "products": [
+      {
+       "name": "Meeting Room (per day)",
+       "unit": "DAY",
+       "pricing": "TIME"
+      },
+      {
+       "name": "Catering (per person)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "TRAVEL_MANAGEMENT",
+     "name": "Travel Management",
+     "was": [],
+     "description": "Booking and managing business travel.",
+     "products": [
+      {
+       "name": "Travel Program Setup",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Trip Booking",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Education & Training",
+   "was": [],
+   "description": "Building skills. Examples: corporate training, systems training, certification prep, coaching, eLearning.",
+   "hidden": false,
+   "sort_order": 10,
+   "rates": [
+    {
+     "name": "Per Session",
+     "unit": "SESSION",
+     "pricing": "FIXED",
+     "delivery": "EITHER"
+    },
+    {
+     "name": "Per Seat",
+     "unit": "EACH",
+     "pricing": "FIXED",
+     "delivery": "EITHER"
+    },
+    {
+     "name": "Day Rate",
+     "unit": "DAY",
+     "pricing": "TIME",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Hourly Coaching",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "OFFSITE"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "CORPORATE_TRAINING",
+     "name": "Corporate Training",
+     "was": [],
+     "description": "Workshops, leadership, compliance courses.",
+     "products": [
+      {
+       "name": "Workshop (Half Day)",
+       "unit": "SESSION",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Leadership Program",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Compliance Course (per seat)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "SOFTWARE_SYSTEMS_TRAINING",
+     "name": "Software & Systems Training",
+     "was": [],
+     "description": "End-user training on ERP and business apps.",
+     "products": [
+      {
+       "name": "End-User Training Session",
+       "unit": "SESSION",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Train-the-Trainer",
+       "unit": "SESSION",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Job Aids Package",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "CERTIFICATION_EXAM_PREP",
+     "name": "Certification & Exam Prep",
+     "was": [],
+     "description": "Courses and practice tests for credentials.",
+     "products": [
+      {
+       "name": "Exam Prep Course (per seat)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Practice Test Pack",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "COACHING_MENTORING",
+     "name": "Coaching & Mentoring",
+     "was": [],
+     "description": "One-to-one career and skills coaching.",
+     "products": [
+      {
+       "name": "Single Session",
+       "unit": "SESSION",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Coaching Package (5 Sessions)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "ELEARNING_DEVELOPMENT",
+     "name": "eLearning Development",
+     "was": [],
+     "description": "Online courses, video lessons, quizzes.",
+     "products": [
+      {
+       "name": "Online Course Module",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "How-To Video Lesson",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Quiz / Assessment Build",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Telecom",
+   "was": [],
+   "description": "Keeping the business connected. Examples: phones, internet, network cabling.",
+   "hidden": false,
+   "sort_order": 11,
+   "rates": [
+    {
+     "name": "Monthly Service",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "OFFSITE"
+    },
+    {
+     "name": "Install per Site",
+     "unit": "VISIT",
+     "pricing": "FIXED",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Hourly Technician",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "ONSITE"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "PHONE_INTERNET_SERVICE",
+     "name": "Phone & Internet Service",
+     "was": [],
+     "description": "Business internet and phone lines.",
+     "products": [
+      {
+       "name": "Business Internet",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "VoIP Phone Line",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    },
+    {
+     "code": "CABLING_INSTALLATION",
+     "name": "Cabling & Installation",
+     "was": [],
+     "description": "Network wiring and installs.",
+     "products": [
+      {
+       "name": "Network Drop",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Site Wiring",
+       "unit": "EACH",
+       "pricing": "QUOTE"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Environmental & Waste",
+   "was": [],
+   "description": "Removing waste safely. Examples: dumpsters, recycling, shredding, hazardous waste.",
+   "hidden": false,
+   "sort_order": 12,
+   "rates": [
+    {
+     "name": "Per Pickup",
+     "unit": "VISIT",
+     "pricing": "FIXED",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Monthly Service",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "ONSITE"
+    },
+    {
+     "name": "Per Container",
+     "unit": "EACH",
+     "pricing": "FIXED",
+     "delivery": "ONSITE"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "WASTE_RECYCLING",
+     "name": "Waste & Recycling",
+     "was": [],
+     "description": "Dumpsters, recycling, one-time hauls.",
+     "products": [
+      {
+       "name": "Dumpster Service",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "One-Time Haul",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "SHREDDING_RECORDS_DESTRUCTION",
+     "name": "Shredding & Records Destruction",
+     "was": [],
+     "description": "Secure shredding of paper and media.",
+     "products": [
+      {
+       "name": "Shred Bin Service",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      },
+      {
+       "name": "One-Time Purge",
+       "unit": "VISIT",
+       "pricing": "FIXED"
+      }
+     ]
+    },
+    {
+     "code": "ENVIRONMENTAL_SERVICES",
+     "name": "Environmental Services",
+     "was": [],
+     "description": "Assessments and hazardous waste.",
+     "products": [
+      {
+       "name": "Environmental Assessment",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Hazardous Waste Pickup",
+       "unit": "VISIT",
+       "pricing": "QUOTE"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Business Services",
+   "was": [],
+   "description": "OPTIONAL 13th \u2014 office-type services. Examples: mailroom, document scanning, records storage, translation.",
+   "hidden": false,
+   "sort_order": 13,
+   "rates": [
+    {
+     "name": "Hourly",
+     "unit": "HOUR",
+     "pricing": "TIME",
+     "delivery": "EITHER"
+    },
+    {
+     "name": "Per Item / Page",
+     "unit": "EACH",
+     "pricing": "FIXED",
+     "delivery": "OFFSITE"
+    },
+    {
+     "name": "Monthly Service",
+     "unit": "MONTH",
+     "pricing": "RECURRING",
+     "delivery": "EITHER"
+    }
+   ],
+   "businessTypes": [
+    {
+     "code": "MAILROOM_SERVICES",
+     "name": "Mailroom Services",
+     "was": [],
+     "description": "Mailroom staffing and handling.",
+     "products": [
+      {
+       "name": "Mailroom Staffing",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    },
+    {
+     "code": "DOCUMENT_SCANNING_RECORDS",
+     "name": "Document Scanning & Records",
+     "was": [],
+     "description": "Scanning and box storage.",
+     "products": [
+      {
+       "name": "Scanning (per box)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Records Storage (per box)",
+       "unit": "MONTH",
+       "pricing": "RECURRING"
+      }
+     ]
+    },
+    {
+     "code": "TRANSLATION_INTERPRETING",
+     "name": "Translation & Interpreting",
+     "was": [],
+     "description": "Written translation and live interpreters.",
+     "products": [
+      {
+       "name": "Document Translation (per page)",
+       "unit": "EACH",
+       "pricing": "FIXED"
+      },
+      {
+       "name": "Interpreter (per hour)",
+       "unit": "HOUR",
+       "pricing": "TIME"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Healthcare",
+   "was": [],
+   "description": "Parked \u2014 not shown to users yet.",
+   "hidden": true,
+   "sort_order": 90,
+   "rates": [],
+   "businessTypes": []
+  },
+  {
+   "name": "Personal & Domestic",
+   "was": [],
+   "description": "Parked \u2014 not shown to users yet.",
+   "hidden": true,
+   "sort_order": 91,
+   "rates": [],
+   "businessTypes": []
+  }
+ ]
+}

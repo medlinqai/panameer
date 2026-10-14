@@ -16,13 +16,14 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
   const [attestation, setAttestation] = useState(false);
   const [companyTos, setCompanyTos] = useState(false);
   const [businessTypes, setBusinessTypes] = useState<BT[]>([]);
+  const [commodities, setCommodities] = useState<string[]>([]);
   const [businessTypeId, setBusinessTypeId] = useState("");
   const [match, setMatch] = useState<Match>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/company/industries").then((r) => (r.ok ? r.json() : { industries: [] })).then((b) => { setBusinessTypes(b.businessTypes ?? []); if (b.businessTypes?.length === 1) setBusinessTypeId(b.businessTypes[0].id); }).catch(() => {});
+    fetch("/api/company/industries").then((r) => (r.ok ? r.json() : { industries: [] })).then((b) => { setBusinessTypes(b.businessTypes ?? []); setCommodities(b.commodities ?? []); if (b.businessTypes?.length === 1) setBusinessTypeId(b.businessTypes[0].id); }).catch(() => {});
   }, []);
 
   const lookUp = async () => {
@@ -98,7 +99,7 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
               <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Your business name" autoComplete="organization" />
             </Field>
             {businessTypes.length > 0 && (
-              <BusinessTypePicker types={businessTypes} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog. You can add more later." />
+              <BusinessTypePicker types={businessTypes} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog. You can add more later." />
             )}
             {/* BT-E001: a seller picks its Business Type (it selects the Service Catalog); Industries You Serve comes later on the company page. */}
             <Field label="Description (optional)" hint={`What the company does, in a sentence or two. Up to ${COMPANY_DESCRIPTION_MAX} characters.`}>

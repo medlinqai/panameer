@@ -6,11 +6,13 @@ export const REAL_COMPANY = { NOT: { name: { startsWith: "MyCo Test" } }, member
 
 // TX-E003: business types a provider company sells under (more than one allowed). Only seeded, visible types are offered.
 export async function offeredBusinessTypes() {
-  return prisma.businessType.findMany({
+  const rows = await prisma.businessType.findMany({
     where: { hidden: false, commodity_group_id: { not: null } },
-    orderBy: [{ commodityGroup: { sort_order: "asc" } }, { sort_order: "asc" }, { name: "asc" }],
-    select: { id: true, name: true, uses_skills: true, commodityGroup: { select: { name: true } } },
+    orderBy: [{ sort_order: "asc" }, { name: "asc" }],
+    select: { id: true, name: true, uses_skills: true, commodityGroup: { select: { name: true, sort_order: true } } },
   });
+  // Group order first (stable sort keeps type order inside a group).
+  return rows.sort((a, b) => (a.commodityGroup?.sort_order ?? 0) - (b.commodityGroup?.sort_order ?? 0));
 }
 
 export async function companyBusinessTypeIds(companyId: string): Promise<string[]> {
