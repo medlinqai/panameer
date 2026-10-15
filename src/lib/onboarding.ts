@@ -1534,6 +1534,17 @@ export async function applyProviderSection(
           currency: typeof data.currency === "string" ? data.currency : undefined,
         },
       });
+      // Scott 10-15: the wizard's rates feed My Catalog › Services — fill hourly rate types still without a rate
+      // (onsite → ONSITE types, offsite → OFFSITE types). Rates the seller already set in the catalog are left alone.
+      for (const [delivery, cents] of [["ONSITE", onsite], ["OFFSITE", remote ?? hourly]] as const) {
+        if (cents == null || cents <= 0) continue;
+        const types = await prisma.serviceType.findMany({ where: { delivery }, select: { id: true } });
+        if (!types.length) continue;
+        await prisma.providerService.updateMany({
+          where: { provider_profile_id: profileId, rate_cents: null, uom: "HOUR", service_type_id: { in: types.map((t) => t.id) } },
+          data: { rate_cents: cents },
+        });
+      }
       break;
     }
 

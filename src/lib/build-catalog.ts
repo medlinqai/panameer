@@ -82,8 +82,10 @@ export async function ensureDefaultRates(viewer: Viewer) {
   ]);
   const seen = new Set(have.map((h) => h.service_type_id));
   for (const t of types.filter((t) => !seen.has(t.id))) {
-    const rate = registrationRate(prof, t.delivery);
-    await saveCatalogService(viewer, { serviceTypeId: t.id, on: true, rateCents: rate, unit: t.units[0] ?? "HOUR" });
+    const unit = t.units[0] ?? "HOUR";
+    // The registration rates are per hour — only seed hourly rate types (not per visit, per job, monthly…).
+    const rate = unit === "HOUR" ? registrationRate(prof, t.delivery) : null;
+    await saveCatalogService(viewer, { serviceTypeId: t.id, on: true, rateCents: rate, unit });
   }
 }
 
