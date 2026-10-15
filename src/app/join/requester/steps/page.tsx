@@ -101,6 +101,8 @@ export default function RequesterStepsPage() {
   const [industries, setIndustries] = useState<{ id: string; name: string }[]>([]);
   const [coMatch, setCoMatch] = useState<CoMatch>(null);
   const [askedAdmin, setAskedAdmin] = useState<string | null>(null);
+  // Scott 10-15: furthest step reached (rail index; Review = number of work steps) — stays clickable.
+  const [furthest, setFurthest] = useState(0);
 
   // BC-E005: the company already here for the website or the registrant's email domain.
   const checkMatch = useCallback(async (site: string): Promise<CoMatch> => {
@@ -130,6 +132,11 @@ export default function RequesterStepsPage() {
       address: LocationValue | null; workLocation: LocationValue | null;
     };
   }) => {
+    {
+      const r = s.resumeStep as string;
+      const n = r === "review" ? REQUESTER_WORK_STEPS.length : REQUESTER_WORK_STEPS.indexOf(r as (typeof REQUESTER_WORK_STEPS)[number]);
+      if (n >= 0) setFurthest((f) => Math.max(f, n));
+    }
     const p = s.profile;
     const stored = parseStoredPhone(p.phone);
     setPhoneCountry(stored.country ?? p.address?.country ?? null);
@@ -258,7 +265,7 @@ export default function RequesterStepsPage() {
   const railSteps = REQUESTER_WORK_STEPS.map((k) => ({ key: k, label: REQUESTER_STEP_LABELS[k] }));
   const workIdx = REQUESTER_WORK_STEPS.indexOf(step as (typeof REQUESTER_WORK_STEPS)[number]);
   const shell = {
-    rail: { steps: railSteps, current: step === "review" ? railSteps.length : workIdx, onPick: (i: number) => { setFromReview(false); setError(null); setStep(REQUESTER_WORK_STEPS[i]); } },
+    rail: { steps: railSteps, current: step === "review" ? railSteps.length : workIdx, reached: furthest, onPick: (i: number) => { setFromReview(false); setError(null); setStep(i >= REQUESTER_WORK_STEPS.length ? "review" : REQUESTER_WORK_STEPS[i]); } },
     eyebrow: step === "review" ? "Review" : `Step ${workIdx + 1} of ${railSteps.length} · ${REQUESTER_STEP_LABELS[step]}`,
     busy,
     onBack: back,

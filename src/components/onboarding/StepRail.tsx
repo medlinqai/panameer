@@ -2,18 +2,19 @@
 // LS-E007: with `onPick`, done steps are buttons that jump back (no save, like Back).
 export type RailStep = { key: string; label: string };
 
-export function StepRail({ steps, current, review = true, onPick }: { steps: RailStep[]; current: number; review?: boolean; onPick?: (index: number) => void }) {
+export function StepRail({ steps, current, review = true, onPick, reached }: { steps: RailStep[]; current: number; review?: boolean; onPick?: (index: number) => void; /** Scott 10-15: furthest step reached — everything up to it stays ✓ and clickable, both directions. */ reached?: number }) {
+  const top = Math.max(current, reached ?? current);
   const all = review ? [...steps, { key: "review", label: "Review" }] : steps;
   return (
     <nav data-step-rail aria-label="Steps" className="flex border-b border-line">
       {all.map((s, i) => {
-        const state = i < current ? "done" : i === current ? "now" : "next";
+        const state = i === current ? "now" : i <= top ? "done" : "next";
         const isReview = review && i === all.length - 1;
         const Tag = onPick && state === "done" ? "button" : "div";
         return (
           <Tag
             key={s.key}
-            {...(Tag === "button" ? { type: "button" as const, onClick: () => onPick!(i), "aria-label": `Back to ${s.label}` } : {})}
+            {...(Tag === "button" ? { type: "button" as const, onClick: () => onPick!(i), "aria-label": `Go to ${s.label}` } : {})}
             data-rail-state={state}
             aria-current={state === "now" ? "step" : undefined}
             className={
