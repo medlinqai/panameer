@@ -147,7 +147,7 @@ export function guessMode(text: string): WorkMode {
 
 /** GT-E004: after the résumé matched Skills as today, translate each matched skill → capability through legacy_skill_id
  *  (the backfill's map), mode guessed from the text it came from; saved unconfirmed. Off when the switch is off. */
-export async function capabilitiesFromSkills(profileId: string, picks: { skillIds: string[]; text: string }[]) {
+export async function capabilitiesFromSkills(profileId: string, picks: { skillIds: string[]; text: string; systems?: boolean }[]) {
   if (!(await taxonomyV2())) return 0;
   const ids = [...new Set(picks.flatMap((p) => p.skillIds))];
   if (!ids.length) return 0;
@@ -158,12 +158,16 @@ export async function capabilitiesFromSkills(profileId: string, picks: { skillId
   ]);
   const legacyDomains = await prisma.providerCapability.findMany({ where: { legacy_skill_id: { in: ids }, domain_id: { not: null }, knowledge_skill_id: null, system_item_id: null, work_role_id: null }, distinct: ["legacy_skill_id"], select: { legacy_skill_id: true, domain_id: true } });
   let n = 0;
+  const seen = new Set<string>();
   for (const p of picks) {
     const mode = guessMode(p.text);
     for (const sid of p.skillIds) {
+      // A skill read in a job keeps that job's row; the whole-document pass only fills skills no job named.
+      if (seen.has(sid)) continue;
+      seen.add(sid);
       // RC-E001: every system item for the skill; keep one only if this job's text names its product. None named → domain only.
       const all = items.filter((x) => x.legacy_skill_id === sid);
-      const it = all.find((x) => !selfNamedItem(x, x.product) && textNamesProduct(p.text, x.product)) ?? null;
+      const it = p.systems === false ? null : all.find((x) => !selfNamedItem(x, x.product) && textNamesProduct(p.text, x.product)) ?? null;
       const k = ks.find((x) => x.legacy_skill_id === sid), r = roles.find((x) => x.legacy_skill_id === sid), d = legacyDomains.find((x) => x.legacy_skill_id === sid);
       const domain = k?.domain_id ?? it?.domain_id ?? d?.domain_id ?? all.find((x) => x.domain_id)?.domain_id ?? null;
       if (!k && !it && !r && !domain) continue;

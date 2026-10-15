@@ -471,7 +471,7 @@ export async function applyParsedResume(
     },
   });
   if (!profile) return applied;
-  const capPicks: { skillIds: string[]; text: string }[] = [];
+  const capPicks: { skillIds: string[]; text: string; systems?: boolean }[] = [];
 
   // --- Headline + bio: fill only when empty (never overwrite typed text) ---
   const data: Prisma.ProviderProfileUpdateInput = {};
@@ -700,7 +700,8 @@ export async function applyParsedResume(
     applied.skillsUnmatched = skillUnmatched;
     applied.skillSuggestions = suggestableSkills(skillUnmatched);
     applied.skillsMatchedNames = matched.map((m) => m.name);
-    capPicks.push({ skillIds: matched.map((m) => m.id), text: text ?? "" });
+    // RC-E001: the whole document names every system the person ever touched — this pass never attaches one.
+    capPicks.push({ skillIds: matched.map((m) => m.id), text: text ?? "", systems: false });
 
     const have = new Set(profile.skills.map((s) => s.skill_id));
     const toAdd = matched.filter((m) => !have.has(m.id));
