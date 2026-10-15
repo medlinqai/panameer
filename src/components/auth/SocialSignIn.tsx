@@ -1,4 +1,5 @@
 "use client";
+import type React from "react";
 
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
@@ -64,11 +65,9 @@ const BUTTONS: {
 
 export function SocialSignIn({
   callbackUrl = "/join",
-  disabledHint = "Not available",
-}: {
+  disabledHint = "Not available", divider }: {
   callbackUrl?: string;
-  disabledHint?: string;
-}) {
+  disabledHint?: string; divider?: React.ReactNode; }) {
   const [available, setAvailable] = useState<Set<string> | null>(null);
   const [busy, setBusy] = useState<ProviderId | null>(null);
 
@@ -90,6 +89,8 @@ export function SocialSignIn({
   }, []);
 
   const anyLive = available !== null && BUTTONS.some((b) => available.has(b.id));
+  // Scott 10-15: no keys set → no buttons and no "or" (they appear on their own once Google/Apple are configured).
+  if (!anyLive) return null;
 
   return (
     <div className="@container">
@@ -125,13 +126,7 @@ export function SocialSignIn({
         })}
       </div>
 
-      {available !== null && !anyLive && (
-        // THE FORM BELOW THIS CALLS `signIn("credentials")` AND NOTHING ELSE. IT
-        <p className="mt-2.5 text-center text-[13px] text-ink-2">
-          Social sign-in isn&apos;t configured yet — sign in with your email
-          below.
-        </p>
-      )}
+      {divider}
     </div>
   );
 }

@@ -75,13 +75,11 @@ function LoginForm() {
             <p className="pt-1 text-sm text-ink-2">Sign in to continue</p>
           </div>
 
-          <SocialSignIn callbackUrl={callbackUrl ?? "/dashboard"} />
-
-          <div className="flex items-center gap-4">
+          <SocialSignIn callbackUrl={callbackUrl ?? "/dashboard"} divider={<div className="mt-4 flex items-center gap-4">
             <span className="h-px flex-1 bg-line" />
             <span className="text-xs font-semibold text-ink-2">or</span>
             <span className="h-px flex-1 bg-line" />
-          </div>
+          </div>} />
 
           <label className="block text-sm font-medium">
             Email

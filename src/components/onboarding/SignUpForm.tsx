@@ -73,13 +73,11 @@ export function SignUpForm({
 
       {}
       <div className="mt-5">
-        <SocialSignIn callbackUrl={callbackUrl} />
-      </div>
-
-      <div className="my-4 flex items-center gap-4">
+        <SocialSignIn callbackUrl={callbackUrl} divider={<div className="my-4 flex items-center gap-4">
         <span className="h-px flex-1 bg-line" />
         <span className="text-[13px] font-semibold text-ink-2">or</span>
         <span className="h-px flex-1 bg-line" />
+      </div>} />
       </div>
 
       <div className="space-y-2.5">
