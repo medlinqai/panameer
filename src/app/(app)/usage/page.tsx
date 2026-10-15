@@ -18,6 +18,8 @@ import type { TrendPeriod } from "@/components/console/StatCardBacks";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs, profileTabLabel, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { prisma } from "@/lib/prisma";
+import { CommunitySignalBlock } from "@/components/profile/CommunitySignal";
+import { getCommunitySignal } from "@/lib/community-signal";
 import { guardPage } from "@/lib/guard";
 import { ownedProviderProfile } from "@/lib/access";
 
@@ -221,6 +223,9 @@ export default async function MyStatsPage({
       {}
       {}
       <UsageActivity areas={activity} range={range} levels={levels} />
+
+      {/* Scott 10-15: Your Community Activity moved here from the profile. */}
+      <div className="mt-6"><CommunitySignalBlock signal={await getCommunitySignal(profile.person_id)} firstName="" isOwner full /></div>
 
       {}
 

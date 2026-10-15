@@ -6,14 +6,29 @@ export function CommunitySignalBlock({
   signal,
   firstName,
   isOwner = false,
+  full = false,
 }: {
   signal: CommunitySignal | null;
   firstName: string;
   isOwner?: boolean;
+  /** The full activity box (Usage tab). Off = the profile's one line for buyers. */
+  full?: boolean;
 }) {
   if (!signal) return null;
 
   const { helpfulAnswers, replies, threads, boards, lastActive } = signal;
+
+  // Scott 10-15: on a profile, buyers see ONE line and only when there's something to show;
+  // the owner's activity box lives on Usage (`full`).
+  if (!full) {
+    if (isOwner || helpfulAnswers < 1) return null;
+    return (
+      <p data-community-line className="text-[13.5px] text-ink-2">
+        <b className="text-ink">{helpfulAnswers} answer{helpfulAnswers === 1 ? "" : "s"} marked helpful</b> by the person who asked
+        {boards.length > 0 && <> · active in {boards.join(", ")}</>}
+      </p>
+    );
+  }
 
   return (
     <section className="rounded-brand border border-line bg-white p-6">
