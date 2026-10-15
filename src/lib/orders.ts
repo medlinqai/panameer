@@ -247,8 +247,12 @@ export type OrderRow = {
   valueCents: number;
   drawnCents: number;
   lineCount: number;
-  /** DIRECT orders have none, and the row must not imply one. */
   workRequestId: string | null;
+  /** JW-E006: the Work Request's description, copied on the order. */
+  description: string | null;
+  wrNumber: string | null;
+  /** The Job behind it, if any. */
+  jobId: string | null;
   externalRef: string | null;
   waiting: string | null;
   frozen: boolean;
@@ -285,6 +289,8 @@ export async function listOrders(viewer: Viewer): Promise<OrderRow[]> {
       buyer_person_id: true,
       provider_person_id: true,
       work_request_id: true,
+      description: true,
+      workRequest: { select: { wr_number: true, job_id: true } },
       external_ref: true,
       period_start: true,
       period_end: true,
@@ -349,6 +355,9 @@ export async function listOrders(viewer: Viewer): Promise<OrderRow[]> {
       drawnCents,
       lineCount: mine.length,
       workRequestId: o.work_request_id,
+      description: o.description,
+      wrNumber: o.workRequest.wr_number,
+      jobId: o.workRequest.job_id,
       externalRef: o.external_ref,
       waiting: waitingLine(o, party, { buyer: names.get(o.buyer_person_id) ?? "the buyer", provider: names.get(o.provider_person_id) ?? "the provider" }),
       frozen: !!o.frozen_at,
@@ -401,6 +410,9 @@ export type OrderDetail = {
   externalRef: string | null;
   sowText: string | null;
   workRequestId: string | null;
+  /** JW: the Job behind the work request, if any, and the work request's description. */
+  jobId: string | null;
+  description: string | null;
   providerAcceptedAt: string | null;
   buyerReleasedAt: string | null;
   buyerAcceptedAt: string | null;
@@ -570,6 +582,8 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     externalRef: o.external_ref,
     sowText: o.sow_text,
     workRequestId: o.work_request_id,
+    jobId: (await prisma.workRequest.findUnique({ where: { id: o.work_request_id }, select: { job_id: true } }))?.job_id ?? null,
+    description: o.description,
     providerAcceptedAt: o.provider_accepted_at ? o.provider_accepted_at.toISOString() : null,
     buyerReleasedAt: o.buyer_released_at ? o.buyer_released_at.toISOString() : null,
     buyerAcceptedAt: o.buyer_accepted_at ? o.buyer_accepted_at.toISOString() : null,

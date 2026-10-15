@@ -111,7 +111,7 @@ export function AppHeader() {
 
         {/* SH-E002: the cart, once something is in it. */}
         {(me?.cartCount ?? 0) > 0 && (
-          <IconLink href="/cart" label="Cart" active={pathname === "/cart"}>
+          <IconLink href="/cart" label="Work Request (Incomplete)" active={pathname === "/cart"}>
             <span className="relative inline-flex" data-cart-count={me?.cartCount}>
               <CartIcon />
               <span aria-label={`${me?.cartCount} in your cart`} className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-magenta px-1 text-[10px] font-bold text-white">

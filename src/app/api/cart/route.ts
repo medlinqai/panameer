@@ -8,7 +8,7 @@ const BODY = z.discriminatedUnion("action", [
   z.object({ action: z.literal("add"), productId: z.string().uuid(), quantity: z.number().int().min(1).max(99).optional() }),
   z.object({ action: z.literal("qty"), lineId: z.string().uuid(), quantity: z.number().int() }),
   z.object({ action: z.literal("remove"), lineId: z.string().uuid() }),
-  z.object({ action: z.literal("place") }),
+  z.object({ action: z.literal("place"), description: z.string().max(500).optional() }),
 ]);
 
 // SH-E002/E003: the signed-in buyer's own cart (owner-scoped in the lib).
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     if (d.action === "add") await addToCart(viewer, d.productId, d.quantity);
     else if (d.action === "qty") await setQuantity(viewer, d.lineId, d.quantity);
     else if (d.action === "remove") await removeLine(viewer, d.lineId);
-    else return NextResponse.json({ ok: true, orders: await placeOrder(viewer) });
+    else return NextResponse.json({ ok: true, orders: await placeOrder(viewer, { description: d.description }) });
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof SignGateError) {

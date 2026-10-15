@@ -111,7 +111,6 @@ export const REQUESTER_NAV: NavItem[] = [
   { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
-    // BR-E006: the buyer's menu says Jobs (same destination until the Job / Work Request run lands).
     label: "Jobs",
     heading: "Jobs",
     href: "/hire",
@@ -140,10 +139,12 @@ export type PageTabItem = NavItem & {
 
 export const PAGE_TABS: Record<string, PageTabItem[]> = {
   // WS-E002: the Work area (providers); tabs are views of /find-work.
+  // JW-E008: Jobs — Find Jobs · My Jobs · My Proposals.
   "/find-work": [
-    { label: "Home", href: "/find-work" },
+    { label: "Find Jobs", href: "/find-work" },
     { label: "Best Matches", href: "/find-work?tab=best" },
-    { label: "All Work Requests", href: "/find-work?tab=recent" },
+    { label: "All Jobs", href: "/find-work?tab=recent" },
+    { label: "My Jobs", href: "/hire", requires: "canHireTalent" },
     { label: "Proposal Requests", href: "/find-work?tab=invitations" },
     { label: "My Proposals", href: "/find-work?tab=proposals" },
     { label: "Saved", href: "/find-work?tab=saved" },
@@ -158,8 +159,10 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Offers for My Services", href: "/services/offers", requires: "canProvideServices" },
   ],
   "/hire": [
-    { label: "Work Requests", href: "/hire", requires: "canHireTalent" },
-    { label: "Create a Request", href: "/create-work", requires: "canHireTalent" },
+    { label: "Find Jobs", href: "/find-work", requires: "canProvideServices" },
+    { label: "My Jobs", href: "/hire", requires: "canHireTalent" },
+    { label: "Post a Job", href: "/create-work", requires: "canHireTalent" },
+    { label: "My Proposals", href: "/find-work?tab=proposals", requires: "canProvideServices" },
   ],
   "/payments": [
     { label: "Payments", href: "/payments" },
@@ -199,8 +202,8 @@ export const PROVIDER_NAV: NavItem[] = [
   { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
-    label: "Work",
-    heading: "Work Requests",
+    label: "Jobs",
+    heading: "Jobs",
     href: "/find-work",
     icon: "Briefcase",
     requires: "canProvideServices",

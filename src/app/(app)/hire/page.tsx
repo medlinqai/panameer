@@ -11,7 +11,7 @@ import {
   jobStatusPillClass,
 } from "@/lib/work-request-status";
 
-export const metadata = { title: "Work Requests · Panameer" };
+export const metadata = { title: "My Jobs · Panameer" };
 
 function budgetLine(r: WorkRequestRow): string | null {
   if (r.budgetAmountCents != null)
@@ -51,31 +51,31 @@ export default async function Page() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
-            Work Requests
+            My Jobs
           </h1>
           {/* NARROWED TO WHAT IS PROVEN. The brief's line ended *"You pay only for */}
           <FreeLine claim="Post work and search providers, free." />
           <p className="mt-1.5 text-[15px] text-ink-2">
             {requests.length === 0
-              ? "You haven't created a work request yet."
+              ? "You haven't posted a job yet."
               : `${requests.length} request${requests.length === 1 ? "" : "s"} · ${drafts} draft${
                   drafts === 1 ? "" : "s"
                 } · ${posted} posted`}
           </p>
         </div>
-        <Button href="/create-work">Create a Work Request</Button>
+        <Button href="/create-work">Post a Job</Button>
       </div>
 
       {requests.length === 0 ? (
         <div className="mt-8 rounded-brand border border-dashed border-line px-6 py-12 text-center">
           <p className="text-[16px] font-bold">Nothing here yet</p>
           <p className="mx-auto mt-2 max-w-md text-[14.5px] leading-relaxed text-ink-2">
-            A work request describes what you need done. The wizard walks you
+            A job describes what you need done. The wizard walks you
             through it in nine short steps and saves as you go, so you can stop
             and come back.
           </p>
           <Button href="/create-work" className="mt-6">
-            Create your first Work Request
+            Post your first Job
           </Button>
         </div>
       ) : (

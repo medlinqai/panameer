@@ -164,19 +164,24 @@ export function AssignDirectly({
 }
 
 /** TRANSITION TWO. The irreversible one, and it says so before it is pressed. */
-export function CreateOrder({ workRequestId }: { workRequestId: string }) {
+export function CreateOrder({ workRequestId, description: initial = "" }: { workRequestId: string; description?: string }) {
   const { post, busy, error, gateModal } = useHirePost(workRequestId);
   const [sow, setSow] = useState("");
+  const [description, setDescription] = useState(initial);
   return (
     <div className="mt-4 rounded-brand border-2 border-magenta/40 bg-magenta/[0.04] p-5">
       {gateModal}
       <p className="text-[15px] font-bold">A provider is selected.</p>
       {/* IT NAMES WHAT CHANGES AND WHAT STOPS BEING POSSIBLE. Ruling 17's */}
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">
-        Creating the work order sends it to them to accept, and the selection
-        can&apos;t be changed after that.
+        Submitting the work request creates the work order and sends it to them
+        to accept; the selection can&apos;t be changed after that.
       </p>
       <div className="mt-3">
+        <label className="mb-3 block text-[13px] font-semibold text-ink-2">
+          Description
+          <input data-wr-description value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} className="mt-1 block h-11 w-full border border-line bg-surface px-3 text-[14px] text-ink outline-none focus:border-ink" />
+        </label>
         <label className="mb-3 block text-[13px] font-semibold text-ink-2">
           Statement of work (optional)
           <textarea
@@ -187,8 +192,8 @@ export function CreateOrder({ workRequestId }: { workRequestId: string }) {
             placeholder="Scope, deliverables, acceptance — the provider reads this before accepting."
           />
         </label>
-        <Button disabled={busy !== null} onClick={() => post("order", { sowText: sow }, "order")}>
-          {busy ? "Creating the work order…" : "Create the Work Order"}
+        <Button disabled={busy !== null} onClick={() => post("order", { sowText: sow, description }, "order")}>
+          {busy ? "Submitting…" : "Submit"}
         </Button>
       </div>
       {error && (

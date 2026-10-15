@@ -137,6 +137,7 @@ export type WorkRequestDetail = {
   /** The Job's requisition. */
   workRequestId: string;
   workRequestStatus: WorkRequestStatus;
+  workRequestDescription: string;
   // THE KIND, AND IT DECIDES WHETHER SOURCING EXISTS WS-B)
   soleSourced: boolean;
   postedAt: string | null;
@@ -216,6 +217,7 @@ export async function getWorkRequestDetail(
     status: wr.status,
     workRequestId: req.id,
     workRequestStatus: req.status as WorkRequestStatus,
+    workRequestDescription: (await prisma.workRequest.findUnique({ where: { id: req.id }, select: { description: true } }))?.description ?? wr.title,
     /* `P2-A8-E712` WS-B — the branch above the sourcing chain. See the type. */
     soleSourced: wr.sole_sourced,
     postedAt: wr.posted_at ? wr.posted_at.toISOString() : null,

@@ -58,7 +58,7 @@ export default async function Page({
       <div className="pm-white-page mx-auto w-full max-w-5xl">
         <BackLink href="/orders" label="Work Orders" />
         <p className="mt-2 text-[11px] font-semibold tracking-[0.12em] text-magenta">WORK ORDER {o.orderNumber}</p>
-        <h1 className="mt-1 text-[28px] font-bold">{o.lines[0]?.description ?? o.orderNumber}</h1>
+        <h1 className="mt-1 text-[28px] font-bold">{o.description ?? o.lines[0]?.description ?? o.orderNumber}</h1>
         <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
           <p className="text-[14px] text-ink-2">{o.buyerName} · {o.providerName}</p>
           {o.party === "PROVIDER" && BILLABLE.includes(o.status) && (
@@ -233,9 +233,9 @@ export default async function Page({
           <Button href={`/orders/${o.id}/settle`}>Raise a payment request</Button>
         )}
         <OrderControls orderId={o.id} controls={o.controls} unusedLabel={formatCents(o.remainingCents, o.currency)} pending={o.pendingRequests} />
-        {o.workRequestId && (
-          <Button href={`/work-requests/${o.workRequestId}`} variant="ghost">
-            Open the work request
+        {o.party === "BUYER" && (
+          <Button href={o.jobId ? `/work-requests/${o.jobId}` : "/orders/work-requests"} variant="ghost">
+            {o.jobId ? "Open the job" : "Open the work request"}
           </Button>
         )}
       </div>

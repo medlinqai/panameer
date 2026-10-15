@@ -35,3 +35,27 @@ export async function descriptionRequired(pAccountId: string): Promise<boolean> 
   const c = await prisma.company.findFirst({ where: { p_account_id: pAccountId }, select: { require_wr_description: true } });
   return c?.require_wr_description ?? true;
 }
+
+export const SOURCE_LABEL: Record<string, string> = { JOB_HIRE: "Job Hire", SHOP: "Shop", ESTIMATE: "Estimate", OFFER: "Offer", EXTERNALLY_SOURCED: "Externally Sourced", PUNCHOUT: "Punchout" };
+
+/** JW-E008: My Work Requests — the buyer's own (owner-scoped from the session person). */
+export async function myWorkRequests(personId: string, status?: string) {
+  const rows = await prisma.workRequest.findMany({
+    where: { buyer_person_id: personId, ...(status ? { status: status as never } : {}), OR: [{ lines: { some: {} } }, { workOrders: { some: {} } }] },
+    orderBy: { created_at: "desc" },
+    take: 200,
+    select: {
+      id: true, wr_number: true, description: true, title: true, source: true, status: true, currency: true, job_id: true, created_at: true,
+      lines: { select: { provider_person_id: true, quantity: true, unit_price_cents: true, amount_cents: true, transaction_type: true } },
+      workOrders: { select: { id: true, order_number: true } },
+    },
+  });
+  const ids = [...new Set(rows.flatMap((r) => r.lines.map((l) => l.provider_person_id)).filter((x): x is string => !!x))];
+  const people = new Map((await prisma.person.findMany({ where: { id: { in: ids } }, select: { id: true, first_name: true, last_name: true } })).map((p) => [p.id, `${p.first_name} ${p.last_name}`.trim()]));
+  return rows.map((r) => ({
+    id: r.id, wrNumber: r.wr_number, description: r.description || r.title || "", source: r.source, status: r.status, currency: r.currency, jobId: r.job_id, createdAt: r.created_at.toISOString().slice(0, 10),
+    sellers: [...new Set(r.lines.map((l) => l.provider_person_id).filter((x): x is string => !!x))].map((id) => people.get(id) ?? "A provider"),
+    totalCents: r.lines.reduce((n, l) => n + (l.transaction_type === "SERVICE_BY_AMT" ? l.amount_cents ?? 0 : Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0))), 0),
+    orders: r.workOrders.map((o) => ({ id: o.id, number: o.order_number })),
+  }));
+}

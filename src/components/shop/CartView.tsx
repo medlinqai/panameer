@@ -9,14 +9,18 @@ import type { CartGroup } from "@/lib/cart";
 
 const BTN_K = "inline-flex min-h-11 items-center justify-center bg-ink px-6 text-[14px] font-semibold text-surface hover:bg-ink-hover disabled:opacity-40";
 
-// SH-E002/E003: lines by provider, quantity and Remove, totals, each line's payment schedule, then Place Order.
-export function CartView({ groups, totalCents, currency, hasCompany }: { groups: CartGroup[]; totalCents: number; currency: string; hasCompany: boolean }) {
+type WR = { id: string; wrNumber: string | null; description: string; descriptionRequired: boolean } | null;
+
+// JW-E008: the buyer's Work Request (Incomplete) — lines by provider, a description, then Submit (one work order per seller).
+export function CartView({ groups, totalCents, currency, hasCompany, workRequest }: { groups: CartGroup[]; totalCents: number; currency: string; hasCompany: boolean; workRequest?: WR }) {
   const router = useRouter();
   const { refresh } = useMe();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gate, setGate] = useState<{ items: { company: string; item: string; done: boolean; href?: string }[]; isAdmin: boolean } | null>(null);
   const [placed, setPlaced] = useState<{ orderId: string; providerName: string; open: boolean }[] | null>(null);
+  const [description, setDescription] = useState(workRequest?.description ?? "");
+  const needsDescription = !!workRequest?.descriptionRequired && !description.trim();
 
   const post = async (body: object) => {
     setBusy(true);
@@ -35,7 +39,7 @@ export function CartView({ groups, totalCents, currency, hasCompany }: { groups:
   if (placed)
     return (
       <section data-order-placed className="mt-6 border-t border-line pt-5">
-        <h2 className="text-[20px] font-bold">Order Placed</h2>
+        <h2 className="text-[20px] font-bold">Work Request Submitted</h2>
         <ul className="mt-3 grid gap-2 text-[14.5px]">
           {placed.map((o) => (
             <li key={o.orderId} className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2">
@@ -51,7 +55,7 @@ export function CartView({ groups, totalCents, currency, hasCompany }: { groups:
   if (!groups.length)
     return (
       <p className="mt-6 border-t border-line pt-5 text-[14.5px] text-ink-2">
-        Your cart is empty. <Link href="/shop" className="font-semibold text-ink underline underline-offset-4">Shop Service Products</Link>
+        Your work request is empty. <Link href="/shop" className="font-semibold text-ink underline underline-offset-4">Shop Service Products</Link>
       </p>
     );
 
@@ -87,12 +91,16 @@ export function CartView({ groups, totalCents, currency, hasCompany }: { groups:
           <p className="mt-2 text-right text-[14px]">Total for {g.providerName}: <b className="tabular-nums">{formatCents(g.totalCents, l0(g))}</b></p>
         </section>
       ))}
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink pt-4">
+      <label className="mt-6 block border-t border-line pt-4 text-[13px] font-semibold">
+        Description{workRequest?.descriptionRequired ? "" : " (optional)"}
+        <input data-wr-description value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} placeholder="What is this work request for?" className="mt-1 block h-11 w-full border border-line bg-surface px-3 text-[14.5px] font-normal text-ink" />
+      </label>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink pt-4">
         <span className="text-[18px] font-bold">Total {formatCents(totalCents, currency)}</span>
         {hasCompany ? (
-          <button type="button" data-place-order disabled={busy} onClick={() => post({ action: "place" })} className={BTN_K}>{busy ? "Placing…" : "Place Order"}</button>
+          <button type="button" data-place-order disabled={busy || needsDescription} title={needsDescription ? "Add a description first" : undefined} onClick={() => post({ action: "place", description })} className={BTN_K}>{busy ? "Submitting…" : "Submit"}</button>
         ) : (
-          <Link href="/company" className={BTN_K}>Add Your Company to Order</Link>
+          <Link href="/company" className={BTN_K}>Add Your Company to Submit</Link>
         )}
       </div>
       {groups.length > 1 && <p className="mt-2 text-right text-[12.5px] text-ink-2">One work order per provider.</p>}

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { VerifiedTag } from "@/components/company/VerifiedTag";
 import { CompanyLink } from "@/components/company/CompanyLink";
 import { notFound, redirect } from "next/navigation";
@@ -15,12 +16,13 @@ import { SelectProposal, AssignDirectly, CreateOrder } from "@/components/work/H
 import { matchProvidersFor } from "@/lib/work-request-match";
 import {
   JOB_STATUS_LABEL,
+  WORK_REQUEST_STATUS_LABEL,
   jobStatusPillClass,
 } from "@/lib/work-request-status";
 import { WorkRequestError } from "@/lib/work-request";
 import { BackLink } from "@/components/console/BackLink";
 
-export const metadata = { title: "Work Request · Panameer" };
+export const metadata = { title: "Job · Panameer" };
 
 export default async function Page({
   params,
@@ -88,12 +90,12 @@ export default async function Page({
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <BackLink href="/hire" label="Work Requests" />
+      <BackLink href="/hire" label="My Jobs" />
 
       <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
-            {detail.title.trim() || "Untitled request"}
+            {detail.title.trim() || "Untitled job"}
           </h1>
           <p className="mt-1.5 text-[14px] text-ink-2">
             {detail.roleName && <>{detail.roleName} · </>}
@@ -269,7 +271,11 @@ export default async function Page({
       {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && (
         <AssignDirectly workRequestId={detail.id} providers={options} />
       )}
-      {awarded && <CreateOrder workRequestId={detail.id} />}
+      <p data-job-requisition className="mt-4 text-[13.5px] text-ink-2">
+        Work Request: <Link href="/orders/work-requests" className="font-semibold text-ink underline underline-offset-2">{WORK_REQUEST_STATUS_LABEL[detail.workRequestStatus]}</Link>
+        {awarded && " · every line has a provider and a price — Submit creates the work order"}
+      </p>
+      {awarded && <CreateOrder workRequestId={detail.id} description={detail.workRequestDescription} />}
 
       {/* WHO HAS BEEN INVITED */}
       {/* THE SECOND HALF OF THE SAME BRANCH WS-B). Guarded on the same */}
@@ -309,7 +315,7 @@ export default async function Page({
 
       <div className="mt-9 flex flex-wrap items-center gap-4 border-t border-line pt-6">
         <Button href="/hire" variant="ghost">
-          All Work Requests
+          My Jobs
         </Button>
         {posted && (
           <Button href={`/work-requests/${id}/share`} variant="quiet">

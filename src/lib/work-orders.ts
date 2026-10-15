@@ -288,11 +288,11 @@ export async function snapshotTerms(
 /** DOOR 1 — Hire on a Job: its requisition is submitted; the Job is FILLED. `jobId` is the Job's id. */
 export async function hire(
   viewer: Viewer,
-  input: { jobId: string; sowText?: string | null }
+  input: { jobId: string; sowText?: string | null; description?: string }
 ): Promise<BuiltOrder> {
   const req = await requisitionForJob(input.jobId);
   const job = await prisma.job.findUnique({ where: { id: input.jobId }, select: { sole_sourced: true } });
-  const [order] = await submitWorkRequest(viewer, { workRequestId: req.id, sowText: input.sowText, soleSourced: job?.sole_sourced });
+  const [order] = await submitWorkRequest(viewer, { workRequestId: req.id, sowText: input.sowText, soleSourced: job?.sole_sourced, description: input.description });
   await prisma.job.update({ where: { id: input.jobId }, data: { status: "FILLED" } });
   return order!;
 }

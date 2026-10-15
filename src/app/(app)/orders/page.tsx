@@ -44,6 +44,12 @@ export default async function Page() {
               .join(" · ")}
       </p>
 
+      {buys && (
+        <p className="mt-2 text-[14px]">
+          <Link href="/orders/work-requests" className="font-semibold underline underline-offset-4 hover:text-magenta">My Work Requests</Link>
+        </p>
+      )}
+
       {(sells || buys) && (
         <nav
           aria-label="Payments"
@@ -95,6 +101,7 @@ export default async function Page() {
                     </Link>
                     <OriginBadge origin={o.origin} erpRef={o.erp ? o.externalRef ?? "" : null} />
                   </div>
+                  {o.description && <p data-wo-description className="mt-1 text-[15px] font-semibold">{o.description}</p>}
                   <p className="mt-1 text-[14.5px]">
                     {/* THE ROW NAMES THE OTHER SIDE AND SAYS WHICH SIDE THAT IS. */}
                     <span className="text-ink-2">
@@ -104,20 +111,17 @@ export default async function Page() {
                   </p>
                   <p className="mt-1 text-[13.5px] text-ink-2">
                     {periodOf(o)} · {o.lineCount} line{o.lineCount === 1 ? "" : "s"}
-                    {/* A DIRECT ORDER HAS NO WORK REQUEST BEHIND IT AND THE ROW */}
-                    {o.workRequestId ? (
+                    {o.wrNumber && (
                       <>
                         {" · "}
-                        <Link
-                          href={`/work-requests/${o.workRequestId}`}
-                          className="underline underline-offset-2 hover:text-magenta"
-                        >
-                          from a work request
-                        </Link>
+                        {o.party === "BUYER" ? (
+                          <Link href={`/orders/work-requests#${o.wrNumber}`} className="underline underline-offset-2 hover:text-magenta">from {o.wrNumber}</Link>
+                        ) : (
+                          <>from {o.wrNumber}</>
+                        )}
                       </>
-                    ) : o.externalRef ? (
-                      <> · buyer&apos;s ref {o.externalRef}</>
-                    ) : null}
+                    )}
+                    {o.externalRef && <> · buyer&apos;s ref {o.externalRef}</>}
                   </p>
                 </div>
                 <div className="text-right">

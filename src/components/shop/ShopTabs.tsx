@@ -17,7 +17,7 @@ export function ShopTabs({ services = false }: { services?: boolean } = {}) {
     { label: "Service Products", href: "/shop" },
     ...(services ? [{ label: "Services", href: "/shop/services" }] : []),
     { label: "My Estimates", href: "/estimates" },
-    { label: "Cart", href: "/cart", badge: cart },
+    { label: "Work Request (Incomplete)", href: "/cart", badge: cart },
   ];
   return (
     <PageTabs wrap eyebrow="Shop" tabs={tabs} current={current}>
