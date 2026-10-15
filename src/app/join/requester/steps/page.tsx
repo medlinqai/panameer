@@ -429,31 +429,32 @@ export default function RequesterStepsPage() {
         {...shell}
         title="Which company are you buying for?"
         subtitle="Your company's details, entered once. They're also your billing details when you order."
-        continueLabel={coMatch ? `Ask to Join ${coMatch.name}` : nextLabel}
+        continueLabel={coMatch ? "Ask to Join & Continue" : nextLabel}
         continueDisabled={coMatch ? false : joining ? false : draft.coName.trim().length < 2 || !addrOk || !emailOk}
         onContinue={submitCompany}
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-buyer-company-step>
           {error && <Notice>{error}</Notice>}
-          {coMatch && (
-            <div className="border border-line bg-white p-4" data-company-match>
-              <p className="text-[15px]"><b>{coMatch.name}</b> is already on Panameer. Ask to join and we&apos;ll let its admin know.</p>
-              <p className="mt-1 text-[13px] text-ink-2">We matched it because {coMatch.why}. You can keep going while you wait; ordering opens once its admin approves.</p>
-              {!coMatch.byEmail && <button type="button" onClick={() => setCoMatch(null)} className="mt-2 text-[13.5px] font-semibold underline underline-offset-4">That&apos;s Not My Company</button>}
-            </div>
-          )}
           {joining ? (
             <Notice>You&apos;ve asked to join <b>{draft.companyName}</b>. Its address and industry are already on Panameer.</Notice>
-          ) : !coMatch && (
+          ) : (
             <>
               <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Company Name *">
                 <TextInput value={draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" />
               </Field>
               <Field label="Website">
-                <TextInput value={draft.coWebsite} onChange={(e) => edit({ coWebsite: e.target.value })} onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
+                <TextInput value={draft.coWebsite} onChange={(e) => { edit({ coWebsite: e.target.value }); if (coMatch && !coMatch.byEmail) setCoMatch(null); }} onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
               </Field>
               </div>
+              {coMatch && (
+            <div className="border border-line bg-white p-4" data-company-match>
+              <p className="text-[15px]"><b>{coMatch.name}</b> is already on Panameer. Ask to join and we&apos;ll let its admin know.</p>
+              <p className="mt-1 text-[13px] text-ink-2">We matched it because {coMatch.why}. Keep going while you wait. Only submitting an order waits for the admin. Wrong website? Change it above.</p>
+              {!coMatch.byEmail && <button type="button" onClick={() => setCoMatch(null)} className="mt-2 text-[13.5px] font-semibold underline underline-offset-4">That&apos;s Not My Company</button>}
+            </div>
+          )}
+              {!coMatch && (<>
               <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Industry">
                 <select aria-label="Industry" value={draft.coIndustryId} onChange={(e) => edit({ coIndustryId: e.target.value })} className="h-11 w-full border border-line bg-surface px-3 text-[15px] text-ink">
@@ -471,6 +472,7 @@ export default function RequesterStepsPage() {
               </div>
 
               <p className="text-[12.5px] text-ink-2">By continuing you confirm you can add this company and accept the company terms. No tax ID or W-9 is needed to buy.</p>
+              </>)}
             </>
           )}
         </div>
