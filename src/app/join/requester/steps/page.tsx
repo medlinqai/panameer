@@ -8,7 +8,6 @@ import { LocationFields, type LocationValue } from "@/components/onboarding/Loca
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
 import { PhoneField } from "@/components/onboarding/PhoneField";
 import { Avatar } from "@/components/Avatar";
-import { FillFromResume } from "@/components/buyer/FillFromResume";
 import { PhotoCropModal } from "@/components/onboarding/PhotoCropModal";
 import { isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
 import { REQUESTER_STEPS, REQUESTER_STEP_LABELS, REQUESTER_WORK_STEPS, type RequesterStep } from "@/lib/requester-steps";
@@ -321,8 +320,7 @@ export default function RequesterStepsPage() {
             />
           </div>
 
-          {/* Optional: fill the Buyer Profile from a résumé (title here; overview, work history, education on the profile). */}
-          <FillFromResume className="border border-line p-4" onFilled={(v) => v.title && !draft.title.trim() && setDraft((d) => ({ ...d, title: v.title ?? d.title }))} />
+          {/* Scott 10-15: no résumé at buyer registration — it filled things the buyer can't see here. It stays on the Buyer Profile editor. */}
 
           {/* THE SHARED MODAL. `onUploaded` fires only after the server has */}
           <PhotoCropModal
