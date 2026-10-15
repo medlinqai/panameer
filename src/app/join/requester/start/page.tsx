@@ -8,11 +8,11 @@ import {
   REQUESTER_WORK_STEPS,
 } from "@/lib/requester-steps";
 
-// BR-E007: Buyer Details · Company · Location.
+// BC-E001: Buyer · Company · Location.
 const CARDS: Record<(typeof REQUESTER_WORK_STEPS)[number], { title: string; blurb: string }> = {
   requester_info: { title: REQUESTER_STEP_LABELS.requester_info, blurb: "Who you are, and how providers reach you." },
-  company: { title: REQUESTER_STEP_LABELS.company, blurb: "Your company name and website." },
-  work_location: { title: "Location", blurb: "Where the work happens." },
+  company: { title: REQUESTER_STEP_LABELS.company, blurb: "Your company, its industry, address and invoice email." },
+  work_location: { title: REQUESTER_STEP_LABELS.work_location, blurb: "Where the work happens." },
 };
 
 export default async function RequesterStartPage() {
