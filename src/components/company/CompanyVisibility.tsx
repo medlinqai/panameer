@@ -41,3 +41,42 @@ export function CompanyVisibility({ on, canEdit }: { on: boolean; canEdit: boole
     </div>
   );
 }
+
+// JW-E007: "Require a description on Work Requests" — default on; admins toggle it.
+export function CompanyWrDescription({ on, canEdit }: { on: boolean; canEdit: boolean }) {
+  const router = useRouter();
+  const [value, setValue] = useState(on);
+  const [busy, setBusy] = useState(false);
+  const toggle = async () => {
+    if (!canEdit || busy) return;
+    const next = !value;
+    setBusy(true);
+    setValue(next);
+    const r = await fetch("/api/company/wr-description", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ require: next }) }).catch(() => null);
+    if (!r?.ok) setValue(!next);
+    setBusy(false);
+    router.refresh();
+  };
+  return (
+    <div className="mt-6 border-t border-line pt-[22px]" data-wr-description-setting={value ? "on" : "off"}>
+      <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.12em] text-magenta-dark">Work Requests</p>
+      <div className="flex items-center justify-between gap-3 text-[13.5px] font-semibold">
+        <span>Require a description on Work Requests</span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={value}
+          aria-label="Require a description on Work Requests"
+          disabled={!canEdit || busy}
+          onClick={toggle}
+          className={"relative h-5 w-9 shrink-0 rounded-full transition-colors disabled:cursor-default " + (value ? "bg-ink" : "bg-line")}
+        >
+          <span className={"absolute top-[3px] h-3.5 w-3.5 rounded-full bg-white transition-all " + (value ? "left-[19px]" : "left-[3px]")} />
+        </button>
+      </div>
+      <p className="mt-1.5 text-[12.5px] text-ink-3">
+        {canEdit ? "Buyers must describe a work request before they submit it." : "Only an admin can change this."}
+      </p>
+    </div>
+  );
+}

@@ -15,7 +15,7 @@ import { PendingJoinLine } from "@/components/company/PendingJoinLine";
 import { loadCompanyView } from "@/lib/company-view";
 import { CompanyShell } from "@/components/company/CompanyShell";
 import { CompanyDetailsRead, PayReadyBox } from "@/components/company/CompanyOverview";
-import { CompanyVisibility } from "@/components/company/CompanyVisibility";
+import { CompanyVisibility, CompanyWrDescription } from "@/components/company/CompanyVisibility";
 import { BuyerTrackRecord } from "@/components/company/BuyerTrackRecord";
 import { buyerTrackRecord } from "@/lib/buyer-track-record";
 import { CompanyDetailsEditor, OVERVIEW_FIELDS } from "@/components/company/CompanyDetailsEditor";
@@ -99,10 +99,11 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
     select: { company: { select: { id: true, name: true } } },
   });
   const role = binding.isAdmin ? "admin" : "member";
+  const requireWrDescription = (await prisma.company.findUnique({ where: { id: c.id }, select: { require_wr_description: true } }))?.require_wr_description ?? true;
   return (
     <>
       {blockedMessage && <div className="mx-auto mb-4 w-full max-w-[1010px]">{blockedCard}</div>}
-      <CompanyShell c={view} role={role} visibility={<CompanyVisibility on={view.showOnProfiles} canEdit={binding.isAdmin} />}>
+      <CompanyShell c={view} role={role} visibility={<><CompanyVisibility on={view.showOnProfiles} canEdit={binding.isAdmin} /><CompanyWrDescription on={requireWrDescription} canEdit={binding.isAdmin} /></>}>
         <CompanyDetailsRead
           c={view}
           role={role}
