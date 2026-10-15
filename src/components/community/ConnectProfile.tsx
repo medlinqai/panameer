@@ -753,14 +753,8 @@ export function ConnectProfile({
               </span>
             )}
             {/* ROW 13 — `How You Work` LANDS HERE, AS A PLAIN LINK. It was a stray */}
-            {owner && (
-              <Link
-                href={editHref("work-method")}
-                className="font-semibold text-magenta-dark hover:underline"
-              >
-                How You Work
-              </Link>
-            )}
+            {/* Scott 10-15: the old "How You Work" link (work method — set at sign-up) is gone; it clashed with
+                What I Do's "How do you work with it?". The edit page still exists at /profile/edit/work-method. */}
           </div>
 
           {/* ROW 3 — THE BIO IS PLAIN TEXT, NOT A FOLDING SECTION */}
