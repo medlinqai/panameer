@@ -111,8 +111,9 @@ export const REQUESTER_NAV: NavItem[] = [
   { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
-    label: "Hire",
-    heading: "Work Requests",
+    // BR-E006: the buyer's menu says Jobs (same destination until the Job / Work Request run lands).
+    label: "Jobs",
+    heading: "Jobs",
     href: "/hire",
     icon: "ClipboardList",
     requires: "canHireTalent",

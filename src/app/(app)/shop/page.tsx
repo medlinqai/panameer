@@ -23,9 +23,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sho
   const [all, me] = await Promise.all([listShopProducts(), prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } })]);
   const cartLines = me ? await prisma.cartLine.findMany({ where: { cart: { buyer_person_id: me.id } }, select: { id: true, service_product_id: true } }) : [];
   const inCart = new Map(cartLines.map((l) => [l.service_product_id, l.id]));
-  // TX-E006: What We Buy — products from business types the viewer's company switched off are left out.
+  // BR-E004: buyers see everything; What We Buy only orders it — business types they buy come first.
   const off = await offBusinessTypeIds(viewer.userId);
-  const products = filterProducts(all, sp).filter((p) => !p.businessTypeId || !off.has(p.businessTypeId)).sort(byPopular);
+  const first = (p: { businessTypeId?: string | null }) => (p.businessTypeId && off.has(p.businessTypeId) ? 1 : 0);
+  const products = filterProducts(all, sp).sort((a, b) => first(a) - first(b) || byPopular(a, b));
   const countries = [...new Set(all.map((p) => p.providerCountry).filter((x): x is string => !!x))].sort();
   // WS-E008: Service Type first — grouped Build / Run, live counts, a pulse until this viewer opens it.
   const types = await listProductTypes();

@@ -3062,6 +3062,8 @@ enum RequesterOnboardingStep {
   REQUESTER_INFO
   WORK_LOCATION
   REVIEW
+  /// BR-E002: Company Name + Website, between Buyer Details and Location.
+  COMPANY
 }
 
 model RequesterProfile {

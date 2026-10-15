@@ -15,6 +15,7 @@ import { REQUESTER_STEPS, REQUESTER_STEP_LABELS, REQUESTER_WORK_STEPS, type Requ
 
 const LABELS: Record<RequesterStep, string> = {
   requester_info: "Buyer Information",
+  company: "Company",
   work_location: "Work Location",
   review: "Review",
 };
@@ -34,6 +35,11 @@ type Draft = {
   workLocation: LocationValue;
   /** True once the work location has been touched or loaded from the server. */
   workLocationSet: boolean;
+  /** BR-E002: the company on file (name), and the Company step's inputs. */
+  companyName: string;
+  companyBound: boolean;
+  coName: string;
+  coWebsite: string;
 };
 
 const EMPTY: Draft = {
@@ -50,6 +56,10 @@ const EMPTY: Draft = {
   approverEmail: "",
   workLocation: {},
   workLocationSet: false,
+  companyName: "",
+  companyBound: false,
+  coName: "",
+  coWebsite: "",
 };
 
 export default function RequesterStepsPage() {
@@ -68,7 +78,7 @@ export default function RequesterStepsPage() {
     emailVerified: boolean;
     completed: boolean;
     resumeStep: string;
-    company?: { bound?: boolean } | null;
+    company?: { bound?: boolean; name?: string | null } | null;
     profile: {
       firstName: string; lastName: string; phone: string | null;
       photoUrl: string | null; title: string | null;
@@ -96,6 +106,10 @@ export default function RequesterStepsPage() {
       approverEmail: p.approverEmail ?? "",
       workLocation: p.workLocation ?? {},
       workLocationSet: !!p.workLocation?.country,
+      companyName: s.company?.bound ? s.company?.name ?? "" : "",
+      companyBound: !!s.company?.bound,
+      coName: s.company?.bound ? s.company?.name ?? "" : "",
+      coWebsite: "",
     });
     return s;
   }, []);
@@ -212,7 +226,7 @@ export default function RequesterStepsPage() {
     return (
       <WizardShell
         {...shell}
-        title="Who's asking for the work?"
+        title="Who Is Buying?"
         subtitle="This is the person on the request — the contact a provider sees, and the identity your ERP sends if you connect one later."
         continueLabel={nextLabel}
         // THE GATE IS FIRST + LAST + A COMPLETE PHONE, AND THAT IS TWO BRIEF
@@ -241,8 +255,36 @@ export default function RequesterStepsPage() {
         <div className="mx-auto w-full max-w-xl space-y-4">
           {error && <Notice>{error}</Notice>}
 
-          {/* Optional: fill the Buyer Profile from a résumé (title here; overview, work history, education on the profile). */}
-          <FillFromResume className="border border-line p-4" onFilled={(v) => v.title && !draft.title.trim() && setDraft((d) => ({ ...d, title: v.title ?? d.title }))} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="First Name *">
+              <TextInput
+                value={draft.firstName}
+                onChange={(e) => setDraft((d) => ({ ...d, firstName: e.target.value }))}
+                autoComplete="given-name"
+              />
+            </Field>
+            <Field label="Last Name *">
+              <TextInput
+                value={draft.lastName}
+                onChange={(e) => setDraft((d) => ({ ...d, lastName: e.target.value }))}
+                autoComplete="family-name"
+              />
+            </Field>
+          </div>
+
+          {/* A ROLE, NOT A SALES HEADLINE . Same `Person.title` column */}
+          {/* asked for the change *"on CARD and in the question that solicits the */}
+          <Field
+            label="Title *"
+            hint="Your role at your company — for example, Director of Procurement. Providers see it next to your name."
+          >
+            <TextInput
+              value={draft.title}
+              onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+              placeholder="Director of Procurement"
+              autoComplete="organization-title"
+            />
+          </Field>
 
           {/* THE PROVIDER'S OWN UPLOADER, REUSED */}
           <div className="flex flex-col items-center gap-5 border border-line p-6 sm:flex-row sm:items-center sm:text-left">
@@ -268,37 +310,6 @@ export default function RequesterStepsPage() {
             </div>
           </div>
 
-          {/* A ROLE, NOT A SALES HEADLINE . Same `Person.title` column */}
-          {/* asked for the change *"on CARD and in the question that solicits the */}
-          <Field
-            label="Title *"
-            hint="Your role at your company — for example, Director of Procurement. Providers see it next to your name."
-          >
-            <TextInput
-              value={draft.title}
-              onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-              placeholder="Director of Procurement"
-              autoComplete="organization-title"
-            />
-          </Field>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="First Name *">
-              <TextInput
-                value={draft.firstName}
-                onChange={(e) => setDraft((d) => ({ ...d, firstName: e.target.value }))}
-                autoComplete="given-name"
-              />
-            </Field>
-            <Field label="Last Name *">
-              <TextInput
-                value={draft.lastName}
-                onChange={(e) => setDraft((d) => ({ ...d, lastName: e.target.value }))}
-                autoComplete="family-name"
-              />
-            </Field>
-          </div>
-
           {/* FULL WIDTH SINCE , and measured in the walk rather */}
           <div className="grid gap-3">
             {/* THE BUILT VALIDATOR, NOT A RAW INPUT . This was a plain */}
@@ -309,6 +320,9 @@ export default function RequesterStepsPage() {
               onCountryChange={setPhoneCountry}
             />
           </div>
+
+          {/* Optional: fill the Buyer Profile from a résumé (title here; overview, work history, education on the profile). */}
+          <FillFromResume className="border border-line p-4" onFilled={(v) => v.title && !draft.title.trim() && setDraft((d) => ({ ...d, title: v.title ?? d.title }))} />
 
           {/* THE SHARED MODAL. `onUploaded` fires only after the server has */}
           <PhotoCropModal
@@ -325,7 +339,50 @@ export default function RequesterStepsPage() {
 
   // THE `buyer_approver` SCREEN STOOD HERE AND IS GONE .
 
-  // ---- 2/3 — Work Location ----------------------------------------------
+  // ---- 2/3 — Company (BR-E002): name + website only; joins the company already on Panameer for that website ----
+  if (step === "company") {
+    const unchanged = draft.companyBound && draft.coName.trim() === draft.companyName.trim() && !draft.coWebsite.trim();
+    const submitCompany = async () => {
+      if (unchanged) return save({ companyBound: true }, fromReview ? "review" : undefined);
+      setBusy(true);
+      setError(null);
+      try {
+        const site = draft.coWebsite.trim();
+        const match = site ? await fetch(`/api/company/match?site=${encodeURIComponent(site)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null) : null;
+        const r = match?.match
+          ? await fetch("/api/company/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyId: match.match.id, attestation: true, matchedOn: `website:${match.domain}` }) })
+          : await fetch("/api/company/define", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: draft.coName.trim(), website: site || null, attestation: true, companyTos: true }) });
+        const b = await r.json().catch(() => ({}));
+        if (!r.ok) { setError(b.error ?? "Could not save your company."); return; }
+      } finally {
+        setBusy(false);
+      }
+      await save({ companyBound: true }, fromReview ? "review" : undefined);
+    };
+    return (
+      <WizardShell
+        {...shell}
+        title="Which company are you buying for?"
+        subtitle="Just the name and website. If your company is already on Panameer, we'll ask its admin to add you."
+        continueLabel={nextLabel}
+        continueDisabled={draft.coName.trim().length < 2}
+        onContinue={submitCompany}
+      >
+        <div className="mx-auto w-full max-w-xl space-y-4" data-buyer-company-step>
+          {error && <Notice>{error}</Notice>}
+          <Field label="Company Name *">
+            <TextInput value={draft.coName} onChange={(e) => setDraft((d) => ({ ...d, coName: e.target.value }))} autoComplete="organization" placeholder="Acme Manufacturing" />
+          </Field>
+          <Field label="Website" hint="Optional. We use it to find your company if it's already here.">
+            <TextInput value={draft.coWebsite} onChange={(e) => setDraft((d) => ({ ...d, coWebsite: e.target.value }))} placeholder="acme.com" autoComplete="url" />
+          </Field>
+          <p className="text-[12.5px] text-ink-2">By continuing you confirm you can add this company and accept the company terms. No tax ID or W-9 is needed to buy.</p>
+        </div>
+      </WizardShell>
+    );
+  }
+
+  // ---- 3/3 — Work Location ----------------------------------------------
   if (step === "work_location") {
     // THIS FALLBACK IS NOT A PRE-FILL ANY MORE , 2026-08-30).
     const wl = draft.workLocationSet ? draft.workLocation : draft.address;
@@ -379,6 +436,7 @@ export default function RequesterStepsPage() {
     // — a required field belongs on the review. ITS ORIGINAL REASONING
     { label: "Title", value: draft.title || "—", step: "requester_info" },
     // THE `Employer` ROW IS GONE , 2026-09-11).
+    { label: "Company", value: draft.companyName || "—", step: "company" },
     // THE `Your Address` ROW IS GONE , 2026-08-30).
     {
       label: "Work Location",

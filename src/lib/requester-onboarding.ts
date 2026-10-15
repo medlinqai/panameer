@@ -305,7 +305,11 @@ export async function saveRequesterStep(
   const p = await loadRequester(viewer);
   const rp = p.requesterProfile!;
 
-  // THERE IS NO `company` STEP TO HANDLE , 2026-09-11).
+  // BR-E002: the Company step — the binding is written by /api/company/define or /join; this confirms it exists.
+  if (step === "company") {
+    const bound = await prisma.companyMembership.count({ where: { person_id: p.id, status: { in: ["APPROVED", "PENDING"] } } });
+    if (!bound) throw new OnboardingError("Add your company first", "INVALID");
+  }
   if (step === "requester_info") {
     await prisma.person.update({
       where: { id: p.id },

@@ -8,9 +8,11 @@ import {
   REQUESTER_WORK_STEPS,
 } from "@/lib/requester-steps";
 
-const CARD_BLURBS: Record<(typeof REQUESTER_WORK_STEPS)[number], string> = {
-  requester_info: "Who you are, and how a provider reaches you.",
-  work_location: "The location providers deliver to.",
+// BR-E007: Buyer Details · Company · Location.
+const CARDS: Record<(typeof REQUESTER_WORK_STEPS)[number], { title: string; blurb: string }> = {
+  requester_info: { title: REQUESTER_STEP_LABELS.requester_info, blurb: "Who you are, and how providers reach you." },
+  company: { title: REQUESTER_STEP_LABELS.company, blurb: "Your company name and website." },
+  work_location: { title: "Location", blurb: "Where the work happens." },
 };
 
 export default async function RequesterStartPage() {
@@ -35,10 +37,10 @@ export default async function RequesterStartPage() {
 
   return (
     <StartPage
-      headline={`Hey ${displayFirstName(person.first_name)}. Ready to find the world's best talent?`}
-      lead="Tell us who you are and where the work happens — then post your first work request."
+      headline={`Hey ${displayFirstName(person.first_name)}. Let's get you set up to buy.`}
+      lead="Tell us who you are, your company, and where the work happens. Then shop services and products, or post a job."
       icon="people"
-      cards={REQUESTER_WORK_STEPS.map((step) => ({ title: REQUESTER_STEP_LABELS[step], blurb: CARD_BLURBS[step] }))}
+      cards={REQUESTER_WORK_STEPS.map((step) => CARDS[step])}
       footnote="It takes about 3 minutes and you can edit it later. We'll save as you go."
       href="/join/requester/steps"
     />

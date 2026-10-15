@@ -68,7 +68,8 @@ export async function lifecycleFor(personId: string) {
     request: requests > 0,
     paid: payouts + payments > 0,
   };
-  const steps = provider ? PROVIDER_ROAD : LIFECYCLE;
+  // BR-E003: buyers add their company at registration, so Add Your Company drops off — unless they still have none.
+  const steps = provider ? PROVIDER_ROAD : m ? LIFECYCLE.filter((s) => s.key !== "link") : LIFECYCLE;
   return { steps, road: provider ? ("provider" as const) : ("buyer" as const), ...lifecycleStatus(facts, steps), isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
 }
 

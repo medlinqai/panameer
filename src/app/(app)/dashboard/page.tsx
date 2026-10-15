@@ -140,10 +140,11 @@ export default async function DashboardPage({
         .join(", ")
     : null;
 
+  // BR-E005: a buyer's dashboard ends at Waiting on You — nothing below it.
+  if (first) return <div className="space-y-8">{first}</div>;
   return (
     <div className="space-y-8">
-      {first}
-      <header className={first ? "hidden" : undefined}>
+      <header>
         <h1 className="text-3xl tracking-tight">
           Welcome Back{firstName ? `, ${firstName}` : ""}
         </h1>

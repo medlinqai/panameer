@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-// TX-E006: What We Buy — the commodity groups and business types your company buys; Shop shows only those.
+// TX-E006 / BR-E004: What We Buy — orders Shop (ticked first); it no longer hides anything.
 type G = { id: string; name: string; parked: boolean; on: boolean; businessTypes: { id: string; name: string; on: boolean }[] };
 
 export function WhatWeBuyEditor({ initial, canEdit }: { initial: G[]; canEdit: boolean }) {
@@ -17,8 +17,8 @@ export function WhatWeBuyEditor({ initial, canEdit }: { initial: G[]; canEdit: b
   };
   return (
     <section id="what-we-buy" data-what-we-buy className="mt-8 border-t border-line pt-5">
-      <h2 className="text-[19px] font-bold">What We Buy</h2>
-      <p className="mt-1 text-[13.5px] text-ink-2">Shop shows service products only from what your company buys.</p>
+      <h2 className="text-[19px] font-bold">What We Buy · Show These First</h2>
+      <p className="mt-1 text-[13.5px] text-ink-2">Shop shows everything. What you tick here comes first; nothing is hidden.</p>
       <ul className="mt-3 grid gap-2">
         {groups.map((g) => (
           <li key={g.id} className="border border-line p-3">

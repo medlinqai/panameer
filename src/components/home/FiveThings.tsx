@@ -12,6 +12,14 @@ import { CoverBand } from "@/components/casing/CoverBand";
 
 // Dashboard (mockup dashboard_five_things 2026-10-06): greeting + Your Path bar, 5 cards, "Waiting on you" tiles.
 const ICON = { eye: Eye, chart: TrendingUp, badge: BadgeCheck, book: BookOpen, folder: FolderPlus, people: Users, search: Search, tag: Tag, send: Send, message: MessageSquare, person: UserPlus, alert: AlertTriangle };
+// BR-E005: a buyer's cards are the menu, in this order.
+const BUYER_THINGS: Thing[] = [
+  { key: "connect", icon: "people", title: "Connect with Other Buyers & Colleagues", line: "People who buy what you buy, and the colleagues you work with.", chips: ["Free"], time: "", cta: { label: "Find People", href: "/connect/community" } },
+  { key: "learn", icon: "book", title: "Learn About Skills", line: "Free courses on the skills and systems you buy.", chips: ["Free"], time: "", cta: { label: "Start Learning", href: "/learn" } },
+  { key: "post", icon: "send", title: "Post Jobs", line: "Describe the work; providers send proposals.", chips: ["Free"], time: "5 min", cta: { label: "Post a Job", href: "/create-work" } },
+  { key: "shop", icon: "tag", title: "Shop for Products & Services", line: "Fixed-price service products and providers' rates.", chips: [], time: "", cta: { label: "Go Shopping", href: "/shop" } },
+  { key: "estimate", icon: "search", title: "Request an Estimate", line: "Ask a provider for a quote from their profile or a service.", chips: [], time: "", cta: { label: "Request an Estimate", href: "/estimates" } },
+];
 const BTN = "inline-flex min-h-[40px] items-center justify-center bg-ink px-4 text-[13.5px] font-bold text-surface hover:bg-ink-hover";
 
 function Card({ t, i }: { t: Thing; i: number }) {
@@ -108,18 +116,24 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
       ) : (
         <>
       <h2 className="mt-7 text-[17px] font-bold">
-          5 things you can do today <span className="text-[12.5px] font-normal text-ink-3">most useful first</span>
+          Things You Can Do Today {path?.road !== "buyer" && <span className="text-[12.5px] font-normal text-ink-3">most useful first</span>}
         </h2>
+        {path?.road === "buyer" ? (
+          <div role="list" data-buyer-things className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {BUYER_THINGS.map((t, i) => <Card key={t.key} t={t} i={i} />)}
+          </div>
+        ) : (
         <div role="list" className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {things.slice(0, 2).map((t, i) => <Card key={t.key} t={t} i={i} />)}
           <MoreCards count={things.length - 2}>
             {things.slice(2).map((t, i) => <Card key={t.key} t={t} i={i + 2} />)}
           </MoreCards>
         </div>
+        )}
         </>
       )}
 
-      <h2 className="mt-8 text-[17px] font-bold">Waiting on you</h2>
+      <h2 className="mt-8 text-[17px] font-bold">Waiting on You</h2>
       <ul className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {waiting.map((w) => {
           const I = ICON[w.icon as keyof typeof ICON];

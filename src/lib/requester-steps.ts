@@ -1,5 +1,6 @@
 export const REQUESTER_STEPS = [
   "requester_info",
+  "company",
   "work_location",
   "review",
 ] as const;
@@ -8,6 +9,7 @@ export type RequesterStep = (typeof REQUESTER_STEPS)[number];
 
 export const REQUESTER_STEP_LABELS: Record<RequesterStep, string> = {
   requester_info: "Buyer Details",
+  company: "Company",
   work_location: "Location Details",
   review: "Review",
 };
