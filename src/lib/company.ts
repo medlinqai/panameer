@@ -779,10 +779,9 @@ export async function findWebsiteMatch(viewer: Viewer, raw: string) {
   if (!domain) return { domain: null, freeMail: false, match: null };
   if (!isWorkDomain(domain)) return { domain, freeMail: true, match: null };
   const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { company_id: true } });
-  const hit = await prisma.company.findFirst({
-    where: { archived_at: null, OR: [{ website_domain: domain }, { email_domain: domain }], memberships: { some: { status: "APPROVED" } }, ...(person ? { id: { not: person.company_id } } : {}) },
-    select: { id: true, name: true, logo_url: true },
-  });
+  // Scott 10-15: the SAME rule the save uses (findCompanyMatch) — two rules gave a red error with no Ask to Join.
+  const m = await findCompanyMatch(person?.company_id ?? null, { website: domain });
+  const hit = m ? await prisma.company.findFirst({ where: { id: m.companyId, archived_at: null }, select: { id: true, name: true, logo_url: true } }) : null;
   return { domain, freeMail: false, match: hit ? { id: hit.id, name: hit.name, logoUrl: hit.logo_url } : null };
 }
 
@@ -793,10 +792,8 @@ export async function findRegistrationMatch(viewer: Viewer, raw: string) {
   const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { company_id: true, user: { select: { email: true } } } });
   const domain = await matchableEmailDomain(emailDomain(person?.user?.email));
   if (!domain) return { domain: web?.domain ?? null, freeMail: web?.freeMail ?? false, match: null, reason: null };
-  const hit = await prisma.company.findFirst({
-    where: { archived_at: null, OR: [{ website_domain: domain }, { email_domain: domain }], memberships: { some: { status: "APPROVED" } }, ...(person ? { id: { not: person.company_id } } : {}) },
-    select: { id: true, name: true, logo_url: true },
-  });
+  const m = await findCompanyMatch(person?.company_id ?? null, { emailDomain: domain });
+  const hit = m ? await prisma.company.findFirst({ where: { id: m.companyId, archived_at: null }, select: { id: true, name: true, logo_url: true } }) : null;
   return { domain, freeMail: false, match: hit ? { id: hit.id, name: hit.name, logoUrl: hit.logo_url } : null, reason: hit ? ("email" as const) : null };
 }
 
