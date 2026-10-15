@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { putShopLine } from "@/lib/cart";
 import { SourcingError } from "@/lib/sourcing";
 import type { Viewer } from "@/lib/access";
 import { notify } from "@/lib/notifications";
@@ -121,17 +122,16 @@ export async function counterOffer(viewer: Viewer, input: { offerId: string; amo
   return { id: offer.id, status: "COUNTERED" };
 }
 
-/** The agreed price (and date) goes on the buyer's cart, replacing any list-price line for that item. */
+/** The agreed price (and date) goes on the buyer's Shop work request (JW-E004), replacing any list-price line for that item. */
 async function putOnCart(buyerPersonId: string, t: Target, cents: number, currency: string, offerId: string, deliveryDate: Date | null) {
   const buyer = await prisma.person.findUnique({ where: { id: buyerPersonId }, select: { id: true, requesterProfile: { select: { id: true } } } });
   if (!buyer) throw new SourcingError("That buyer has no account.", "NO_ACCOUNT");
   if (!buyer.requesterProfile) await prisma.requesterProfile.create({ data: { person_id: buyer.id } });
-  const cart = await prisma.cart.upsert({ where: { buyer_person_id: buyer.id }, create: { buyer_person_id: buyer.id }, update: {}, select: { id: true } });
-  const where = t.kind === "product" ? { cart_id: cart.id, service_product_id: t.id } : { cart_id: cart.id, provider_service_id: t.id };
-  const data = { quantity: 1, unit_price_cents: cents, currency, offer_id: offerId, delivery_date: deliveryDate };
-  const line = await prisma.cartLine.findFirst({ where, select: { id: true } });
-  if (line) await prisma.cartLine.update({ where: { id: line.id }, data });
-  else await prisma.cartLine.create({ data: { ...where, ...data } });
+  const byQty = t.kind === "product"
+    ? ["HOURLY", "TM"].includes((await prisma.serviceProduct.findUnique({ where: { id: t.id }, select: { pricing_type: true } }))?.pricing_type ?? "")
+    : (await prisma.providerService.findUnique({ where: { id: t.id }, select: { service_type: true } }))?.service_type !== "SERVICE_BY_AMT";
+  const uom = t.kind === "service" ? (await prisma.providerService.findUnique({ where: { id: t.id }, select: { uom: true } }))?.uom ?? "HOUR" : "HOUR";
+  await putShopLine(buyer.id, { ...(t.kind === "product" ? { productId: t.id } : { serviceId: t.id }), title: t.title, providerPersonId: t.sellerPersonId, type: byQty ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", uom, quantity: 1, unitCents: cents, currency, offerId, deliveryDate }, true);
 }
 
 /** Seller accepts the buyer's offer → cart line at the offered price/date. */

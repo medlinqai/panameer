@@ -68,7 +68,7 @@ export async function getMe(viewer: Viewer) {
     prisma.notification.count({ where: notMessages }),
     prisma.notification.count({ where: { ...notMessages, requires_action: true, resolved_at: null } }),
     prisma.message.count({ where: { to_user_id: viewer.userId, read_at: null } }),
-    prisma.cartLine.aggregate({ where: { cart: { buyer_person_id: person.id } }, _sum: { quantity: true } }).then((r) => r._sum.quantity ?? 0),
+    prisma.workRequestLine.aggregate({ where: { workRequest: { buyer_person_id: person.id, source: "SHOP", status: "INCOMPLETE" } }, _sum: { quantity: true } }).then((r) => Number(r._sum.quantity ?? 0)),
   ]);
 
   return {

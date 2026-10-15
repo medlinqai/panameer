@@ -21,7 +21,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sho
   const viewer = await memberOrPublicTwin("/shop");
   const sp = await searchParams;
   const [all, me] = await Promise.all([listShopProducts(), prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } })]);
-  const cartLines = me ? await prisma.cartLine.findMany({ where: { cart: { buyer_person_id: me.id } }, select: { id: true, service_product_id: true } }) : [];
+  const cartLines = me ? await prisma.workRequestLine.findMany({ where: { workRequest: { buyer_person_id: me.id, source: "SHOP", status: "INCOMPLETE" } }, select: { id: true, service_product_id: true } }) : [];
   const inCart = new Map(cartLines.map((l) => [l.service_product_id, l.id]));
   // BR-E004: buyers see everything; What We Buy only orders it — business types they buy come first.
   const off = await offBusinessTypeIds(viewer.userId);

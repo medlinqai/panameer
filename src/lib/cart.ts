@@ -6,8 +6,9 @@ import { resolveCommissionBps } from "@/lib/application-commissions";
 import { snapshotMilestones } from "@/lib/order-milestones";
 import { assertCanSign, nudgeTaxBanking } from "@/lib/your-path";
 import type { Viewer } from "@/lib/access";
+import { descriptionRequired, wrNumber } from "@/lib/requisition";
 
-// SH-E002/E003: the Shop cart — service products at the listed price; Place Order makes one work order per provider.
+// JW-E004: the cart is the buyer's INCOMPLETE Work Request (source SHOP); Submit makes one Work Order per seller.
 export class CartError extends Error {
   constructor(message: string, public code: "NOT_FOUND" | "INVALID" | "NO_COMPANY" = "INVALID") {
     super(message);
@@ -40,9 +41,38 @@ export function scheduleLine(p: { pricing_type: string; billing_period: string |
   return p.milestones.map((m) => `${m.percent}% ${m.label} ${WHEN[m.payment_event ?? fallback] ?? ""}`.trim()).join(" · ");
 }
 
+/** Lines of the buyer's open Shop work request. */
+export const shopLines = (personId: string) => ({ workRequest: { buyer_person_id: personId, source: "SHOP" as const, status: "INCOMPLETE" as const } });
+
+/** The buyer's INCOMPLETE Shop work request — created on first add (needs a company: a work request is the company's). */
+export async function shopRequest(personId: string): Promise<{ id: string }> {
+  const open = await prisma.workRequest.findFirst({ where: shopLines(personId).workRequest, orderBy: { created_at: "desc" }, select: { id: true } });
+  if (open) return open;
+  const p = await prisma.person.findUnique({ where: { id: personId }, select: { company: { select: { p_account_id: true } } } });
+  if (!p?.company?.p_account_id) throw new CartError("Add your company before you add to a work request", "NO_COMPANY");
+  const id = crypto.randomUUID();
+  return prisma.workRequest.create({ data: { id, wr_number: wrNumber(id), buyer_person_id: personId, p_account_id: p.company.p_account_id, source: "SHOP", status: "INCOMPLETE", proposal_access: "INVITE_ONLY", sole_sourced: true }, select: { id: true } });
+}
+
+/** Put (or replace) one item on the Shop work request. Shop lines keep quantity × unit price; by-amount lines also carry the amount. */
+export async function putShopLine(personId: string, item: { productId?: string; serviceId?: string; title: string; providerPersonId: string; type: TransactionType; uom: string | null; quantity: number; unitCents: number; currency: string; offerId?: string | null; deliveryDate?: Date | null }, replace: boolean) {
+  const wr = await shopRequest(personId);
+  const where = { work_request_id: wr.id, ...(item.productId ? { service_product_id: item.productId } : { provider_service_id: item.serviceId }), work_order_id: null };
+  const byAmt = item.type === "SERVICE_BY_AMT";
+  const data = {
+    transaction_type: item.type, description: item.title, currency: item.currency, provider_person_id: item.providerPersonId, uom: byAmt ? null : item.uom,
+    quantity: item.quantity, unit_price_cents: item.unitCents, amount_cents: byAmt ? item.unitCents * item.quantity : null,
+    offer_id: item.offerId ?? null, service_end: item.deliveryDate ?? null,
+  };
+  const line = await prisma.workRequestLine.findFirst({ where, select: { id: true } });
+  if (line) { if (replace) await prisma.workRequestLine.update({ where: { id: line.id }, data }); return; }
+  const last = await prisma.workRequestLine.findFirst({ where: { work_request_id: wr.id }, orderBy: { line_number: "desc" }, select: { line_number: true } });
+  await prisma.workRequestLine.create({ data: { ...data, work_request_id: wr.id, line_number: (last?.line_number ?? 0) + 1, service_product_id: item.productId ?? null, provider_service_id: item.serviceId ?? null } });
+}
+
 export async function cartCount(personId: string): Promise<number> {
-  const r = await prisma.cartLine.aggregate({ where: { cart: { buyer_person_id: personId } }, _sum: { quantity: true } });
-  return r._sum.quantity ?? 0;
+  const r = await prisma.workRequestLine.aggregate({ where: shopLines(personId), _sum: { quantity: true } });
+  return Number(r._sum.quantity ?? 0);
 }
 
 /** Add a product at its listed price (Buy Now and Add to Cart). Turns the buyer side on, as Start Buying does. */
@@ -53,32 +83,33 @@ export async function addToCart(viewer: Viewer, productId: string, quantity = 1)
   if (product.providerProfile.person_id === p.id) throw new CartError("You can't buy your own service product");
   if (product.price_cents == null) throw new CartError("This service product has no listed price. Request an Estimate instead.");
   if (!p.requesterProfile) await prisma.requesterProfile.create({ data: { person_id: p.id } });
-  const cart = await prisma.cart.upsert({ where: { buyer_person_id: p.id }, create: { buyer_person_id: p.id }, update: {}, select: { id: true } });
   const qty = Math.min(MAX_QTY, Math.max(1, Math.floor(quantity)));
-  await prisma.cartLine.upsert({
-    where: { cart_id_service_product_id: { cart_id: cart.id, service_product_id: product.id } },
-    create: { cart_id: cart.id, service_product_id: product.id, quantity: qty, unit_price_cents: product.price_cents, currency: product.currency },
-    update: {},
-  });
+  const byQty = settlesByQty(product.pricing_type);
+  await putShopLine(p.id, { productId: product.id, title: product.title, providerPersonId: product.providerProfile.person_id, type: byQty ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", uom: byQty ? "HOUR" : null, quantity: qty, unitCents: product.price_cents, currency: product.currency }, false);
 }
 
 export async function setQuantity(viewer: Viewer, lineId: string, quantity: number) {
   const p = await me(viewer);
   if (!Number.isFinite(quantity) || quantity < 1 || quantity > MAX_QTY) throw new CartError(`Quantity is 1 to ${MAX_QTY}`);
   // MO-E003: an agreed-price (offer) line is for one.
-  const n = await prisma.cartLine.updateMany({ where: { id: lineId, cart: { buyer_person_id: p.id }, offer_id: null }, data: { quantity: Math.floor(quantity) } });
-  if (!n.count) throw new CartError("That line isn't in your cart", "NOT_FOUND");
+  const line = await prisma.workRequestLine.findFirst({ where: { id: lineId, ...shopLines(p.id), offer_id: null }, select: { id: true, transaction_type: true, unit_price_cents: true } });
+  if (!line) throw new CartError("That line isn't on your work request", "NOT_FOUND");
+  const q = Math.floor(quantity);
+  await prisma.workRequestLine.update({ where: { id: line.id }, data: { quantity: q, ...(line.transaction_type === "SERVICE_BY_AMT" ? { amount_cents: (line.unit_price_cents ?? 0) * q } : {}) } });
 }
 
 export async function removeLine(viewer: Viewer, lineId: string) {
   const p = await me(viewer);
-  await prisma.cartLine.deleteMany({ where: { id: lineId, cart: { buyer_person_id: p.id } } });
+  await prisma.workRequestLine.deleteMany({ where: { id: lineId, ...shopLines(p.id) } });
 }
 
 export type CartLineView = { id: string; productId: string | null; serviceId: string | null; title: string; quantity: number; unitCents: number; lineCents: number; currency: string; unit: string; schedule: string; available: boolean; agreed: boolean; deliveryDate: string | null };
 export type CartGroup = { providerPersonId: string; providerProfileId: string; providerName: string; manual: boolean; lines: CartLineView[]; totalCents: number };
 
-type Line = Awaited<ReturnType<typeof prisma.cartLine.findMany>>[number];
+type Line = { id: string; service_product_id: string | null; provider_service_id: string | null };
+type ShopLine = Awaited<ReturnType<typeof loadLines>>[number];
+const loadLines = (personId: string) => prisma.workRequestLine.findMany({ where: shopLines(personId), orderBy: { line_number: "asc" }, select: { id: true, work_request_id: true, service_product_id: true, provider_service_id: true, quantity: true, unit_price_cents: true, currency: true, offer_id: true, service_end: true } });
+const qtyOf = (l: ShopLine) => Number(l.quantity ?? 1);
 type Item = {
   title: string; providerPersonId: string; providerProfileId: string; providerName: string; byQty: boolean; unit: string; schedule: string; available: boolean;
   productId: string | null; serviceId: string | null; paymentTerms: PaymentTerms | null; paymentEvent: PaymentEvent | null; uom: string; type: TransactionType;
@@ -110,32 +141,50 @@ async function resolveItems(lines: Line[]): Promise<Map<string, Item>> {
   return out;
 }
 
-export async function cartFor(viewer: Viewer): Promise<{ groups: CartGroup[]; totalCents: number; currency: string; hasCompany: boolean }> {
+export async function cartFor(viewer: Viewer): Promise<{ groups: CartGroup[]; totalCents: number; currency: string; hasCompany: boolean; workRequest: { id: string; wrNumber: string | null; description: string; descriptionRequired: boolean } | null }> {
   const p = await me(viewer);
-  const lines = await prisma.cartLine.findMany({ where: { cart: { buyer_person_id: p.id } }, orderBy: { created_at: "asc" } });
+  const lines = await loadLines(p.id);
   const items = await resolveItems(lines);
   const groups = new Map<string, CartGroup>();
   for (const l of lines) {
     const it = items.get(l.id);
     if (!it) continue;
     const g = groups.get(it.providerPersonId) ?? { providerPersonId: it.providerPersonId, providerProfileId: it.providerProfileId, providerName: it.providerName, manual: false, lines: [], totalCents: 0 };
-    const lineCents = l.unit_price_cents * l.quantity;
-    g.lines.push({ id: l.id, productId: it.productId, serviceId: it.serviceId, title: it.title, quantity: l.quantity, unitCents: l.unit_price_cents, lineCents, currency: l.currency, unit: it.unit, schedule: it.schedule, available: it.available, agreed: !!l.offer_id, deliveryDate: l.delivery_date ? l.delivery_date.toISOString().slice(0, 10) : null });
+    const lineCents = (l.unit_price_cents ?? 0) * qtyOf(l);
+    g.lines.push({ id: l.id, productId: it.productId, serviceId: it.serviceId, title: it.title, quantity: qtyOf(l), unitCents: l.unit_price_cents ?? 0, lineCents, currency: l.currency, unit: it.unit, schedule: it.schedule, available: it.available, agreed: !!l.offer_id, deliveryDate: l.service_end ? l.service_end.toISOString().slice(0, 10) : null });
     g.totalCents += lineCents;
     groups.set(it.providerPersonId, g);
   }
   const all = [...groups.values()];
-  return { groups: all, totalCents: all.reduce((n, g) => n + g.totalCents, 0), currency: lines[0]?.currency ?? "USD", hasCompany: !!p.company?.p_account_id };
+  const wr = lines[0] ? await prisma.workRequest.findUnique({ where: { id: lines[0].work_request_id }, select: { id: true, wr_number: true, description: true, p_account_id: true } }) : null;
+  // JW-E007: pre-filled from the first item when empty.
+  const workRequest = wr ? { id: wr.id, wrNumber: wr.wr_number, description: wr.description ?? (all[0]?.lines[0]?.title ?? ""), descriptionRequired: await descriptionRequired(wr.p_account_id) } : null;
+  return { groups: all, totalCents: all.reduce((n, g) => n + g.totalCents, 0), currency: lines[0]?.currency ?? "USD", hasCompany: !!p.company?.p_account_id, workRequest };
+}
+
+/** JW-E007: the description on the Shop work request. */
+export async function setDescription(viewer: Viewer, description: string) {
+  const p = await me(viewer);
+  const wr = await prisma.workRequest.findFirst({ where: shopLines(p.id).workRequest, select: { id: true } });
+  if (!wr) throw new CartError("Your work request is empty", "NOT_FOUND");
+  await prisma.workRequest.update({ where: { id: wr.id }, data: { description: description.trim().slice(0, 500) || null } });
 }
 
 /** Place Order: one work order per provider at the cart's prices (and agreed dates). Lane 7: orders at the list price and
  *  date — and accepted offers — open at once; the old "I accept orders manually" is replaced by Open to Offers. */
-export async function placeOrder(viewer: Viewer): Promise<{ orderId: string; providerName: string; open: boolean }[]> {
+export async function placeOrder(viewer: Viewer, input: { description?: string | null } = {}): Promise<{ orderId: string; providerName: string; open: boolean }[]> {
   const p = await me(viewer);
   if (!p.company?.p_account_id) throw new CartError("Add your company before placing an order", "NO_COMPANY");
   const pAccountId = p.company.p_account_id;
-  const lines = await prisma.cartLine.findMany({ where: { cart: { buyer_person_id: p.id } }, orderBy: { created_at: "asc" } });
-  if (!lines.length) throw new CartError("Your cart is empty");
+  const lines = await loadLines(p.id);
+  if (!lines.length) throw new CartError("Your work request is empty");
+  const wrId = lines[0].work_request_id;
+  const head = await prisma.workRequest.findUniqueOrThrow({ where: { id: wrId }, select: { description: true } });
+  const description = input.description !== undefined ? input.description?.trim() || null : head.description;
+  if (!description && (await descriptionRequired(pAccountId))) throw new CartError("Add a description before you submit");
+  // JW-E005: Submit → APPROVED (automatic in R1); ORDERED once its work orders exist.
+  const now0 = new Date();
+  await prisma.workRequest.update({ where: { id: wrId }, data: { description, status: "APPROVED", submitted_at: now0, approved_at: now0 } });
   const items = await resolveItems(lines);
   if (lines.some((l) => !items.get(l.id)?.available)) throw new CartError("Something in your cart is no longer available. Remove it to continue.");
   const byProvider = new Map<string, typeof lines>();
@@ -154,21 +203,21 @@ export async function placeOrder(viewer: Viewer): Promise<{ orderId: string; pro
       const it = items.get(l.id)!;
       const fee = (await resolveCommissionBps("SOLE_SOURCED", it.type)).bps;
       return {
-        line_number: i + 1, transaction_type: it.type, fee_bps: fee, description: it.title, service_product_id: it.productId, provider_service_id: it.serviceId, payment_terms: it.paymentTerms ?? "NET30",
-        ...(l.delivery_date ? { service_end: l.delivery_date } : {}),
+        line_number: i + 1, work_request_line_id: l.id, transaction_type: it.type, fee_bps: fee, description: it.title, service_product_id: it.productId, provider_service_id: it.serviceId, payment_terms: it.paymentTerms ?? "NET30",
+        ...(l.service_end ? { service_end: l.service_end } : {}),
         ...(it.byQty
-          ? { uom: it.uom, quantity: l.quantity, unit_price_cents: l.unit_price_cents, payment_event: "TIMESHEET" as const }
-          : { amount_cents: l.unit_price_cents * l.quantity, payment_event: it.paymentEvent ?? ("ACCEPTANCE" as const) }),
+          ? { uom: it.uom, quantity: qtyOf(l), unit_price_cents: l.unit_price_cents, payment_event: "TIMESHEET" as const }
+          : { amount_cents: (l.unit_price_cents ?? 0) * qtyOf(l), payment_event: it.paymentEvent ?? ("ACCEPTANCE" as const) }),
       };
     }));
     const fees = [...new Set(rows.map((r) => r.fee_bps))];
-    const total = group.reduce((n, l) => n + l.unit_price_cents * l.quantity, 0);
+    const total = group.reduce((n, l) => n + (l.unit_price_cents ?? 0) * qtyOf(l), 0);
     const now = new Date();
     const order = await prisma.$transaction(async (tx) => {
       const o = await tx.workOrder.create({
         data: {
           order_number: `WO-${Date.now().toString(36).toUpperCase()}-${providerPersonId.slice(0, 4)}`,
-          origin: "DIRECT", buyer_person_id: p.id, p_account_id: pAccountId, provider_person_id: providerPersonId, currency: group[0].currency,
+          origin: "DIRECT", work_request_id: wrId, description, buyer_person_id: p.id, p_account_id: pAccountId, provider_person_id: providerPersonId, currency: group[0].currency,
           status: "RELEASED", buyer_accepted_at: now, provider_accepted_at: now,
           fee_bps: fees.length === 1 ? fees[0] : null, not_to_exceed_cents: total,
           lines: { create: rows },
@@ -176,7 +225,7 @@ export async function placeOrder(viewer: Viewer): Promise<{ orderId: string; pro
         select: { id: true },
       });
       await tx.onboardingRequest.create({ data: { onboarding_request_number: `ONB-${Date.now().toString(36).toUpperCase()}-${o.id.slice(0, 4)}`, work_order_id: o.id, provider_person_id: providerPersonId, buyer_person_id: p.id, raised_at: now } });
-      await tx.cartLine.deleteMany({ where: { id: { in: group.map((l) => l.id) } } });
+      await tx.workRequestLine.updateMany({ where: { id: { in: group.map((l) => l.id) } }, data: { status: "ORDERED", work_order_id: o.id } });
       return o;
     });
     await snapshotMilestones(order.id);
@@ -187,5 +236,6 @@ export async function placeOrder(viewer: Viewer): Promise<{ orderId: string; pro
     await nudgeTaxBanking(providerPersonId);
     placed.push({ orderId: order.id, providerName, open: true });
   }
+  await prisma.workRequest.update({ where: { id: wrId }, data: { status: "ORDERED" } });
   return placed;
 }

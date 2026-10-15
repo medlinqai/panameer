@@ -2,6 +2,7 @@ import { assertCanSign } from "@/lib/your-path";
 import { randomBytes } from "node:crypto";
 import { Prisma, type BillingCycle, type EstimateLineKind, type PaymentTerms } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { wrNumber } from "@/lib/requisition";
 import { notify } from "@/lib/notifications";
 import { sendEmail } from "@/lib/resend";
 import { emailShell, escapeHtml, paragraph, primaryButton } from "@/lib/email/shell";
@@ -205,15 +206,32 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
   const distinct = [...new Set(fees.values())];
   const now = new Date();
   const order = await prisma.$transaction(async (tx) => {
+    // JW-E004: an accepted estimate creates a complete Work Request (source ESTIMATE); its Work Order comes from it.
+    const wrId = crypto.randomUUID();
+    const description = e.title || `Estimate ${e.estimate_number}`;
+    await tx.workRequest.create({
+      data: {
+        id: wrId, wr_number: wrNumber(wrId), source: "ESTIMATE", status: "ORDERED", submitted_at: now, approved_at: now, description, sole_sourced: true,
+        job_id: e.work_request_id ? (await tx.job.findUnique({ where: { id: e.work_request_id }, select: { id: true } }))?.id ?? null : null,
+        buyer_person_id: buyer.id, p_account_id: buyer.company!.p_account_id, currency: e.currency, proposal_access: "INVITE_ONLY",
+        lines: {
+          create: rev.lines.map((l) => ({
+            line_number: l.line_number, transaction_type: l.kind === "SERVICE" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", description: l.description, currency: e.currency, status: "ORDERED",
+            uom: l.uom, quantity: l.quantity, unit_price_cents: l.rate_cents, amount_cents: l.amount_cents, provider_service_id: l.provider_service_id, service_product_id: l.service_product_id, provider_person_id: e.provider_person_id,
+          })),
+        },
+      },
+    });
+    const wrLines = new Map((await tx.workRequestLine.findMany({ where: { work_request_id: wrId }, select: { id: true, line_number: true } })).map((l) => [l.line_number, l.id]));
     const o = await tx.workOrder.create({
       data: {
         order_number: `WO-${Date.now().toString(36).toUpperCase()}-${e.id.slice(0, 4)}`,
-        origin: "INDIRECT", work_request_id: e.work_request_id, buyer_person_id: buyer.id, p_account_id: buyer.company!.p_account_id, provider_person_id: e.provider_person_id,
+        origin: "INDIRECT", work_request_id: wrId, description, buyer_person_id: buyer.id, p_account_id: buyer.company!.p_account_id, provider_person_id: e.provider_person_id,
         currency: e.currency, status: "ISSUED", buyer_accepted_at: now, fee_bps: distinct.length === 1 ? distinct[0] : null, not_to_exceed_cents: rev.total_cents,
         external_ref: e.estimate_number, sow_text: [rev.scope, rev.assumptions && `Assumptions: ${rev.assumptions}`, rev.exclusions && `Not included: ${rev.exclusions}`].filter(Boolean).join("\n\n") || null,
         lines: {
           create: rev.lines.map((l) => ({
-            line_number: l.line_number, transaction_type: l.kind === "SERVICE" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", fee_bps: fees.get(l.id)!, description: l.description,
+            line_number: l.line_number, work_request_line_id: wrLines.get(l.line_number), transaction_type: l.kind === "SERVICE" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", fee_bps: fees.get(l.id)!, description: l.description,
             uom: l.uom, quantity: l.quantity, unit_price_cents: l.rate_cents, amount_cents: l.amount_cents, provider_service_id: l.provider_service_id, service_product_id: l.service_product_id,
             billing_cycle: l.kind === "SERVICE" ? rev.billing_cycle : null, payment_terms: rev.payment_terms,
             payment_event: l.kind === "SERVICE" ? "TIMESHEET" : l.kind === "FIXED" ? "ACCEPTANCE" : "PAYMENT_REQUEST",
@@ -223,6 +241,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
       select: { id: true },
     });
     await tx.estimate.update({ where: { id: e.id }, data: { work_order_id: o.id } });
+    await tx.workRequestLine.updateMany({ where: { work_request_id: wrId }, data: { work_order_id: o.id } });
     return o;
   });
   await snapshotMilestones(order.id);
