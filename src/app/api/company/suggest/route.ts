@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { matchableEmailDomain } from "@/lib/platform-settings";
 import { prisma } from "@/lib/prisma";
 import { guardApi } from "@/lib/guard";
-import { emailDomain, isWorkDomain } from "@/lib/tos";
+import { emailDomain } from "@/lib/tos";
 
 export async function GET() {
   const gate = await guardApi("authenticated");
@@ -26,8 +27,7 @@ export async function GET() {
   const domain = emailDomain(person?.user?.email);
   // "straterp.com" → "straterp". Free-mail domains say nothing about an
   // employer, so they never suggest one.
-  const fromDomain =
-    domain && isWorkDomain(domain) ? domain.split(".")[0] : null;
+  const fromDomain = (await matchableEmailDomain(domain))?.split(".")[0] ?? null;
   const fromResume = person?.providerProfile?.employers?.[0]?.name ?? null;
 
   return NextResponse.json({

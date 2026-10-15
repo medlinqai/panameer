@@ -15,6 +15,7 @@ import type { TaxType } from "@prisma/client";
 import { notifyJoinRequested, notifyJoinDecided } from "@/lib/company-domain-join";
 import { checkCompanyFields, CompanyFieldError, tinDigits, websiteDomain } from "@/lib/company-fields";
 import { findCompanyMatch, type CompanyMatch } from "@/lib/company-match";
+import { matchableEmailDomain } from "@/lib/platform-settings";
 
 export type DefineInput = {
   name: string;
@@ -162,7 +163,7 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
   const domain = emailDomain(person.user?.email);
   const website = websiteDomain(input.website) ?? (input.website?.trim() || null);
   // Same website / email domain / tax ID = same company: route to joining it instead of a duplicate.
-  const match = await findCompanyMatch(null, { website, ein: input.ein, emailDomain: isWorkDomain(domain) ? domain : null });
+  const match = await findCompanyMatch(null, { website, ein: input.ein, emailDomain: await matchableEmailDomain(domain) });
   if (match) {
     throw new OnboardingError(
       match.kind === "tin"
@@ -202,7 +203,7 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
       ...(input.logoUrl ? { logo_url: input.logoUrl } : {}),
       // Only a WORK domain is stored. Recording gmail.com here would auto-
       // approve every Gmail user in the world into this company.
-      email_domain: isWorkDomain(domain) ? domain : null,
+      email_domain: await matchableEmailDomain(domain),
       company_tos_accepted_by: person.id,
       company_tos_accepted_at: new Date(),
       company_tos_version: COMPANY_TOS_VERSION,
@@ -720,7 +721,7 @@ export async function requestDomainJoin(userId: string): Promise<{ companyId: st
   });
   if (!person?.user?.email_verified) return null;
   const domain = emailDomain(person.user.email);
-  if (!domain || !isWorkDomain(domain)) return null;
+  if (!(await matchableEmailDomain(domain))) return null;
   const matches = await prisma.company.findMany({ where: { email_domain: domain }, select: { id: true }, take: 2 });
   if (matches.length !== 1) return null;
   const companyId = matches[0].id;

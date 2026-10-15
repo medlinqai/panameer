@@ -20,3 +20,26 @@ export async function setSetting(key: SettingKey, value: boolean, userId: string
 
 /** GT-E001: is the Global Taxonomy on? Every new screen/path checks this; off = today's app. */
 export const taxonomyV2 = cache(() => getSetting("taxonomy_v2"));
+
+// BC-E007: email domains that never auto-match a company (email-domain match only; website and tax ID unchanged).
+export const NEVER_MATCH_KEY = "never_match_email_domains";
+export const NEVER_MATCH_DEFAULT = ["panameer.com"];
+
+export async function neverMatchDomains(): Promise<string[]> {
+  const row = await prisma.platformSetting.findUnique({ where: { key: NEVER_MATCH_KEY } }).catch(() => null);
+  return Array.isArray(row?.value) ? (row.value as unknown[]).filter((x): x is string => typeof x === "string") : NEVER_MATCH_DEFAULT;
+}
+
+export async function setNeverMatchDomains(domains: string[], userId: string | null) {
+  const value = [...new Set(domains.map((d) => d.trim().toLowerCase().replace(/^@/, "")).filter((d) => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(d)))];
+  await prisma.platformSetting.upsert({ where: { key: NEVER_MATCH_KEY }, create: { key: NEVER_MATCH_KEY, value, updated_by: userId }, update: { value, updated_by: userId } });
+  return value;
+}
+
+/** A registrant's email domain that may auto-match a company: a work domain not on the never-match list. */
+export async function matchableEmailDomain(domain: string | null): Promise<string | null> {
+  if (!domain) return null;
+  const { isWorkDomain } = await import("@/lib/tos");
+  if (!isWorkDomain(domain)) return null;
+  return (await neverMatchDomains()).includes(domain.toLowerCase()) ? null : domain;
+}
