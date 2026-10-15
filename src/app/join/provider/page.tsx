@@ -931,6 +931,51 @@ setScreen(target);
   if (screen === "signup") {
     // SR-E001/E005: Seller · Company · Locations · Review, in the buyer's shell. Signed up already → a summary, not the form.
     const signedUp = !!email && !inviteToken;
+    // Scott 10-15: the sign-up page itself looks exactly like the buyer's — centered title, no rail, Country, the other-side link.
+    if (!signedUp) {
+      return (
+        <OnboardingShell
+          compact
+          contentWidth="max-w-2xl"
+          footer={
+            <>
+              <button
+                onClick={() => router.push("/join")}
+                disabled={busy}
+                className="border border-ink bg-surface px-6 py-3 font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-50"
+              >
+                Back
+              </button>
+              <button
+                onClick={createAccount}
+                disabled={!canSignUp(acct) || busy}
+                className="bg-ink px-8 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
+              >
+                {busy ? "Creating…" : "Create My Account"}
+              </button>
+            </>
+          }
+        >
+          {inviteCtx && (
+            <div className="mb-4">
+              <Notice tone="info">
+                <b>{inviteCtx.coordinatorName}</b> invited you to join Panameer.
+              </Notice>
+            </div>
+          )}
+          <SignUpForm
+            values={acct}
+            onChange={(patch) => setAcct((a) => ({ ...a, ...patch }))}
+            error={error}
+            emailLocked={!!inviteToken}
+            // EXPLICIT, AND IT IS LOAD-BEARING , 2026-08-30).
+            callbackUrl="/join/provider"
+            title="Sign Up to Sell Services and/or Service Products"
+            altPrompt={{ label: "Looking to hire?", href: "/join/requester", cta: "Sign Up as a Buyer" }}
+          />
+        </OnboardingShell>
+      );
+    }
     return (
       <WizardShell
         rail={{ steps: SELLER_RAIL, current: 0, reached: signedUp ? 1 : 0, onPick: (i) => i > 0 && goTo("register_company") }}

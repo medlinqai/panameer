@@ -155,9 +155,9 @@ export default function JoinRequesterPage() {
           title="Sign Up to Buy Services and/or Service Products"
           callbackUrl="/join/requester"
           altPrompt={{
-            label: "Looking for work?",
+            label: "Looking to sell?",
             href: "/join/provider",
-            cta: "Apply as a Provider",
+            cta: "Sign Up as a Seller",
           }}
         />
       </OnboardingShell>
