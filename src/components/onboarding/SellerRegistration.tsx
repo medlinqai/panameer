@@ -23,6 +23,7 @@ const DESCRIPTION_MAX = 600;
 
 type Reg = {
   email: string;
+  name?: string;
   company: null | { status: "APPROVED" | "PENDING"; owner: boolean; id?: string; name: string; legalName?: string; website?: string; description?: string; businessTypeIds?: string[] };
   locations: (LocRow & { id: string })[];
   own: (LocationValue & { line1?: string | null }) | null;
@@ -250,7 +251,9 @@ export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () =
   // ---- Review --------------------------------------------------------------
   const btName = types.find((t) => t.id === businessTypeId)?.name;
   const addr = (a: LocationValue) => [a.line1, a.city, a.state, a.postalCode, countryName(a.country, a.country)].filter(Boolean).join(", ") || "—";
-  const rows: { label: string; value: string; step: Step }[] = [
+  const rows: { label: string; value: string; step: Step | "seller" }[] = [
+    ...(reg.name ? [{ label: "Name", value: reg.name, step: "seller" as const }] : []),
+    { label: "Email", value: reg.email, step: "seller" as const },
     { label: "Company", value: joining ? `${c?.name} (asked to join)` : [name, legal && legal !== name ? `Legal name ${legal}` : null, btName].filter(Boolean).join(" · "), step: "company" },
     ...(owner
       ? locs.map((l, i) => ({ label: locs.length > 1 ? `Location ${i + 1}` : "Location", value: locLine(l, { seller: true }), step: "locations" as Step }))
@@ -259,9 +262,9 @@ export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () =
   return (
     <WizardShell
       {...shell}
-      title="Check your company, then continue."
-      subtitle="Everything here is editable later from your Company page."
-      continueLabel="Continue"
+      title="Check your details, then verify your email."
+      subtitle="Everything here is editable later. Next we email you a link; after it, you build your profile (résumé upload included)."
+      continueLabel="Continue to Verify Email"
       onContinue={() => { store.set("done"); onDone(); }}
     >
       <div className="w-full max-w-2xl" data-seller-review>
@@ -271,7 +274,7 @@ export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () =
             <div key={r.label} className="flex flex-wrap items-baseline gap-3 border-b border-line px-5 py-4 last:border-0">
               <dt className="w-40 shrink-0 text-[13.5px] font-bold uppercase tracking-wide text-ink-2">{r.label}</dt>
               <dd className="min-w-0 flex-1 text-[15.5px]">{r.value}</dd>
-              <button type="button" onClick={() => go(r.step)} className="text-[13.5px] font-bold text-magenta hover:underline">Edit</button>
+              <button type="button" onClick={() => (r.step === "seller" ? onSeller() : go(r.step))} className="text-[13.5px] font-bold text-magenta hover:underline">Edit</button>
             </div>
           ))}
         </dl>

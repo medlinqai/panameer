@@ -15,6 +15,8 @@ export async function GET() {
     where: { user_id: viewer.userId },
     select: {
       id: true,
+      first_name: true,
+      last_name: true,
       user: { select: { email: true } },
       companyMemberships: { where: { status: { in: ["APPROVED", "PENDING"] } }, orderBy: { updated_at: "desc" }, take: 1, select: { status: true, role: true, company: { select: { id: true, name: true, legal_name: true, website: true, description: true } } } },
     },
@@ -24,6 +26,7 @@ export async function GET() {
   const approved = m?.status === "APPROVED";
   return NextResponse.json({
     email: p.user?.email ?? "",
+    name: [p.first_name, p.last_name].filter(Boolean).join(" "),
     company: m
       ? approved
         ? { status: m.status, owner: m.role === "ADMIN", id: m.company.id, name: m.company.name, legalName: m.company.legal_name && m.company.legal_name !== m.company.name ? m.company.legal_name : "", website: m.company.website ?? "", description: m.company.description ?? "", businessTypeIds: await companyBusinessTypeIds(m.company.id) }
