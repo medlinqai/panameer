@@ -9,7 +9,7 @@ async function data(c: Ctx) {
   const [svcs, products, estimates, lines] = await Promise.all([
     prisma.providerService.findMany({ where: { published_at: { not: null } }, select: { id: true, name: true, published_at: true, provider_profile_id: true } }),
     prisma.serviceProduct.findMany({ where: { status: "PUBLISHED" }, select: { id: true, title: true, created_at: true, updated_at: true, providerProfile: { select: { person_id: true } } } }),
-    prisma.costEstimate.findMany({ select: { id: true, estimate_number: true, title: true, status: true, sent_at: true, decided_at: true, provider_person_id: true } }),
+    prisma.estimate.findMany({ select: { id: true, estimate_number: true, title: true, status: true, sent_at: true, decided_at: true, provider_person_id: true } }),
     prisma.workOrderLine.findMany({ where: { service_product_id: { not: null } }, select: { workOrder: { select: { id: true, order_number: true, created_at: true, buyer_person_id: true } } } }),
   ]);
   const orders = new Map(lines.map((l) => [l.workOrder.id, l.workOrder]));

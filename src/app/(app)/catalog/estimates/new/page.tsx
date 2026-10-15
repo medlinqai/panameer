@@ -20,7 +20,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, first_name: true, last_name: true } });
   if (!me) return null;
   // EST-E002: Build Estimate from a request — pre-filled; a draft already started from it reopens.
-  const req = sp.request ? await prisma.costEstimateRequest.findFirst({ where: { id: sp.request, provider_person_id: me.id } }) : null;
+  const req = sp.request ? await prisma.estimateRequest.findFirst({ where: { id: sp.request, provider_person_id: me.id } }) : null;
   if (req?.cost_estimate_id && !sp.id) sp.id = req.cost_estimate_id;
   const conns = await prisma.connection.findMany({ where: { kind: "COLLEAGUE", status: "ACCEPTED", OR: [{ from_user_id: viewer.userId }, { to_user_id: viewer.userId }] }, select: { from_user_id: true, to_user_id: true }, take: 500 });
   const others = conns.map((c) => (c.from_user_id === viewer.userId ? c.to_user_id : c.from_user_id));
@@ -30,7 +30,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
   const [services, products, past] = await Promise.all([
     listProviderServices(viewer).catch(() => []),
     listOwnServiceProducts(viewer).catch(() => []),
-    prisma.costEstimate.findMany({ where: { provider_person_id: me.id }, orderBy: { created_at: "desc" }, take: 20, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, include: { lines: { orderBy: { line_number: "asc" } } } } } }),
+    prisma.estimate.findMany({ where: { provider_person_id: me.id }, orderBy: { created_at: "desc" }, take: 20, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, include: { lines: { orderBy: { line_number: "asc" } } } } } }),
   ]);
   const editing = sp.id ? past.find((e) => e.id === sp.id) ?? null : null;
   const rev = editing?.revisions[0];

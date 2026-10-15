@@ -39,14 +39,14 @@ export async function createRequest(viewer: Viewer, input: RequestInput, files: 
   if (min && max && max < min) throw new EstimateRequestError("The budget's top end is below its bottom", "INVALID");
   const usable = files.filter((f) => f.size > 0).slice(0, MAX_FILES);
   if (usable.some((f) => f.size > MAX_BYTES)) throw new EstimateRequestError("Each file can be up to 10 MB", "INVALID");
-  const r = await prisma.costEstimateRequest.create({
+  const r = await prisma.estimateRequest.create({
     data: { requester_person_id: p.id, provider_person_id: provider.id, service_id: svc?.id ?? null, service_product_id: prod?.id ?? null, description, start_by: input.startBy ? new Date(input.startBy) : null, budget_min_cents: min, budget_max_cents: max },
     select: { id: true },
   });
   if (usable.length) {
     const stored = [];
     for (const f of usable) stored.push({ path: await uploadEstimateRequestFile(r.id, { name: f.name, type: f.type, bytes: await f.arrayBuffer() }), name: f.name, size: f.size, type: f.type });
-    await prisma.costEstimateRequest.update({ where: { id: r.id }, data: { attachments: stored } });
+    await prisma.estimateRequest.update({ where: { id: r.id }, data: { attachments: stored } });
   }
   await notify({ event: "estimate.requested", personId: provider.id, entityType: "cost_estimate_request", entityId: r.id, dedupeKey: `estimate.requested:${r.id}`, vars: { requestId: r.id, buyerName: nameOf(p), firstLine: firstLine(description) } });
   return r.id;
@@ -55,7 +55,7 @@ export async function createRequest(viewer: Viewer, input: RequestInput, files: 
 /** Only the requester and the provider can open a request. */
 export async function requestFor(viewer: Viewer, id: string) {
   const p = await me(viewer);
-  const r = await prisma.costEstimateRequest.findUnique({ where: { id } });
+  const r = await prisma.estimateRequest.findUnique({ where: { id } });
   if (!r || (r.requester_person_id !== p.id && r.provider_person_id !== p.id)) throw new EstimateRequestError("Request not found", "NOT_FOUND");
   const [people, svc, prod] = await Promise.all([
     prisma.person.findMany({ where: { id: { in: [r.requester_person_id, r.provider_person_id] } }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } } } }),
@@ -81,7 +81,7 @@ export async function declineRequest(viewer: Viewer, id: string, reason: string)
   if (party !== "PROVIDER") throw new EstimateRequestError("Only the provider can decline", "FORBIDDEN");
   const note = reason.trim();
   if (note.length < 3) throw new EstimateRequestError("Give the buyer a reason", "INVALID");
-  const done = await prisma.costEstimateRequest.updateMany({ where: { id, status: "OPEN" }, data: { status: "DECLINED", decline_reason: note.slice(0, 2000) } });
+  const done = await prisma.estimateRequest.updateMany({ where: { id, status: "OPEN" }, data: { status: "DECLINED", decline_reason: note.slice(0, 2000) } });
   if (!done.count) throw new EstimateRequestError("This request isn't open", "INVALID");
   await prisma.notification.updateMany({ where: { dedupe_key: `estimate.requested:${id}`, resolved_at: null }, data: { resolved_at: new Date() } });
   await notify({ event: "estimate.request_declined", personId: r.requester_person_id, entityType: "cost_estimate_request", entityId: id, dedupeKey: `estimate.request_declined:${id}`, vars: { requestId: id, providerName, reason: note } });
@@ -90,7 +90,7 @@ export async function declineRequest(viewer: Viewer, id: string, reason: string)
 export async function withdrawRequest(viewer: Viewer, id: string) {
   const { party } = await requestFor(viewer, id);
   if (party !== "BUYER") throw new EstimateRequestError("Only the requester can withdraw", "FORBIDDEN");
-  const done = await prisma.costEstimateRequest.updateMany({ where: { id, status: "OPEN" }, data: { status: "WITHDRAWN" } });
+  const done = await prisma.estimateRequest.updateMany({ where: { id, status: "OPEN" }, data: { status: "WITHDRAWN" } });
   if (!done.count) throw new EstimateRequestError("This request isn't open", "INVALID");
   // Nothing left for the provider to do.
   await prisma.notification.updateMany({ where: { dedupe_key: `estimate.requested:${id}`, resolved_at: null }, data: { resolved_at: new Date() } });
@@ -98,12 +98,12 @@ export async function withdrawRequest(viewer: Viewer, id: string) {
 
 /** EST-E002: the estimate built from a request is linked when saved, and answers it when sent. */
 export async function linkRequest(requestId: string, estimateId: string, providerPersonId: string) {
-  await prisma.costEstimateRequest.updateMany({ where: { id: requestId, provider_person_id: providerPersonId, status: "OPEN" }, data: { cost_estimate_id: estimateId } });
+  await prisma.estimateRequest.updateMany({ where: { id: requestId, provider_person_id: providerPersonId, status: "OPEN" }, data: { cost_estimate_id: estimateId } });
 }
 export async function answerRequestsFor(estimateId: string) {
-  const rows = await prisma.costEstimateRequest.findMany({ where: { cost_estimate_id: estimateId, status: "OPEN" }, select: { id: true } });
+  const rows = await prisma.estimateRequest.findMany({ where: { cost_estimate_id: estimateId, status: "OPEN" }, select: { id: true } });
   if (!rows.length) return;
-  await prisma.costEstimateRequest.updateMany({ where: { id: { in: rows.map((r) => r.id) } }, data: { status: "ANSWERED" } });
+  await prisma.estimateRequest.updateMany({ where: { id: { in: rows.map((r) => r.id) } }, data: { status: "ANSWERED" } });
   await prisma.notification.updateMany({ where: { dedupe_key: { in: rows.map((r) => `estimate.requested:${r.id}`) }, resolved_at: null }, data: { resolved_at: new Date() } });
 }
 
@@ -113,10 +113,10 @@ export type EstimateListRow = { kind: "estimate" | "request"; id: string; href: 
 export async function estimatesPage(viewer: Viewer) {
   const p = await me(viewer);
   const [asCustomer, asProvider, myRequests, waiting] = await Promise.all([
-    prisma.costEstimate.findMany({ where: { customer_person_id: p.id, status: { not: "DRAFT" } }, orderBy: { updated_at: "desc" }, take: 100, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, select: { total_cents: true } } } }),
-    prisma.costEstimate.findMany({ where: { provider_person_id: p.id }, orderBy: { updated_at: "desc" }, take: 100, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, select: { total_cents: true } } } }),
-    prisma.costEstimateRequest.findMany({ where: { requester_person_id: p.id }, orderBy: { updated_at: "desc" }, take: 100 }),
-    prisma.costEstimateRequest.findMany({ where: { provider_person_id: p.id, status: "OPEN" }, orderBy: { created_at: "asc" }, take: 100 }),
+    prisma.estimate.findMany({ where: { customer_person_id: p.id, status: { not: "DRAFT" } }, orderBy: { updated_at: "desc" }, take: 100, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, select: { total_cents: true } } } }),
+    prisma.estimate.findMany({ where: { provider_person_id: p.id }, orderBy: { updated_at: "desc" }, take: 100, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, select: { total_cents: true } } } }),
+    prisma.estimateRequest.findMany({ where: { requester_person_id: p.id }, orderBy: { updated_at: "desc" }, take: 100 }),
+    prisma.estimateRequest.findMany({ where: { provider_person_id: p.id, status: "OPEN" }, orderBy: { created_at: "asc" }, take: 100 }),
   ]);
   const ids = [...new Set([...asCustomer.map((e) => e.provider_person_id), ...asProvider.map((e) => e.customer_person_id), ...myRequests.map((r) => r.provider_person_id), ...waiting.map((r) => r.requester_person_id)].filter((x): x is string => !!x))];
   const names = new Map((await prisma.person.findMany({ where: { id: { in: ids } }, select: { id: true, first_name: true, last_name: true } })).map((x) => [x.id, nameOf(x)]));

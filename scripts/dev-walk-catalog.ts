@@ -49,8 +49,8 @@ async function main() {
   check("changes requested → provider notified", (await prisma.notification.count({ where: { person_id: prov.personId, event_key: "estimate.changes_requested" } })) === 1);
   await saveEstimate(prov.viewer, estId, { customerPersonId: buyer.personId, title: "Spend Dashboard for Acme", scope: "Install the dashboard + walkthrough.", lines: [{ ...line, amountCents: 120000 }], paymentTerms: "NET30" });
   await sendEstimate(prov.viewer, estId);
-  const e = await prisma.costEstimate.findUniqueOrThrow({ where: { id: estId } });
-  check("revised and resubmitted as revision 2 (history kept)", e.current_revision === 2 && e.status === "SENT" && (await prisma.costEstimateRevision.count({ where: { estimate_id: estId } })) === 2);
+  const e = await prisma.estimate.findUniqueOrThrow({ where: { id: estId } });
+  check("revised and resubmitted as revision 2 (history kept)", e.current_revision === 2 && e.status === "SENT" && (await prisma.estimateRevision.count({ where: { estimate_id: estId } })) === 2);
   const stranger = await party("BUYER", "Sam");
   await refuses("someone else can't open it (private)", () => estimateFor(stranger.viewer, estId));
 
@@ -74,8 +74,8 @@ main()
   .catch((err) => { console.error(err); process.exitCode = 1; })
   .finally(async () => {
     const people = made.persons;
-    const ests = await prisma.costEstimate.findMany({ where: { provider_person_id: { in: people } }, select: { id: true } });
-    await prisma.costEstimate.deleteMany({ where: { id: { in: ests.map((x) => x.id) } } });
+    const ests = await prisma.estimate.findMany({ where: { provider_person_id: { in: people } }, select: { id: true } });
+    await prisma.estimate.deleteMany({ where: { id: { in: ests.map((x) => x.id) } } });
     const lines = await prisma.workOrderLine.findMany({ where: { workOrder: { provider_person_id: { in: people } } }, select: { id: true } });
     await prisma.workOrderMilestone.deleteMany({ where: { work_order_line_id: { in: lines.map((l) => l.id) } } });
     await prisma.payoutMethod.deleteMany({ where: { person_id: { in: people } } });

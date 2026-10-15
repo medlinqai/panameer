@@ -1,6 +1,6 @@
 import { assertCanSign } from "@/lib/your-path";
 import { randomBytes } from "node:crypto";
-import { Prisma, type BillingCycle, type CostEstimateLineKind, type PaymentTerms } from "@prisma/client";
+import { Prisma, type BillingCycle, type EstimateLineKind, type PaymentTerms } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import { sendEmail } from "@/lib/resend";
@@ -18,7 +18,7 @@ export class EstimateError extends Error {
   }
 }
 
-export type EstimateLineInput = { kind: CostEstimateLineKind; description: string; providerServiceId?: string | null; serviceProductId?: string | null; uom?: string | null; quantity?: number | null; rateCents?: number | null; amountCents?: number | null };
+export type EstimateLineInput = { kind: EstimateLineKind; description: string; providerServiceId?: string | null; serviceProductId?: string | null; uom?: string | null; quantity?: number | null; rateCents?: number | null; amountCents?: number | null };
 export type EstimateInput = {
   /** EST-E002: the request this estimate answers. */
   requestId?: string | null;
@@ -41,7 +41,7 @@ const number = () => `EST-${[...randomBytes(5)].map((b) => ALPHA[b % ALPHA.lengt
 const appUrl = () => (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100").replace(/\/$/, "");
 const clean = (s?: string | null, max = 4000) => s?.trim().slice(0, max) || null;
 
-export function lineAmount(l: { kind: CostEstimateLineKind; quantity?: number | Prisma.Decimal | null; rate_cents?: number | null; rateCents?: number | null; amount_cents?: number | null; amountCents?: number | null }): number {
+export function lineAmount(l: { kind: EstimateLineKind; quantity?: number | Prisma.Decimal | null; rate_cents?: number | null; rateCents?: number | null; amount_cents?: number | null; amountCents?: number | null }): number {
   if (l.kind === "SERVICE") return Math.round(Number(l.quantity ?? 0) * Number(l.rate_cents ?? l.rateCents ?? 0));
   return Number(l.amount_cents ?? l.amountCents ?? 0);
 }
@@ -92,23 +92,23 @@ export async function saveEstimate(viewer: Viewer, id: string | null, input: Est
   const head = { customer_person_id: input.customerPersonId || null, customer_email: input.customerPersonId ? null : email, work_request_id: input.workRequestId || null, title, valid_until: validUntil };
 
   if (!id) {
-    const e = await prisma.costEstimate.create({ data: { estimate_number: number(), provider_person_id: p.id, ...head, revisions: { create: { revision_number: 1, ...rev, lines: { create: rows } } } }, select: { id: true } });
+    const e = await prisma.estimate.create({ data: { estimate_number: number(), provider_person_id: p.id, ...head, revisions: { create: { revision_number: 1, ...rev, lines: { create: rows } } } }, select: { id: true } });
     if (input.requestId) await linkRequest(input.requestId, e.id, p.id);
     return e.id;
   }
-  const e = await prisma.costEstimate.findFirst({ where: { id, provider_person_id: p.id } });
+  const e = await prisma.estimate.findFirst({ where: { id, provider_person_id: p.id } });
   if (!e) throw new EstimateError("Estimate not found", "NOT_FOUND");
   if (!["DRAFT", "CHANGES_REQUESTED"].includes(e.status)) throw new EstimateError("This estimate can't be edited now", "INVALID");
-  const current = await prisma.costEstimateRevision.findUnique({ where: { estimate_id_revision_number: { estimate_id: e.id, revision_number: e.current_revision } } });
+  const current = await prisma.estimateRevision.findUnique({ where: { estimate_id_revision_number: { estimate_id: e.id, revision_number: e.current_revision } } });
   await prisma.$transaction(async (tx) => {
-    await tx.costEstimate.update({ where: { id: e.id }, data: head });
+    await tx.estimate.update({ where: { id: e.id }, data: head });
     if (current && !current.sent_at) {
-      await tx.costEstimateLine.deleteMany({ where: { revision_id: current.id } });
-      await tx.costEstimateRevision.update({ where: { id: current.id }, data: { ...rev, lines: { create: rows } } });
+      await tx.estimateLine.deleteMany({ where: { revision_id: current.id } });
+      await tx.estimateRevision.update({ where: { id: current.id }, data: { ...rev, lines: { create: rows } } });
     } else {
       const n = e.current_revision + 1;
-      await tx.costEstimateRevision.create({ data: { estimate_id: e.id, revision_number: n, ...rev, lines: { create: rows } } });
-      await tx.costEstimate.update({ where: { id: e.id }, data: { current_revision: n } });
+      await tx.estimateRevision.create({ data: { estimate_id: e.id, revision_number: n, ...rev, lines: { create: rows } } });
+      await tx.estimate.update({ where: { id: e.id }, data: { current_revision: n } });
     }
   });
   return e.id;
@@ -117,18 +117,18 @@ export async function saveEstimate(viewer: Viewer, id: string | null, input: Est
 /** Send (or resubmit) the current revision. Members get bell + worklist + email; a non-member gets an email to sign up. */
 export async function sendEstimate(viewer: Viewer, id: string) {
   const p = await me(viewer);
-  const e = await prisma.costEstimate.findFirst({ where: { id, provider_person_id: p.id } });
+  const e = await prisma.estimate.findFirst({ where: { id, provider_person_id: p.id } });
   if (!e) throw new EstimateError("Estimate not found", "NOT_FOUND");
   if (!["DRAFT", "CHANGES_REQUESTED"].includes(e.status)) throw new EstimateError("This estimate has already been sent", "INVALID");
-  const rev = await prisma.costEstimateRevision.findUnique({ where: { estimate_id_revision_number: { estimate_id: e.id, revision_number: e.current_revision } }, include: { lines: true } });
+  const rev = await prisma.estimateRevision.findUnique({ where: { estimate_id_revision_number: { estimate_id: e.id, revision_number: e.current_revision } }, include: { lines: true } });
   if (!rev || rev.sent_at) throw new EstimateError("Revise the estimate before sending it again", "INVALID");
   if (!rev.lines.length) throw new EstimateError("Add at least one line", "INVALID");
   let customerId = e.customer_person_id;
   if (!customerId && e.customer_email) customerId = (await prisma.person.findFirst({ where: { user: { email: { equals: e.customer_email, mode: "insensitive" } } }, select: { id: true } }))?.id ?? null;
   const now = new Date();
   await prisma.$transaction([
-    prisma.costEstimateRevision.update({ where: { id: rev.id }, data: { sent_at: now } }),
-    prisma.costEstimate.update({ where: { id: e.id }, data: { status: "SENT", sent_at: now, customer_person_id: customerId } }),
+    prisma.estimateRevision.update({ where: { id: rev.id }, data: { sent_at: now } }),
+    prisma.estimate.update({ where: { id: e.id }, data: { status: "SENT", sent_at: now, customer_person_id: customerId } }),
   ]);
   await answerRequestsFor(e.id);
   // The provider's "changes requested" item is answered by resubmitting.
@@ -143,24 +143,24 @@ export async function sendEstimate(viewer: Viewer, id: string) {
       paragraph("Join Panameer with your name and company to open it, then accept it, ask for changes or decline. It's free."),
       primaryButton(url, "Open the Estimate"),
     ].join("");
-    await sendEmail({ to: e.customer_email, subject: `${nameOf(p)} sent you an estimate: ${e.title}`, html: emailShell({ bodyHtml: body }), text: `${nameOf(p)} sent you an estimate: ${e.title} (${vars.total}). Open it: ${url}`, template: "cost-estimate", subjectType: "CostEstimate", subjectId: e.id }).catch(() => {});
+    await sendEmail({ to: e.customer_email, subject: `${nameOf(p)} sent you an estimate: ${e.title}`, html: emailShell({ bodyHtml: body }), text: `${nameOf(p)} sent you an estimate: ${e.title} (${vars.total}). Open it: ${url}`, template: "cost-estimate", subjectType: "Estimate", subjectId: e.id }).catch(() => {});
   }
 }
 
 /** Who may open it: the provider, the customer, or a member signed in with the emailed address (who then becomes the customer). */
 export async function estimateFor(viewer: Viewer, id: string) {
   const p = await me(viewer);
-  let e = await prisma.costEstimate.findUnique({ where: { id }, include: { revisions: { orderBy: { revision_number: "desc" }, include: { lines: { orderBy: { line_number: "asc" } } } } } });
+  let e = await prisma.estimate.findUnique({ where: { id }, include: { revisions: { orderBy: { revision_number: "desc" }, include: { lines: { orderBy: { line_number: "asc" } } } } } });
   if (!e) throw new EstimateError("Estimate not found", "NOT_FOUND");
   const email = p.user?.email?.toLowerCase();
   if (e.provider_person_id !== p.id && e.customer_person_id !== p.id) {
     if (!e.customer_person_id && e.customer_email && email && e.customer_email === email && e.status !== "DRAFT") {
-      await prisma.costEstimate.update({ where: { id }, data: { customer_person_id: p.id } });
+      await prisma.estimate.update({ where: { id }, data: { customer_person_id: p.id } });
       e = { ...e, customer_person_id: p.id };
     } else throw new EstimateError("Estimate not found", "NOT_FOUND");
   }
   if ((e.status === "SENT" || e.status === "CHANGES_REQUESTED") && e.valid_until < new Date()) {
-    await prisma.costEstimate.update({ where: { id }, data: { status: "EXPIRED" } });
+    await prisma.estimate.update({ where: { id }, data: { status: "EXPIRED" } });
     e = { ...e, status: "EXPIRED" };
   }
   if (e.status === "DRAFT" && e.provider_person_id !== p.id) throw new EstimateError("Estimate not found", "NOT_FOUND");
@@ -182,9 +182,9 @@ export async function decideEstimate(viewer: Viewer, id: string, decision: "ACCE
   const rev = e.revisions[0];
   const now = new Date();
   const status = decision === "ACCEPT" ? "ACCEPTED" : decision === "CHANGES" ? "CHANGES_REQUESTED" : "DECLINED";
-  const moved = await prisma.costEstimate.updateMany({ where: { id: e.id, status: "SENT" }, data: { status, decided_at: now } });
+  const moved = await prisma.estimate.updateMany({ where: { id: e.id, status: "SENT" }, data: { status, decided_at: now } });
   if (!moved.count) throw new EstimateError("This estimate changed while you were looking at it", "INVALID");
-  await prisma.costEstimateRevision.update({ where: { id: rev.id }, data: { decision: status, customer_comment: note, decided_at: now } });
+  await prisma.estimateRevision.update({ where: { id: rev.id }, data: { decision: status, customer_comment: note, decided_at: now } });
   await prisma.notification.updateMany({ where: { dedupe_key: { startsWith: `estimate.received:${e.id}:` }, resolved_at: null }, data: { resolved_at: now } });
   let orderId: string | null = null;
   if (decision === "ACCEPT") orderId = await orderFromEstimate(e.id);
@@ -196,7 +196,7 @@ export async function decideEstimate(viewer: Viewer, id: string, decision: "ACCE
 
 /** Accept → a work order from the accepted revision, customer acceptance set; the provider accepts the terms as today. */
 async function orderFromEstimate(estimateId: string): Promise<string> {
-  const e = await prisma.costEstimate.findUniqueOrThrow({ where: { id: estimateId }, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, include: { lines: { orderBy: { line_number: "asc" } } } } } });
+  const e = await prisma.estimate.findUniqueOrThrow({ where: { id: estimateId }, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, include: { lines: { orderBy: { line_number: "asc" } } } } } });
   const rev = e.revisions[0];
   const buyer = await prisma.person.findUniqueOrThrow({ where: { id: e.customer_person_id! }, select: { id: true, company: { select: { p_account_id: true } } } });
   if (!buyer.company?.p_account_id) throw new EstimateError("Add your company before accepting", "INVALID");
@@ -222,7 +222,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
       },
       select: { id: true },
     });
-    await tx.costEstimate.update({ where: { id: e.id }, data: { work_order_id: o.id } });
+    await tx.estimate.update({ where: { id: e.id }, data: { work_order_id: o.id } });
     return o;
   });
   await snapshotMilestones(order.id);
@@ -235,7 +235,7 @@ export type EstimateRow = { id: string; number: string; title: string; status: s
 /** My Estimates (owner-only) — the estimates you've written. */
 export async function myEstimates(viewer: Viewer): Promise<EstimateRow[]> {
   const p = await me(viewer);
-  const rows = await prisma.costEstimate.findMany({ where: { provider_person_id: p.id }, orderBy: { updated_at: "desc" }, take: 100, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, select: { total_cents: true } } } });
+  const rows = await prisma.estimate.findMany({ where: { provider_person_id: p.id }, orderBy: { updated_at: "desc" }, take: 100, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, select: { total_cents: true } } } });
   const custs = new Map((await prisma.person.findMany({ where: { id: { in: rows.map((r) => r.customer_person_id).filter((x): x is string => !!x) } }, select: { id: true, first_name: true, last_name: true } })).map((c) => [c.id, nameOf(c)]));
   return rows.map((r) => ({ id: r.id, number: r.estimate_number, title: r.title, status: r.status, totalCents: r.revisions[0]?.total_cents ?? 0, currency: r.currency, counterpart: (r.customer_person_id && custs.get(r.customer_person_id)) || r.customer_email || "—", validUntil: r.valid_until.toISOString().slice(0, 10), revision: r.current_revision }));
 }

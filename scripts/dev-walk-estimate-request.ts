@@ -19,9 +19,9 @@ async function main() {
 
   // Build Estimate from the request (what the pre-filled wizard sends).
   const eid = await saveEstimate(prov.viewer, null, { requestId: rid, customerPersonId: buyer.personId, title: svc.name, scope: "Supplier Portal rollout for 3 BUs", lines: [{ kind: "SERVICE", description: svc.name, providerServiceId: svc.id, uom: "HOUR", quantity: 40, rateCents: 12500 }] });
-  check("draft links the request", (await prisma.costEstimateRequest.findUnique({ where: { id: rid } }))?.cost_estimate_id === eid);
+  check("draft links the request", (await prisma.estimateRequest.findUnique({ where: { id: rid } }))?.cost_estimate_id === eid);
   await sendEstimate(prov.viewer, eid);
-  const r = await prisma.costEstimateRequest.findUnique({ where: { id: rid } });
+  const r = await prisma.estimateRequest.findUnique({ where: { id: rid } });
   check("Send → request Answered, provider's item cleared", r?.status === "ANSWERED" && !!(await prisma.notification.findFirst({ where: { id: n!.id } }))?.resolved_at);
   const bp = await estimatesPage(buyer.viewer);
   check("buyer sees the estimate under Received", bp.received.some((x) => x.kind === "estimate" && x.id === eid));
@@ -34,19 +34,19 @@ async function main() {
   check("provider sees it under Requests Waiting on Me", (await estimatesPage(prov.viewer)).waiting.some((x) => x.id === r2));
   await refuses("decline needs a reason", () => declineRequest(prov.viewer, r2, ""), "reason");
   await declineRequest(prov.viewer, r2, "Fully booked this quarter");
-  check("Decline → buyer notified, status Declined", (await prisma.costEstimateRequest.findUnique({ where: { id: r2 } }))?.status === "DECLINED" && (await prisma.notification.count({ where: { person_id: buyer.personId, event_key: "estimate.request_declined" } })) === 1);
+  check("Decline → buyer notified, status Declined", (await prisma.estimateRequest.findUnique({ where: { id: r2 } }))?.status === "DECLINED" && (await prisma.notification.count({ where: { person_id: buyer.personId, event_key: "estimate.request_declined" } })) === 1);
 
   const r3 = await createRequest(buyer.viewer, { providerPersonId: prov.personId, description: "Third request to withdraw" });
   await refuses("only the requester can withdraw", () => withdrawRequest(prov.viewer, r3), "requester");
   await withdrawRequest(buyer.viewer, r3);
-  check("Withdraw → status Withdrawn, provider's item cleared", (await prisma.costEstimateRequest.findUnique({ where: { id: r3 } }))?.status === "WITHDRAWN" && !!(await prisma.notification.findFirst({ where: { dedupe_key: `estimate.requested:${r3}` } }))?.resolved_at);
+  check("Withdraw → status Withdrawn, provider's item cleared", (await prisma.estimateRequest.findUnique({ where: { id: r3 } }))?.status === "WITHDRAWN" && !!(await prisma.notification.findFirst({ where: { dedupe_key: `estimate.requested:${r3}` } }))?.resolved_at);
 }
 
 main()
   .catch((e) => { console.error(e); process.exitCode = 1; })
   .finally(async () => {
-    await prisma.costEstimateRequest.deleteMany({ where: { OR: [{ provider_person_id: { in: made.persons } }, { requester_person_id: { in: made.persons } }] } });
-    await prisma.costEstimate.deleteMany({ where: { provider_person_id: { in: made.persons } } });
+    await prisma.estimateRequest.deleteMany({ where: { OR: [{ provider_person_id: { in: made.persons } }, { requester_person_id: { in: made.persons } }] } });
+    await prisma.estimate.deleteMany({ where: { provider_person_id: { in: made.persons } } });
     await cleanup();
     process.exitCode = done("dev-walk-estimate-request") || process.exitCode;
     await prisma.$disconnect();

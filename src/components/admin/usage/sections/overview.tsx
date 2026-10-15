@@ -27,7 +27,7 @@ async function data(c: Ctx) {
     prisma.forumPost.findMany({ where: { created_at: since }, select: { author_person_id: true, created_at: true } }),
     prisma.workRequest.findMany({ where: { posted_at: since }, select: { buyer_person_id: true, posted_at: true } }),
     prisma.proposal.findMany({ where: { submitted_at: since }, select: { provider_person_id: true, submitted_at: true } }),
-    prisma.costEstimate.findMany({ where: { sent_at: since }, select: { provider_person_id: true, sent_at: true } }),
+    prisma.estimate.findMany({ where: { sent_at: since }, select: { provider_person_id: true, sent_at: true } }),
     prisma.providerService.findMany({ where: { published_at: since }, select: { published_at: true } }),
     prisma.workOrder.findMany({ select: { id: true, buyer_person_id: true, provider_person_id: true, created_at: true, status: true, buyer_accepted_at: true, provider_accepted_at: true } }),
     prisma.paymentRequest.findMany({ where: { submitted_at: since }, select: { provider_person_id: true, submitted_at: true } }),

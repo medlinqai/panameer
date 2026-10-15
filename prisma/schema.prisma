@@ -8598,7 +8598,7 @@ model ServiceType {
   @@map("service_types")
 }
 
-enum CostEstimateStatus {
+enum EstimateStatus {
   DRAFT
   SENT
   CHANGES_REQUESTED
@@ -8607,14 +8607,14 @@ enum CostEstimateStatus {
   EXPIRED
 }
 
-enum CostEstimateLineKind {
+enum EstimateLineKind {
   SERVICE
   FIXED
   NOT_TO_EXCEED
 }
 
 /// CAT-E006: a provider's estimate for one customer — private to the two of them. Accept → work order.
-model CostEstimate {
+model Estimate {
   id                  String             @id @default(uuid()) @db.Uuid
   estimate_number     String             @unique
   provider_person_id  String             @db.Uuid
@@ -8623,7 +8623,7 @@ model CostEstimate {
   customer_email      String?
   work_request_id     String?            @db.Uuid
   title               String
-  status              CostEstimateStatus @default(DRAFT)
+  status              EstimateStatus @default(DRAFT)
   valid_until         DateTime
   current_revision    Int                @default(1)
   currency            String             @default("USD")
@@ -8633,16 +8633,16 @@ model CostEstimate {
   created_at          DateTime           @default(now())
   updated_at          DateTime           @updatedAt
 
-  revisions CostEstimateRevision[]
+  revisions EstimateRevision[]
 
   @@index([provider_person_id])
   @@index([customer_person_id])
   @@index([customer_email])
-  @@map("cost_estimates")
+  @@map("estimates")
 }
 
 /// CAT-E006: each send is a revision; Ask for Changes → the provider revises and resubmits as revision n+1 (history kept).
-model CostEstimateRevision {
+model EstimateRevision {
   id               String         @id @default(uuid()) @db.Uuid
   estimate_id      String         @db.Uuid
   revision_number  Int
@@ -8660,18 +8660,18 @@ model CostEstimateRevision {
   decided_at       DateTime?
   created_at       DateTime       @default(now())
 
-  estimate CostEstimate       @relation(fields: [estimate_id], references: [id], onDelete: Cascade)
-  lines    CostEstimateLine[]
+  estimate Estimate       @relation(fields: [estimate_id], references: [id], onDelete: Cascade)
+  lines    EstimateLine[]
 
   @@unique([estimate_id, revision_number])
-  @@map("cost_estimate_revisions")
+  @@map("estimate_revisions")
 }
 
-model CostEstimateLine {
+model EstimateLine {
   id                  String               @id @default(uuid()) @db.Uuid
   revision_id         String               @db.Uuid
   line_number         Int
-  kind                CostEstimateLineKind
+  kind                EstimateLineKind
   description         String
   provider_service_id String?              @db.Uuid
   /// Copied from a service product: the order line keeps its payment schedule.
@@ -8681,10 +8681,10 @@ model CostEstimateLine {
   rate_cents          Int?
   amount_cents        Int?
 
-  revision CostEstimateRevision @relation(fields: [revision_id], references: [id], onDelete: Cascade)
+  revision EstimateRevision @relation(fields: [revision_id], references: [id], onDelete: Cascade)
 
   @@unique([revision_id, line_number])
-  @@map("cost_estimate_lines")
+  @@map("estimate_lines")
 }
 
 /// CAT-E007: a work-order line's payment schedule, copied from the service product (or one 100% milestone). Reporting it raises its payment request.
@@ -8716,7 +8716,7 @@ model LearningPathNext {
   @@map("learning_path_next")
 }
 
-enum CostEstimateRequestStatus {
+enum EstimateRequestStatus {
   OPEN
   ANSWERED
   DECLINED
@@ -8724,7 +8724,7 @@ enum CostEstimateRequestStatus {
 }
 
 /// EST-E001: a buyer asks a provider for a cost estimate (private to the two). Sending the estimate answers it.
-model CostEstimateRequest {
+model EstimateRequest {
   id                  String                    @id @default(uuid()) @db.Uuid
   requester_person_id String                    @db.Uuid
   provider_person_id  String                    @db.Uuid
@@ -8736,7 +8736,7 @@ model CostEstimateRequest {
   budget_max_cents    Int?
   /// [{ path, name, size, type }] in the private project-docs bucket under estimate-requests/<id>/
   attachments         Json?
-  status              CostEstimateRequestStatus @default(OPEN)
+  status              EstimateRequestStatus @default(OPEN)
   decline_reason      String?
   cost_estimate_id    String?                   @db.Uuid
   created_at          DateTime                  @default(now())
@@ -8744,7 +8744,7 @@ model CostEstimateRequest {
 
   @@index([provider_person_id, status])
   @@index([requester_person_id])
-  @@map("cost_estimate_requests")
+  @@map("estimate_requests")
 }
 
 /// SH-E002: a buyer's shopping cart — one per person; lines snapshot the listed price.
