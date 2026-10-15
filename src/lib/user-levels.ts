@@ -118,7 +118,7 @@ export function passRate(subjects: LevelSubject[], i: number): number | null {
 // ── Lifecycle (2026-10-06): 7 steps, 7 statuses, same for buyers and sellers. The one definition.
 export type LifecycleWho = "you" | "company" | "both";
 export type RoadPhase = "join" | "win" | "paid";
-export type LifecycleStep = { key: string; phase?: RoadPhase; step: string; status: string; who: LifecycleWho; gate: boolean; admin?: boolean; desc: string; unlocks?: string; href: string; next: string; time?: string; lockBefore?: string };
+export type LifecycleStep = { key: string; phase?: RoadPhase; step: string; status: string; who: LifecycleWho; gate: boolean; admin?: boolean; desc: string; unlocks?: string; href: string; next: string; time?: string; lockBefore?: string; /** Scott 10-15: hand-split three-line road label when the word split reads badly. */ lines?: [string, string, string] };
 
 export const LIFECYCLE: LifecycleStep[] = [
   { key: "account", step: "Create Your Account", status: "Registered", who: "you", gate: false, desc: "One account per email.", href: "/join", next: "Create Your Account" },
@@ -148,11 +148,14 @@ export const BUYER_ROAD_TITLE = "From Signing Up to Getting the Work Done";
 export const BUYER_ROAD: LifecycleStep[] = [
   { key: "account", phase: "join", step: "Create Your Account", status: "Registered", who: "you", gate: false, desc: "You, your company and its addresses, in one go.", href: "/profile", next: "Create Your Account", time: "about 3 min" },
   { key: "link", phase: "join", step: "Add Your Company", status: "Linked", who: "you", gate: false, desc: "Add your company, or ask to join it if it's already here. Its admin approves you.", href: "/company?join=1#join", next: "Add Your Company", time: "1 min" },
-  { key: "find", phase: "win", step: "Find a Provider", status: "Sourcing", who: "you", gate: false, desc: "Shop products and rates, post a job for proposals, or ask a provider for an estimate.", href: "/shop", next: "Find a Provider", time: "minutes" },
-  { key: "order", phase: "win", step: "Order or Post a Job", status: "Ordered", who: "both", gate: false, desc: "Submit your work request: one work order per provider. Ordering needs your company's legal name, billing address and invoice email.", href: "/cart", next: "Order or Post a Job", time: "5 min" },
+  { key: "find", phase: "win", lines: ["Post", "a Job", "or Shop"], step: "Post a Job or Shop", status: "Sourcing", who: "you", gate: false, desc: "Post a job for proposals, shop products and rates, or ask a provider for an estimate.", href: "/hire", next: "Post a Job or Shop", time: "minutes" },
+  { key: "order", phase: "win", lines: ["Hire", "Your", "Provider"], step: "Hire Your Provider", status: "Hired", who: "both", gate: false, desc: "Hire from a job's proposals or submit your work request: one work order per provider. Ordering needs your company's legal name, billing address and invoice email.", href: "/hire", next: "Hire Your Provider", time: "5 min" },
   { key: "approve", phase: "win", step: "Approve the Work", status: "Approved", who: "you", gate: false, desc: "Accept the deliverable or approve the timesheet.", href: "/orders", next: "Approve the Work", time: "per work order" },
   { key: "pay", phase: "paid", step: "Pay the Invoice", status: "Paid", who: "company", gate: false, desc: "Pay the payment request. Panameer pays the provider's company.", href: "/pay", next: "Pay the Invoice", time: "automatic" },
 ];
+
+/** Scott 10-15: the buyer road names its phases from the buyer's side (the provider's say "Get Found" / "Get Paid"). */
+export const BUYER_PHASE_LABELS: Record<RoadPhase, string> = { join: "Set Up", win: "Find & Order", paid: "Approve & Pay" };
 
 /** The road's three phases — each its own color on the road, rings, label and band. */
 export const ROAD_PHASES: Record<RoadPhase, { label: string; color: string; band: string; track: string }> = {

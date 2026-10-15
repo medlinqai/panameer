@@ -1,4 +1,4 @@
-import { PROVIDER_ROAD, ROAD_PHASES, roadLabelThree, type LifecycleStep, type RoadPhase } from "@/lib/user-levels";
+import { BUYER_ROAD, BUYER_PHASE_LABELS, PROVIDER_ROAD, ROAD_PHASES, roadLabelThree, type LifecycleStep, type RoadPhase } from "@/lib/user-levels";
 
 // Provider road v6.1 (mockup provider_road_v6_1_mockup_2026-10-13): built from boxes and text, not a scaled SVG,
 // so labels stay ≥12px at any width. Every label is exactly three lines (Scott 10-13). Phones use RoadStepper.
@@ -28,7 +28,7 @@ export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider r
           const now = i === here;
           const next = road[i + 1];
           const wait = waiting?.key === s.key;
-          const [a, b, c] = roadLabelThree(s.step);
+          const [a, b, c] = s.lines ?? roadLabelThree(s.step);
           return (
             <div key={s.key} data-stop={i + 1} data-done={done || undefined} data-here={now || undefined} data-waiting={wait || undefined} className="relative flex flex-col items-center pt-1.5 text-center">
               {i < n - 1 && <span aria-hidden className="absolute left-1/2 top-[20px] h-1 w-full" style={{ background: i < here ? C : OFF }} />}
@@ -56,7 +56,7 @@ export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider r
         {phases.map(({ ph, span }) => (
           <div key={ph} style={{ gridColumn: `span ${span}` }}>
             <i className="block h-[3px]" style={{ background: ROAD_PHASES[ph].color }} />
-            <b className="mt-1.5 block text-center text-[10.5px] tracking-[0.14em]" style={{ color: ROAD_PHASES[ph].color }}>{ROAD_PHASES[ph].label.toUpperCase()}</b>
+            <b className="mt-1.5 block text-center text-[10.5px] tracking-[0.14em]" style={{ color: ROAD_PHASES[ph].color }}>{(road === BUYER_ROAD ? BUYER_PHASE_LABELS[ph] : ROAD_PHASES[ph].label).toUpperCase()}</b>
           </div>
         ))}
       </div>
