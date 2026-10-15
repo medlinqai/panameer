@@ -22,12 +22,15 @@ export function LocationFields({
   withStreet = false,
   part = "all",
   countryHint,
+  compact = false,
 }: {
   value: LocationValue;
   onChange: (patch: LocationValue) => void;
   withStreet?: boolean;
   part?: "all" | "country" | "rest";
   countryHint?: string;
+  /** Scott 10-15: Country | Street, then City | State | ZIP on one row each (stacks on phones). */
+  compact?: boolean;
 }) {
   const country = value.country ?? "";
   const regions = regionsFor(country);
@@ -62,6 +65,43 @@ export function LocationFields({
         </select>
       </Field>
   );
+
+  if (compact && withStreet && part === "all") {
+    const cityF = (
+      <Field label="City">
+        <TextInput value={value.city ?? ""} onChange={(e) => onChange({ city: e.target.value })} placeholder={country.toUpperCase() === "US" ? "Chicago" : "City"} />
+      </Field>
+    );
+    const stateF = (
+      <Field label={regions ? `${regionLabel(country)} *` : regionLabel(country)}>
+        {regions ? (
+          <select value={value.state ?? ""} onChange={(e) => onChange({ state: e.target.value })} className={SELECT}>
+            <option value="">Choose…</option>
+            {regions.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+        ) : (
+          <TextInput value={value.state ?? ""} onChange={(e) => onChange({ state: e.target.value })} placeholder={country ? regionLabel(country) : "Choose a country first"} disabled={!country} />
+        )}
+      </Field>
+    );
+    return (
+      <>
+        <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
+          {country_field}
+          <Field label="Street Address">
+            <TextInput value={value.line1 ?? ""} onChange={(e) => onChange({ line1: e.target.value })} />
+          </Field>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {cityF}
+          {stateF}
+          <Field label="ZIP / Postal Code">
+            <TextInput value={value.postalCode ?? ""} onChange={(e) => onChange({ postalCode: e.target.value })} />
+          </Field>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

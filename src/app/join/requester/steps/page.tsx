@@ -446,25 +446,30 @@ export default function RequesterStepsPage() {
             <Notice>You&apos;ve asked to join <b>{draft.companyName}</b>. Its address and industry are already on Panameer.</Notice>
           ) : !coMatch && (
             <>
+              <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Company Name *">
                 <TextInput value={draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" />
               </Field>
-              <Field label="Website" hint="Optional. We use it to find your company if it's already here.">
+              <Field label="Website" hint="Optional. Helps us find your company.">
                 <TextInput value={draft.coWebsite} onChange={(e) => edit({ coWebsite: e.target.value })} onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
               </Field>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Industry">
                 <select aria-label="Industry" value={draft.coIndustryId} onChange={(e) => edit({ coIndustryId: e.target.value })} className="h-11 w-full border border-line bg-surface px-3 text-[15px] text-ink">
                   <option value="">Choose…</option>
                   {industries.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                 </select>
               </Field>
-              <div data-company-address>
-                <p className="mb-2 text-[14px] font-semibold text-ink">Company Address *</p>
-                <LocationFields value={draft.coAddress} onChange={(patch) => edit({ coAddress: { ...draft.coAddress, ...patch } })} withStreet />
-              </div>
               <Field label="Invoice Email *" hint="Where providers' invoices go.">
                 <TextInput type="email" value={draft.coInvoiceEmail} onChange={(e) => edit({ coInvoiceEmail: e.target.value })} placeholder={draft.email} autoComplete="email" />
               </Field>
+              </div>
+              <div data-company-address>
+                <p className="mb-2 text-[14px] font-semibold text-ink">Company Address *</p>
+                <LocationFields value={draft.coAddress} onChange={(patch) => edit({ coAddress: { ...draft.coAddress, ...patch } })} withStreet compact />
+              </div>
+
               <p className="text-[12.5px] text-ink-2">By continuing you confirm you can add this company and accept the company terms. No tax ID or W-9 is needed to buy.</p>
             </>
           )}
@@ -506,6 +511,7 @@ export default function RequesterStepsPage() {
                   }))
                 }
                 withStreet
+                compact
               />
             </div>
           )}
