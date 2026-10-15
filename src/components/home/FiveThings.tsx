@@ -1,5 +1,7 @@
 import { BUYER_ROAD, BUYER_ROAD_TITLE, ROAD_TITLE } from "@/lib/user-levels";
 import { BuyerThings } from "@/components/home/BuyerThings";
+import { menuFor } from "@/lib/menu-hint";
+import { MenuClause } from "@/components/home/MenuChip";
 import Link from "next/link";
 import { Eye, TrendingUp, BadgeCheck, BookOpen, FolderPlus, Users, Search, Tag, Send, MessageSquare, UserPlus, AlertTriangle } from "lucide-react";
 import type { Viewer } from "@/lib/access";
@@ -17,6 +19,8 @@ const BTN = "inline-flex min-h-[40px] items-center justify-center bg-ink px-4 te
 
 function Card({ t, i }: { t: Thing; i: number }) {
   const I = ICON[t.icon];
+  // DC-E002/E003: name where it lives in the menu; the button says "Go to {menu}".
+  const hint = menuFor(t.cta.href, "seller");
   return (
     <div role="listitem" data-thing={t.key} className={"flex flex-col border bg-surface p-4 " + (i === 0 ? "border-2 border-ink" : "border-line")}>
       <span className="flex items-center gap-2">
@@ -24,7 +28,7 @@ function Card({ t, i }: { t: Thing; i: number }) {
         <span className="text-[11px] font-bold text-ink-3">{i + 1}</span>
       </span>
       <b className="mt-2.5 block text-[15.5px] leading-snug">{t.title}</b>
-      <span className="mt-1 block flex-1 text-[13px] text-ink-2">{t.line}</span>
+      <span className="mt-1 block flex-1 text-[13px] text-ink-2">{t.line}<MenuClause hint={hint} /></span>
       {(t.chips.length > 0 || t.time) && (
         <span className="mt-2.5 flex flex-wrap gap-1.5">
           {t.chips.map((c) => (
@@ -34,7 +38,7 @@ function Card({ t, i }: { t: Thing; i: number }) {
         </span>
       )}
       <span className="mt-3">
-        {t.toggleVisibility ? <TurnOnButton className={`${BTN} w-full`} /> : <Link href={t.cta.href} className={`${BTN} w-full`}>{t.cta.label}</Link>}
+        {t.toggleVisibility ? <TurnOnButton className={`${BTN} w-full`} /> : <Link href={t.cta.href} className={`${BTN} w-full`}>{hint ? `Go to ${hint.label}` : t.cta.label}</Link>}
       </span>
     </div>
   );
@@ -42,7 +46,6 @@ function Card({ t, i }: { t: Thing; i: number }) {
 
 export async function FiveThings({ viewer, firstName, firstVisit = false }: { viewer: Viewer; firstName: string; firstVisit?: boolean }) {
   const path = await lifecycleForUser(viewer.userId);
-  const next = path ? path.steps[path.current] : null;
   // BD-E002/E005: a buyer's dashboard = greeting · their road · the five cards. Nothing else.
   if (path?.road === "buyer") {
     return (
@@ -52,12 +55,8 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
           <h2 className="flex items-center gap-1.5 text-[17px] font-bold">{BUYER_ROAD_TITLE} <LifecycleHelp /></h2>
           <div className="mt-2 hidden overflow-x-auto sm:block"><div className="min-w-[560px]"><RoadGraphic current={path.current} road={BUYER_ROAD} label="Buyer road" waiting={path.waiting} /></div></div>
           <div className="mt-4 sm:hidden"><RoadStepper current={path.current} road={BUYER_ROAD} waiting={path.waiting} /></div>
-          {next && (
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-[13.5px]">
-              <span className="text-ink-2">{path.waiting ? "Your company's admin has your request. Everything below is open while you wait." : next.desc}</span>
-              <Link href={next.href} className={BTN}>Next: {next.next}</Link>
-            </div>
-          )}
+          {/* DC-E001: the road is a picture of the journey — the cards below are the way in. */}
+          {path.waiting && <p className="mt-3 text-[13.5px] text-ink-2">Your company&apos;s admin has your request. Everything below is open while you wait.</p>}
         </div>
         <h2 className="mt-9 text-[19px] font-extrabold">Things You Can Do Today</h2>
         <BuyerThings />
@@ -72,7 +71,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
     { key: "connect", code: "CON", tone: ["#272334", "#6b2f6a"] as [string, string], title: "Connect", line: "Find colleagues and mentors.", cta: "Find People", href: "/connect/community" },
     { key: "services", code: "SVC", tone: ["#1d2a3a", "#36506e"] as [string, string], title: "Sell My Services", line: "Browse open work and get invited to propose.", cta: "Browse Work", href: "/find-work" },
     { key: "products", code: "PRD", tone: ["#1f2b28", "#3e5f55"] as [string, string], title: "Sell Service Products", line: "List a fixed-price package buyers can order.", cta: "List a Service", href: "/catalog/products" },
-  ];
+  ].map((c) => ({ ...c, hint: menuFor(c.href, "seller") }));
   return (
     <section data-five-things className="mb-8 font-body text-ink">
       <h1 className="text-[26px] font-extrabold leading-tight sm:text-[30px]">{firstVisit ? "Welcome" : "Welcome back"}{firstName ? `, ${firstName}` : ""}.</h1>
@@ -84,10 +83,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
           </div>
           <div className="mt-3 hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>
           <div className="mt-4 sm:hidden"><RoadStepper current={path.current} /></div>
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-[13.5px]">
-            <span className="text-ink-2">Learn, Connect and Build Your Catalog are open now.</span>
-            {next && <Link href={next.href} className={BTN}>Next: {next.next} →</Link>}
-          </div>
+          <p className="mt-2 text-[13.5px] text-ink-2">Learn, Connect and Build Your Catalog are open now.</p>
         </div>
       )}
       {path && !onRoad && (
@@ -101,12 +97,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
               <span key={i} className={"h-1.5 " + (d ? "bg-magenta" : i === path.current ? "bg-ink" : "bg-line")} />
             ))}
           </span>
-          {next && (
-            <span className="flex flex-1 items-center justify-between gap-3 text-[13.5px] max-sm:hidden">
-              <span>Next: {next.next}</span>
-              <Link href={next.href} className="font-bold text-magenta-dark underline underline-offset-2">Go</Link>
-            </span>
-          )}
+
         </div>
       )}
 
@@ -120,8 +111,8 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
                   <CoverBand code={c.code} tone={c.tone} className="h-[84px]" />
                   <span className="flex flex-1 flex-col p-5 pt-3">
                     <b className="block text-[18px] leading-snug">{c.title}</b>
-                    <span className="mt-1 block flex-1 text-[13.5px] text-ink-2">{c.line}</span>
-                    <span className={`${BTN} mt-4 w-full`}>{c.cta} →</span>
+                    <span className="mt-1 block flex-1 text-[13.5px] text-ink-2">{c.line}<MenuClause hint={c.hint} /></span>
+                    <span className={`${BTN} mt-4 w-full`}>{c.hint ? `Go to ${c.hint.label}` : c.cta}</span>
                   </span>
                 </Link>
               );
