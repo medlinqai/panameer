@@ -39,6 +39,15 @@ type Draft = {
   companyBound: boolean;
   coName: string;
   coWebsite: string;
+  /** BC-E002: the company's industry, one address and invoice email (owner only). */
+  companyOwner: boolean;
+  coIndustryId: string;
+  coAddress: LocationValue;
+  coInvoiceEmail: string;
+  coHasAddress: boolean;
+  /** BC-E003 */
+  sameAsCompany: boolean;
+  email: string;
 };
 
 const EMPTY: Draft = {
@@ -59,7 +68,16 @@ const EMPTY: Draft = {
   companyBound: false,
   coName: "",
   coWebsite: "",
+  companyOwner: false,
+  coIndustryId: "",
+  coAddress: {},
+  coInvoiceEmail: "",
+  coHasAddress: false,
+  sameAsCompany: true,
+  email: "",
 };
+
+type CoMatch = { id: string; name: string; why: string; byEmail: boolean } | null;
 
 export default function RequesterStepsPage() {
   const router = useRouter();
@@ -72,12 +90,28 @@ export default function RequesterStepsPage() {
   const [photoModal, setPhotoModal] = useState(false);
 
   const [phoneCountry, setPhoneCountry] = useState<string | null>(null);
+  const [industries, setIndustries] = useState<{ id: string; name: string }[]>([]);
+  const [coMatch, setCoMatch] = useState<CoMatch>(null);
+
+  // BC-E005: the company already here for the website or the registrant's email domain.
+  const checkMatch = useCallback(async (site: string): Promise<CoMatch> => {
+    const b = await fetch(`/api/company/match?email=1&site=${encodeURIComponent(site.trim())}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const m = b?.match ? { id: b.match.id as string, name: b.match.name as string, byEmail: b.reason === "email", why: b.reason === "email" ? `your email is @${b.domain}` : `its website is ${b.domain}` } : null;
+    setCoMatch(m);
+    return m;
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/company/industries").then((r) => (r.ok ? r.json() : { industries: [] })).then((b) => setIndustries(b.industries ?? [])).catch(() => {});
+  }, []);
 
   const hydrate = useCallback((s: {
     emailVerified: boolean;
     completed: boolean;
     resumeStep: string;
-    company?: { bound?: boolean; name?: string | null } | null;
+    email?: string;
+    sameAsCompany?: boolean;
+    company?: { bound?: boolean; name?: string | null; owner?: boolean; industryId?: string | null; invoiceEmail?: string | null; address?: LocationValue | null } | null;
     profile: {
       firstName: string; lastName: string; phone: string | null;
       photoUrl: string | null; title: string | null;
@@ -109,6 +143,14 @@ export default function RequesterStepsPage() {
       companyBound: !!s.company?.bound,
       coName: s.company?.bound ? s.company?.name ?? "" : "",
       coWebsite: "",
+      companyOwner: !!s.company?.owner,
+      coIndustryId: s.company?.industryId ?? "",
+      coAddress: s.company?.address ?? { country: p.address?.country ?? undefined },
+      coInvoiceEmail: s.company?.invoiceEmail ?? s.email ?? "",
+      coHasAddress: !!s.company?.address?.line1,
+      // Default on; off only once the buyer has their own work location saved.
+      sameAsCompany: !!s.sameAsCompany || !p.workLocation?.country,
+      email: s.email ?? "",
     });
     return s;
   }, []);
@@ -134,11 +176,12 @@ export default function RequesterStepsPage() {
         return;
       }
       hydrate(s);
+      if (!s.company?.bound) void checkMatch("");
       const resume = s.resumeStep as RequesterStep;
       setStep(REQUESTER_STEPS.includes(resume) ? resume : REQUESTER_STEPS[0]);
       setReady(true);
     })();
-  }, [router, hydrate]);
+  }, [router, hydrate, checkMatch]);
 
   const idx = REQUESTER_STEPS.indexOf(step);
 
@@ -337,80 +380,135 @@ export default function RequesterStepsPage() {
 
   // THE `buyer_approver` SCREEN STOOD HERE AND IS GONE .
 
-  // ---- 2/3 — Company (BR-E002): name + website only; joins the company already on Panameer for that website ----
+  // ---- 2/3 — Company (BC-E002): name · website · industry · one address · invoice email; joining skips the details ----
   if (step === "company") {
-    const unchanged = draft.companyBound && draft.coName.trim() === draft.companyName.trim() && !draft.coWebsite.trim();
-    const submitCompany = async () => {
-      if (unchanged) return save({ companyBound: true }, fromReview ? "review" : undefined);
+    const joining = draft.companyBound && !draft.companyOwner;
+    const details = { industryId: draft.coIndustryId || null, address: draft.coAddress, invoiceEmail: draft.coInvoiceEmail.trim() || draft.email };
+    const after = fromReview ? "review" : undefined;
+    const askToJoin = async () => {
+      if (!coMatch) return;
       setBusy(true);
       setError(null);
       try {
-        const site = draft.coWebsite.trim();
-        const match = site ? await fetch(`/api/company/match?site=${encodeURIComponent(site)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null) : null;
-        const r = match?.match
-          ? await fetch("/api/company/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyId: match.match.id, attestation: true, matchedOn: `website:${match.domain}` }) })
-          : await fetch("/api/company/define", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: draft.coName.trim(), website: site || null, attestation: true, companyTos: true }) });
+        const r = await fetch("/api/company/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyId: coMatch.id, attestation: true, matchedOn: coMatch.byEmail ? "email" : "website" }) });
         const b = await r.json().catch(() => ({}));
-        if (!r.ok) { setError(b.error ?? "Could not save your company."); return; }
+        if (!r.ok) { setError(b.error ?? "Could not send your request."); return; }
       } finally {
         setBusy(false);
       }
-      await save({ companyBound: true }, fromReview ? "review" : undefined);
+      setCoMatch(null);
+      await save({ companyBound: true }, after);
     };
+    const submitCompany = async () => {
+      if (coMatch) return askToJoin();
+      if (joining) return save({ companyBound: true }, after);
+      const unchanged = draft.companyBound && draft.coName.trim() === draft.companyName.trim() && !draft.coWebsite.trim();
+      if (!unchanged) {
+        setBusy(true);
+        setError(null);
+        try {
+          const site = draft.coWebsite.trim();
+          const r = await fetch("/api/company/define", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: draft.coName.trim(), website: site || null, attestation: true, companyTos: true }) });
+          const b = await r.json().catch(() => ({}));
+          if (!r.ok) {
+            // A match that only shows now becomes Ask to Join, not a dead end.
+            if (!(await checkMatch(site))) setError(b.error ?? "Could not save your company.");
+            return;
+          }
+        } finally {
+          setBusy(false);
+        }
+      }
+      await save({ companyBound: true, companyDetails: details }, after);
+    };
+    const edit = (patch: Partial<Draft>) => { setError(null); setDraft((d) => ({ ...d, ...patch })); };
+    const addrOk = !!draft.coAddress.line1?.trim() && !!draft.coAddress.country;
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.coInvoiceEmail.trim() || draft.email);
     return (
       <WizardShell
         {...shell}
         title="Which company are you buying for?"
-        subtitle="Just the name and website. If your company is already on Panameer, we'll ask its admin to add you."
-        continueLabel={nextLabel}
-        continueDisabled={draft.coName.trim().length < 2}
+        subtitle="Your company's details, entered once. They're also your billing details when you order."
+        continueLabel={coMatch ? `Ask to Join ${coMatch.name}` : nextLabel}
+        continueDisabled={coMatch ? false : joining ? false : draft.coName.trim().length < 2 || !addrOk || !emailOk}
         onContinue={submitCompany}
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-buyer-company-step>
           {error && <Notice>{error}</Notice>}
-          <Field label="Company Name *">
-            <TextInput value={draft.coName} onChange={(e) => setDraft((d) => ({ ...d, coName: e.target.value }))} autoComplete="organization" placeholder="Acme Manufacturing" />
-          </Field>
-          <Field label="Website" hint="Optional. We use it to find your company if it's already here.">
-            <TextInput value={draft.coWebsite} onChange={(e) => setDraft((d) => ({ ...d, coWebsite: e.target.value }))} placeholder="acme.com" autoComplete="url" />
-          </Field>
-          <p className="text-[12.5px] text-ink-2">By continuing you confirm you can add this company and accept the company terms. No tax ID or W-9 is needed to buy.</p>
+          {coMatch && (
+            <div className="border border-line bg-white p-4" data-company-match>
+              <p className="text-[15px]"><b>{coMatch.name}</b> is already on Panameer. Ask to join and we&apos;ll let its admin know.</p>
+              <p className="mt-1 text-[13px] text-ink-2">We matched it because {coMatch.why}. You can keep going while you wait; ordering opens once its admin approves.</p>
+              {!coMatch.byEmail && <button type="button" onClick={() => setCoMatch(null)} className="mt-2 text-[13.5px] font-semibold underline underline-offset-4">That&apos;s Not My Company</button>}
+            </div>
+          )}
+          {joining ? (
+            <Notice>You&apos;ve asked to join <b>{draft.companyName}</b>. Its address and industry are already on Panameer.</Notice>
+          ) : !coMatch && (
+            <>
+              <Field label="Company Name *">
+                <TextInput value={draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" />
+              </Field>
+              <Field label="Website" hint="Optional. We use it to find your company if it's already here.">
+                <TextInput value={draft.coWebsite} onChange={(e) => edit({ coWebsite: e.target.value })} onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
+              </Field>
+              <Field label="Industry">
+                <select aria-label="Industry" value={draft.coIndustryId} onChange={(e) => edit({ coIndustryId: e.target.value })} className="h-11 w-full border border-line bg-surface px-3 text-[15px] text-ink">
+                  <option value="">Choose…</option>
+                  {industries.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                </select>
+              </Field>
+              <div data-company-address>
+                <p className="mb-2 text-[14px] font-semibold text-ink">Company Address *</p>
+                <LocationFields value={draft.coAddress} onChange={(patch) => edit({ coAddress: { ...draft.coAddress, ...patch } })} withStreet />
+              </div>
+              <Field label="Invoice Email *" hint="Where providers' invoices go.">
+                <TextInput type="email" value={draft.coInvoiceEmail} onChange={(e) => edit({ coInvoiceEmail: e.target.value })} placeholder={draft.email} autoComplete="email" />
+              </Field>
+              <p className="text-[12.5px] text-ink-2">By continuing you confirm you can add this company and accept the company terms. No tax ID or W-9 is needed to buy.</p>
+            </>
+          )}
         </div>
       </WizardShell>
     );
   }
 
-  // ---- 3/3 — Work Location ----------------------------------------------
+  // ---- 3/3 — Location (BC-E003): same as the company address by default ----
   if (step === "work_location") {
-    // THIS FALLBACK IS NOT A PRE-FILL ANY MORE , 2026-08-30).
+    const canShare = draft.coHasAddress;
+    const same = canShare && draft.sameAsCompany;
     const wl = draft.workLocationSet ? draft.workLocation : draft.address;
     return (
       <WizardShell
         {...shell}
         title="Where does the work happen?"
-        // NO SUBTITLE, AND THAT IS SCOTT'S ANSWER, NOT AN OMISSION .
         continueLabel={nextLabel}
-        continueDisabled={!wl.country}
-        onContinue={() => save({ workLocation: wl }, fromReview ? "review" : undefined)}
+        continueDisabled={!same && !wl.country}
+        onContinue={() => save(same ? { sameAsCompany: true } : { workLocation: wl }, fromReview ? "review" : undefined)}
       >
         <div className="mx-auto w-full max-w-xl space-y-4">
           {error && <Notice>{error}</Notice>}
-
-          {/* THE "Pre-filled from your address" NOTICE IS GONE . */}
-
-          <div className="space-y-3">
-            <LocationFields
-              value={wl}
-              onChange={(patch) =>
-                setDraft((d) => ({
-                  ...d,
-                  workLocationSet: true,
-                  workLocation: { ...(d.workLocationSet ? d.workLocation : d.address), ...patch },
-                }))
-              }
-              withStreet
-            />
-          </div>
+          {canShare && (
+            <label className="flex cursor-pointer items-start gap-3 border border-line p-3" data-same-as-company>
+              <input type="checkbox" checked={draft.sameAsCompany} onChange={(e) => setDraft((d) => ({ ...d, sameAsCompany: e.target.checked }))} className="mt-1 h-4 w-4 accent-magenta" />
+              <span className="text-[14.5px]">Same as company address</span>
+            </label>
+          )}
+          {!same && (
+            <div className="space-y-3">
+              <LocationFields
+                value={wl}
+                onChange={(patch) =>
+                  setDraft((d) => ({
+                    ...d,
+                    workLocationSet: true,
+                    workLocation: { ...(d.workLocationSet ? d.workLocation : d.address), ...patch },
+                  }))
+                }
+                withStreet
+              />
+            </div>
+          )}
         </div>
       </WizardShell>
     );
@@ -434,11 +532,17 @@ export default function RequesterStepsPage() {
     // — a required field belongs on the review. ITS ORIGINAL REASONING
     { label: "Title", value: draft.title || "—", step: "requester_info" },
     // THE `Employer` ROW IS GONE , 2026-09-11).
-    { label: "Company", value: draft.companyName || "—", step: "company" },
-    // THE `Your Address` ROW IS GONE , 2026-08-30).
+    // BC-E004: Company = name · industry · address · invoice email; Location = same as company, or its own address.
     {
-      label: "Work Location",
-      value: addr(draft.workLocationSet ? draft.workLocation : draft.address),
+      label: "Company",
+      value: draft.companyOwner
+        ? [draft.companyName, industries.find((x) => x.id === draft.coIndustryId)?.name, addr(draft.coAddress), draft.coInvoiceEmail || draft.email].filter((x) => x && x !== "—").join(" · ")
+        : draft.companyName ? `${draft.companyName} (asked to join)` : "—",
+      step: "company",
+    },
+    {
+      label: "Location",
+      value: draft.coHasAddress && draft.sameAsCompany ? "Same as company address" : addr(draft.workLocationSet ? draft.workLocation : draft.address),
       step: "work_location",
     },
     { label: "Phone", value: draft.phone || "—", step: "requester_info" },

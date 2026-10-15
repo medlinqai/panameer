@@ -14,6 +14,7 @@ import type { Viewer } from "@/lib/access";
 /** The step list lives in `requester-steps.ts` (no server imports) and is */
 export { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
 import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
+import { REGISTERED_SITE_NAME, saveRegisteredAddress } from "@/lib/company";
 
 export type AddressInput = {
   line1?: string | null;
@@ -137,7 +138,8 @@ async function loadRequester(viewer: Viewer) {
         orderBy: [{ status: "asc" }, { updated_at: "desc" }],
         select: {
           status: true,
-          company: { select: { id: true, name: true, tax_type: true } },
+          role: true,
+          company: { select: { id: true, name: true, tax_type: true, industry_id: true, invoice_email: true } },
         },
       },
       site: {
@@ -200,6 +202,11 @@ export async function getRequesterState(viewer: Viewer) {
 
   // THE BINDING, ON THE PAYLOAD / E005)
   const membership = p.companyMemberships[0] ?? null;
+  // BC-E002: the company's one address (its Registered site) — also the billing address.
+  const coSite = membership
+    ? await prisma.site.findFirst({ where: { company_id: membership.company.id, name: REGISTERED_SITE_NAME }, select: { id: true, addresses: { take: 1, orderBy: { created_at: "asc" } } } })
+    : null;
+  const coAddr = coSite?.addresses[0] ?? null;
 
   return {
     email: p.user?.email ?? "",
@@ -214,7 +221,14 @@ export async function getRequesterState(viewer: Viewer) {
       /** The bound company has a `tax_type`, i.e. somebody actually DEFINED it */
       defined: membership ? membership.company.tax_type !== null : false,
       name: membership?.company.name ?? null,
+      /** BC-E002: the registrant added it (approved admin) → they fill its address/industry; joiners skip them. */
+      owner: membership?.status === "APPROVED" && membership.role === "ADMIN",
+      industryId: membership?.company.industry_id ?? null,
+      invoiceEmail: membership?.company.invoice_email ?? null,
+      address: coAddr?.line1 ? toAddress(coAddr) : null,
     },
+    /** BC-E003: the work location is the company's own address. */
+    sameAsCompany: !!coSite && rp.work_site_id === coSite.id,
     profile: {
       firstName: p.first_name,
       lastName: p.last_name,
@@ -279,6 +293,10 @@ async function upsertSiteAddress(
 export type StepPayload = {
   /** company — confirmation only; the binding itself is written by company.ts. */
   companyBound?: boolean;
+  /** BC-E002: the company's details (owner only). */
+  companyDetails?: { industryId?: string | null; address?: AddressInput; invoiceEmail?: string | null };
+  /** BC-E003: work location = the company address. */
+  sameAsCompany?: boolean;
   /** requester_info */
   firstName?: string;
   lastName?: string;
@@ -309,6 +327,16 @@ export async function saveRequesterStep(
   if (step === "company") {
     const bound = await prisma.companyMembership.count({ where: { person_id: p.id, status: { in: ["APPROVED", "PENDING"] } } });
     if (!bound) throw new OnboardingError("Add your company first", "INVALID");
+    const owned = p.companyMemberships.find((m) => m.status === "APPROVED" && m.role === "ADMIN");
+    const d = payload.companyDetails;
+    if (d && owned) {
+      if (!d.address?.line1?.trim() || !d.address.country) throw new OnboardingError("Add the company address", "INVALID");
+      const email = d.invoiceEmail?.trim() || p.user?.email || "";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new OnboardingError("Enter a valid invoice email", "INVALID");
+      const industry = d.industryId ? await prisma.specialization.findFirst({ where: { id: d.industryId, kind: "INDUSTRY" }, select: { id: true } }) : null;
+      await saveRegisteredAddress(owned.company.id, d.address);
+      await prisma.company.update({ where: { id: owned.company.id }, data: { invoice_email: email, industry_id: industry?.id ?? null } });
+    }
   }
   if (step === "requester_info") {
     await prisma.person.update({
@@ -345,14 +373,24 @@ export async function saveRequesterStep(
 
   // a `buyer_approver` branch
 
-  if (step === "work_location" && payload.workLocation) {
+  const coSite = async () => {
+    const m = p.companyMemberships[0];
+    return m ? prisma.site.findFirst({ where: { company_id: m.company.id, name: REGISTERED_SITE_NAME, addresses: { some: { line1: { not: "" } } } }, select: { id: true } }) : null;
+  };
+  if (step === "work_location" && payload.sameAsCompany) {
+    const site = await coSite();
+    if (!site) throw new OnboardingError("Your company has no address yet — enter where the work happens", "INVALID");
+    await prisma.requesterProfile.update({ where: { id: rp.id }, data: { work_site_id: site.id } });
+  } else if (step === "work_location" && payload.workLocation) {
     const current = await prisma.person.findUnique({
       where: { id: p.id },
       select: { company_id: true },
     });
+    // Never write over the company's own address: an unticked "same as company" gets the buyer's own site.
+    const shared = rp.work_site_id && rp.work_site_id === (await coSite())?.id;
     const siteId = await upsertSiteAddress(
       current!.company_id,
-      rp.work_site_id,
+      shared ? null : rp.work_site_id,
       "Work Location",
       payload.workLocation
     );
