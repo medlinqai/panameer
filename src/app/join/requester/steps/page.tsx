@@ -1,11 +1,11 @@
 "use client";
-import Link from "next/link";
 
 import { useCallback, useEffect, useState } from "react";
 import { countryName } from "@/lib/country";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
+import { CompanyIdentityFields, findCoMatch, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
 import { PhoneField } from "@/components/onboarding/PhoneField";
@@ -87,7 +87,6 @@ const EMPTY: Draft = {
 
 type ServerLoc = LocRow & { id: string; siteId: string };
 
-type CoMatch = { id: string; name: string; why: string; byEmail: boolean; admin: string | null } | null;
 
 export default function RequesterStepsPage() {
   const router = useRouter();
@@ -105,12 +104,10 @@ export default function RequesterStepsPage() {
   const [askedAdmin, setAskedAdmin] = useState<string | null>(null);
   // Scott 10-15: furthest step reached (rail index; Review = number of work steps) — stays clickable.
   const [furthest, setFurthest] = useState(0);
-  const [showLegal, setShowLegal] = useState(false);
 
   // BC-E005: the company already here for the website or the registrant's email domain.
   const checkMatch = useCallback(async (site: string): Promise<CoMatch> => {
-    const b = await fetch(`/api/company/match?email=1&site=${encodeURIComponent(site.trim())}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-    const m = b?.match ? { id: b.match.id as string, name: b.match.name as string, byEmail: b.reason === "email", why: b.reason === "email" ? `your email is @${b.domain}` : `its website is ${b.domain}`, admin: (b.match.adminName as string | null) ?? null } : null;
+    const m = await findCoMatch(site);
     setCoMatch(m);
     return m;
   }, []);
@@ -465,35 +462,21 @@ export default function RequesterStepsPage() {
           {error && <Notice>{error}</Notice>}
           {(
             <>
-              <div className="space-y-3">
-              <Field label="Company Name *">
-                <TextInput value={joining ? draft.companyName : draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" className="sm:max-w-[50%]" disabled={joining} />
-              </Field>
-              {!joining && (showLegal || draft.coLegal ? (
-                <Field label="Legal Name" hint="The name on your invoices, if it's different from the company name.">
-                  <TextInput value={draft.coLegal} onChange={(e) => edit({ coLegal: e.target.value })} placeholder="Acme Holdings LLC" className="sm:max-w-[50%]" />
-                </Field>
-              ) : (
-                <button type="button" onClick={() => setShowLegal(true)} className="-mt-1 text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Legal name is different?</button>
-              ))}
-              <Field label="Website">
-                <div className="flex gap-2">
-                  <TextInput value={draft.coWebsite} onChange={(e) => { edit({ coWebsite: e.target.value }); setCoMatch(null); }} className="sm:max-w-[50%]" disabled={joining} onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
-                  <button type="button" data-request-access disabled={!coMatch || busy} onClick={() => void askToJoin()} className="shrink-0 bg-ink px-4 text-[13.5px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-30">{joining ? "Requested ✓" : "Request Access"}</button>
-                </div>
-              </Field>
-              </div>
-              {joining && (
-            <div data-join-requested className="border border-line bg-white p-4 text-[14px]">
-              <p>Request sent. We asked {askedAdmin ? <b>{askedAdmin}</b> : "the admin"} at <b>{draft.companyName}</b> to approve you, and we&apos;ll email you when they do. Keep going while you wait; ordering opens once they approve.</p>
-              <p className="mt-2 text-[13px] text-ink-2">Wrong person, or not your company? <Link href="/support/bug" className="font-semibold text-magenta-dark underline underline-offset-4">Message Support</Link></p>
-            </div>
-              )}
-              {coMatch && (
-                <p data-company-match className="-mt-1 border-l-2 border-magenta pl-3 text-[13px] text-ink-2">
-                  <b className="text-ink">{coMatch.name}</b> is already on Panameer ({coMatch.why}). <b>Request Access</b> and we&apos;ll ask {coMatch.admin ? <b className="text-ink">{coMatch.admin}</b> : "its admin"} to approve you. You can keep going while you wait.
-                </p>
-              )}
+              <CompanyIdentityFields
+                name={draft.coName}
+                legal={draft.coLegal}
+                website={draft.coWebsite}
+                onChange={(p) => { if (p.website !== undefined) setCoMatch(null); edit({ ...(p.name !== undefined ? { coName: p.name } : {}), ...(p.legal !== undefined ? { coLegal: p.legal } : {}), ...(p.website !== undefined ? { coWebsite: p.website } : {}) }); }}
+                joining={joining}
+                joinedName={draft.companyName}
+                match={coMatch}
+                askedAdmin={askedAdmin}
+                busy={busy}
+                onRequestAccess={() => void askToJoin()}
+                onWebsiteBlur={() => void checkMatch(draft.coWebsite)}
+                legalHint="The name on your invoices, if it's different from the company name."
+                waitNote="ordering"
+              />
               {/* LS-E004: a joiner sees the company's name only — the rest isn't rendered. */}
               {!joining && (
               <div className="space-y-4">
