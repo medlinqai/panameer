@@ -38,7 +38,7 @@ export default async function RequesterStartPage() {
   return (
     <StartPage
       headline={`Hey ${displayFirstName(person.first_name)}. Let's get you set up to buy.`}
-      lead="Tell us who you are, your company, and where the work happens. Then shop services and products, or post a job."
+      lead="Tell us who you are, who your company is, and where the work happens. Then shop services and products, or post a job."
       icon="people"
       cards={REQUESTER_WORK_STEPS.map((step) => CARDS[step])}
       footnote="It takes about 3 minutes and you can edit it later. We'll save as you go."
