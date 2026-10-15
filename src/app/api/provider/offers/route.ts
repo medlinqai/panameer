@@ -6,7 +6,7 @@ import { SourcingError } from "@/lib/sourcing";
 
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("accept"), offerId: z.string().uuid() }),
-  z.object({ action: z.literal("counter"), offerId: z.string().uuid(), amountCents: z.number().int().positive().max(1_000_000_000), message: z.string().trim().max(500).nullable().optional() }),
+  z.object({ action: z.literal("counter"), offerId: z.string().uuid(), amountCents: z.number().int().positive().max(1_000_000_000).nullable().optional(), deliveryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(), message: z.string().trim().max(500).nullable().optional() }),
   z.object({ action: z.literal("deny"), offerId: z.string().uuid(), message: z.string().trim().max(500).nullable().optional(), floorCents: z.number().int().positive().nullable().optional() }),
 ]);
 

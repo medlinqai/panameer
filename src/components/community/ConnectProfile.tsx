@@ -6,6 +6,7 @@ import { BuyButtons } from "@/components/shop/BuyButtons";
 import { ProductCard } from "@/components/shop/ProductCard";
 import type { ShopProduct } from "@/lib/shop";
 import { ManualOrdersToggle } from "@/components/shop/ManualOrdersToggle";
+import { ServiceOfferButton } from "@/components/shop/ServiceOfferButton";
 import { ProfileVisibilityCard } from "@/components/profile/ProfileVisibilityCard";
 import { HireButton } from "@/components/community/HireButton";
 import { ShareBar, HowToWorkWith } from "@/components/community/ProfileFooter";
@@ -273,6 +274,7 @@ export function ConnectProfile({
                 )}
                 {owner && <Link href={`/catalog/services/new?id=${s.id}`} className="block text-[12.5px] font-semibold underline">Edit</Link>}
                 {!owner && p.person.personId && <Link href={`/estimates/request?provider=${p.person.personId}&service=${s.id}`} data-request-estimate-link className="block text-[12.5px] font-semibold underline underline-offset-4">Request an Estimate</Link>}
+                {!owner && s.openToOffers && <ServiceOfferButton serviceId={s.id} />}
               </div>
             </div>
           ))}

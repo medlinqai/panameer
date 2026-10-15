@@ -4,9 +4,11 @@ import type { Viewer } from "@/lib/access";
 import { notify } from "@/lib/notifications";
 import { formatCents } from "@/lib/display";
 
-// MO-E003: Make an Offer on a Service Product that's Open to Offers. Below the provider's private floor → declined at once.
-// Provider: Accept · Counter (once) · Decline. After a counter the buyer Accepts or Declines. Accepted → a cart line at the
-// agreed price → normal checkout. One open (or countered) offer per buyer per product — `open_service_product_id` enforces it.
+// MO-E003 / Lane 7 (Scott 10-15): one negotiation pattern. A buyer proposes a different price and/or delivery date on a
+// Service Product or a Service (rate) that's open to offers; the seller Accepts · Counters (once) · Declines; after a
+// counter the buyer Accepts or Declines. Accepted → a cart line at the agreed price/date → normal checkout.
+// Open to offers = the item's own override, else the seller's "Open to offers on price and delivery" switch.
+// One open (or countered) offer per buyer per item — `open_service_product_id` holds the item id (product or service).
 export const AUTO_DECLINE_MESSAGE = "Thanks for the offer — the seller isn't taking offers at that price. You can buy at the listed price or offer a little more.";
 
 async function ownPerson(viewer: Viewer) {
@@ -15,52 +17,69 @@ async function ownPerson(viewer: Viewer) {
   return person;
 }
 
-async function loadProduct(serviceProductId: string) {
-  const p = await prisma.serviceProduct.findUnique({
-    where: { id: serviceProductId },
-    select: { id: true, title: true, status: true, price_cents: true, currency: true, open_to_offers: true, offer_floor_cents: true, providerProfile: { select: { person_id: true } } },
-  });
-  if (!p) throw new SourcingError("That service product doesn't exist.", "NOT_FOUND");
-  if (p.status !== "PUBLISHED") throw new SourcingError("That service product isn't published.", "NOT_PUBLISHED");
-  return p;
-}
+type Target = { kind: "product" | "service"; id: string; title: string; currency: string; listCents: number | null; open: boolean; floorCents: number | null; sellerPersonId: string };
 
-const offerNumber = (productId: string) => `OFR-${Date.now().toString(36).toUpperCase()}-${productId.slice(0, 4)}`;
+/** The thing being negotiated: a published Service Product or a live Service (rate). */
+async function loadTarget(ref: { serviceProductId?: string | null; providerServiceId?: string | null }): Promise<Target> {
+  if (ref.serviceProductId) {
+    const p = await prisma.serviceProduct.findUnique({ where: { id: ref.serviceProductId }, select: { id: true, title: true, status: true, price_cents: true, currency: true, open_to_offers: true, offers_override: true, offer_floor_cents: true, providerProfile: { select: { person_id: true, open_to_offers: true } } } });
+    if (!p) throw new SourcingError("That service product doesn't exist.", "NOT_FOUND");
+    if (p.status !== "PUBLISHED") throw new SourcingError("That service product isn't published.", "NOT_PUBLISHED");
+    return { kind: "product", id: p.id, title: p.title, currency: p.currency, listCents: p.price_cents, open: p.offers_override ?? (p.providerProfile.open_to_offers || p.open_to_offers), floorCents: p.offer_floor_cents, sellerPersonId: p.providerProfile.person_id };
+  }
+  if (ref.providerServiceId) {
+    const s = await prisma.providerService.findUnique({ where: { id: ref.providerServiceId }, select: { id: true, name: true, rate_cents: true, active: true, published_at: true, offers_override: true, provider_profile_id: true } });
+    if (!s || !s.active || !s.published_at) throw new SourcingError("That service isn't available.", "NOT_FOUND");
+    const pp = await prisma.providerProfile.findUniqueOrThrow({ where: { id: s.provider_profile_id }, select: { person_id: true, open_to_offers: true } });
+    return { kind: "service", id: s.id, title: s.name, currency: "USD", listCents: s.rate_cents, open: s.offers_override ?? pp.open_to_offers, floorCents: null, sellerPersonId: pp.person_id };
+  }
+  throw new SourcingError("Which service product or service?", "NOT_FOUND");
+}
+const targetOf = (o: { service_product_id: string | null; provider_service_id: string | null }) => loadTarget({ serviceProductId: o.service_product_id, providerServiceId: o.provider_service_id });
+const day = (d: Date | null | undefined) => (d ? d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null);
+const offerNumber = (id: string) => `OFR-${Date.now().toString(36).toUpperCase()}-${id.slice(0, 4)}`;
 
 export async function makeOffer(
   viewer: Viewer,
-  input: { serviceProductId: string; amountCents: number; note?: string | null }
+  input: { serviceProductId?: string | null; providerServiceId?: string | null; amountCents?: number | null; deliveryDate?: string | null; note?: string | null }
 ): Promise<{ id: string; offerNumber: string; status: "OPEN" | "DENIED"; message: string | null }> {
   const me = await ownPerson(viewer);
-  const product = await loadProduct(input.serviceProductId);
-  if (product.providerProfile.person_id === me.id) throw new SourcingError("You can't make an offer on your own service product.", "OWN_PRODUCT");
-  if (!product.open_to_offers) throw new SourcingError("This service product isn't open to offers.", "NOT_OPEN_TO_OFFERS");
-  if (!Number.isInteger(input.amountCents) || input.amountCents <= 0) throw new SourcingError("An offer needs an amount above zero.", "BAD_AMOUNT");
+  const t = await loadTarget(input);
+  if (t.sellerPersonId === me.id) throw new SourcingError("You can't make an offer on your own listing.", "OWN_PRODUCT");
+  if (!t.open) throw new SourcingError("This listing isn't open to offers.", "NOT_OPEN_TO_OFFERS");
+  const date = input.deliveryDate ? new Date(input.deliveryDate) : null;
+  if (date && Number.isNaN(date.getTime())) throw new SourcingError("That delivery date isn't valid.", "BAD_DATE");
+  // A proposal changes the price, the date, or both; an unchanged price is the list price.
+  const amount = input.amountCents ?? t.listCents;
+  if (!amount || !Number.isInteger(amount) || amount <= 0) throw new SourcingError("An offer needs an amount above zero.", "BAD_AMOUNT");
+  if (input.amountCents == null && !date) throw new SourcingError("Propose a different price or delivery date.", "BAD_AMOUNT");
   const note = input.note?.trim().slice(0, 500) || null;
-  const below = product.offer_floor_cents != null && input.amountCents < product.offer_floor_cents;
+  const below = t.floorCents != null && amount < t.floorCents;
   try {
     const row = await prisma.serviceProductOffer.create({
       data: {
-        offer_number: offerNumber(product.id),
+        offer_number: offerNumber(t.id),
         buyer_person_id: me.id,
-        service_product_id: product.id,
-        provider_person_id: product.providerProfile.person_id,
-        amount_cents: input.amountCents,
-        currency: product.currency,
+        service_product_id: t.kind === "product" ? t.id : null,
+        provider_service_id: t.kind === "service" ? t.id : null,
+        provider_person_id: t.sellerPersonId,
+        amount_cents: amount,
+        currency: t.currency,
+        delivery_date: date,
         note,
         ...(below
           ? { status: "DENIED" as const, decided_at: new Date(), deny_message: AUTO_DECLINE_MESSAGE, open_service_product_id: null }
-          : { status: "OPEN" as const, open_service_product_id: product.id }),
+          : { status: "OPEN" as const, open_service_product_id: t.id }),
       },
       select: { id: true, offer_number: true },
     });
     if (!below) {
-      await notify({ event: "shop.offer_received", personId: product.providerProfile.person_id, entityType: "ServiceProductOffer", entityId: row.id, vars: { productTitle: product.title, amount: formatCents(input.amountCents, product.currency) } });
+      await notify({ event: "shop.offer_received", personId: t.sellerPersonId, entityType: "ServiceProductOffer", entityId: row.id, vars: { productTitle: t.title, amount: `${formatCents(amount, t.currency)}${date ? ` by ${day(date)}` : ""}` } });
     }
     return { id: row.id, offerNumber: row.offer_number, status: below ? "DENIED" : "OPEN", message: below ? AUTO_DECLINE_MESSAGE : null };
   } catch (e) {
     if (typeof e === "object" && e !== null && (e as { code?: string }).code === "P2002") {
-      throw new SourcingError("You already have an offer open on this service product.", "OFFER_ALREADY_OPEN");
+      throw new SourcingError("You already have an offer open on this listing.", "OFFER_ALREADY_OPEN");
     }
     throw e;
   }
@@ -75,7 +94,7 @@ async function loadForSeller(offerId: string, sellerPersonId: string, states: ("
   return offer;
 }
 
-/** Provider declines (optional message). */
+/** Seller declines (optional message). */
 export async function denyOffer(viewer: Viewer, input: { offerId: string; message?: string | null; floorCents?: number | null }): Promise<{ id: string; status: "DENIED" }> {
   const me = await ownPerson(viewer);
   const offer = await loadForSeller(input.offerId, me.id);
@@ -86,45 +105,48 @@ export async function denyOffer(viewer: Viewer, input: { offerId: string; messag
   return { id: offer.id, status: "DENIED" };
 }
 
-/** Provider counters once; the buyer then accepts or declines. */
-export async function counterOffer(viewer: Viewer, input: { offerId: string; amountCents: number; message?: string | null }): Promise<{ id: string; status: "COUNTERED" }> {
+/** Seller counters once — a price and/or a delivery date; the buyer then accepts or declines. */
+export async function counterOffer(viewer: Viewer, input: { offerId: string; amountCents?: number | null; deliveryDate?: string | null; message?: string | null }): Promise<{ id: string; status: "COUNTERED" }> {
   const me = await ownPerson(viewer);
   const offer = await loadForSeller(input.offerId, me.id);
-  if (offer.counter_amount_cents != null) throw new SourcingError("You've already countered this offer.", "ALREADY_COUNTERED");
-  if (!Number.isInteger(input.amountCents) || input.amountCents <= 0) throw new SourcingError("A counter needs an amount above zero.", "BAD_AMOUNT");
-  const product = await loadProduct(offer.service_product_id);
-  const moved = await prisma.serviceProductOffer.updateMany({ where: { id: offer.id, status: "OPEN" }, data: { status: "COUNTERED", counter_amount_cents: input.amountCents, countered_at: new Date(), deny_message: input.message?.trim() || null } });
+  if (offer.counter_amount_cents != null || offer.countered_at) throw new SourcingError("You've already countered this offer.", "ALREADY_COUNTERED");
+  const amount = input.amountCents ?? offer.amount_cents;
+  if (!Number.isInteger(amount) || amount <= 0) throw new SourcingError("A counter needs an amount above zero.", "BAD_AMOUNT");
+  const date = input.deliveryDate ? new Date(input.deliveryDate) : offer.delivery_date;
+  if (date && Number.isNaN(date.getTime())) throw new SourcingError("That delivery date isn't valid.", "BAD_DATE");
+  const t = await targetOf(offer);
+  const moved = await prisma.serviceProductOffer.updateMany({ where: { id: offer.id, status: "OPEN" }, data: { status: "COUNTERED", counter_amount_cents: amount, counter_delivery_date: date, countered_at: new Date(), deny_message: input.message?.trim() || null } });
   if (!moved.count) throw new SourcingError("That offer has already been answered.", "NOT_OPEN");
-  await notify({ event: "shop.offer_countered", personId: offer.buyer_person_id, entityType: "ServiceProductOffer", entityId: offer.id, vars: { productTitle: product.title, amount: formatCents(input.amountCents, offer.currency), offered: formatCents(offer.amount_cents, offer.currency) } });
+  await notify({ event: "shop.offer_countered", personId: offer.buyer_person_id, entityType: "ServiceProductOffer", entityId: offer.id, vars: { productTitle: t.title, amount: `${formatCents(amount, offer.currency)}${date ? ` by ${day(date)}` : ""}`, offered: formatCents(offer.amount_cents, offer.currency) } });
   return { id: offer.id, status: "COUNTERED" };
 }
 
-/** The agreed price goes on the buyer's cart (quantity 1), replacing any list-price line for that product. */
-async function putOnCart(buyerPersonId: string, productId: string, cents: number, currency: string, offerId: string) {
+/** The agreed price (and date) goes on the buyer's cart, replacing any list-price line for that item. */
+async function putOnCart(buyerPersonId: string, t: Target, cents: number, currency: string, offerId: string, deliveryDate: Date | null) {
   const buyer = await prisma.person.findUnique({ where: { id: buyerPersonId }, select: { id: true, requesterProfile: { select: { id: true } } } });
   if (!buyer) throw new SourcingError("That buyer has no account.", "NO_ACCOUNT");
   if (!buyer.requesterProfile) await prisma.requesterProfile.create({ data: { person_id: buyer.id } });
   const cart = await prisma.cart.upsert({ where: { buyer_person_id: buyer.id }, create: { buyer_person_id: buyer.id }, update: {}, select: { id: true } });
-  await prisma.cartLine.upsert({
-    where: { cart_id_service_product_id: { cart_id: cart.id, service_product_id: productId } },
-    create: { cart_id: cart.id, service_product_id: productId, quantity: 1, unit_price_cents: cents, currency, offer_id: offerId },
-    update: { quantity: 1, unit_price_cents: cents, currency, offer_id: offerId },
-  });
+  const where = t.kind === "product" ? { cart_id: cart.id, service_product_id: t.id } : { cart_id: cart.id, provider_service_id: t.id };
+  const data = { quantity: 1, unit_price_cents: cents, currency, offer_id: offerId, delivery_date: deliveryDate };
+  const line = await prisma.cartLine.findFirst({ where, select: { id: true } });
+  if (line) await prisma.cartLine.update({ where: { id: line.id }, data });
+  else await prisma.cartLine.create({ data: { ...where, ...data } });
 }
 
-/** Provider accepts the buyer's offer → cart line at the offered amount. */
+/** Seller accepts the buyer's offer → cart line at the offered price/date. */
 export async function acceptOffer(viewer: Viewer, input: { offerId: string }): Promise<{ id: string; status: "ACCEPTED" }> {
   const me = await ownPerson(viewer);
   const offer = await loadForSeller(input.offerId, me.id);
-  const product = await loadProduct(offer.service_product_id);
+  const t = await targetOf(offer);
   const moved = await prisma.serviceProductOffer.updateMany({ where: { id: offer.id, status: "OPEN" }, data: { status: "ACCEPTED", decided_at: new Date(), open_service_product_id: null } });
   if (!moved.count) throw new SourcingError("That offer has already been answered.", "NOT_OPEN");
-  await putOnCart(offer.buyer_person_id, product.id, offer.amount_cents, offer.currency, offer.id);
-  await notify({ event: "shop.offer_accepted", personId: offer.buyer_person_id, entityType: "ServiceProductOffer", entityId: offer.id, vars: { productTitle: product.title, amount: formatCents(offer.amount_cents, offer.currency) } });
+  await putOnCart(offer.buyer_person_id, t, offer.amount_cents, offer.currency, offer.id, offer.delivery_date);
+  await notify({ event: "shop.offer_accepted", personId: offer.buyer_person_id, entityType: "ServiceProductOffer", entityId: offer.id, vars: { productTitle: t.title, amount: formatCents(offer.amount_cents, offer.currency) } });
   return { id: offer.id, status: "ACCEPTED" };
 }
 
-/** Buyer answers the provider's counter: accept → cart line at the counter; decline → closed. */
+/** Buyer answers the seller's counter: accept → cart line at the counter price/date; decline → closed. */
 export async function answerCounter(viewer: Viewer, input: { offerId: string; accept: boolean }): Promise<{ id: string; status: "ACCEPTED" | "WITHDRAWN" }> {
   const me = await ownPerson(viewer);
   const offer = await prisma.serviceProductOffer.findUnique({ where: { id: input.offerId } });
@@ -134,9 +156,9 @@ export async function answerCounter(viewer: Viewer, input: { offerId: string; ac
   const status = input.accept ? ("ACCEPTED" as const) : ("WITHDRAWN" as const);
   const moved = await prisma.serviceProductOffer.updateMany({ where: { id: offer.id, status: "COUNTERED" }, data: { status, decided_at: new Date(), open_service_product_id: null } });
   if (!moved.count) throw new SourcingError("That counter has already been answered.", "NOT_COUNTERED");
-  const product = await prisma.serviceProduct.findUniqueOrThrow({ where: { id: offer.service_product_id }, select: { title: true } });
-  if (input.accept) await putOnCart(me.id, offer.service_product_id, offer.counter_amount_cents, offer.currency, offer.id);
-  await notify({ event: "shop.offer_counter_answered", personId: offer.provider_person_id, entityType: "ServiceProductOffer", entityId: offer.id, vars: { productTitle: product.title, amount: formatCents(offer.counter_amount_cents, offer.currency), accepted: input.accept ? 1 : 0 } });
+  const t = await targetOf(offer);
+  if (input.accept) await putOnCart(me.id, t, offer.counter_amount_cents, offer.currency, offer.id, offer.counter_delivery_date ?? offer.delivery_date);
+  await notify({ event: "shop.offer_counter_answered", personId: offer.provider_person_id, entityType: "ServiceProductOffer", entityId: offer.id, vars: { productTitle: t.title, amount: formatCents(offer.counter_amount_cents, offer.currency), accepted: input.accept ? 1 : 0 } });
   return { id: offer.id, status };
 }
 
@@ -151,22 +173,27 @@ export async function withdrawOffer(viewer: Viewer, input: { offerId: string }):
   return { id: offer.id, status: "WITHDRAWN" };
 }
 
-export type OfferRow = { id: string; offerNumber: string; productId: string; productTitle: string; listPriceCents: number | null; amountCents: number; counterCents: number | null; currency: string; status: string; note: string | null; message: string | null; otherName: string; createdAt: Date };
+export type OfferRow = { id: string; offerNumber: string; productId: string | null; serviceId: string | null; productTitle: string; listPriceCents: number | null; amountCents: number; counterCents: number | null; deliveryDate: string | null; counterDeliveryDate: string | null; currency: string; status: string; note: string | null; message: string | null; otherName: string; createdAt: Date };
 
 async function rowsFor(where: { provider_person_id?: string; buyer_person_id?: string; status?: { in: ("OPEN" | "COUNTERED" | "ACCEPTED" | "DENIED" | "WITHDRAWN")[] } }, side: "seller" | "buyer"): Promise<OfferRow[]> {
   const rows = await prisma.serviceProductOffer.findMany({ where, orderBy: { created_at: "desc" }, take: 100 });
   if (!rows.length) return [];
-  const [products, people] = await Promise.all([
-    prisma.serviceProduct.findMany({ where: { id: { in: rows.map((r) => r.service_product_id) } }, select: { id: true, title: true, price_cents: true } }),
+  const [products, services, people] = await Promise.all([
+    prisma.serviceProduct.findMany({ where: { id: { in: rows.map((r) => r.service_product_id).filter((x): x is string => !!x) } }, select: { id: true, title: true, price_cents: true } }),
+    prisma.providerService.findMany({ where: { id: { in: rows.map((r) => r.provider_service_id).filter((x): x is string => !!x) } }, select: { id: true, name: true, rate_cents: true } }),
     prisma.person.findMany({ where: { id: { in: rows.map((r) => (side === "seller" ? r.buyer_person_id : r.provider_person_id)) } }, select: { id: true, first_name: true, last_name: true } }),
   ]);
-  const prod = new Map(products.map((p) => [p.id, p]));
   const who = new Map(people.map((p) => [p.id, `${p.first_name} ${p.last_name}`.trim()]));
-  return rows.map((r) => ({
-    id: r.id, offerNumber: r.offer_number, productId: r.service_product_id, productTitle: prod.get(r.service_product_id)?.title ?? "(removed)", listPriceCents: prod.get(r.service_product_id)?.price_cents ?? null,
-    amountCents: r.amount_cents, counterCents: r.counter_amount_cents, currency: r.currency, status: r.status, note: r.note, message: r.deny_message,
-    otherName: who.get(side === "seller" ? r.buyer_person_id : r.provider_person_id) ?? "—", createdAt: r.created_at,
-  }));
+  const iso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+  return rows.map((r) => {
+    const prod = r.service_product_id ? products.find((x) => x.id === r.service_product_id) : null;
+    const svc = r.provider_service_id ? services.find((x) => x.id === r.provider_service_id) : null;
+    return {
+      id: r.id, offerNumber: r.offer_number, productId: r.service_product_id, serviceId: r.provider_service_id, productTitle: prod?.title ?? svc?.name ?? "(removed)", listPriceCents: prod?.price_cents ?? svc?.rate_cents ?? null,
+      amountCents: r.amount_cents, counterCents: r.counter_amount_cents, deliveryDate: iso(r.delivery_date), counterDeliveryDate: iso(r.counter_delivery_date), currency: r.currency, status: r.status, note: r.note, message: r.deny_message,
+      otherName: who.get(side === "seller" ? r.buyer_person_id : r.provider_person_id) ?? "—", createdAt: r.created_at,
+    };
+  });
 }
 
 /** Seller: offers waiting on you (OPEN). */
@@ -179,4 +206,9 @@ export async function openOffersForSeller(viewer: Viewer) {
 export async function offersForBuyer(viewer: Viewer) {
   const me = await ownPerson(viewer);
   return rowsFor({ buyer_person_id: me.id }, "buyer");
+}
+
+/** Lane 7: is this listing open to offers? (the item's override, else the seller's switch). */
+export async function openToOffers(ref: { serviceProductId?: string | null; providerServiceId?: string | null }) {
+  return (await loadTarget(ref).catch(() => null))?.open ?? false;
 }

@@ -33,14 +33,14 @@ export async function buildCatalogData(viewer: Viewer) {
       })
     : [];
   const [services, products, gate] = await Promise.all([
-    prisma.providerService.findMany({ where: { provider_profile_id: p.id, active: true, service_type_id: { not: null } }, select: { id: true, service_type_id: true, rate_cents: true, uom: true, published_at: true, expenses: true, hours_included: true } }),
+    prisma.providerService.findMany({ where: { provider_profile_id: p.id, active: true, service_type_id: { not: null } }, select: { id: true, service_type_id: true, rate_cents: true, uom: true, published_at: true, expenses: true, hours_included: true, offers_override: true } }),
     prisma.serviceProduct.findMany({ where: { provider_profile_id: p.id, service_type_id: { not: null } }, orderBy: { created_at: "asc" }, select: { service_type_id: true, title: true, status: true } }),
     publishGate(p.person_id),
   ]);
   return { businessTypes: types, categories: cats, services, products, gate };
 }
 
-export type ServiceInput = { serviceTypeId: string; on: boolean; rateCents?: number | null; unit?: ServiceUnit | null; expenses?: Expenses | null; hoursIncluded?: number | null };
+export type ServiceInput = { serviceTypeId: string; on: boolean; rateCents?: number | null; unit?: ServiceUnit | null; expenses?: Expenses | null; hoursIncluded?: number | null ; offersOverride?: boolean | null };
 export type Expenses = "AT_COST" | "INCLUDED" | "NOT_APPLICABLE";
 /** MC-E005: Onsite defaults to expenses billed at cost; everything else to none. */
 export const defaultExpenses = (delivery: string | null | undefined): Expenses => (delivery === "ONSITE" ? "AT_COST" : "NOT_APPLICABLE");
@@ -59,12 +59,14 @@ export async function saveCatalogService(viewer: Viewer, input: ServiceInput) {
   const data = {
     name: t.name, uom: unit, rate_cents: rate ?? existing?.rate_cents ?? null, active: true, unspsc_code: t.commodity_code ?? existing?.unspsc_code ?? null, company_id: existing?.company_id ?? (await companyIdForProfile(p.id)),
     expenses: input.expenses ?? existing?.expenses ?? defaultExpenses(t.delivery),
+    // Lane 7: per-Service override of the seller's Open to Offers switch (undefined = leave as is).
+    ...(input.offersOverride !== undefined ? { offers_override: input.offersOverride } : {}),
     hours_included: unit === "MONTH" ? (input.hoursIncluded !== undefined ? (input.hoursIncluded && input.hoursIncluded > 0 ? Math.round(input.hoursIncluded) : null) : existing?.hours_included ?? null) : null,
   };
   const row = existing
     ? await prisma.providerService.update({ where: { id: existing.id }, data })
     : await prisma.providerService.create({ data: { ...data, provider_profile_id: p.id, service_type_id: t.id, service_type: "SERVICE_BY_QTY", payment_event: "TIMESHEET" } });
-  return { id: row.id, rateCents: row.rate_cents, unit: row.uom, published: !!row.published_at, expenses: row.expenses, hoursIncluded: row.hours_included };
+  return { id: row.id, rateCents: row.rate_cents, unit: row.uom, published: !!row.published_at, expenses: row.expenses, hoursIncluded: row.hours_included, offersOverride: row.offers_override };
 }
 
 /** MC-E005: rate types "on by default" start on for a new provider, filled from the onsite/offsite rate given at registration.

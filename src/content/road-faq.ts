@@ -19,7 +19,7 @@ export const ROAD_FAQ: Record<string, { q: string; a: string }[]> = {
   ],
   sell: [
     { q: "What are the three ways to win work?", a: "5.A a buyer buys your service product; 5.B a buyer accepts the rate you proposed on their work request; 5.C a buyer accepts the estimate you sent. Each ends in a signed work order." },
-    { q: "Do I have to accept every product order?", a: "No. Orders open automatically by default; turn on \"I accept orders manually\" under My Service Products to review each one first." },
+    { q: "Can buyers negotiate?", a: "Only if you want them to. Orders at your price and date open at once. Turn on \"Open to offers on price and delivery\" (or open a single product or service) and buyers can propose a different price or date; you accept, counter once, or decline." },
     { q: "Do I need a W-9 or tax ID to sell?", a: "No. Selling, signing work orders and requesting payment only need a linked company. Payout details are asked for just before you get paid." },
   ],
   deliver: [

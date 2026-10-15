@@ -28,7 +28,7 @@ const PLAN: Record<PayPlan, { label: string; percent: number; event: PaymentEven
 };
 
 async function me(viewer: Viewer) {
-  const p = await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { id: true, person_id: true } });
+  const p = await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { id: true, person_id: true, open_to_offers: true } });
   if (!p) throw new Error("No provider profile");
   return p;
 }
@@ -78,17 +78,17 @@ export async function catalogProductsPage(viewer: Viewer) {
     prisma.providerSkill.findMany({ where: { provider_profile_id: p.id }, select: { skill: { select: { id: true, name: true } } }, take: 40 }),
     sellGaps(viewer.userId),
   ]);
-  return { types, products: rows.map((r) => toForm(r)), domains, skills: skills.map((s) => s.skill), sellGaps: gaps };
+  return { types, products: rows.map((r) => toForm(r, p.open_to_offers)), domains, skills: skills.map((s) => s.skill), sellGaps: gaps };
 }
 
 type Row = Awaited<ReturnType<typeof prisma.serviceProduct.findMany<{ include: { images: true; serviceType: { select: { name: true } }; domains: { select: { domain_id: true } }; skills: { select: { skill_id: true } }; deliverables: true; milestones: true } }>>>[number];
-function toForm(r: Row) {
+function toForm(r: Row, sellerOpen = false) {
   const pricing: Pricing = r.pricing_type === "RECURRING" ? "MONTHLY" : r.pricing_type === "HOURLY" ? "HOURLY" : "FIXED";
   const payPlan: PayPlan = r.milestones.length === 2 ? "SPLIT" : r.milestones.length === 0 && pricing === "MONTHLY" ? "MONTHLY_ADVANCE" : "ON_DELIVERY";
   const images = r.images.length ? r.images.map((i) => i.url) : r.cover_image_url ? [r.cover_image_url] : [];
   return {
     id: r.id, status: r.status, typeName: r.serviceType?.name ?? null,
-    form: { openToOffers: r.open_to_offers, offerFloorCents: r.offer_floor_cents, coverStyle: r.cover_style ?? null, title: r.title, serviceTypeId: r.service_type_id, summary: r.summary ?? "", images, pricing, priceCents: r.price_cents, delivery: r.delivery, leadTimeDays: r.lead_time_days, durationWeeks: r.duration_weeks, domainIds: r.domains.map((d) => d.domain_id), skillIds: r.skills.map((s) => s.skill_id), deliverables: r.deliverables.map((d) => d.text), payPlan } satisfies ProductForm,
+    form: { openToOffers: r.offers_override ?? (sellerOpen || r.open_to_offers), offerFloorCents: r.offer_floor_cents, coverStyle: r.cover_style ?? null, title: r.title, serviceTypeId: r.service_type_id, summary: r.summary ?? "", images, pricing, priceCents: r.price_cents, delivery: r.delivery, leadTimeDays: r.lead_time_days, durationWeeks: r.duration_weeks, domainIds: r.domains.map((d) => d.domain_id), skillIds: r.skills.map((s) => s.skill_id), deliverables: r.deliverables.map((d) => d.text), payPlan } satisfies ProductForm,
   };
 }
 
@@ -123,7 +123,9 @@ export async function saveCatalogProduct(viewer: Viewer, id: string | null, f: P
   const data = {
     title, summary: f.summary.trim().slice(0, 4000) || null, service_type_id: f.serviceTypeId, price_cents: f.priceCents,
     ...PRICING_ROW[f.pricing], delivery: f.delivery, lead_time_days: f.leadTimeDays, duration_weeks: f.durationWeeks,
-    cover_image_url: f.images[0] ?? null, cover_style: f.coverStyle && ["A", "B", "C", "D"].includes(f.coverStyle) ? f.coverStyle : null, open_to_offers: !!f.openToOffers, offer_floor_cents: f.openToOffers && f.offerFloorCents != null && f.offerFloorCents > 0 ? f.offerFloorCents : null, payment_terms: "NET30" as const, payment_event: (f.pricing === "MONTHLY" ? "ORDER_ACCEPTED" : "ACCEPTANCE") as PaymentEvent,
+    cover_image_url: f.images[0] ?? null, cover_style: f.coverStyle && ["A", "B", "C", "D"].includes(f.coverStyle) ? f.coverStyle : null, open_to_offers: !!f.openToOffers,
+    // Lane 7: the product's own override only when it differs from the seller's switch (null = follow the switch).
+    offers_override: !!f.openToOffers === p.open_to_offers ? null : !!f.openToOffers, offer_floor_cents: f.openToOffers && f.offerFloorCents != null && f.offerFloorCents > 0 ? f.offerFloorCents : null, payment_terms: "NET30" as const, payment_event: (f.pricing === "MONTHLY" ? "ORDER_ACCEPTED" : "ACCEPTANCE") as PaymentEvent,
     status: publish ? ("PUBLISHED" as const) : owned?.status === "PUBLISHED" ? ("PUBLISHED" as const) : ("DRAFT" as const),
   };
   const children = {

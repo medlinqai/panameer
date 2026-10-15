@@ -1090,6 +1090,8 @@ model ProviderProfile {
   person_id               String             @unique @db.Uuid
   /// SH-E003: "I accept orders manually" — off means Shop orders open on placement.
   accepts_orders_manually Boolean            @default(false)
+  /// Lane 7 (Scott 10-15): "Open to offers on price and delivery" — replaces accepts_orders_manually (kept, unused).
+  open_to_offers          Boolean            @default(false)
   region_id               String?            @db.Uuid
   /// ── ⚠⚠⚠ `headline` IS GONE (`P0-E595` WS-B) ───────────────────────────
   ///
@@ -2432,6 +2434,8 @@ model ServiceProduct {
   lead_time_days Int?
   /// MO-E001: buyers may Make an Offer; offers below the floor (private to the provider) are declined automatically.
   open_to_offers    Boolean @default(false)
+  /// Lane 7: per-product override of the seller's switch (null = follow it). open_to_offers stays for old rows.
+  offers_override   Boolean?
   offer_floor_cents Int?
 
   @@index([provider_profile_id])
@@ -7540,7 +7544,9 @@ model ServiceProductOffer {
   offer_number String @unique
 
   buyer_person_id    String @db.Uuid
-  service_product_id String @db.Uuid
+  /// Lane 7: one of service_product_id / provider_service_id (an offer on a Service rate).
+  service_product_id  String? @db.Uuid
+  provider_service_id String? @db.Uuid
   /**
    * ⚠⚠ THE PRODUCT'S OWNER, COPIED AT OFFER TIME AND NEVER RE-READ.
    * ⚠⚠⚠ **A PRODUCT CHANGING HANDS MUST NOT SILENTLY RE-POINT AN OLD OFFER AT A
@@ -7604,6 +7610,9 @@ model ServiceProductOffer {
   note                 String?
   counter_amount_cents Int?
   countered_at         DateTime?
+  /// Lane 7: the buyer's proposed delivery date, and the seller's counter date.
+  delivery_date         DateTime?
+  counter_delivery_date DateTime?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -8435,6 +8444,8 @@ model ProviderService {
   company_id          String?         @db.Uuid
   /// MC-E005: Monthly Retainer — the block of hours the monthly price buys.
   hours_included      Int?
+  /// Lane 7: per-Service override of the seller's Open to Offers switch (null = follow the switch).
+  offers_override     Boolean?
   created_at          DateTime        @default(now())
   updated_at          DateTime        @updatedAt
 
@@ -8765,7 +8776,11 @@ model Cart {
 model CartLine {
   id                 String   @id @default(uuid()) @db.Uuid
   cart_id            String   @db.Uuid
-  service_product_id String   @db.Uuid
+  /// Lane 7: a product line, or a Service (rate) line from an accepted offer.
+  service_product_id  String?   @db.Uuid
+  provider_service_id String?   @db.Uuid
+  /// Lane 7: the agreed delivery date from an accepted offer.
+  delivery_date       DateTime?
   quantity           Int      @default(1)
   unit_price_cents   Int
   currency           String   @default("USD")

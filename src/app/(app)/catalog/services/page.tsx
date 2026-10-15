@@ -51,10 +51,11 @@ export default async function Page() {
             <RatesTable
               key={`${d.services.map((s) => s.service_type_id).join()}`}
               types={types}
-              rows={d.services.map((s) => ({ id: s.id, serviceTypeId: s.service_type_id!, rateCents: s.rate_cents, unit: s.uom, published: !!s.published_at, expenses: s.expenses, hoursIncluded: s.hours_included, overrideCents: overrides.get(s.id) ?? null }))}
+              rows={d.services.map((s) => ({ id: s.id, serviceTypeId: s.service_type_id!, rateCents: s.rate_cents, unit: s.uom, published: !!s.published_at, expenses: s.expenses, hoursIncluded: s.hours_included, offersOverride: s.offers_override, overrideCents: overrides.get(s.id) ?? null }))}
               registration={{ ONSITE: me?.onsite_rate_cents ?? null, OFFSITE: me?.remote_rate_cents ?? me?.hourly_rate_cents ?? null }}
               gate={d.gate}
               multiProvider={multiProvider}
+              openToOffers={!!(await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { open_to_offers: true } }))?.open_to_offers}
             />
           ) : (
             <p className="mt-6 text-[14px] text-ink-2">The rate types for {bt} aren&apos;t loaded yet.</p>

@@ -40,11 +40,11 @@ export type ShopProduct = {
 };
 
 const SELECT = {
-  id: true, title: true, summary: true, pricing_type: true, billing_period: true, kind: true, price_cents: true, open_to_offers: true, currency: true, duration_weeks: true, cover_code: true, cover_image_url: true, cover_style: true,
+  id: true, title: true, summary: true, pricing_type: true, billing_period: true, kind: true, price_cents: true, open_to_offers: true, offers_override: true, currency: true, duration_weeks: true, cover_code: true, cover_image_url: true, cover_style: true,
   payment_terms: true, payment_event: true, product_type_id: true, service_type_id: true, serviceType: { select: { name: true, serviceCategory: { select: { business_type_id: true } } } }, created_at: true,
   milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, payment_event: true } },
   deliverables: { orderBy: { sequence: "asc" as const }, select: { text: true } },
-  providerProfile: { select: { id: true, person_id: true, person: { select: { first_name: true, last_name: true, photo_url: true, company: { select: { country: true } } } } } },
+  providerProfile: { select: { id: true, person_id: true, open_to_offers: true, person: { select: { first_name: true, last_name: true, photo_url: true, company: { select: { country: true } } } } } },
 };
 
 const TERMS: Record<string, string> = { IMMEDIATE: "due on receipt", NET15: "net 15", NET30: "net 30", NET45: "net 45", NET60: "net 60" };
@@ -74,7 +74,8 @@ function shape(p: Row, orders: number): ShopProduct {
     billingPeriod: p.billing_period,
     kind: p.kind,
     priceCents: p.price_cents,
-    openToOffers: p.open_to_offers,
+    // Lane 7: the product's override, else the seller's Open to Offers switch.
+    openToOffers: p.offers_override ?? (p.providerProfile.open_to_offers || p.open_to_offers),
     currency: p.currency,
     durationWeeks: p.duration_weeks,
     providerName: person ? `${person.first_name} ${person.last_name}`.trim() : "A provider",

@@ -6,7 +6,7 @@ import { answerCounter, makeOffer, withdrawOffer } from "@/lib/service-product-o
 import { SourcingError } from "@/lib/sourcing";
 
 const Body = z.union([
-  z.object({ action: z.literal("make").optional(), serviceProductId: z.string().uuid(), amountCents: z.number().int().positive().max(1_000_000_000), note: z.string().trim().max(500).nullable().optional() }),
+  z.object({ action: z.literal("make").optional(), serviceProductId: z.string().uuid().nullable().optional(), providerServiceId: z.string().uuid().nullable().optional(), amountCents: z.number().int().positive().max(1_000_000_000).nullable().optional(), deliveryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(), note: z.string().trim().max(500).nullable().optional() }),
   z.object({ action: z.literal("answer"), offerId: z.string().uuid(), accept: z.boolean() }),
   z.object({ action: z.literal("withdraw"), offerId: z.string().uuid() }),
 ]);
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   if (!p.success) return NextResponse.json({ error: "Enter an amount above zero." }, { status: 400 });
   try {
     const d = p.data;
-    if ("serviceProductId" in d) {
+    if (!("offerId" in d)) {
       const transact = await checkTransact(gate);
       if (!transact.ok) return NextResponse.json({ error: TRANSACT_MESSAGE[transact.reason], code: transact.reason }, { status: 403 });
       return NextResponse.json({ ok: true, ...(await makeOffer(gate, d)) });

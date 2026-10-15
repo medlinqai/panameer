@@ -8,7 +8,7 @@ import { buyersSee, EXPENSES_LABEL } from "@/lib/rate-display";
 // MC-E005: My Catalog › Services — the business type's rate types; toggle, rate, expenses. Saves as you go; draft until published.
 type Unit = "HOUR" | "DAY" | "WEEK" | "MONTH" | "SESSION" | "VISIT" | "EACH";
 export type RateType = { id: string; name: string; description: string | null; units: Unit[]; delivery: string | null; custom?: boolean };
-export type RateRow = { id: string; serviceTypeId: string; rateCents: number | null; unit: string | null; published: boolean; expenses: string | null; hoursIncluded: number | null; overrideCents?: number | null };
+export type RateRow = { id: string; serviceTypeId: string; rateCents: number | null; unit: string | null; published: boolean; expenses: string | null; hoursIncluded: number | null; offersOverride?: boolean | null; overrideCents?: number | null };
 const PER: Record<string, string> = { HOUR: "/hr", DAY: "/day", WEEK: "/wk", MONTH: "/mo", SESSION: "/session", VISIT: "/visit", EACH: "each" };
 const DELIVERY: Record<string, string> = { ONSITE: "Onsite", OFFSITE: "Offsite", EITHER: "Either" };
 const EXPENSES = ["AT_COST", "INCLUDED", "NOT_APPLICABLE"] as const;
@@ -16,7 +16,7 @@ const COLS = "md:grid-cols-[56px_minmax(0,1.5fr)_minmax(0,1.15fr)_minmax(0,1fr)_
 export const ADD_RATE_EVENT = "pm:add-rate";
 const dollars = (c: number | null | undefined) => (c != null ? String(c / 100) : "");
 
-export function RatesTable({ types, rows, registration, gate, multiProvider = false }: { types: RateType[]; rows: RateRow[]; registration: { ONSITE: number | null; OFFSITE: number | null }; gate: { ok: boolean; reason: string | null; href: string }; multiProvider?: boolean }) {
+export function RatesTable({ types, rows, registration, gate, multiProvider = false, openToOffers = false }: { types: RateType[]; rows: RateRow[]; registration: { ONSITE: number | null; OFFSITE: number | null }; gate: { ok: boolean; reason: string | null; href: string }; multiProvider?: boolean; openToOffers?: boolean }) {
   const [svc, setSvc] = useState<Record<string, RateRow>>(Object.fromEntries(rows.map((r) => [r.serviceTypeId, r])));
   const [rate, setRate] = useState<Record<string, string>>(Object.fromEntries(rows.map((r) => [r.serviceTypeId, dollars(r.rateCents)])));
   const [hrs, setHrs] = useState<Record<string, string>>(Object.fromEntries(rows.map((r) => [r.serviceTypeId, r.hoursIncluded ? String(r.hoursIncluded) : ""])));
@@ -38,7 +38,7 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
     if (!r.ok) setMsg(j.error ?? "Could not save that");
     return r.ok ? j : null;
   };
-  const save = async (t: RateType, on: boolean, patch: { expenses?: string } = {}) => {
+  const save = async (t: RateType, on: boolean, patch: { expenses?: string; offersOverride?: boolean | null } = {}) => {
     setMsg(null);
     const n = Number(rate[t.id]);
     const h = Number(hrs[t.id]);
@@ -46,7 +46,7 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
     if (!j) return;
     setSvc((m) => {
       const next = { ...m };
-      if (on && j.service) next[t.id] = { ...next[t.id], id: j.service.id, serviceTypeId: t.id, rateCents: j.service.rateCents, unit: j.service.unit, published: j.service.published, expenses: j.service.expenses, hoursIncluded: j.service.hoursIncluded };
+      if (on && j.service) next[t.id] = { ...next[t.id], id: j.service.id, serviceTypeId: t.id, rateCents: j.service.rateCents, unit: j.service.unit, published: j.service.published, expenses: j.service.expenses, hoursIncluded: j.service.hoursIncluded, offersOverride: j.service.offersOverride };
       else delete next[t.id];
       return next;
     });
@@ -149,6 +149,13 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
               <span data-buyers-see className={on ? "col-start-2 text-[13px] md:col-start-auto" : "col-start-2 text-[13px] text-ink-3 md:col-start-auto"}>
                 {on ? see ?? "Add a rate" : "Hidden until on"}
                 {s?.published ? <span className="ml-1.5 inline-block border border-ink px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em]">LIVE</span> : on && s?.rateCents != null ? <span data-draft className="ml-1.5 inline-block border border-dashed border-ink-3 px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em] text-ink-2">DRAFT</span> : null}
+                {/* Lane 7: this Service's own Open to Offers (else the seller's switch). */}
+                {s && (
+                  <label className="mt-1 flex items-center gap-1.5 text-[12px] text-ink-2" data-service-offers>
+                    <input type="checkbox" checked={s.offersOverride ?? openToOffers} onChange={(e) => save(t, true, { offersOverride: e.target.checked === openToOffers ? null : e.target.checked })} className="h-3.5 w-3.5 accent-ink" />
+                    Open to offers
+                  </label>
+                )}
                 {multiProvider && s && (
                   <button type="button" onClick={() => override(t, s)} data-override-rate className="block text-[12px] font-semibold text-magenta-dark underline underline-offset-4">
                     {s.overrideCents != null ? `Your rate $${s.overrideCents / 100}` : "Override My Rate"}

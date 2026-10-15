@@ -32,12 +32,13 @@ export async function addServiceType(name: string, personId: string) {
   return prisma.serviceType.create({ data: { name: clean, created_by_person_id: personId, status: "SUGGESTED" } });
 }
 
-export type CatalogService = { id: string; name: string; typeName: string | null; rateCents: number; uom: string; published: boolean; terms: string | null; expenses: string | null; hoursIncluded: number | null };
+export type CatalogService = { id: string; name: string; typeName: string | null; rateCents: number; uom: string; published: boolean; terms: string | null; expenses: string | null; hoursIncluded: number | null; openToOffers: boolean; offersOverride: boolean | null };
 
 /** CAT-E001: services on a profile — the owner sees drafts too; visitors only published. */
 export async function catalogServicesFor(profileId: string, owner: boolean): Promise<CatalogService[]> {
   const raw = await prisma.providerService.findMany({ where: { provider_profile_id: profileId, active: true, rate_cents: { not: null }, ...(owner ? {} : { published_at: { not: null } }) }, orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] });
-  const rows = await effectiveRates((await prisma.providerProfile.findUnique({ where: { id: profileId }, select: { person_id: true } }))?.person_id ?? null, raw);
+  const pp = await prisma.providerProfile.findUnique({ where: { id: profileId }, select: { person_id: true, open_to_offers: true } });
+  const rows = await effectiveRates(pp?.person_id ?? null, raw);
   const types = new Map((await prisma.serviceType.findMany({ where: { id: { in: rows.map((r) => r.service_type_id).filter((x): x is string => !!x) } }, select: { id: true, name: true } })).map((t) => [t.id, t.name]));
-  return rows.map((r) => ({ id: r.id, name: r.name, typeName: r.service_type_id ? types.get(r.service_type_id) ?? null : null, rateCents: r.rate_cents ?? 0, uom: r.uom ?? "HOUR", published: !!r.published_at, terms: termsLine(r), expenses: r.expenses, hoursIncluded: r.hours_included }));
+  return rows.map((r) => ({ id: r.id, name: r.name, typeName: r.service_type_id ? types.get(r.service_type_id) ?? null : null, rateCents: r.rate_cents ?? 0, uom: r.uom ?? "HOUR", published: !!r.published_at, terms: termsLine(r), expenses: r.expenses, hoursIncluded: r.hours_included, openToOffers: r.offers_override ?? !!pp?.open_to_offers, offersOverride: r.offers_override }));
 }
