@@ -168,7 +168,7 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
     throw new OnboardingError(
       match.kind === "tin"
         ? "This tax ID is already registered to a company on Panameer. Ask its admin to add you instead."
-        : `${match.companyName} is already on Panameer. Search for it and ask to join instead.`,
+        : `${match.companyName} is already on Panameer. Ask to join and we'll let its admin know.`,
       "INVALID"
     );
   }
@@ -768,6 +768,20 @@ export async function findWebsiteMatch(viewer: Viewer, raw: string) {
     select: { id: true, name: true, logo_url: true },
   });
   return { domain, freeMail: false, match: hit ? { id: hit.id, name: hit.name, logoUrl: hit.logo_url } : null };
+}
+
+/** BC-E005: at registration — the company already here for this website, else for the registrant's email domain. */
+export async function findRegistrationMatch(viewer: Viewer, raw: string) {
+  const web = raw.trim() ? await findWebsiteMatch(viewer, raw) : null;
+  if (web?.match) return { ...web, reason: "website" as const };
+  const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { company_id: true, user: { select: { email: true } } } });
+  const domain = await matchableEmailDomain(emailDomain(person?.user?.email));
+  if (!domain) return { domain: web?.domain ?? null, freeMail: web?.freeMail ?? false, match: null, reason: null };
+  const hit = await prisma.company.findFirst({
+    where: { archived_at: null, OR: [{ website_domain: domain }, { email_domain: domain }], memberships: { some: { status: "APPROVED" } }, ...(person ? { id: { not: person.company_id } } : {}) },
+    select: { id: true, name: true, logo_url: true },
+  });
+  return { domain, freeMail: false, match: hit ? { id: hit.id, name: hit.name, logoUrl: hit.logo_url } : null, reason: hit ? ("email" as const) : null };
 }
 
 /** Withdraw your own pending request to join a company. */
