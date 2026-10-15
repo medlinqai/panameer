@@ -82,7 +82,7 @@ export async function lifecycleForUser(userId: string) {
 export async function buyerOrderChecklist(companyId: string) {
   const c = await prisma.company.findUnique({
     where: { id: companyId },
-    select: { name: true, legal_name: true, invoice_email: true, sites: { select: { addresses: { select: { line1: true }, take: 1 } } } },
+    select: { name: true, legal_name: true, invoice_email: true, sites: { select: { addresses: { where: { is_bill_to: true }, select: { line1: true }, take: 1 } } } },
   });
   if (!c) return null;
   const items = [

@@ -507,6 +507,11 @@ model Address {
   /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
   /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
   country_code String? @db.VarChar(2)
+  /// LS-E001 (Oracle site uses): what the address is used for.
+  is_corporate Boolean  @default(false)
+  is_bill_to   Boolean  @default(false)
+  is_ship_to   Boolean  @default(false)
+  is_remit_to  Boolean  @default(false)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 

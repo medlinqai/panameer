@@ -846,6 +846,10 @@ export async function saveRegisteredAddress(companyId: string, reg: { line1?: st
       state: reg.state?.trim() || null,
       postal_code: reg.postalCode?.trim() || null,
       ...countryColumns(reg.country),
+      // LS-E001: the registered address is the company's corporate, bill-to and ship-to address.
+      is_corporate: true,
+      is_bill_to: true,
+      is_ship_to: true,
     };
     const site =
       (await prisma.site.findFirst({
