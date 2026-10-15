@@ -448,13 +448,13 @@ export default function RequesterStepsPage() {
             </div>
           ) : (
             <>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-3">
               <Field label="Company Name *">
-                <TextInput value={draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" />
+                <TextInput value={draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" className="sm:max-w-[50%]" />
               </Field>
               <Field label="Website">
                 <div className="flex gap-2">
-                  <TextInput value={draft.coWebsite} onChange={(e) => { edit({ coWebsite: e.target.value }); setCoMatch(null); }} onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
+                  <TextInput value={draft.coWebsite} onChange={(e) => { edit({ coWebsite: e.target.value }); setCoMatch(null); }} className="sm:max-w-[50%]" onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
                   <button type="button" data-request-access disabled={!coMatch || busy} onClick={() => void askToJoin()} className="shrink-0 bg-ink px-4 text-[13.5px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-30">Request Access</button>
                 </div>
               </Field>
