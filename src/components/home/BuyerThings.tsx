@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { BookOpen, Briefcase, MessageSquareQuote, Tag, Users } from "lucide-react";
+import { menuFor, type MenuHint } from "@/lib/menu-hint";
+import { MenuClause } from "@/components/home/MenuChip";
 
 // BD-E004: the buyer's five things — one whole-card link each; a magenta icon tile and a small drawn cue that says what's inside.
+// DC-E003: titles and "Go to {menu}" buttons; each goes where its menu item goes. Estimates is Shop's My Estimates tab.
 const THINGS = [
-  { key: "connect", icon: Users, cue: "people", title: "Connect with Other Buyers & Colleagues", line: "Meet people who buy what you buy, and bring in the colleagues you work with.", cta: "Find People", href: "/connect/community" },
-  { key: "learn", icon: BookOpen, cue: "book", title: "Learn About Skills", line: "Free courses on the skills and systems you're buying, so you know what good looks like.", cta: "Start Learning", href: "/learn" },
-  { key: "post", icon: Briefcase, cue: "brief", title: "Post Jobs", line: "Describe the work once. Providers send proposals; you pick who to hire.", cta: "Post a Job", href: "/create-work" },
-  { key: "shop", icon: Tag, cue: "tag", title: "Shop for Products & Services", line: "Fixed-price service products and providers' rates, ready to order.", cta: "Go Shopping", href: "/shop" },
-  { key: "estimate", icon: MessageSquareQuote, cue: "quote", title: "Request an Estimate", line: "Ask a provider for a price on exactly what you need.", cta: "Request an Estimate", href: "/estimates" },
+  { key: "connect", icon: Users, cue: "people", title: "Connect with Colleagues", line: "Meet people who buy what you buy, and the colleagues you work with.", cta: "Go to Connect", href: "/connect", menu: "/connect" },
+  { key: "learn", icon: BookOpen, cue: "book", title: "Learn from Experts", line: "Free courses on the skills and systems you're buying.", cta: "Go to Learn", href: "/learn", menu: "/learn" },
+  { key: "post", icon: Briefcase, cue: "brief", title: "Hire Experts", line: "Post a job; providers send proposals and you pick who to hire.", cta: "Go to Hire", href: "/hire", menu: "/hire" },
+  { key: "shop", icon: Tag, cue: "tag", title: "Shop Products", line: "Fixed-price service products and providers' rates, ready to order.", cta: "Go to Shop", href: "/shop", menu: "/shop" },
+  { key: "estimate", icon: MessageSquareQuote, cue: "quote", title: "Get an Estimate", line: "Ask a provider for a price on exactly what you need.", cta: "Go to Estimates", href: "/estimates", menu: "/shop" },
 ] as const;
+const hintFor = (menu: string): MenuHint | null => menuFor(menu, "buyer");
 
 /** Small line drawings in brand ink and magenta — decorative, hidden from screen readers. */
 function Cue({ kind }: { kind: (typeof THINGS)[number]["cue"] }) {
@@ -82,7 +86,10 @@ export function BuyerThings() {
                 <Cue kind={t.cue} />
               </span>
               <b className="mt-5 block text-[18px] font-extrabold leading-snug text-ink">{t.title}</b>
-              <span className="mt-2 block flex-1 text-[14.5px] leading-relaxed text-ink-2">{t.line}</span>
+              <span className="mt-2 block flex-1 text-[14.5px] leading-relaxed text-ink-2">
+                {t.line}
+                <MenuClause hint={hintFor(t.menu)} />
+              </span>
               <span className="mt-5 inline-flex min-h-[44px] items-center self-start bg-ink px-5 text-[14px] font-bold text-surface transition-colors group-hover:bg-magenta-dark">{t.cta}</span>
             </Link>
           </li>
