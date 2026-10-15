@@ -81,8 +81,8 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
             <h2 className="flex items-center gap-1.5 text-[17px] font-bold">{ROAD_TITLE} <LifecycleHelp /></h2>
             <span className="text-[11px] font-bold tracking-[0.1em] text-ink-2">STEP {path.current + 1} OF {path.steps.length}</span>
           </div>
-          <div className="mt-3 hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>
-          <div className="mt-4 sm:hidden"><RoadStepper current={path.current} /></div>
+          <div className="mt-3 hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} waiting={path.waiting} /></div></div>
+          <div className="mt-4 sm:hidden"><RoadStepper current={path.current} waiting={path.waiting} /></div>
           <p className="mt-2 text-[13.5px] text-ink-2">Learn, Connect and Build Your Catalog are open now.</p>
         </div>
       )}
@@ -135,23 +135,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
         </>
       )}
 
-      <h2 className="mt-8 text-[17px] font-bold">Waiting on You</h2>
-      <ul className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {waiting.map((w) => {
-          const I = ICON[w.icon as keyof typeof ICON];
-          return (
-            <li key={w.key}>
-              <Link href={w.href} data-waiting={w.key} className={"flex h-full items-center gap-3 border p-3 hover:bg-surface-hover " + (w.problem ? "border-[#b26b00]" : "border-line")}>
-                <I className={"h-5 w-5 shrink-0 " + (w.problem ? "text-[#b26b00]" : "text-ink-2")} aria-hidden />
-                <span className="min-w-0">
-                  <b className={"block text-[18px] leading-tight " + (w.problem ? "text-[#b26b00]" : "")}>{w.value}</b>
-                  <span className="block truncate text-[12px] text-ink-2">{w.label}</span>
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      {/* Scott 10-15: like the buyer dashboard — greeting, road, cards. No Waiting on You below. */}
     </section>
   );
 }

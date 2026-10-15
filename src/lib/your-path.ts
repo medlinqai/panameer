@@ -59,7 +59,8 @@ export async function lifecycleFor(personId: string) {
   ]);
   const liveRates = provider && p.providerProfile ? await prisma.providerService.count({ where: { provider_profile_id: p.providerProfile.id, active: true, published_at: { not: null }, rate_cents: { not: null } } }) : 0;
   const facts: LifecycleFacts = {
-    register: !!m,
+    // Scott 10-15: like the buyer road — sign-up done (company linked or asked to join, or email already verified) = stop 1 done.
+    register: !!m || pending || !!p.user?.email_verified,
     verify: !!p.user?.email_verified,
     profile: provider ? (p.providerProfile?.completeness ?? 0) >= VISIBILITY_THRESHOLD : !!p.requesterProfile?.completed_at,
     link: !!m,
@@ -84,7 +85,7 @@ export async function lifecycleFor(personId: string) {
     const buyerFacts: LifecycleFacts = { link: !!m || pending, find: jobs + wrs + estimates + orders > 0, order: orders > 0, approve: approved > 0, pay: paid > 0 };
     return { steps: BUYER_ROAD, road: "buyer" as const, ...lifecycleStatus(buyerFacts, BUYER_ROAD), waiting: pending ? { key: "link", label: "Waiting for approval" } : null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
   }
-  return { steps: PROVIDER_ROAD, road: "provider" as const, ...lifecycleStatus(facts, PROVIDER_ROAD), waiting: null as { key: string; label: string } | null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
+  return { steps: PROVIDER_ROAD, road: "provider" as const, ...lifecycleStatus(facts, PROVIDER_ROAD), waiting: (pending ? { key: "register", label: "Waiting for approval" } : null) as { key: string; label: string } | null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
 }
 
 export async function lifecycleForUser(userId: string) {

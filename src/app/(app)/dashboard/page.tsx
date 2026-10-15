@@ -80,11 +80,7 @@ export default async function DashboardPage({
           <PublishedDialog />
         </Suspense>
 
-        {}
-        <AttentionStrip
-          cards={attention.cards}
-          completeness={providerProfile.completeness}
-        />
+        {/* Scott 10-15: nothing below the cards (same as the buyer dashboard). */}
 
         {/* Find Work feed hidden here (lives at /find-work). */}
         {false && <WorkFeed tab={tab} query={query} cards={cards} />}
