@@ -734,14 +734,30 @@ export async function requestDomainJoin(userId: string): Promise<{ companyId: st
 }
 
 /** People tab (company v3): an admin makes a member an admin, or removes a member. Admin rows are left alone. */
-export async function changeMember(viewer: Viewer, membershipId: string, action: "make_admin" | "remove") {
+export async function changeMember(viewer: Viewer, membershipId: string, action: "make_admin" | "remove" | "hand_over" | "step_down") {
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   if (!me) throw new OnboardingError("No person record", "INVALID");
   const target = await prisma.companyMembership.findUnique({ where: { id: membershipId }, select: { id: true, company_id: true, person_id: true, role: true, status: true } });
   if (!target || target.status !== "APPROVED") throw new OnboardingError("That member is no longer here", "INVALID");
   const isAdmin = await prisma.companyMembership.findFirst({ where: { person_id: me.id, company_id: target.company_id, role: "ADMIN", status: "APPROVED" }, select: { id: true } });
   if (!isAdmin) throw new OnboardingError("Only a company admin can change members", "GATE_UNMET");
+  // BC-E006: step down (own row) once another admin exists; a company always keeps ≥1 admin.
+  if (action === "step_down") {
+    if (target.person_id !== me.id) throw new OnboardingError("You can only step down yourself", "INVALID");
+    const admins = await prisma.companyMembership.count({ where: { company_id: target.company_id, role: "ADMIN", status: "APPROVED" } });
+    if (admins < 2) throw new OnboardingError("Make someone else an admin first — a company always keeps an admin", "INVALID");
+    await prisma.companyMembership.update({ where: { id: target.id }, data: { role: "MEMBER" } });
+    return { ok: true as const };
+  }
   if (target.person_id === me.id || target.role === "ADMIN") throw new OnboardingError("Admins can't be changed here", "INVALID");
+  // BC-E006: hand over admin — they become admin and you step down, together.
+  if (action === "hand_over") {
+    await prisma.$transaction([
+      prisma.companyMembership.update({ where: { id: target.id }, data: { role: "ADMIN" } }),
+      prisma.companyMembership.update({ where: { id: isAdmin.id }, data: { role: "MEMBER" } }),
+    ]);
+    return { ok: true as const };
+  }
   if (action === "make_admin") await prisma.companyMembership.update({ where: { id: target.id }, data: { role: "ADMIN" } });
   else await prisma.companyMembership.update({ where: { id: target.id }, data: { status: "REJECTED", decided_at: new Date(), decided_by_person_id: me.id } });
   return { ok: true as const };

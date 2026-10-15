@@ -91,7 +91,9 @@ export async function CompanyPeople({ viewer, binding }: { viewer: Viewer; bindi
         <div className="mt-2">
           {members.map((m) => {
             const name = `${m.person.first_name ?? ""} ${m.person.last_name ?? ""}`.trim() || "(unnamed)";
-            const canChange = admin && m.role !== "ADMIN" && m.person.user_id !== viewer.userId;
+            const self = m.person.user_id === viewer.userId;
+            const canChange = admin && m.role !== "ADMIN" && !self;
+            const canStepDown = admin && self && m.role === "ADMIN" && members.filter((x) => x.role === "ADMIN").length > 1;
             return (
               <div key={m.id} data-member={m.role} className="grid grid-cols-[40px_1fr_auto] items-center gap-x-3 gap-y-2 border-b border-line/60 py-3">
                 <span className={"grid h-10 w-10 place-items-center rounded-full text-[13px] font-bold " + (m.role === "ADMIN" ? "bg-ink text-surface" : "bg-[#cfc9db] text-ink")}>
@@ -102,9 +104,9 @@ export async function CompanyPeople({ viewer, binding }: { viewer: Viewer; bindi
                   {m.person.title && <span className="block truncate text-[12.5px] text-ink-3">{m.person.title}</span>}
                 </span>
                 <span className="border border-current px-[7px] text-[10.5px] font-bold tracking-[0.06em] text-ink-2">{m.role === "ADMIN" ? "ADMIN" : "MEMBER"}</span>
-                {canChange && (
+                {(canChange || canStepDown) && (
                   <span className="col-span-3 sm:col-span-1 sm:col-start-3 sm:justify-self-end">
-                    <MemberActions membershipId={m.id} name={name} />
+                    <MemberActions membershipId={m.id} name={name} self={self} canStepDown={canStepDown} />
                   </span>
                 )}
               </div>
