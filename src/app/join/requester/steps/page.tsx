@@ -264,7 +264,8 @@ export default function RequesterStepsPage() {
   const workIdx = REQUESTER_WORK_STEPS.indexOf(step as (typeof REQUESTER_WORK_STEPS)[number]);
   const shell = {
     rail: { steps: railSteps, current: step === "review" ? railSteps.length : workIdx, reached: furthest, onPick: (i: number) => { setFromReview(false); setError(null); setStep(i >= REQUESTER_WORK_STEPS.length ? "review" : REQUESTER_WORK_STEPS[i]); } },
-    eyebrow: step === "review" ? "Review" : `Step ${workIdx + 1} of ${railSteps.length} · ${REQUESTER_STEP_LABELS[step]}`,
+    // SO-E003: four steps on the rail (Review included), so "of 4".
+    eyebrow: step === "review" ? `Step ${railSteps.length + 1} of ${railSteps.length + 1} · Review` : `Step ${workIdx + 1} of ${railSteps.length + 1} · ${REQUESTER_STEP_LABELS[step]}`,
     busy,
     onBack: back,
     canBack: fromReview || idx > 0,

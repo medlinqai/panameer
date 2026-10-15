@@ -11,7 +11,7 @@ import { AiLine } from "@/components/onboarding/AiLine";
 import { formatCents } from "@/lib/display";
 import { Avatar } from "@/components/Avatar";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
-import { SellerRegistration, SELLER_RAIL, sellerRegistrationDone } from "@/components/onboarding/SellerRegistration";
+
 import {
   canSignUp,
   SignUpForm,
@@ -120,7 +120,7 @@ import { formatPhone, isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/ph
 // Every screen this wizard can RENDER. The counted itinerary is a subset and
 // imported above — the section route names the same steps when it saves, so the
 // It has to ask the question WITHOUT touching `RECRUITER_STEPS`
-type Screen = "signup" | "register_company" | "check_email" | "work_method" | Step;
+type Screen = "signup" | "check_email" | "work_method" | Step;
 
 /** The review screen's in-place editors WS-1). Each value names a */
 type EditSection =
@@ -503,8 +503,14 @@ setScreen(target);
         }
         hydrate(s);
         if (!s.emailVerified) {
-          // SR-E004: a refresh returns to the step they were on; Check Your Email once Review is done.
-          setScreen(token || (s.hasCompany && sellerRegistrationDone()) ? "check_email" : "register_company");
+          // SO-E001: Verify Your Email comes right after Sign Up (as buyers).
+          setScreen("check_email");
+        } else if (!token && !(await fetch("/api/onboarding/provider/registration").then((x) => (x.ok ? x.json() : null)).then((g) => {
+          // SO-E003/E005: not registered yet → the start page, or the step they stopped at.
+          if (g && !g.registered) { router.replace(g.step ? "/join/provider/register" : "/join/provider/start"); return false; }
+          return true;
+        }).catch(() => true))) {
+          return;
         } else if (!s.profile?.workMethod) {
           // Only if the silent save failed.
           setScreen("work_method");
@@ -802,8 +808,8 @@ setScreen(target);
         lastName: acct.lastName,
         address: emptyAddress(acct.country),
       }));
-      // RD-E001: company at Register — an invited provider joins the coordinator's company instead.
-      goTo(inviteToken ? "check_email" : "register_company");
+      // SO-E001: Verify Your Email right after Sign Up (as buyers).
+      goTo("check_email");
     } catch {
       // THERE WAS NO `catch`
       // THIS ONE IS SIGNUP. A silent failure here is A REGISTRATION WALL —
@@ -976,62 +982,31 @@ setScreen(target);
         </OnboardingShell>
       );
     }
-    return (
-      <WizardShell
-        rail={{ steps: SELLER_RAIL, current: 0, reached: signedUp ? 1 : 0, onPick: (i) => i > 0 && goTo("register_company") }}
-        eyebrow="Step 1 of 3 · Seller"
-        title={signedUp ? "You're signed up" : "Sign Up to Sell Services and/or Service Products"}
-        subtitle={signedUp ? undefined : "Your name, email and a password. Your company comes next."}
-        canBack
-        onBack={() => router.push("/join")}
-        continueLabel={signedUp ? "Next: Company" : busy ? "Creating…" : "Create My Account"}
-        continueDisabled={signedUp ? false : !canSignUp(acct) || busy}
-        onContinue={signedUp ? () => goTo("register_company") : createAccount}
-        busy={busy}
-      >
-        {inviteCtx && (
-          <div className="mb-4 max-w-xl">
-            <Notice tone="info">
-              <b>{inviteCtx.coordinatorName}</b> invited you to join Panameer.
-            </Notice>
-          </div>
-        )}
-        {signedUp ? (
-          <p className="text-[15px] text-ink-2">Your account is <b className="text-ink">{email}</b>. Carry on with your company.</p>
-        ) : (
-          <SignUpForm
-            title=""
-            values={acct}
-            onChange={(patch) => setAcct((a) => ({ ...a, ...patch }))}
-            error={error}
-            emailLocked={!!inviteToken}
-            // EXPLICIT, AND IT IS LOAD-BEARING , 2026-08-30).
-            callbackUrl="/join/provider"
-            hideCountry
-          />
-        )}
-      </WizardShell>
-    );
-  }
-
-  if (screen === "register_company") {
-    return <SellerRegistration onDone={() => goTo("check_email")} onSeller={() => goTo("signup")} onLeave={() => router.push("/dashboard")} />;
+    return null;
   }
 
   if (screen === "check_email") {
-    // After Review: no step bar, the same left-aligned shell.
+    // SO-E001: the buyer's Verify Your Email screen, word for word; verified → the seller start page.
     return (
-      <WizardShell title="Verify Your Email" subtitle="Click the link we sent to finish signing up." hideFooter onboardingChrome>
-        <div className="max-w-md">
-          <VerifyGate
-            email={email}
-            onEmailChange={setEmail}
-            statusUrl="/api/onboarding/status"
-            onVerified={() => router.push("/join/provider/path")}
-            initialDevLink={devLink}
-          />
+      <OnboardingShell contentWidth="max-w-md">
+        <div>
+          <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">Verify Your Email</h1>
+          {error && (
+            <div className="mt-6">
+              <Notice>{error}</Notice>
+            </div>
+          )}
+          <div className="mt-6">
+            <VerifyGate
+              email={email}
+              onEmailChange={setEmail}
+              statusUrl="/api/onboarding/status"
+              initialDevLink={devLink}
+              onVerified={() => router.push("/join/provider/start")}
+            />
+          </div>
         </div>
-      </WizardShell>
+      </OnboardingShell>
     );
   }
 
@@ -1159,7 +1134,7 @@ setScreen(target);
         ? () => goTo("tell_us")
         : stepIndex > 0
           ? goBack
-          : () => router.push("/join/provider/path"),
+          : () => router.push("/dashboard"),
     canBack: true,
     // SCOTT, 2026-09-10: *"'Finish Later' — do it."* WS-2 stopped here
     leaveLabel: "Finish later",

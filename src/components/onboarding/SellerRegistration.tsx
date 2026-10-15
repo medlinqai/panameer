@@ -9,38 +9,36 @@ import { CompanyIdentityFields, findCoMatch, type CoMatch } from "@/components/o
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
 import { countryName } from "@/lib/country";
+import { PersonFields, personComplete, type PersonValues } from "@/components/onboarding/PersonFields";
+import { parseStoredPhone, toE164 } from "@/lib/phone";
 
-// SR-E001–E005: seller sign-up after the Seller page — Company · Locations · Review, the buyer's shell and pieces.
+// SO-E003: seller registration after Verify + the start page — Who Is Selling? · Company · Locations · Review, the buyer's shell and pieces.
 export const SELLER_RAIL = [
   { key: "seller", label: "Seller" },
   { key: "company", label: "Company" },
   { key: "locations", label: "Locations" },
 ];
-const STEPS = ["company", "locations", "review"] as const;
+const STEPS = ["seller", "company", "locations", "review"] as const;
 type Step = (typeof STEPS)[number];
-const KEY = "pm-seller-reg-step";
 const DESCRIPTION_MAX = 600;
 
 type Reg = {
   email: string;
   name?: string;
+  seller: PersonValues;
+  step: Step | null;
+  registered: boolean;
   company: null | { status: "APPROVED" | "PENDING"; owner: boolean; id?: string; name: string; legalName?: string; website?: string; description?: string; businessTypeIds?: string[] };
   locations: (LocRow & { id: string })[];
   own: (LocationValue & { line1?: string | null }) | null;
 };
 
-const store = {
-  get: () => { try { return localStorage.getItem(KEY); } catch { return null; } },
-  set: (v: string) => { try { localStorage.setItem(KEY, v); } catch {} },
-};
-
-/** Has the seller finished Review (→ Check Your Email on a refresh)? */
-export const sellerRegistrationDone = () => store.get() === "done";
-
-export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () => void; onSeller: () => void; onLeave: () => void }) {
+export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; onLeave: () => void }) {
   const [ready, setReady] = useState(false);
-  const [step, setStep] = useState<Step>("company");
-  const [reached, setReached] = useState(1);
+  const [step, setStep] = useState<Step>("seller");
+  const [reached, setReached] = useState(0);
+  const [person, setPerson] = useState<PersonValues>({ firstName: "", lastName: "", title: "", photoUrl: null, phone: "" });
+  const [phoneCountry, setPhoneCountry] = useState<string | null>(null);
   const [reg, setReg] = useState<Reg | null>(null);
   const [name, setName] = useState("");
   const [legal, setLegal] = useState("");
@@ -62,6 +60,8 @@ export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () =
     const r: Reg | null = await fetch("/api/onboarding/provider/registration").then((x) => (x.ok ? x.json() : null)).catch(() => null);
     if (!r) return null;
     setReg(r);
+    setPerson({ ...r.seller, phone: parseStoredPhone(r.seller.phone).display });
+    setPhoneCountry((pc) => pc ?? parseStoredPhone(r.seller.phone).country ?? null);
     const c = r.company;
     if (c?.status === "APPROVED") {
       setName(c.name);
@@ -81,13 +81,13 @@ export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () =
         load(),
         fetch("/api/company/industries").then((x) => (x.ok ? x.json() : {})).then((b: { businessTypes?: BT[]; commodities?: string[] }) => { setTypes(b.businessTypes ?? []); setCommodities(b.commodities ?? []); if (b.businessTypes?.length === 1) setBusinessTypeId((v) => v || b.businessTypes![0].id); }).catch(() => {}),
       ]);
-      // Refresh returns to the step they were on: no company → Company; no addresses → Locations; else the saved step.
+      // Refresh returns to the step they were on (saved on the server), never past what's missing.
       const c = r?.company;
       const hasLocs = c?.owner ? r!.locations.some((l) => l.remitTo) : !!r?.own?.line1;
-      const saved = store.get() as Step | "done" | null;
-      const s: Step = !c ? "company" : !hasLocs ? "locations" : saved && saved !== "done" && STEPS.includes(saved) ? saved : "review";
+      const saved: Step = r?.step && STEPS.includes(r.step) ? r.step : "seller";
+      const s: Step = saved === "seller" ? "seller" : !c ? "company" : !hasLocs && saved === "review" ? "locations" : saved;
       setStep(s);
-      setReached(STEPS.indexOf(s) + 1);
+      setReached(STEPS.indexOf(s));
       if (!c) setMatch(await findCoMatch(""));
       setReady(true);
     })();
@@ -96,8 +96,8 @@ export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () =
   const go = (s: Step) => {
     setError(null);
     setStep(s);
-    store.set(s);
-    setReached((n) => Math.max(n, STEPS.indexOf(s) + 1));
+    setReached((n) => Math.max(n, STEPS.indexOf(s)));
+    void fetch("/api/onboarding/provider/registration", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ step: s }) }).catch(() => {});
   };
 
   const post = async (url: string, method: string, body: object) => {
@@ -113,11 +113,12 @@ export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () =
   const owner = !!c?.owner;
   const idx = STEPS.indexOf(step);
   const shell = {
-    rail: { steps: SELLER_RAIL, current: idx + 1, reached, onPick: (i: number) => (i === 0 ? onSeller() : go(STEPS[i - 1])) },
-    eyebrow: step === "review" ? "Review" : `Step ${idx + 2} of 3 · ${SELLER_RAIL[idx + 1].label}`,
+    rail: { steps: SELLER_RAIL, current: idx, reached, onPick: (i: number) => go(STEPS[i]) },
+    // SO-E003: four steps on the rail, so "of 4".
+    eyebrow: `Step ${idx + 1} of 4 · ${step === "review" ? "Review" : SELLER_RAIL[idx].label}`,
     busy,
-    canBack: true,
-    onBack: () => (idx === 0 ? onSeller() : go(STEPS[idx - 1])),
+    canBack: idx > 0,
+    onBack: idx > 0 ? () => go(STEPS[idx - 1]) : undefined,
     leaveLabel: "Finish later",
     onLeave,
   };
@@ -126,6 +127,38 @@ export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () =
     setError(null);
     try { await fn(); } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   };
+
+  // ---- Who Is Selling? (= the buyer's Who Is Buying?) ------------------------
+  if (step === "seller") {
+    const next = () => run(async () => {
+      await post("/api/onboarding/provider/registration", "POST", { seller: { firstName: person.firstName, lastName: person.lastName, title: person.title, phone: toE164(person.phone, phoneCountry) ?? person.phone } });
+      await load();
+      go("company");
+    });
+    return (
+      <WizardShell
+        {...shell}
+        title="Who Is Selling?"
+        subtitle="This is the person buyers see on your profile and on proposals."
+        continueLabel="Next: Company"
+        continueDisabled={!personComplete(person, phoneCountry)}
+        onContinue={next}
+      >
+        <div className="mx-auto w-full max-w-xl space-y-4" data-seller-person-step>
+          {error && <Notice>{error}</Notice>}
+          <PersonFields
+            values={person}
+            onChange={(patch) => setPerson((v) => ({ ...v, ...patch }))}
+            phoneCountry={phoneCountry}
+            onPhoneCountry={setPhoneCountry}
+            titleHint="What you do, in one line — for example, Oracle Procurement Consultant."
+            titlePlaceholder="Oracle Procurement Consultant"
+            photoLine="Buyers see this next to your name on your profile and proposals. A clear headshot gets a faster response than an empty circle."
+          />
+        </div>
+      </WizardShell>
+    );
+  }
 
   // ---- Company -------------------------------------------------------------
   if (step === "company") {
@@ -251,9 +284,11 @@ export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () =
   // ---- Review --------------------------------------------------------------
   const btName = types.find((t) => t.id === businessTypeId)?.name;
   const addr = (a: LocationValue) => [a.line1, a.city, a.state, a.postalCode, countryName(a.country, a.country)].filter(Boolean).join(", ") || "—";
-  const rows: { label: string; value: string; step: Step | "seller" }[] = [
-    ...(reg.name ? [{ label: "Name", value: reg.name, step: "seller" as const }] : []),
-    { label: "Email", value: reg.email, step: "seller" as const },
+  const rows: { label: string; value: string; step: Step }[] = [
+    { label: "Name", value: `${person.firstName} ${person.lastName}`.trim() || "—", step: "seller" },
+    { label: "Title", value: person.title || "—", step: "seller" },
+    { label: "Photo", value: person.photoUrl ? "Added" : "—", step: "seller" },
+    { label: "Phone", value: person.phone || "—", step: "seller" },
     { label: "Company", value: joining ? `${c?.name} (asked to join)` : [name, legal && legal !== name ? `Legal name ${legal}` : null, btName].filter(Boolean).join(" · "), step: "company" },
     ...(owner
       ? locs.map((l, i) => ({ label: locs.length > 1 ? `Location ${i + 1}` : "Location", value: locLine(l, { seller: true }), step: "locations" as Step }))
@@ -262,10 +297,10 @@ export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () =
   return (
     <WizardShell
       {...shell}
-      title="Check your details, then verify your email."
-      subtitle="Everything here is editable later. Next we email you a link; after it, you build your profile (résumé upload included)."
-      continueLabel="Continue to Verify Email"
-      onContinue={() => { store.set("done"); onDone(); }}
+      title="Here's your registration. Check it, then finish."
+      subtitle="Everything here is editable later. Next: get found by buyers, from your dashboard."
+      continueLabel="Finish"
+      onContinue={() => run(async () => { await post("/api/onboarding/provider/registration", "POST", { complete: true }); onDone(); })}
     >
       <div className="w-full max-w-2xl" data-seller-review>
         {error && <div className="mb-4"><Notice>{error}</Notice></div>}
@@ -274,7 +309,7 @@ export function SellerRegistration({ onDone, onSeller, onLeave }: { onDone: () =
             <div key={r.label} className="flex flex-wrap items-baseline gap-3 border-b border-line px-5 py-4 last:border-0">
               <dt className="w-40 shrink-0 text-[13.5px] font-bold uppercase tracking-wide text-ink-2">{r.label}</dt>
               <dd className="min-w-0 flex-1 text-[15.5px]">{r.value}</dd>
-              <button type="button" onClick={() => (r.step === "seller" ? onSeller() : go(r.step))} className="text-[13.5px] font-bold text-magenta hover:underline">Edit</button>
+              <button type="button" onClick={() => go(r.step)} className="text-[13.5px] font-bold text-magenta hover:underline">Edit</button>
             </div>
           ))}
         </dl>
