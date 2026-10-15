@@ -45,6 +45,9 @@ export async function makeOffer(
   input: { serviceProductId?: string | null; providerServiceId?: string | null; amountCents?: number | null; deliveryDate?: string | null; note?: string | null }
 ): Promise<{ id: string; offerNumber: string; status: "OPEN" | "DENIED"; message: string | null }> {
   const me = await ownPerson(viewer);
+  // Scott 10-15: an accepted offer becomes a Work Request line, and a work request is the company's — ask first, not at accept.
+  const co = await prisma.person.findUnique({ where: { id: me.id }, select: { company: { select: { p_account_id: true } } } });
+  if (!co?.company?.p_account_id) throw new SourcingError("Add your company before you make an offer.", "NO_COMPANY");
   const t = await loadTarget(input);
   if (t.sellerPersonId === me.id) throw new SourcingError("You can't make an offer on your own listing.", "OWN_PRODUCT");
   if (!t.open) throw new SourcingError("This listing isn't open to offers.", "NOT_OPEN_TO_OFFERS");

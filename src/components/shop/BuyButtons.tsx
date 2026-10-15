@@ -69,7 +69,7 @@ export function BuyButtons({ productId, signedIn, size = "md", openToOffers = fa
         </div>
       )}
       {offer.sent && <p role="status" data-offer-sent className="w-full text-[13px] font-semibold">{offer.sent} <Link href="/estimates#offers" className="text-magenta-dark underline">My Offers</Link></p>}
-      {error && <p role="alert" className="w-full text-[13px] font-semibold text-magenta-dark">{error}</p>}
+      {error && <p role="alert" className="w-full text-[13px] font-semibold text-magenta-dark">{error}{/add your company/i.test(error) && <> <Link href="/company?join=1#join" className="underline">Add Your Company</Link></>}</p>}
     </div>
   );
 }
