@@ -270,6 +270,10 @@ export function AccountMenu({
               </span>
             )}
           </span>
+          {/* SO-E004: a seller who hasn't gone live yet. */}
+          {me?.providerProfile && !me.providerProfile.published && (
+            <span data-not-live className="ml-2 hidden border border-magenta px-1.5 py-px text-[11px] font-bold text-magenta-dark sm:inline">Not live yet</span>
+          )}
         </button>
       )}
 

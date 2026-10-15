@@ -30,7 +30,7 @@ export async function lifecycleFor(personId: string) {
     select: {
       is_service_provider: true,
       user: { select: { email_verified: true } },
-      providerProfile: { select: { id: true, completeness: true, _count: { select: { serviceProducts: { where: { status: "PUBLISHED" } } } } } },
+      providerProfile: { select: { id: true, completeness: true, onboarding_completed_at: true, _count: { select: { serviceProducts: { where: { status: "PUBLISHED" } } } } } },
       requesterProfile: { select: { completed_at: true } },
       companyMemberships: { where: { status: "APPROVED" }, select: { company_id: true, role: true, company: { select: { p_account_id: true } } }, take: 1 },
       _count: { select: { companyMemberships: { where: { status: "PENDING" } } } },
@@ -85,7 +85,10 @@ export async function lifecycleFor(personId: string) {
     const buyerFacts: LifecycleFacts = { link: !!m || pending, find: jobs + wrs + estimates + orders > 0, order: orders > 0, approve: approved > 0, pay: paid > 0 };
     return { steps: BUYER_ROAD, road: "buyer" as const, ...lifecycleStatus(buyerFacts, BUYER_ROAD), waiting: pending ? { key: "link", label: "Waiting for approval" } : null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
   }
-  return { steps: PROVIDER_ROAD, road: "provider" as const, ...lifecycleStatus(facts, PROVIDER_ROAD), waiting: (pending ? { key: "register", label: "Waiting for approval" } : null) as { key: string; label: string } | null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
+  // SO-E004: until they're live, stops 3 (profile) and 4 (products & services) point at the Get Found run.
+  const live = !!p.providerProfile?.onboarding_completed_at;
+  const road = live ? PROVIDER_ROAD : PROVIDER_ROAD.map((s) => (s.key === "profile" || s.key === "list" ? { ...s, href: "/join/provider", next: "Get Found" } : s));
+  return { steps: road, road: "provider" as const, ...lifecycleStatus(facts, PROVIDER_ROAD), waiting: (pending ? { key: "register", label: "Waiting for approval" } : null) as { key: string; label: string } | null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
 }
 
 export async function lifecycleForUser(userId: string) {

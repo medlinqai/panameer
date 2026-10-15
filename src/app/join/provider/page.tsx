@@ -18,6 +18,7 @@ import {
   type SignUpValues,
 } from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import { GetFoundRates, GoLiveRates } from "@/components/onboarding/GetFoundRates";
 // WS-B) — 's disambiguation belongs with the picker that
 import { isSkillShown } from "@/lib/shown-skills";
 /* THE ONE DEFINITION of the five proficiencies (`E723`, `E585`). */
@@ -133,6 +134,15 @@ type EditSection =
   | "specializations"
   | "education"
   | "location";
+
+/** SO-E004: Title, Photo and Phone came from "Who Is Selling?" — those steps skip (still editable on Go Live). */
+function skippedSteps(s: StatusPayload): Set<Step> {
+  const pf = s.profile;
+  return new Set<Step>([
+    ...(pf?.headline?.trim() ? (["title"] as Step[]) : []),
+    ...(pf?.photoUrl && pf?.phone && pf?.address?.line1 ? (["picture"] as Step[]) : []),
+  ]);
+}
 
 /** Provider journey (10). The server sends the real list; this is the fallback. */
 const DEFAULT_STEPS: readonly Step[] = ALL_STEPS;
@@ -374,7 +384,8 @@ export default function JoinProviderPage() {
   // The server owns profile state; every save returns the fresh snapshot and
   // we re-seed local form state from it rather than guessing what changed.
   const hydrate = useCallback((s: StatusPayload) => {
-    if (s.steps?.length) setSteps(s.steps);
+    const skip = skippedSteps(s);
+    if (s.steps?.length) setSteps(s.steps.filter((st) => !skip.has(st as Step)) as Step[]);
     if (s.displayTotalSteps) setWizardTotal(s.displayTotalSteps);
     if (typeof s.isRecruiter === "boolean") setIsRecruiter(s.isRecruiter);
     const p = s.profile;
@@ -406,9 +417,14 @@ export default function JoinProviderPage() {
       // The uncounted-but-renderable screens. `page.tsx` keeps its own
       "tell_us" as Step,
     ]);
+    const skip = skippedSteps(s);
+    const order = (s.steps ?? DEFAULT_STEPS) as Step[];
+    let resume = s.resumeStep as Step;
+    // A skipped step resumes at the next one that isn't.
+    while (skip.has(resume) && order.indexOf(resume) >= 0 && order.indexOf(resume) < order.length - 1) resume = order[order.indexOf(resume) + 1];
     const target = jumpable.has(requested as Step)
       ? (requested as Step)
-      : (s.resumeStep as Step);
+      : resume;
     // E118 — the profile view's edit links can ask for the same
     // jump-and-return the review's pencils get, so editing from the live
     // profile doesn't dump you into the middle of the wizard either.
@@ -1099,24 +1115,22 @@ setScreen(target);
   const labels = STEP_LABELS[screen as Step];
   const nextStep = stepIndex >= 0 ? steps[stepIndex + 1] : undefined;
   // One count everywhere (2026-10-05): Résumé + the member's own itinerary; Review after, unnumbered.
-  const railKeys = ["tell_us", ...steps.filter((s) => s !== "finish")] as Step[];
-  const railSteps = railKeys.map((k) => ({ key: k, label: RAIL_LABELS[k] ?? STEP_LABELS[k]?.stepper ?? k }));
-  const railIndex = screen === "finish" ? railKeys.length : railKeys.indexOf(screen as Step);
-  const railNext = railIndex >= 0 && railIndex < railKeys.length ? railKeys[railIndex + 1] : undefined;
+  // SO-E004 Get Found: one run in three parts — Profile (résumé, roles, skills…) · Rates · Go Live.
+  const GET_FOUND = [{ key: "profile", label: "Profile" }, { key: "rates", label: "Rates" }, { key: "live", label: "Go Live" }];
+  const phaseOf = (k: Step) => (k === "finish" ? 2 : k === "rate" ? 1 : 0);
+  const inRun = screen === "tell_us" || screen === "finish" || stepIndex >= 0;
+  const railIndex = inRun ? phaseOf(screen as Step) : -1;
+  const firstOfPhase = (i: number): Step => (i === 0 ? "tell_us" : i === 1 ? "rate" : "finish");
+  const upcoming = stepIndex >= 0 ? steps[stepIndex + 1] : screen === "tell_us" ? steps[0] : undefined;
   const nextLabel =
     screen === "finish"
-      ? "Publish Profile"
-      : railNext
-        ? `Next: ${RAIL_LABELS[railNext] ?? STEP_LABELS[railNext].stepper}`
-        : "Next: Review";
+      ? "Go Live"
+      : upcoming && phaseOf(upcoming) !== railIndex
+        ? `Next: ${GET_FOUND[phaseOf(upcoming)].label}`
+        : "Next";
   const shell = (props: Partial<React.ComponentProps<typeof WizardShell>> & { title: string }) => ({
-    rail: railIndex >= 0 ? { steps: railSteps, current: railIndex, onPick: (i: number) => { setReturnToReview(false); goTo(railKeys[i]); } } : undefined,
-    eyebrow:
-      screen === "finish"
-        ? "Review"
-        : railIndex >= 0
-          ? `Step ${railIndex + 1} of ${railKeys.length} · ${railSteps[railIndex].label}`
-          : undefined,
+    rail: railIndex >= 0 ? { steps: GET_FOUND, current: railIndex, review: false, onPick: (i: number) => { setReturnToReview(false); goTo(firstOfPhase(i)); } } : undefined,
+    eyebrow: railIndex >= 0 ? `Step ${railIndex + 1} of 3 · ${GET_FOUND[railIndex].label}` : undefined,
     onboardingChrome: true,
     step: stepNumber,
     totalSteps: wizardTotal,
@@ -1975,17 +1989,24 @@ setScreen(target);
 
     // ---- 11/12 — Rate (E018, "You'll Get") -----------------------------
     case "rate": {
+      // SO-E004: Your Rates = My Catalog › Services' rates table; Next needs at least one rate.
+      const saveRates = async () => {
+        setError(null);
+        const r = await fetch("/api/onboarding/provider/rates", { method: "POST" }).catch(() => null);
+        if (!r?.ok) return setError(((await r?.json().catch(() => ({}))) as { error?: string })?.error ?? "Could not save your rates.");
+        goNext();
+      };
       return (
         <WizardShell
           {...shell({
-            title: "What do you charge?",
-            subtitle: "Set one or both. You can change them any time.",
-            onContinue: rateEditing().save,
-            continueDisabled: !rateEditing().canSave,
+            title: "Your Rates",
+            subtitle: "Turn on the rates you offer and set what you charge. Changes save as you go.",
+            onContinue: saveRates,
+            wide: true,
           })}
         >
           {error && <Notice>{error}</Notice>}
-          {rateEditing().body}
+          <GetFoundRates />
         </WizardShell>
       );
     }
@@ -2265,8 +2286,8 @@ setScreen(target);
       return (
         <WizardShell
           {...shell({
-            title: "Here's your profile. Check it, then publish.",
-            subtitle: "This is what buyers will see. Edit any line before you go live.",
+            title: "Go Live",
+            subtitle: "Your profile as buyers see it, and your rates. Edit any line, then go live.",
             wide: true,
             onContinue: publish,
             // The gate itself is unchanged and still enforced server-side by
@@ -2275,6 +2296,7 @@ setScreen(target);
             continueDisabled: busy || errors.length > 0,
           })}
         >
+          <GoLiveRates onEdit={() => { setReturnToReview(true); goTo("rate"); }} />
           {error && <Notice>{error}</Notice>}
 
           {/* WS5 / E181 — THE BIG SUGGESTIONS PANEL IS GONE. */}

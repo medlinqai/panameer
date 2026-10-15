@@ -45,6 +45,9 @@ export async function POST(req: Request) {
     const seller = p.data.seller || (await isSellerCompany(binding.company.id));
     const buys = (await prisma.companyMembership.count({ where: { company_id: binding.company.id, status: "APPROVED", person: { requesterProfile: { isNot: null } } } })) > 0;
     const locations = await saveCompanyLocations(binding.company.id, p.data.locations, { seller, buyer: buys || !seller });
+    // The person's own address (publishing reads it): the first company address, if they have none yet.
+    const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, site_id: true } });
+    if (me && !me.site_id && locations[0]) await prisma.person.update({ where: { id: me.id }, data: { site_id: locations[0].siteId } });
     return NextResponse.json({ ok: true, locations });
   } catch (e) {
     if (e instanceof OnboardingError) return NextResponse.json({ error: e.message }, { status: 400 });

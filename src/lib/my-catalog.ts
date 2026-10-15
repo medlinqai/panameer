@@ -9,7 +9,12 @@ import { termsLine } from "@/lib/billing-terms";
 /** CAT-E004 / RD-E003: publishing needs no Panameer review, only a linked company (validation waits until payment). */
 export async function publishGate(personId: string): Promise<{ ok: boolean; href: string; reason: string | null }> {
   const m = await prisma.companyMembership.findFirst({ where: { person_id: personId, status: "APPROVED" }, select: { company_id: true } });
-  if (!m) return { ok: false, href: "/company?join=1#join", reason: "Add your company first." };
+  if (!m) {
+    // SO-E004: a pending joiner is told why.
+    const pending = await prisma.companyMembership.findFirst({ where: { person_id: personId, status: "PENDING" }, select: { company: { select: { name: true } } } });
+    if (pending) return { ok: false, href: "/company", reason: `${pending.company.name}'s admin hasn't approved you yet — you can go live once they do.` };
+    return { ok: false, href: "/company?join=1#join", reason: "Add your company first." };
+  }
   // IN-E002: professional sellers name an industry before publishing.
   const pp = await prisma.providerProfile.findUnique({ where: { person_id: personId }, select: { id: true } });
   if (pp && (await industryGap(personId, pp.id))) return { ok: false, href: "/profile#industries", reason: "Add the industries you've worked in." };

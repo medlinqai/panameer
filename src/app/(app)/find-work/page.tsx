@@ -28,15 +28,22 @@ export default async function FindWorkPage({
   const profile = viewer
     ? await prisma.providerProfile.findFirst({
         where: ownedProviderProfile(viewer),
-        select: { id: true, person_id: true },
+        select: { id: true, person_id: true, onboarding_completed_at: true },
       })
     : null;
+  // SO-E004: browsing is open; proposals wait for Go Live.
+  const notLive = profile && !profile.onboarding_completed_at ? (
+    <p data-not-live-jobs className="mb-4 border-l-2 border-magenta py-1 pl-3 text-[14px]">
+      Finish Get Found to send proposals. <a href="/join/provider" className="font-bold text-magenta-dark underline underline-offset-4">Start</a>
+    </p>
+  ) : null;
 
   // WS-E003: no tab = Work Home.
   if (!sp.tab && !query && !Object.keys(sp).length && profile) {
     const [home, best] = await Promise.all([workHome(profile.person_id), getWorkFeed({ tab: "best", profileId: profile.id, personId: profile.person_id })]);
     return (
       <div className="mx-auto w-full max-w-6xl">
+        {notLive}
         <WorkHome home={home} best={best} />
       </div>
     );
@@ -52,6 +59,7 @@ export default async function FindWorkPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl">
+      {notLive}
       <WorkFeed tab={tab} query={query} cards={cards} basePath="/find-work" filters={await workFilterDefs(sp)} />
     </div>
   );
