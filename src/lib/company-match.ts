@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { websiteDomain, tinDigits } from "@/lib/company-fields";
 import { isWorkDomain } from "@/lib/tos";
+import { neverMatchDomains } from "@/lib/platform-settings";
 
 // Same website domain, same tax ID digits or same email domain = same company (Scott 2026-10-05).
 export type CompanyMatch = { kind: "website" | "email" | "tin"; companyId: string; companyName: string };
@@ -27,10 +28,13 @@ export async function findCompanyMatch(
     select: { id: true, name: true, website: true, website_domain: true, email_domain: true, tin: true, tin_digits: true },
     take: 500,
   });
+  // Scott 10-15: a company's stored email domain on the never-match list (e.g. panameer.com, every test account) never matches.
+  const never = new Set((await neverMatchDomains()).map((d) => d.toLowerCase()));
   for (const r of rows) {
     const rDomain = r.website_domain ?? websiteDomain(r.website);
-    if (domain && (rDomain === domain || r.email_domain === domain)) return { kind: "website", companyId: r.id, companyName: r.name };
-    if (email && (rDomain === email || r.email_domain === email)) return { kind: "email", companyId: r.id, companyName: r.name };
+    const rEmail = r.email_domain && !never.has(r.email_domain.toLowerCase()) ? r.email_domain : null;
+    if (domain && (rDomain === domain || rEmail === domain)) return { kind: "website", companyId: r.id, companyName: r.name };
+    if (email && (rDomain === email || rEmail === email)) return { kind: "email", companyId: r.id, companyName: r.name };
   }
   if (tin) {
     const t = rows.find((r) => (r.tin_digits ?? tinDigits(r.tin)) === tin);
