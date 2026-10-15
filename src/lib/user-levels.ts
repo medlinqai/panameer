@@ -150,7 +150,7 @@ export const BUYER_ROAD: LifecycleStep[] = [
   { key: "link", phase: "join", step: "Add Your Company", status: "Linked", who: "you", gate: false, desc: "Add your company, or ask to join it if it's already here. Its admin approves you.", href: "/company?join=1#join", next: "Add Your Company", time: "1 min" },
   { key: "find", phase: "win", lines: ["Post", "a Job", "or Shop"], step: "Post a Job or Shop", status: "Sourcing", who: "you", gate: false, desc: "Post a job for proposals, shop products and rates, or ask a provider for an estimate.", href: "/hire", next: "Post a Job or Shop", time: "minutes" },
   { key: "order", phase: "win", lines: ["Hire", "Your", "Provider"], step: "Hire Your Provider", status: "Hired", who: "both", gate: false, desc: "Hire from a job's proposals or submit your work request: one work order per provider. Ordering needs your company's legal name, billing address and invoice email.", href: "/hire", next: "Hire Your Provider", time: "5 min" },
-  { key: "approve", phase: "win", step: "Approve the Work", status: "Approved", who: "you", gate: false, desc: "Accept the deliverable or approve the timesheet.", href: "/orders", next: "Approve the Work", time: "per work order" },
+  { key: "approve", phase: "win", step: "Approve the Delivery", status: "Approved", who: "you", gate: false, desc: "Accept the deliverable, or approve the timesheet for time-based work.", href: "/orders", next: "Approve the Delivery", time: "per work order" },
   { key: "pay", phase: "paid", step: "Pay the Invoice", status: "Paid", who: "company", gate: false, desc: "Pay the payment request. Panameer pays the provider's company.", href: "/pay", next: "Pay the Invoice", time: "automatic" },
 ];
 
