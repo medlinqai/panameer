@@ -774,6 +774,13 @@ async function leaveOldCompanies(personId: string, keepCompanyId: string) {
 }
 
 /** Website-first join: the company already on Panameer for this website (never matched on tax ID here). */
+/** Scott 10-15: who a join request goes to — the company's first admin, "Scott W." */
+async function adminNameOf(companyId: string): Promise<string | null> {
+  const m = await prisma.companyMembership.findFirst({ where: { company_id: companyId, role: "ADMIN", status: "APPROVED" }, orderBy: { created_at: "asc" }, select: { person: { select: { first_name: true, last_name: true } } } });
+  if (!m?.person) return null;
+  return [m.person.first_name, m.person.last_name ? `${m.person.last_name[0]}.` : ""].filter(Boolean).join(" ") || null;
+}
+
 export async function findWebsiteMatch(viewer: Viewer, raw: string) {
   const domain = websiteDomain(raw);
   if (!domain) return { domain: null, freeMail: false, match: null };
@@ -782,7 +789,7 @@ export async function findWebsiteMatch(viewer: Viewer, raw: string) {
   // Scott 10-15: the SAME rule the save uses (findCompanyMatch) — two rules gave a red error with no Ask to Join.
   const m = await findCompanyMatch(person?.company_id ?? null, { website: domain });
   const hit = m ? await prisma.company.findFirst({ where: { id: m.companyId, archived_at: null }, select: { id: true, name: true, logo_url: true } }) : null;
-  return { domain, freeMail: false, match: hit ? { id: hit.id, name: hit.name, logoUrl: hit.logo_url } : null };
+  return { domain, freeMail: false, match: hit ? { id: hit.id, name: hit.name, logoUrl: hit.logo_url, adminName: await adminNameOf(hit.id) } : null };
 }
 
 /** BC-E005: at registration — the company already here for this website, else for the registrant's email domain. */
@@ -794,7 +801,7 @@ export async function findRegistrationMatch(viewer: Viewer, raw: string) {
   if (!domain) return { domain: web?.domain ?? null, freeMail: web?.freeMail ?? false, match: null, reason: null };
   const m = await findCompanyMatch(person?.company_id ?? null, { emailDomain: domain });
   const hit = m ? await prisma.company.findFirst({ where: { id: m.companyId, archived_at: null }, select: { id: true, name: true, logo_url: true } }) : null;
-  return { domain, freeMail: false, match: hit ? { id: hit.id, name: hit.name, logoUrl: hit.logo_url } : null, reason: hit ? ("email" as const) : null };
+  return { domain, freeMail: false, match: hit ? { id: hit.id, name: hit.name, logoUrl: hit.logo_url, adminName: await adminNameOf(hit.id) } : null, reason: hit ? ("email" as const) : null };
 }
 
 /** Withdraw your own pending request to join a company. */

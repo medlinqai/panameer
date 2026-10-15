@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { useCallback, useEffect, useState } from "react";
 import { countryName } from "@/lib/country";
@@ -77,7 +78,7 @@ const EMPTY: Draft = {
   email: "",
 };
 
-type CoMatch = { id: string; name: string; why: string; byEmail: boolean } | null;
+type CoMatch = { id: string; name: string; why: string; byEmail: boolean; admin: string | null } | null;
 
 export default function RequesterStepsPage() {
   const router = useRouter();
@@ -92,11 +93,12 @@ export default function RequesterStepsPage() {
   const [phoneCountry, setPhoneCountry] = useState<string | null>(null);
   const [industries, setIndustries] = useState<{ id: string; name: string }[]>([]);
   const [coMatch, setCoMatch] = useState<CoMatch>(null);
+  const [askedAdmin, setAskedAdmin] = useState<string | null>(null);
 
   // BC-E005: the company already here for the website or the registrant's email domain.
   const checkMatch = useCallback(async (site: string): Promise<CoMatch> => {
     const b = await fetch(`/api/company/match?email=1&site=${encodeURIComponent(site.trim())}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-    const m = b?.match ? { id: b.match.id as string, name: b.match.name as string, byEmail: b.reason === "email", why: b.reason === "email" ? `your email is @${b.domain}` : `its website is ${b.domain}` } : null;
+    const m = b?.match ? { id: b.match.id as string, name: b.match.name as string, byEmail: b.reason === "email", why: b.reason === "email" ? `your email is @${b.domain}` : `its website is ${b.domain}`, admin: (b.match.adminName as string | null) ?? null } : null;
     setCoMatch(m);
     return m;
   }, []);
@@ -396,14 +398,16 @@ export default function RequesterStepsPage() {
       } finally {
         setBusy(false);
       }
+      setAskedAdmin(coMatch.admin);
       setCoMatch(null);
-      await save({ companyBound: true }, after);
+      // Stay on the step so they see who was asked; Next carries on to Location.
+      await save({ companyBound: true });
     };
     const submitCompany = async () => {
       if (coMatch) return askToJoin();
       if (joining) return save({ companyBound: true }, after);
       const unchanged = draft.companyBound && draft.coName.trim() === draft.companyName.trim() && !draft.coWebsite.trim();
-      // Scott 10-15: check for an existing company only when they press Next, then show the join screen.
+      // Scott 10-15: a match found only now lights up Request Access; nothing else moves.
       if (!unchanged && (await checkMatch(draft.coWebsite))) return;
       if (!unchanged) {
         setBusy(true);
@@ -431,34 +435,35 @@ export default function RequesterStepsPage() {
         {...shell}
         title="Which company are you buying for?"
         subtitle="Your company's details, entered once. They're also your billing details when you order."
-        continueLabel={coMatch ? "Ask to Join & Continue" : nextLabel}
+        continueLabel={nextLabel}
         continueDisabled={coMatch ? false : joining ? false : draft.coName.trim().length < 2 || !addrOk || !emailOk}
         onContinue={submitCompany}
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-buyer-company-step>
           {error && <Notice>{error}</Notice>}
           {joining ? (
-            <Notice>You&apos;ve asked to join <b>{draft.companyName}</b>. Its address and industry are already on Panameer.</Notice>
+            <div data-join-requested className="border border-line bg-white p-4 text-[14px]">
+              <p>Request sent. We asked {askedAdmin ? <b>{askedAdmin}</b> : "the admin"} at <b>{draft.companyName}</b> to approve you, and we&apos;ll email you when they do. Keep going while you wait; ordering opens once they approve.</p>
+              <p className="mt-2 text-[13px] text-ink-2">Wrong person, or not your company? <Link href="/support/bug" className="font-semibold text-magenta-dark underline underline-offset-4">Message Support</Link></p>
+            </div>
           ) : (
             <>
-              {!coMatch && (
               <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Company Name *">
                 <TextInput value={draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" />
               </Field>
               <Field label="Website">
-                <TextInput value={draft.coWebsite} onChange={(e) => edit({ coWebsite: e.target.value })} placeholder="acme.com" autoComplete="url" />
+                <div className="flex gap-2">
+                  <TextInput value={draft.coWebsite} onChange={(e) => { edit({ coWebsite: e.target.value }); setCoMatch(null); }} onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
+                  <button type="button" data-request-access disabled={!coMatch || busy} onClick={() => void askToJoin()} className="shrink-0 bg-ink px-4 text-[13.5px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-30">Request Access</button>
+                </div>
               </Field>
               </div>
-              )}
               {coMatch && (
-            <div className="border border-line bg-white p-4" data-company-match>
-              <p className="text-[15px]"><b>{coMatch.name}</b> is already on Panameer. Ask to join and we&apos;ll let its admin know.</p>
-              <p className="mt-1 text-[13px] text-ink-2">We matched it because {coMatch.why}. Keep going while you wait. Only submitting an order waits for the admin.</p>
-              <button type="button" onClick={() => setCoMatch(null)} className="mt-2 text-[13.5px] font-semibold underline underline-offset-4">{coMatch.byEmail ? "Go Back and Edit" : "Not My Company? Go Back and Change the Website"}</button>
-            </div>
-          )}
-              {!coMatch && (<>
+                <p data-company-match className="-mt-1 border-l-2 border-magenta pl-3 text-[13px] text-ink-2">
+                  <b className="text-ink">{coMatch.name}</b> is already on Panameer ({coMatch.why}). <b>Request Access</b> and we&apos;ll ask {coMatch.admin ? <b className="text-ink">{coMatch.admin}</b> : "its admin"} to approve you. You can keep going while you wait.
+                </p>
+              )}
               <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Industry">
                 <select aria-label="Industry" value={draft.coIndustryId} onChange={(e) => edit({ coIndustryId: e.target.value })} className="h-11 w-full border border-line bg-surface px-3 text-[15px] text-ink">
@@ -476,7 +481,6 @@ export default function RequesterStepsPage() {
               </div>
 
               <p className="text-[12.5px] text-ink-2">By continuing you confirm you can add this company and accept the company terms. No tax ID or W-9 is needed to buy.</p>
-              </>)}
             </>
           )}
         </div>
