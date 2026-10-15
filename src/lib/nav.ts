@@ -111,8 +111,9 @@ export const REQUESTER_NAV: NavItem[] = [
   { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
-    label: "Jobs",
-    heading: "Jobs",
+    // DC-E003: buyers see this section as Hire (sellers see Jobs).
+    label: "Hire",
+    heading: "Hire",
     href: "/hire",
     icon: "ClipboardList",
     requires: "canHireTalent",
