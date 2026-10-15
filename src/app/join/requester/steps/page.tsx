@@ -258,7 +258,7 @@ export default function RequesterStepsPage() {
   const railSteps = REQUESTER_WORK_STEPS.map((k) => ({ key: k, label: REQUESTER_STEP_LABELS[k] }));
   const workIdx = REQUESTER_WORK_STEPS.indexOf(step as (typeof REQUESTER_WORK_STEPS)[number]);
   const shell = {
-    rail: { steps: railSteps, current: step === "review" ? railSteps.length : workIdx },
+    rail: { steps: railSteps, current: step === "review" ? railSteps.length : workIdx, onPick: (i: number) => { setFromReview(false); setError(null); setStep(REQUESTER_WORK_STEPS[i]); } },
     eyebrow: step === "review" ? "Review" : `Step ${workIdx + 1} of ${railSteps.length} · ${REQUESTER_STEP_LABELS[step]}`,
     busy,
     onBack: back,

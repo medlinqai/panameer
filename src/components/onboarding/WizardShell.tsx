@@ -70,7 +70,7 @@ export function WizardShell({
   frameClassName?: string;
   chrome?: boolean;
   /** Onboarding frame (2026-10-05): step rail, "Step N of M · Name" eyebrow, slim bar. */
-  rail?: { steps: RailStep[]; current: number; review?: boolean };
+  rail?: { steps: RailStep[]; current: number; review?: boolean; onPick?: (index: number) => void };
   eyebrow?: string;
   /** "From your résumé: …" — magenta left rule, no box. */
   aiLine?: ReactNode;
@@ -153,7 +153,7 @@ export function WizardShell({
       {rail && <ScrollTop k={`${rail.current}:${title}`} />}
       {rail && (
         <div className="-mt-4 mb-5 sm:-mt-6">
-          <StepRail steps={rail.steps} current={rail.current} review={rail.review ?? true} />
+          <StepRail steps={rail.steps} current={rail.current} review={rail.review ?? true} onPick={rail.onPick} />
           {eyebrow && (
             <p data-step-eyebrow className="mt-5 text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">
               {eyebrow}

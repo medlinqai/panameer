@@ -1106,7 +1106,7 @@ setScreen(target);
         ? `Next: ${RAIL_LABELS[railNext] ?? STEP_LABELS[railNext].stepper}`
         : "Next: Review";
   const shell = (props: Partial<React.ComponentProps<typeof WizardShell>> & { title: string }) => ({
-    rail: railIndex >= 0 ? { steps: railSteps, current: railIndex } : undefined,
+    rail: railIndex >= 0 ? { steps: railSteps, current: railIndex, onPick: (i: number) => { setReturnToReview(false); goTo(railKeys[i]); } } : undefined,
     eyebrow:
       screen === "finish"
         ? "Review"
