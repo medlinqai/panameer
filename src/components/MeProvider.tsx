@@ -45,17 +45,23 @@ export function MeProvider({ children }: { children: React.ReactNode }) {
       });
   }, []);
 
+  const last = useRef(0);
   useEffect(() => {
     alive.current = true;
+    last.current = Date.now();
     load();
-    // Counts stay live: refetch every 30s while visible and when the tab regains focus.
-    const tick = () => document.visibilityState === "visible" && load();
-    const t = window.setInterval(tick, 30_000);
-    window.addEventListener("focus", load);
+    // DC-E005: once per page, then only when the tab comes back into view after ≥15s (some browsers fire focus constantly).
+    const back = () => {
+      if (document.visibilityState !== "visible" || Date.now() - last.current < 15_000) return;
+      last.current = Date.now();
+      load();
+    };
+    document.addEventListener("visibilitychange", back);
+    window.addEventListener("focus", back);
     return () => {
       alive.current = false;
-      window.clearInterval(t);
-      window.removeEventListener("focus", load);
+      document.removeEventListener("visibilitychange", back);
+      window.removeEventListener("focus", back);
     };
   }, [load]);
 
