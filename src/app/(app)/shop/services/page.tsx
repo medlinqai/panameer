@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { prisma } from "@/lib/prisma";
 import { taxonomyV2 } from "@/lib/platform-settings";
-import { listServiceProviders, servicesFilterOptions, type ServicesQuery } from "@/lib/shop-services";
+import { attributeFilterOptions, listServiceProviders, servicesFilterOptions, type ServicesQuery } from "@/lib/shop-services";
+import { HelpTip } from "@/components/ui/HelpTip";
+import { fieldHelp } from "@/lib/field-guide";
 import { ShopTabs } from "@/components/shop/ShopTabs";
 import { FilterBar, type FilterDef } from "@/components/casing/FilterBar";
 
@@ -17,19 +19,25 @@ export default async function Page({ searchParams }: { searchParams: Promise<Ser
   const viewer = await memberOrPublicTwin("/shop");
   const sp = await searchParams;
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
-  const [rows, o] = await Promise.all([listServiceProviders(sp, { includeTestPersonId: me?.id ?? null }), servicesFilterOptions()]);
+  const [rows, o, attrs] = await Promise.all([listServiceProviders(sp, { includeTestPersonId: me?.id ?? null }), servicesFilterOptions(), attributeFilterOptions()]);
   const filters: FilterDef[] = [
     { key: "mode", label: "How They Work", options: [{ value: "IMPLEMENT", label: "Implement" }, { value: "SUPPORT", label: "Support" }, { value: "OPERATE", label: "Do the Work" }] },
     { key: "process", label: "Process", options: o.processes.map((p) => ({ value: p, label: p })) },
     { key: "domain", label: "Capability Domain", options: o.domains.filter((d) => !sp.process || d.process === sp.process).map((d) => ({ value: d.id, label: d.name, group: d.process })) },
     { key: "industry", label: "Industry", options: (await prisma.specialization.findMany({ where: { kind: "INDUSTRY", status: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true } })).map((i) => ({ value: i.id, label: i.name })) },
+    ...attrs.map((a) => ({ key: `a_${a.id}`, label: a.label, options: a.values.map((v) => ({ value: v, label: v })) })),
     { key: "vendor", label: "Vendor", options: o.vendors.map((v) => ({ value: v.id, label: v.name })) },
     { key: "product", label: "Product", options: o.products.filter((p) => !sp.vendor || p.vendor.id === sp.vendor).map((p) => ({ value: p.id, label: `${p.vendor.name} ${p.name}` })) },
   ];
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl" data-shop-services>
       <ShopTabs services />
-      <h1 className="mb-3 mt-2 text-[24px] font-bold">Services</h1>
+      <h1 className="mb-1 mt-2 text-[24px] font-bold">Services</h1>
+      <p className="mb-3 flex flex-wrap items-center gap-x-4 text-[13px] text-ink-2" data-buyer-help>
+        <span className="inline-flex items-center">How they work · what they know<HelpTip label="What I Do" text={fieldHelp("What I Do", "buyer")} /></span>
+        <span className="inline-flex items-center">Industry<HelpTip label="Industry" text={fieldHelp("Industry", "buyer")} /></span>
+        <span className="inline-flex items-center">Trade filters<HelpTip label="Attributes" text={fieldHelp("Attributes", "buyer")} /></span>
+      </p>
       <Suspense>
         <FilterBar placeholder="Search providers…" filters={filters} />
       </Suspense>

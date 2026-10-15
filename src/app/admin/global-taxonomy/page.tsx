@@ -10,7 +10,8 @@ export const metadata = { title: "Global Taxonomy · Admin · Panameer" };
 export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string; unlinked?: string }> }) {
   await guardPage("canAdminister");
   const { tab: raw, unlinked } = await searchParams;
-  const tab = raw === "systems" || raw === "work" ? raw : "knowledge";
+  const tab = raw === "systems" || raw === "work" || raw === "attributes" ? raw : "knowledge";
+  const attributes = tab === "attributes" ? await prisma.businessTypeAttribute.findMany({ orderBy: [{ businessType: { commodityGroup: { sort_order: "asc" } } }, { businessType: { sort_order: "asc" } }, { sort_order: "asc" }], select: { id: true, name: true, choices: true, list: true, hidden: true, businessType: { select: { name: true, commodityGroup: { select: { name: true } } } } } }) : [];
   const [on, domains, items, roles] = await Promise.all([
     taxonomyV2(),
     prisma.domain.findMany({ orderBy: [{ process: "asc" }, { sort_order: "asc" }, { name: "asc" }], select: { id: true, process: true, name: true, origin: true, knowledgeSkills: { orderBy: { name: "asc" }, select: { id: true, name: true, hidden: true } } } }),
@@ -25,6 +26,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
       </p>
       <GlobalTaxonomyAdmin
         tab={tab}
+        attributes={attributes.map((a) => ({ id: a.id, name: a.name, choices: a.choices, list: a.list, hidden: a.hidden, businessType: a.businessType.name, commodity: a.businessType.commodityGroup?.name ?? "" }))}
         unlinkedOnly={!!unlinked}
         domains={domains.map((d) => ({ id: d.id, process: d.process, name: d.name, gt: !!d.origin, skills: d.knowledgeSkills }))}
         items={items.map((i) => ({ id: i.id, name: i.name, kind: i.kind, hidden: i.hidden, domainId: i.domain_id, product: i.product.name, vendor: i.product.vendor.name }))}

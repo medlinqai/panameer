@@ -9,6 +9,7 @@ import { readTimeRemaining, READ_BUDGET_MS } from "@/lib/resume/budget";
 import { splitCertificationName } from "@/lib/resume/certification-names";
 import { markResumePrefill } from "@/lib/resume/prefill";
 import { capabilitiesFromSkills } from "@/lib/capabilities";
+import { capabilitiesFromSpecializations } from "@/lib/spec-to-capability";
 import { prisma } from "@/lib/prisma";
 import { extractText, ExtractError } from "@/lib/resume/extract";
 import { parseResume, type ParsedResume } from "@/lib/resume/parse";
@@ -766,6 +767,7 @@ export async function applyParsedResume(
 
   // GT-E004: matching above is unchanged; behind taxonomy_v2 the matched skills also become unconfirmed capabilities.
   await capabilitiesFromSkills(profileId, capPicks).catch(() => 0);
+  await capabilitiesFromSpecializations(profileId).catch(() => 0);
   await markResumePrefill(profileId, applied, text);
   return applied;
 }

@@ -21,14 +21,17 @@ const INCLUDE = {
   domain: { select: { id: true, process: true, name: true } },
   knowledgeSkill: { select: { id: true, name: true } },
   systemItem: { select: { id: true, name: true, product: { select: { name: true, vendor: { select: { name: true } } } } } },
+  systemProduct: { select: { id: true, name: true, vendor: { select: { name: true } } } },
   workRole: { select: { id: true, name: true } },
 } as const;
+const productName = (p: { name: string; vendor: { name: string } }) => `${p.vendor.name === "Cross-Vendor" ? "" : `${p.vendor.name} `}${p.name}`.trim();
 
 type Row = Awaited<ReturnType<typeof prisma.providerCapability.findMany<{ include: typeof INCLUDE }>>>[number];
 
 /** "Supports Oracle Fusion Cloud Payables · Invoice Processing & Matching". */
 export function capabilityLine(c: Row): string {
-  const system = c.systemItem ? `${c.systemItem.product.vendor.name === "Cross-Vendor" ? "" : `${c.systemItem.product.vendor.name} `}${c.systemItem.product.name} ${c.systemItem.name}`.trim() : null;
+  // Lane 6: a product with no module ("Implements Oracle Fusion Cloud") comes from a Product specialization.
+  const system = c.systemItem ? `${productName(c.systemItem.product)} ${c.systemItem.name}`.trim() : c.systemProduct ? productName(c.systemProduct) : null;
   const what = [c.domain?.name, c.knowledgeSkill?.name].filter(Boolean).join(" › ");
   const head = system ? `${MODE_VERB[c.mode]} ${system}` : c.workRole ? `${c.workRole.name}` : what ? `${MODE_VERB[c.mode]} ${what}` : MODE_VERB[c.mode];
   const tail = system ? what : c.workRole ? what : "";
@@ -40,7 +43,7 @@ export async function capabilitiesFor(profileId: string) {
   return rows.map((c) => ({
     id: c.id, line: capabilityLine(c), mode: c.mode, source: c.source, confirmed: !!c.confirmed_at || c.source === "SELF",
     // For grouped display: "Implements · Oracle Fusion Cloud" › Procure-to-Pay › Purchase Orders.
-    system: c.systemItem ? `${c.systemItem.product.vendor.name === "Cross-Vendor" ? "" : `${c.systemItem.product.vendor.name} `}${c.systemItem.product.name}`.trim() : null,
+    system: c.systemItem ? productName(c.systemItem.product) : c.systemProduct ? productName(c.systemProduct) : null,
     process: c.domain?.process ?? null,
     label: c.systemItem?.name ?? c.workRole?.name ?? [c.domain?.name, c.knowledgeSkill?.name].filter(Boolean).join(" › ") ?? "",
   }));

@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { HelpTip } from "@/components/ui/HelpTip";
+import { fieldHelp } from "@/lib/field-guide";
 import { useState } from "react";
 
 // IN-E002: asked once, only of professional sellers with no industry yet.
@@ -19,7 +21,7 @@ export function IndustryAsk({ industries }: { industries: { id: string; name: st
   };
   return (
     <section id="industries" data-industry-ask className="mb-4 border-l-2 border-magenta bg-white py-3 pl-4 pr-3">
-      <h2 className="text-[16px] font-bold">Which industries have you worked in?</h2>
+      <h2 className="flex items-center text-[16px] font-bold">Which industries have you worked in?<HelpTip label="Industry" text={fieldHelp("Industry", "seller")} /></h2>
       <p className="text-[13px] text-ink-2">Buyers search by industry. Pick every one that fits — you need at least one to publish.</p>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {industries.map((i) => {

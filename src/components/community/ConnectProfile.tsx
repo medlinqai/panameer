@@ -818,13 +818,14 @@ export function ConnectProfile({
           id="specializations"
           // CLOSED AT LOAD , Scott 2026-09-30)
           open={false}
-          title="Specializations"
-          count={p.specializations.length}
+          title={whatIDo ? "Industries" : "Specializations"}
+          count={(whatIDo ? p.specializations.filter((s) => s.kind === "INDUSTRY") : p.specializations).length}
           showWhenEmpty={owner}
           action={owner ? <CleanEdit href={editHref("specializations")} title="Specializations" /> : undefined}
         >
           <p data-hint className="-mt-1 mb-2.5 text-[12.5px] text-ink-3">Areas of expertise, e.g., Procure-to-Pay, Coupa, Healthcare</p>
-          <SpecializationsBody specializations={p.specializations} chipClass={CLEAN_CHIP} />
+          {/* Lane 6: with What I Do on (taxonomy_v2), Product and Business Process move there; Industry stays. */}
+          <SpecializationsBody specializations={whatIDo ? p.specializations.filter((s) => s.kind === "INDUSTRY") : p.specializations} chipClass={CLEAN_CHIP} />
         </CleanSection>
 
         <CleanSection

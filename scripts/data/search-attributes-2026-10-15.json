@@ -1,0 +1,652 @@
+{
+ "source": "2. Claude Sub-Files/Panameer_Search_Attributes_2026-10-15.xlsx (draft, loaded as-is per Scott 10-15)",
+ "attributes": [
+  {
+   "commodity": "Professional Services",
+   "businessType": "Management Consulting",
+   "name": "Engagement size",
+   "list": null,
+   "choices": [
+    "Small (< $50K)",
+    "Mid",
+    "Large (> $500K)"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Professional Services",
+   "businessType": "Accounting",
+   "name": "Credential",
+   "list": null,
+   "choices": [
+    "CPA",
+    "CMA",
+    "EA",
+    "None"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Professional Services",
+   "businessType": "Accounting",
+   "name": "Licensed in (states)",
+   "list": "US_STATES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Professional Services",
+   "businessType": "Legal",
+   "name": "Practice area",
+   "list": null,
+   "choices": [
+    "Corporate",
+    "Contracts",
+    "Employment",
+    "IP",
+    "Litigation",
+    "Regulatory",
+    "Real Estate"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Professional Services",
+   "businessType": "Legal",
+   "name": "Bar admitted (states)",
+   "list": "US_STATES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Professional Services",
+   "businessType": "Human Resources",
+   "name": "Certification",
+   "list": null,
+   "choices": [
+    "SHRM",
+    "HRCI",
+    "None"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Professional Services",
+   "businessType": "Engineering",
+   "name": "Discipline",
+   "list": null,
+   "choices": [
+    "Civil",
+    "Mechanical",
+    "Electrical",
+    "Structural",
+    "Environmental",
+    "Software"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Professional Services",
+   "businessType": "Engineering",
+   "name": "PE licensed in (states)",
+   "list": "US_STATES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Technology",
+   "businessType": "IT Services & Support",
+   "name": "Support coverage",
+   "list": null,
+   "choices": [
+    "Business hours",
+    "24/7"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Technology",
+   "businessType": "IT Services & Support",
+   "name": "Certifications held",
+   "list": null,
+   "choices": [
+    "CompTIA",
+    "Microsoft",
+    "Cisco",
+    "AWS",
+    "Other"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Technology",
+   "businessType": "Software & SaaS",
+   "name": "Deployment",
+   "list": null,
+   "choices": [
+    "Cloud",
+    "On-premise",
+    "Hybrid"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Technology",
+   "businessType": "Cybersecurity",
+   "name": "Frameworks",
+   "list": null,
+   "choices": [
+    "SOC 2",
+    "ISO 27001",
+    "NIST",
+    "HIPAA",
+    "PCI"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Technology",
+   "businessType": "Cybersecurity",
+   "name": "Clearance held",
+   "list": null,
+   "choices": [
+    "None",
+    "Public Trust",
+    "Secret",
+    "Top Secret"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Technology",
+   "businessType": "Data & AI",
+   "name": "Platforms",
+   "list": null,
+   "choices": [
+    "Snowflake",
+    "Databricks",
+    "Power BI",
+    "Tableau",
+    "Azure",
+    "AWS",
+    "GCP"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Staffing & Contingent Labor",
+   "businessType": "Contract Staffing",
+   "name": "Worker types",
+   "list": null,
+   "choices": [
+    "IT",
+    "Finance",
+    "Admin",
+    "Industrial",
+    "Healthcare"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Staffing & Contingent Labor",
+   "businessType": "Recruiting",
+   "name": "Search type",
+   "list": null,
+   "choices": [
+    "Contingent",
+    "Retained"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Staffing & Contingent Labor",
+   "businessType": "Payroll & Employer Services",
+   "name": "Countries covered",
+   "list": "COUNTRIES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Marketing & Creative",
+   "businessType": "Digital Marketing",
+   "name": "Channels",
+   "list": null,
+   "choices": [
+    "SEO",
+    "Paid search",
+    "Social",
+    "Email"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Marketing & Creative",
+   "businessType": "Video & Photography",
+   "name": "Deliverables",
+   "list": null,
+   "choices": [
+    "Promo",
+    "Training",
+    "Event",
+    "Product"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Marketing & Creative",
+   "businessType": "Web Design & Development",
+   "name": "Platforms",
+   "list": null,
+   "choices": [
+    "WordPress",
+    "Webflow",
+    "Shopify",
+    "Custom"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Marketing & Creative",
+   "businessType": "Print & Promotional",
+   "name": "Turnaround",
+   "list": null,
+   "choices": [
+    "Standard",
+    "Rush"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "Janitorial & Cleaning",
+   "name": "Bonded & insured",
+   "list": null,
+   "choices": [
+    "Yes",
+    "No"
+   ],
+   "multi": false
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "Janitorial & Cleaning",
+   "name": "Facility types",
+   "list": null,
+   "choices": [
+    "Office",
+    "Medical",
+    "Industrial",
+    "Retail"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "Landscaping & Grounds",
+   "name": "Services",
+   "list": null,
+   "choices": [
+    "Mowing",
+    "Irrigation",
+    "Tree work",
+    "Snow removal"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "HVAC",
+   "name": "Licensed in (states)",
+   "list": "US_STATES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "HVAC",
+   "name": "Work type",
+   "list": null,
+   "choices": [
+    "Residential",
+    "Commercial",
+    "Industrial"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "Electrical",
+   "name": "Licensed in (states)",
+   "list": "US_STATES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "Electrical",
+   "name": "Work type",
+   "list": null,
+   "choices": [
+    "Residential",
+    "Commercial",
+    "Industrial"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "Plumbing",
+   "name": "Licensed in (states)",
+   "list": "US_STATES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "Plumbing",
+   "name": "Work type",
+   "list": null,
+   "choices": [
+    "Residential",
+    "Commercial"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "General Contracting & Repairs",
+   "name": "Licensed in (states)",
+   "list": "US_STATES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "General Contracting & Repairs",
+   "name": "Bonded & insured",
+   "list": null,
+   "choices": [
+    "Yes",
+    "No"
+   ],
+   "multi": false
+  },
+  {
+   "commodity": "Facilities & Property",
+   "businessType": "Pest Control",
+   "name": "Licensed in (states)",
+   "list": "US_STATES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Security",
+   "businessType": "Guard Services",
+   "name": "Licensed in (states)",
+   "list": "US_STATES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Security",
+   "businessType": "Guard Services",
+   "name": "Armed",
+   "list": null,
+   "choices": [
+    "Unarmed",
+    "Armed"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Security",
+   "businessType": "Alarms & Monitoring",
+   "name": "Licensed in (states)",
+   "list": "US_STATES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Security",
+   "businessType": "Cameras & Access Control",
+   "name": "Licensed in (states)",
+   "list": "US_STATES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Logistics & Transportation",
+   "businessType": "Freight & Trucking",
+   "name": "Equipment",
+   "list": null,
+   "choices": [
+    "Dry van",
+    "Reefer",
+    "Flatbed",
+    "LTL"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Logistics & Transportation",
+   "businessType": "Freight & Trucking",
+   "name": "Lanes",
+   "list": null,
+   "choices": [
+    "Local",
+    "Regional",
+    "National"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Logistics & Transportation",
+   "businessType": "Courier & Delivery",
+   "name": "Service area",
+   "list": "FREE",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Logistics & Transportation",
+   "businessType": "Warehousing & Fulfillment",
+   "name": "Climate controlled",
+   "list": null,
+   "choices": [
+    "Yes",
+    "No"
+   ],
+   "multi": false
+  },
+  {
+   "commodity": "Logistics & Transportation",
+   "businessType": "Moving & Relocation",
+   "name": "Move types",
+   "list": null,
+   "choices": [
+    "Office",
+    "Employee",
+    "International"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Fleet & Vehicles",
+   "businessType": "Fleet Maintenance",
+   "name": "Vehicle types",
+   "list": null,
+   "choices": [
+    "Cars",
+    "Light trucks",
+    "Heavy trucks"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Fleet & Vehicles",
+   "businessType": "Fleet Maintenance",
+   "name": "Mobile service",
+   "list": null,
+   "choices": [
+    "Yes",
+    "No"
+   ],
+   "multi": false
+  },
+  {
+   "commodity": "Fleet & Vehicles",
+   "businessType": "Vehicle Rental & Leasing",
+   "name": "Vehicle types",
+   "list": null,
+   "choices": [
+    "Cars",
+    "Vans",
+    "Trucks"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Travel & Events",
+   "businessType": "Event Planning",
+   "name": "Event size",
+   "list": null,
+   "choices": [
+    "< 50",
+    "50–250",
+    "250+"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Travel & Events",
+   "businessType": "Event Planning",
+   "name": "Format",
+   "list": null,
+   "choices": [
+    "In person",
+    "Virtual",
+    "Hybrid"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Education & Training",
+   "businessType": "Corporate Training",
+   "name": "Format",
+   "list": null,
+   "choices": [
+    "In person",
+    "Virtual"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Education & Training",
+   "businessType": "Corporate Training",
+   "name": "Topics",
+   "list": null,
+   "choices": [
+    "Leadership",
+    "Compliance",
+    "Sales",
+    "Safety"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Education & Training",
+   "businessType": "Software & Systems Training",
+   "name": "Format",
+   "list": null,
+   "choices": [
+    "In person",
+    "Virtual"
+   ],
+   "multi": true
+  },
+  {
+   "commodity": "Education & Training",
+   "businessType": "Certification & Exam Prep",
+   "name": "Certifications",
+   "list": "FREE",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Environmental & Waste",
+   "businessType": "Waste & Recycling",
+   "name": "Service area",
+   "list": "FREE",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Environmental & Waste",
+   "businessType": "Shredding & Records Destruction",
+   "name": "Certified (NAID AAA)",
+   "list": null,
+   "choices": [
+    "Yes",
+    "No"
+   ],
+   "multi": false
+  },
+  {
+   "commodity": "Business Services",
+   "businessType": "Translation & Interpreting",
+   "name": "Languages",
+   "list": "LANGUAGES",
+   "choices": [],
+   "multi": true
+  },
+  {
+   "commodity": "Business Services",
+   "businessType": "Translation & Interpreting",
+   "name": "Certified translation",
+   "list": null,
+   "choices": [
+    "Yes",
+    "No"
+   ],
+   "multi": false
+  }
+ ],
+ "fieldGuide": [
+  {
+   "field": "Business Type",
+   "seller": "What your company sells. Sets up your catalog.",
+   "buyer": "What kind of company you're looking for.",
+   "who": "All sellers"
+  },
+  {
+   "field": "What I Do",
+   "seller": "How you work (implement, support, do the work), what you know, and in which system.",
+   "buyer": "Search by how they work, what they know and which system.",
+   "who": "Professional Services & Technology"
+  },
+  {
+   "field": "Industry",
+   "seller": "Industries you've done this work in, e.g. Healthcare, Retail, Government.",
+   "buyer": "Providers with experience in your industry rank first.",
+   "who": "Professional Services, Technology, Marketing & Creative"
+  },
+  {
+   "field": "Attributes",
+   "seller": "The few facts buyers in your trade always check, e.g. licensed states. Pick from the list.",
+   "buyer": "Exact filters for your trade, e.g. licensed in Florida.",
+   "who": "Business Types that have them"
+  },
+  {
+   "field": "Keywords",
+   "seller": "Anything else you want to be found for, in your own words.",
+   "buyer": "Free-text search across everything else.",
+   "who": "Everyone (optional)"
+  },
+  {
+   "field": "Credentials",
+   "seller": "Certifications and licenses you hold, with proof.",
+   "buyer": "Verified certifications and licenses.",
+   "who": "Everyone (optional)"
+  }
+ ]
+}

@@ -12,6 +12,8 @@ async function main() {
   const gtDomainIds = (await prisma.domain.findMany({ where: o, select: { id: true } })).map((d) => d.id);
   const counts = {
     providerCapabilities: await prisma.providerCapability.count({ where: o }),
+    providerAttributeValues: await prisma.providerAttributeValue.count({ where: o }),
+    businessTypeAttributes: await prisma.businessTypeAttribute.count({ where: o }),
     businessTypeProcesses: await prisma.businessTypeProcess.count({ where: o }),
     systemItems: await prisma.systemItem.count({ where: o }),
     systemProducts: await prisma.systemProduct.count({ where: o }),
@@ -31,6 +33,8 @@ async function main() {
   await setSetting("taxonomy_v2", false, null);
   await prisma.$transaction([
     prisma.providerCapability.deleteMany({ where: o }),
+    prisma.providerAttributeValue.deleteMany({ where: o }),
+    prisma.businessTypeAttribute.deleteMany({ where: o }),
     prisma.businessTypeProcess.deleteMany({ where: o }),
     prisma.systemItem.deleteMany({ where: o }),
     prisma.systemProduct.deleteMany({ where: o }),

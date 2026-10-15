@@ -664,6 +664,7 @@ model BusinessType {
 
   processes         BusinessTypeProcess[]
 
+  attributes        BusinessTypeAttribute[]
   @@map("business_types")
 }
 
@@ -1380,6 +1381,7 @@ model ProviderProfile {
   @@index([role_id])
   @@map("provider_profiles")
   capabilities      ProviderCapability[]
+  attributeValues   ProviderAttributeValue[]
 }
 
 /// ── ⚠⚠ THE PERSONAL PUBLIC URL — `/in/<slug>` (`P2-A1.1-E738`) ────────────
@@ -9055,6 +9057,7 @@ model SystemProduct {
   created_at DateTime     @default(now())
   vendor     SystemVendor @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
   items      SystemItem[]
+  capabilities ProviderCapability[]
 
   @@unique([vendor_id, name])
   @@map("system_products")
@@ -9105,6 +9108,8 @@ model ProviderCapability {
   domain_id           String?          @db.Uuid
   knowledge_skill_id  String?          @db.Uuid
   system_item_id      String?          @db.Uuid
+  /// Lane 6 (10-15): a Product specialization becomes "that product, no module".
+  system_product_id   String?          @db.Uuid
   mode                WorkMode
   work_role_id        String?          @db.Uuid
   source              CapabilitySource
@@ -9118,6 +9123,7 @@ model ProviderCapability {
   domain              Domain?          @relation(fields: [domain_id], references: [id], onDelete: Cascade)
   knowledgeSkill      KnowledgeSkill?  @relation(fields: [knowledge_skill_id], references: [id], onDelete: SetNull)
   systemItem          SystemItem?      @relation(fields: [system_item_id], references: [id], onDelete: SetNull)
+  systemProduct       SystemProduct?   @relation(fields: [system_product_id], references: [id], onDelete: SetNull)
   workRole            WorkRole?        @relation(fields: [work_role_id], references: [id], onDelete: SetNull)
 
   @@unique([provider_profile_id, legacy_skill_id])
@@ -9138,4 +9144,41 @@ model BusinessTypeProcess {
 
   @@unique([business_type_id, process])
   @@map("business_type_processes")
+}
+
+/// Lane 6 (Scott 10-15): search attributes per Business Type — the few pick-from-list facts buyers in a trade check
+/// (e.g. "Licensed in (states)"). `list` = a standard list (US_STATES · COUNTRIES · LANGUAGES) or FREE (type your own);
+/// otherwise `choices`. Behind taxonomy_v2; origin GT (the rollback removes them).
+model BusinessTypeAttribute {
+  id               String   @id @default(uuid()) @db.Uuid
+  business_type_id String   @db.Uuid
+  name             String
+  choices          String[] @default([])
+  list             String?
+  multi            Boolean  @default(true)
+  hidden           Boolean  @default(false)
+  sort_order       Int      @default(100)
+  origin           String   @default("GT_2026_10_14")
+  created_at       DateTime @default(now())
+  businessType     BusinessType @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  values           ProviderAttributeValue[]
+
+  @@unique([business_type_id, name])
+  @@map("business_type_attributes")
+}
+
+/// Lane 6: a seller's answer to one attribute (one or more values).
+model ProviderAttributeValue {
+  id                  String                @id @default(uuid()) @db.Uuid
+  provider_profile_id String                @db.Uuid
+  attribute_id        String                @db.Uuid
+  values              String[]              @default([])
+  origin              String                @default("GT_2026_10_14")
+  updated_at          DateTime              @updatedAt
+  providerProfile     ProviderProfile       @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  attribute           BusinessTypeAttribute @relation(fields: [attribute_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider_profile_id, attribute_id])
+  @@index([attribute_id])
+  @@map("provider_attribute_values")
 }

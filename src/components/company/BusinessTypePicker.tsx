@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { fieldHelp } from "@/lib/field-guide";
 import { HelpTip } from "@/components/ui/HelpTip";
 
 export type BT = { id: string; name: string; group: string; description?: string | null; groupDescription?: string | null };
@@ -34,7 +35,7 @@ export function BusinessTypePicker({ types, commodities = [], value, onChange, h
       )}
       {group && inGroup.length > 0 && (
         <div>
-          <span className={LABEL}>Business Type<HelpTip label={inGroup.find((b) => b.id === value)?.name ?? "Business Type"} text={inGroup.find((b) => b.id === value)?.description ?? inGroup.map((b) => b.name).join(" · ")} /></span>
+          <span className={LABEL}>Business Type<HelpTip label={inGroup.find((b) => b.id === value)?.name ?? "Business Type"} text={inGroup.find((b) => b.id === value)?.description ?? fieldHelp("Business Type", "seller")} /></span>
           <select value={value} onChange={(e) => onChange(e.target.value)} className={SELECT} data-business-type>
             <option value="">Pick a business type</option>
             {inGroup.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}

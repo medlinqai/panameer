@@ -1,5 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { CapabilitiesEditor } from "@/components/profile/CapabilitiesEditor";
+import { AttributesEditor } from "@/components/profile/AttributesEditor";
+import { fieldHelp } from "@/lib/search-attributes";
 import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
@@ -40,7 +42,7 @@ export default async function ProfileSectionEditPage({
       </header>
       {/* THE SLUG CROSSES THE BOUNDARY, NOT THE SPEC. A `SectionSpec` carries */}
       {/* GT-E004: the capabilities questions sit above Skills; nothing shows while taxonomy_v2 is off. */}
-      {section.slug === "skills" && <CapabilitiesEditor />}
+      {section.slug === "skills" && <><CapabilitiesEditor /><AttributesEditor help={fieldHelp("Attributes", "seller")} /></>}
       <SectionEditorClient slug={section.slug} />
     </div>
   );

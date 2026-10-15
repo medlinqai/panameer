@@ -12,7 +12,10 @@ const TH = "border-b border-line px-2 py-2 text-left text-[10.5px] font-bold tra
 const TD = "border-b border-[#ECEEF4] px-2 py-2 text-[13px] align-middle";
 const MODE: Record<string, string> = { IMPLEMENT: "Implement", SUPPORT: "Support", OPERATE: "Do the Work" };
 
-export function GlobalTaxonomyAdmin({ tab, domains, items, roles, unlinkedOnly }: { tab: string; domains: Domain[]; items: Item[]; roles: Role[]; unlinkedOnly: boolean }) {
+type Attr = { id: string; name: string; choices: string[]; list: string | null; hidden: boolean; businessType: string; commodity: string };
+const LIST: Record<string, string> = { US_STATES: "US states", COUNTRIES: "Country list", LANGUAGES: "Language list", FREE: "Typed by the seller" };
+
+export function GlobalTaxonomyAdmin({ tab, domains, items, roles, unlinkedOnly, attributes = [] }: { tab: string; domains: Domain[]; items: Item[]; roles: Role[]; unlinkedOnly: boolean; attributes?: Attr[] }) {
   const router = useRouter();
   const [err, setErr] = useState<string | null>(null);
   const call = async (body: object) => {
@@ -27,7 +30,7 @@ export function GlobalTaxonomyAdmin({ tab, domains, items, roles, unlinkedOnly }
       onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== value && call({ action: "rename", kind, id, name: e.target.value.trim() })} className="w-full border border-transparent bg-transparent px-1 py-0.5 hover:border-line focus:border-ink" />
   );
   const hide = (kind: string, id: string, hidden: boolean) => <button type="button" onClick={() => call({ action: "hide", kind, id, hidden: !hidden })} className="text-[12px] font-bold text-magenta-dark underline">{hidden ? "Show" : "Hide"}</button>;
-  const tabs = [["knowledge", "Knowledge"], ["systems", "Systems"], ["work", "Way of Working"]];
+  const tabs = [["knowledge", "Knowledge"], ["systems", "Systems"], ["work", "Way of Working"], ["attributes", "Attributes"]];
   const byProcess = [...new Set(domains.map((d) => d.process))];
   return (
     <div data-global-taxonomy-admin>
@@ -71,6 +74,24 @@ export function GlobalTaxonomyAdmin({ tab, domains, items, roles, unlinkedOnly }
             </tbody>
           </table>
         </>
+      )}
+      {/* Lane 6: search attributes per Business Type — rename, edit the pick-list, hide. */}
+      {tab === "attributes" && (
+        <table className="w-full border-collapse bg-white" data-attributes-admin>
+          <thead><tr><th className={TH}>COMMODITY › BUSINESS TYPE</th><th className={TH}>ATTRIBUTE</th><th className={TH}>CHOICES (· between)</th><th className={TH} /></tr></thead>
+          <tbody>
+            {attributes.map((a) => (
+              <tr key={a.id} data-attribute={a.name} className={a.hidden ? "text-ink-3" : ""}>
+                <td className={TD}>{`${a.commodity} › ${a.businessType}`}</td>
+                <td className={TD}>{name("attribute", a.id, a.name)}</td>
+                <td className={TD}>{a.list ? <span className="px-1 text-ink-2">{LIST[a.list] ?? a.list}</span> : (
+                  <input defaultValue={a.choices.join(" · ")} aria-label={`${a.name} choices`} onBlur={(e) => { const next = e.target.value.split("·").map((x) => x.trim()).filter(Boolean); if (next.join("·") !== a.choices.join("·")) void call({ action: "choices", id: a.id, choices: next }); }} className="w-full border border-transparent bg-transparent px-1 py-0.5 hover:border-line focus:border-ink" />
+                )}</td>
+                <td className={`${TD} w-20 text-right`}>{hide("attribute", a.id, a.hidden)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
       {tab === "work" && (["IMPLEMENT", "SUPPORT", "OPERATE"] as const).map((m) => (
         <section key={m} className="mb-5">

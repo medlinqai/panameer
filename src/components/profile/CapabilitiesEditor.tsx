@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { HelpTip } from "@/components/ui/HelpTip";
+import { fieldHelp } from "@/lib/field-guide";
 
 // GT-E004: three plain questions — How do you work with it? · What do you know? · In which system? (behind taxonomy_v2).
 type Mode = "IMPLEMENT" | "SUPPORT" | "OPERATE";
@@ -65,7 +67,7 @@ export function CapabilitiesEditor() {
   const caps = data.capabilities ?? [];
   return (
     <section data-capabilities-editor className="mb-6 border border-line bg-white p-4">
-      <h2 className="text-[17px] font-bold">What You Do</h2>
+      <h2 className="flex items-center text-[17px] font-bold">What You Do<HelpTip label="What I Do" text={fieldHelp("What I Do", "seller")} /></h2>
       <p className="text-[13px] text-ink-2">Pick how you work, tick everything you know, then tick the modules in each product you use (your ticks stay when you switch products). Press Add once.</p>
 
       <div className="mt-3 grid gap-4">
