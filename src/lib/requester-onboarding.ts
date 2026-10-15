@@ -14,7 +14,7 @@ import type { Viewer } from "@/lib/access";
 /** The step list lives in `requester-steps.ts` (no server imports) and is */
 export { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
 import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
-import { REGISTERED_SITE_NAME, saveRegisteredAddress } from "@/lib/company";
+import { companyLocations, saveCompanyLocations, type Loc } from "@/lib/locations";
 
 export type AddressInput = {
   line1?: string | null;
@@ -202,14 +202,11 @@ export async function getRequesterState(viewer: Viewer) {
 
   // THE BINDING, ON THE PAYLOAD / E005)
   const membership = p.companyMemberships[0] ?? null;
-  // BC-E002: the company's one address (its Registered site) — also the billing address.
-  // Scott 10-15: older companies (StratERP) have their address on another site — fall back to the oldest site with one.
-  const coSite = membership
-    ? (await prisma.site.findFirst({ where: { company_id: membership.company.id, name: REGISTERED_SITE_NAME, addresses: { some: { line1: { not: "" } } } }, select: { id: true, addresses: { take: 1, orderBy: { created_at: "asc" } } } })) ??
-      (await prisma.site.findFirst({ where: { company_id: membership.company.id, addresses: { some: { line1: { not: "" } } } }, orderBy: { created_at: "asc" }, select: { id: true, addresses: { take: 1, orderBy: { created_at: "asc" } } } }))
-    : null;
-  const coAddr = coSite?.addresses[0] ?? null;
-
+  // LS-E003/E004: the company's addresses — only once the membership is approved (a pending joiner sees the name only).
+  const approved = membership?.status === "APPROVED";
+  const owner = approved && membership!.role === "ADMIN";
+  const addresses = approved ? await companyLocations(membership!.company.id) : [];
+  const workCo = addresses.find((a) => a.siteId === rp.work_site_id) ?? null;
   return {
     email: p.user?.email ?? "",
     emailVerified: !!p.user?.email_verified,
@@ -224,14 +221,18 @@ export async function getRequesterState(viewer: Viewer) {
       defined: membership ? membership.company.tax_type !== null : false,
       name: membership?.company.name ?? null,
       /** BC-E002: the registrant added it (approved admin) → they fill its address/industry; joiners skip them. */
-      owner: membership?.status === "APPROVED" && membership.role === "ADMIN",
+      owner,
       // Privacy (Scott 10-15): a PENDING joiner sees the company's name only — no industry, invoice email or address.
       industryId: membership?.status === "APPROVED" ? membership.company.industry_id ?? null : null,
       invoiceEmail: membership?.status === "APPROVED" ? membership.company.invoice_email ?? null : null,
-      address: membership?.status === "APPROVED" && coAddr?.line1 ? toAddress(coAddr) : null,
     },
-    /** BC-E003: the work location is the company's own address. */
-    sameAsCompany: membership?.status === "APPROVED" && !!coSite && rp.work_site_id === coSite.id,
+    /** LS-E003: owner edits the company's addresses; an approved member picks one; a pending joiner enters their own. */
+    locations: {
+      mode: owner ? ("owner" as const) : approved ? ("member" as const) : membership ? ("pending" as const) : ("none" as const),
+      addresses,
+      workAddressId: workCo?.id ?? null,
+      own: workCo ? null : toAddress(work),
+    },
     profile: {
       firstName: p.first_name,
       lastName: p.last_name,
@@ -297,9 +298,11 @@ export type StepPayload = {
   /** company — confirmation only; the binding itself is written by company.ts. */
   companyBound?: boolean;
   /** BC-E002: the company's details (owner only). */
-  companyDetails?: { industryId?: string | null; address?: AddressInput; invoiceEmail?: string | null };
-  /** BC-E003: work location = the company address. */
-  sameAsCompany?: boolean;
+  companyDetails?: { industryId?: string | null; invoiceEmail?: string | null };
+  /** LS-E003: the company's addresses (owner) + which Ship To is where I work; or a company address id (member). */
+  locations?: Loc[];
+  workIndex?: number | null;
+  workAddressId?: string | null;
   /** requester_info */
   firstName?: string;
   lastName?: string;
@@ -333,11 +336,9 @@ export async function saveRequesterStep(
     const owned = p.companyMemberships.find((m) => m.status === "APPROVED" && m.role === "ADMIN");
     const d = payload.companyDetails;
     if (d && owned) {
-      if (!d.address?.line1?.trim() || !d.address.country) throw new OnboardingError("Add the company address", "INVALID");
       const email = d.invoiceEmail?.trim() || p.user?.email || "";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new OnboardingError("Enter a valid invoice email", "INVALID");
       const industry = d.industryId ? await prisma.specialization.findFirst({ where: { id: d.industryId, kind: "INDUSTRY" }, select: { id: true } }) : null;
-      await saveRegisteredAddress(owned.company.id, d.address);
       await prisma.company.update({ where: { id: owned.company.id }, data: { invoice_email: email, industry_id: industry?.id ?? null } });
     }
   }
@@ -376,34 +377,29 @@ export async function saveRequesterStep(
 
   // a `buyer_approver` branch
 
-  const coSite = async () => {
+  if (step === "work_location") {
     const m = p.companyMemberships[0];
-    if (!m) return null;
-    return (await prisma.site.findFirst({ where: { company_id: m.company.id, name: REGISTERED_SITE_NAME, addresses: { some: { line1: { not: "" } } } }, select: { id: true } })) ??
-      prisma.site.findFirst({ where: { company_id: m.company.id, addresses: { some: { line1: { not: "" } } } }, orderBy: { created_at: "asc" }, select: { id: true } });
-  };
-  if (step === "work_location" && payload.sameAsCompany) {
-    if (p.companyMemberships[0]?.status !== "APPROVED") throw new OnboardingError("Enter where you work; you can use the company's address once its admin approves you", "INVALID");
-    const site = await coSite();
-    if (!site) throw new OnboardingError("Your company has no address yet — enter where the work happens", "INVALID");
-    await prisma.requesterProfile.update({ where: { id: rp.id }, data: { work_site_id: site.id } });
-  } else if (step === "work_location" && payload.workLocation) {
-    const current = await prisma.person.findUnique({
-      where: { id: p.id },
-      select: { company_id: true },
-    });
-    // Never write over the company's own address: an unticked "same as company" gets the buyer's own site.
-    const shared = rp.work_site_id && rp.work_site_id === (await coSite())?.id;
-    const siteId = await upsertSiteAddress(
-      current!.company_id,
-      shared ? null : rp.work_site_id,
-      "Work Location",
-      payload.workLocation
-    );
-    await prisma.requesterProfile.update({
-      where: { id: rp.id },
-      data: { work_site_id: siteId },
-    });
+    const approved = m?.status === "APPROVED";
+    if (payload.locations && approved && m.role === "ADMIN") {
+      const saved = await saveCompanyLocations(m.company.id, payload.locations, { buyer: true });
+      const ships = saved.filter((l) => l.shipTo);
+      const pick = payload.workIndex != null && saved[payload.workIndex]?.shipTo ? saved[payload.workIndex] : ships[0];
+      await prisma.requesterProfile.update({ where: { id: rp.id }, data: { work_site_id: pick.siteId } });
+    } else if (payload.workAddressId && approved) {
+      const a = (await companyLocations(m.company.id)).find((l) => l.id === payload.workAddressId && l.shipTo);
+      if (!a) throw new OnboardingError("Pick one of your company's Ship To addresses", "INVALID");
+      await prisma.requesterProfile.update({ where: { id: rp.id }, data: { work_site_id: a.siteId } });
+    } else if (payload.workLocation) {
+      if (!payload.workLocation.line1?.trim() || !payload.workLocation.country) throw new OnboardingError("Add the country and street", "INVALID");
+      const current = await prisma.person.findUnique({ where: { id: p.id }, select: { company_id: true } });
+      // The buyer's own address (a pending joiner's stays with them): never write over a company address.
+      const shared = rp.work_site_id && approved && (await companyLocations(m.company.id)).some((l) => l.siteId === rp.work_site_id);
+      const siteId = await upsertSiteAddress(current!.company_id, shared ? null : rp.work_site_id, "Work Location", payload.workLocation);
+      await prisma.address.updateMany({ where: { site_id: siteId }, data: { is_ship_to: true } });
+      await prisma.requesterProfile.update({ where: { id: rp.id }, data: { work_site_id: siteId } });
+    } else {
+      throw new OnboardingError("Add where the work happens", "INVALID");
+    }
   }
 
   // The resume point only ever moves FORWARD. Stepping back to fix an answer

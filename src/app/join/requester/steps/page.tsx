@@ -6,6 +6,7 @@ import { countryName } from "@/lib/country";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
+import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
 import { PhoneField } from "@/components/onboarding/PhoneField";
 import { Avatar } from "@/components/Avatar";
@@ -43,12 +44,14 @@ type Draft = {
   /** BC-E002: the company's industry, one address and invoice email (owner only). */
   companyOwner: boolean;
   coIndustryId: string;
-  coAddress: LocationValue;
   coInvoiceEmail: string;
-  coHasAddress: boolean;
-  /** BC-E003 */
-  sameAsCompany: boolean;
   email: string;
+  /** LS-E003: owner edits the company's addresses; member picks one (or their own); pending joiner enters their own. */
+  locMode: "owner" | "member" | "pending" | "none";
+  locs: LocRow[];
+  workIdx: number;
+  workAddressId: string | null;
+  own: LocationValue;
 };
 
 const EMPTY: Draft = {
@@ -71,12 +74,16 @@ const EMPTY: Draft = {
   coWebsite: "",
   companyOwner: false,
   coIndustryId: "",
-  coAddress: {},
   coInvoiceEmail: "",
-  coHasAddress: false,
-  sameAsCompany: true,
   email: "",
+  locMode: "none",
+  locs: [],
+  workIdx: 0,
+  workAddressId: null,
+  own: {},
 };
+
+type ServerLoc = LocRow & { id: string; siteId: string };
 
 type CoMatch = { id: string; name: string; why: string; byEmail: boolean; admin: string | null } | null;
 
@@ -112,8 +119,8 @@ export default function RequesterStepsPage() {
     completed: boolean;
     resumeStep: string;
     email?: string;
-    sameAsCompany?: boolean;
-    company?: { bound?: boolean; name?: string | null; owner?: boolean; industryId?: string | null; invoiceEmail?: string | null; address?: LocationValue | null } | null;
+    company?: { bound?: boolean; name?: string | null; owner?: boolean; industryId?: string | null; invoiceEmail?: string | null } | null;
+    locations?: { mode: Draft["locMode"]; addresses: ServerLoc[]; workAddressId: string | null; own: LocationValue | null };
     profile: {
       firstName: string; lastName: string; phone: string | null;
       photoUrl: string | null; title: string | null;
@@ -127,7 +134,9 @@ export default function RequesterStepsPage() {
     const stored = parseStoredPhone(p.phone);
     setPhoneCountry(stored.country ?? p.address?.country ?? null);
 
-    setDraft({
+    const L = s.locations ?? { mode: "none" as const, addresses: [], workAddressId: null, own: null };
+    const workIdx = Math.max(0, L.addresses.findIndex((a) => a.id === L.workAddressId));
+    setDraft((prev) => ({
       firstName: p.firstName ?? "",
       lastName: p.lastName ?? "",
       photoUrl: p.photoUrl ?? null,
@@ -144,16 +153,19 @@ export default function RequesterStepsPage() {
       companyName: s.company?.bound ? s.company?.name ?? "" : "",
       companyBound: !!s.company?.bound,
       coName: s.company?.bound ? s.company?.name ?? "" : "",
-      coWebsite: "",
+      // LS-E004: keep the website they typed (the server never sends a pending joiner the company's).
+      coWebsite: prev.coWebsite,
       companyOwner: !!s.company?.owner,
       coIndustryId: s.company?.industryId ?? "",
-      coAddress: s.company?.address ?? { country: p.address?.country ?? undefined },
       coInvoiceEmail: s.company?.invoiceEmail ?? s.email ?? "",
-      coHasAddress: !!s.company?.address?.line1,
-      // Default on; off only once the buyer has their own work location saved.
-      sameAsCompany: !!s.sameAsCompany || !p.workLocation?.country,
       email: s.email ?? "",
-    });
+      locMode: L.mode,
+      // The first address arrives with every use ticked.
+      locs: L.addresses.length ? L.addresses : [newLoc(p.address?.country)],
+      workIdx,
+      workAddressId: L.workAddressId ?? (L.own?.line1 ? null : L.addresses.find((a) => a.shipTo)?.id ?? null),
+      own: L.own ?? { country: p.address?.country ?? undefined },
+    }));
     return s;
   }, []);
 
@@ -385,7 +397,7 @@ export default function RequesterStepsPage() {
   // ---- 2/3 — Company (BC-E002): name · website · industry · one address · invoice email; joining skips the details ----
   if (step === "company") {
     const joining = draft.companyBound && !draft.companyOwner;
-    const details = { industryId: draft.coIndustryId || null, address: draft.coAddress, invoiceEmail: draft.coInvoiceEmail.trim() || draft.email };
+    const details = { industryId: draft.coIndustryId || null, invoiceEmail: draft.coInvoiceEmail.trim() || draft.email };
     const after = fromReview ? "review" : undefined;
     const askToJoin = async () => {
       if (!coMatch) return;
@@ -428,15 +440,14 @@ export default function RequesterStepsPage() {
       await save({ companyBound: true, companyDetails: details }, after);
     };
     const edit = (patch: Partial<Draft>) => { setError(null); setDraft((d) => ({ ...d, ...patch })); };
-    const addrOk = !!draft.coAddress.line1?.trim() && !!draft.coAddress.country;
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.coInvoiceEmail.trim() || draft.email);
     return (
       <WizardShell
         {...shell}
         title="Which company are you buying for?"
-        subtitle="Your company's details, entered once. They're also your billing details when you order."
+        subtitle="Your company's details, entered once. Its addresses come next."
         continueLabel={nextLabel}
-        continueDisabled={coMatch ? false : joining ? false : draft.coName.trim().length < 2 || !addrOk || !emailOk}
+        continueDisabled={coMatch ? false : joining ? false : draft.coName.trim().length < 2 || !emailOk}
         onContinue={submitCompany}
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-buyer-company-step>
@@ -465,7 +476,9 @@ export default function RequesterStepsPage() {
                   <b className="text-ink">{coMatch.name}</b> is already on Panameer ({coMatch.why}). <b>Request Access</b> and we&apos;ll ask {coMatch.admin ? <b className="text-ink">{coMatch.admin}</b> : "its admin"} to approve you. You can keep going while you wait.
                 </p>
               )}
-              <fieldset disabled={joining} className={joining ? "hidden" : "space-y-4"}>
+              {/* LS-E004: a joiner sees the company's name only — the rest isn't rendered. */}
+              {!joining && (
+              <div className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Industry">
                 <select aria-label="Industry" value={draft.coIndustryId} onChange={(e) => edit({ coIndustryId: e.target.value })} className="h-11 w-full border border-line bg-surface px-3 text-[15px] text-ink">
@@ -477,13 +490,9 @@ export default function RequesterStepsPage() {
                 <TextInput type="email" value={draft.coInvoiceEmail} onChange={(e) => edit({ coInvoiceEmail: e.target.value })} placeholder={draft.email} autoComplete="email" />
               </Field>
               </div>
-              <div data-company-address>
-                <p className="mb-2 text-[14px] font-semibold text-ink">Company Address *</p>
-                <LocationFields value={draft.coAddress} onChange={(patch) => edit({ coAddress: { ...draft.coAddress, ...patch } })} withStreet compact />
-              </div>
-
               <p className="text-[12.5px] text-ink-2">By continuing you confirm you can add this company and accept the company terms. No tax ID or W-9 is needed to buy.</p>
-              </fieldset>
+              </div>
+              )}
             </>
           )}
         </div>
@@ -491,43 +500,57 @@ export default function RequesterStepsPage() {
     );
   }
 
-  // ---- 3/3 — Location (BC-E003): same as the company address by default ----
+  // ---- 3/3 — Locations (LS-E003/E004): the company's addresses with their uses; joiners enter their own ----
   if (step === "work_location") {
-    const canShare = draft.coHasAddress;
-    const same = canShare && draft.sameAsCompany;
-    const wl = draft.workLocationSet ? draft.workLocation : draft.address;
+    const after = fromReview ? "review" : undefined;
+    const ownOk = !!draft.own.line1?.trim() && !!draft.own.country;
+    const ships = draft.locs.map((l, i) => (l.shipTo ? i : -1)).filter((i) => i >= 0);
+    const problem =
+      draft.locMode === "owner" ? locsProblem(draft.locs, { buyer: true }) :
+      draft.locMode === "member" ? (draft.workAddressId ? null : ownOk ? null : "Pick where you work, or enter it") :
+      ownOk ? null : "Add the country and street";
+    const onContinue = () => {
+      if (draft.locMode === "owner") return save({ locations: draft.locs, workIndex: ships.includes(draft.workIdx) ? draft.workIdx : ships[0] }, after);
+      if (draft.locMode === "member" && draft.workAddressId) return save({ workAddressId: draft.workAddressId }, after);
+      return save({ workLocation: draft.own }, after);
+    };
+    const ownFields = (
+      <div data-own-address className="border border-line p-4">
+        <p className="mb-2 text-[14px] font-bold">Where you work *</p>
+        <LocationFields value={draft.own} onChange={(patch) => setDraft((d) => ({ ...d, own: { ...d.own, ...patch } }))} withStreet compact />
+      </div>
+    );
     return (
       <WizardShell
         {...shell}
-        title="Where does the work happen?"
+        title={draft.locMode === "owner" ? "Where is your company?" : "Where does the work happen?"}
+        subtitle={draft.locMode === "owner" ? "Tick what each address is for. You need at least one Bill To and one Ship To." : draft.locMode === "pending" ? "Your own work address for now. Once you're approved you can switch to one of your company's addresses." : undefined}
         continueLabel={nextLabel}
-        continueDisabled={!same && !wl.country}
-        onContinue={() => save(same ? { sameAsCompany: true } : { workLocation: wl }, fromReview ? "review" : undefined)}
+        continueDisabled={!!problem}
+        onContinue={onContinue}
       >
-        <div className="mx-auto w-full max-w-xl space-y-4">
+        <div className="mx-auto w-full max-w-2xl space-y-4" data-locations-step={draft.locMode}>
           {error && <Notice>{error}</Notice>}
-          {canShare && (
-            <label className="flex cursor-pointer items-start gap-3 border border-line p-3" data-same-as-company>
-              <input type="checkbox" checked={draft.sameAsCompany} onChange={(e) => setDraft((d) => ({ ...d, sameAsCompany: e.target.checked }))} className="mt-1 h-4 w-4 accent-magenta" />
-              <span className="text-[14.5px]">Same as company address</span>
-            </label>
-          )}
-          {!same && (
-            <div className="space-y-3">
-              <LocationFields
-                value={wl}
-                onChange={(patch) =>
-                  setDraft((d) => ({
-                    ...d,
-                    workLocationSet: true,
-                    workLocation: { ...(d.workLocationSet ? d.workLocation : d.address), ...patch },
-                  }))
-                }
-                withStreet
-                compact
-              />
+          {draft.locMode === "owner" ? (
+            <LocationsBlock rows={draft.locs} onChange={(locs) => setDraft((d) => ({ ...d, locs }))} work={draft.workIdx} onWork={(i) => setDraft((d) => ({ ...d, workIdx: i }))} />
+          ) : draft.locMode === "member" ? (
+            <div className="space-y-2" role="radiogroup" aria-label="Where you work">
+              {draft.locs.filter((l) => l.shipTo && l.id).map((l) => (
+                <label key={l.id!} className="flex cursor-pointer items-center gap-3 border border-line p-3 text-[14.5px]">
+                  <input type="radio" name="work-address" checked={draft.workAddressId === l.id} onChange={() => setDraft((d) => ({ ...d, workAddressId: l.id! }))} className="h-4 w-4 accent-magenta" />
+                  {locLine(l)}
+                </label>
+              ))}
+              <label className="flex cursor-pointer items-center gap-3 border border-line p-3 text-[14.5px]">
+                <input type="radio" name="work-address" checked={!draft.workAddressId} onChange={() => setDraft((d) => ({ ...d, workAddressId: null }))} className="h-4 w-4 accent-magenta" />
+                Somewhere else
+              </label>
+              {!draft.workAddressId && ownFields}
             </div>
+          ) : (
+            ownFields
           )}
+          {problem && draft.locMode === "owner" && <p className="text-[13px] text-ink-2">{problem}</p>}
         </div>
       </WizardShell>
     );
@@ -551,19 +574,19 @@ export default function RequesterStepsPage() {
     // — a required field belongs on the review. ITS ORIGINAL REASONING
     { label: "Title", value: draft.title || "—", step: "requester_info" },
     // THE `Employer` ROW IS GONE , 2026-09-11).
-    // BC-E004: Company = name · industry · address · invoice email; Location = same as company, or its own address.
+    // LS-E006: Company = name · industry · invoice email; a Locations row per address with its uses.
     {
       label: "Company",
       value: draft.companyOwner
-        ? [draft.companyName, industries.find((x) => x.id === draft.coIndustryId)?.name, addr(draft.coAddress), draft.coInvoiceEmail || draft.email].filter((x) => x && x !== "—").join(" · ")
-        : draft.companyName ? `${draft.companyName} (asked to join)` : "—",
+        ? [draft.companyName, industries.find((x) => x.id === draft.coIndustryId)?.name, draft.coInvoiceEmail || draft.email].filter(Boolean).join(" · ")
+        : draft.companyName ? `${draft.companyName} (${draft.locMode === "pending" ? "asked to join" : "member"})` : "—",
       step: "company",
     },
-    {
-      label: "Location",
-      value: draft.coHasAddress && draft.sameAsCompany ? "Same as company address" : addr(draft.workLocationSet ? draft.workLocation : draft.address),
-      step: "work_location",
-    },
+    ...(draft.locMode === "owner"
+      ? draft.locs.map((l, i) => ({ label: draft.locs.length > 1 ? `Location ${i + 1}` : "Location", value: locLine(l, { work: l.shipTo && i === draft.workIdx }), step: "work_location" as RequesterStep }))
+      : draft.locMode === "member" && draft.workAddressId
+        ? [{ label: "Location", value: locLine(draft.locs.find((l) => l.id === draft.workAddressId) ?? newLoc(), { work: true }), step: "work_location" as RequesterStep }]
+        : [{ label: "Location", value: `${addr(draft.own)} · Where I work`, step: "work_location" as RequesterStep }]),
     { label: "Phone", value: draft.phone || "—", step: "requester_info" },
   ];
 

@@ -11,8 +11,8 @@ import {
 // BC-E001: Buyer · Company · Location.
 const CARDS: Record<(typeof REQUESTER_WORK_STEPS)[number], { title: string; blurb: string }> = {
   requester_info: { title: REQUESTER_STEP_LABELS.requester_info, blurb: "Who you are, and how providers reach you." },
-  company: { title: REQUESTER_STEP_LABELS.company, blurb: "Your company, its industry, address and invoice email." },
-  work_location: { title: REQUESTER_STEP_LABELS.work_location, blurb: "Where the work happens." },
+  company: { title: REQUESTER_STEP_LABELS.company, blurb: "Your company, its industry and invoice email." },
+  work_location: { title: REQUESTER_STEP_LABELS.work_location, blurb: "Your company's addresses and where you work." },
 };
 
 export default async function RequesterStartPage() {

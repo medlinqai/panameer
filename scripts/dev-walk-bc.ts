@@ -19,12 +19,16 @@ async function main() {
   const a = await buyer("Ana", `ana@${DOMAIN}`);
   await defineCompany(a.viewer, { name: "BC Walk Co", website: `www.${DOMAIN}`, attestation: true, companyTos: true });
   const ind = await prisma.specialization.findFirst({ where: { kind: "INDUSTRY", status: "ACTIVE" }, select: { id: true } });
-  await saveRequesterStep(a.viewer, "company", { companyBound: true, companyDetails: { industryId: ind?.id ?? null, address: { line1: "1 Main St", city: "Austin", state: "TX", postalCode: "78701", country: "US" }, invoiceEmail: null } });
+  await saveRequesterStep(a.viewer, "company", { companyBound: true, companyDetails: { industryId: ind?.id ?? null, invoiceEmail: null } });
   let s = await getRequesterState(a.viewer);
-  check("Company step: owner, industry, address, invoice email defaults to the buyer's email", s.company.owner && s.company.industryId === (ind?.id ?? null) && s.company.address?.line1 === "1 Main St" && s.company.invoiceEmail === a.email);
-  await saveRequesterStep(a.viewer, "work_location", { sameAsCompany: true });
+  check("Company step: owner, industry, address, invoice email defaults to the buyer's email", s.company.owner && s.company.industryId === (ind?.id ?? null) && s.company.invoiceEmail === a.email && s.locations.mode === "owner");
+  await refuses("Locations: a Bill To is required", () => saveRequesterStep(a.viewer, "work_location", { locations: [{ line1: "1 Main St", country: "US", corporate: true, billTo: false, shipTo: true, remitTo: false }] }), "Bill To");
+  await saveRequesterStep(a.viewer, "work_location", { locations: [
+    { line1: "1 Main St", city: "Austin", state: "TX", postalCode: "78701", country: "US", corporate: true, billTo: true, shipTo: true, remitTo: false },
+    { line1: "9 Plant Rd", city: "Dallas", state: "TX", postalCode: "75201", country: "US", corporate: false, billTo: false, shipTo: true, remitTo: false },
+  ], workIndex: 1 });
   s = await getRequesterState(a.viewer);
-  check("Location: same as company address", s.sameAsCompany && s.profile.workLocation?.line1 === "1 Main St");
+  check("Locations: two company addresses with uses; where I work = the second Ship To", s.locations.addresses.length === 2 && s.locations.addresses[0].billTo && s.profile.workLocation?.line1 === "9 Plant Rd" && s.locations.workAddressId === s.locations.addresses[1].id);
   await completeRequester(a.viewer);
   const coId = (await prisma.companyMembership.findFirstOrThrow({ where: { person_id: a.personId, status: "APPROVED" } })).company_id;
   const seller = await party("PROVIDER", "Sol");
@@ -43,12 +47,18 @@ async function main() {
   await joinCompany(b.viewer, { companyId: coId, attestation: true, matchedOn: "email" });
   await saveRequesterStep(b.viewer, "company", { companyBound: true });
   const sb = await getRequesterState(b.viewer);
-  check("joiner skips address/industry (not owner), sees the company address", !sb.company.owner && sb.company.status === "PENDING" && !!sb.company.address);
+  check("pending joiner sees the name only — no industry, invoice email or addresses", !sb.company.owner && sb.company.status === "PENDING" && !sb.company.industryId && !sb.company.invoiceEmail && sb.locations.mode === "pending" && sb.locations.addresses.length === 0);
+  await saveRequesterStep(b.viewer, "work_location", { workLocation: { line1: "5 Home Ln", city: "Austin", country: "US" } });
+  check("pending joiner's own work address is theirs", (await getRequesterState(b.viewer)).profile.workLocation?.line1 === "5 Home Ln");
   const req = await prisma.companyMembership.findFirstOrThrow({ where: { person_id: b.personId, company_id: coId } });
   await decideRequest(a.viewer, req.id, "APPROVED");
   let bOk = true;
   try { await assertCanSign(b.personId, b.personId, seller.personId); } catch { bOk = false; }
   check("approved → second buyer can order", bOk);
+  const sb2 = await getRequesterState(b.viewer);
+  check("after approval: sees the company's addresses and can pick where they work", sb2.locations.mode === "member" && sb2.locations.addresses.length >= 2, `${sb2.locations.mode} ${sb2.locations.addresses.map((a) => a.line1).join("|")}`);
+  await saveRequesterStep(b.viewer, "work_location", { workAddressId: sb2.locations.addresses[0].id });
+  check("member picked a company Ship To", (await getRequesterState(b.viewer)).profile.workLocation?.line1 === "1 Main St");
 
   const aM = await prisma.companyMembership.findFirstOrThrow({ where: { person_id: a.personId, company_id: coId } });
   await refuses("sole admin can't step down", () => changeMember(a.viewer, aM.id, "step_down"), "admin");
