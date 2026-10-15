@@ -40,9 +40,15 @@ export function buildCompanyList(
   parsed: Pick<ParsedResume, "experiences" | "projects">
 ): FoundCompany[] {
   const out = new Map<string, FoundCompany>();
+  const names = new Set<string>();
+  // RC-E005: the same company with a different role and start year is a second row, not a duplicate.
   const add = (c: FoundCompany) => {
-    const k = normCompany(c.name);
-    if (k && !out.has(k)) out.set(k, c);
+    const name = normCompany(c.name);
+    if (!name) return;
+    const k = c.guess === "EMPLOYER" ? `${name}|${c.startDate?.slice(0, 4) ?? ""}|${(c.title ?? "").toLowerCase().trim()}` : name;
+    if (out.has(k) || (c.guess !== "EMPLOYER" && names.has(name))) return;
+    out.set(k, c);
+    names.add(name);
   };
   if (engagements.length) {
     for (const e of engagements)

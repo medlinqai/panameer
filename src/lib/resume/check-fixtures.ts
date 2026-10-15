@@ -4,6 +4,8 @@ import { extractText, mimeFromName, ExtractError, proseRatio } from "./extract";
 import { parseResume } from "./parse";
 import { matchSkills, suggestableSkills } from "./match";
 import { assessParse } from "./confidence";
+import { mergeCertifications } from "./cleanup";
+import { buildCompanyList } from "./company-list";
 
 const DIR = path.join(process.cwd(), "src/lib/resume/__fixtures__");
 
@@ -22,6 +24,11 @@ type Check = {
   mustAppearAtMost?: { text: string; atMost: number }[];
   /** WS0 — the confidence gate's verdict for this fixture. */
   expectConfidence?: "high" | "low";
+  /** RC-E005 — at least this many certifications, and these names among them. */
+  minCertifications?: number;
+  certificationsInclude?: string[];
+  /** RC-E005 — roles at the same employer with different titles/dates are both kept (employer substring, count). */
+  employerRoles?: { employer: string; atLeast: number }[];
 };
 
 const CHECKS: Check[] = [
@@ -152,6 +159,15 @@ const CHECKS: Check[] = [
     maxEducation: 4,
     maxSkills: 40,
   },
+  // --- 4. RC-E005 (2026-10-15) — Scott's colour-coded CV --------------------
+  {
+    file: "scott-cv-2026-10-15.docx",
+    note: "RC-E005 — 'ORACLE CLOUD CERTIFICATIONS' comma list → 5 certs; both Panameer roles",
+    minChars: 3000,
+    minCertifications: 5,
+    certificationsInclude: ["Oracle Cloud Procurement", "Oracle Cloud Payables"],
+    employerRoles: [{ employer: "Panameer", atLeast: 2 }],
+  },
 ];
 
 let pass = 0;
@@ -266,6 +282,25 @@ async function run() {
         named >= c.namedEmployers,
         `${c.file}: only ${named} roles name an employer (want ${c.namedEmployers})`
       );
+    }
+
+    // RC-E005: certifications are read by the clean-up step (both import paths), so run it here on a copy.
+    const certs = c.minCertifications || c.certificationsInclude ? (() => { const q = { ...p, certifications: [...p.certifications] }; mergeCertifications(q, text); return q.certifications; })() : p.certifications;
+    if (c.minCertifications) {
+      assert(certs.length >= c.minCertifications, `${c.file}: ${certs.length} certifications < ${c.minCertifications} (${certs.map((x) => x.name).join(" | ")})`);
+    }
+    for (const want of c.certificationsInclude ?? []) {
+      assert(certs.some((x) => x.name.toLowerCase() === want.toLowerCase()), `${c.file}: no certification "${want}" (${certs.map((x) => x.name).join(" | ")})`);
+    }
+    // RC-E005: the company list keeps a second role at the same company (the model reads the late "Panameer — Founder" row;
+    // the heuristic stops at its 20-row cap), so check the list with both rows as the model returns them.
+    for (const er of c.employerRoles ?? []) {
+      const rows = buildCompanyList([], [], { projects: [], experiences: [
+        { employer: `${er.employer} Digital Services`, roleTitle: "AI-Native Application Designer & Builder", description: null, startDate: "2025-01-01", endDate: null, isCurrent: true },
+        { employer: `${er.employer} Digital Services`, roleTitle: "Founder", description: null, startDate: "2018-01-01", endDate: null, isCurrent: true },
+      ] });
+      const n = rows.filter((r) => r.name.toLowerCase().includes(er.employer.toLowerCase())).length;
+      assert(n >= er.atLeast, `${c.file}: company list kept ${n} ${er.employer} roles < ${er.atLeast}`);
     }
 
     console.log(

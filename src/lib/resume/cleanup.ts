@@ -54,16 +54,23 @@ export function cleanEmployers(parsed: ParsedResume, text: string) {
 
 const CERT_HEAD = /^\s*(?:[•\-–*]\s*)?(certifications?|certified|certificates?|badges?|credentials?|licen[cs]es?)\b\s*[:\-–]?\s*(.*)$/i;
 const isHeading = (l: string) => /^[A-Z][A-Z &/()-]{3,}:?$/.test(l.trim());
+/** "ORACLE CLOUD CERTIFICATIONS" → "ORACLE CLOUD" (an ALL-CAPS heading with words before CERTIFICATIONS). */
+const VENDOR_CERT_HEAD = /^\s*([A-Z][A-Z0-9 &/.-]*[A-Z0-9])\s+(?:CERTIFICATIONS?|CERTIFICATES?|BADGES?|CREDENTIALS?)\s*:?\s*$/;
+const titleCase = (s: string) => s.toLowerCase().split(/\s+/).map((w) => (/^(sap|ebs|hcm|erp|scm|aws|ibm|obn)$/.test(w) ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1))).join(" ");
 
 /** Certifications the document states plainly: CERTIFICATIONS / BADGES lists, parenthesized lists, Oracle exam codes. */
 export function readCertifications(text: string): string[] {
   const lines = text.split("\n").map((l) => l.trim());
   const out: string[] = [];
-  const split = (s: string) => s.split(/[,;|•]/).map((x) => x.replace(/^(and|&)\s+/i, "").replace(/[.\s]+$/, "").trim()).filter((x) => x.length >= 2 && x.length <= 80 && x.split(/\s+/).length <= 8);
+  const split = (s: string) => s.split(/[,;|•]/).map((x) => x.trim().replace(/^(and|&)\s+/i, "").replace(/[.\s]+$/, "").trim()).filter((x) => x.length >= 2 && x.length <= 80 && x.split(/\s+/).length <= 8);
   for (let i = 0; i < lines.length; i++) {
-    const m = CERT_HEAD.exec(lines[i]);
-    if (!m) continue;
-    if (m[2]) out.push(...split(m[2]));
+    // RC-E005: "ORACLE CLOUD CERTIFICATIONS" — the heading names the vendor/product; bare items get it as a prefix.
+    const v = VENDOR_CERT_HEAD.exec(lines[i]);
+    const m = v ? null : CERT_HEAD.exec(lines[i]);
+    if (!m && !v) continue;
+    const prefix = v ? titleCase(v[1]) : "";
+    const named = (x: string) => (prefix && !x.toLowerCase().startsWith(prefix.split(" ")[0].toLowerCase()) ? `${prefix} ${x}` : x);
+    if (m?.[2]) out.push(...split(m[2]));
     else
       for (let j = i + 1; j < Math.min(lines.length, i + 25); j++) {
         const l = lines[j];
@@ -72,7 +79,7 @@ export function readCertifications(text: string): string[] {
           continue;
         }
         if (isHeading(l) || /^(education|experience|skills|projects|summary|languages)\b/i.test(l)) break;
-        out.push(...split(l.replace(/^[•\-–*]\s*/, "")));
+        out.push(...split(l.replace(/^[•\-–*]\s*/, "")).map(named));
       }
   }
   for (const code of text.match(/\b1Z0-\d{3}\b/gi) ?? []) out.push(`Oracle ${code.toUpperCase()}`);
