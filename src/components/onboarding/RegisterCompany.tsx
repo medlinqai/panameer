@@ -13,6 +13,8 @@ const COMPANY_DESCRIPTION_MAX = 600;
 export function RegisterCompany({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   const [website, setWebsite] = useState("");
+  const [legal, setLegal] = useState("");
+  const [showLegal, setShowLegal] = useState(false);
   const [description, setDescription] = useState("");
   const [attestation, setAttestation] = useState(false);
   const [companyTos, setCompanyTos] = useState(false);
@@ -71,6 +73,7 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
       await post("/api/company/define", "POST", { name: name.trim(), website: website.trim(), attestation, companyTos });
       await post("/api/company/locations", "POST", { locations: locs, seller: true });
       if (description.trim()) await post("/api/company", "PATCH", { description: description.trim() });
+      if (legal.trim() && legal.trim() !== name.trim()) await post("/api/company", "PATCH", { legalName: legal.trim() });
       if (businessTypeId) await post("/api/company/business-types", "POST", { businessTypeId, on: true });
       onDone();
     } catch (e) {
@@ -111,6 +114,13 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
             <Field label="Company Name">
               <TextInput value={name} onChange={(e) => { setName(e.target.value); setError(null); }} placeholder="Your business name" autoComplete="organization" />
             </Field>
+            {showLegal || legal ? (
+              <Field label="Legal Name" hint="The name on your checks and payments, if it's different from the company name.">
+                <TextInput value={legal} onChange={(e) => setLegal(e.target.value)} placeholder="Acme Holdings LLC" />
+              </Field>
+            ) : (
+              <button type="button" onClick={() => setShowLegal(true)} className="-mt-2 mb-2 text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Legal name is different?</button>
+            )}
             {businessTypes.length > 0 && (
               <BusinessTypePicker types={businessTypes} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog. You can add more later." />
             )}

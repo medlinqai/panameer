@@ -44,6 +44,7 @@ type Draft = {
   /** BC-E002: the company's industry, one address and invoice email (owner only). */
   companyOwner: boolean;
   coIndustryId: string;
+  coLegal: string;
   coInvoiceEmail: string;
   email: string;
   /** LS-E003: owner edits the company's addresses; member picks one (or their own); pending joiner enters their own. */
@@ -74,6 +75,7 @@ const EMPTY: Draft = {
   coWebsite: "",
   companyOwner: false,
   coIndustryId: "",
+  coLegal: "",
   coInvoiceEmail: "",
   email: "",
   locMode: "none",
@@ -103,6 +105,7 @@ export default function RequesterStepsPage() {
   const [askedAdmin, setAskedAdmin] = useState<string | null>(null);
   // Scott 10-15: furthest step reached (rail index; Review = number of work steps) — stays clickable.
   const [furthest, setFurthest] = useState(0);
+  const [showLegal, setShowLegal] = useState(false);
 
   // BC-E005: the company already here for the website or the registrant's email domain.
   const checkMatch = useCallback(async (site: string): Promise<CoMatch> => {
@@ -121,7 +124,7 @@ export default function RequesterStepsPage() {
     completed: boolean;
     resumeStep: string;
     email?: string;
-    company?: { bound?: boolean; name?: string | null; owner?: boolean; industryId?: string | null; invoiceEmail?: string | null } | null;
+    company?: { bound?: boolean; name?: string | null; owner?: boolean; industryId?: string | null; legalName?: string | null; invoiceEmail?: string | null } | null;
     locations?: { mode: Draft["locMode"]; addresses: ServerLoc[]; workAddressId: string | null; own: LocationValue | null };
     profile: {
       firstName: string; lastName: string; phone: string | null;
@@ -164,6 +167,7 @@ export default function RequesterStepsPage() {
       coWebsite: prev.coWebsite,
       companyOwner: !!s.company?.owner,
       coIndustryId: s.company?.industryId ?? "",
+      coLegal: s.company?.legalName ?? "",
       coInvoiceEmail: s.company?.invoiceEmail ?? s.email ?? "",
       email: s.email ?? "",
       locMode: L.mode,
@@ -404,7 +408,7 @@ export default function RequesterStepsPage() {
   // ---- 2/3 — Company (BC-E002): name · website · industry · one address · invoice email; joining skips the details ----
   if (step === "company") {
     const joining = draft.companyBound && !draft.companyOwner;
-    const details = { industryId: draft.coIndustryId || null, invoiceEmail: draft.coInvoiceEmail.trim() || draft.email };
+    const details = { legalName: draft.coLegal.trim() || null, industryId: draft.coIndustryId || null, invoiceEmail: draft.coInvoiceEmail.trim() || draft.email };
     const after = fromReview ? "review" : undefined;
     const askToJoin = async () => {
       if (!coMatch) return;
@@ -465,6 +469,13 @@ export default function RequesterStepsPage() {
               <Field label="Company Name *">
                 <TextInput value={joining ? draft.companyName : draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" className="sm:max-w-[50%]" disabled={joining} />
               </Field>
+              {!joining && (showLegal || draft.coLegal ? (
+                <Field label="Legal Name" hint="The name on your invoices, if it's different from the company name.">
+                  <TextInput value={draft.coLegal} onChange={(e) => edit({ coLegal: e.target.value })} placeholder="Acme Holdings LLC" className="sm:max-w-[50%]" />
+                </Field>
+              ) : (
+                <button type="button" onClick={() => setShowLegal(true)} className="-mt-1 text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Legal name is different?</button>
+              ))}
               <Field label="Website">
                 <div className="flex gap-2">
                   <TextInput value={draft.coWebsite} onChange={(e) => { edit({ coWebsite: e.target.value }); setCoMatch(null); }} className="sm:max-w-[50%]" disabled={joining} onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
