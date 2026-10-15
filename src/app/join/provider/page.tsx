@@ -1021,7 +1021,7 @@ setScreen(target);
   if (screen === "check_email") {
     // After Review: no step bar, the same left-aligned shell.
     return (
-      <WizardShell title="Check Your Email" subtitle="Click the link we sent to finish signing up." hideFooter onboardingChrome>
+      <WizardShell title="Verify Your Email" subtitle="Click the link we sent to finish signing up." hideFooter onboardingChrome>
         <div className="max-w-md">
           <VerifyGate
             email={email}

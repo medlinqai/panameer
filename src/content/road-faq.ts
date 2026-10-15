@@ -6,7 +6,7 @@ export const ROAD_FAQ: Record<string, { q: string; a: string }[]> = {
     { q: "Do I need tax details now?", a: "No. Payout details come last — just before Get Paid, and only what your country needs." },
   ],
   verify: [
-    { q: "I didn't get the email.", a: "Check spam, then use Resend on the Check Your Email screen. The link works once." },
+    { q: "I didn't get the email.", a: "Check spam, then use Resend on the Verify Your Email screen. The link works once." },
     { q: "What does verifying unlock?", a: "Learn and Connect open right away, and you can keep building your profile." },
   ],
   profile: [

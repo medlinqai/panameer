@@ -168,7 +168,7 @@ export default function JoinRequesterPage() {
     <OnboardingShell contentWidth="max-w-md">
       <div>
         <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">
-          Check Your Email
+          Verify Your Email
         </h1>
         {error && (
           <div className="mt-6">
