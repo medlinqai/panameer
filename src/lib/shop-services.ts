@@ -17,7 +17,7 @@ export async function listServiceProviders(f: ServicesQuery, opts: { includeTest
   const filtered = Object.keys(capWhere).length > 0;
   const caps = await prisma.providerCapability.findMany({
     where: capWhere,
-    include: { domain: { select: { id: true, process: true, name: true } }, knowledgeSkill: { select: { id: true, name: true } }, systemItem: { select: { id: true, name: true, product: { select: { name: true, vendor: { select: { name: true } } } } } }, systemProduct: { select: { id: true, name: true, vendor: { select: { name: true } } } }, workRole: { select: { id: true, name: true } } },
+    include: { domain: { select: { id: true, process: true, name: true } }, knowledgeSkill: { select: { id: true, name: true } }, systemItem: { select: { id: true, name: true, hidden: true, product: { select: { name: true, vendor: { select: { name: true } } } } } }, systemProduct: { select: { id: true, name: true, vendor: { select: { name: true } } } }, workRole: { select: { id: true, name: true } } },
   });
   const byProfile = new Map<string, string[]>();
   for (const c of caps) byProfile.set(c.provider_profile_id, [...(byProfile.get(c.provider_profile_id) ?? []), capabilityLine(c)]);
