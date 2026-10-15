@@ -85,12 +85,12 @@ async function main() {
        while the probe makes two is how an orphan survives a green gate. */
     const requestIds: string[] = [];
     try {
-      const wr = await prisma.workRequest.create({
+      const wr = await prisma.job.create({
         data: {
           buyer_person_id: buyer.id,
           p_account_id: buyer.company.p_account_id,
           title: TAG,
-          status: "POSTED",
+          status: "OPEN",
           proposal_access: "OPEN",
         },
         select: { id: true },
@@ -101,7 +101,7 @@ async function main() {
       check("3 — ⚠⚠ a provider CAN propose — the writer writes", !first.replaced);
       const row = await prisma.proposal.findUnique({
         where: { id: first.id },
-        select: { submitted_at: true, status: true, proposal_request_id: true, work_request_id: true },
+        select: { submitted_at: true, status: true, proposal_request_id: true, job_id: true },
       });
       /* ⚠ WS-A item 1: `submitted_at` is what *Proposals Sent* counts. */
       check("3 — ⚠ submitted_at is set", row?.submitted_at != null);
@@ -110,7 +110,7 @@ async function main() {
       check("3 — ⚠⚠ an OPEN request takes a proposal with NO invite",
         row?.proposal_request_id === null,
         "this is the half that was unreachable while proposal_request_id was NOT NULL");
-      check("3 — it is attached to the request directly", row?.work_request_id === wr.id);
+      check("3 — it is attached to the request directly", row?.job_id === wr.id);
 
       /* ── ⚠⚠⚠ IDEMPOTENCY: the second submit REPLACES ──────────────────── */
       const second = await submitProposal(V(provider.user_id), {
@@ -119,7 +119,7 @@ async function main() {
       });
       check("3 — ⚠⚠⚠ proposing twice REPLACES, it does not duplicate", second.replaced);
       check("3 — ⚠ and it is the same row", second.id === first.id);
-      const count = await prisma.proposal.count({ where: { work_request_id: wr.id } });
+      const count = await prisma.proposal.count({ where: { job_id: wr.id } });
       check("3 — ⚠⚠ exactly ONE proposal exists for this provider",
         count === 1, `${count} — the @@unique is what makes this true`);
       const revised = await prisma.proposal.findUnique({
@@ -235,12 +235,12 @@ async function main() {
          request this provider was never invited to: the predicate must refuse it
          with the SAME code the writer throws. ⚠ Proving it behaviourally is what
          makes the grep above more than a naming convention. */
-      const closed = await prisma.workRequest.create({
+      const closed = await prisma.job.create({
         data: {
           buyer_person_id: buyer.id,
           p_account_id: buyer.company.p_account_id,
           title: TAG,
-          status: "POSTED",
+          status: "OPEN",
           proposal_access: "INVITE_ONLY",
         },
         select: { id: true },
@@ -268,12 +268,12 @@ async function main() {
          ⚠⚠ `ProposalLine` IS IN WS-C's SPEC AND §3 NEVER PRICED ANYTHING —
          every proposal it submits has no rate, so `writeRate` was exercised only
          by its early return. ⚠ This walks the priced path. */
-      const priced = await prisma.workRequest.create({
+      const priced = await prisma.job.create({
         data: {
           buyer_person_id: buyer.id,
           p_account_id: buyer.company.p_account_id,
           title: TAG,
-          status: "POSTED",
+          status: "OPEN",
           proposal_access: "OPEN",
         },
         select: { id: true },
@@ -365,11 +365,11 @@ async function main() {
       if (!realBuyer?.user_id) {
         check("10 — a service buyer exists to read proposals (E586)", false, "none seeded");
       } else {
-        const wr2 = await prisma.workRequest.create({
+        const wr2 = await prisma.job.create({
           data: {
             buyer_person_id: realBuyer.id,
             p_account_id: realBuyer.company.p_account_id,
-            title: TAG, status: "POSTED", proposal_access: "OPEN",
+            title: TAG, status: "OPEN", proposal_access: "OPEN",
           },
           select: { id: true },
         });
@@ -407,7 +407,7 @@ async function main() {
           await prisma.proposal.create({
             data: {
               proposal_number: `PRO-DRAFT-${Date.now().toString(36)}`,
-              work_request_id: wr2.id,
+              job_id: wr2.id,
               provider_person_id: other.id,
               status: "DRAFT",
               submitted_at: null,
@@ -425,7 +425,7 @@ async function main() {
            reason: *"a deleted proposal reads to the buyer as though it was never
            sent"* — hiding it here would recreate that one layer up. */
         const mine = await prisma.proposal.findFirst({
-          where: { work_request_id: wr2.id, provider_person_id: provider.id },
+          where: { job_id: wr2.id, provider_person_id: provider.id },
           select: { id: true },
         });
         await withdrawProposal(V(provider.user_id), mine!.id);
@@ -504,13 +504,13 @@ async function main() {
          by its own dedupe key while the id still resolves (`E620`'s lesson). */
       if (requestIds.length > 0) {
         const made = await prisma.proposal.findMany({
-          where: { work_request_id: { in: requestIds } },
+          where: { job_id: { in: requestIds } },
           select: { id: true },
         });
         await prisma.notification.deleteMany({
           where: { dedupe_key: { in: made.map((m) => `work.proposal_received:${m.id}`) } },
         });
-        await prisma.workRequest.deleteMany({ where: { id: { in: requestIds } } });
+        await prisma.job.deleteMany({ where: { id: { in: requestIds } } });
       }
       /*
         ⚠⚠⚠ AND ANY ORPHAN A KILLED — OR MUTATED — RUN LEFT BEHIND.
@@ -545,7 +545,7 @@ async function main() {
         }
       }
 
-      const left = await prisma.workRequest.count({ where: { title: TAG } });
+      const left = await prisma.job.count({ where: { title: TAG } });
       check("5 — ⚠ the probe cleaned up after itself", left === 0, `${left} left`);
     }
   }

@@ -39,6 +39,7 @@ export async function cleanup() {
   await prisma.workRequestLine.updateMany({ where: { work_request_id: { in: requests } }, data: { work_order_id: null } });
   await prisma.workOrder.deleteMany({ where: { id: { in: orders } } });
   await prisma.workRequest.deleteMany({ where: { id: { in: requests } } });
+  await prisma.job.deleteMany({ where: { buyer_person_id: { in: made.persons } } });
   await prisma.notification.deleteMany({ where: { person_id: { in: made.persons } } });
   await prisma.providerService.deleteMany({ where: { provider_profile_id: { in: (await prisma.providerProfile.findMany({ where: { person_id: { in: made.persons } }, select: { id: true } })).map((p) => p.id) } } });
   await prisma.user.deleteMany({ where: { id: { in: made.users }, is_test: true } });

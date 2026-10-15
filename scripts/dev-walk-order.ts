@@ -13,9 +13,10 @@ async function main() {
   const prov = await party("PROVIDER", "Pat");
   const start = new Date(Date.UTC(2026, 8, 1));
   const end = new Date(Date.UTC(2026, 11, 31));
+  const wr = await prisma.workRequest.create({ data: { buyer_person_id: buyer.personId, p_account_id: buyer.pAccountId, source: "EXTERNALLY_SOURCED", status: "ORDERED", proposal_access: "INVITE_ONLY", description: "Dev walk" }, select: { id: true } });
   const o = await prisma.workOrder.create({
     data: {
-      order_number: `WO-DEVWALK-${Date.now().toString(36)}`, origin: "INDIRECT", buyer_person_id: buyer.personId, provider_person_id: prov.personId, p_account_id: buyer.pAccountId,
+      order_number: `WO-DEVWALK-${Date.now().toString(36)}`, origin: "INDIRECT", work_request_id: wr.id, buyer_person_id: buyer.personId, provider_person_id: prov.personId, p_account_id: buyer.pAccountId,
       status: "ISSUED", period_start: start, period_end: end, fee_bps: 1490, not_to_exceed_cents: 40 * 10000 + 600000,
       lines: { create: [
         { line_number: 1, transaction_type: "SERVICE_BY_QTY", fee_bps: 1490, description: "Consulting", uom: "HOUR", quantity: 40, unit_price_cents: 10000, billing_cycle: "MONTHLY", payment_terms: "NET30", payment_event: "TIMESHEET" },

@@ -46,12 +46,12 @@ async function main() {
     check("0 — the cast is two DIFFERENT people", buyer.id !== provider.id);
 
     const makeRequest = async () => {
-      const wr = await prisma.workRequest.create({
+      const wr = await prisma.job.create({
         data: {
           buyer_person_id: buyer.id,
           p_account_id: buyer.company!.p_account_id,
           title: TAG,
-          status: "POSTED",
+          status: "OPEN",
           proposal_access: "OPEN",
         },
         select: { id: true },
@@ -81,7 +81,7 @@ async function main() {
       providerPersonId: provider.id,
     });
     check("1 — ⚠⚠ asking twice returns the SAME open interview", again.id === ivA.id && !again.created);
-    const ivCount = await prisma.interviewRequest.count({ where: { work_request_id: rA } });
+    const ivCount = await prisma.interviewRequest.count({ where: { job_id: rA } });
     check("1 — ⚠ exactly ONE interview exists", ivCount === 1, `${ivCount}`);
 
     const soon = new Date(Date.now() + 3 * 86_400_000);
@@ -183,7 +183,7 @@ async function main() {
     const reached = new Set(
       (
         await prisma.interviewRequest.findMany({
-          where: { work_request_id: { in: requestIds } },
+          where: { job_id: { in: requestIds } },
           select: { status: true },
         })
       ).map((r) => r.status)
@@ -207,7 +207,7 @@ async function main() {
     /* ⚠⚠ THE ROW IS NEVER DELETED. A declined interview that vanished would
        read to the buyer as though they never asked. */
     const survivors = await prisma.interviewRequest.count({
-      where: { work_request_id: { in: requestIds } },
+      where: { job_id: { in: requestIds } },
     });
     check("1 — ⚠⚠ closing an interview RECORDS, it does not delete", survivors === 4, `${survivors}`);
 
@@ -420,12 +420,12 @@ async function main() {
        test a precondition — asserted on the schema and on the proposal row. */
     const rNone = await makeRequest();
     const bare = await prisma.proposal.findFirst({
-      where: { work_request_id: rNone },
+      where: { job_id: rNone },
       select: { id: true, status: true },
     });
     check("3 — ⚠⚠ a proposal exists with NO interview and NO test", bare != null);
-    const noIv = await prisma.interviewRequest.count({ where: { work_request_id: rNone } });
-    const noTest = await prisma.testRequest.count({ where: { work_request_id: rNone } });
+    const noIv = await prisma.interviewRequest.count({ where: { job_id: rNone } });
+    const noTest = await prisma.testRequest.count({ where: { job_id: rNone } });
     check("3 — ⚠ and neither was created for it", noIv === 0 && noTest === 0, `${noIv}/${noTest}`);
     /* ⚠⚠⚠ THE STRUCTURAL HALF: `Proposal` carries no required link to
        either, so no selection path CAN demand one. */
@@ -471,16 +471,16 @@ async function main() {
       if (requestIds.length > 0) {
         proposalIds = (
           await prisma.proposal.findMany({
-            where: { work_request_id: { in: requestIds } },
+            where: { job_id: { in: requestIds } },
             select: { id: true },
           })
         ).map((b) => b.id);
         const ivs = await prisma.interviewRequest.findMany({
-          where: { work_request_id: { in: requestIds } },
+          where: { job_id: { in: requestIds } },
           select: { id: true },
         });
         const tests = await prisma.testRequest.findMany({
-          where: { work_request_id: { in: requestIds } },
+          where: { job_id: { in: requestIds } },
           select: { id: true },
         });
         /*
@@ -518,8 +518,8 @@ async function main() {
           ⚠⚠⚠ DELETED EXPLICITLY, BECAUSE THERE IS **NO FOREIGN KEY** — AND
           FINDING THAT OUT IS WHY THIS GATE COUNTS ROWS AFTERWARDS.
 
-          ⚠ MEASURED 2026-09-25: `InterviewRequest.work_request_id`,
-          `TestRequest.work_request_id`, `ProposalRequest`, `WorkOrder` and
+          ⚠ MEASURED 2026-09-25: `InterviewRequest.job_id`,
+          `TestRequest.job_id`, `ProposalRequest`, `WorkOrder` and
           `Requisition` are **bare `String @db.Uuid` columns with no
           `@relation`**. `WorkRequest` declares exactly four cascading children —
           `lines`, `skills`, `specializations`, `proposals` — and **none of the
@@ -535,9 +535,9 @@ async function main() {
           ⚠ SUPERSEDED, quoted not deleted (`E164`):
           //   ⚠ `TestRequest` and `InterviewRequest` cascade on the work request.
         */
-        await prisma.testRequest.deleteMany({ where: { work_request_id: { in: requestIds } } });
-        await prisma.interviewRequest.deleteMany({ where: { work_request_id: { in: requestIds } } });
-        await prisma.workRequest.deleteMany({ where: { id: { in: requestIds } } });
+        await prisma.testRequest.deleteMany({ where: { job_id: { in: requestIds } } });
+        await prisma.interviewRequest.deleteMany({ where: { job_id: { in: requestIds } } });
+        await prisma.job.deleteMany({ where: { id: { in: requestIds } } });
       }
 
       /* ⚠⚠⚠ THE ATTEMPTS THIS PROBE WROTE — BY ID, in the teardown, so a throw
@@ -558,14 +558,14 @@ async function main() {
         is therefore probe residue by construction.
       */
       const liveRequests = new Set(
-        (await prisma.workRequest.findMany({ select: { id: true } })).map((r) => r.id)
+        (await prisma.job.findMany({ select: { id: true } })).map((r) => r.id)
       );
       const strandedIv = (
-        await prisma.interviewRequest.findMany({ select: { id: true, work_request_id: true } })
-      ).filter((r) => !liveRequests.has(r.work_request_id));
+        await prisma.interviewRequest.findMany({ select: { id: true, job_id: true } })
+      ).filter((r) => !liveRequests.has(r.job_id));
       const strandedTr = (
-        await prisma.testRequest.findMany({ select: { id: true, work_request_id: true } })
-      ).filter((r) => !liveRequests.has(r.work_request_id));
+        await prisma.testRequest.findMany({ select: { id: true, job_id: true } })
+      ).filter((r) => !liveRequests.has(r.job_id));
       if (strandedIv.length > 0) {
         await prisma.notification.deleteMany({
           where: {
@@ -628,17 +628,17 @@ async function main() {
       fails.push(`teardown — ${(e as Error).message}`);
     }
 
-    const left = await prisma.workRequest.count({ where: { title: TAG } });
+    const left = await prisma.job.count({ where: { title: TAG } });
     check("5 — ⚠ the probe cleaned up after itself", left === 0, `${left} left`);
     /* ⚠⚠ COUNTED RATHER THAN ASSUMED, AND THIS IS THE ASSERTION THAT FOUND THE
        MISSING FOREIGN KEY. ⚠ Interviews and tests are swept by hand above; if
        anybody removes those two lines believing a cascade exists, this reddens. */
     const leakedIv = await prisma.interviewRequest.count({
-      where: { work_request_id: { in: requestIds } },
+      where: { job_id: { in: requestIds } },
     });
     check("5 — ⚠⚠ and no interview row survived its request", leakedIv === 0, `${leakedIv}`);
     const leakedTests = await prisma.testRequest.count({
-      where: { work_request_id: { in: requestIds } },
+      where: { job_id: { in: requestIds } },
     });
     check("5 — ⚠⚠ nor any test row", leakedTests === 0, `${leakedTests}`);
     /* ⚠⚠⚠ AND NO LEARN ATTEMPT THIS PROBE WROTE. It writes into a REAL

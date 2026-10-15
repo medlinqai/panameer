@@ -103,7 +103,7 @@ async function live() {
   const before = {
     shortlists: await prisma.shortlist.count(),
     lines: await prisma.shortlistLine.count(),
-    requests: await prisma.workRequest.count(),
+    requests: await prisma.job.count(),
     payments: await prisma.payment.count(),
     paymentLines: await prisma.paymentLine.count(),
   };
@@ -118,7 +118,7 @@ async function live() {
 
   let wrId: string | null = null;
   try {
-    const wr = await prisma.workRequest.create({
+    const wr = await prisma.job.create({
       data: {
         buyer_person_id: buyer.id,
         p_account_id: buyer.company.p_account_id,
@@ -131,7 +131,7 @@ async function live() {
     const sl = await prisma.shortlist.create({
       data: {
         shortlist_number: `SL-GATE-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
-        work_request_id: wr.id,
+        job_id: wr.id,
         created_by_person_id: buyer.id,
       },
       select: { id: true },
@@ -183,17 +183,17 @@ async function live() {
   } finally {
     /* ⚠⚠ BY ID, INNERMOST FIRST. The shortlist and its lines cascade from the request. */
     if (wrId) {
-      const sls = await prisma.shortlist.findMany({ where: { work_request_id: wrId }, select: { id: true } });
+      const sls = await prisma.shortlist.findMany({ where: { job_id: wrId }, select: { id: true } });
       if (sls.length) await prisma.shortlistLine.deleteMany({ where: { shortlist_id: { in: sls.map((s) => s.id) } } });
-      await prisma.shortlist.deleteMany({ where: { work_request_id: wrId } });
-      await prisma.workRequest.deleteMany({ where: { id: wrId } });
+      await prisma.shortlist.deleteMany({ where: { job_id: wrId } });
+      await prisma.job.deleteMany({ where: { id: wrId } });
     }
   }
 
   const after = {
     shortlists: await prisma.shortlist.count(),
     lines: await prisma.shortlistLine.count(),
-    requests: await prisma.workRequest.count(),
+    requests: await prisma.job.count(),
     payments: await prisma.payment.count(),
     paymentLines: await prisma.paymentLine.count(),
   };

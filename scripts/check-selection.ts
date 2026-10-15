@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
+import { requisitionForJob } from "@/lib/requisition";
 import { assertTransactionLineShape } from "@/lib/transaction-spine";
 import { submitProposal } from "@/lib/proposals";
 import {
@@ -49,12 +50,12 @@ async function main() {
     const END = new Date(Date.UTC(2026, 9, 16));
 
     const makeRequest = async () => {
-      const wr = await prisma.workRequest.create({
+      const wr = await prisma.job.create({
         data: {
           buyer_person_id: buyer.id,
           p_account_id: buyer.company!.p_account_id,
           title: TAG,
-          status: "POSTED",
+          status: "OPEN",
           proposal_access: "OPEN",
           start_date: START,
           end_date: END,
@@ -121,7 +122,7 @@ async function main() {
     }
     check("2 — ⚠ three proposals exist, each with a rate", bids.length === 3);
     const pricedLines = await prisma.proposalLine.count({
-      where: { proposal: { work_request_id: rA } },
+      where: { proposal: { job_id: rA } },
     });
     /* ⚠⚠⚠ THE HALF THE `NOT NULL` MADE UNREACHABLE. Before WS-C dropped it,
        `ProposalLine` could not be written by ANY route — 0 writers for
@@ -129,7 +130,7 @@ async function main() {
     check("2 — ⚠⚠⚠ a proposal on an OPEN request CAN carry a rate",
       pricedLines === 3, `${pricedLines} — proposal_request_line_id had to become nullable`);
     const openRate = await prisma.proposalLine.findFirst({
-      where: { proposal: { work_request_id: rA } },
+      where: { proposal: { job_id: rA } },
       select: { proposal_request_line_id: true, unit_price_cents: true, quantity: true },
     });
     check("2 — ⚠ with no invited line to point at", openRate?.proposal_request_line_id === null);
@@ -225,7 +226,7 @@ async function main() {
     check("2 — ⚠ two other proposals were on the table", selA.notSelected === 1,
       `${selA.notSelected} — one had already withdrawn, so only one loses`);
     const after = await prisma.proposal.findMany({
-      where: { work_request_id: rA },
+      where: { job_id: rA },
       select: { id: true, status: true },
     });
     check("2 — ⚠⚠⚠ ALL THREE PROPOSALS STILL EXIST", after.length === 3, `${after.length}`);
@@ -238,10 +239,10 @@ async function main() {
     check("2 — ⚠⚠⚠ a WITHDRAWN proposal keeps its own ending",
       after.find((b) => b.id === withdrawn.id)?.status === "WITHDRAWN",
       "the provider ended that one, not the buyer");
-    const wrA = await prisma.workRequest.findUnique({
+    const wrA = await prisma.job.findUnique({
       where: { id: rA }, select: { status: true },
     });
-    check("2 — ⚠ the work request is ASSIGNED, not yet ORDERED", wrA?.status === "ASSIGNED");
+    check("2 — ⚠ the job stays Active until the order", wrA?.status === "OPEN");
 
     /* ═══ 3 · ⚠⚠⚠ ROUTE B — DIRECT, A FIRST-CLASS PATH (item 3) ═══════════ */
     const rB = await makeRequest();
@@ -253,8 +254,8 @@ async function main() {
     console.log(`  Route B: ${selB.math.formula}\n`);
     check("3 — ⚠⚠ a buyer can assign directly, with NO proposal",
       selB.workRequestLineId != null);
-    const proposalsOnB = await prisma.proposal.count({ where: { work_request_id: rB } });
-    const ivOnB = await prisma.interviewRequest.count({ where: { work_request_id: rB } });
+    const proposalsOnB = await prisma.proposal.count({ where: { job_id: rB } });
+    const ivOnB = await prisma.interviewRequest.count({ where: { job_id: rB } });
     check("3 — ⚠⚠⚠ and it reached the requisition with no proposal and no interview",
       proposalsOnB === 0 && ivOnB === 0, `${proposalsOnB}/${ivOnB}`);
     check("3 — the rate the buyer stated was used", selB.math.unitPriceCents === RATE_B_CENTS);
@@ -304,7 +305,7 @@ async function main() {
     check("4 — ⚠⚠ the selection can be reversed before any order",
       rev.reopened === 2, `${rev.reopened} — the award and the one NOT_SELECTED`);
     const reopened = await prisma.proposal.findMany({
-      where: { work_request_id: rA }, select: { id: true, status: true },
+      where: { job_id: rA }, select: { id: true, status: true },
     });
     check("4 — the award went back to SUBMITTED",
       reopened.find((b) => b.id === winner.id)?.status === "SUBMITTED");
@@ -313,8 +314,8 @@ async function main() {
     check("4 — ⚠⚠⚠ but the WITHDRAWN one was NOT revived",
       reopened.find((b) => b.id === withdrawn.id)?.status === "WITHDRAWN",
       "reviving it would undo the provider's own decision");
-    const wrRev = await prisma.workRequest.findUnique({ where: { id: rA }, select: { status: true } });
-    check("4 — the request is POSTED again", wrRev?.status === "POSTED");
+    const wrRev = await prisma.job.findUnique({ where: { id: rA }, select: { status: true } });
+    check("4 — the job is Active again", wrRev?.status === "OPEN");
     /* ⚠⚠ THE LINE IS KEPT AND RE-POINTED, NOT DELETED. */
     const lineRev = await prisma.workRequestLine.findUnique({
       where: { id: selA.workRequestLineId },
@@ -340,7 +341,7 @@ async function main() {
       data: {
         order_number: `WO-PROBE-${Date.now().toString(36)}`,
         origin: "INDIRECT",
-        work_request_id: rC,
+        work_request_id: (await requisitionForJob(rC)).id,
         buyer_person_id: buyer.id,
         provider_person_id: providers[0]!.id,
         p_account_id: buyer.company.p_account_id,
@@ -368,12 +369,12 @@ async function main() {
     await prisma.workOrder.delete({ where: { id: fakeOrder.id } });
 
     /* ═══ 5 · ⚠⚠ THE REFUSALS — NO GUESSES ═══════════════════════════════ */
-    const rNoDates = await prisma.workRequest.create({
+    const rNoDates = await prisma.job.create({
       data: {
         buyer_person_id: buyer.id,
         p_account_id: buyer.company.p_account_id,
         title: TAG,
-        status: "POSTED",
+        status: "OPEN",
         proposal_access: "OPEN",
       },
       select: { id: true },
@@ -450,44 +451,30 @@ async function main() {
         string, so this can only ever match this gate's own rows.
       */
       const tagged = (
-        await prisma.workRequest.findMany({ where: { title: TAG }, select: { id: true } })
+        await prisma.job.findMany({ where: { title: TAG }, select: { id: true } })
       ).map((r) => r.id);
       for (const id of tagged) if (!requestIds.includes(id)) requestIds.push(id);
 
       if (requestIds.length > 0) {
         const bidIds = (
           await prisma.proposal.findMany({
-            where: { work_request_id: { in: requestIds } },
+            where: { job_id: { in: requestIds } },
             select: { id: true },
           })
         ).map((b) => b.id);
         await prisma.notification.deleteMany({
           where: { dedupe_key: { in: bidIds.map((id) => `work.proposal_received:${id}`) } },
         });
-        /* ⚠⚠ NO FOREIGN KEY on `WorkOrder.work_request_id` either — measured in
+        /* ⚠⚠ NO FOREIGN KEY on `WorkOrder.job_id` either — measured in
            WS-B. Swept by hand for the same reason. */
-        await prisma.workOrder.deleteMany({ where: { work_request_id: { in: requestIds } } });
-        await prisma.workRequest.deleteMany({ where: { id: { in: requestIds } } });
-      }
-      /* ⚠ Orphan sweep, same argument as WS-B's: nothing calls
-         `workRequest.delete` in `src/`, so an orphan is probe residue. */
-      const live = new Set(
-        (await prisma.workRequest.findMany({ select: { id: true } })).map((r) => r.id)
-      );
-      /* ⚠⚠ A NULL `work_request_id` IS NOT STRANDED — `WorkOrder.work_request_id`
-         is nullable on purpose, because a direct order need not come from a
-         request at all. Only a NON-NULL pointer at a request that is gone is
-         residue. ⚠ Treating null as orphaned would delete real direct orders. */
-      const strandedWo = (
-        await prisma.workOrder.findMany({ select: { id: true, work_request_id: true } })
-      ).filter((r) => r.work_request_id != null && !live.has(r.work_request_id));
-      if (strandedWo.length > 0) {
-        await prisma.workOrder.deleteMany({ where: { id: { in: strandedWo.map((r) => r.id) } } });
+        await prisma.workOrder.deleteMany({ where: { workRequest: { job_id: { in: requestIds } } } });
+        await prisma.workRequest.deleteMany({ where: { job_id: { in: requestIds } } });
+        await prisma.job.deleteMany({ where: { id: { in: requestIds } } });
       }
     } catch (e) {
       fails.push(`teardown — ${(e as Error).message}`);
     }
-    const left = await prisma.workRequest.count({ where: { title: TAG } });
+    const left = await prisma.job.count({ where: { title: TAG } });
     check("7 — ⚠ the probe cleaned up after itself", left === 0, `${left} left`);
     const leftWo = await prisma.workOrder.count();
     check("7 — ⚠⚠ and no work order was left behind", leftWo === 0, `${leftWo}`);

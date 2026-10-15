@@ -74,12 +74,20 @@ async function main() {
 
     /** A requisition with every kind on it, all assigned to one provider. */
     const makeRequisition = async (providerPersonId: string, kinds = KINDS) => {
-      const wr = await prisma.workRequest.create({
+      // JW: a Job, and its requisition Work Request holding the lines.
+      const job = await prisma.job.create({
+        data: { buyer_person_id: buyer.id, p_account_id: buyer.company!.p_account_id, title: TAG, status: "OPEN", proposal_access: "OPEN", start_date: START, end_date: END },
+        select: { id: true },
+      });
+      await prisma.workRequest.create({
         data: {
+          job_id: job.id,
+          source: "JOB_HIRE",
+          description: TAG,
           buyer_person_id: buyer.id,
           p_account_id: buyer.company!.p_account_id,
           title: TAG,
-          status: "POSTED",
+          status: "INCOMPLETE",
           proposal_access: "OPEN",
           start_date: START,
           end_date: END,
@@ -97,19 +105,19 @@ async function main() {
         },
         select: { id: true },
       });
-      requestIds.push(wr.id);
-      return wr.id;
+      requestIds.push(job.id);
+      return job.id;
     };
 
     /* ═══ 1 · ⚠⚠⚠ TWO DOORS, ONE EVENT (item 1) ═══════════════════════════ */
     const rHire = await makeRequisition(provider.id);
-    const viaHire = await hire(V(buyer.user_id), { workRequestId: rHire });
+    const viaHire = await hire(V(buyer.user_id), { jobId: rHire });
     check("1 — ⚠⚠ HIRE creates a work order", viaHire.id != null);
     check("1 — ⚠ with every requisition line on it", viaHire.lineCount === 3, `${viaHire.lineCount}`);
 
     const rPo = await makeRequisition(provider.id);
-    const viaPo = await acceptPurchaseOrder(V(buyer.user_id), {
-      workRequestId: rPo,
+    const [viaPo] = await acceptPurchaseOrder(V(buyer.user_id), {
+      workRequestId: (await prisma.workRequest.findFirstOrThrow({ where: { job_id: rPo } })).id,
       poNumber: "PO-4417",
     });
     check("1 — ⚠⚠ an ERP purchase order creates one too", viaPo.id != null);
@@ -206,7 +214,7 @@ async function main() {
 
     /* ═══ 2 · ⚠⚠⚠ RULING 44 — ALL THREE KINDS SURVIVE THE COPY ════════════ */
     const reqLines = await prisma.workRequestLine.findMany({
-      where: { work_request_id: rHire },
+      where: { workRequest: { job_id: rHire } },
       orderBy: { line_number: "asc" },
       select: {
         line_number: true, transaction_type: true, quantity: true,
@@ -272,8 +280,8 @@ async function main() {
       "a second assert written against TransactionType would be the same rule twice");
 
     /* ⚠⚠ RULING 17: creating the order moved the request's status. */
-    const wrAfter = await prisma.workRequest.findUnique({
-      where: { id: rHire }, select: { status: true },
+    const wrAfter = await prisma.workRequest.findFirst({
+      where: { job_id: rHire }, select: { status: true },
     });
     check("2 — ⚠⚠ the work request is ORDERED", wrAfter?.status === "ORDERED");
     check("2 — ⚠ and each line names its order",
@@ -281,7 +289,7 @@ async function main() {
     /* ⚠ One order per request — a second press must not build a second contract. */
     let refusedTwice = "";
     try {
-      await hire(V(buyer.user_id), { workRequestId: rHire });
+      await hire(V(buyer.user_id), { jobId: rHire });
     } catch (e) {
       refusedTwice = (e as { code?: string }).code ?? "threw";
     }
@@ -363,7 +371,7 @@ async function main() {
     await prisma.proposal.create({
       data: {
         proposal_number: `PRO-PROBE-${Date.now().toString(36)}`,
-        work_request_id: rDecline,
+        job_id: rDecline,
         provider_person_id: other.id,
         status: "NOT_SELECTED",
         submitted_at: new Date(),
@@ -372,33 +380,33 @@ async function main() {
     await prisma.proposal.create({
       data: {
         proposal_number: `PRO-PROBE2-${Date.now().toString(36)}`,
-        work_request_id: rDecline,
+        job_id: rDecline,
         provider_person_id: provider.id,
         status: "AWARDED",
         submitted_at: new Date(),
       },
     });
-    const toDecline = await hire(V(buyer.user_id), { workRequestId: rDecline });
+    const toDecline = await hire(V(buyer.user_id), { jobId: rDecline });
     await declineWorkOrder(V(provider.user_id), toDecline.id, "Booked elsewhere");
 
     const declined = await prisma.workOrder.findUnique({
       where: { id: toDecline.id }, select: { status: true },
     });
     check("4 — ⚠⚠ the declined order is CANCELLED and still exists", declined?.status === "CANCELLED");
-    const wrBack = await prisma.workRequest.findUnique({
-      where: { id: rDecline }, select: { status: true },
+    const wrBack = await prisma.workRequest.findFirst({
+      where: { job_id: rDecline }, select: { status: true },
     });
-    check("4 — ⚠⚠⚠ the work request goes BACK to the buyer as POSTED (ruling 16)",
-      wrBack?.status === "POSTED");
+    check("4 — ⚠⚠⚠ the work request goes BACK to the buyer as INCOMPLETE (ruling 16)",
+      wrBack?.status === "INCOMPLETE");
     const lineBack = await prisma.workRequestLine.findFirst({
-      where: { work_request_id: rDecline },
+      where: { workRequest: { job_id: rDecline } },
       select: { provider_person_id: true, status: true, work_order_id: true },
     });
     check("4 — ⚠ its line loses the provider and the order",
       lineBack?.provider_person_id === null && lineBack?.work_order_id === null &&
         lineBack?.status === "SOURCING");
     const proposalsBack = await prisma.proposal.findMany({
-      where: { work_request_id: rDecline },
+      where: { job_id: rDecline },
       select: { provider_person_id: true, status: true, declined_at: true, decline_reason: true },
     });
     const mine = proposalsBack.find((b) => b.provider_person_id === provider.id);
@@ -507,16 +515,16 @@ async function main() {
   } finally {
     try {
       const tagged = (
-        await prisma.workRequest.findMany({ where: { title: TAG }, select: { id: true } })
+        await prisma.job.findMany({ where: { title: TAG }, select: { id: true } })
       ).map((r) => r.id);
       for (const id of tagged) if (!requestIds.includes(id)) requestIds.push(id);
       if (requestIds.length > 0) {
         const orders = await prisma.workOrder.findMany({
-          where: { work_request_id: { in: requestIds } },
+          where: { workRequest: { job_id: { in: requestIds } } },
           select: { id: true },
         });
         const bids = await prisma.proposal.findMany({
-          where: { work_request_id: { in: requestIds } },
+          where: { job_id: { in: requestIds } },
           select: { id: true },
         });
         await prisma.notification.deleteMany({
@@ -536,7 +544,8 @@ async function main() {
           where: { work_order_id: { in: orders.map((o) => o.id) } },
         });
         await prisma.workOrder.deleteMany({ where: { id: { in: orders.map((o) => o.id) } } });
-        await prisma.workRequest.deleteMany({ where: { id: { in: requestIds } } });
+        await prisma.workRequest.deleteMany({ where: { job_id: { in: requestIds } } });
+        await prisma.job.deleteMany({ where: { id: { in: requestIds } } });
       }
       /* ⚠ Orphan sweep — nothing in `src/` deletes a work request, so a work
          order pointing at one that is gone is probe residue. */
@@ -555,7 +564,7 @@ async function main() {
     } catch (e) {
       fails.push(`teardown — ${(e as Error).message}`);
     }
-    const left = await prisma.workRequest.count({ where: { title: TAG } });
+    const left = await prisma.job.count({ where: { title: TAG } });
     check("8 — ⚠ the probe cleaned up after itself", left === 0, `${left} left`);
     const leftOrders = await prisma.workOrder.count();
     check("8 — ⚠⚠ and no work order survived", leftOrders === 0, `${leftOrders}`);

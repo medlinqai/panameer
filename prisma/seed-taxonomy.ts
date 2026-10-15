@@ -914,19 +914,19 @@ export async function seedTaxonomy(
       }
     }
 
-    const wrLinks = await prisma.workRequestSkill.findMany({
+    const wrLinks = await prisma.jobPostingSkill.findMany({
       where: { skill_id: stale.id },
-      select: { id: true, work_request_id: true },
+      select: { id: true, job_id: true },
     });
     for (const link of wrLinks) {
-      const already = await prisma.workRequestSkill.findFirst({
-        where: { work_request_id: link.work_request_id, skill_id: target },
+      const already = await prisma.jobPostingSkill.findFirst({
+        where: { job_id: link.job_id, skill_id: target },
         select: { id: true },
       });
       if (already) {
-        await prisma.workRequestSkill.delete({ where: { id: link.id } });
+        await prisma.jobPostingSkill.delete({ where: { id: link.id } });
       } else {
-        await prisma.workRequestSkill.update({
+        await prisma.jobPostingSkill.update({
           where: { id: link.id },
           data: { skill_id: target },
         });
@@ -956,7 +956,7 @@ export async function seedTaxonomy(
       })
     : [];
   const orphanedWorkRequestSkills = staleSkillIds.length
-    ? await prisma.workRequestSkill.count({ where: { skill_id: { in: staleSkillIds } } })
+    ? await prisma.jobPostingSkill.count({ where: { skill_id: { in: staleSkillIds } } })
     : 0;
   const orphanedProviderSkills = doomedProviderLinks.length;
 
@@ -1002,7 +1002,7 @@ export async function seedTaxonomy(
     await prisma.providerSkill.deleteMany({
       where: { skill_id: { in: staleSkillIds } },
     });
-    await prisma.workRequestSkill.deleteMany({
+    await prisma.jobPostingSkill.deleteMany({
       where: { skill_id: { in: staleSkillIds } },
     });
   }

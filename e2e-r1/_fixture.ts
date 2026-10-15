@@ -45,9 +45,10 @@ export async function createFixture(opts: { feeBps?: number } = {}): Promise<R1F
   const buyer = await mk("buyer");
   const provider = await mk("provider");
   const fee = opts.feeBps ?? 999;
+  const wr = await prisma.workRequest.create({ data: { buyer_person_id: buyer.personId, p_account_id: company.p_account_id, source: "EXTERNALLY_SOURCED", status: "ORDERED", proposal_access: "INVITE_ONLY", description: `Fixture ${tag}` }, select: { id: true } });
   const order = await prisma.workOrder.create({
     data: {
-      order_number: `WO-${tag}`, origin: "DIRECT", buyer_person_id: buyer.personId, provider_person_id: provider.personId,
+      order_number: `WO-${tag}`, origin: "DIRECT", work_request_id: wr.id, buyer_person_id: buyer.personId, provider_person_id: provider.personId,
       p_account_id: company.p_account_id, status: "RELEASED", not_to_exceed_cents: 150000, fee_bps: fee,
       provider_accepted_at: new Date(), buyer_accepted_at: new Date(), buyer_released_at: new Date(),
       lines: {
