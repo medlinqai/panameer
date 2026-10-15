@@ -465,7 +465,7 @@ export default function RequesterStepsPage() {
                   <b className="text-ink">{coMatch.name}</b> is already on Panameer ({coMatch.why}). <b>Request Access</b> and we&apos;ll ask {coMatch.admin ? <b className="text-ink">{coMatch.admin}</b> : "its admin"} to approve you. You can keep going while you wait.
                 </p>
               )}
-              <fieldset disabled={joining} className={joining ? "space-y-4 opacity-40" : "space-y-4"}>
+              <fieldset disabled={joining} className={joining ? "hidden" : "space-y-4"}>
               <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Industry">
                 <select aria-label="Industry" value={draft.coIndustryId} onChange={(e) => edit({ coIndustryId: e.target.value })} className="h-11 w-full border border-line bg-surface px-3 text-[15px] text-ink">

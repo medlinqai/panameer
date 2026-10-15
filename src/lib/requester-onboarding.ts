@@ -225,12 +225,13 @@ export async function getRequesterState(viewer: Viewer) {
       name: membership?.company.name ?? null,
       /** BC-E002: the registrant added it (approved admin) → they fill its address/industry; joiners skip them. */
       owner: membership?.status === "APPROVED" && membership.role === "ADMIN",
-      industryId: membership?.company.industry_id ?? null,
-      invoiceEmail: membership?.company.invoice_email ?? null,
-      address: coAddr?.line1 ? toAddress(coAddr) : null,
+      // Privacy (Scott 10-15): a PENDING joiner sees the company's name only — no industry, invoice email or address.
+      industryId: membership?.status === "APPROVED" ? membership.company.industry_id ?? null : null,
+      invoiceEmail: membership?.status === "APPROVED" ? membership.company.invoice_email ?? null : null,
+      address: membership?.status === "APPROVED" && coAddr?.line1 ? toAddress(coAddr) : null,
     },
     /** BC-E003: the work location is the company's own address. */
-    sameAsCompany: !!coSite && rp.work_site_id === coSite.id,
+    sameAsCompany: membership?.status === "APPROVED" && !!coSite && rp.work_site_id === coSite.id,
     profile: {
       firstName: p.first_name,
       lastName: p.last_name,
@@ -382,6 +383,7 @@ export async function saveRequesterStep(
       prisma.site.findFirst({ where: { company_id: m.company.id, addresses: { some: { line1: { not: "" } } } }, orderBy: { created_at: "asc" }, select: { id: true } });
   };
   if (step === "work_location" && payload.sameAsCompany) {
+    if (p.companyMemberships[0]?.status !== "APPROVED") throw new OnboardingError("Enter where you work; you can use the company's address once its admin approves you", "INVALID");
     const site = await coSite();
     if (!site) throw new OnboardingError("Your company has no address yet — enter where the work happens", "INVALID");
     await prisma.requesterProfile.update({ where: { id: rp.id }, data: { work_site_id: site.id } });
