@@ -143,6 +143,17 @@ export const PROVIDER_ROAD: LifecycleStep[] = [
   { key: "paid", phase: "paid", step: "Receive Your Payment", status: "Paid", who: "both", gate: false, lockBefore: "if required", desc: "Paid to the company's account in its legal name. Before the first payout: a payout account, plus a tax form where your country needs one.", href: "/company/legal#payout", next: "Get Paid", time: "automatic" },
 ];
 
+// BD-E005 (2026-10-15): the buyer road — 6 stops, same graphic as the provider road.
+export const BUYER_ROAD_TITLE = "From Signing Up to Getting the Work Done";
+export const BUYER_ROAD: LifecycleStep[] = [
+  { key: "account", phase: "join", step: "Create Your Account", status: "Registered", who: "you", gate: false, desc: "You, your company and its addresses, in one go.", href: "/profile", next: "Create Your Account", time: "about 3 min" },
+  { key: "link", phase: "join", step: "Add Your Company", status: "Linked", who: "you", gate: false, desc: "Add your company, or ask to join it if it's already here. Its admin approves you.", href: "/company?join=1#join", next: "Add Your Company", time: "1 min" },
+  { key: "find", phase: "win", step: "Find a Provider", status: "Sourcing", who: "you", gate: false, desc: "Shop products and rates, post a job for proposals, or ask a provider for an estimate.", href: "/shop", next: "Find a Provider", time: "minutes" },
+  { key: "order", phase: "win", step: "Order or Post a Job", status: "Ordered", who: "both", gate: false, desc: "Submit your work request: one work order per provider. Ordering needs your company's legal name, billing address and invoice email.", href: "/cart", next: "Order or Post a Job", time: "5 min" },
+  { key: "approve", phase: "win", step: "Approve the Work", status: "Approved", who: "you", gate: false, desc: "Accept the deliverable or approve the timesheet.", href: "/orders", next: "Approve the Work", time: "per work order" },
+  { key: "pay", phase: "paid", step: "Pay the Invoice", status: "Paid", who: "company", gate: false, desc: "Pay the payment request. Panameer pays the provider's company.", href: "/pay", next: "Pay the Invoice", time: "automatic" },
+];
+
 /** The road's three phases — each its own color on the road, rings, label and band. */
 export const ROAD_PHASES: Record<RoadPhase, { label: string; color: string; band: string; track: string }> = {
   join: { label: "Join & Get Found", color: "#5C6485", band: "#F6F7FB", track: "#E2E5EF" },
@@ -182,7 +193,7 @@ export const LIFECYCLE_RULES = [
 ];
 
 /** One fact per step key (account is always done; the provider's register = a linked company); a road's steps read only their own keys. */
-export type LifecycleFacts = Partial<Record<"register" | "verify" | "profile" | "link" | "list" | "validate" | "contract" | "sell" | "deliver" | "request" | "paid", boolean>>;
+export type LifecycleFacts = Partial<Record<"register" | "verify" | "profile" | "link" | "list" | "validate" | "contract" | "sell" | "deliver" | "request" | "paid" | "find" | "order" | "approve" | "pay", boolean>>;
 
 /** done[i] per step; current = first step not done (steps.length = all done); status = the status after the last done step. */
 export function lifecycleStatus(f: LifecycleFacts, road: LifecycleStep[] = LIFECYCLE) {

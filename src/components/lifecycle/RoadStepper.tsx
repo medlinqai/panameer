@@ -1,16 +1,18 @@
-import { PROVIDER_ROAD, ROAD_PHASES } from "@/lib/user-levels";
+import { PROVIDER_ROAD, ROAD_PHASES, type LifecycleStep } from "@/lib/user-levels";
 
 // M-E008 / RV-E001: the 8-stop road as a vertical stepper on phones — phase colors, magenta now, the lock before Get Paid.
-export function RoadStepper({ current }: { current: number }) {
-  const here = Math.min(Math.max(current, 0), PROVIDER_ROAD.length);
+export function RoadStepper({ current, road = PROVIDER_ROAD, waiting }: { current: number; road?: LifecycleStep[]; waiting?: { key: string; label: string } | null }) {
+  const ROAD = road;
+  const here = Math.min(Math.max(current, 0), ROAD.length);
   return (
     <ol data-road-stepper data-current={here + 1} className="grid">
-      {PROVIDER_ROAD.map((s, i) => {
+      {ROAD.map((s, i) => {
         const done = i < here;
         const now = i === here;
-        const last = i === PROVIDER_ROAD.length - 1;
+        const last = i === ROAD.length - 1;
+        const wait = waiting?.key === s.key;
         const ph = ROAD_PHASES[s.phase ?? "join"];
-        const firstOfPhase = i === 0 || PROVIDER_ROAD[i - 1].phase !== s.phase;
+        const firstOfPhase = i === 0 || ROAD[i - 1].phase !== s.phase;
         return (
           <li key={s.key} data-stop={i + 1} data-done={done || undefined} data-here={now || undefined} aria-current={now ? "step" : undefined} className="grid grid-cols-[28px_1fr] gap-x-3">
             {firstOfPhase && (
@@ -26,7 +28,7 @@ export function RoadStepper({ current }: { current: number }) {
                 className={"grid h-7 w-7 shrink-0 place-items-center rounded-full text-[12px] font-extrabold " + (now ? "bg-magenta text-white" : "")}
                 style={now ? undefined : done ? { background: ph.color, color: "#fff" } : { border: `2px solid ${ph.color}`, color: ph.color, background: "#fff" }}
               >
-                {done ? "✓" : i + 1}
+                {wait ? "…" : done ? "✓" : i + 1}
               </span>
               {!last && <span aria-hidden className="w-[2px] flex-1" style={{ background: done ? ph.color : ph.track }} />}
             </span>
@@ -36,7 +38,7 @@ export function RoadStepper({ current }: { current: number }) {
                 {s.gate && <span className="text-[10px] font-extrabold tracking-[0.08em] text-ink">{s.admin ? "GATE · BEFORE PAYMENT" : "GATE"}</span>}
               </span>
               <span className="mt-0.5 flex flex-wrap gap-x-2 text-[11.5px] text-ink-2">
-                <span className="font-bold uppercase tracking-[0.06em]">{now ? "You are here" : s.status}</span>
+                <span className={"font-bold uppercase tracking-[0.06em]" + (wait ? " text-magenta-dark" : "")}>{now ? "You are here" : wait ? waiting!.label : s.status}</span>
                 {s.time && <span>⏱ {s.time}</span>}
               </span>
             </span>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
-import { LifecycleGraphic } from "@/components/lifecycle/LifecycleGraphic";
+import { BUYER_ROAD } from "@/lib/user-levels";
 import { RoadGraphic } from "@/components/lifecycle/RoadGraphic";
 import { RoadStepper } from "@/components/lifecycle/RoadStepper";
 
@@ -30,7 +30,7 @@ export function LifecycleHelp({ className = "", onOpen }: { className?: string; 
 
 export function LifecycleHelpHost() {
   const [open, setOpen] = useState(false);
-  const [path, setPath] = useState<{ road: "provider" | "buyer"; current: number } | null>(null);
+  const [path, setPath] = useState<{ road: "provider" | "buyer"; current: number; waiting?: { key: string; label: string } | null } | null>(null);
   useEffect(() => {
     const show = () => {
       setOpen(true);
@@ -58,10 +58,11 @@ export function LifecycleHelpHost() {
         </>
       ) : (
         <>
-          <p className="mb-4 text-[14px] text-ink-2">
-            Buyers follow seven steps. You do the first four. Your company does the rest — Panameer contracts with and pays companies, not individuals.
+          <p className="mb-2 text-[14px] text-ink-2">
+            Six stops: your account and company, then find a provider, order or post a job, approve the work and pay the invoice. Panameer contracts with and pays companies, not individuals.
           </p>
-          <LifecycleGraphic />
+          <div className="hidden overflow-x-auto sm:block"><div className="min-w-[560px]"><RoadGraphic current={path?.current ?? 0} road={BUYER_ROAD} label="Buyer road" waiting={path?.waiting} /></div></div>
+          <div className="sm:hidden"><RoadStepper current={path?.current ?? 0} road={BUYER_ROAD} waiting={path?.waiting} /></div>
         </>
       )}
     </Modal>

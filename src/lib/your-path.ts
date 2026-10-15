@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { payoutChecklist } from "@/lib/payout-requirements";
-import { LIFECYCLE, PROVIDER_ROAD, lifecycleStatus, type LifecycleFacts } from "@/lib/user-levels";
+import { BUYER_ROAD, PROVIDER_ROAD, lifecycleStatus, type LifecycleFacts } from "@/lib/user-levels";
 
 // Lifecycle loader for one person; the work-order gate reads the same Validate Company check.
 const SIGNED = ["ACCEPTED", "RELEASED", "ACTIVE", "CLOSED", "ON_HOLD", "FINALLY_CLOSED"] as const;
@@ -33,9 +33,12 @@ export async function lifecycleFor(personId: string) {
       providerProfile: { select: { id: true, completeness: true, _count: { select: { serviceProducts: { where: { status: "PUBLISHED" } } } } } },
       requesterProfile: { select: { completed_at: true } },
       companyMemberships: { where: { status: "APPROVED" }, select: { company_id: true, role: true, company: { select: { p_account_id: true } } }, take: 1 },
+      _count: { select: { companyMemberships: { where: { status: "PENDING" } } } },
     },
   });
   if (!p) return null;
+  // BD-E003: a pending company join counts as done on the buyer road, shown as "Waiting for approval".
+  const pending = !p.companyMemberships.length && p._count.companyMemberships > 0;
   const m = p.companyMemberships[0];
   const provider = p.is_service_provider;
   const check = m ? await companyChecklist(m.company_id, { payout: provider }) : null;
@@ -68,9 +71,20 @@ export async function lifecycleFor(personId: string) {
     request: requests > 0,
     paid: payouts + payments > 0,
   };
-  // BR-E003: buyers add their company at registration, so Add Your Company drops off — unless they still have none.
-  const steps = provider ? PROVIDER_ROAD : m ? LIFECYCLE.filter((s) => s.key !== "link") : LIFECYCLE;
-  return { steps, road: provider ? ("provider" as const) : ("buyer" as const), ...lifecycleStatus(facts, steps), isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
+  if (!provider) {
+    // BD-E005: the buyer road — found a provider (job, work request, estimate), ordered, approved work, paid.
+    const [jobs, wrs, estimates, orders, approved, paid] = await Promise.all([
+      prisma.job.count({ where: { buyer_person_id: { in: members }, posted_at: { not: null } } }),
+      prisma.workRequest.count({ where: { buyer_person_id: { in: members }, lines: { some: {} } } }),
+      prisma.estimateRequest.count({ where: { requester_person_id: { in: members } } }),
+      prisma.workOrder.count({ where: { buyer_person_id: { in: members } } }),
+      prisma.workOrder.findMany({ where: { buyer_person_id: { in: members } }, select: { id: true } }).then((wos) => prisma.paymentRequest.count({ where: { status: { in: ["APPROVED", "PAID"] }, work_order_id: { in: wos.map((w) => w.id) } } })),
+      payments,
+    ]);
+    const buyerFacts: LifecycleFacts = { link: !!m || pending, find: jobs + wrs + estimates + orders > 0, order: orders > 0, approve: approved > 0, pay: paid > 0 };
+    return { steps: BUYER_ROAD, road: "buyer" as const, ...lifecycleStatus(buyerFacts, BUYER_ROAD), waiting: pending ? { key: "link", label: "Waiting for approval" } : null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
+  }
+  return { steps: PROVIDER_ROAD, road: "provider" as const, ...lifecycleStatus(facts, PROVIDER_ROAD), waiting: null as { key: string; label: string } | null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
 }
 
 export async function lifecycleForUser(userId: string) {

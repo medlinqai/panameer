@@ -3,16 +3,15 @@ import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
 import { lifecycleForUser } from "@/lib/your-path";
-import { LIFECYCLE_WHO, ROAD_TITLE } from "@/lib/user-levels";
+import { BUYER_ROAD, BUYER_ROAD_TITLE, LIFECYCLE_WHO, ROAD_TITLE } from "@/lib/user-levels";
 import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
 import { RoadGraphic } from "@/components/lifecycle/RoadGraphic";
 import { RoadStepper } from "@/components/lifecycle/RoadStepper";
-import { LifecycleStrip } from "@/components/lifecycle/LifecycleStrip";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your Path · Panameer" };
 
-// Your Path: the road (8 stops for providers, 7 for buyers) with "You are here" and one Next button.
+// Your Path: the road (8 stops for providers, 6 for buyers) with "You are here" and one Next button.
 export default async function YourPathPage() {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fyour-path");
@@ -27,7 +26,7 @@ export default async function YourPathPage() {
         YOUR PATH{current < total ? ` · STEP ${current + 1} OF ${total}` : ""} · {status.toUpperCase()}
         <LifecycleHelp className="text-ink" />
       </p>
-      <h1 className="mt-1.5 text-[30px] font-bold leading-tight">{road === "provider" ? ROAD_TITLE : "From Account to Getting Paid"}</h1>
+      <h1 className="mt-1.5 text-[30px] font-bold leading-tight">{road === "provider" ? ROAD_TITLE : BUYER_ROAD_TITLE}</h1>
       {road === "provider" ? (
         <>
           <p className="mt-1.5 max-w-[780px] text-[14.5px] text-ink-2">
@@ -41,12 +40,14 @@ export default async function YourPathPage() {
           </p>
         </>
       ) : (
-        <p className="mt-1.5 max-w-[62ch] text-[14.5px] text-ink-2">
-          Buyers follow seven steps. You do the first four; your company does the rest. Panameer contracts with and pays companies, not individuals.
-        </p>
+        <>
+          <p className="mt-1.5 max-w-[62ch] text-[14.5px] text-ink-2">
+            Six stops: your account and company, then find a provider, order or post a job, approve the work and pay the invoice. Panameer contracts with and pays companies, not individuals.
+          </p>
+          <div className="mt-4 hidden sm:block"><RoadGraphic current={current} road={BUYER_ROAD} label="Buyer road" waiting={path.waiting} /></div>
+          <div className="mt-4 sm:hidden"><RoadStepper current={current} road={BUYER_ROAD} waiting={path.waiting} /></div>
+        </>
       )}
-      {/* Providers already see the road above; the strip is the buyer's graphic only (Scott 10-13: no second copy). */}
-      {road !== "provider" && <div className="mt-6"><LifecycleStrip current={current} steps={steps} /></div>}
       <ol className="mt-8 border-t border-line">
         {steps.map((s, i) => {
           const here = i === current;

@@ -1,4 +1,4 @@
-import { PROVIDER_ROAD, ROAD_PHASES, roadLabelThree } from "@/lib/user-levels";
+import { PROVIDER_ROAD, ROAD_PHASES, roadLabelThree, type LifecycleStep, type RoadPhase } from "@/lib/user-levels";
 
 // Provider road v6.1 (mockup provider_road_v6_1_mockup_2026-10-13): built from boxes and text, not a scaled SVG,
 // so labels stay ≥12px at any width. Every label is exactly three lines (Scott 10-13). Phones use RoadStepper.
@@ -13,22 +13,24 @@ function Lock({ color }: { color: string }) {
   );
 }
 
-/** `current` = index of the stop you're on (0-based); `PROVIDER_ROAD.length` = every stop done. */
-export function RoadGraphic({ current }: { current: number; hereLabel?: string }) {
-  const here = Math.min(Math.max(current, 0), PROVIDER_ROAD.length);
-  const n = PROVIDER_ROAD.length;
-  const phases = (["join", "win", "paid"] as const).map((ph) => ({ ph, span: PROVIDER_ROAD.filter((s) => s.phase === ph).length }));
+/** `current` = index of the stop you're on (0-based); `road.length` = every stop done. BD-E005: buyers pass BUYER_ROAD;
+ *  `waiting` marks a stop counted done but not yet confirmed (a pending company join). */
+export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider road", waiting }: { current: number; hereLabel?: string; road?: LifecycleStep[]; label?: string; waiting?: { key: string; label: string } | null }) {
+  const here = Math.min(Math.max(current, 0), road.length);
+  const n = road.length;
+  const phases = (["join", "win", "paid"] as RoadPhase[]).map((ph) => ({ ph, span: road.filter((s) => s.phase === ph).length })).filter((x) => x.span > 0);
   return (
-    <div role="img" aria-label={`Provider road, ${n} stops`} data-road-graphic data-current={here + 1} className="pt-5">
+    <div role="img" aria-label={`${label}, ${n} stops`} data-road-graphic data-current={here + 1} className="pt-5">
       <div className="grid" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
-        {PROVIDER_ROAD.map((s, i) => {
+        {road.map((s, i) => {
           const C = ROAD_PHASES[s.phase ?? "join"].color;
           const done = i < here;
           const now = i === here;
-          const next = PROVIDER_ROAD[i + 1];
+          const next = road[i + 1];
+          const wait = waiting?.key === s.key;
           const [a, b, c] = roadLabelThree(s.step);
           return (
-            <div key={s.key} data-stop={i + 1} data-done={done || undefined} data-here={now || undefined} className="relative flex flex-col items-center pt-1.5 text-center">
+            <div key={s.key} data-stop={i + 1} data-done={done || undefined} data-here={now || undefined} data-waiting={wait || undefined} className="relative flex flex-col items-center pt-1.5 text-center">
               {i < n - 1 && <span aria-hidden className="absolute left-1/2 top-[20px] h-1 w-full" style={{ background: i < here ? C : OFF }} />}
               {next?.lockBefore && (
                 <span data-road-lock className="absolute left-full top-[-14px] z-[2] flex -translate-x-1/2 flex-col items-center bg-white px-1">
@@ -38,13 +40,14 @@ export function RoadGraphic({ current }: { current: number; hereLabel?: string }
               )}
               <span
                 className={"relative z-[1] grid place-items-center rounded-full font-extrabold " + (now ? "-mt-[3px] h-[38px] w-[38px] border-4 text-[13px]" : "h-8 w-8 border-[3px] text-[13px]")}
-                style={{ borderColor: C, background: done ? C : "#fff", color: done ? "#fff" : C }}
+                style={{ borderColor: C, background: done && !wait ? C : "#fff", color: done && !wait ? "#fff" : C }}
               >
-                {done ? "✓" : i + 1}
+                {wait ? "…" : done ? "✓" : i + 1}
               </span>
               <span className={"mt-2 whitespace-nowrap px-1 text-[12.5px] leading-[1.25] text-ink " + (now ? "font-extrabold" : "font-semibold")}>
                 {a}<br />{b}<br />{c}
               </span>
+              {wait && <span className="mt-1 text-[11.5px] font-bold text-magenta-dark">{waiting!.label}</span>}
             </div>
           );
         })}
