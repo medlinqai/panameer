@@ -15,12 +15,12 @@ export async function workHome(personId: string) {
     prisma.proposal.count({ where: { provider_person_id: personId, submitted_at: { gte: since } } }),
     prisma.proposal.count({ where: { provider_person_id: personId, status: "AWARDED", updated_at: { gte: since } } }),
     prisma.workOrder.count({ where: { provider_person_id: personId, status: { in: ["RELEASED", "ACTIVE"] }, provider_accepted_at: { gte: since } } }),
-    prisma.proposalRequest.findFirst({ where: { provider_person_id: personId, status: { in: OPEN_INVITE } }, orderBy: { issued_at: "desc" }, select: { work_request_id: true, invited_by_person_id: true } }),
+    prisma.proposalRequest.findFirst({ where: { provider_person_id: personId, status: { in: OPEN_INVITE } }, orderBy: { issued_at: "desc" }, select: { job_id: true, invited_by_person_id: true } }),
   ]);
   let newestLine: { title: string; from: string } | null = null;
   if (newest) {
     const [wr, by] = await Promise.all([
-      prisma.workRequest.findUnique({ where: { id: newest.work_request_id }, select: { title: true } }),
+      prisma.job.findUnique({ where: { id: newest.job_id }, select: { title: true } }),
       prisma.person.findUnique({ where: { id: newest.invited_by_person_id }, select: { first_name: true, last_name: true } }),
     ]);
     newestLine = { title: wr?.title || "Untitled work request", from: by ? `${by.first_name} ${by.last_name}`.trim() : "a buyer" };
@@ -32,7 +32,7 @@ export async function workHome(personId: string) {
 export async function myWorkRequestIds(personId: string, tab: "invitations" | "proposals"): Promise<string[]> {
   const rows =
     tab === "invitations"
-      ? await prisma.proposalRequest.findMany({ where: { provider_person_id: personId, status: { in: OPEN_INVITE } }, select: { work_request_id: true } })
-      : await prisma.proposal.findMany({ where: { provider_person_id: personId, status: { not: "DRAFT" } }, select: { work_request_id: true } });
-  return rows.map((r) => r.work_request_id);
+      ? await prisma.proposalRequest.findMany({ where: { provider_person_id: personId, status: { in: OPEN_INVITE } }, select: { job_id: true } })
+      : await prisma.proposal.findMany({ where: { provider_person_id: personId, status: { not: "DRAFT" } }, select: { job_id: true } });
+  return rows.map((r) => r.job_id);
 }

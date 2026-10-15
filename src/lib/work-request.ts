@@ -47,7 +47,7 @@ export class WorkRequestError extends Error {
       | "NOT_A_BUYER"
       | "NOT_FOUND"
       | "INVALID"
-      | "POSTED"
+      | "OPEN"
       | "INCOMPLETE"
       | "IDENTITY_REQUIRED",
     /** Populated for IDENTITY_REQUIRED: the named fields, with their links. */
@@ -113,7 +113,7 @@ function serialize(wr: Awaited<ReturnType<typeof loadOwned>>) {
 }
 
 export async function loadOwned(viewer: Viewer, id: string, pAccountId: string) {
-  const wr = await prisma.workRequest.findFirst({
+  const wr = await prisma.job.findFirst({
     where: scopedToPAccount(scopedViewer(viewer, pAccountId), { id }),
     include: {
       skills: { include: { skill: { select: { name: true } } } },
@@ -127,7 +127,7 @@ export async function loadOwned(viewer: Viewer, id: string, pAccountId: string) 
 /** The buyer's most recent DRAFT (for resume), or null. */
 export async function getCurrentDraft(viewer: Viewer) {
   const { pAccountId } = await resolveBuyer(viewer);
-  const draft = await prisma.workRequest.findFirst({
+  const draft = await prisma.job.findFirst({
     where: scopedToPAccount(scopedViewer(viewer, pAccountId), {
       status: "DRAFT" as const,
     }),
@@ -154,7 +154,7 @@ export async function createDraft(
   opts?: { soleSourced?: boolean }
 ) {
   const { personId, pAccountId } = await resolveBuyer(viewer);
-  const draft = await prisma.workRequest.create({
+  const draft = await prisma.job.create({
     data: {
       buyer_person_id: personId,
       p_account_id: pAccountId,
@@ -179,7 +179,7 @@ export async function saveSection(
   const { pAccountId } = await resolveBuyer(viewer);
   const wr = await loadOwned(viewer, id, pAccountId);
   if (wr.status !== "DRAFT") {
-    throw new WorkRequestError("A posted request can't be edited", "POSTED");
+    throw new WorkRequestError("A posted request can't be edited", "OPEN");
   }
 
   switch (section) {
@@ -191,7 +191,7 @@ export async function saveSection(
 
       const changed = wr.role_id !== roleTypeId;
       await prisma.$transaction([
-        prisma.workRequest.update({
+        prisma.job.update({
           where: { id: wr.id },
           data: {
             role_id: roleTypeId,
@@ -199,7 +199,7 @@ export async function saveSection(
           },
         }),
         ...(changed
-          ? [prisma.workRequestSkill.deleteMany({ where: { work_request_id: wr.id } })]
+          ? [prisma.jobPostingSkill.deleteMany({ where: { job_id: wr.id } })]
           : []),
       ]);
       break;
@@ -225,9 +225,9 @@ export async function saveSection(
       if (!pillarId) {
         const changedToAny = wr.pillar_id !== null;
         await prisma.$transaction([
-          prisma.workRequest.update({ where: { id: wr.id }, data: { pillar_id: null } }),
+          prisma.job.update({ where: { id: wr.id }, data: { pillar_id: null } }),
           ...(changedToAny
-            ? [prisma.workRequestSkill.deleteMany({ where: { work_request_id: wr.id } })]
+            ? [prisma.jobPostingSkill.deleteMany({ where: { job_id: wr.id } })]
             : []),
         ]);
         break;
@@ -242,9 +242,9 @@ export async function saveSection(
 
       const changed = wr.pillar_id !== pillarId;
       await prisma.$transaction([
-        prisma.workRequest.update({ where: { id: wr.id }, data: { pillar_id: pillarId } }),
+        prisma.job.update({ where: { id: wr.id }, data: { pillar_id: pillarId } }),
         ...(changed
-          ? [prisma.workRequestSkill.deleteMany({ where: { work_request_id: wr.id } })]
+          ? [prisma.jobPostingSkill.deleteMany({ where: { job_id: wr.id } })]
           : []),
       ]);
       break;
@@ -263,14 +263,14 @@ export async function saveSection(
         }
       }
       await prisma.$transaction([
-        prisma.workRequestSpecialization.deleteMany({
-          where: { work_request_id: wr.id },
+        prisma.jobSpecialization.deleteMany({
+          where: { job_id: wr.id },
         }),
         ...(ids.length
           ? [
-              prisma.workRequestSpecialization.createMany({
+              prisma.jobSpecialization.createMany({
                 data: ids.map((specialization_id) => ({
-                  work_request_id: wr.id,
+                  job_id: wr.id,
                   specialization_id,
                 })),
               }),
@@ -292,7 +292,7 @@ export async function saveSection(
       if (start && end && end < start) {
         throw new WorkRequestError("The end date is before the start date", "INVALID");
       }
-      await prisma.workRequest.update({
+      await prisma.job.update({
         where: { id: wr.id },
         data: { start_date: start, end_date: end },
       });
@@ -318,7 +318,7 @@ export async function saveSection(
       if (min !== null && max !== null && max < min) {
         throw new WorkRequestError("The maximum is below the minimum", "INVALID");
       }
-      await prisma.workRequest.update({
+      await prisma.job.update({
         where: { id: wr.id },
         data: {
           budget_type: budgetType,
@@ -340,7 +340,7 @@ export async function saveSection(
         (data.title ?? "").trim() ||
         wr.title.trim() ||
         description.split("\n")[0].slice(0, 120).trim();
-      await prisma.workRequest.update({
+      await prisma.job.update({
         where: { id: wr.id },
         data: { description, title },
       });
@@ -373,14 +373,14 @@ export async function saveSection(
         );
       }
       await prisma.$transaction([
-        prisma.workRequest.update({
+        prisma.job.update({
           where: { id: wr.id },
           data: { role_id: roleTypeId },
         }),
-        prisma.workRequestSkill.deleteMany({ where: { work_request_id: wr.id } }),
-        prisma.workRequestSkill.createMany({
+        prisma.jobPostingSkill.deleteMany({ where: { job_id: wr.id } }),
+        prisma.jobPostingSkill.createMany({
           data: skillIds.map((skill_id) => ({
-            work_request_id: wr.id,
+            job_id: wr.id,
             skill_id,
           })),
         }),
@@ -412,7 +412,7 @@ export async function saveSection(
         }
         budgetCents = Math.round(n * 100);
       }
-      await prisma.workRequest.update({
+      await prisma.job.update({
         where: { id: wr.id },
         data: {
           title,
@@ -436,7 +436,7 @@ export async function saveSection(
         const region = await prisma.region.findUnique({ where: { id: regionId } });
         if (!region) throw new WorkRequestError("Invalid region", "INVALID");
       }
-      await prisma.workRequest.update({
+      await prisma.job.update({
         where: { id: wr.id },
         data: {
           location_country: data.locationCountry?.trim() || null,
@@ -464,7 +464,7 @@ export async function saveSection(
           "INVALID"
         );
       }
-      await prisma.workRequest.update({
+      await prisma.job.update({
         where: { id: wr.id },
         data: {
           company_visibility: visibility as "PUBLIC" | "PLUS_ONLY" | "CONFIDENTIAL",
@@ -520,7 +520,7 @@ export async function missingIdentityForPerson(buyerPersonId: string): Promise<P
 export async function postWorkRequest(viewer: Viewer, id: string) {
   const { pAccountId } = await resolveBuyer(viewer);
   const wr = await loadOwned(viewer, id, pAccountId);
-  if (wr.status === "POSTED") {
+  if (wr.status === "OPEN") {
     // Idempotent-friendly: already posted.
     return getWorkRequest(viewer, id);
   }
@@ -542,9 +542,9 @@ export async function postWorkRequest(viewer: Viewer, id: string) {
       reqs.map((r) => ({ key: r.key, field: r.field, reason: r.reason, href: r.href }))
     );
   }
-  await prisma.workRequest.update({
+  await prisma.job.update({
     where: { id: wr.id },
-    data: { status: "POSTED", posted_at: new Date() },
+    data: { status: "OPEN", posted_at: new Date() },
   });
 
   await sendPostedConfirmation(wr.id, wr.buyer_person_id, wr.title);

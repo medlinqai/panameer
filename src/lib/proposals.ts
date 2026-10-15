@@ -82,7 +82,7 @@ export async function proposeEligibility(
   workRequestId: string,
   now: Date = new Date()
 ): Promise<ProposeVerdict> {
-  const request = await prisma.workRequest.findUnique({
+  const request = await prisma.job.findUnique({
     where: { id: workRequestId },
     select: {
       id: true,
@@ -95,8 +95,8 @@ export async function proposeEligibility(
 
   const row = await prisma.proposal.findUnique({
     where: {
-      work_request_id_provider_person_id: {
-        work_request_id: workRequestId,
+      job_id_provider_person_id: {
+        job_id: workRequestId,
         provider_person_id: providerPersonId,
       },
     },
@@ -143,14 +143,14 @@ export async function proposeEligibility(
 
   if (!request) return no("NOT_FOUND", "That work request isn't available.");
 
-  if (request.status !== "POSTED") {
+  if (request.status !== "OPEN") {
     return no("REQUEST_NOT_OPEN", "This work request isn't open for proposals.");
   }
 
   let inviteId: string | null = null;
   if (request.proposal_access === "INVITE_ONLY") {
     const itb = await prisma.proposalRequest.findFirst({
-      where: { work_request_id: request.id, provider_person_id: providerPersonId },
+      where: { job_id: request.id, provider_person_id: providerPersonId },
       select: { id: true, status: true, responds_by: true },
     });
     if (!itb) {
@@ -224,7 +224,7 @@ export async function submitProposal(
   const created = await prisma.proposal.create({
     data: {
       proposal_number: `PRO-${now.getTime().toString(36).toUpperCase()}-${provider.id.slice(0, 4)}`,
-      work_request_id: request.id,
+      job_id: request.id,
       // NULL ON AN OPEN REQUEST. That is the whole reason the column was
       proposal_request_id: verdict.inviteId,
       provider_person_id: provider.id,
@@ -316,7 +316,7 @@ export async function proposalsOn(
   const wr = await loadOwned(viewer, workRequestId, pAccountId);
 
   const rows = await prisma.proposal.findMany({
-    where: { work_request_id: wr.id, submitted_at: { not: null } },
+    where: { job_id: wr.id, submitted_at: { not: null } },
     select: {
       id: true,
       proposal_number: true,
@@ -344,12 +344,12 @@ export async function proposalsOn(
       select: { id: true, first_name: true, last_name: true },
     }),
     prisma.interviewRequest.findMany({
-      where: { work_request_id: wr.id, provider_person_id: { in: providerIds } },
+      where: { job_id: wr.id, provider_person_id: { in: providerIds } },
       select: { provider_person_id: true, status: true },
       orderBy: { created_at: "desc" },
     }),
     prisma.testRequest.findMany({
-      where: { work_request_id: wr.id, provider_person_id: { in: providerIds } },
+      where: { job_id: wr.id, provider_person_id: { in: providerIds } },
       select: { provider_person_id: true, status: true },
       orderBy: { created_at: "desc" },
     }),

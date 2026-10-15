@@ -24,13 +24,13 @@ async function existingDraftFor(
 
   const shortlists = await prisma.shortlist.findMany({
     where: { id: { in: lines.map((l) => l.shortlist_id) } },
-    select: { work_request_id: true },
+    select: { job_id: true },
   });
   if (shortlists.length === 0) return null;
 
-  const draft = await prisma.workRequest.findFirst({
+  const draft = await prisma.job.findFirst({
     where: {
-      id: { in: shortlists.map((s) => s.work_request_id) },
+      id: { in: shortlists.map((s) => s.job_id) },
       buyer_person_id: buyerPersonId,
       status: "DRAFT",
       sole_sourced: true,

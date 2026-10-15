@@ -97,8 +97,8 @@ async function createOrders(connectionId: string, pAccountId: string, poNumber: 
       const o = await tx.workOrder.create({
         data: {
           order_number: `WO-${Date.now().toString(36).toUpperCase()}-${wr.id.slice(0, 4)}`,
-          origin: "DIRECT", work_request_id: wr.id, buyer_person_id: wr.buyer_person_id, p_account_id: wr.p_account_id, provider_person_id: providerId,
-          currency: wr.currency, status: "ISSUED", buyer_accepted_at: now, external_ref: poNumber, erp_connection_id: connectionId,
+          origin: "DIRECT", work_request_id: wr.id, description: wr.description ?? wr.title, buyer_person_id: wr.buyer_person_id, p_account_id: wr.p_account_id, provider_person_id: providerId,
+          currency: wr.currency, status: "ISSUED", buyer_accepted_at: now, external_ref: poNumber, erp_po_number: poNumber, erp_po_revision: 0, erp_connection_id: connectionId,
           fee_bps: distinct.length === 1 ? distinct[0] : null, not_to_exceed_cents: value,
           period_start: starts.length ? new Date(Math.min(...starts.map((d) => d.getTime()))) : null,
           period_end: ends.length ? new Date(Math.max(...ends.map((d) => d.getTime()))) : null,
@@ -119,7 +119,7 @@ async function createOrders(connectionId: string, pAccountId: string, poNumber: 
     await snapshotMilestones(order.id);
     await notify({ event: "work.order_offered", personId: providerId, entityType: "work_order", entityId: order.id, dedupeKey: `work.order_offered:${order.id}`, vars: { orderId: order.id, requestTitle: `PO ${poNumber} from the customer's ERP` } });
   }
-  await prisma.workRequest.updateMany({ where: { id: { in: wrIds } }, data: { status: "ORDERED" } });
+  await prisma.workRequest.updateMany({ where: { id: { in: wrIds } }, data: { status: "ORDERED", approved_at: now } });
   return { workRequestId: wrIds[0] ?? null, orderIds };
 }
 
@@ -147,13 +147,14 @@ async function updateOrders(connectionId: string, poNumber: string, items: PoIte
         value += pricedByQuantity(l.transaction_type) ? Math.round((q ?? 0) * (u ?? 0)) : a ?? 0;
         if (f) await prisma.workOrderLine.update({ where: { id: l.id }, data: { quantity: q == null ? null : new Prisma.Decimal(q), unit_price_cents: u, amount_cents: a } });
       }
-      await prisma.workOrder.update({ where: { id: o.id }, data: { not_to_exceed_cents: value } });
+      await prisma.workOrder.update({ where: { id: o.id }, data: { not_to_exceed_cents: value, erp_po_revision: { increment: 1 } } });
       await prisma.workOrderEvent.create({ data: { work_order_id: o.id, kind: "erp.updated", text: `PO ${poNumber} updated in the customer's ERP before acknowledgment` } });
       touched.push(o.id);
       continue;
     }
     try {
       await proposeChange(null, o.id, input, { externalPayloadId: payloadId });
+      await prisma.workOrder.update({ where: { id: o.id }, data: { erp_po_revision: { increment: 1 } } });
       touched.push(o.id);
     } catch (e) {
       if ((e as Error).message !== "Nothing changed") throw e;

@@ -30,7 +30,7 @@ export async function sendTest(
 ): Promise<{ id: string; created: boolean }> {
   const me = await ownPerson(viewer);
 
-  const wr = await prisma.workRequest.findUnique({
+  const wr = await prisma.job.findUnique({
     where: { id: input.workRequestId },
     select: { id: true, buyer_person_id: true, status: true, title: true },
   });
@@ -47,8 +47,8 @@ export async function sendTest(
 
   const proposal = await prisma.proposal.findUnique({
     where: {
-      work_request_id_provider_person_id: {
-        work_request_id: wr.id,
+      job_id_provider_person_id: {
+        job_id: wr.id,
         provider_person_id: input.providerPersonId,
       },
     },
@@ -63,7 +63,7 @@ export async function sendTest(
 
   const open = await prisma.testRequest.findFirst({
     where: {
-      work_request_id: wr.id,
+      job_id: wr.id,
       provider_person_id: input.providerPersonId,
       status: { in: ["DRAFT", "ISSUED", "IN_PROGRESS"] },
     },
@@ -74,7 +74,7 @@ export async function sendTest(
   const created = await prisma.testRequest.create({
     data: {
       request_number: `TR-${Date.now().toString(36).toUpperCase()}-${input.providerPersonId.slice(0, 4)}`,
-      work_request_id: wr.id,
+      job_id: wr.id,
       provider_person_id: input.providerPersonId,
       requested_by_person_id: me.id,
       proposal_id: proposal.id,

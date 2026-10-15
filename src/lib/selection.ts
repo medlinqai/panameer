@@ -2,6 +2,7 @@ import { assertCanSign } from "@/lib/your-path";
 import { prisma } from "@/lib/prisma";
 import { SourcingError } from "@/lib/sourcing";
 import type { Viewer } from "@/lib/access";
+import { requisitionForJob } from "@/lib/requisition";
 
 export const HOURS_PER_DAY = 8;
 
@@ -74,9 +75,10 @@ async function ownPerson(viewer: Viewer) {
   return person;
 }
 
-async function buyerRequest(workRequestId: string, personId: string) {
-  const wr = await prisma.workRequest.findUnique({
-    where: { id: workRequestId },
+// JW-E002: `workRequestId` here is the Job's id; the hire line goes on the Job's requisition (`reqId`).
+async function buyerRequest(jobId: string, personId: string) {
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
     select: {
       id: true,
       buyer_person_id: true,
@@ -87,11 +89,12 @@ async function buyerRequest(workRequestId: string, personId: string) {
       currency: true,
     },
   });
-  if (!wr) throw new SourcingError("That work request isn't available.", "NOT_FOUND");
-  if (wr.buyer_person_id !== personId) {
+  if (!job) throw new SourcingError("That job isn't available.", "NOT_FOUND");
+  if (job.buyer_person_id !== personId) {
     throw new SourcingError("Only the buyer can do that.", "NOT_BUYER");
   }
-  return wr;
+  const req = await requisitionForJob(job.id);
+  return { ...job, reqId: req.id, status: job.status === "CANCELED" ? "CANCELLED" : req.status };
 }
 
 export type Selection = {
@@ -108,7 +111,7 @@ export type Selection = {
 
 /** THE SHARED BODY. BOTH ROUTES END HERE AND NOTHING DOWNSTREAM CAN TELL */
 async function writeRequisitionLine(args: {
-  workRequest: { id: string; title: string; start_date: Date | null; end_date: Date | null };
+  workRequest: { reqId: string; title: string; start_date: Date | null; end_date: Date | null };
   providerPersonId: string;
   proposalId: string | null;
   unitPriceCents: number;
@@ -141,9 +144,9 @@ async function writeRequisitionLine(args: {
 
   // ONE TALENT LINE PER SELECTION, REPLACED RATHER THAN APPENDED. Selecting
   const line = await prisma.workRequestLine.upsert({
-    where: { work_request_id_line_number: { work_request_id: wr.id, line_number: 1 } },
+    where: { work_request_id_line_number: { work_request_id: wr.reqId, line_number: 1 } },
     create: {
-      work_request_id: wr.id,
+      work_request_id: wr.reqId,
       line_number: 1,
       // SERVICE BY QUANTITY — HOURS AT A RATE. Ruling 44 deleted the
       transaction_type: "SERVICE_BY_QTY",
@@ -203,8 +206,8 @@ export async function selectProvider(
 
   const winner = await prisma.proposal.findUnique({
     where: {
-      work_request_id_provider_person_id: {
-        work_request_id: wr.id,
+      job_id_provider_person_id: {
+        job_id: wr.id,
         provider_person_id: input.providerPersonId,
       },
     },
@@ -246,7 +249,7 @@ export async function selectProvider(
   // THE LOSERS (item 2)
   const losers = await prisma.proposal.updateMany({
     where: {
-      work_request_id: wr.id,
+      job_id: wr.id,
       id: { not: winner.id },
       status: { in: ["DRAFT", "SUBMITTED", "SHORTLISTED"] },
     },
@@ -257,15 +260,12 @@ export async function selectProvider(
     prisma.proposal.update({ where: { id: winner.id }, data: { status: "AWARDED" } }),
     // RULING 17: creating the ORDER moves the status to `ORDERED`; selecting
     // WS-D). The column's `@default(false)` means *"nobody
-    prisma.workRequest.update({
-      where: { id: wr.id },
-      data: { status: "ASSIGNED", sole_sourced: false },
-    }),
+    prisma.job.update({ where: { id: wr.id }, data: { sole_sourced: false } }),
   ]);
 
   // THE BUYER'S WORKLIST ITEMS ARE CLEARED — they no longer owe a response
   const allProposals = await prisma.proposal.findMany({
-    where: { work_request_id: wr.id },
+    where: { job_id: wr.id },
     select: { id: true },
   });
   await prisma.notification
@@ -337,10 +337,7 @@ export async function assignProviderDirectly(
   });
 
   // WS-D, ruling `97d`. AN HOUR AGO IT WAS A CONVENIENCE SO A
-  await prisma.workRequest.update({
-    where: { id: wr.id },
-    data: { status: "ASSIGNED", sole_sourced: true },
-  });
+  await prisma.job.update({ where: { id: wr.id }, data: { sole_sourced: true } });
 
   return {
     workRequestId: wr.id,
@@ -363,7 +360,7 @@ export async function reverseSelection(
 
   // THE FENCE, READ FROM THE LINE RATHER THAN FROM THE HEADER'S STATUS.
   const ordered = await prisma.workRequestLine.findFirst({
-    where: { work_request_id: wr.id, work_order_id: { not: null } },
+    where: { work_request_id: wr.reqId, work_order_id: { not: null } },
     select: { id: true },
   });
   if (ordered || wr.status === "ORDERED") {
@@ -376,7 +373,7 @@ export async function reverseSelection(
   // Back to the state before the choice: the award returns to `SUBMITTED` and
   const reopened = await prisma.proposal.updateMany({
     where: {
-      work_request_id: wr.id,
+      job_id: wr.id,
       status: { in: ["AWARDED", "NOT_SELECTED"] },
     },
     data: { status: "SUBMITTED" },
@@ -384,10 +381,9 @@ export async function reverseSelection(
 
   await prisma.$transaction([
     prisma.workRequestLine.updateMany({
-      where: { work_request_id: wr.id, line_number: 1 },
+      where: { work_request_id: wr.reqId, line_number: 1 },
       data: { provider_person_id: null, status: "SOURCING" },
     }),
-    prisma.workRequest.update({ where: { id: wr.id }, data: { status: "POSTED" } }),
   ]);
 
   return { reopened: reopened.count };

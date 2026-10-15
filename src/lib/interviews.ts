@@ -14,7 +14,7 @@ async function ownPerson(viewer: Viewer) {
 }
 
 async function assertIsBuyer(workRequestId: string, personId: string) {
-  const wr = await prisma.workRequest.findUnique({
+  const wr = await prisma.job.findUnique({
     where: { id: workRequestId },
     select: { id: true, buyer_person_id: true, title: true },
   });
@@ -39,8 +39,8 @@ export async function requestInterview(
 
   const proposal = await prisma.proposal.findUnique({
     where: {
-      work_request_id_provider_person_id: {
-        work_request_id: wr.id,
+      job_id_provider_person_id: {
+        job_id: wr.id,
         provider_person_id: input.providerPersonId,
       },
     },
@@ -55,7 +55,7 @@ export async function requestInterview(
 
   const open = await prisma.interviewRequest.findFirst({
     where: {
-      work_request_id: wr.id,
+      job_id: wr.id,
       provider_person_id: input.providerPersonId,
       status: { in: ["REQUESTED", "SLOTS_OFFERED", "SCHEDULED"] },
     },
@@ -66,7 +66,7 @@ export async function requestInterview(
   const created = await prisma.interviewRequest.create({
     data: {
       request_number: `IV-${Date.now().toString(36).toUpperCase()}-${input.providerPersonId.slice(0, 4)}`,
-      work_request_id: wr.id,
+      job_id: wr.id,
       provider_person_id: input.providerPersonId,
       requested_by_person_id: me.id,
       status: "REQUESTED",
@@ -151,10 +151,10 @@ export async function confirmSlot(
   const me = await ownPerson(viewer);
   const iv = await prisma.interviewRequest.findUnique({
     where: { id: interviewId },
-    select: { id: true, status: true, work_request_id: true, provider_person_id: true },
+    select: { id: true, status: true, job_id: true, provider_person_id: true },
   });
   if (!iv) throw new SourcingError("That interview isn't available.", "NOT_FOUND");
-  await assertIsBuyer(iv.work_request_id, me.id);
+  await assertIsBuyer(iv.job_id, me.id);
   if (iv.status !== "SLOTS_OFFERED") {
     throw new SourcingError("There are no times to confirm yet.", "NO_SLOTS");
   }
@@ -186,10 +186,10 @@ export async function completeInterview(viewer: Viewer, interviewId: string): Pr
   const me = await ownPerson(viewer);
   const iv = await prisma.interviewRequest.findUnique({
     where: { id: interviewId },
-    select: { id: true, status: true, work_request_id: true },
+    select: { id: true, status: true, job_id: true },
   });
   if (!iv) throw new SourcingError("That interview isn't available.", "NOT_FOUND");
-  await assertIsBuyer(iv.work_request_id, me.id);
+  await assertIsBuyer(iv.job_id, me.id);
   if (iv.status !== "SCHEDULED") {
     throw new SourcingError("That interview isn't scheduled.", "NOT_SCHEDULED");
   }
@@ -211,7 +211,7 @@ export async function closeInterview(
     select: {
       id: true,
       status: true,
-      work_request_id: true,
+      job_id: true,
       provider_person_id: true,
     },
   });
@@ -223,7 +223,7 @@ export async function closeInterview(
       throw new SourcingError("Only the provider can decline.", "NOT_PROVIDER");
     }
   } else {
-    await assertIsBuyer(iv.work_request_id, me.id);
+    await assertIsBuyer(iv.job_id, me.id);
   }
 
   if (iv.status === "COMPLETED" || iv.status === "DECLINED" || iv.status === "CANCELLED") {

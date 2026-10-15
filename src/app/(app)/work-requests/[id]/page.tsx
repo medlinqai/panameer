@@ -14,8 +14,8 @@ import { ProposalSteps } from "@/components/work/ProposalSteps";
 import { SelectProposal, AssignDirectly, CreateOrder } from "@/components/work/HireControls";
 import { matchProvidersFor } from "@/lib/work-request-match";
 import {
-  WORK_REQUEST_STATUS_LABEL,
-  workRequestStatusPillClass,
+  JOB_STATUS_LABEL,
+  jobStatusPillClass,
 } from "@/lib/work-request-status";
 import { WorkRequestError } from "@/lib/work-request";
 import { BackLink } from "@/components/console/BackLink";
@@ -82,7 +82,9 @@ export default async function Page({
     }))
     .filter((p) => p.personId);
 
-  const posted = detail.status === "POSTED";
+  const posted = detail.status === "OPEN";
+  // Every line has a provider and a price, and the requisition isn't ordered yet → Create Order.
+  const awarded = detail.completeness.complete && !["ORDERED", "CANCELLED"].includes(detail.workRequestStatus) && detail.status !== "FILLED";
 
   return (
     <div className="mx-auto w-full max-w-4xl">
@@ -98,15 +100,15 @@ export default async function Page({
             {}
             {posted && detail.postedAt
               ? `Posted ${detail.postedAt.slice(0, 10)}`
-              : WORK_REQUEST_STATUS_LABEL[detail.status]}
+              : JOB_STATUS_LABEL[detail.status]}
           </p>
         </div>
         {/* ONE PLACE — this pill read `posted ? … : "Draft"` */}
         <span className="inline-flex flex-col items-end">
-          <span className={workRequestStatusPillClass(detail.status)}>
-            {WORK_REQUEST_STATUS_LABEL[detail.status]}
+          <span className={jobStatusPillClass(detail.status)}>
+            {JOB_STATUS_LABEL[detail.status]}
           </span>
-          {detail.status === "ASSIGNED" && erpReturned && <span className="mt-1 text-[12px] text-ink-2">Returned to ERP — waiting for the PO</span>}
+          {awarded && erpReturned && <span className="mt-1 text-[12px] text-ink-2">Returned to ERP — waiting for the PO</span>}
         </span>
       </div>
 
@@ -264,10 +266,10 @@ export default async function Page({
       )}
 
       {/* THE OTHER ROUTE, AND THE SECOND TRANSITION ( WS-F) */}
-      {(detail.status === "DRAFT" || detail.status === "POSTED") && options.length > 0 && (
+      {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && (
         <AssignDirectly workRequestId={detail.id} providers={options} />
       )}
-      {detail.status === "ASSIGNED" && <CreateOrder workRequestId={detail.id} />}
+      {awarded && <CreateOrder workRequestId={detail.id} />}
 
       {/* WHO HAS BEEN INVITED */}
       {/* THE SECOND HALF OF THE SAME BRANCH WS-B). Guarded on the same */}

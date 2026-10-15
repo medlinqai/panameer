@@ -1,4 +1,4 @@
-import type { WorkRequestStatus } from "@prisma/client";
+import type { JobStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { scopedToPAccount, withPAccount, type Viewer } from "@/lib/access";
 import { resolveBuyer } from "@/lib/work-request";
@@ -7,7 +7,7 @@ import { completenessFor, type Completeness } from "@/lib/work-request-lines";
 export type WorkRequestRow = {
   id: string;
   title: string;
-  status: WorkRequestStatus;
+  status: JobStatus;
   postedAt: string | null;
   updatedAt: string;
   currency: string;
@@ -26,7 +26,7 @@ export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]
   const { pAccountId } = await resolveBuyer(viewer);
   const scoped = withPAccount(viewer, pAccountId);
 
-  const requests = await prisma.workRequest.findMany({
+  const requests = await prisma.job.findMany({
     where: scopedToPAccount(scoped, {}),
     orderBy: [{ updated_at: "desc" }],
     select: {
@@ -47,9 +47,9 @@ export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]
   if (requests.length === 0) return [];
 
   const lines = await prisma.workRequestLine.findMany({
-    where: { work_request_id: { in: requests.map((r) => r.id) } },
+    where: { workRequest: { job_id: { in: requests.map((r) => r.id) } } },
     select: {
-      work_request_id: true,
+      workRequest: { select: { job_id: true } },
       line_number: true,
       description: true,
       provider_person_id: true,
@@ -61,14 +61,14 @@ export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]
   });
 
   const shortlists = await prisma.shortlist.findMany({
-    where: { work_request_id: { in: requests.map((r) => r.id) } },
-    select: { work_request_id: true, lines: { select: { provider_person_id: true } } },
+    where: { job_id: { in: requests.map((r) => r.id) } },
+    select: { job_id: true, lines: { select: { provider_person_id: true } } },
   });
   const shortlisted = new Map<string, string[]>();
   for (const sl of shortlists) {
-    const list = shortlisted.get(sl.work_request_id) ?? [];
+    const list = shortlisted.get(sl.job_id) ?? [];
     for (const l of sl.lines) if (!list.includes(l.provider_person_id)) list.push(l.provider_person_id);
-    shortlisted.set(sl.work_request_id, list);
+    shortlisted.set(sl.job_id, list);
   }
 
   const names = await namesFor([
@@ -78,9 +78,10 @@ export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]
 
   const byRequest = new Map<string, typeof lines>();
   for (const l of lines) {
-    const list = byRequest.get(l.work_request_id) ?? [];
+    const jobId = l.workRequest.job_id!;
+    const list = byRequest.get(jobId) ?? [];
     list.push(l);
-    byRequest.set(l.work_request_id, list);
+    byRequest.set(jobId, list);
   }
 
   return requests.map((r) => {

@@ -185,7 +185,7 @@ export async function searchWorkTeaser(
   const term = q.trim();
   const like = { contains: term, mode: "insensitive" as const };
   const where = {
-    status: "POSTED" as const,
+    status: "OPEN" as const,
     ...(term
       ? {
           OR: [
@@ -198,7 +198,7 @@ export async function searchWorkTeaser(
   };
 
   const [rows, total] = await Promise.all([
-    prisma.workRequest.findMany({
+    prisma.job.findMany({
       where,
       take,
       orderBy: { updated_at: "desc" },
@@ -216,7 +216,7 @@ export async function searchWorkTeaser(
         skills: { select: { skill: { select: { name: true } } }, take: 4 },
       },
     }),
-    prisma.workRequest.count({ where }),
+    prisma.job.count({ where }),
   ]);
 
   return {

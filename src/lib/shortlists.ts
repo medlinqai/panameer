@@ -12,7 +12,7 @@ async function ownPerson(viewer: Viewer) {
 }
 
 async function assertOwnsRequest(workRequestId: string, personId: string) {
-  const wr = await prisma.workRequest.findUnique({
+  const wr = await prisma.job.findUnique({
     where: { id: workRequestId },
     select: { id: true, buyer_person_id: true },
   });
@@ -25,14 +25,14 @@ async function assertOwnsRequest(workRequestId: string, personId: string) {
 
 async function shortlistFor(workRequestId: string, personId: string) {
   const existing = await prisma.shortlist.findFirst({
-    where: { work_request_id: workRequestId },
+    where: { job_id: workRequestId },
     select: { id: true },
   });
   if (existing) return existing;
   return prisma.shortlist.create({
     data: {
       shortlist_number: `SL-${Date.now().toString(36).toUpperCase()}-${workRequestId.slice(0, 4)}`,
-      work_request_id: workRequestId,
+      job_id: workRequestId,
       created_by_person_id: personId,
     },
     select: { id: true },
@@ -90,7 +90,7 @@ export async function keepProvider(
   const me = await ownPerson(viewer);
   await assertOwnsRequest(input.workRequestId, me.id);
   const sl = await prisma.shortlist.findFirst({
-    where: { work_request_id: input.workRequestId },
+    where: { job_id: input.workRequestId },
     select: { id: true },
   });
   if (!sl) throw new SourcingError("There is no shortlist on that request.", "NOT_FOUND");

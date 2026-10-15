@@ -12,12 +12,16 @@ import { notify } from "@/lib/notifications";
 import { queueConfirmation } from "@/lib/erp/outbound";
 import { snapshotMilestones } from "@/lib/order-milestones";
 import type { Viewer } from "@/lib/access";
+import { descriptionRequired, requisitionForJob } from "@/lib/requisition";
+import { completenessFor, completenessMessage } from "@/lib/work-request-lines";
 
 export type OrderFromRequisition = {
   workRequestId: string;
   externalRef?: string | null;
   /** The buyer's statement of work (run 13). */
   sowText?: string | null;
+  /** The Job was sole-sourced (commission kind). */
+  soleSourced?: boolean;
 };
 
 export type BuiltOrder = {
@@ -37,11 +41,32 @@ async function ownPerson(viewer: Viewer) {
   return person;
 }
 
-async function buildWorkOrder(
+// JW-E005: Submit — complete check → SUBMITTED → APPROVED (automatic in R1) → one Work Order per seller → ORDERED.
+export async function submitWorkRequest(
+  viewer: Viewer,
+  input: OrderFromRequisition & { description?: string | null },
+  origin: WorkOrderOrigin = "INDIRECT"
+): Promise<BuiltOrder[]> {
+  const me = await ownPerson(viewer);
+  const head = await prisma.workRequest.findUnique({ where: { id: input.workRequestId }, select: { buyer_person_id: true, p_account_id: true, status: true, description: true } });
+  if (!head || head.buyer_person_id !== me.id) throw new SourcingError("That work request isn't available.", "NOT_FOUND");
+  if (!["INCOMPLETE", "RETURNED", "SUBMITTED", "APPROVED", "ASSIGNED", "DRAFT", "POSTED"].includes(head.status)) throw new SourcingError("This work request can't be submitted now.", head.status === "ORDERED" ? "ALREADY_ORDERED" : "CANCELLED");
+  const description = input.description !== undefined ? input.description?.trim() || null : head.description;
+  if (!description && (await descriptionRequired(head.p_account_id))) throw new SourcingError("Add a description before you submit.", "NO_DESCRIPTION");
+  const lines = await prisma.workRequestLine.findMany({ where: { work_request_id: input.workRequestId, work_order_id: null }, select: { line_number: true, description: true, provider_person_id: true, transaction_type: true, unit_price_cents: true, amount_cents: true } });
+  const c = completenessFor(lines);
+  if (!c.complete) throw new SourcingError(completenessMessage(c), "INCOMPLETE");
+  const now = new Date();
+  await prisma.workRequestLine.updateMany({ where: { work_request_id: input.workRequestId, work_order_id: null }, data: { status: "ASSIGNED" } });
+  await prisma.workRequest.update({ where: { id: input.workRequestId }, data: { description, status: "APPROVED", submitted_at: now, approved_at: now } });
+  return buildWorkOrders(viewer, input, origin);
+}
+
+async function buildWorkOrders(
   viewer: Viewer,
   input: OrderFromRequisition,
   origin: WorkOrderOrigin
-): Promise<BuiltOrder> {
+): Promise<BuiltOrder[]> {
   const me = await ownPerson(viewer);
 
   const wr = await prisma.workRequest.findUnique({
@@ -52,7 +77,7 @@ async function buildWorkOrder(
       p_account_id: true,
       status: true,
       currency: true,
-      sole_sourced: true,
+      description: true,
       lines: {
         where: { status: "ASSIGNED" },
         orderBy: { line_number: "asc" },
@@ -94,30 +119,35 @@ async function buildWorkOrder(
     );
   }
 
-  const lines = wr.lines;
-  if (lines.length === 0) {
+  if (wr.lines.length === 0) {
     throw new SourcingError(
       "Select a provider before creating the work order.",
       "NOTHING_ASSIGNED"
     );
   }
 
-  const providerIds = [...new Set(lines.map((l) => l.provider_person_id).filter(Boolean))];
+  const providerIds = [...new Set(wr.lines.map((l) => l.provider_person_id).filter((x): x is string => !!x))];
   if (providerIds.length === 0) {
     throw new SourcingError("No provider is on this work request.", "NO_PROVIDER");
   }
-  if (providerIds.length > 1) {
-    throw new SourcingError(
-      "This work request names more than one provider, so it can't become a single work order.",
-      "MANY_PROVIDERS"
-    );
+  // One Work Order per seller.
+  const out: BuiltOrder[] = [];
+  for (const providerPersonId of providerIds) {
+    out.push(await buildOne({ ...wr, sole_sourced: input.soleSourced }, wr.lines.filter((l) => l.provider_person_id === providerPersonId), providerPersonId, input, origin));
   }
-  const providerPersonId = providerIds[0]!;
+  await prisma.workRequest.update({ where: { id: wr.id }, data: { status: "ORDERED" } });
+  return out;
+}
+
+type ReqForOrder = { id: string; buyer_person_id: string; p_account_id: string; currency: string; description: string | null; sole_sourced?: boolean };
+type ReqLine = Awaited<ReturnType<typeof prisma.workRequestLine.findMany<{ select: { id: true; line_number: true; transaction_type: true; description: true; unspsc_code: true; uom: true; quantity: true; unit_price_cents: true; amount_cents: true; supplier_part_id: true; service_product_id: true; provider_service_id: true; provider_person_id: true; service_start: true; service_end: true; work_order_id: true } }>>>[number];
+
+async function buildOne(wr: ReqForOrder, lines: ReqLine[], providerPersonId: string, input: OrderFromRequisition, origin: WorkOrderOrigin): Promise<BuiltOrder> {
 
   const lineFees = new Map<string, number>();
   for (const l of lines) {
     const kind = sourcingKindForLine({
-      soleSourced: wr.sole_sourced,
+      soleSourced: !!wr.sole_sourced,
       supplierPartId: l.supplier_part_id,
       serviceProductId: l.service_product_id,
     });
@@ -147,7 +177,7 @@ async function buildWorkOrder(
       : l.amount_cents ?? 0;
   }
 
-  const orderNumber = `WO-${Date.now().toString(36).toUpperCase()}-${wr.id.slice(0, 4)}`;
+  const orderNumber = `WO-${Date.now().toString(36).toUpperCase()}-${providerPersonId.slice(0, 4)}`;
 
   // THE ORDER, ITS LINES AND THE REQUISITION'S STATUS MOVE IN ONE
   const built = await prisma.$transaction(async (tx) => {
@@ -161,6 +191,8 @@ async function buildWorkOrder(
         p_account_id: wr.p_account_id,
         provider_person_id: providerPersonId,
         currency: wr.currency,
+        description: wr.description,
+        erp_po_number: origin === "DIRECT" ? input.externalRef?.trim() || null : null,
         // out of `ISSUED` (`canAcceptNow`), and there is no screen that issues a
         status: "ISSUED",
         period_start: periodStart,
@@ -197,10 +229,8 @@ async function buildWorkOrder(
       select: { id: true, order_number: true, origin: true },
     });
 
-    // RULING 17'S OTHER HALF: creating the order moves the request's status
-    await tx.workRequest.update({ where: { id: wr.id }, data: { status: "ORDERED" } });
     await tx.workRequestLine.updateMany({
-      where: { work_request_id: wr.id, status: "ASSIGNED" },
+      where: { id: { in: lines.map((l) => l.id) } },
       /* Scott's WR_LINE line status: *"Sourced = used to create a WO."* */
       data: { status: "ORDERED", work_order_id: order.id },
     });
@@ -255,27 +285,27 @@ export async function snapshotTerms(
   return out;
 }
 
-/** DOOR 1 — THE BUYER PRESSES HIRE. Panameer generated these terms, so it */
+/** DOOR 1 — Hire on a Job: its requisition is submitted; the Job is FILLED. `jobId` is the Job's id. */
 export async function hire(
   viewer: Viewer,
-  input: { workRequestId: string; sowText?: string | null }
+  input: { jobId: string; sowText?: string | null }
 ): Promise<BuiltOrder> {
-  return buildWorkOrder(viewer, { workRequestId: input.workRequestId, sowText: input.sowText }, "INDIRECT");
+  const req = await requisitionForJob(input.jobId);
+  const job = await prisma.job.findUnique({ where: { id: input.jobId }, select: { sole_sourced: true } });
+  const [order] = await submitWorkRequest(viewer, { workRequestId: req.id, sowText: input.sowText, soleSourced: job?.sole_sourced });
+  await prisma.job.update({ where: { id: input.jobId }, data: { status: "FILLED" } });
+  return order!;
 }
 
 /** DOOR 2 — THE ERP RETURNS A PO. The terms were approved in the buyer's */
 export async function acceptPurchaseOrder(
   viewer: Viewer,
   input: { workRequestId: string; poNumber: string }
-): Promise<BuiltOrder> {
+): Promise<BuiltOrder[]> {
   if (!input.poNumber.trim()) {
     throw new SourcingError("A purchase order needs its number.", "NO_PO_NUMBER");
   }
-  return buildWorkOrder(
-    viewer,
-    { workRequestId: input.workRequestId, externalRef: input.poNumber },
-    "DIRECT"
-  );
+  return submitWorkRequest(viewer, { workRequestId: input.workRequestId, externalRef: input.poNumber }, "DIRECT");
 }
 
 /** THE PROVIDER DECLINES THE WORK ORDER — RULING 16 */
@@ -304,11 +334,18 @@ export async function declineWorkOrder(
       where: { id: order.id },
       data: { status: "CANCELLED" },
     });
-    if (order.work_request_id) {
+    const req = await tx.workRequest.findUnique({ where: { id: order.work_request_id }, select: { job_id: true } });
+    // Lines on the declined order go back to the requisition; a Job's proposals reopen.
+    await tx.workRequestLine.updateMany({
+      where: { work_order_id: order.id },
+      data: { provider_person_id: req?.job_id ? null : undefined, status: req?.job_id ? "SOURCING" : "DRAFT", work_order_id: null },
+    });
+    await tx.workRequest.update({ where: { id: order.work_request_id }, data: { status: "INCOMPLETE" } });
+    if (req?.job_id) {
       /* The declining provider's own proposal records the refusal. */
       await tx.proposal.updateMany({
         where: {
-          work_request_id: order.work_request_id,
+          job_id: req.job_id,
           provider_person_id: me.id,
         },
         data: {
@@ -320,20 +357,13 @@ export async function declineWorkOrder(
       // AND EVERYONE ELSE IS BACK IN CONTENTION. `WITHDRAWN` and `DECLINED`
       await tx.proposal.updateMany({
         where: {
-          work_request_id: order.work_request_id,
+          job_id: req.job_id,
           provider_person_id: { not: me.id },
           status: { in: ["NOT_SELECTED", "AWARDED", "SHORTLISTED"] },
         },
         data: { status: "SUBMITTED" },
       });
-      await tx.workRequestLine.updateMany({
-        where: { work_request_id: order.work_request_id },
-        data: { provider_person_id: null, status: "SOURCING", work_order_id: null },
-      });
-      await tx.workRequest.update({
-        where: { id: order.work_request_id },
-        data: { status: "POSTED" },
-      });
+      await tx.job.update({ where: { id: req.job_id }, data: { status: "OPEN" } });
     }
   });
 

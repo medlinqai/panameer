@@ -13,7 +13,7 @@ async function ownPerson(viewer: Viewer) {
 }
 
 async function assertOwnsRequest(workRequestId: string, personId: string) {
-  const wr = await prisma.workRequest.findUnique({
+  const wr = await prisma.job.findUnique({
     where: { id: workRequestId },
     select: { id: true, buyer_person_id: true },
   });
@@ -69,8 +69,8 @@ export async function recordEvaluation(
   return prisma.$transaction(async (tx) => {
     const existing = await tx.providerEvaluation.findUnique({
       where: {
-        work_request_id_provider_person_id_created_by_person_id: {
-          work_request_id: input.workRequestId,
+        job_id_provider_person_id_created_by_person_id: {
+          job_id: input.workRequestId,
           provider_person_id: input.providerPersonId,
           created_by_person_id: me.id,
         },
@@ -79,7 +79,7 @@ export async function recordEvaluation(
     });
 
     const data = {
-      work_request_id: input.workRequestId,
+      job_id: input.workRequestId,
       provider_person_id: input.providerPersonId,
       created_by_person_id: me.id,
       interview_request_id: input.interviewRequestId ?? null,
@@ -143,7 +143,7 @@ export async function evaluationsOn(
   await assertOwnsRequest(workRequestId, me.id);
 
   const rows = await prisma.providerEvaluation.findMany({
-    where: { work_request_id: workRequestId, created_by_person_id: me.id },
+    where: { job_id: workRequestId, created_by_person_id: me.id },
     orderBy: { created_at: "asc" },
     select: {
       id: true,

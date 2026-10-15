@@ -7,8 +7,8 @@ import { Button } from "@/components/casing/Button";
 import { formatCents } from "@/lib/display";
 import { listWorkRequests, type WorkRequestRow } from "@/lib/hire";
 import {
-  WORK_REQUEST_STATUS_LABEL,
-  workRequestStatusPillClass,
+  JOB_STATUS_LABEL,
+  jobStatusPillClass,
 } from "@/lib/work-request-status";
 
 export const metadata = { title: "Work Requests · Panameer" };
@@ -44,7 +44,7 @@ export default async function Page() {
 
   const requests = await listWorkRequests(viewer);
   const drafts = requests.filter((r) => r.status === "DRAFT").length;
-  const posted = requests.filter((r) => r.status === "POSTED").length;
+  const posted = requests.filter((r) => r.status === "OPEN").length;
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -103,8 +103,8 @@ export default async function Page() {
                     </p>
                   </div>
                   {/* ONE PLACE . This read */}
-                  <span className={workRequestStatusPillClass(r.status)}>
-                    {WORK_REQUEST_STATUS_LABEL[r.status]}
+                  <span className={jobStatusPillClass(r.status)}>
+                    {JOB_STATUS_LABEL[r.status]}
                   </span>
                 </div>
 

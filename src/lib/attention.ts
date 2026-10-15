@@ -183,9 +183,9 @@ async function countNewMatches(profileId: string): Promise<number> {
   const skillIds = profile.skills.map((s) => s.skill_id);
   if (skillIds.length === 0) return 0;
 
-  return prisma.workRequest.count({
+  return prisma.job.count({
     where: {
-      status: "POSTED",
+      status: "OPEN",
       skills: { some: { skill_id: { in: skillIds } } },
       ...(profile.dashboard_seen_at
         ? { posted_at: { gt: profile.dashboard_seen_at } }

@@ -40,7 +40,7 @@ export async function inviteProviders(
 
   // THE LINE MUST BELONG TO THE REQUEST THE VIEWER OWNS. The client supplies a
   const line = await prisma.workRequestLine.findFirst({
-    where: { id: input.lineId, work_request_id: wr.id },
+    where: { id: input.lineId, workRequest: { job_id: wr.id } },
     select: { id: true },
   });
   if (!line) throw new WorkRequestError("Line not found", "NOT_FOUND");
@@ -65,7 +65,7 @@ export async function inviteProviders(
     throw new WorkRequestError("One of those people is not a service provider", "INVALID");
 
   const existing = await prisma.proposalRequest.findMany({
-    where: { work_request_id: wr.id, provider_person_id: { in: ids } },
+    where: { job_id: wr.id, provider_person_id: { in: ids } },
     select: { provider_person_id: true },
   });
   const already = new Set(existing.map((e) => e.provider_person_id));
@@ -78,7 +78,7 @@ export async function inviteProviders(
       await prisma.proposalRequest.create({
         data: {
           request_number: requestNumber,
-          work_request_id: wr.id,
+          job_id: wr.id,
           provider_person_id: providerPersonId,
           /* THE INVITER IS RESOLVED FROM THE SESSION. Never from input. */
           invited_by_person_id: personId,
@@ -134,7 +134,7 @@ export async function invitedOn(
   const wr = await loadOwned(viewer, workRequestId, pAccountId);
 
   const rows = await prisma.proposalRequest.findMany({
-    where: { work_request_id: wr.id },
+    where: { job_id: wr.id },
     select: {
       provider_person_id: true,
       request_number: true,
@@ -151,7 +151,7 @@ export async function invitedOn(
       select: { id: true, first_name: true, last_name: true },
     }),
     prisma.workRequestLine.findMany({
-      where: { work_request_id: wr.id },
+      where: { workRequest: { job_id: wr.id } },
       select: { id: true, line_number: true },
     }),
   ]);

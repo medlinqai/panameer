@@ -65,7 +65,7 @@ async function sellerFacts(viewer: Viewer, pp: Pp): Promise<SellerFacts> {
     prisma.providerSkill.findMany({ where: { provider_profile_id: pp.id }, select: { skill_id: true } }),
   ]);
   const matchingRequests = skillIds.length
-    ? await prisma.workRequest.count({ where: { status: "POSTED", skills: { some: { skill_id: { in: skillIds.map((s) => s.skill_id) } } } } })
+    ? await prisma.job.count({ where: { status: "OPEN", skills: { some: { skill_id: { in: skillIds.map((s) => s.skill_id) } } } } })
     : null;
 
   let resumeHref = "/join/provider";
@@ -105,8 +105,8 @@ async function sellerFacts(viewer: Viewer, pp: Pp): Promise<SellerFacts> {
 }
 
 async function buyerFacts(personId: string): Promise<BuyerFacts> {
-  const wr = await prisma.workRequest.findFirst({
-    where: { buyer_person_id: personId, status: "POSTED" },
+  const wr = await prisma.job.findFirst({
+    where: { buyer_person_id: personId, status: "OPEN" },
     orderBy: [{ posted_at: "desc" }, { created_at: "desc" }],
     select: { id: true, title: true, pillar_id: true, skills: { select: { skill_id: true } } },
   });
@@ -115,7 +115,7 @@ async function buyerFacts(personId: string): Promise<BuyerFacts> {
     wr.skills.length
       ? matchProvidersForSkills({ skillIds: wr.skills.map((s) => s.skill_id), pillarId: wr.pillar_id }).catch(() => null)
       : Promise.resolve(null),
-    prisma.proposalRequest.count({ where: { work_request_id: wr.id } }),
+    prisma.proposalRequest.count({ where: { job_id: wr.id } }),
   ]);
   return { openRequest: { id: wr.id, title: wr.title, matches: match ? match.providers.length : null, invited } };
 }

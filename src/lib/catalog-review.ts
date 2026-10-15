@@ -57,12 +57,12 @@ export async function mergeSkill(viewer: Viewer | null, fromId: string, intoId: 
       (id) => tx.jobSkill.update({ where: { id }, data: { skill_id: intoId } }),
       (id) => tx.jobSkill.delete({ where: { id } })
     );
-    const wr = await tx.workRequestSkill.findMany({ where: { skill_id: fromId } });
+    const wr = await tx.jobPostingSkill.findMany({ where: { skill_id: fromId } });
     await relink(
-      wr.map((w) => ({ id: w.id, key: w.work_request_id })),
-      async (k) => !!(await tx.workRequestSkill.findFirst({ where: { skill_id: intoId, work_request_id: k } })),
-      (id) => tx.workRequestSkill.update({ where: { id }, data: { skill_id: intoId } }),
-      (id) => tx.workRequestSkill.delete({ where: { id } })
+      wr.map((w) => ({ id: w.id, key: w.job_id })),
+      async (k) => !!(await tx.jobPostingSkill.findFirst({ where: { skill_id: intoId, job_id: k } })),
+      (id) => tx.jobPostingSkill.update({ where: { id }, data: { skill_id: intoId } }),
+      (id) => tx.jobPostingSkill.delete({ where: { id } })
     );
     await tx.skill.update({ where: { id: intoId }, data: { aliases: withAlias(into.aliases, from.name, into.name) } });
     await tx.skill.update({ where: { id: fromId }, data: { merged_into_id: intoId, status: "RETIRED", visible_to_members: false, review_pending: false } });
@@ -119,10 +119,10 @@ export async function mergeSpecialization(viewer: Viewer | null, fromId: string,
       else await tx.providerProfileSpecialization.update({ where: { id: l.id }, data: { specialization_id: intoId } });
       n++;
     }
-    for (const l of await tx.workRequestSpecialization.findMany({ where: { specialization_id: fromId } })) {
-      const dup = await tx.workRequestSpecialization.findFirst({ where: { work_request_id: l.work_request_id, specialization_id: intoId } });
-      if (dup) await tx.workRequestSpecialization.delete({ where: { id: l.id } });
-      else await tx.workRequestSpecialization.update({ where: { id: l.id }, data: { specialization_id: intoId } });
+    for (const l of await tx.jobSpecialization.findMany({ where: { specialization_id: fromId } })) {
+      const dup = await tx.jobSpecialization.findFirst({ where: { job_id: l.job_id, specialization_id: intoId } });
+      if (dup) await tx.jobSpecialization.delete({ where: { id: l.id } });
+      else await tx.jobSpecialization.update({ where: { id: l.id }, data: { specialization_id: intoId } });
     }
     await tx.project.updateMany({ where: { industry_specialization_id: fromId }, data: { industry_specialization_id: intoId } });
     await tx.assessment.updateMany({ where: { industry_specialization_id: fromId }, data: { industry_specialization_id: intoId } });

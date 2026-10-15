@@ -113,9 +113,9 @@ export async function getWorkFeed(input: {
       ).map((s) => s.skill_id)
     : [];
 
-  const rows = await prisma.workRequest.findMany({
+  const rows = await prisma.job.findMany({
     where: {
-      ...(ids ? { id: { in: ids } } : { status: "POSTED" }),
+      ...(ids ? { id: { in: ids } } : { status: "OPEN" }),
       AND: workFilterWhere(input.filters ?? {}),
       ...(input.tab === "us" ? { location_country: { in: ["United States", "USA", "US"] } } : {}),
       ...(input.query
@@ -184,9 +184,9 @@ export async function getWorkFeed(input: {
   const accountIds = [...new Set(rows.map((w) => w.p_account_id))];
   const [postedCounts, accounts] = await Promise.all([
     accountIds.length
-      ? prisma.workRequest.groupBy({
+      ? prisma.job.groupBy({
           by: ["p_account_id"],
-          where: { p_account_id: { in: accountIds }, status: "POSTED" },
+          where: { p_account_id: { in: accountIds }, status: "OPEN" },
           _count: { _all: true },
         })
       : Promise.resolve([]),

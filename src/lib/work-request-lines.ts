@@ -1,6 +1,6 @@
 import { roleLong } from "@/lib/role-labels";
 import { TransactionType, WorkRequestLineStatus } from "@prisma/client";
-import type { WorkRequestStatus } from "@prisma/client";
+import type { JobStatus, WorkRequestStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import {
@@ -10,6 +10,15 @@ import {
   workRequestIsComplete,
 } from "@/lib/transaction-spine";
 import { loadOwned, resolveBuyer, WorkRequestError } from "@/lib/work-request";
+import { requisitionForJob } from "@/lib/requisition";
+
+// JW-E003: `id` here is the Job's; its lines live on the Job's requisition Work Request.
+async function ownedReq(viewer: Viewer, jobId: string) {
+  const { pAccountId } = await resolveBuyer(viewer);
+  const job = await loadOwned(viewer, jobId, pAccountId);
+  const req = await requisitionForJob(job.id);
+  return { job, req };
+}
 
 export type LineForCompleteness = {
   line_number: number;
@@ -124,7 +133,10 @@ export type WorkRequestDetail = {
   title: string;
   description: string;
   // THE ENUM, NOT `string` — same reason as `hire.ts`
-  status: WorkRequestStatus;
+  status: JobStatus;
+  /** The Job's requisition. */
+  workRequestId: string;
+  workRequestStatus: WorkRequestStatus;
   // THE KIND, AND IT DECIDES WHETHER SOURCING EXISTS WS-B)
   soleSourced: boolean;
   postedAt: string | null;
@@ -149,12 +161,11 @@ export async function getWorkRequestDetail(
   viewer: Viewer,
   id: string
 ): Promise<WorkRequestDetail> {
-  const { pAccountId } = await resolveBuyer(viewer);
-  const wr = await loadOwned(viewer, id, pAccountId);
-  await ensureFirstLine(wr.id);
+  const { job: wr, req } = await ownedReq(viewer, id);
+  await ensureFirstLine(wr.id, req.id);
 
   const rows = await prisma.workRequestLine.findMany({
-    where: { work_request_id: wr.id },
+    where: { work_request_id: req.id },
     select: LINE_SELECT,
     orderBy: { line_number: "asc" },
   });
@@ -203,6 +214,8 @@ export async function getWorkRequestDetail(
     title: wr.title,
     description: wr.description ?? "",
     status: wr.status,
+    workRequestId: req.id,
+    workRequestStatus: req.status as WorkRequestStatus,
     /* `P2-A8-E712` WS-B — the branch above the sourcing chain. See the type. */
     soleSourced: wr.sole_sourced,
     postedAt: wr.posted_at ? wr.posted_at.toISOString() : null,
@@ -235,14 +248,14 @@ export async function getWorkRequestDetail(
    ═════════════════════════════════════════════════════════════════════════ */
 
 /** LINE 1, MATERIALISED FROM THE HEADER THE WIZARD ALREADY FILLED. Idempotent */
-export async function ensureFirstLine(workRequestId: string): Promise<void> {
+export async function ensureFirstLine(jobId: string, workRequestId: string): Promise<void> {
   const existing = await prisma.workRequestLine.count({
     where: { work_request_id: workRequestId },
   });
   if (existing > 0) return;
 
-  const wr = await prisma.workRequest.findUnique({
-    where: { id: workRequestId },
+  const wr = await prisma.job.findUnique({
+    where: { id: jobId },
     select: {
       title: true,
       description: true,
@@ -351,13 +364,12 @@ function draftToData(d: LineDraft) {
 
 /** Add line n+1. Owner-scoped through `loadOwned`. */
 export async function addLine(viewer: Viewer, id: string, draft: LineDraft) {
-  const { pAccountId } = await resolveBuyer(viewer);
-  const wr = await loadOwned(viewer, id, pAccountId);
+  const { job: wr, req } = await ownedReq(viewer, id);
   validateDraft(draft);
   await prisma.workRequestLine.create({
     data: {
-      work_request_id: wr.id,
-      line_number: await nextLineNumber(wr.id),
+      work_request_id: req.id,
+      line_number: await nextLineNumber(req.id),
       currency: wr.currency,
       ...draftToData(draft),
     },
@@ -372,11 +384,10 @@ export async function updateLine(
   lineId: string,
   draft: LineDraft
 ) {
-  const { pAccountId } = await resolveBuyer(viewer);
-  const wr = await loadOwned(viewer, id, pAccountId);
+  const { req } = await ownedReq(viewer, id);
   validateDraft(draft);
   const res = await prisma.workRequestLine.updateMany({
-    where: { id: lineId, work_request_id: wr.id },
+    where: { id: lineId, work_request_id: req.id },
     data: draftToData(draft),
   });
   if (res.count === 0) throw new WorkRequestError("Line not found", "NOT_FOUND");
@@ -385,10 +396,9 @@ export async function updateLine(
 
 /** Remove a line. */
 export async function removeLine(viewer: Viewer, id: string, lineId: string) {
-  const { pAccountId } = await resolveBuyer(viewer);
-  const wr = await loadOwned(viewer, id, pAccountId);
+  const { req } = await ownedReq(viewer, id);
 
-  const count = await prisma.workRequestLine.count({ where: { work_request_id: wr.id } });
+  const count = await prisma.workRequestLine.count({ where: { work_request_id: req.id } });
   if (count <= 1)
     throw new WorkRequestError(
       "A work request needs at least one line — edit this one instead of removing it",
@@ -405,7 +415,7 @@ export async function removeLine(viewer: Viewer, id: string, lineId: string) {
     );
 
   const res = await prisma.workRequestLine.deleteMany({
-    where: { id: lineId, work_request_id: wr.id },
+    where: { id: lineId, work_request_id: req.id },
   });
   if (res.count === 0) throw new WorkRequestError("Line not found", "NOT_FOUND");
   return getWorkRequestDetail(viewer, id);
@@ -418,8 +428,7 @@ export async function assignProvider(
   lineId: string,
   providerPersonId: string | null
 ) {
-  const { pAccountId } = await resolveBuyer(viewer);
-  const wr = await loadOwned(viewer, id, pAccountId);
+  const { req } = await ownedReq(viewer, id);
 
   if (providerPersonId) {
     const person = await prisma.person.findFirst({
@@ -431,7 +440,7 @@ export async function assignProvider(
   }
 
   const res = await prisma.workRequestLine.updateMany({
-    where: { id: lineId, work_request_id: wr.id },
+    where: { id: lineId, work_request_id: req.id },
     data: {
       provider_person_id: providerPersonId,
       // THE LINE'S STATUS FOLLOWS THE ASSIGNMENT, and it is the only thing
@@ -444,11 +453,10 @@ export async function assignProvider(
 
 /** THE COMPLETE ACTION — AND IT READS `completenessFor`, THE SAME FUNCTION THE */
 export async function completeWorkRequest(viewer: Viewer, id: string) {
-  const { pAccountId } = await resolveBuyer(viewer);
-  const wr = await loadOwned(viewer, id, pAccountId);
+  const { req } = await ownedReq(viewer, id);
 
   const rows = await prisma.workRequestLine.findMany({
-    where: { work_request_id: wr.id },
+    where: { work_request_id: req.id },
     select: {
       line_number: true,
       description: true,
@@ -467,10 +475,8 @@ export async function completeWorkRequest(viewer: Viewer, id: string) {
     throw new WorkRequestError("Every line needs a provider and a price", "INCOMPLETE");
 
   await prisma.workRequestLine.updateMany({
-    where: { work_request_id: wr.id, status: { in: ["DRAFT", "SOURCING"] } },
+    where: { work_request_id: req.id, status: { in: ["DRAFT", "SOURCING"] } },
     data: { status: "ASSIGNED" },
   });
-  // The request follows its lines, so the buyer sees Create Order (Chain C cart, R1 audit).
-  await prisma.workRequest.updateMany({ where: { id: wr.id, status: { in: ["DRAFT", "POSTED"] } }, data: { status: "ASSIGNED" } });
   return getWorkRequestDetail(viewer, id);
 }

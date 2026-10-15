@@ -1,5 +1,6 @@
 import { searchVariants } from "@/lib/search-synonyms";
 import { prisma } from "@/lib/prisma";
+import { wrNumber } from "@/lib/requisition";
 import { effectiveRates } from "@/lib/company-catalog";
 import { cxmlDoc, cxmlUom, esc, payloadId, timestamp } from "@/lib/erp/cxml";
 import { logMessage } from "@/lib/erp/connections";
@@ -31,10 +32,12 @@ export async function searchServices(q: string): Promise<CartService[]> {
 
 async function cartRequest(s: PunchoutSessionLive): Promise<string> {
   if (s.work_request_id) return s.work_request_id;
+  const id = crypto.randomUUID();
   const wr = await prisma.workRequest.create({
     data: {
+      id, wr_number: wrNumber(id), source: "PUNCHOUT", description: `Punchout ${new Date().toISOString().slice(0, 10)}`,
       buyer_person_id: s.requester_person_id, p_account_id: s.connection.p_account_id, title: `Punchout ${new Date().toISOString().slice(0, 10)}`,
-      status: "DRAFT", proposal_access: "INVITE_ONLY", sole_sourced: true, erp_connection_id: s.connection_id,
+      status: "INCOMPLETE", proposal_access: "INVITE_ONLY", sole_sourced: true, erp_connection_id: s.connection_id,
     },
     select: { id: true },
   });
@@ -160,7 +163,7 @@ export async function returnCart(s: PunchoutSessionLive): Promise<{ url: string;
   const xml = orderMessageXml(s, lines);
   const pid = /payloadID="([^"]+)"/.exec(xml)?.[1] ?? `pom-${Date.now()}`;
   await prisma.$transaction([
-    prisma.workRequest.update({ where: { id: s.work_request_id! }, data: { status: "ASSIGNED", erp_returned_at: new Date() } }),
+    prisma.workRequest.update({ where: { id: s.work_request_id! }, data: { status: "PENDING_APPROVAL", submitted_at: new Date(), erp_returned_at: new Date() } }),
     prisma.punchoutSession.update({ where: { id: s.id }, data: { returned_at: new Date() } }),
   ]);
   await logMessage({ connectionId: s.connection_id, direction: "OUT", type: "PUNCHOUT_ORDER", payloadId: pid, status: "PROCESSED", body: xml, workRequestId: s.work_request_id, response: "Posted by the requester's browser to BrowserFormPost" });

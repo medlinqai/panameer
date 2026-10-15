@@ -27,13 +27,13 @@ export type WorkDetail = {
   stageLabel: string | null;
 };
 
-export const PROVIDER_OPENABLE_STATUS = "POSTED" as const;
+export const PROVIDER_OPENABLE_STATUS = "OPEN" as const;
 
 export async function getWorkDetailForProvider(input: {
   id: string;
   providerPersonId: string | null;
 }): Promise<WorkDetail | null> {
-  const w = await prisma.workRequest.findFirst({
+  const w = await prisma.job.findFirst({
     where: { id: input.id, status: PROVIDER_OPENABLE_STATUS },
     select: {
       id: true,
@@ -79,7 +79,7 @@ export async function getWorkDetailForProvider(input: {
   if (!w) return null;
 
   const [postedCount, account] = await Promise.all([
-    prisma.workRequest.count({
+    prisma.job.count({
       where: { p_account_id: w.p_account_id, status: PROVIDER_OPENABLE_STATUS },
     }),
     prisma.pAccount.findUnique({

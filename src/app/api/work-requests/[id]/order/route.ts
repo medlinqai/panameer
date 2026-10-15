@@ -31,7 +31,7 @@ export async function POST(
     return NextResponse.json({ error: "That order couldn't be read.", code: "BAD_BODY" }, { status: 400 });
   }
   try {
-    return NextResponse.json(await hire(gate, { workRequestId: id, sowText: parsed.data.sowText ?? null }));
+    return NextResponse.json(await hire(gate, { jobId: id, sowText: parsed.data.sowText ?? null }));
   } catch (e) {
     if (e instanceof SignGateError) return NextResponse.json({ error: e.message, code: "SIGN_GATE", gate: e.gate }, { status: 409 });
     if (e instanceof Error && e.name === "SourcingError") {

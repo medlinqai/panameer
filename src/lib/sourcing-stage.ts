@@ -79,27 +79,27 @@ export async function sourcingEvidenceForWorkRequest(
 
   const [itbs, bids, tests, interviews, shortlisted, orders] = await Promise.all([
     /* 1 */ prisma.proposalRequest.findMany({
-      where: { work_request_id: workRequestId },
+      where: { job_id: workRequestId },
       select: { id: true, provider_person_id: true, status: true },
     }),
     /* 2 */ prisma.proposal.findMany({
-      where: { proposalRequest: { work_request_id: workRequestId } },
+      where: { proposalRequest: { job_id: workRequestId } },
       select: { provider_person_id: true, status: true, submitted_at: true },
     }),
     /* 3 */ prisma.testResponse.findMany({
-      where: { testRequest: { work_request_id: workRequestId }, status: "COMPLETED" },
+      where: { testRequest: { job_id: workRequestId }, status: "COMPLETED" },
       select: { provider_person_id: true },
     }),
     /* 4 */ prisma.interviewRequest.findMany({
-      where: { work_request_id: workRequestId, status: "COMPLETED" },
+      where: { job_id: workRequestId, status: "COMPLETED" },
       select: { provider_person_id: true },
     }),
     /* 5 */ prisma.shortlistLine.findMany({
-      where: { shortlist: { work_request_id: workRequestId } },
+      where: { shortlist: { job_id: workRequestId } },
       select: { provider_person_id: true },
     }),
     /* 6 */ prisma.workOrder.findMany({
-      where: { work_request_id: workRequestId },
+      where: { workRequest: { job_id: workRequestId } },
       select: { provider_person_id: true },
     }),
   ]);

@@ -25,8 +25,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
   const conns = await prisma.connection.findMany({ where: { kind: "COLLEAGUE", status: "ACCEPTED", OR: [{ from_user_id: viewer.userId }, { to_user_id: viewer.userId }] }, select: { from_user_id: true, to_user_id: true }, take: 500 });
   const others = conns.map((c) => (c.from_user_id === viewer.userId ? c.to_user_id : c.from_user_id));
   const people = await prisma.person.findMany({ where: { OR: [{ user_id: { in: others } }, ...(req ? [{ id: req.requester_person_id }] : [])] }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } } }, orderBy: { first_name: "asc" } });
-  const proposals = await prisma.proposal.findMany({ where: { provider_person_id: me.id }, select: { work_request_id: true }, take: 200 });
-  const wrs = await prisma.workRequest.findMany({ where: { id: { in: proposals.map((p) => p.work_request_id).filter((x): x is string => !!x) }, status: { in: ["POSTED", "ASSIGNED"] } }, select: { id: true, title: true } });
+  const proposals = await prisma.proposal.findMany({ where: { provider_person_id: me.id }, select: { job_id: true }, take: 200 });
+  const wrs = await prisma.job.findMany({ where: { id: { in: proposals.map((p) => p.job_id) }, status: "OPEN" }, select: { id: true, title: true } });
   const [services, products, past] = await Promise.all([
     listProviderServices(viewer).catch(() => []),
     listOwnServiceProducts(viewer).catch(() => []),

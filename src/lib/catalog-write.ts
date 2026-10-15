@@ -18,7 +18,7 @@ const refuse = (error: string, links?: number): WriteResult => ({
 export async function skillLinks(id: string) {
   const [providers, requests, jobs] = await Promise.all([
     prisma.providerSkill.count({ where: { skill_id: id } }),
-    prisma.workRequestSkill.count({ where: { skill_id: id } }),
+    prisma.jobPostingSkill.count({ where: { skill_id: id } }),
     prisma.jobSkill.count({ where: { skill_id: id } }),
   ]);
   return { providers, requests, jobs, total: providers + requests + jobs };
@@ -28,7 +28,7 @@ export async function skillLinks(id: string) {
 export async function specializationLinks(id: string) {
   const [providers, requests, projects, assessments] = await Promise.all([
     prisma.providerProfileSpecialization.count({ where: { specialization_id: id } }),
-    prisma.workRequestSpecialization.count({ where: { specialization_id: id } }),
+    prisma.jobSpecialization.count({ where: { specialization_id: id } }),
     prisma.project.count({ where: { industry_specialization_id: id } }),
     prisma.assessment.count({ where: { industry_specialization_id: id } }),
   ]);
