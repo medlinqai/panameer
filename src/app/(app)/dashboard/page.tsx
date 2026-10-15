@@ -43,7 +43,12 @@ export default async function DashboardPage({
     where: { person: { user_id: viewer.userId } },
     select: { id: true, person_id: true, completeness: true, dashboard_seen_at: true, onboarding_completed_at: true },
   });
-  const first = facts.seller || facts.buyer ? <FiveThings viewer={viewer} firstName={facts.firstName} firstVisit={!!providerProfile && (!providerProfile.dashboard_seen_at || (!!providerProfile.onboarding_completed_at && providerProfile.dashboard_seen_at < providerProfile.onboarding_completed_at))} /> : null;
+  // BD-E001: buyers' first visit comes from requesterProfile.dashboard_seen_at, read before it's stamped below.
+  const requesterSeen = providerProfile ? null : await prisma.requesterProfile.findFirst({ where: { person: { user_id: viewer.userId } }, select: { dashboard_seen_at: true, completed_at: true } });
+  const firstVisit = providerProfile
+    ? !providerProfile.dashboard_seen_at || (!!providerProfile.onboarding_completed_at && providerProfile.dashboard_seen_at < providerProfile.onboarding_completed_at)
+    : !!requesterSeen && (!requesterSeen.dashboard_seen_at || (!!requesterSeen.completed_at && requesterSeen.dashboard_seen_at < requesterSeen.completed_at));
+  const first = facts.seller || facts.buyer ? <FiveThings viewer={viewer} firstName={facts.firstName} firstVisit={firstVisit} /> : null;
 
   if (providerProfile) {
     const sp = await searchParams;
@@ -94,22 +99,18 @@ export default async function DashboardPage({
 
   if (requester) {
     await prisma.requesterProfile.update({ where: { id: requester.id }, data: { dashboard_seen_at: new Date() } });
+    // BD-E002: greeting · Your Path · Things You Can Do Today — nothing below for buyers.
+    if (first) return <div className="mx-auto w-full max-w-6xl">{first}</div>;
     const [openWorkCount, experts] = await Promise.all([
-      prisma.workRequest.count({
-        where: { buyer: { user_id: viewer.userId }, status: "POSTED" },
-      }),
+      prisma.job.count({ where: { buyer: { user_id: viewer.userId }, status: "OPEN" } }),
       listMentors(),
     ]);
-
     return (
-      <>
-        <div className="mx-auto w-full max-w-6xl">{first}</div>
-        <RequesterHome
+      <RequesterHome
         firstName={displayFirstName(requester.person.first_name ?? "")}
         openWorkCount={openWorkCount}
         experts={experts.slice(0, 8)}
       />
-      </>
     );
   }
 
@@ -141,7 +142,7 @@ export default async function DashboardPage({
     : null;
 
   // BR-E005: a buyer's dashboard ends at Waiting on You — nothing below it.
-  if (first) return <div className="space-y-8">{first}</div>;
+  if (first) return <div className="mx-auto w-full max-w-6xl">{first}</div>;
   return (
     <div className="space-y-8">
       <header>

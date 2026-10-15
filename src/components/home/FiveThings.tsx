@@ -1,4 +1,5 @@
-import { ROAD_TITLE } from "@/lib/user-levels";
+import { BUYER_ROAD, BUYER_ROAD_TITLE, ROAD_TITLE } from "@/lib/user-levels";
+import { BuyerThings } from "@/components/home/BuyerThings";
 import Link from "next/link";
 import { Eye, TrendingUp, BadgeCheck, BookOpen, FolderPlus, Users, Search, Tag, Send, MessageSquare, UserPlus, AlertTriangle } from "lucide-react";
 import type { Viewer } from "@/lib/access";
@@ -12,14 +13,6 @@ import { CoverBand } from "@/components/casing/CoverBand";
 
 // Dashboard (mockup dashboard_five_things 2026-10-06): greeting + Your Path bar, 5 cards, "Waiting on you" tiles.
 const ICON = { eye: Eye, chart: TrendingUp, badge: BadgeCheck, book: BookOpen, folder: FolderPlus, people: Users, search: Search, tag: Tag, send: Send, message: MessageSquare, person: UserPlus, alert: AlertTriangle };
-// BR-E005: a buyer's cards are the menu, in this order.
-const BUYER_THINGS: Thing[] = [
-  { key: "connect", icon: "people", title: "Connect with Other Buyers & Colleagues", line: "People who buy what you buy, and the colleagues you work with.", chips: ["Free"], time: "", cta: { label: "Find People", href: "/connect/community" } },
-  { key: "learn", icon: "book", title: "Learn About Skills", line: "Free courses on the skills and systems you buy.", chips: ["Free"], time: "", cta: { label: "Start Learning", href: "/learn" } },
-  { key: "post", icon: "send", title: "Post Jobs", line: "Describe the work; providers send proposals.", chips: ["Free"], time: "5 min", cta: { label: "Post a Job", href: "/create-work" } },
-  { key: "shop", icon: "tag", title: "Shop for Products & Services", line: "Fixed-price service products and providers' rates.", chips: [], time: "", cta: { label: "Go Shopping", href: "/shop" } },
-  { key: "estimate", icon: "search", title: "Request an Estimate", line: "Ask a provider for a quote from their profile or a service.", chips: [], time: "", cta: { label: "Request an Estimate", href: "/estimates" } },
-];
 const BTN = "inline-flex min-h-[40px] items-center justify-center bg-ink px-4 text-[13.5px] font-bold text-surface hover:bg-ink-hover";
 
 function Card({ t, i }: { t: Thing; i: number }) {
@@ -48,8 +41,30 @@ function Card({ t, i }: { t: Thing; i: number }) {
 }
 
 export async function FiveThings({ viewer, firstName, firstVisit = false }: { viewer: Viewer; firstName: string; firstVisit?: boolean }) {
-  const [{ things, waiting }, path] = await Promise.all([fiveThings(viewer), lifecycleForUser(viewer.userId)]);
+  const path = await lifecycleForUser(viewer.userId);
   const next = path ? path.steps[path.current] : null;
+  // BD-E002/E005: a buyer's dashboard = greeting · their road · the five cards. Nothing else.
+  if (path?.road === "buyer") {
+    return (
+      <section data-five-things data-buyer-dashboard className="mb-8 font-body text-ink">
+        <h1 className="text-[28px] font-extrabold leading-tight sm:text-[32px]">{firstVisit ? "Welcome" : "Welcome back"}{firstName ? `, ${firstName}` : ""}.</h1>
+        <div data-path-road className="mt-5 rounded-[14px] border border-line bg-surface px-4 py-5 sm:px-6">
+          <h2 className="flex items-center gap-1.5 text-[17px] font-bold">{BUYER_ROAD_TITLE} <LifecycleHelp /></h2>
+          <div className="mt-2 hidden overflow-x-auto sm:block"><div className="min-w-[560px]"><RoadGraphic current={path.current} road={BUYER_ROAD} label="Buyer road" waiting={path.waiting} /></div></div>
+          <div className="mt-4 sm:hidden"><RoadStepper current={path.current} road={BUYER_ROAD} waiting={path.waiting} /></div>
+          {next && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-[13.5px]">
+              <span className="text-ink-2">{path.waiting ? "Your company's admin has your request. Everything below is open while you wait." : next.desc}</span>
+              <Link href={next.href} className={BTN}>Next: {next.next}</Link>
+            </div>
+          )}
+        </div>
+        <h2 className="mt-9 text-[19px] font-extrabold">Things You Can Do Today</h2>
+        <BuyerThings />
+      </section>
+    );
+  }
+  const { things, waiting } = await fiveThings(viewer);
   // While on the provider road (before Request Payment), the cards become one question with four directions.
   const onRoad = !!path && path.road === "provider" && path.current < 6;
   const choices = [
@@ -116,13 +131,9 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
       ) : (
         <>
       <h2 className="mt-7 text-[17px] font-bold">
-          Things You Can Do Today {path?.road !== "buyer" && <span className="text-[12.5px] font-normal text-ink-3">most useful first</span>}
+          Things You Can Do Today <span className="text-[12.5px] font-normal text-ink-3">most useful first</span>
         </h2>
-        {path?.road === "buyer" ? (
-          <div role="list" data-buyer-things className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {BUYER_THINGS.map((t, i) => <Card key={t.key} t={t} i={i} />)}
-          </div>
-        ) : (
+        {(
         <div role="list" className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {things.slice(0, 2).map((t, i) => <Card key={t.key} t={t} i={i} />)}
           <MoreCards count={things.length - 2}>
