@@ -5,7 +5,7 @@ import { buyersSee } from "@/lib/rate-display";
 
 // GT-E005: Shop › Services (behind taxonomy_v2) — providers with live rates, filtered by how they work (Mode),
 // what they know (Process / Capability Domain) and the system (Vendor / Product).
-export type ServicesQuery = { q?: string; mode?: string; process?: string; domain?: string; vendor?: string; product?: string };
+export type ServicesQuery = { q?: string; mode?: string; process?: string; domain?: string; vendor?: string; product?: string; industry?: string };
 const MODES = new Set(["IMPLEMENT", "SUPPORT", "OPERATE"]);
 
 export async function listServiceProviders(f: ServicesQuery, opts: { includeTestPersonId?: string | null } = {}) {
@@ -25,6 +25,8 @@ export async function listServiceProviders(f: ServicesQuery, opts: { includeTest
   const profiles = await prisma.providerProfile.findMany({
     where: {
       ...(filtered ? { id: { in: [...byProfile.keys()] } } : {}),
+      // IN-E003: Industry filter.
+      ...(f.industry ? { specializations: { some: { specialization_id: f.industry, specialization: { kind: "INDUSTRY" } } } } : {}),
       person: { OR: [{ user: { is_test: false } }, ...(opts.includeTestPersonId ? [{ id: opts.includeTestPersonId }] : [])], ...(term ? { OR: [{ first_name: { contains: term, mode: "insensitive" } }, { last_name: { contains: term, mode: "insensitive" } }, { title: { contains: term, mode: "insensitive" } }] } : {}) },
     },
     select: { id: true, person: { select: { id: true, first_name: true, last_name: true, title: true, photo_url: true } } },

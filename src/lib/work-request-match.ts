@@ -45,10 +45,12 @@ async function widenThroughBridge(
 }
 
 export function rankMatchedProviders<
-  T extends { personId: string; name: string; matchWeight: number; relevantSkills: number }
+  T extends { personId: string; name: string; matchWeight: number; relevantSkills: number; industryMatch?: number }
 >(rows: T[], growth: Map<string, number>): T[] {
   return [...rows].sort(
     (a, b) =>
+      // IN-E003: a matching industry ranks first; nobody is filtered out by it.
+      (b.industryMatch ?? 0) - (a.industryMatch ?? 0) ||
       b.matchWeight - a.matchWeight ||
       b.relevantSkills - a.relevantSkills ||
       (growth.get(b.personId) ?? 0) - (growth.get(a.personId) ?? 0) ||
@@ -60,6 +62,10 @@ export async function matchProvidersForSkills(input: {
   skillIds: string[];
   /** Null means "any suite" — the widen signal, not a missing value. */
   pillarId: string | null;
+  /** IN-E003: the request's industries — a booster, never a filter. */
+  industryIds?: string[];
+  /** IN-E003: Search's Industry filter — only providers with this industry. */
+  industryFilter?: string | null;
 }): Promise<{ skillIds: string[]; providers: MatchedProvider[] }> {
   if (input.skillIds.length === 0) return { skillIds: input.skillIds, providers: [] };
 
@@ -82,6 +88,7 @@ export async function matchProvidersForSkills(input: {
     where: {
       ...marketplaceVisibleWhere(),
       skills: { some: { skill_id: { in: skillIds } } },
+      ...(input.industryFilter ? { specializations: { some: { specialization_id: input.industryFilter, specialization: { kind: "INDUSTRY" } } } } : {}),
     },
     orderBy: [{ updated_at: "desc" }, { id: "asc" }],
     take: 100,
@@ -108,8 +115,10 @@ export async function matchProvidersForSkills(input: {
         select: { suite: true, weight_pct: true },
         orderBy: { weight_pct: "desc" },
       },
+      specializations: { where: { specialization: { kind: "INDUSTRY" } }, select: { specialization_id: true } },
     },
   });
+  const wantIndustry = new Set(input.industryIds ?? []);
 
   const SUITE_BOOST = 0.5;
 
@@ -137,6 +146,7 @@ export async function matchProvidersForSkills(input: {
         rateMaxCents: p.rate_max_cents,
         currency: p.currency,
         matchWeight: base * (1 + SUITE_BOOST * share),
+        industryMatch: p.specializations.filter((s) => wantIndustry.has(s.specialization_id)).length,
         depthMonths: p.skills.reduce((n, s) => Math.max(n, s.months_total), 0),
         lastUsed: p.skills.reduce<Date | null>(
           (d, s) => (s.last_used && (!d || s.last_used > d) ? s.last_used : d),
@@ -179,5 +189,5 @@ export async function matchProvidersFor(
   // Ownership + tenancy are enforced by `getWorkRequest`; a request the viewer
   // does not own throws before any provider is read.
   const wr = await getWorkRequest(viewer, workRequestId);
-  return matchProvidersForSkills({ skillIds: wr.skillIds, pillarId: wr.pillarId });
+  return matchProvidersForSkills({ skillIds: wr.skillIds, pillarId: wr.pillarId, industryIds: wr.specializationIds });
 }

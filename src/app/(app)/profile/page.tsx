@@ -1,3 +1,5 @@
+import { IndustryAsk } from "@/components/profile/IndustryAsk";
+import { industryGap } from "@/lib/industry";
 import { catalogServicesFor } from "@/lib/my-catalog";
 import { CapabilityLines } from "@/components/profile/CapabilityLines";
 import { taxonomyV2 } from "@/lib/platform-settings";
@@ -51,6 +53,9 @@ export default async function MyProfilePage() {
   ]);
 
   const slug = await ensureSlug(profile.id);
+  // IN-E002: professional sellers with no industry are asked once, here.
+  const industryMissing = !!(await industryGap(profile.person.personId, profile.id));
+  const industries = industryMissing ? await prisma.specialization.findMany({ where: { kind: "INDUSTRY", status: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true } }) : [];
   const prefill = (await prisma.providerProfile.findUnique({ where: { id: profile.id }, select: { resume_prefill: true } }))?.resume_prefill as ResumePrefill | null;
   const publicUrl = slug
     ? `${(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100").replace(/\/$/, "")}/pro/${slug}`
@@ -77,6 +82,7 @@ export default async function MyProfilePage() {
       {/* THE CLEAN SURFACE STARTS HERE, BELOW THE MENUING WS-A) */}
       <div className="account-surface">
       {prefill?.fields?.length ? <ResumePrefillBanner fields={prefill.fields} /> : null}
+      {industryMissing && <IndustryAsk industries={industries} />}
       <ConnectProfile
         whatIDo={(await taxonomyV2()) ? <CapabilityLines profileId={profile.id} owner /> : undefined}
         // above. The view model carries `null` for every other surface.

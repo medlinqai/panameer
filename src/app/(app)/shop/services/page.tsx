@@ -22,6 +22,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Ser
     { key: "mode", label: "How They Work", options: [{ value: "IMPLEMENT", label: "Implement" }, { value: "SUPPORT", label: "Support" }, { value: "OPERATE", label: "Do the Work" }] },
     { key: "process", label: "Process", options: o.processes.map((p) => ({ value: p, label: p })) },
     { key: "domain", label: "Capability Domain", options: o.domains.filter((d) => !sp.process || d.process === sp.process).map((d) => ({ value: d.id, label: d.name, group: d.process })) },
+    { key: "industry", label: "Industry", options: (await prisma.specialization.findMany({ where: { kind: "INDUSTRY", status: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true } })).map((i) => ({ value: i.id, label: i.name })) },
     { key: "vendor", label: "Vendor", options: o.vendors.map((v) => ({ value: v.id, label: v.name })) },
     { key: "product", label: "Product", options: o.products.filter((p) => !sp.vendor || p.vendor.id === sp.vendor).map((p) => ({ value: p.id, label: `${p.vendor.name} ${p.name}` })) },
   ];

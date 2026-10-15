@@ -3,6 +3,7 @@ import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
 import { creditInviteForNewUser } from "@/lib/colleague-invite";
 import type { ResumePrefill } from "@/lib/resume/prefill";
 import { prisma } from "@/lib/prisma";
+import { industryGap, profilesMissingIndustry } from "@/lib/industry";
 /* THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
 import { countryColumns } from "@/lib/country";
 /* THE ONE DEFINITION of the five proficiencies (`E723`, `E585`). */
@@ -1922,7 +1923,9 @@ async function loadForCompleteness(profileId: string) {
 export async function buildCompletenessInput(profileId: string) {
   const profile = await loadForCompleteness(profileId);
   if (!profile) return null;
-  return completenessInputFrom(profile);
+  const input = completenessInputFrom(profile);
+  // IN-E002: for sellers who need an industry, the specializations item counts only once they have one.
+  return (await profilesMissingIndustry([profileId])).has(profileId) ? { ...input, specializations: [] } : input;
 }
 
 /** THE SAME INPUT FOR MANY PROFILES, IN ONE QUERY */
@@ -1934,7 +1937,8 @@ export async function buildCompletenessInputs(
     where: { id: { in: profileIds } },
     include: COMPLETENESS_INCLUDE,
   });
-  return new Map(rows.map((r) => [r.id, completenessInputFrom(r)]));
+  const noIndustry = await profilesMissingIndustry(profileIds);
+  return new Map(rows.map((r) => { const input = completenessInputFrom(r); return [r.id, noIndustry.has(r.id) ? { ...input, specializations: [] } : input]; }));
 }
 
 /** Recompute + persist a provider's `completeness` (0–100). */
@@ -1991,6 +1995,10 @@ export async function publishProfile(viewer: Viewer) {
     languages: pp.languages,
     hasLocation: Boolean(p.site?.addresses?.[0]?.city?.trim() || p.site?.addresses?.[0]?.state?.trim() || p.site?.addresses?.[0]?.country?.trim()),
   });
+
+  // IN-E002: professional sellers also name the industries they've worked in.
+  const industry = await industryGap(p.id, pp.id);
+  if (industry && !missing.includes(industry)) missing.push(industry);
 
   if (missing.length > 0) {
     throw new OnboardingError(

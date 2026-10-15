@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { industryGap } from "@/lib/industry";
 import { sellerCategoryWhere, sellerTypeByName } from "@/lib/business-types";
 import { effectiveRates } from "@/lib/company-catalog";
 import { termsLine } from "@/lib/billing-terms";
@@ -8,7 +9,11 @@ import { termsLine } from "@/lib/billing-terms";
 /** CAT-E004 / RD-E003: publishing needs no Panameer review, only a linked company (validation waits until payment). */
 export async function publishGate(personId: string): Promise<{ ok: boolean; href: string; reason: string | null }> {
   const m = await prisma.companyMembership.findFirst({ where: { person_id: personId, status: "APPROVED" }, select: { company_id: true } });
-  return m ? { ok: true, href: "", reason: null } : { ok: false, href: "/company?join=1#join", reason: "Add your company first." };
+  if (!m) return { ok: false, href: "/company?join=1#join", reason: "Add your company first." };
+  // IN-E002: professional sellers name an industry before publishing.
+  const pp = await prisma.providerProfile.findUnique({ where: { person_id: personId }, select: { id: true } });
+  if (pp && (await industryGap(personId, pp.id))) return { ok: false, href: "/profile#industries", reason: "Add the industries you've worked in." };
+  return { ok: true, href: "", reason: null };
 }
 
 /** CAT-E002 / TX-E002: the services' types — stock (seeded by scripts/seed-service-taxonomy.ts) plus provider-added, merged ones folded away. */

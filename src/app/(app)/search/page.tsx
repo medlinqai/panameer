@@ -7,10 +7,11 @@ import {
 } from "@/lib/catalog";
 import { matchProvidersForSkills } from "@/lib/work-request-match";
 import { formatCents } from "@/lib/display";
+import { prisma } from "@/lib/prisma";
 
 export const metadata = { title: "Search · Panameer" };
 
-type SP = { role?: string; domain?: string; skill?: string };
+type SP = { role?: string; domain?: string; skill?: string; industry?: string };
 
 export default async function Page({
   searchParams,
@@ -34,8 +35,11 @@ export default async function Page({
 
   const skillIds = skill ? [skill.id] : skillOptions.map((s) => s.id);
   const searched = Boolean(role || domain || skill);
+  // IN-E003: Industry filter (professional sellers name the industries they've worked in).
+  const industries = await prisma.specialization.findMany({ where: { kind: "INDUSTRY", status: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true } });
+  const industry = industries.find((i) => i.id === sp.industry) ?? null;
   const result = searched
-    ? await matchProvidersForSkills({ skillIds, pillarId: domain?.id ?? null })
+    ? await matchProvidersForSkills({ skillIds, pillarId: domain?.id ?? null, industryFilter: industry?.id ?? null })
     : null;
 
   const sel =
@@ -100,6 +104,14 @@ export default async function Page({
                 {s.name}
               </option>
             ))}
+          </select>
+        </label>
+
+        <label className="block sm:col-span-3">
+          <span className="mb-1 block text-[13px] font-bold text-ink-2">Industry</span>
+          <select name="industry" defaultValue={industry?.id ?? ""} className={sel} data-industry-filter>
+            <option value="">Any industry</option>
+            {industries.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
         </label>
 
