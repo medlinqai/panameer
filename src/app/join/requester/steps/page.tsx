@@ -450,7 +450,7 @@ export default function RequesterStepsPage() {
               <Field label="Company Name *">
                 <TextInput value={draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" />
               </Field>
-              <Field label="Website" hint="Optional. Helps us find your company.">
+              <Field label="Website">
                 <TextInput value={draft.coWebsite} onChange={(e) => edit({ coWebsite: e.target.value })} onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
               </Field>
               </div>
@@ -461,7 +461,7 @@ export default function RequesterStepsPage() {
                   {industries.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                 </select>
               </Field>
-              <Field label="Invoice Email *" hint="Where providers' invoices go.">
+              <Field label="Invoice Email *">
                 <TextInput type="email" value={draft.coInvoiceEmail} onChange={(e) => edit({ coInvoiceEmail: e.target.value })} placeholder={draft.email} autoComplete="email" />
               </Field>
               </div>
