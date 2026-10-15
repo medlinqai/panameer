@@ -203,8 +203,10 @@ export async function getRequesterState(viewer: Viewer) {
   // THE BINDING, ON THE PAYLOAD / E005)
   const membership = p.companyMemberships[0] ?? null;
   // BC-E002: the company's one address (its Registered site) — also the billing address.
+  // Scott 10-15: older companies (StratERP) have their address on another site — fall back to the oldest site with one.
   const coSite = membership
-    ? await prisma.site.findFirst({ where: { company_id: membership.company.id, name: REGISTERED_SITE_NAME }, select: { id: true, addresses: { take: 1, orderBy: { created_at: "asc" } } } })
+    ? (await prisma.site.findFirst({ where: { company_id: membership.company.id, name: REGISTERED_SITE_NAME, addresses: { some: { line1: { not: "" } } } }, select: { id: true, addresses: { take: 1, orderBy: { created_at: "asc" } } } })) ??
+      (await prisma.site.findFirst({ where: { company_id: membership.company.id, addresses: { some: { line1: { not: "" } } } }, orderBy: { created_at: "asc" }, select: { id: true, addresses: { take: 1, orderBy: { created_at: "asc" } } } }))
     : null;
   const coAddr = coSite?.addresses[0] ?? null;
 
@@ -375,7 +377,9 @@ export async function saveRequesterStep(
 
   const coSite = async () => {
     const m = p.companyMemberships[0];
-    return m ? prisma.site.findFirst({ where: { company_id: m.company.id, name: REGISTERED_SITE_NAME, addresses: { some: { line1: { not: "" } } } }, select: { id: true } }) : null;
+    if (!m) return null;
+    return (await prisma.site.findFirst({ where: { company_id: m.company.id, name: REGISTERED_SITE_NAME, addresses: { some: { line1: { not: "" } } } }, select: { id: true } })) ??
+      prisma.site.findFirst({ where: { company_id: m.company.id, addresses: { some: { line1: { not: "" } } } }, orderBy: { created_at: "asc" }, select: { id: true } });
   };
   if (step === "work_location" && payload.sameAsCompany) {
     const site = await coSite();

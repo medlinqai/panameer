@@ -441,29 +441,31 @@ export default function RequesterStepsPage() {
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-buyer-company-step>
           {error && <Notice>{error}</Notice>}
-          {joining ? (
+          {(
+            <>
+              <div className="space-y-3">
+              <Field label="Company Name *">
+                <TextInput value={joining ? draft.companyName : draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" className="sm:max-w-[50%]" disabled={joining} />
+              </Field>
+              <Field label="Website">
+                <div className="flex gap-2">
+                  <TextInput value={draft.coWebsite} onChange={(e) => { edit({ coWebsite: e.target.value }); setCoMatch(null); }} className="sm:max-w-[50%]" disabled={joining} onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
+                  <button type="button" data-request-access disabled={!coMatch || busy} onClick={() => void askToJoin()} className="shrink-0 bg-ink px-4 text-[13.5px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-30">{joining ? "Requested ✓" : "Request Access"}</button>
+                </div>
+              </Field>
+              </div>
+              {joining && (
             <div data-join-requested className="border border-line bg-white p-4 text-[14px]">
               <p>Request sent. We asked {askedAdmin ? <b>{askedAdmin}</b> : "the admin"} at <b>{draft.companyName}</b> to approve you, and we&apos;ll email you when they do. Keep going while you wait; ordering opens once they approve.</p>
               <p className="mt-2 text-[13px] text-ink-2">Wrong person, or not your company? <Link href="/support/bug" className="font-semibold text-magenta-dark underline underline-offset-4">Message Support</Link></p>
             </div>
-          ) : (
-            <>
-              <div className="space-y-3">
-              <Field label="Company Name *">
-                <TextInput value={draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" className="sm:max-w-[50%]" />
-              </Field>
-              <Field label="Website">
-                <div className="flex gap-2">
-                  <TextInput value={draft.coWebsite} onChange={(e) => { edit({ coWebsite: e.target.value }); setCoMatch(null); }} className="sm:max-w-[50%]" onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
-                  <button type="button" data-request-access disabled={!coMatch || busy} onClick={() => void askToJoin()} className="shrink-0 bg-ink px-4 text-[13.5px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-30">Request Access</button>
-                </div>
-              </Field>
-              </div>
+              )}
               {coMatch && (
                 <p data-company-match className="-mt-1 border-l-2 border-magenta pl-3 text-[13px] text-ink-2">
                   <b className="text-ink">{coMatch.name}</b> is already on Panameer ({coMatch.why}). <b>Request Access</b> and we&apos;ll ask {coMatch.admin ? <b className="text-ink">{coMatch.admin}</b> : "its admin"} to approve you. You can keep going while you wait.
                 </p>
               )}
+              <fieldset disabled={joining} className={joining ? "space-y-4 opacity-40" : "space-y-4"}>
               <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Industry">
                 <select aria-label="Industry" value={draft.coIndustryId} onChange={(e) => edit({ coIndustryId: e.target.value })} className="h-11 w-full border border-line bg-surface px-3 text-[15px] text-ink">
@@ -481,6 +483,7 @@ export default function RequesterStepsPage() {
               </div>
 
               <p className="text-[12.5px] text-ink-2">By continuing you confirm you can add this company and accept the company terms. No tax ID or W-9 is needed to buy.</p>
+              </fieldset>
             </>
           )}
         </div>
