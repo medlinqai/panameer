@@ -469,6 +469,18 @@ export const NOTIFICATION_EVENTS = {
     body: (v) => `Members typed this ${str(v, "kind", "skill")} and it isn't in the catalog. Merge it, add it, or reject it in Compare.`,
     href: (v) => `/admin/skill-catalog?tab=compare&q=${encodeURIComponent(str(v, "term", ""))}`,
   },
+  // SO-E008: someone stopped partway through registration, 8 days idle after two reminders.
+  "admin.registration_stopped": {
+    event: "admin.registration_stopped",
+    recipient: "Panameer admins",
+    category: "account.registration",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `${str(v, "name", "Someone")} (${str(v, "side", "Buyer")}) stopped at ${str(v, "step", "registration")} ${str(v, "days", "8")} days ago`,
+    body: () => "Two reminders went unanswered. Send a personal note or record why they stopped.",
+    href: (v) => `/admin/users/${str(v, "personId", "")}`,
+  },
   // Catalog review (E910): one per admin per day; the count is refreshed as new terms arrive.
   "catalog.review_new": {
     event: "catalog.review_new",

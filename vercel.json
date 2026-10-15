@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/build-digest",
       "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/cron/registration-followup",
+      "schedule": "0 15 * * *"
     }
   ]
 }

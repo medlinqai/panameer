@@ -14,6 +14,7 @@ import type { Viewer } from "@/lib/access";
 /** The step list lives in `requester-steps.ts` (no server imports) and is */
 export { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
 import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
+import { touchRegistration } from "@/lib/registration-followup";
 import { companyLocations, saveCompanyLocations, type Loc } from "@/lib/locations";
 
 export type AddressInput = {
@@ -330,6 +331,7 @@ export async function saveRequesterStep(
 ) {
   const p = await loadRequester(viewer);
   const rp = p.requesterProfile!;
+  await touchRegistration(p.id);
 
   // BR-E002: the Company step — the binding is written by /api/company/define or /join; this confirms it exists.
   if (step === "company") {

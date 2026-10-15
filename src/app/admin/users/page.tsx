@@ -1,3 +1,4 @@
+import { StoppedPartway } from "@/components/admin/StoppedPartway";
 import { Fragment } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
@@ -30,9 +31,19 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ stage?: string; test?: string; q?: string; period?: string }>;
+  searchParams: Promise<{ stage?: string; test?: string; q?: string; period?: string; view?: string }>;
 }) {
   const sp = await searchParams;
+  // SO-E006: the Stopped Partway list.
+  if (sp.view === "stopped") {
+    return (
+      <div className="mx-auto w-full max-w-6xl">
+        <BackLink href="/admin/users" label="Users" />
+        <h1 className="mt-1 font-display text-[26px] font-bold text-ink">Stopped Partway</h1>
+        <StoppedPartway />
+      </div>
+    );
+  }
   const people = await prisma.person.findMany({
     orderBy: { created_at: "desc" },
     select: {
@@ -394,6 +405,7 @@ export default async function Page({
         </p>
       )}
 
+      <p className="mt-2 text-[13px]"><Link href="/admin/users?view=stopped" data-stopped-link className="font-bold text-magenta-ink underline underline-offset-2">Stopped Partway</Link> — signed up, didn&apos;t finish registration</p>
       <TestAccountControls filter={testFilter} />
 
       {/* THE SUB-PAGE HEADER , the Medlinq pattern Scott pointed at. */}

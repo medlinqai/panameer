@@ -34,6 +34,8 @@ type SendEmailArgs = {
   html: string;
   text?: string;
   replyTo?: string;
+  /** SO-E009: shown as "{fromName} via Panameer" on the same sending address. */
+  fromName?: string;
   template: string;
   subjectType?: string | null;
   subjectId?: string | null;
@@ -80,6 +82,7 @@ export async function sendEmail({
   html,
   text,
   replyTo,
+  fromName,
   category,
   template,
   subjectType,
@@ -171,7 +174,7 @@ export async function sendEmail({
   }
 
   const { data, error } = await getResend().emails.send({
-    from: EMAIL_FROM,
+    from: fromName ? `${fromName.replace(/[<>"]/g, "")} via Panameer <${EMAIL_FROM.match(/<([^>]+)>/)?.[1] ?? EMAIL_FROM}>` : EMAIL_FROM,
     to: allowed,
     subject,
     html: withUnsubscribe,

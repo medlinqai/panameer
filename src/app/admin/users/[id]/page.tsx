@@ -1,3 +1,5 @@
+import { RegistrationFollowup } from "@/components/admin/RegistrationFollowup";
+import { stoppedPartway } from "@/lib/registration-followup";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -65,6 +67,11 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
     },
   });
   if (!person) notFound();
+  // SO-E009: someone who stopped partway gets the follow-up box.
+  const [stopped, followup] = await Promise.all([
+    stoppedPartway(new Date(), 0).then((l) => l.find((x) => x.personId === person.id) ?? null),
+    prisma.registrationFollowup.findUnique({ where: { person_id: person.id }, select: { personal_emails: true } }),
+  ]);
   const u = person.user;
   const userId = person.user_id;
   const name = `${person.first_name ?? ""} ${person.last_name ?? ""}`.trim() || "(unnamed)";
@@ -145,6 +152,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
+      {stopped && <RegistrationFollowup personId={person.id} firstName={person.first_name ?? ""} step={stopped.stoppedAt} reason={stopped.reason} note={stopped.note} emails={followup?.personal_emails ?? 0} />}
       <div className="mt-5"><LifecycleStrip steps={steps.length ? steps : undefined} current={cur - 1} intro="they" hereLabel="Here now" /></div>
 
       {blocked && (
