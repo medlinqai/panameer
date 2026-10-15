@@ -8,10 +8,8 @@ import { LocationFields, type LocationValue } from "@/components/onboarding/Loca
 import { CompanyIdentityFields, findCoMatch, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
-import { PhoneField } from "@/components/onboarding/PhoneField";
-import { Avatar } from "@/components/Avatar";
-import { PhotoCropModal } from "@/components/onboarding/PhotoCropModal";
-import { isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
+import { parseStoredPhone, toE164 } from "@/lib/phone";
+import { PersonFields, personComplete } from "@/components/onboarding/PersonFields";
 import { REQUESTER_STEPS, REQUESTER_STEP_LABELS, REQUESTER_WORK_STEPS, type RequesterStep } from "@/lib/requester-steps";
 
 const LABELS: Record<RequesterStep, string> = {
@@ -96,7 +94,6 @@ export default function RequesterStepsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [photoModal, setPhotoModal] = useState(false);
 
   const [phoneCountry, setPhoneCountry] = useState<string | null>(null);
   const [industries, setIndustries] = useState<{ id: string; name: string }[]>([]);
@@ -294,14 +291,7 @@ export default function RequesterStepsPage() {
         subtitle="This is the person on the request — the contact a provider sees, and the identity your ERP sends if you connect one later."
         continueLabel={nextLabel}
         // THE GATE IS FIRST + LAST + A COMPLETE PHONE, AND THAT IS TWO BRIEF
-        continueDisabled={
-          !draft.firstName.trim() ||
-          !draft.lastName.trim() ||
-          // — photo AND title are REQUIRED, per Scott: *"The requester
-          !draft.photoUrl ||
-          !draft.title.trim() ||
-          !isPhoneComplete(draft.phone, phoneCountry)
-        }
+        continueDisabled={!personComplete(draft, phoneCountry)}
         // `save(payload, "review")` is the entire behaviour Scott
         onContinue={() =>
           save({
@@ -319,81 +309,15 @@ export default function RequesterStepsPage() {
         <div className="mx-auto w-full max-w-xl space-y-4">
           {error && <Notice>{error}</Notice>}
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="First Name *">
-              <TextInput
-                value={draft.firstName}
-                onChange={(e) => setDraft((d) => ({ ...d, firstName: e.target.value }))}
-                autoComplete="given-name"
-              />
-            </Field>
-            <Field label="Last Name *">
-              <TextInput
-                value={draft.lastName}
-                onChange={(e) => setDraft((d) => ({ ...d, lastName: e.target.value }))}
-                autoComplete="family-name"
-              />
-            </Field>
-          </div>
-
-          {/* A ROLE, NOT A SALES HEADLINE . Same `Person.title` column */}
-          {/* asked for the change *"on CARD and in the question that solicits the */}
-          <Field
-            label="Title *"
-            hint="Your role at your company — for example, Director of Procurement. Providers see it next to your name."
-          >
-            <TextInput
-              value={draft.title}
-              onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-              placeholder="Director of Procurement"
-              autoComplete="organization-title"
-            />
-          </Field>
-
-          {/* THE PROVIDER'S OWN UPLOADER, REUSED */}
-          <div className="flex flex-col items-center gap-5 border border-line p-6 sm:flex-row sm:items-center sm:text-left">
-            <Avatar
-              firstName={draft.firstName}
-              lastName={draft.lastName}
-              photoUrl={draft.photoUrl}
-              size={96}
-            />
-            <div className="min-w-0">
-              <p className="text-[14px] font-bold text-ink">Your Photo *</p>
-              <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
-                Providers see this next to your name on a work request. A clear
-                headshot gets a faster response than an empty circle.
-              </p>
-              <button
-                type="button"
-                onClick={() => setPhotoModal(true)}
-                className="mt-3 border border-ink bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-surface-hover"
-              >
-                {draft.photoUrl ? "Change Photo" : "Add a Photo"}
-              </button>
-            </div>
-          </div>
-
-          {/* FULL WIDTH SINCE , and measured in the walk rather */}
-          <div className="grid gap-3">
-            {/* THE BUILT VALIDATOR, NOT A RAW INPUT . This was a plain */}
-            <PhoneField
-              value={draft.phone}
-              onChange={(next) => setDraft((d) => ({ ...d, phone: next }))}
-              country={phoneCountry}
-              onCountryChange={setPhoneCountry}
-            />
-          </div>
-
-          {/* Scott 10-15: no résumé at buyer registration — it filled things the buyer can't see here. It stays on the Buyer Profile editor. */}
-
-          {/* THE SHARED MODAL. `onUploaded` fires only after the server has */}
-          <PhotoCropModal
-            open={photoModal}
-            onClose={() => setPhotoModal(false)}
-            onUploaded={(photoUrl) => setDraft((d) => ({ ...d, photoUrl }))}
+          <PersonFields
+            values={draft}
+            onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))}
+            phoneCountry={phoneCountry}
+            onPhoneCountry={setPhoneCountry}
+            titleHint="Your role at your company — for example, Director of Procurement. Providers see it next to your name."
+            titlePlaceholder="Director of Procurement"
+            photoLine="Providers see this next to your name on a work request. A clear headshot gets a faster response than an empty circle."
           />
-
           {/* THE `Your address` BLOCK STOOD HERE AND IS GONE . */}
         </div>
       </WizardShell>

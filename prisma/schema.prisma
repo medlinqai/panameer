@@ -621,6 +621,7 @@ model Person {
   recruitedLines           WorkRequestLine[] @relation("WorkRequestLineRecruiter")
 
   @@map("people")
+  registrationFollowup RegistrationFollowup?
 }
 
 enum PersonStatus {
@@ -1199,6 +1200,9 @@ model ProviderProfile {
   /// (brief_P / E019). This is a COMPLETION marker, NOT a visibility flag —
   /// brief_K's derived completeness gate remains the only visibility rule.
   onboarding_completed_at DateTime?
+  /// SO-E003: seller registration (Who Is Selling? · Company · Locations · Review) — the step reached and when Review was finished.
+  registration_step         String?
+  registration_completed_at DateTime?
   rating                  Decimal?           @db.Decimal(3, 2)
   id_badge                String?
   // Account lifecycle (brief_K): PENDING on sign-up → ACTIVE on email verify.
@@ -9301,4 +9305,24 @@ enum WorkRequestSource {
   OFFER
   EXTERNALLY_SOURCED
   PUNCHOUT
+}
+
+/// SO-E006–E009: follow-up on people who stopped partway through registration (buyer or seller).
+model RegistrationFollowup {
+  id               String    @id @default(uuid()) @db.Uuid
+  person_id        String    @unique @db.Uuid
+  last_activity_at DateTime  @default(now())
+  reminder1_at     DateTime?
+  reminder2_at     DateTime?
+  admin_notified_at DateTime?
+  personal_emails  Int       @default(0)
+  followed_up_at   DateTime?
+  reason           String?
+  note             String?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
+
+  @@map("registration_followups")
 }
