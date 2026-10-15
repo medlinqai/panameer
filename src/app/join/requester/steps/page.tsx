@@ -403,6 +403,8 @@ export default function RequesterStepsPage() {
       if (coMatch) return askToJoin();
       if (joining) return save({ companyBound: true }, after);
       const unchanged = draft.companyBound && draft.coName.trim() === draft.companyName.trim() && !draft.coWebsite.trim();
+      // Scott 10-15: check for an existing company only when they press Next, then show the join screen.
+      if (!unchanged && (await checkMatch(draft.coWebsite))) return;
       if (!unchanged) {
         setBusy(true);
         setError(null);
@@ -439,19 +441,21 @@ export default function RequesterStepsPage() {
             <Notice>You&apos;ve asked to join <b>{draft.companyName}</b>. Its address and industry are already on Panameer.</Notice>
           ) : (
             <>
+              {!coMatch && (
               <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Company Name *">
                 <TextInput value={draft.coName} onChange={(e) => edit({ coName: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" />
               </Field>
               <Field label="Website">
-                <TextInput value={draft.coWebsite} onChange={(e) => { edit({ coWebsite: e.target.value }); if (coMatch && !coMatch.byEmail) setCoMatch(null); }} onBlur={() => { if (draft.coWebsite.trim()) void checkMatch(draft.coWebsite); }} placeholder="acme.com" autoComplete="url" />
+                <TextInput value={draft.coWebsite} onChange={(e) => edit({ coWebsite: e.target.value })} placeholder="acme.com" autoComplete="url" />
               </Field>
               </div>
+              )}
               {coMatch && (
             <div className="border border-line bg-white p-4" data-company-match>
               <p className="text-[15px]"><b>{coMatch.name}</b> is already on Panameer. Ask to join and we&apos;ll let its admin know.</p>
-              <p className="mt-1 text-[13px] text-ink-2">We matched it because {coMatch.why}. Keep going while you wait. Only submitting an order waits for the admin. Wrong website? Change it above.</p>
-              {!coMatch.byEmail && <button type="button" onClick={() => setCoMatch(null)} className="mt-2 text-[13.5px] font-semibold underline underline-offset-4">That&apos;s Not My Company</button>}
+              <p className="mt-1 text-[13px] text-ink-2">We matched it because {coMatch.why}. Keep going while you wait. Only submitting an order waits for the admin.</p>
+              <button type="button" onClick={() => setCoMatch(null)} className="mt-2 text-[13.5px] font-semibold underline underline-offset-4">{coMatch.byEmail ? "Go Back and Edit" : "Not My Company? Go Back and Change the Website"}</button>
             </div>
           )}
               {!coMatch && (<>
