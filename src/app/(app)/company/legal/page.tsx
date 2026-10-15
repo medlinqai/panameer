@@ -13,6 +13,7 @@ import { companyPayouts } from "@/lib/company-pay";
 import { payoutChecklist } from "@/lib/payout-requirements";
 import { BillingDetails } from "@/components/company/BillingDetails";
 import { prisma } from "@/lib/prisma";
+import { companyAddressFor } from "@/lib/locations";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Legal, Tax & Banking · Panameer" };
@@ -28,11 +29,12 @@ export default async function CompanyLegalPage({ searchParams }: { searchParams:
   const { edit } = await searchParams;
   const payouts = await companyPayouts(c.id);
   const payRule = (await payoutChecklist(c.id))!.rule;
-  const [billSite, billCo] = await Promise.all([
-    prisma.site.findFirst({ where: { company_id: c.id, addresses: { some: {} } }, orderBy: { created_at: "asc" }, select: { addresses: { take: 1, select: { line1: true, city: true, state: true, postal_code: true, country: true } } } }),
+  // LS-E005: billing reads the Bill To address.
+  const [billTo, billCo] = await Promise.all([
+    companyAddressFor(c.id, "bill"),
     prisma.company.findUnique({ where: { id: c.id }, select: { invoice_email: true } }),
   ]);
-  const bill = billSite?.addresses[0];
+  const bill = billTo ? { line1: billTo.line1 ?? "", city: billTo.city ?? null, state: billTo.state ?? null, postal_code: billTo.postalCode ?? null, country: billTo.country ?? null } : undefined;
   const taxLabel = "Tax ID (EIN)";
   const form = taxFormLabel(c.country);
   const r = c.payReady!;

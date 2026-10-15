@@ -67,7 +67,7 @@ export function LocationsBlock({
           )}
         </div>
       ))}
-      <button type="button" onClick={() => onChange([...rows, { ...newLoc(rows[0]?.country, seller), corporate: false, billTo: false }])} className="text-[14px] font-semibold text-magenta-dark underline underline-offset-4" data-add-location>
+      <button type="button" onClick={() => onChange([...rows, { ...newLoc(rows[0]?.country, seller), corporate: false, billTo: false, shipTo: buyer }])} className="text-[14px] font-semibold text-magenta-dark underline underline-offset-4" data-add-location>
         + Add Another Address
       </button>
     </div>

@@ -9,15 +9,16 @@ export const AREA_EYEBROW: Record<Area, string> = {
   support: "SUPPORT",
 };
 
-/** Company v3: Overview · Team · Legal, Tax & Banking 🔒 · Branding; non-admins see Overview + Team. */
+/** Company v3: Overview · Team · Addresses · Legal, Tax & Banking 🔒 · Branding; non-admins see Overview + Team + Addresses. */
 export function companyTabs(isAdmin: boolean): AreaTab[] {
   const all: AreaTab[] = [
     { label: "Overview", href: "/company" },
     { label: "Team", href: "/company/team" },
+    { label: "Addresses", href: "/company/addresses" },
     { label: "Legal, Tax & Banking 🔒", href: "/company/legal" },
     { label: "Branding", href: "/company/branding" },
   ];
-  return isAdmin ? all : all.slice(0, 2);
+  return isAdmin ? all : all.slice(0, 3);
 }
 
 /** Account = today's /settings pages, grouped. Every settings page sits under one tab. */

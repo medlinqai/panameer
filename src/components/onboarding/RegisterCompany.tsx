@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Field, Notice, TextArea, TextInput } from "@/components/onboarding/controls";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { BusinessTypePicker, type BT } from "@/components/company/BusinessTypePicker";
+import { LocationsBlock, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 
 type Match = { id: string; name: string; why: string } | null;
 const COMPANY_DESCRIPTION_MAX = 600;
@@ -19,6 +20,8 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
   const [commodities, setCommodities] = useState<string[]>([]);
   const [businessTypeId, setBusinessTypeId] = useState("");
   const [match, setMatch] = useState<Match>(null);
+  // LS-E005: the company's addresses; Remit To is where payments go (≥1 required).
+  const [locs, setLocs] = useState<LocRow[]>([{ ...newLoc(null, true), billTo: false, shipTo: false }]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,6 +69,7 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
     setError(null);
     try {
       await post("/api/company/define", "POST", { name: name.trim(), website: website.trim(), attestation, companyTos });
+      await post("/api/company/locations", "POST", { locations: locs, seller: true });
       if (description.trim()) await post("/api/company", "PATCH", { description: description.trim() });
       if (businessTypeId) await post("/api/company/business-types", "POST", { businessTypeId, on: true });
       onDone();
@@ -77,7 +81,8 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
     }
   };
 
-  const ready = name.trim().length >= 2 && website.trim().length >= 3 && (!businessTypes.length || !!businessTypeId) && attestation && companyTos;
+  const locProblem = locsProblem(locs, { buyer: false, seller: true });
+  const ready = !locProblem && name.trim().length >= 2 && website.trim().length >= 3 && (!businessTypes.length || !!businessTypeId) && attestation && companyTos;
 
   return (
     <div className="mx-auto w-full max-w-2xl" data-register-company>
@@ -113,6 +118,11 @@ export function RegisterCompany({ onDone }: { onDone: () => void }) {
             <Field label="Description (optional)" hint={`What the company does, in a sentence or two. Up to ${COMPANY_DESCRIPTION_MAX} characters.`}>
               <TextArea value={description} maxLength={COMPANY_DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} className="min-h-24" />
             </Field>
+            <div data-seller-locations>
+              <p className="mb-2 text-[14px] font-semibold">Company Addresses *</p>
+              <LocationsBlock rows={locs} onChange={setLocs} buyer={false} seller />
+              {locProblem && <p className="mt-2 text-[13px] text-ink-2">{locProblem}</p>}
+            </div>
             <label className="flex cursor-pointer items-start gap-3 border border-line p-3">
               <input type="checkbox" checked={attestation} onChange={(e) => setAttestation(e.target.checked)} className="mt-1 h-4 w-4 accent-magenta" />
               <span className="text-[14px] text-ink-2">I&apos;m authorized to represent this company on Panameer.</span>
