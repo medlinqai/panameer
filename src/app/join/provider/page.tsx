@@ -11,7 +11,7 @@ import { AiLine } from "@/components/onboarding/AiLine";
 import { formatCents } from "@/lib/display";
 import { Avatar } from "@/components/Avatar";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
-import { RegisterCompany } from "@/components/onboarding/RegisterCompany";
+import { SellerRegistration, SELLER_RAIL, sellerRegistrationDone } from "@/components/onboarding/SellerRegistration";
 import {
   canSignUp,
   SignUpForm,
@@ -503,7 +503,8 @@ setScreen(target);
         }
         hydrate(s);
         if (!s.emailVerified) {
-          setScreen(s.hasCompany || token ? "check_email" : "register_company");
+          // SR-E004: a refresh returns to the step they were on; Check Your Email once Review is done.
+          setScreen(token || (s.hasCompany && sellerRegistrationDone()) ? "check_email" : "register_company");
         } else if (!s.profile?.workMethod) {
           // Only if the silent save failed.
           setScreen("work_method");
@@ -928,81 +929,64 @@ setScreen(target);
 
   // ===== PRE-VERIFY (no stepper, E001) ====================================
   if (screen === "signup") {
-    // compact — the sign-up form is the one pre-verify page long enough to run
+    // SR-E001/E005: Seller · Company · Locations · Review, in the buyer's shell. Signed up already → a summary, not the form.
+    const signedUp = !!email && !inviteToken;
     return (
-      <PlainShell
-        compact
-        contentWidth="max-w-2xl"
-        // THE ACTION BAND THIS SCREEN USED TO OPT OUT OF ( §5)
-        footer={
-          <>
-            <button
-              onClick={() => router.push("/join")}
-              disabled={busy}
-              className="border border-ink bg-surface px-6 py-3 font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-50"
-            >
-              Back
-            </button>
-            <button
-              onClick={createAccount}
-              disabled={!canSignUp(acct) || busy}
-              className="bg-ink px-8 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
-            >
-              {busy ? "Creating…" : "Create My Account"}
-            </button>
-          </>
-        }
+      <WizardShell
+        rail={{ steps: SELLER_RAIL, current: 0, reached: signedUp ? 1 : 0, onPick: (i) => i > 0 && goTo("register_company") }}
+        eyebrow="Step 1 of 3 · Seller"
+        title={signedUp ? "You're signed up" : "Sign Up to Sell Services and/or Service Products"}
+        subtitle={signedUp ? undefined : "Your name, email and a password. Your company comes next."}
+        canBack
+        onBack={() => router.push("/join")}
+        continueLabel={signedUp ? "Next: Company" : busy ? "Creating…" : "Create My Account"}
+        continueDisabled={signedUp ? false : !canSignUp(acct) || busy}
+        onContinue={signedUp ? () => goTo("register_company") : createAccount}
+        busy={busy}
       >
         {inviteCtx && (
-          <div className="mx-auto mb-4 max-w-xl">
+          <div className="mb-4 max-w-xl">
             <Notice tone="info">
               <b>{inviteCtx.coordinatorName}</b> invited you to join Panameer.
             </Notice>
           </div>
         )}
-        <SignUpForm
-          // SCOTT'S WORDS, VERBATIM . Was inherited from the removed
-          title="Sign Up to Sell Services and/or Service Products"
-          values={acct}
-          onChange={(patch) => setAcct((a) => ({ ...a, ...patch }))}
-          error={error}
-          emailLocked={!!inviteToken}
-          // EXPLICIT, AND IT IS LOAD-BEARING , 2026-08-30).
-          callbackUrl="/join/provider"
-          hideCountry
-        />
-      </PlainShell>
+        {signedUp ? (
+          <p className="text-[15px] text-ink-2">Your account is <b className="text-ink">{email}</b>. Carry on with your company.</p>
+        ) : (
+          <SignUpForm
+            title=""
+            values={acct}
+            onChange={(patch) => setAcct((a) => ({ ...a, ...patch }))}
+            error={error}
+            emailLocked={!!inviteToken}
+            // EXPLICIT, AND IT IS LOAD-BEARING , 2026-08-30).
+            callbackUrl="/join/provider"
+            hideCountry
+          />
+        )}
+      </WizardShell>
     );
   }
 
   if (screen === "register_company") {
-    return (
-      <PlainShell contentWidth="max-w-2xl">
-        <RegisterCompany onDone={() => goTo("check_email")} />
-      </PlainShell>
-    );
+    return <SellerRegistration onDone={() => goTo("check_email")} onSeller={() => goTo("signup")} onLeave={() => router.push("/dashboard")} />;
   }
 
   if (screen === "check_email") {
+    // After Review: no step bar, the same left-aligned shell.
     return (
-      <PlainShell contentWidth="max-w-md">
-        {/* E048 — centred title, same 28px as sign-up. All three pre-verify
-            pages (role select, sign up, check email) share one format. */}
-        <div>
-          <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">
-            Check Your Email
-          </h1>
-          <div className="mt-6">
-            <VerifyGate
-              email={email}
-              onEmailChange={setEmail}
-              statusUrl="/api/onboarding/status"
-              onVerified={() => router.push("/join/provider/path")}
-              initialDevLink={devLink}
-            />
-          </div>
+      <WizardShell title="Check Your Email" subtitle="Click the link we sent to finish signing up." hideFooter onboardingChrome>
+        <div className="max-w-md">
+          <VerifyGate
+            email={email}
+            onEmailChange={setEmail}
+            statusUrl="/api/onboarding/status"
+            onVerified={() => router.push("/join/provider/path")}
+            initialDevLink={devLink}
+          />
         </div>
-      </PlainShell>
+      </WizardShell>
     );
   }
 

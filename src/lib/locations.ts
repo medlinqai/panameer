@@ -95,3 +95,25 @@ export async function saveCompanyLocations(companyId: string, locs: Loc[], opts:
 export async function isSellerCompany(companyId: string): Promise<boolean> {
   return (await prisma.companyMembership.count({ where: { company_id: companyId, status: "APPROVED", person: { is_service_provider: true } } })) > 0;
 }
+
+/** SR-E003: a joiner's own work address (their own site; the company's addresses stay private until approval). */
+export async function saveOwnAddress(personId: string, l: Omit<Loc, "corporate" | "billTo" | "shipTo" | "remitTo">) {
+  if (!l.line1?.trim() || !l.country) throw new OnboardingError("Add the country and street", "INVALID");
+  const p = await prisma.person.findUniqueOrThrow({ where: { id: personId }, select: { company_id: true, site_id: true, site: { select: { company_id: true, addresses: { take: 1, orderBy: { created_at: "asc" }, select: { id: true } } } } } });
+  const data = { ...addrData({ ...l, corporate: false, billTo: false, shipTo: true, remitTo: false }) };
+  const own = p.site && p.site.company_id === p.company_id ? p.site : null;
+  if (own && p.site_id) {
+    if (own.addresses[0]) await prisma.address.update({ where: { id: own.addresses[0].id }, data });
+    else await prisma.address.create({ data: { site_id: p.site_id, ...data } });
+    return;
+  }
+  const site = await prisma.site.create({ data: { company_id: p.company_id, name: "Work Location" }, select: { id: true } });
+  await prisma.address.create({ data: { site_id: site.id, ...data } });
+  await prisma.person.update({ where: { id: personId }, data: { site_id: site.id } });
+}
+
+export async function ownAddress(personId: string): Promise<SavedLoc | null> {
+  const p = await prisma.person.findUnique({ where: { id: personId }, select: { site: { select: { addresses: { take: 1, orderBy: { created_at: "asc" }, select: SELECT } } } } });
+  const a = p?.site?.addresses[0];
+  return a && a.line1 ? toLoc(a) : null;
+}

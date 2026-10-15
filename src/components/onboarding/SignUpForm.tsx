@@ -61,9 +61,11 @@ export function SignUpForm({
   return (
     // max-w-2xl (672px), not the max-w-md this replaced. brief_W specified
     <div className="mx-auto w-full max-w-2xl">
-      <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">
-        {title}
-      </h1>
+      {title && (
+        <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">
+          {title}
+        </h1>
+      )}
 
       {error && (
         <div className="mt-6">
