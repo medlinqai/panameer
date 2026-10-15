@@ -204,6 +204,7 @@ model PAccount {
 
   companies    Company[]
   workRequests WorkRequest[]
+  jobs Job[]
 
   @@map("p_accounts")
 }
@@ -332,6 +333,8 @@ model Company {
   /// issue with no stated reason is an accusation.
   entity_status_detail         String?
   vertical                     String?
+  /// JW-E007: buyers must give a Work Request a short description before Submit (default on).
+  require_wr_description Boolean @default(true)
   /// WN-E001: where the buyer's invoices go (asked at Place Order).
   invoice_email                String?
   website                      String?
@@ -572,6 +575,7 @@ model Person {
   profileViewsMade    ProfileView[]       @relation("ProfileViewer")
   // As a BUYER: the work requests this Person created (brief_L).
   workRequests        WorkRequest[]
+  jobs Job[]
   // SMS verification challenges for this person's phone (brief_P).
   phoneVerifications  PhoneVerification[]
 
@@ -692,6 +696,7 @@ model Role {
   skills           Skill[]
   tags             SkillTag[]
   workRequests     WorkRequest[]
+  jobs Job[]
   providerProfiles ProviderProfile[]
   /// WS2 — providers who work in this role, including as a secondary one.
   profileRoles     ProviderProfileRole[]
@@ -734,6 +739,7 @@ model Pillar {
   tags             SkillTag[]
   providerProfiles ProviderProfile[]
   workRequests     WorkRequest[]
+  jobs Job[]
 
   @@unique([business_type_id, code])
   /// Decision 4: pillars fold into areas (mapping only; filled by the taxonomy seed).
@@ -850,7 +856,7 @@ model Skill {
   pillar            Pillar?                  @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
   application       Application?             @relation(fields: [application_id], references: [id], onDelete: SetNull)
   providerSkills    ProviderSkill[]
-  workRequestSkills WorkRequestSkill[]
+  jobPostingSkills JobPostingSkill[]
   serviceProductSkills ServiceProductSkill[]
   bridges           DomainModuleBridge[]
   jobSkills         JobSkill[]
@@ -1039,6 +1045,7 @@ model Region {
 
   providerProfiles ProviderProfile[]
   workRequests     WorkRequest[]
+  jobs Job[]
 
   @@map("regions")
 }
@@ -1627,7 +1634,7 @@ model Specialization {
   /// Assessments that named this industry (INDUSTRY-kind rows only, in practice).
   assessments       Assessment[]
   providerProfiles  ProviderProfileSpecialization[]
-  workRequests      WorkRequestSpecialization[]
+  jobs              JobSpecialization[]
   /// Projects delivered in this sector — only INDUSTRY-kind rows are ever
   /// linked (brief_project_model_v2).
   projectIndustries Project[]
@@ -1635,6 +1642,7 @@ model Specialization {
   skillsAsVendor       Skill[]       @relation("skillsAsVendor")
   skillTagsAsVendor    SkillTag[]    @relation("skillTagsAsVendor")
   workRequestsAsVendor WorkRequest[] @relation("workRequestsAsVendor")
+  jobsAsVendor         Job[]         @relation("jobsAsVendor")
 
   companiesServed CompanyIndustry[]
   @@unique([business_type_id, name])
@@ -1694,19 +1702,20 @@ enum SpecializationKind {
  * products, processes and industries does this touch"), so matching the two is
  * a join on `specialization_id` rather than a translation between two shapes.
  */
-model WorkRequestSpecialization {
+model JobSpecialization {
   id                String   @id @default(uuid()) @db.Uuid
-  work_request_id   String   @db.Uuid
+  job_id            String   @db.Uuid
   specialization_id String   @db.Uuid
   created_at        DateTime @default(now())
 
-  workRequest    WorkRequest    @relation(fields: [work_request_id], references: [id], onDelete: Cascade)
+  job            Job            @relation(fields: [job_id], references: [id], onDelete: Cascade)
   specialization Specialization @relation(fields: [specialization_id], references: [id], onDelete: Cascade)
 
-  @@unique([work_request_id, specialization_id])
+  @@unique([job_id, specialization_id])
   @@index([specialization_id])
-  @@map("work_request_specializations")
+  @@map("job_specializations")
 }
+
 
 model ProviderProfileSpecialization {
   id                  String   @id @default(uuid()) @db.Uuid
@@ -3499,7 +3508,7 @@ model WorkRequest {
   /// ⚠ `p_account_id` ABOVE STAYS ON THE HEADER — it is Oracle's
   /// `RequisitioningBU`, true of every line by construction.
   lines               WorkRequestLine[]
-  status              WorkRequestStatus    @default(DRAFT)
+  status              WorkRequestStatus    @default(INCOMPLETE)
 
   /// ⚠⚠⚠ RULING 14 — THE BUYER PICKS, PER REQUEST. ⚠ NO `@default`, AND THAT IS
   /// DELIBERATE: a default here would mean *"nobody decided"*, which is exactly
@@ -3535,8 +3544,7 @@ model WorkRequest {
   role        Role?                   @relation(fields: [role_id], references: [id], onDelete: SetNull)
   pillar          Pillar?                     @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
   region          Region?                     @relation(fields: [region_id], references: [id], onDelete: SetNull)
-  skills          WorkRequestSkill[]
-  specializations WorkRequestSpecialization[]
+  // JW-E001: the posting fields above are retired — a Job holds them now (left in place, unused; nothing dropped).
 
   /// TL-E003: the vendor pillar it sat under, as a Specialization (kind PRODUCT); pillar_id is kept.
   specialization_id String?         @db.Uuid
@@ -3546,26 +3554,35 @@ model WorkRequest {
   @@index([status])
   /// ⚠⚠ `E621` WS-A — EVERY proposal against this request, invited or open.
   /// Ruling 14: the buyer picks per request, so both shapes land here.
-  proposals Proposal[]
+  // JW-E003: the requisition header (Oracle POR_REQUISITION_HEADERS_ALL).
+  wr_number              String?            @unique
+  job_id                 String?            @db.Uuid
+  source                 WorkRequestSource?
+  submitted_at           DateTime?
+  approved_at            DateTime?
+  erp_requisition_number String?
+  job                    Job?               @relation(fields: [job_id], references: [id], onDelete: SetNull)
+  workOrders             WorkOrder[]
 
   @@map("work_requests")
 }
 
 /// Join: a taxonomy Skill targeted by a WorkRequest (mirrors ProviderSkill).
 /// Skills must share the request's role_type_id (enforced on write).
-model WorkRequestSkill {
-  id              String   @id @default(uuid()) @db.Uuid
-  work_request_id String   @db.Uuid
-  skill_id        String   @db.Uuid
-  created_at      DateTime @default(now())
+model JobPostingSkill {
+  id         String   @id @default(uuid()) @db.Uuid
+  job_id     String   @db.Uuid
+  skill_id   String   @db.Uuid
+  created_at DateTime @default(now())
 
-  workRequest WorkRequest @relation(fields: [work_request_id], references: [id], onDelete: Cascade)
-  skill       Skill       @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+  job   Job   @relation(fields: [job_id], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skill_id], references: [id], onDelete: Cascade)
 
-  @@unique([work_request_id, skill_id])
+  @@unique([job_id, skill_id])
   @@index([skill_id])
-  @@map("work_request_skills")
+  @@map("job_posting_skills")
 }
+
 
 enum BudgetType {
   FIXED
@@ -3640,6 +3657,14 @@ enum WorkRequestStatus {
   ORDERED
   /// ⚠ Withdrawn by the buyer before an order was placed.
   CANCELLED
+  /// JW-E003: the requisition statuses (Oracle).
+  INCOMPLETE
+  SUBMITTED
+  PENDING_APPROVAL
+  APPROVED
+  RETURNED
+  REJECTED
+  WITHDRAWN
 }
 
 // ===========================================================================
@@ -6068,6 +6093,8 @@ model WorkRequestLine {
   service_start    DateTime?
   service_end      DateTime?
   note_to_supplier String?
+  /// JW-E004: set when the price is an accepted offer (the agreed price, not the list price).
+  offer_id         String?   @db.Uuid
 
   status WorkRequestLineStatus @default(DRAFT)
 
@@ -6134,7 +6161,12 @@ model WorkOrder {
   origin WorkOrderOrigin
 
   /// ⚠ INDIRECT has one; DIRECT does not.
-  work_request_id String? @db.Uuid
+  /// JW-E006: every Work Order comes from a Work Request (one WO per seller).
+  work_request_id String  @db.Uuid
+  description     String?
+  erp_po_number   String?
+  erp_po_revision Int?
+  workRequest     WorkRequest @relation(fields: [work_request_id], references: [id], onDelete: Restrict)
 
   buyer_person_id String @db.Uuid
   /// ⚠ The requisitioning BU, carried down from the request header.
@@ -6671,7 +6703,7 @@ model ProposalRequest {
   id             String @id @default(uuid()) @db.Uuid
   request_number String @unique
 
-  work_request_id String @db.Uuid
+  job_id String @db.Uuid
 
   /// ⚠ ONE ITB PER INVITED PROVIDER. Scott: *"1 work request will have multiple
   /// ITBs."* THE FAN-OUT IS HERE, NOT INSIDE ONE DOCUMENT — a single invitation
@@ -6704,8 +6736,8 @@ model ProposalRequest {
   lines ProposalRequestLine[]
   bid   Proposal?
 
-  @@unique([work_request_id, provider_person_id])
-  @@index([work_request_id])
+  @@unique([job_id, provider_person_id])
+  @@index([job_id])
   @@index([provider_person_id])
   @@index([status])
   @@map("proposal_requests")
@@ -6751,7 +6783,7 @@ model Proposal {
   /// so the link has to live here, on every proposal, either way.
   /// ⚠⚠⚠ IT IS ALSO WHAT MAKES 'ONE PROPOSAL PER PROVIDER PER REQUEST'
   /// ENFORCEABLE BY THE DATABASE rather than by code remembering to check.
-  work_request_id String @db.Uuid
+  job_id String @db.Uuid
 
   provider_person_id String @db.Uuid
 
@@ -6773,7 +6805,7 @@ model Proposal {
 
   lines      ProposalLine[]
   proposalRequest  ProposalRequest? @relation(fields: [proposal_request_id], references: [id], onDelete: Cascade)
-  workRequest WorkRequest @relation(fields: [work_request_id], references: [id], onDelete: Cascade)
+  job Job @relation(fields: [job_id], references: [id], onDelete: Cascade)
 
   /// ── ⚠⚠⚠ ONE PROPOSAL PER PROVIDER PER REQUEST, BY CONSTRUCTION ─────────
   /// ⚠ WS-A item 3: *"One proposal per provider per request. Idempotent;
@@ -6782,9 +6814,9 @@ model Proposal {
   /// to check — the same call `GroupMembership` made, and for the same reason.
   /// ⚠ It works for BOTH shapes: an invited proposal and an open one are still
   /// one provider against one request.
-  @@unique([work_request_id, provider_person_id])
+  @@unique([job_id, provider_person_id])
   @@index([provider_person_id])
-  @@index([work_request_id])
+  @@index([job_id])
   @@index([status])
   @@map("proposals")
 }
@@ -6880,7 +6912,7 @@ model TestRequest {
   id             String @id @default(uuid()) @db.Uuid
   request_number String @unique
 
-  work_request_id        String @db.Uuid
+  job_id        String @db.Uuid
   provider_person_id     String @db.Uuid
   requested_by_person_id String @db.Uuid
 
@@ -6901,7 +6933,7 @@ model TestRequest {
   lines    TestRequestLine[]
   response TestResponse?
 
-  @@index([work_request_id])
+  @@index([job_id])
   @@index([provider_person_id])
   @@index([proposal_id])
   @@index([status])
@@ -7019,7 +7051,7 @@ model InterviewRequest {
   id             String @id @default(uuid()) @db.Uuid
   request_number String @unique
 
-  work_request_id      String  @db.Uuid
+  job_id      String  @db.Uuid
   work_request_line_id String? @db.Uuid
 
   provider_person_id     String @db.Uuid
@@ -7044,7 +7076,7 @@ model InterviewRequest {
   notes    InterviewNote[]
   response InterviewResponse?
 
-  @@index([work_request_id])
+  @@index([job_id])
   @@index([provider_person_id])
   @@index([status])
   @@map("interview_requests")
@@ -7089,7 +7121,7 @@ model ProviderEvaluation {
   evaluation_number String @unique
 
   /// ⚠ The request being sourced. Plain id + index (`E388`).
-  work_request_id String @db.Uuid
+  job_id String @db.Uuid
   /// ⚠ Who is being judged.
   provider_person_id String @db.Uuid
   /// ⚠ Who is judging. The requester — never the provider.
@@ -7120,8 +7152,8 @@ model ProviderEvaluation {
   /// ⚠⚠ ONE EVALUATION PER (REQUEST, PROVIDER, AUTHOR). A second judgement of
   /// the same provider on the same request REPLACES rather than accumulates —
   /// otherwise "what did they think" has no answer, only a list.
-  @@unique([work_request_id, provider_person_id, created_by_person_id])
-  @@index([work_request_id])
+  @@unique([job_id, provider_person_id, created_by_person_id])
+  @@index([job_id])
   @@index([provider_person_id])
   @@index([status])
   @@map("provider_evaluations")
@@ -7228,7 +7260,7 @@ model Shortlist {
   id               String @id @default(uuid()) @db.Uuid
   shortlist_number String @unique
 
-  work_request_id      String  @db.Uuid
+  job_id      String  @db.Uuid
   work_request_line_id String? @db.Uuid
 
   created_by_person_id String @db.Uuid
@@ -7238,7 +7270,7 @@ model Shortlist {
 
   lines ShortlistLine[]
 
-  @@index([work_request_id])
+  @@index([job_id])
   @@map("shortlists")
 }
 
@@ -9196,4 +9228,72 @@ model ProviderAttributeValue {
   @@unique([provider_profile_id, attribute_id])
   @@index([attribute_id])
   @@map("provider_attribute_values")
+}
+
+/// JW-E001: the posting (the JD). Proposals, proposal requests, shortlists, interviews, test requests and the
+/// acceptance of a proposal belong to the Job. HIRE creates a Work Request (source JOB_HIRE).
+model Job {
+  id                    String               @id @default(uuid()) @db.Uuid
+  buyer_person_id       String               @db.Uuid
+  p_account_id          String               @db.Uuid
+  role_id               String?              @db.Uuid
+  pillar_id             String?              @db.Uuid
+  region_id             String?              @db.Uuid
+  specialization_id     String?              @db.Uuid
+  title                 String               @default("")
+  description           String?
+  experience_level      ExperienceLevel?
+  budget_type           BudgetType?
+  budget_amount_cents   Int?
+  budget_min_cents      Int?
+  budget_max_cents      Int?
+  currency              String               @default("USD")
+  worksite              WorksiteType?
+  location_country      String?
+  location_country_code String?              @db.VarChar(2)
+  duration              WorkRequestDuration?
+  start_date            DateTime?
+  end_date              DateTime?
+  status                JobStatus            @default(DRAFT)
+  proposal_access       WorkProposalAccess
+  posted_at             DateTime?
+  company_visibility    ClientVisibility     @default(PUBLIC)
+  company_code_name     String?
+  sole_sourced          Boolean              @default(false)
+  created_at            DateTime             @default(now())
+  updated_at            DateTime             @updatedAt
+
+  buyer           Person              @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
+  pAccount        PAccount            @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
+  role            Role?               @relation(fields: [role_id], references: [id], onDelete: SetNull)
+  pillar          Pillar?             @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  region          Region?             @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  specialization  Specialization?     @relation("jobsAsVendor", fields: [specialization_id], references: [id], onDelete: SetNull)
+  skills          JobPostingSkill[]
+  specializations JobSpecialization[]
+  proposals       Proposal[]
+  workRequests    WorkRequest[]
+
+  @@index([p_account_id])
+  @@index([buyer_person_id])
+  @@index([status])
+  @@map("jobs")
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  FILLED
+  CANCELED
+}
+
+/// JW-E003: where a Work Request came from.
+enum WorkRequestSource {
+  JOB_HIRE
+  SHOP
+  ESTIMATE
+  OFFER
+  EXTERNALLY_SOURCED
+  PUNCHOUT
 }
