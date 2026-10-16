@@ -5,7 +5,7 @@ import { WizardShell } from "@/components/onboarding/WizardShell";
 import { Field, Notice, TextArea, TextInput } from "@/components/onboarding/controls";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { BusinessTypePicker, type BT } from "@/components/company/BusinessTypePicker";
-import { CompanyIdentityFields, findCoMatch, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
+import { CompanyIdentityFields, findCoMatch, companyIdentityOk, emailOk, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
 import { countryName } from "@/lib/country";
@@ -199,8 +199,8 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
       await load();
       go("locations");
     });
-    const remitOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(remitEmail.trim() || reg?.email || "");
-    const ok = match || joining || (name.trim().length >= 2 && remitOk && (!types.length || !!businessTypeId) && (c ? true : attestation && companyTos));
+    const remitOk = emailOk(remitEmail.trim() || reg?.email || "");
+    const ok = match || joining || (name.trim().length >= 2 && remitOk && companyIdentityOk({ website, tin }) && (!types.length || !!businessTypeId) && (c ? true : attestation && companyTos));
     return (
       <WizardShell
         {...shell}
@@ -230,15 +230,14 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
             nameSide={
               <Field label="Company Email *" hint="Where we send payment notices.">
                 <TextInput type="email" value={remitEmail} onChange={(e) => setRemitEmail(e.target.value)} placeholder={reg?.email ?? ""} autoComplete="email" />
+                {!remitOk && !!remitEmail.trim() && <span className="mt-1 block text-[13px] text-red-700">Enter an email like ap@acme.com</span>}
               </Field>
             }
           />
           {!joining && !match && (
             <div className="space-y-4">
               {types.length > 0 && (
-                <div className="sm:w-1/2 sm:pr-1.5">
-                  <BusinessTypePicker types={types} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog. You can add more later." />
-                </div>
+                <BusinessTypePicker inline types={types} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells. It sets up your Service Catalog; you can add more later." />
               )}
               <Field label="Description (optional)">
                 <TextArea value={description} maxLength={DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder={`What the company does, in a sentence or two (up to ${DESCRIPTION_MAX} characters).`} className="min-h-0! h-[60px]" />

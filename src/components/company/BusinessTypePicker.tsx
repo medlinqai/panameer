@@ -10,7 +10,7 @@ const SELECT = "w-full border border-line bg-white px-4 py-3 text-[15px] text-in
 
 // Scott 10-14: two steps — Commodity Group (by name), then the Business Types in it. Only groups that hold a
 // Business Type show; the Commodity question always shows (one group = pre-picked). Order follows the list (group sort, then type sort).
-export function BusinessTypePicker({ types, commodities = [], value, onChange, hint }: { types: BT[]; commodities?: string[]; value: string; onChange: (id: string) => void; hint: string }) {
+export function BusinessTypePicker({ types, commodities = [], value, onChange, hint, inline = false }: { types: BT[]; commodities?: string[]; value: string; onChange: (id: string) => void; hint: string; /** Scott 10-16: Commodity | Business Type side by side, one hint under both. */ inline?: boolean }) {
   const withTypes = [...new Set(types.map((t) => t.group))];
   const groups = [...commodities, ...withTypes.filter((g) => !commodities.includes(g))];
   const [chosen, setPicked] = useState<string | null>(null);
@@ -18,7 +18,7 @@ export function BusinessTypePicker({ types, commodities = [], value, onChange, h
   const picked = chosen ?? types.find((t) => t.id === value)?.group ?? (withTypes.length === 1 ? withTypes[0] : "");
   const group = picked;
   const inGroup = types.filter((t) => t.group === group);
-  return (
+  const body = (
     <>
       {groups.length > 0 && (
         <div>
@@ -27,7 +27,7 @@ export function BusinessTypePicker({ types, commodities = [], value, onChange, h
             <option value="">Pick a commodity</option>
             {groups.map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
-          <span className="mt-1 block text-[13px] text-ink-2">What kind of services your company sells.</span>
+          {!inline && <span className="mt-1 block text-[13px] text-ink-2">What kind of services your company sells.</span>}
         </div>
       )}
       {group && inGroup.length === 0 && (
@@ -40,9 +40,16 @@ export function BusinessTypePicker({ types, commodities = [], value, onChange, h
             <option value="">Pick a business type</option>
             {inGroup.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
-          <span className="mt-1 block text-[13px] text-ink-2">{hint}</span>
+          {!inline && <span className="mt-1 block text-[13px] text-ink-2">{hint}</span>}
         </div>
       )}
     </>
+  );
+  if (!inline) return body;
+  return (
+    <div>
+      <div className="grid gap-3 sm:grid-cols-2">{body}</div>
+      <span className="mt-1 block text-[13px] text-ink-2">{hint}</span>
+    </div>
   );
 }

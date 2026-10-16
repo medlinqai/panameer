@@ -1,10 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { Field, TextInput } from "@/components/onboarding/controls";
 
 // The Company step's top block, shared by buyer and seller registration (SR-E002): Company Name (+ Legal Name),
 // Website with Request Access beside it (lit only on a match), then "Request sent…". A joiner sees the company name only.
+// Scott 10-16: standard field edits — TIN formats as typed (12-3456789), website tidies to its domain, both checked on blur.
+const domainOf = (raw: string) => raw.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split(/[/?#\s]/)[0];
+export const websiteOk = (raw: string) => !raw.trim() || /^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(domainOf(raw));
+export const formatTin = (raw: string) => {
+  const d = raw.replace(/\D/g, "");
+  // US EIN shape for 9 digits or fewer; longer (non-US) numbers keep their digits as typed.
+  return d.length <= 9 ? (d.length > 2 ? `${d.slice(0, 2)}-${d.slice(2)}` : d) : raw.replace(/[^0-9A-Za-z-]/g, "");
+};
+export const tinOk = (raw: string) => !raw.trim() || raw.replace(/\D/g, "").length >= 9;
+export const emailOk = (raw: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw.trim());
+/** Problems that stop Next — empty optional fields are fine. */
+export const companyIdentityOk = (v: { website: string; tin: string }) => websiteOk(v.website) && tinOk(v.tin);
+
 export type CoMatch = { id: string; name: string; why: string; byEmail: boolean; admin: string | null } | null;
 
 /** The company already on Panameer for this website or the registrant's email domain. */
@@ -47,15 +61,17 @@ export function CompanyIdentityFields({
   /** Scott 10-16: Company Email sits beside Company Name (both sides). */
   nameSide?: React.ReactNode;
 }) {
+  const [touched, setTouched] = useState<{ website?: boolean; tin?: boolean }>({});
   return (
     <>
       <div className="space-y-3">
         {/* Scott 10-16: Website first — a company already on Panameer needs no more details. */}
-        <Field label="Website" hint={joining || match ? undefined : "We'll check if your company is already on Panameer."}>
+        <Field label="Website" hint={joining || match ? undefined : touched.website && !websiteOk(website) ? undefined : "We'll check if your company is already on Panameer."}>
           <div className="flex gap-2">
-            <TextInput value={website} onChange={(e) => onChange({ website: e.target.value })} className="sm:max-w-[50%]" disabled={joining} onBlur={() => { if (website.trim()) onWebsiteBlur(); }} placeholder="acme.com" autoComplete="url" />
+            <TextInput value={website} onChange={(e) => onChange({ website: e.target.value })} className="sm:max-w-[50%]" disabled={joining} onBlur={() => { setTouched((t) => ({ ...t, website: true })); if (website.trim() && websiteOk(website)) { const d = domainOf(website); if (d !== website) onChange({ website: d }); onWebsiteBlur(); } }} placeholder="acme.com" autoComplete="url" />
             <button type="button" data-request-access disabled={!match || busy} onClick={onRequestAccess} className="shrink-0 bg-ink px-4 text-[13.5px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-30">{joining ? "Requested ✓" : "Request Access"}</button>
           </div>
+          {touched.website && !websiteOk(website) && <span className="mt-1 block text-[13px] text-red-700">Enter a website like acme.com</span>}
         </Field>
         {match && (
           <p data-company-match className="-mt-1 border-l-2 border-magenta pl-3 text-[13px] text-ink-2">
@@ -70,11 +86,12 @@ export function CompanyIdentityFields({
                   <TextInput value={name} onChange={(e) => onChange({ name: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing LLC" />
                 </Field>
                 <Field label="Doing Business As (DBA) Name">
-                  <TextInput value={dba} onChange={(e) => onChange({ dba: e.target.value })} placeholder="Acme" />
+                  <TextInput value={dba} onChange={(e) => onChange({ dba: e.target.value })} placeholder="Acme" autoComplete="off" />
                 </Field>
                 {nameSide}
                 <Field label="Tax ID Number (TIN)">
-                  <TextInput value={tin} onChange={(e) => onChange({ tin: e.target.value })} placeholder="12-3456789" inputMode="numeric" />
+                  <TextInput value={tin} onChange={(e) => onChange({ tin: formatTin(e.target.value) })} onBlur={() => setTouched((t) => ({ ...t, tin: true }))} placeholder="12-3456789" inputMode="numeric" autoComplete="off" />
+                  {touched.tin && !tinOk(tin) && <span className="mt-1 block text-[13px] text-red-700">Enter all 9 digits, like 12-3456789.</span>}
                 </Field>
               </div>
             ) : (

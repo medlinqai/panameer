@@ -5,7 +5,7 @@ import { countryName } from "@/lib/country";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
-import { CompanyIdentityFields, findCoMatch, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
+import { CompanyIdentityFields, findCoMatch, companyIdentityOk, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
 import { LegalLink } from "@/components/legal/LegalLink";
@@ -408,7 +408,7 @@ export default function RequesterStepsPage() {
         title="Which company are you buying for?"
         subtitle="Your company's details, entered once. Its addresses come next."
         continueLabel={nextLabel}
-        continueDisabled={coMatch ? false : joining ? false : draft.coName.trim().length < 2 || !emailOk || (!draft.companyBound && !(draft.coAttest && draft.coTos))}
+        continueDisabled={coMatch ? false : joining ? false : draft.coName.trim().length < 2 || !emailOk || !companyIdentityOk({ website: draft.coWebsite, tin: draft.coTin }) || (!draft.companyBound && !(draft.coAttest && draft.coTos))}
         onContinue={submitCompany}
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-buyer-company-step>
@@ -433,6 +433,7 @@ export default function RequesterStepsPage() {
                 nameSide={
                   <Field label="Company Email *" hint="Where we send invoices.">
                     <TextInput type="email" value={draft.coInvoiceEmail} onChange={(e) => edit({ coInvoiceEmail: e.target.value })} placeholder={draft.email} autoComplete="email" />
+                    {!emailOk && !!draft.coInvoiceEmail.trim() && <span className="mt-1 block text-[13px] text-red-700">Enter an email like ap@acme.com</span>}
                   </Field>
                 }
               />
