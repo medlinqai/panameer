@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 // SO-E003/E005: a seller is registered once Review is finished — or they were already live, or have a company (the old order).
-export const SELLER_REG_STEPS = ["seller", "company", "locations", "review"] as const;
+export const SELLER_REG_STEPS = ["seller", "profile", "company", "locations", "review"] as const;
 export type SellerRegStep = (typeof SELLER_REG_STEPS)[number];
 
 export async function sellerRegistration(personId: string) {

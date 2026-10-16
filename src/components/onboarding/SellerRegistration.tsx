@@ -18,16 +18,18 @@ import { parseStoredPhone, toE164 } from "@/lib/phone";
 // SO-E003: seller registration after Verify + the start page — Who Is Selling? · Company · Locations · Review, the buyer's shell and pieces.
 export const SELLER_RAIL = [
   { key: "seller", label: "Seller" },
+  { key: "profile", label: "Profile" },
   { key: "company", label: "Company" },
   { key: "locations", label: "Locations" },
 ];
-const STEPS = ["seller", "company", "locations", "review"] as const;
+const STEPS = ["seller", "profile", "company", "locations", "review"] as const;
 type Step = (typeof STEPS)[number];
 const DESCRIPTION_MAX = 600;
 export const TIN_TAKEN = "A company with that Tax ID is already on Panameer. Check the number, or Message Support and we'll connect you.";
 
 type Reg = {
   email: string;
+  hasResume?: boolean;
   name?: string;
   seller: PersonValues;
   step: Step | null;
@@ -63,12 +65,12 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imported, setImported] = useState(false);
-  const [profileChecked, setProfileChecked] = useState(false);
 
   const load = useCallback(async () => {
     const r: Reg | null = await fetch("/api/onboarding/provider/registration").then((x) => (x.ok ? x.json() : null)).catch(() => null);
     if (!r) return null;
     setReg(r);
+    if (r.hasResume) setImported(true);
     setPerson({ ...r.seller, phone: parseStoredPhone(r.seller.phone).display });
     setPhoneCountry((pc) => pc ?? parseStoredPhone(r.seller.phone).country ?? null);
     const c = r.company;
@@ -126,8 +128,8 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   const idx = STEPS.indexOf(step);
   const shell = {
     rail: { steps: SELLER_RAIL, current: idx, reached, onPick: (i: number) => go(STEPS[i]) },
-    // SO-E003: four steps on the rail, so "of 4".
-    eyebrow: `Step ${idx + 1} of 4 · ${step === "review" ? "Review" : SELLER_RAIL[idx].label}`,
+    // Scott 10-16: Seller · Profile · Company · Locations · Review.
+    eyebrow: `Step ${idx + 1} of ${STEPS.length} · ${step === "review" ? "Review" : SELLER_RAIL[idx].label}`,
     busy,
     canBack: idx > 0,
     onBack: idx > 0 ? () => go(STEPS[idx - 1]) : undefined,
@@ -145,53 +147,19 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     const next = () => run(async () => {
       await post("/api/onboarding/provider/registration", "POST", { seller: { firstName: person.firstName, lastName: person.lastName, title: person.title, phone: toE164(person.phone, phoneCountry) ?? person.phone } });
       await load();
-      // Scott 10-16: registration builds the profile — after a résumé, check what we read before the company.
-      if (imported && !profileChecked) { setProfileChecked(true); return; }
-      go("company");
+      go("profile");
     });
-    if (imported && profileChecked) {
-      return (
-        <WizardShell
-          {...shell}
-          title="Check your profile"
-          subtitle="This is what we read from your résumé. Fix anything that's wrong; buyers see it on your profile."
-          continueLabel="Next: Company"
-          onContinue={() => go("company")}
-          onBack={() => setProfileChecked(false)}
-          wide
-        >
-          <ResumeReview onContinue={() => go("company")} />
-        </WizardShell>
-      );
-    }
     return (
       <WizardShell
         {...shell}
         title="Who Is Selling?"
         subtitle="This is the person buyers see on your profile and on proposals."
-        continueLabel="Next: Company"
+        continueLabel="Next: Profile"
         continueDisabled={!personComplete(person, phoneCountry)}
         onContinue={next}
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-seller-person-step>
           {error && <Notice>{error}</Notice>}
-          {/* CWS-E001: optional — the same import as the profile run (title only if empty, skills, work history, certifications, industries). */}
-          <section data-seller-resume className="border border-line p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <h2 className="text-[16px] font-bold">Upload Your Résumé</h2>
-              <span className="border border-ink px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-ink">Fastest</span>
-            </div>
-            <ResumeDropzone
-              onBusyChange={setBusy}
-              onImported={async () => {
-                setImported(true);
-                // Keep what was typed here; the import fills only what's still empty.
-                const typed = person;
-                await load();
-                setPerson((p) => ({ firstName: typed.firstName || p.firstName, lastName: typed.lastName || p.lastName, title: typed.title || p.title, photoUrl: typed.photoUrl ?? p.photoUrl, phone: typed.phone || p.phone }));
-              }}
-            />
-          </section>
           <PersonFields
             values={person}
             onChange={(patch) => setPerson((v) => ({ ...v, ...patch }))}
@@ -201,6 +169,43 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
             titlePlaceholder="Oracle Procurement Consultant"
             photoLine="Buyers see this next to your name on your profile and proposals. A clear headshot gets a faster response than an empty circle."
           />
+        </div>
+      </WizardShell>
+    );
+  }
+
+  // ---- Profile (Scott 10-16): the profile-building page from before — upload the résumé, then check what we read ----
+  if (step === "profile") {
+    return (
+      <WizardShell
+        {...shell}
+        title={imported ? "Here's what we have — check it over" : "How would you like to tell us about yourself?"}
+        subtitle={imported ? "Edit anything that's wrong or missing. This is what buyers will see." : "Just upload your résumé and let our AI do the rest."}
+        continueLabel="Next: Company"
+        onContinue={() => go("company")}
+        secondaryLabel={imported ? undefined : "Skip for Now"}
+        onSecondary={imported ? undefined : () => go("company")}
+        wide
+      >
+        <div className="w-full space-y-4" data-seller-profile-step>
+          {error && <Notice>{error}</Notice>}
+          {imported ? (
+            <ResumeReview onContinue={() => go("company")} />
+          ) : (
+            <section className="mx-auto max-w-2xl">
+              <div className="mb-3 flex items-center gap-2">
+                <h2 className="text-[17px] font-bold">Upload Your Résumé</h2>
+                <span className="border border-ink px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-ink">Fastest</span>
+              </div>
+              <ResumeDropzone
+                onBusyChange={setBusy}
+                onImported={async () => {
+                  setImported(true);
+                  await load();
+                }}
+              />
+            </section>
+          )}
         </div>
       </WizardShell>
     );

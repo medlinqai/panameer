@@ -42,6 +42,8 @@ export async function GET() {
       : null,
     locations: approved ? await companyLocations(m.company.id) : [],
     own: await ownAddress(p.id),
+    // Scott 10-16: the Profile step shows the review instead of the upload once a résumé has been read.
+    hasResume: (await prisma.profileImport.count({ where: { providerProfile: { person_id: p.id }, status: "PARSED" } })) > 0,
   });
 }
 
