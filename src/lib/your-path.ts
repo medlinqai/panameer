@@ -63,7 +63,7 @@ export async function lifecycleFor(personId: string) {
     // Scott 10-15: like the buyer road — sign-up done (company linked or asked to join, or email already verified) = stop 1 done.
     register: !!m || pending || !!p.user?.email_verified,
     verify: !!p.user?.email_verified,
-    // Scott 10-16: a seller's profile is done when registration is; Create Products & Services is done when they go live.
+    // Scott 10-16: a seller's profile is done when registration is; Create What You Sell is done when they go live.
     profile: provider ? (await sellerRegistration(personId)).registered : !!p.requesterProfile?.completed_at,
     link: !!m,
     list: provider ? !!p.providerProfile?.onboarding_completed_at : (p.providerProfile?._count.serviceProducts ?? 0) + liveRates + proposals > 0,
