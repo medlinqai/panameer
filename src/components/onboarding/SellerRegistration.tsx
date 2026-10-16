@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
-import { Field, Notice, TextArea } from "@/components/onboarding/controls";
+import { Field, Notice, TextArea, TextInput } from "@/components/onboarding/controls";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { BusinessTypePicker, type BT } from "@/components/company/BusinessTypePicker";
 import { CompanyIdentityFields, findCoMatch, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
@@ -28,7 +28,7 @@ type Reg = {
   seller: PersonValues;
   step: Step | null;
   registered: boolean;
-  company: null | { status: "APPROVED" | "PENDING"; owner: boolean; id?: string; name: string; legalName?: string; website?: string; description?: string; businessTypeIds?: string[] };
+  company: null | { status: "APPROVED" | "PENDING"; owner: boolean; id?: string; name: string; legalName?: string; website?: string; description?: string; companyEmail?: string; businessTypeIds?: string[] };
   locations: (LocRow & { id: string })[];
   own: (LocationValue & { line1?: string | null }) | null;
 };
@@ -44,6 +44,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   const [legal, setLegal] = useState("");
   const [website, setWebsite] = useState("");
   const [description, setDescription] = useState("");
+  const [remitEmail, setRemitEmail] = useState("");
   const [businessTypeId, setBusinessTypeId] = useState("");
   const [types, setTypes] = useState<BT[]>([]);
   const [commodities, setCommodities] = useState<string[]>([]);
@@ -70,6 +71,8 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
       setDescription(c.description ?? "");
       if (c.businessTypeIds?.[0]) setBusinessTypeId(c.businessTypeIds[0]);
     }
+    // Prefilled like the buyer's: the company's email if it has one, else theirs.
+    setRemitEmail((v) => v || (c?.status === "APPROVED" ? c.companyEmail : "") || r.email || "");
     if (r.locations.length) setLocs(r.locations);
     if (r.own) setOwn(r.own);
     return r;
@@ -185,13 +188,14 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
         await post("/api/company", "PATCH", { name: name.trim() });
       }
       if (owner || !c) {
-        await post("/api/company", "PATCH", { legalName: legal.trim() || name.trim(), description: description.trim() || null });
+        await post("/api/company", "PATCH", { legalName: legal.trim() || name.trim(), description: description.trim() || null, companyEmail: remitEmail.trim() || reg?.email || null });
         if (businessTypeId && !(c?.businessTypeIds ?? []).includes(businessTypeId)) await post("/api/company/business-types", "POST", { businessTypeId, on: true });
       }
       await load();
       go("locations");
     });
-    const ok = match || joining || (name.trim().length >= 2 && (!types.length || !!businessTypeId) && (c ? true : attestation && companyTos));
+    const remitOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(remitEmail.trim() || reg?.email || "");
+    const ok = match || joining || (name.trim().length >= 2 && remitOk && (!types.length || !!businessTypeId) && (c ? true : attestation && companyTos));
     return (
       <WizardShell
         {...shell}
@@ -224,6 +228,11 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
               {types.length > 0 && (
                 <BusinessTypePicker types={types} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog. You can add more later." />
               )}
+              <div className="sm:w-1/2 sm:pr-1.5">
+                <Field label="Company Email *" hint="Where we send payment notices.">
+                  <TextInput type="email" value={remitEmail} onChange={(e) => setRemitEmail(e.target.value)} placeholder={reg?.email ?? ""} autoComplete="email" />
+                </Field>
+              </div>
               <Field label="Description (optional)">
                 <TextArea value={description} maxLength={DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder={`What the company does, in a sentence or two (up to ${DESCRIPTION_MAX} characters).`} className="min-h-0! h-[60px]" />
               </Field>

@@ -32,6 +32,7 @@ const patchSchema = z
     stateOfFiling: z.string().trim().max(80).nullable().optional(),
     ein: z.string().trim().max(40).nullable().optional(),
     description: z.string().trim().max(600).nullable().optional(),
+    companyEmail: z.string().trim().email().max(200).nullable().optional(),
     industryId: z.string().uuid().nullable().optional(),
     sizeBand: z.string().trim().max(40).nullable().optional(),
     erpUsed: z.string().trim().max(120).nullable().optional(),
@@ -52,6 +53,7 @@ export async function PATCH(request: Request) {
       name: "Enter the company name (at least 2 characters).",
       website: "Enter a website like strateerp.com",
       description: "Keep the description to 600 characters.",
+      companyEmail: "Enter a valid company email.",
       industryId: "Pick an industry from the list.",
       taxType: "Pick a business type from the list.",
     };

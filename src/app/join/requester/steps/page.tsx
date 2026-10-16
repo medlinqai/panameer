@@ -426,7 +426,7 @@ export default function RequesterStepsPage() {
                   {industries.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                 </select>
               </Field>
-              <Field label="Invoice Email *" hint="No tax ID or W-9 is needed to buy.">
+              <Field label="Company Email *" hint="Where we send invoices. No tax ID or W-9 needed.">
                 <TextInput type="email" value={draft.coInvoiceEmail} onChange={(e) => edit({ coInvoiceEmail: e.target.value })} placeholder={draft.email} autoComplete="email" />
               </Field>
               </div>

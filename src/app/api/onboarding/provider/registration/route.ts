@@ -23,7 +23,7 @@ export async function GET() {
       photo_url: true,
       phone: true,
       user: { select: { email: true } },
-      companyMemberships: { where: { status: { in: ["APPROVED", "PENDING"] } }, orderBy: { updated_at: "desc" }, take: 1, select: { status: true, role: true, company: { select: { id: true, name: true, legal_name: true, website: true, description: true } } } },
+      companyMemberships: { where: { status: { in: ["APPROVED", "PENDING"] } }, orderBy: { updated_at: "desc" }, take: 1, select: { status: true, role: true, company: { select: { id: true, name: true, legal_name: true, website: true, description: true, invoice_email: true } } } },
     },
   });
   if (!p) return NextResponse.json({ error: "No person" }, { status: 404 });
@@ -37,7 +37,7 @@ export async function GET() {
     ...(await sellerRegistration(p.id).then((r) => ({ step: r.step, registered: r.registered }))),
     company: m
       ? approved
-        ? { status: m.status, owner: m.role === "ADMIN", id: m.company.id, name: m.company.name, legalName: m.company.legal_name && m.company.legal_name !== m.company.name ? m.company.legal_name : "", website: m.company.website ?? "", description: m.company.description ?? "", businessTypeIds: await companyBusinessTypeIds(m.company.id) }
+        ? { status: m.status, owner: m.role === "ADMIN", id: m.company.id, name: m.company.name, legalName: m.company.legal_name && m.company.legal_name !== m.company.name ? m.company.legal_name : "", website: m.company.website ?? "", description: m.company.description ?? "", companyEmail: m.company.invoice_email ?? "", businessTypeIds: await companyBusinessTypeIds(m.company.id) }
         : { status: m.status, owner: false, name: m.company.name }
       : null,
     locations: approved ? await companyLocations(m.company.id) : [],

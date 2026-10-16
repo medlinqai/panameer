@@ -292,6 +292,8 @@ export type UpdateCompanyInput = {
   stateOfFiling?: string | null;
   ein?: string | null;
   description?: string | null;
+  /** Scott 10-16: one Company Email — buyers' invoices, sellers' payment notices. */
+  companyEmail?: string | null;
   industryId?: string | null;
   sizeBand?: string | null;
   erpUsed?: string | null;
@@ -347,6 +349,7 @@ export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyI
     data: {
       ...(name ? { name } : {}),
       ...(input.description !== undefined ? { description: blank(input.description) } : {}),
+      ...(input.companyEmail !== undefined ? { invoice_email: blank(input.companyEmail) } : {}),
       ...(input.industryId !== undefined ? { industry_id: input.industryId || null } : {}),
       ...(input.sizeBand !== undefined ? { size_band: blank(input.sizeBand) } : {}),
       ...(input.erpUsed !== undefined ? { erp_used: blank(input.erpUsed) } : {}),
