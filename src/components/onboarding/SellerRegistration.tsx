@@ -10,6 +10,7 @@ import { CompanyIdentityFields, findCoMatch, companyIdentityOk, emailOk, formatT
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
 import { countryName } from "@/lib/country";
+import { ResumeDropzone } from "@/components/onboarding/ResumeDropzone";
 import { PersonFields, personComplete, type PersonValues } from "@/components/onboarding/PersonFields";
 import { parseStoredPhone, toE164 } from "@/lib/phone";
 
@@ -154,6 +155,22 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-seller-person-step>
           {error && <Notice>{error}</Notice>}
+          {/* CWS-E001: optional — the same import as the profile run (title only if empty, skills, work history, certifications, industries). */}
+          <section data-seller-resume className="border border-line p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <h2 className="text-[16px] font-bold">Upload Your Résumé</h2>
+              <span className="border border-ink px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-ink">Fastest</span>
+            </div>
+            <ResumeDropzone
+              onBusyChange={setBusy}
+              onImported={async () => {
+                // Keep what was typed here; the import fills only what's still empty.
+                const typed = person;
+                await load();
+                setPerson((p) => ({ firstName: typed.firstName || p.firstName, lastName: typed.lastName || p.lastName, title: typed.title || p.title, photoUrl: typed.photoUrl ?? p.photoUrl, phone: typed.phone || p.phone }));
+              }}
+            />
+          </section>
           <PersonFields
             values={person}
             onChange={(patch) => setPerson((v) => ({ ...v, ...patch }))}
