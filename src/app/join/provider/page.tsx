@@ -296,6 +296,9 @@ const SELL_RUN = [
   { key: "products", label: "Products" },
   { key: "live", label: "Enable My Catalog" },
 ];
+// The pages under each stop, in order, and what the button calls the next page within a stop.
+const PHASE_PAGES: string[][] = [["tell_us", "roles"], ["skills"], ["rate"], ["products"], ["title", "finish"]];
+const SCREEN_NAME: Partial<Record<string, string>> = { roles: "Kind of Work", finish: "Review" };
 const sellPhaseOf = (k: string): number => (k === "finish" || k === "title" || k === "picture" ? 4 : k === "products" ? 3 : k === "rate" ? 2 : k === "skills" ? 1 : 0);
 const sellFirstOfPhase = (i: number) => (i === 0 ? "tell_us" : i === 1 ? "skills" : i === 2 ? "rate" : i === 3 ? "products" : "title");
 
@@ -1147,10 +1150,16 @@ setScreen(target);
       ? "Enable My Catalog"
       : upcoming && phaseOf(upcoming) !== railIndex
         ? `Next: ${GET_FOUND[phaseOf(upcoming)].label}`
-        : "Next";
+        : upcoming && SCREEN_NAME[upcoming]
+          ? `Next: ${SCREEN_NAME[upcoming]}`
+          : "Next";
+  // Scott 10-16: a stop with two pages says so ("Page 2 of 2"), so a second page under the same stop isn't a surprise.
+  const pagesHere = railIndex >= 0 ? PHASE_PAGES[railIndex] : [];
+  const pageNo = pagesHere.indexOf(screen as string);
+  const pageNote = pagesHere.length > 1 && pageNo >= 0 ? ` · Page ${pageNo + 1} of ${pagesHere.length}` : "";
   const shell = (props: Partial<React.ComponentProps<typeof WizardShell>> & { title: string }) => ({
     rail: railIndex >= 0 ? { steps: GET_FOUND, current: railIndex, reached: furthestPhase, review: false, onPick: (i: number) => { setReturnToReview(false); goTo(firstOfPhase(i)); } } : undefined,
-    eyebrow: railIndex >= 0 ? `Step ${railIndex + 1} of ${GET_FOUND.length} · ${GET_FOUND[railIndex].label}` : undefined,
+    eyebrow: railIndex >= 0 ? `Step ${railIndex + 1} of ${GET_FOUND.length} · ${GET_FOUND[railIndex].label}${pageNote}` : undefined,
     onboardingChrome: true,
     step: stepNumber,
     totalSteps: wizardTotal,
