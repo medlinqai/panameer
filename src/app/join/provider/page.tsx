@@ -2337,14 +2337,15 @@ setScreen(target);
             // The gate itself is unchanged and still enforced server-side by
             // `publishProfile`; this only stops the provider from submitting a
             // request the server is certain to refuse.
-            continueDisabled: busy || errors.length > 0,
+            // Scott 10-16: the server decides (title, rate or product, photo, phone, address); its message shows if anything's missing.
+            continueDisabled: busy,
           })}
         >
           <GoLiveRates onEdit={() => { setReturnToReview(true); goTo("rate"); }} />
           {error && <Notice>{error}</Notice>}
 
           {/* WS5 / E181 — THE BIG SUGGESTIONS PANEL IS GONE. */}
-          <ReviewChecklist
+          {SHOW_FULL_PROFILE_ON_REVIEW && <ReviewChecklist
             errors={errors}
             changes={[
               ...(unsorted > 0
@@ -2367,7 +2368,7 @@ setScreen(target);
                 : []),
             ]}
             onFix={applyFix}
-          />
+          />}
           {/* The summary table is gone: the review IS the profile template.
               What still needs attention is listed in the box above. */}
 
@@ -2378,7 +2379,7 @@ setScreen(target);
             {[
               { k: "Your Title", v: profile.headline || "—", go: "title" as Step },
               { k: "Kind of Work", v: profile.roleTypeIds.map((id) => fieldRoles.find((r) => r.id === id)?.name).filter(Boolean).join(" · ") || "—", go: "roles" as Step },
-              { k: "Skills", v: shownSkillNames.slice(0, 12).join(" · ") + (shownSkillNames.length > 12 ? ` · +${shownSkillNames.length - 12} more` : "") || "—", go: "skills" as Step },
+              { k: "Skills", v: shownSkillNames.slice(0, 12).map((x) => x.name).join(" · ") + (shownSkillNames.length > 12 ? ` · +${shownSkillNames.length - 12} more` : "") || "—", go: "skills" as Step },
             ].map((r) => (
               <div key={r.k} className="flex flex-wrap items-baseline gap-3 border-b border-line px-5 py-3 last:border-0">
                 <b className="w-32 shrink-0 text-[14px]">{r.k}</b>

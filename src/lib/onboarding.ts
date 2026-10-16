@@ -1997,24 +1997,18 @@ export async function publishProfile(viewer: Viewer) {
   const coLoc = p.site?.addresses?.[0]?.line1?.trim()
     ? null
     : await prisma.address.findFirst({ where: { site: { company: { memberships: { some: { person_id: p.id, status: "APPROVED" } } } }, line1: { not: "" } }, select: { line1: true, city: true } });
-  const missing = missingRequired({
-    headline: p.title,
-    role_id: pp.role_id,
-    skills: pp.skills,
-    photoUrl: p.photo_url,
-    hasProduct: productCount > 0,
-    hourly_rate_cents: pp.hourly_rate_cents,
-    rate_min_cents: pp.rate_min_cents,
-    rate_max_cents: pp.rate_max_cents,
-    onsite_rate_cents: pp.onsite_rate_cents,
-    remote_rate_cents: pp.remote_rate_cents,
-    hasAddress: Boolean(p.site?.addresses?.[0]?.line1?.trim() || coLoc?.line1?.trim()),
-    hasPhone: Boolean(p.phone?.trim()),
-    overview: pp.overview,
-    specializations: pp.specializations,
-    languages: pp.languages,
-    hasLocation: Boolean(p.site?.addresses?.[0]?.city?.trim() || p.site?.addresses?.[0]?.state?.trim() || p.site?.addresses?.[0]?.country?.trim()),
-  });
+  // Scott 10-16: Enable My Catalog needs only what the slimmed run asks for — a title, a rate or a product, and the
+  // photo / phone / location registration already took. Roles, 3+ skills, bio, specializations and languages
+  // still raise the Search Score but no longer block enabling the catalog.
+  const hasRate = [pp.hourly_rate_cents, pp.rate_min_cents, pp.rate_max_cents, pp.onsite_rate_cents, pp.remote_rate_cents].some((c) => c != null)
+    || (await prisma.providerService.count({ where: { provider_profile_id: pp.id, active: true, rate_cents: { not: null } } })) > 0;
+  const missing = [
+    !p.title?.trim() && "a title",
+    !hasRate && productCount === 0 && "a rate or a product",
+    !p.photo_url && "a photo",
+    !p.phone?.trim() && "your phone number",
+    !(p.site?.addresses?.[0]?.line1?.trim() || coLoc?.line1?.trim()) && "your address",
+  ].filter(Boolean) as string[];
 
   // IN-E002: professional sellers also name the industries they've worked in.
   // Scott 10-16: industries are optional — they no longer block Enable My Catalog.
