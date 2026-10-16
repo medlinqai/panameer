@@ -421,8 +421,8 @@ export default function RequesterStepsPage() {
                   </Field>
                 }
               />
-              {/* LS-E004: a joiner sees the company's name only — the rest isn't rendered. */}
-              {!joining && (
+              {/* LS-E004: a joiner sees the company's name only — the rest isn't rendered. Scott 10-16: nor on a match. */}
+              {!joining && !coMatch && (
               <div className="space-y-4">
               <div className="sm:w-1/2 sm:pr-1.5">
               <Field label="Industry">
