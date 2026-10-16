@@ -92,6 +92,8 @@ export type RequiredSetInput = Pick<
   rate_max_cents?: number | null;
   onsite_rate_cents?: number | null;
   remote_rate_cents?: number | null;
+  /** Scott 10-16: a seller can go live on products alone — a rate OR a product. */
+  hasProduct?: boolean;
   // Removing it from the TYPE is the point: a caller that still computed one
 };
 
@@ -101,7 +103,7 @@ export function missingRequired(p: RequiredSetInput): string[] {
   if (!p.headline?.trim()) missing.push("a title");
   if (!p.role_id) missing.push("a role");
   if (p.skills.length < MIN_SKILLS) missing.push("at least three skills");
-  if (!hasAnyRate(p)) missing.push("your rate");
+  if (!hasAnyRate(p) && !p.hasProduct) missing.push(p.hasProduct === undefined ? "your rate" : "a rate or a product");
   if (!p.photoUrl) missing.push("a photo");
   if (!p.hasAddress) missing.push("your address");
   if (!p.hasPhone) missing.push("your phone number");

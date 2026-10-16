@@ -34,7 +34,8 @@ export async function POST() {
   const me = await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { id: true } });
   if (!me) return NextResponse.json({ error: "No seller profile" }, { status: 404 });
   const rates = await prisma.providerService.findMany({ where: { provider_profile_id: me.id, active: true, rate_cents: { not: null } }, select: { rate_cents: true, uom: true, service_type_id: true } });
-  if (!rates.length) return NextResponse.json({ error: "Add at least one rate." }, { status: 400 });
+  // Scott 10-16: rates are optional here — a seller can go live on products alone (Go Live checks rate OR product).
+  if (!rates.length) return NextResponse.json({ ok: true });
   const delivery = new Map((await prisma.serviceType.findMany({ where: { id: { in: rates.map((r) => r.service_type_id).filter((x): x is string => !!x) } }, select: { id: true, delivery: true } })).map((t) => [t.id, t.delivery]));
   const hourly = (d: string) => rates.find((r) => r.uom === "HOUR" && r.service_type_id && delivery.get(r.service_type_id) === d)?.rate_cents ?? null;
   const onsite = hourly("ONSITE");

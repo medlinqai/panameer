@@ -1991,11 +1991,13 @@ export async function publishProfile(viewer: Viewer) {
   const pp = p.providerProfile!;
 
   // THE PUBLISH GATE IS THE REQUIRED SET (WS6) — and it is the same set the
+  const productCount = await prisma.serviceProduct.count({ where: { provider_profile_id: pp.id } });
   const missing = missingRequired({
     headline: p.title,
     role_id: pp.role_id,
     skills: pp.skills,
     photoUrl: p.photo_url,
+    hasProduct: productCount > 0,
     hourly_rate_cents: pp.hourly_rate_cents,
     rate_min_cents: pp.rate_min_cents,
     rate_max_cents: pp.rate_max_cents,

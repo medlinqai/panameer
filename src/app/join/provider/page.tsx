@@ -284,16 +284,17 @@ const emptyAddress = (country = "United States"): AddressDraft => ({
 /** The provider title cap (WS-4). Matches the talent card's one-line soft cap in */
 // re-exported through the import below — the cap and the input that enforces it
 
-// Scott 10-16: Create What You Sell runs in four parts — Define Skills (résumé, roles) · Get Found (skills
-// buyers search on) · Rates · Go Live. Registration already made the profile, so no "Profile" here.
+// Scott 10-16: Create What You Sell runs in five parts — Define Skills (résumé, roles) · Get Found (skills
+// buyers search on) · Rates · Products · Go Live (title, review). Going live needs a rate OR a product.
 const SELL_RUN = [
   { key: "define", label: "Define Skills" },
   { key: "found", label: "Get Found" },
-  { key: "rates", label: "Rates & Products" },
+  { key: "rates", label: "Rates" },
+  { key: "products", label: "Products" },
   { key: "live", label: "Go Live" },
 ];
-const sellPhaseOf = (k: string): number => (k === "finish" || k === "title" ? 3 : k === "rate" || k === "products" || k === "picture" ? 2 : k === "skills" ? 1 : 0);
-const sellFirstOfPhase = (i: number) => (i === 0 ? "tell_us" : i === 1 ? "skills" : i === 2 ? "rate" : "title");
+const sellPhaseOf = (k: string): number => (k === "finish" || k === "title" || k === "picture" ? 4 : k === "products" ? 3 : k === "rate" ? 2 : k === "skills" ? 1 : 0);
+const sellFirstOfPhase = (i: number) => (i === 0 ? "tell_us" : i === 1 ? "skills" : i === 2 ? "rate" : i === 3 ? "products" : "title");
 
 export default function JoinProviderPage() {
   const router = useRouter();
@@ -2035,7 +2036,7 @@ setScreen(target);
         <WizardShell
           {...shell({
             title: "Your Products",
-            subtitle: "Optional. Fixed-price packages buyers can order, like a report, a dashboard or an integration. Add one now or later in My Catalog.",
+            subtitle: "Fixed-price packages buyers can order, like a report, a dashboard or an integration. To go live you need at least one rate or one product.",
             onContinue: goNext,
             secondaryLabel: "Skip for Now",
             onSecondary: goNext,

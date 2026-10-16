@@ -168,7 +168,7 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
       </ul>
       <p className="mt-4 text-[13.5px] text-ink-2">Fixed-price work — reports, dashboards, AI agents, integrations — goes in <Link href="/catalog/products" className="font-bold text-magenta-dark underline underline-offset-4">Service Products</Link>.</p>
       {inRun ? (
-        <p className="mt-6 border-t-2 border-ink pt-4 text-[13.5px] text-ink-2">Turn on at least one rate. Saved as you go; your rates go live when you Go Live.</p>
+        <p className="mt-6 border-t-2 border-ink pt-4 text-[13.5px] text-ink-2">Turn on the rates you charge, or skip to Products if you only sell fixed-price packages. Saved as you go; everything goes live when you Go Live.</p>
       ) : (
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink pt-4">
         <span className="text-[13.5px] text-ink-2">
