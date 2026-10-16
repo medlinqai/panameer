@@ -47,7 +47,7 @@ export async function GET() {
 
 const Own = z.object({ line1: z.string().trim().max(200).nullish(), line2: z.string().trim().max(200).nullish(), city: z.string().trim().max(120).nullish(), state: z.string().trim().max(120).nullish(), postalCode: z.string().trim().max(40).nullish(), country: z.string().trim().max(80).nullish() });
 
-const Seller = z.object({ firstName: z.string().trim().min(1).max(80), lastName: z.string().trim().min(1).max(80), title: z.string().trim().min(1).max(120), phone: z.string().trim().max(40) });
+const Seller = z.object({ firstName: z.string().trim().min(1).max(80), lastName: z.string().trim().min(1).max(80), title: z.string().trim().max(120).optional(), phone: z.string().trim().max(40) });
 const Body = z.union([
   z.object({ own: Own }),
   z.object({ seller: Seller }),
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     const d = b.data;
     if ("own" in d) await saveOwnAddress(p.id, d.own);
     else if ("seller" in d) {
-      await prisma.person.update({ where: { id: p.id }, data: { first_name: d.seller.firstName, last_name: d.seller.lastName, title: d.seller.title, phone: d.seller.phone || null } });
+      await prisma.person.update({ where: { id: p.id }, data: { first_name: d.seller.firstName, last_name: d.seller.lastName, ...(d.seller.title ? { title: d.seller.title } : {}), phone: d.seller.phone || null } });
       if (forward("company")) await prisma.providerProfile.update({ where: { id: pp.id }, data: { registration_step: "company" } });
     } else if ("step" in d) {
       if (forward(d.step)) await prisma.providerProfile.update({ where: { id: pp.id }, data: { registration_step: d.step } });
