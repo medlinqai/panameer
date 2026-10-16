@@ -284,6 +284,17 @@ const emptyAddress = (country = "United States"): AddressDraft => ({
 /** The provider title cap (WS-4). Matches the talent card's one-line soft cap in */
 // re-exported through the import below — the cap and the input that enforces it
 
+// Scott 10-16: Create What You Sell runs in four parts — Define Skills (résumé, title, roles) · Get Found (skills
+// buyers search on) · Rates · Go Live. Registration already made the profile, so no "Profile" here.
+const SELL_RUN = [
+  { key: "define", label: "Define Skills" },
+  { key: "found", label: "Get Found" },
+  { key: "rates", label: "Rates" },
+  { key: "live", label: "Go Live" },
+];
+const sellPhaseOf = (k: string): number => (k === "finish" ? 3 : k === "rate" || k === "picture" ? 2 : k === "skills" ? 1 : 0);
+const sellFirstOfPhase = (i: number) => (i === 0 ? "tell_us" : i === 1 ? "skills" : i === 2 ? "rate" : "finish");
+
 export default function JoinProviderPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
@@ -369,6 +380,9 @@ export default function JoinProviderPage() {
   const [bioError, setBioError] = useState<string | null>(null);
   const [workImportError, setWorkImportError] = useState<string | null>(null);
   const [certError, setCertError] = useState<string | null>(null);
+  // Furthest part of the run reached — everything up to it stays ✓ and clickable on the rail.
+  const [furthestPhase, setFurthestPhase] = useState(0);
+  useEffect(() => { setFurthestPhase((n) => Math.max(n, sellPhaseOf(screen))); }, [screen]);
   const [photoModal, setPhotoModal] = useState(false);
 
   /** Phone number (E019, verification STUBBED by E036). The SMS */
@@ -1116,11 +1130,11 @@ setScreen(target);
   const nextStep = stepIndex >= 0 ? steps[stepIndex + 1] : undefined;
   // One count everywhere (2026-10-05): Résumé + the member's own itinerary; Review after, unnumbered.
   // SO-E004 Get Found: one run in three parts — Profile (résumé, roles, skills…) · Rates · Go Live.
-  const GET_FOUND = [{ key: "profile", label: "Profile" }, { key: "rates", label: "Rates" }, { key: "live", label: "Go Live" }];
-  const phaseOf = (k: Step) => (k === "finish" ? 2 : k === "rate" ? 1 : 0);
+  const GET_FOUND = SELL_RUN;
+  const phaseOf = (k: Step) => sellPhaseOf(k);
   const inRun = screen === "tell_us" || screen === "finish" || stepIndex >= 0;
   const railIndex = inRun ? phaseOf(screen as Step) : -1;
-  const firstOfPhase = (i: number): Step => (i === 0 ? "tell_us" : i === 1 ? "rate" : "finish");
+  const firstOfPhase = (i: number): Step => sellFirstOfPhase(i) as Step;
   const upcoming = stepIndex >= 0 ? steps[stepIndex + 1] : screen === "tell_us" ? steps[0] : undefined;
   const nextLabel =
     screen === "finish"
@@ -1129,8 +1143,8 @@ setScreen(target);
         ? `Next: ${GET_FOUND[phaseOf(upcoming)].label}`
         : "Next";
   const shell = (props: Partial<React.ComponentProps<typeof WizardShell>> & { title: string }) => ({
-    rail: railIndex >= 0 ? { steps: GET_FOUND, current: railIndex, review: false, onPick: (i: number) => { setReturnToReview(false); goTo(firstOfPhase(i)); } } : undefined,
-    eyebrow: railIndex >= 0 ? `Step ${railIndex + 1} of 3 · ${GET_FOUND[railIndex].label}` : undefined,
+    rail: railIndex >= 0 ? { steps: GET_FOUND, current: railIndex, reached: furthestPhase, review: false, onPick: (i: number) => { setReturnToReview(false); goTo(firstOfPhase(i)); } } : undefined,
+    eyebrow: railIndex >= 0 ? `Step ${railIndex + 1} of ${GET_FOUND.length} · ${GET_FOUND[railIndex].label}` : undefined,
     onboardingChrome: true,
     step: stepNumber,
     totalSteps: wizardTotal,
