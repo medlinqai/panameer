@@ -620,7 +620,8 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
   // Walk the list THIS profile actually has, so a recruiter is never parked on
   // a step (Education, Rate) their journey doesn't include.
   // Résumé is the first step (2026-10-05): a new provider who hasn't chosen how to fill their profile starts there.
-  if (!done.title && pp.profile_method == null) return "tell_us";
+  // Scott 10-16: registration now asks Title, so a filled title no longer means "past the résumé" — only the choice does.
+  if (pp.profile_method == null) return "tell_us";
   for (const step of stepsForProfile(pp)) {
     if (OPTIONAL_STEPS.has(step)) continue;
     if (!done[step]) return step;
