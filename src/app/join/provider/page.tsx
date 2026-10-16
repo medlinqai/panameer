@@ -1428,9 +1428,9 @@ setScreen(target);
       return (
         <WizardShell
           {...shell({
-            title: "Let's start by telling the world what you do.",
+            title: "Now sum up what you do in one line.",
             subtitle:
-              "It's the very first thing clients see, so make it count. Stand out by describing your expertise in your own words.",
+              "It's the first thing buyers see, next to your name. Use your own words, or let AI write it from your résumé.",
             // THE TITLE FORWARDS TO THE RÉSUMÉ SCREEN, NOT TO STEP 2 .
             onContinue: () =>
               saveAnd("title", { headline: profile.headline }, () => goTo(steps[steps.indexOf("title") + 1] ?? "roles")),

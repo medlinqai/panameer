@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { guardApi } from "@/lib/guard";
+import { shortTitle } from "@/lib/short-title";
 
 /** Scott 10-16: the title the AI read off the latest résumé — offered on the Title step, never applied on its own. */
 export async function GET() {
@@ -12,5 +13,5 @@ export async function GET() {
     select: { parsed: true },
   });
   const title = ((imp?.parsed as { headline?: string } | null)?.headline ?? "").trim().slice(0, 200);
-  return NextResponse.json({ title: title || null });
+  return NextResponse.json({ title: title ? await shortTitle(title) : null });
 }
