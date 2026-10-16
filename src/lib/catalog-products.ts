@@ -115,7 +115,8 @@ export async function saveCatalogProduct(viewer: Viewer, id: string | null, f: P
     const missing = publishMissing(f);
     if (missing.length) throw new Error(`To publish, add ${missing.join(", ")}.`);
     // Same gate as Publish My Rates: a linked company. Tax & Banking is the road's gate before payment, not before publishing (Scott 2026-10-11/12).
-    if (!(await publishGate(p.person_id)).ok) throw new Error("Add your company to publish.");
+    const g = await publishGate(p.person_id);
+    if (!g.ok) throw new Error(g.reason ?? "Add your company to publish.");
   }
   const [domainIds, skillIds] = await Promise.all([
     prisma.domain.findMany({ where: { id: { in: f.domainIds } }, select: { id: true } }).then((r) => r.map((x) => x.id)),
