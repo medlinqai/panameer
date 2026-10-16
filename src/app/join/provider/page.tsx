@@ -291,7 +291,7 @@ const SELL_RUN = [
   { key: "found", label: "Get Found" },
   { key: "rates", label: "Rates" },
   { key: "products", label: "Products" },
-  { key: "live", label: "Go Live" },
+  { key: "live", label: "Enable My Catalog" },
 ];
 const sellPhaseOf = (k: string): number => (k === "finish" || k === "title" || k === "picture" ? 4 : k === "products" ? 3 : k === "rate" ? 2 : k === "skills" ? 1 : 0);
 const sellFirstOfPhase = (i: number) => (i === 0 ? "tell_us" : i === 1 ? "skills" : i === 2 ? "rate" : i === 3 ? "products" : "title");
@@ -1140,7 +1140,7 @@ setScreen(target);
   const upcoming = stepIndex >= 0 ? steps[stepIndex + 1] : screen === "tell_us" ? steps[0] : undefined;
   const nextLabel =
     screen === "finish"
-      ? "Go Live"
+      ? "Enable My Catalog"
       : upcoming && phaseOf(upcoming) !== railIndex
         ? `Next: ${GET_FOUND[phaseOf(upcoming)].label}`
         : "Next";
@@ -2036,7 +2036,7 @@ setScreen(target);
         <WizardShell
           {...shell({
             title: "Your Products",
-            subtitle: "Fixed-price packages buyers can order, like a report, a dashboard or an integration. To go live you need at least one rate or one product.",
+            subtitle: "Fixed-price packages buyers can order, like a report, a dashboard or an integration. To enable your catalog you need at least one rate or one product.",
             onContinue: goNext,
             secondaryLabel: "Skip for Now",
             onSecondary: goNext,
@@ -2325,8 +2325,8 @@ setScreen(target);
       return (
         <WizardShell
           {...shell({
-            title: "Go Live",
-            subtitle: "Your profile as buyers see it, and your rates. Edit any line, then go live.",
+            title: "Enable My Catalog",
+            subtitle: "Your profile, rates and products as buyers see them. Edit any line, then enable your catalog.",
             wide: true,
             onContinue: publish,
             // The gate itself is unchanged and still enforced server-side by
