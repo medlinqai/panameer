@@ -139,7 +139,7 @@ type EditSection =
 function skippedSteps(s: StatusPayload): Set<Step> {
   const pf = s.profile;
   return new Set<Step>([
-    ...(pf?.headline?.trim() ? (["title"] as Step[]) : []),
+    // Scott 10-16: Title is NOT skipped — it shows prefilled from registration, with the AI-from-résumé link.
     ...(pf?.photoUrl && pf?.phone && pf?.address?.line1 ? (["picture"] as Step[]) : []),
   ]);
 }
