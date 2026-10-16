@@ -21,7 +21,7 @@ const schema = z.object({
     // The company binding is written by /api/company/* (define or join), not
     // here — this step only confirms it exists.
     companyBound: z.boolean().optional(),
-    companyDetails: z.object({ industryId: z.string().uuid().nullish(), invoiceEmail: z.string().trim().max(200).nullish(), legalName: z.string().trim().max(200).nullish() }).optional(),
+    companyDetails: z.object({ industryId: z.string().uuid().nullish(), invoiceEmail: z.string().trim().max(200).nullish(), legalName: z.string().trim().max(200).nullish(), description: z.string().trim().max(600).nullish() }).optional(),
     // LS-E003: the company's addresses with their uses (owner), which Ship To is where I work, or a company address (member).
     locations: z.array(z.object({
       id: z.string().uuid().nullish(),

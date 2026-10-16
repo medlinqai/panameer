@@ -201,7 +201,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
         continueDisabled={!ok}
         onContinue={next}
       >
-        <div className="w-full max-w-xl space-y-4" data-seller-company-step>
+        <div className="mx-auto w-full max-w-xl space-y-4" data-seller-company-step>
           <a href="/help/road#register" target="_blank" rel="noreferrer" className="-mt-2 inline-block text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Questions?</a>
           {error && <Notice>{error}</Notice>}
           <CompanyIdentityFields

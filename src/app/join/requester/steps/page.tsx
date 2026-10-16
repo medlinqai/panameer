@@ -7,7 +7,10 @@ import { WizardShell } from "@/components/onboarding/WizardShell";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
 import { CompanyIdentityFields, findCoMatch, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
-import { Field, TextInput, Notice } from "@/components/onboarding/controls";
+import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
+import { LegalLink } from "@/components/legal/LegalLink";
+
+const DESCRIPTION_MAX = 600;
 import { parseStoredPhone, toE164 } from "@/lib/phone";
 import { PersonFields, personComplete } from "@/components/onboarding/PersonFields";
 import { REQUESTER_STEPS, REQUESTER_STEP_LABELS, REQUESTER_WORK_STEPS, type RequesterStep } from "@/lib/requester-steps";
@@ -44,6 +47,10 @@ type Draft = {
   coIndustryId: string;
   coLegal: string;
   coInvoiceEmail: string;
+  coDescription: string;
+  /** Scott 10-16: the seller's two checkboxes, same on the buyer side. */
+  coAttest: boolean;
+  coTos: boolean;
   email: string;
   /** LS-E003: owner edits the company's addresses; member picks one (or their own); pending joiner enters their own. */
   locMode: "owner" | "member" | "pending" | "none";
@@ -75,6 +82,9 @@ const EMPTY: Draft = {
   coIndustryId: "",
   coLegal: "",
   coInvoiceEmail: "",
+  coDescription: "",
+  coAttest: false,
+  coTos: false,
   email: "",
   locMode: "none",
   locs: [],
@@ -118,7 +128,7 @@ export default function RequesterStepsPage() {
     completed: boolean;
     resumeStep: string;
     email?: string;
-    company?: { bound?: boolean; name?: string | null; owner?: boolean; industryId?: string | null; legalName?: string | null; invoiceEmail?: string | null } | null;
+    company?: { bound?: boolean; name?: string | null; owner?: boolean; industryId?: string | null; legalName?: string | null; invoiceEmail?: string | null; description?: string | null } | null;
     locations?: { mode: Draft["locMode"]; addresses: ServerLoc[]; workAddressId: string | null; own: LocationValue | null };
     profile: {
       firstName: string; lastName: string; phone: string | null;
@@ -163,6 +173,9 @@ export default function RequesterStepsPage() {
       coIndustryId: s.company?.industryId ?? "",
       coLegal: s.company?.legalName ?? "",
       coInvoiceEmail: s.company?.invoiceEmail ?? s.email ?? "",
+      coDescription: s.company?.description ?? "",
+      coAttest: prev.coAttest,
+      coTos: prev.coTos,
       email: s.email ?? "",
       locMode: L.mode,
       // The first address arrives with every use ticked.
@@ -330,7 +343,7 @@ export default function RequesterStepsPage() {
   // ---- 2/3 — Company (BC-E002): name · website · industry · one address · invoice email; joining skips the details ----
   if (step === "company") {
     const joining = draft.companyBound && !draft.companyOwner;
-    const details = { legalName: draft.coLegal.trim() || null, industryId: draft.coIndustryId || null, invoiceEmail: draft.coInvoiceEmail.trim() || draft.email };
+    const details = { legalName: draft.coLegal.trim() || null, industryId: draft.coIndustryId || null, invoiceEmail: draft.coInvoiceEmail.trim() || draft.email, description: draft.coDescription.trim() || null };
     const after = fromReview ? "review" : undefined;
     const askToJoin = async () => {
       if (!coMatch) return;
@@ -359,7 +372,7 @@ export default function RequesterStepsPage() {
         setError(null);
         try {
           const site = draft.coWebsite.trim();
-          const r = await fetch("/api/company/define", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: draft.coName.trim(), website: site || null, attestation: true, companyTos: true }) });
+          const r = await fetch("/api/company/define", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: draft.coName.trim(), website: site || null, attestation: draft.coAttest, companyTos: draft.coTos }) });
           const b = await r.json().catch(() => ({}));
           if (!r.ok) {
             // A match that only shows now becomes Ask to Join, not a dead end.
@@ -380,10 +393,11 @@ export default function RequesterStepsPage() {
         title="Which company are you buying for?"
         subtitle="Your company's details, entered once. Its addresses come next."
         continueLabel={nextLabel}
-        continueDisabled={coMatch ? false : joining ? false : draft.coName.trim().length < 2 || !emailOk}
+        continueDisabled={coMatch ? false : joining ? false : draft.coName.trim().length < 2 || !emailOk || (!draft.companyBound && !(draft.coAttest && draft.coTos))}
         onContinue={submitCompany}
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-buyer-company-step>
+          <a href="/help/road#register" target="_blank" rel="noreferrer" className="-mt-2 inline-block text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Questions?</a>
           {error && <Notice>{error}</Notice>}
           {(
             <>
@@ -412,11 +426,25 @@ export default function RequesterStepsPage() {
                   {industries.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                 </select>
               </Field>
-              <Field label="Invoice Email *">
+              <Field label="Invoice Email *" hint="No tax ID or W-9 is needed to buy.">
                 <TextInput type="email" value={draft.coInvoiceEmail} onChange={(e) => edit({ coInvoiceEmail: e.target.value })} placeholder={draft.email} autoComplete="email" />
               </Field>
               </div>
-              <p className="text-[12.5px] text-ink-2">By continuing you confirm you can add this company and accept the company terms. No tax ID or W-9 is needed to buy.</p>
+              <Field label="Description (optional)" hint={`What the company does, in a sentence or two. Up to ${DESCRIPTION_MAX} characters.`}>
+                <TextArea value={draft.coDescription} maxLength={DESCRIPTION_MAX} onChange={(e) => edit({ coDescription: e.target.value })} className="min-h-24" />
+              </Field>
+              {!draft.companyBound && (
+                <>
+                  <label className="flex cursor-pointer items-start gap-3 border border-line p-3">
+                    <input type="checkbox" checked={draft.coAttest} onChange={(e) => edit({ coAttest: e.target.checked })} className="mt-1 h-4 w-4 accent-magenta" />
+                    <span className="text-[14px] text-ink-2">I&apos;m authorized to represent this company on Panameer.</span>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-3 border border-line p-3">
+                    <input type="checkbox" checked={draft.coTos} onChange={(e) => edit({ coTos: e.target.checked })} className="mt-1 h-4 w-4 accent-magenta" />
+                    <span className="text-[14px] text-ink-2">On behalf of this company, I accept the Panameer <LegalLink href="/company-terms">Company Terms of Service</LegalLink>.</span>
+                  </label>
+                </>
+              )}
               </div>
               )}
             </>

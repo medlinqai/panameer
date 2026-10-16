@@ -140,7 +140,7 @@ async function loadRequester(viewer: Viewer) {
         select: {
           status: true,
           role: true,
-          company: { select: { id: true, name: true, tax_type: true, industry_id: true, invoice_email: true, legal_name: true } },
+          company: { select: { id: true, name: true, tax_type: true, industry_id: true, invoice_email: true, legal_name: true, description: true } },
         },
       },
       site: {
@@ -226,6 +226,7 @@ export async function getRequesterState(viewer: Viewer) {
       // Privacy (Scott 10-15): a PENDING joiner sees the company's name only — no industry, invoice email or address.
       industryId: membership?.status === "APPROVED" ? membership.company.industry_id ?? null : null,
       invoiceEmail: membership?.status === "APPROVED" ? membership.company.invoice_email ?? null : null,
+      description: membership?.status === "APPROVED" ? membership.company.description ?? null : null,
       // Only when it differs from the company name (v1 stores them the same).
       legalName: membership?.status === "APPROVED" && membership.company.legal_name && membership.company.legal_name !== membership.company.name ? membership.company.legal_name : null,
     },
@@ -301,7 +302,7 @@ export type StepPayload = {
   /** company — confirmation only; the binding itself is written by company.ts. */
   companyBound?: boolean;
   /** BC-E002: the company's details (owner only). */
-  companyDetails?: { industryId?: string | null; invoiceEmail?: string | null; legalName?: string | null };
+  companyDetails?: { industryId?: string | null; invoiceEmail?: string | null; legalName?: string | null; description?: string | null };
   /** LS-E003: the company's addresses (owner) + which Ship To is where I work; or a company address id (member). */
   locations?: Loc[];
   workIndex?: number | null;
@@ -343,7 +344,7 @@ export async function saveRequesterStep(
       const email = d.invoiceEmail?.trim() || p.user?.email || "";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new OnboardingError("Enter a valid invoice email", "INVALID");
       const industry = d.industryId ? await prisma.specialization.findFirst({ where: { id: d.industryId, kind: "INDUSTRY" }, select: { id: true } }) : null;
-      await prisma.company.update({ where: { id: owned.company.id }, data: { invoice_email: email, industry_id: industry?.id ?? null, ...(d.legalName !== undefined ? { legal_name: d.legalName?.trim() || owned.company.name } : {}) } });
+      await prisma.company.update({ where: { id: owned.company.id }, data: { invoice_email: email, industry_id: industry?.id ?? null, ...(d.legalName !== undefined ? { legal_name: d.legalName?.trim() || owned.company.name } : {}), ...(d.description !== undefined ? { description: d.description?.trim().slice(0, 600) || null } : {}) } });
     }
   }
   if (step === "requester_info") {
