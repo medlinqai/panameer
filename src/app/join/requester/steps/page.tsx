@@ -430,20 +430,20 @@ export default function RequesterStepsPage() {
                 <TextInput type="email" value={draft.coInvoiceEmail} onChange={(e) => edit({ coInvoiceEmail: e.target.value })} placeholder={draft.email} autoComplete="email" />
               </Field>
               </div>
-              <Field label="Description (optional)" hint={`What the company does, in a sentence or two. Up to ${DESCRIPTION_MAX} characters.`}>
-                <TextArea value={draft.coDescription} maxLength={DESCRIPTION_MAX} onChange={(e) => edit({ coDescription: e.target.value })} rows={2} className="min-h-0! h-[60px]" />
+              <Field label="Description (optional)">
+                <TextArea value={draft.coDescription} maxLength={DESCRIPTION_MAX} onChange={(e) => edit({ coDescription: e.target.value })} rows={2} placeholder={`What the company does, in a sentence or two (up to ${DESCRIPTION_MAX} characters).`} className="min-h-0! h-[60px]" />
               </Field>
               {!draft.companyBound && (
-                <>
-                  <label className="flex cursor-pointer items-start gap-3 border border-line p-3">
+                <div className="divide-y divide-line border border-line">
+                  <label className="flex cursor-pointer items-start gap-3 px-3 py-2.5">
                     <input type="checkbox" checked={draft.coAttest} onChange={(e) => edit({ coAttest: e.target.checked })} className="mt-1 h-4 w-4 accent-magenta" />
                     <span className="text-[14px] text-ink-2">I&apos;m authorized to represent this company on Panameer.</span>
                   </label>
-                  <label className="flex cursor-pointer items-start gap-3 border border-line p-3">
+                  <label className="flex cursor-pointer items-start gap-3 px-3 py-2.5">
                     <input type="checkbox" checked={draft.coTos} onChange={(e) => edit({ coTos: e.target.checked })} className="mt-1 h-4 w-4 accent-magenta" />
                     <span className="text-[14px] text-ink-2">On behalf of this company, I accept the Panameer <LegalLink href="/company-terms">Company Terms of Service</LegalLink>.</span>
                   </label>
-                </>
+                </div>
               )}
               </div>
               )}

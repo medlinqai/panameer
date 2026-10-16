@@ -224,20 +224,20 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
               {types.length > 0 && (
                 <BusinessTypePicker types={types} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog. You can add more later." />
               )}
-              <Field label="Description (optional)" hint={`What the company does, in a sentence or two. Up to ${DESCRIPTION_MAX} characters.`}>
-                <TextArea value={description} maxLength={DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} rows={2} className="min-h-0! h-[60px]" />
+              <Field label="Description (optional)">
+                <TextArea value={description} maxLength={DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder={`What the company does, in a sentence or two (up to ${DESCRIPTION_MAX} characters).`} className="min-h-0! h-[60px]" />
               </Field>
               {!c && (
-                <>
-                  <label className="flex cursor-pointer items-start gap-3 border border-line p-3">
+                <div className="divide-y divide-line border border-line">
+                  <label className="flex cursor-pointer items-start gap-3 px-3 py-2.5">
                     <input type="checkbox" checked={attestation} onChange={(e) => setAttestation(e.target.checked)} className="mt-1 h-4 w-4 accent-magenta" />
                     <span className="text-[14px] text-ink-2">I&apos;m authorized to represent this company on Panameer.</span>
                   </label>
-                  <label className="flex cursor-pointer items-start gap-3 border border-line p-3">
+                  <label className="flex cursor-pointer items-start gap-3 px-3 py-2.5">
                     <input type="checkbox" checked={companyTos} onChange={(e) => setCompanyTos(e.target.checked)} className="mt-1 h-4 w-4 accent-magenta" />
                     <span className="text-[14px] text-ink-2">On behalf of this company, I accept the Panameer <LegalLink href="/company-terms">Company Terms of Service</LegalLink>.</span>
                   </label>
-                </>
+                </div>
               )}
             </div>
           )}
