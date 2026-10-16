@@ -280,7 +280,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
         continueDisabled={!!problem}
         onContinue={next}
       >
-        <div className="w-full max-w-2xl space-y-4" data-seller-locations>
+        <div className="mx-auto w-full max-w-2xl space-y-4" data-seller-locations>
           {error && <Notice>{error}</Notice>}
           {owner ? (
             <LocationsBlock rows={locs} onChange={setLocs} buyer={false} seller />

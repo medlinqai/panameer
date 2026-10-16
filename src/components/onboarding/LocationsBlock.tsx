@@ -58,7 +58,6 @@ export function LocationsBlock({
               </label>
             ))}
           </div>
-          {seller && r.remitTo && <p className="mt-1 text-[12.5px] text-ink-2">Remit To is where payments to you go.</p>}
           {onWork && shipTos.length > 1 && r.shipTo && (
             <label className="mt-2 flex cursor-pointer items-center gap-2 text-[14px] font-semibold">
               <input type="radio" name="where-i-work" checked={work === i} onChange={() => onWork(i)} className="h-4 w-4 accent-magenta" />

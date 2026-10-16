@@ -15,6 +15,10 @@ export type LocationValue = {
 const SELECT =
   "w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta";
 
+// Scott 10-16: standard field edits — "miami" → "Miami", "fl" → "FL" when they leave the box (typed casing is kept otherwise).
+const tidyCity = (v: string) => (v && v === v.toLowerCase() ? v.replace(/\b\p{L}/gu, (c) => c.toUpperCase()) : v);
+const tidyRegion = (v: string) => (v.trim().length <= 3 ? v.trim().toUpperCase() : v);
+
 export function LocationFields({
   value,
   onChange,
@@ -69,7 +73,7 @@ export function LocationFields({
   if (compact && withStreet && part === "all") {
     const cityF = (
       <Field label="City">
-        <TextInput value={value.city ?? ""} onChange={(e) => onChange({ city: e.target.value })} placeholder={country.toUpperCase() === "US" ? "Chicago" : "City"} />
+        <TextInput value={value.city ?? ""} onChange={(e) => onChange({ city: e.target.value })} onBlur={(e) => { const t = tidyCity(e.target.value); if (t !== e.target.value) onChange({ city: t }); }} placeholder={country.toUpperCase() === "US" ? "Chicago" : "City"} />
       </Field>
     );
     const stateF = (
@@ -80,7 +84,7 @@ export function LocationFields({
             {regions.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
         ) : (
-          <TextInput value={value.state ?? ""} onChange={(e) => onChange({ state: e.target.value })} placeholder={country ? regionLabel(country) : "Choose a country first"} disabled={!country} />
+          <TextInput value={value.state ?? ""} onChange={(e) => onChange({ state: e.target.value })} onBlur={(e) => { const t = tidyRegion(e.target.value); if (t !== e.target.value) onChange({ state: t }); }} placeholder={country ? regionLabel(country) : "Choose a country first"} disabled={!country} />
         )}
       </Field>
     );
@@ -121,7 +125,7 @@ export function LocationFields({
         <Field label="City">
           <TextInput
             value={value.city ?? ""}
-            onChange={(e) => onChange({ city: e.target.value })}
+            onChange={(e) => onChange({ city: e.target.value })} onBlur={(e) => { const t = tidyCity(e.target.value); if (t !== e.target.value) onChange({ city: t }); }}
             placeholder={country.toUpperCase() === "US" ? "Chicago" : "City"}
           />
         </Field>
@@ -147,6 +151,7 @@ export function LocationFields({
             <TextInput
               value={value.state ?? ""}
               onChange={(e) => onChange({ state: e.target.value })}
+              onBlur={(e) => { const t = tidyRegion(e.target.value); if (t !== e.target.value) onChange({ state: t }); }}
               placeholder={country ? regionLabel(country) : "Choose a country first"}
               disabled={!country}
             />
