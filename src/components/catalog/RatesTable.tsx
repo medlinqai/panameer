@@ -16,7 +16,7 @@ const COLS = "md:grid-cols-[56px_minmax(0,1.5fr)_minmax(0,1.15fr)_minmax(0,1fr)_
 export const ADD_RATE_EVENT = "pm:add-rate";
 const dollars = (c: number | null | undefined) => (c != null ? String(c / 100) : "");
 
-export function RatesTable({ types, rows, registration, gate, multiProvider = false, openToOffers = false }: { types: RateType[]; rows: RateRow[]; registration: { ONSITE: number | null; OFFSITE: number | null }; gate: { ok: boolean; reason: string | null; href: string }; multiProvider?: boolean; openToOffers?: boolean }) {
+export function RatesTable({ types, rows, registration, gate, multiProvider = false, openToOffers = false, inRun = false }: { types: RateType[]; rows: RateRow[]; registration: { ONSITE: number | null; OFFSITE: number | null }; gate: { ok: boolean; reason: string | null; href: string }; multiProvider?: boolean; openToOffers?: boolean; /** Inside Create What You Sell: no Publish — Go Live publishes. */ inRun?: boolean }) {
   const [svc, setSvc] = useState<Record<string, RateRow>>(Object.fromEntries(rows.map((r) => [r.serviceTypeId, r])));
   const [rate, setRate] = useState<Record<string, string>>(Object.fromEntries(rows.map((r) => [r.serviceTypeId, dollars(r.rateCents)])));
   const [hrs, setHrs] = useState<Record<string, string>>(Object.fromEntries(rows.map((r) => [r.serviceTypeId, r.hoursIncluded ? String(r.hoursIncluded) : ""])));
@@ -167,6 +167,9 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
         })}
       </ul>
       <p className="mt-4 text-[13.5px] text-ink-2">Fixed-price work — reports, dashboards, AI agents, integrations — goes in <Link href="/catalog/products" className="font-bold text-magenta-dark underline underline-offset-4">Service Products</Link>.</p>
+      {inRun ? (
+        <p className="mt-6 border-t-2 border-ink pt-4 text-[13.5px] text-ink-2">Turn on at least one rate. Saved as you go; your rates go live when you Go Live.</p>
+      ) : (
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink pt-4">
         <span className="text-[13.5px] text-ink-2">
           Saved as you go. {drafts ? <>Publish makes {drafts === 1 ? "your draft rate" : `your ${drafts} draft rates`} live; after that, changes go live right away.</> : <>All your rates are live; changes go live right away.</>} Service Products publish on their own tab.
@@ -174,6 +177,7 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
         </span>
         <button type="button" disabled={busy || !gate.ok || !drafts} onClick={publish} data-publish-catalog className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover disabled:opacity-40">{busy ? "Publishing…" : "Publish My Rates"}</button>
       </div>
+      )}
       {msg && <p role="status" className="mt-2 text-right text-[13.5px] font-semibold">{msg}</p>}
     </div>
   );

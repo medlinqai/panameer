@@ -16,7 +16,7 @@ export function GetFoundRates() {
   return (
     <div data-get-found-rates>
       <p className="inline-flex flex-wrap items-center gap-2 border border-line px-3 py-1.5 text-[12.5px] text-ink-2">Business Type: <b className="text-ink">{d.businessTypes.join(" · ")}</b></p>
-      <RatesTable key={d.rows.map((r) => r.serviceTypeId).join()} types={d.types} rows={d.rows} registration={d.registration} gate={d.gate} multiProvider={d.multiProvider} openToOffers={d.openToOffers} />
+      <RatesTable key={d.rows.map((r) => r.serviceTypeId).join()} types={d.types} rows={d.rows} registration={d.registration} gate={d.gate} multiProvider={d.multiProvider} openToOffers={d.openToOffers} inRun />
     </div>
   );
 }
