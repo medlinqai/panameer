@@ -53,13 +53,27 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
       <section data-five-things data-buyer-dashboard className="mb-8 font-body text-ink">
         <h1 className="text-[28px] font-extrabold leading-tight sm:text-[32px]">Welcome{firstName ? `, ${firstName}` : ""}.</h1>
         <div data-path-road className="mt-5 rounded-[14px] border border-line bg-surface px-4 py-5 sm:px-6">
-          <h2 className="flex items-center gap-1.5 text-[17px] font-bold">{BUYER_ROAD_TITLE} <LifecycleHelp /></h2>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="flex items-center gap-1.5 text-[17px] font-bold">{BUYER_ROAD_TITLE} <LifecycleHelp /></h2>
+            <span className="text-[11px] font-bold tracking-[0.1em] text-ink-2">STEP {path.current + 1} OF {path.steps.length}</span>
+          </div>
           <div className="mt-2 hidden overflow-x-auto sm:block"><div className="min-w-[560px]"><RoadGraphic current={path.current} road={BUYER_ROAD} label="Buyer road" waiting={path.waiting} /></div></div>
           <div className="mt-4 sm:hidden"><RoadStepper current={path.current} road={BUYER_ROAD} waiting={path.waiting} /></div>
           {/* DC-E001: the road is a picture of the journey — the cards below are the way in. */}
           {path.waiting && <p className="mt-3 text-[13.5px] text-ink-2">Your company&apos;s admin has your request. Everything below is open while you wait.</p>}
         </div>
-        <h2 className="mt-9 text-[19px] font-extrabold">Things You Can Do Today</h2>
+        {/* Scott 10-16: the seller is told "Not live yet"; the buyer is told they're live and ready. Same card shape. */}
+        {!path.waiting && (
+          <Link href="/shop" data-buyer-live className="group mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[14px] border-2 border-ink bg-surface p-5 transition-colors hover:border-magenta-dark sm:p-6">
+            <span className="min-w-0">
+              <span className="inline-block bg-magenta px-2 py-0.5 text-[11.5px] font-bold text-white">Live</span>
+              <b className="mt-2 block text-[20px] font-extrabold leading-snug">You&apos;re live and ready to buy</b>
+              <span className="mt-1 block text-[14px] text-ink-2">Shop services and products, or post a job and let sellers come to you.</span>
+            </span>
+            <span className="inline-flex min-h-[44px] items-center bg-ink px-6 text-[14.5px] font-bold text-surface group-hover:bg-magenta-dark">Start Shopping</span>
+          </Link>
+        )}
+        <h2 className="mt-9 text-[19px] font-extrabold">What do you want to do{firstVisit ? " first" : ""}?</h2>
         <BuyerThings />
       </section>
     );
