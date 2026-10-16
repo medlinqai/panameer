@@ -141,7 +141,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
         title="Who Is Selling?"
         subtitle="This is the person buyers see on your profile and on proposals."
         continueLabel="Next: Company"
-        continueDisabled={!personComplete(person, phoneCountry)}
+        continueDisabled={!personComplete(person, phoneCountry, { title: false })}
         onContinue={next}
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-seller-person-step>
