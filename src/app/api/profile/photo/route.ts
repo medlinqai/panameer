@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { photoLooksLikePerson, PHOTO_REJECTED } from "@/lib/photo-check";
 import { guardApi } from "@/lib/guard";
 import { applyProviderSection } from "@/lib/onboarding";
 import {
@@ -40,11 +41,16 @@ export async function POST(request: Request) {
     );
   }
 
+  const bytes = await file.arrayBuffer();
+  if (!(await photoLooksLikePerson(bytes, file.type || "image/jpeg"))) {
+    return NextResponse.json({ error: PHOTO_REJECTED, code: "NOT_A_PERSON" }, { status: 422 });
+  }
+
   try {
     const photoUrl = await uploadProfilePhoto(person.id, {
       type: file.type,
       size: file.size,
-      bytes: await file.arrayBuffer(),
+      bytes,
     });
 
     // Persist through the shared section writer so `completeness` (which counts
