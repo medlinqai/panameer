@@ -189,6 +189,7 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
         })
       ).id;
 
+  await assertTinFree(companyId, input.ein);
   const company = await prisma.company.update({
     where: { id: companyId },
     data: {
@@ -304,6 +305,15 @@ export type UpdateCompanyInput = {
 
 export const COMPANY_DESCRIPTION_MAX = 600;
 
+export const TIN_IN_USE = "A company with that Tax ID is already on Panameer. Check the number, or Message Support and we'll connect you.";
+/** Scott 10-16: a TIN belongs to one company only. */
+export async function assertTinFree(companyId: string, ein: string | null | undefined) {
+  const digits = tinDigits(ein);
+  if (!digits) return;
+  const other = await prisma.company.findFirst({ where: { tin_digits: digits, NOT: { id: companyId } }, select: { id: true } });
+  if (other) throw new CompanyFieldError("ein", TIN_IN_USE);
+}
+
 /** Thrown when the values point at another company; the caller offers Ask to Join / This Isn't Us. */
 export class CompanyMatchError extends Error {
   constructor(public match: CompanyMatch) {
@@ -334,6 +344,8 @@ export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyI
       ? await findCompanyMatch(binding.company.id, { website: input.website, ein: input.ein })
       : null;
   if (match && !input.onMatch) throw new CompanyMatchError(match);
+  // Scott 10-16: no two companies share a TIN — "save anyway" does not apply to a tax ID.
+  if (input.ein !== undefined) await assertTinFree(binding.company.id, input.ein);
   if (match && input.onMatch === "join") {
     // Ask to join the existing company; this member's own company is left as it is.
     const joined = await joinCompany(viewer, { companyId: match.companyId, attestation: true });
