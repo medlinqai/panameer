@@ -284,7 +284,7 @@ const emptyAddress = (country = "United States"): AddressDraft => ({
 /** The provider title cap (WS-4). Matches the talent card's one-line soft cap in */
 // re-exported through the import below — the cap and the input that enforces it
 
-// Scott 10-16: Create What You Sell runs in four parts — Define Skills (résumé, title, roles) · Get Found (skills
+// Scott 10-16: Create What You Sell runs in four parts — Define Skills (résumé, roles) · Get Found (skills
 // buyers search on) · Rates · Go Live. Registration already made the profile, so no "Profile" here.
 const SELL_RUN = [
   { key: "define", label: "Define Skills" },
@@ -292,8 +292,8 @@ const SELL_RUN = [
   { key: "rates", label: "Rates" },
   { key: "live", label: "Go Live" },
 ];
-const sellPhaseOf = (k: string): number => (k === "finish" ? 3 : k === "rate" || k === "picture" ? 2 : k === "skills" ? 1 : 0);
-const sellFirstOfPhase = (i: number) => (i === 0 ? "tell_us" : i === 1 ? "skills" : i === 2 ? "rate" : "finish");
+const sellPhaseOf = (k: string): number => (k === "finish" || k === "title" ? 3 : k === "rate" || k === "picture" ? 2 : k === "skills" ? 1 : 0);
+const sellFirstOfPhase = (i: number) => (i === 0 ? "tell_us" : i === 1 ? "skills" : i === 2 ? "rate" : "title");
 
 export default function JoinProviderPage() {
   const router = useRouter();
@@ -1158,10 +1158,10 @@ setScreen(target);
           setReturnToReview(false);
           goTo("finish");
         }
-      : screen === "title"
-        ? () => goTo("tell_us")
-        : stepIndex > 0
-          ? goBack
+      : stepIndex > 0
+        ? goBack
+        : stepIndex === 0
+          ? () => goTo("tell_us")
           : () => router.push("/dashboard"),
     canBack: true,
     // SCOTT, 2026-09-10: *"'Finish Later' — do it."* WS-2 stopped here

@@ -43,12 +43,13 @@ import { autoLinkSameLetters, notifyCatalogReview } from "@/lib/catalog-review";
 // THE ITINERARY (brief_per_job_skill_model WS-4).
 // THE V3 ITINERARY, RESTORED , 2026-08-31)
 // SIX, NOT SEVEN — `company` IS GONE , 2026-09-11)
+// Scott 10-16: Title moves to the END — define skills, searchability, rates (and products), THEN the title that sums them up.
 export const PROVIDER_STEPS = [
-  "title", //    1 — what you do
-  "roles", //    2 — typed, or pre-filled by the résumé
-  "skills", //   3 — typed, or pre-filled by the résumé
-  "rate", //     4 — provider only; the match needs a price
-  "picture", //  5 — required to publish (WS7 addendum, unchanged)
+  "roles", //    1 — typed, or pre-filled by the résumé
+  "skills", //   2 — typed, or pre-filled by the résumé
+  "rate", //     3 — provider only; the match needs a price
+  "picture", //  4 — required to publish (skipped when registration filled it)
+  "title", //    5 — what you do, now that everything else is defined
   "finish", //   6 — Review + publish
 ] as const;
 export type ProviderStep =
@@ -96,10 +97,10 @@ export const SAVEABLE_STEPS: readonly ProviderStep[] = [
 
 /** Recruiter journey: no Rate — a recruiter sells other people's time (E070). */
 export const RECRUITER_STEPS = [
-  "title",
   "roles",
   "skills",
   "picture",
+  "title",
   "finish",
 ] as const satisfies readonly ProviderStep[];
 
