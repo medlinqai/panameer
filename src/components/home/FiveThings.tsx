@@ -114,7 +114,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
       )}
 
       {reg && !reg.live && (
-        <Link href={reg.registered ? "/join/provider" : reg.step ? "/join/provider/register" : "/join/provider/start"} data-get-found className="group mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[14px] border-2 border-ink bg-surface p-5 transition-colors hover:border-magenta-dark sm:p-6">
+        <Link href={reg.registered ? "/catalog/create" : reg.step ? "/join/provider/register" : "/join/provider/start"} data-get-found className="group mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[14px] border-2 border-ink bg-surface p-5 transition-colors hover:border-magenta-dark sm:p-6">
           <span className="min-w-0">
             <span className="inline-block border border-magenta px-2 py-0.5 text-[11.5px] font-bold text-magenta-dark">Not live yet</span>
             <b className="mt-2 block text-[20px] font-extrabold leading-snug">{reg.registered ? "Create What You Sell — about 10 minutes" : "Finish signing up — about 3 minutes"}</b>

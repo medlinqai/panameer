@@ -385,7 +385,7 @@ export function AccountMenu({
                   )}
                   {/* Scott 10-16: until the catalog is enabled, the way back into the run is its own menu row. */}
                   {me?.providerProfile && !me.providerProfile.published && (
-                    <MenuRow href="/join/provider" label="Create What You Sell" value={null} onClick={close} className={rowClass} />
+                    <MenuRow href="/catalog/create" label="Create What You Sell" value={null} onClick={close} className={rowClass} />
                   )}
                   {me?.person?.roles && !me.person.roles.isRequester && !me.person.roles.isServiceBuyer && (
                     // One click: turn the buying side on, then straight into the buyer steps (no "no buyer profile yet" page).

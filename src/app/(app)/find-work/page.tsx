@@ -34,7 +34,7 @@ export default async function FindWorkPage({
   // SO-E004: browsing is open; proposals wait for Go Live.
   const notLive = profile && !profile.onboarding_completed_at ? (
     <p data-not-live-jobs className="mb-4 border-l-2 border-magenta py-1 pl-3 text-[14px]">
-      Finish Create What You Sell to send proposals. <a href="/join/provider" className="font-bold text-magenta-dark underline underline-offset-4">Start</a>
+      Finish Create What You Sell to send proposals. <a href="/catalog/create" className="font-bold text-magenta-dark underline underline-offset-4">Start</a>
     </p>
   ) : null;
 
