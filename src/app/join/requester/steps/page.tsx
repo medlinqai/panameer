@@ -299,7 +299,6 @@ export default function RequesterStepsPage() {
             firstName: draft.firstName,
             lastName: draft.lastName,
             /* `E281`. NO `photoUrl` — `/api/profile/photo` already wrote it. */
-            title: draft.title,
             // SAVED IN E.164 SO THE COUNTRY TRAVELS WITH THE NUMBER .
             phone: toE164(draft.phone, phoneCountry) ?? draft.phone,
             employeeId: draft.employeeId,
@@ -498,7 +497,6 @@ export default function RequesterStepsPage() {
       step: "requester_info",
     },
     // — a required field belongs on the review. ITS ORIGINAL REASONING
-    { label: "Title", value: draft.title || "—", step: "requester_info" },
     // THE `Employer` ROW IS GONE , 2026-09-11).
     // LS-E006: Company = name · industry · invoice email; a Locations row per address with its uses.
     {

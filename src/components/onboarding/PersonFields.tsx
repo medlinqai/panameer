@@ -10,9 +10,9 @@ import { isPhoneComplete } from "@/lib/phone";
 // "Who Is Buying?" / "Who Is Selling?" (SO-E003): one set of fields for both sides — name, title, photo, phone.
 export type PersonValues = { firstName: string; lastName: string; title: string; photoUrl: string | null; phone: string };
 
-// Sellers skip Title here — it comes from the résumé in Get Found (asked there if the résumé has none).
-export const personComplete = (v: PersonValues, phoneCountry: string | null, { title = true }: { title?: boolean } = {}) =>
-  !!v.firstName.trim() && !!v.lastName.trim() && !!v.photoUrl && (!title || !!v.title.trim()) && isPhoneComplete(v.phone, phoneCountry);
+// Scott 10-16: no Title on either side here (consistency) — sellers get it from the résumé in Get Found, buyers add it in their profile.
+export const personComplete = (v: PersonValues, phoneCountry: string | null) =>
+  !!v.firstName.trim() && !!v.lastName.trim() && !!v.photoUrl && isPhoneComplete(v.phone, phoneCountry);
 
 export function PersonFields({
   values,
@@ -22,7 +22,7 @@ export function PersonFields({
   titleHint,
   titlePlaceholder,
   photoLine,
-  showTitle = true,
+  showTitle = false,
 }: {
   values: PersonValues;
   onChange: (patch: Partial<PersonValues>) => void;
