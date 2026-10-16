@@ -10,6 +10,7 @@ import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/com
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { TIN_TAKEN } from "@/components/onboarding/SellerRegistration";
+import { ReviewProfile, locParts, placeOf, type ReviewSection } from "@/components/onboarding/ReviewProfile";
 
 const DESCRIPTION_MAX = 600;
 import { parseStoredPhone, toE164 } from "@/lib/phone";
@@ -528,79 +529,44 @@ export default function RequesterStepsPage() {
     );
   }
 
-  // ---- 3/3 — Review ------------------------------------------------------
-  const addr = (a: LocationValue) =>
-    // RESOLVED ( WS-C ruling 4) — `a.country` is the form draft, which holds a CODE
-    [a.line1, a.city, a.state, a.postalCode, countryName(a.country, a.country)]
-      .filter(Boolean)
-      .join(", ") ||
-    "—";
-  // THE LABELS SAY WHAT THE FIELD IS , , 
-  const rows: { label: string; value: string; step: RequesterStep }[] = [
-    // THE ORDER IS THE ORDER A PERSON WOULD SAY IT IN
-    {
-      label: "Name",
-      value: `${draft.firstName} ${draft.lastName}`.trim() || "—",
-      step: "requester_info",
-    },
-    // — a required field belongs on the review. ITS ORIGINAL REASONING
-    { label: "Title", value: draft.title || "—", step: "requester_info" },
-    // THE `Employer` ROW IS GONE , 2026-09-11).
-    // LS-E006: Company = name · industry · invoice email; a Locations row per address with its uses.
-    {
-      label: "Company",
-      value: draft.companyOwner
-        ? [draft.companyName, industries.find((x) => x.id === draft.coIndustryId)?.name, draft.coInvoiceEmail || draft.email].filter(Boolean).join(" · ")
-        : draft.companyName ? `${draft.companyName} (${draft.locMode === "pending" ? "asked to join" : "member"})` : "—",
-      step: "company",
-    },
-    ...(draft.locMode === "owner"
-      ? draft.locs.map((l, i) => ({ label: draft.locs.length > 1 ? `Location ${i + 1}` : "Location", value: locLine(l, { work: l.shipTo && i === draft.workIdx }), step: "work_location" as RequesterStep }))
+  // ---- Review (Scott 10-16): the top of the profile, then Company and Locations — same component as the seller ----
+  const shown = draft.coLegal.trim() || draft.coName.trim();
+  const reviewLocs =
+    draft.locMode === "owner"
+      ? draft.locs.map((l, i) => locParts(l, { work: l.shipTo && i === draft.workIdx }))
       : draft.locMode === "member" && draft.workAddressId
-        ? [{ label: "Location", value: locLine(draft.locs.find((l) => l.id === draft.workAddressId) ?? newLoc(), { work: true }), step: "work_location" as RequesterStep }]
-        : [{ label: "Location", value: `${addr(draft.own)} · Where I work`, step: "work_location" as RequesterStep }]),
-    { label: "Phone", value: draft.phone || "—", step: "requester_info" },
-  ];
-
+        ? [locParts(draft.locs.find((l) => l.id === draft.workAddressId) ?? newLoc(), { work: true })]
+        : [locParts(draft.own, { work: true })];
+  const firstLoc = draft.locMode === "owner" ? draft.locs[draft.workIdx] ?? draft.locs[0] : draft.locMode === "member" && draft.workAddressId ? draft.locs.find((l) => l.id === draft.workAddressId) : draft.own;
+  const editStep: Record<ReviewSection, RequesterStep> = { person: "requester_info", company: "company", locations: "work_location" };
   return (
     <WizardShell
       {...shell}
-      title="Here's your profile. Check it, then finish."
-      subtitle="Everything here is editable later — this is the shape a provider sees when you post work."
-      continueLabel="Complete My Profile"
+      title="Here's how you'll look. Check it, then finish."
+      subtitle="This is what sellers see next to your name when you post work. Everything is editable later."
+      continueLabel="Next: Dashboard"
       onContinue={finish}
     >
-      <div className="mx-auto w-full max-w-2xl">
-        {error && (
-          <div className="mb-4">
-            <Notice>{error}</Notice>
-          </div>
-        )}
-        <dl className="overflow-hidden border border-line">
-          {rows.map((r) => (
-            <div
-              key={r.label}
-              className="flex flex-wrap items-baseline gap-3 border-b border-line px-5 py-4 last:border-0"
-            >
-              <dt className="w-40 shrink-0 text-[13.5px] font-bold uppercase tracking-wide text-ink-2">
-                {r.label}
-              </dt>
-              <dd className="min-w-0 flex-1 text-[15.5px]">{r.value}</dd>
-              {/* THE EDIT JUMPED TO THE STEP AND REMEMBERED NOTHING . */}
-              <button
-                type="button"
-                onClick={() => {
-                  setFromReview(true);
-                  setStep(r.step);
-                }}
-                className="text-[13.5px] font-bold text-magenta hover:underline"
-              >
-                Edit
-              </button>
-            </div>
-          ))}
-        </dl>
-      </div>
+      {error && <div className="mx-auto mb-4 w-full max-w-2xl"><Notice>{error}</Notice></div>}
+      <ReviewProfile
+        person={{ firstName: draft.firstName, lastName: draft.lastName, title: draft.title, photoUrl: draft.photoUrl, phone: draft.phone, email: draft.email }}
+        companyLine={[draft.companyOwner ? shown : draft.companyName, placeOf(firstLoc)].filter(Boolean).join(" · ")}
+        companyRows={
+          draft.companyOwner
+            ? [
+                { label: "Company Name", value: draft.coName.trim() },
+                { label: "DBA", value: draft.coLegal.trim() },
+                { label: "Company Email", value: `${draft.coInvoiceEmail.trim() || draft.email} · invoices` },
+                { label: "Tax ID", value: draft.coTin.trim() },
+                { label: "Industry", value: industries.find((x) => x.id === draft.coIndustryId)?.name ?? "" },
+                { label: "Description", value: draft.coDescription.trim() },
+              ]
+            : [{ label: "Company Name", value: draft.companyName ? `${draft.companyName} (${draft.locMode === "pending" ? "asked to join" : "member"})` : "" }]
+        }
+        locations={reviewLocs}
+        next="On your Dashboard: shop services and products, or post a job."
+        onEdit={(sec) => { setFromReview(true); setStep(editStep[sec]); }}
+      />
     </WizardShell>
   );
 }

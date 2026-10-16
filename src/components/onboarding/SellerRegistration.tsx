@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { Field, Notice, TextArea, TextInput } from "@/components/onboarding/controls";
 import { LegalLink } from "@/components/legal/LegalLink";
+import { ReviewProfile, locParts, placeOf } from "@/components/onboarding/ReviewProfile";
 import { BusinessTypePicker, type BT } from "@/components/company/BusinessTypePicker";
 import { CompanyIdentityFields, findCoMatch, companyIdentityOk, emailOk, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
@@ -296,39 +297,41 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     );
   }
 
-  // ---- Review --------------------------------------------------------------
+  // ---- Review (Scott 10-16): the top of the profile, then Company and Locations — same component as the buyer ----
   const btName = types.find((t) => t.id === businessTypeId)?.name;
-  const addr = (a: LocationValue) => [a.line1, a.city, a.state, a.postalCode, countryName(a.country, a.country)].filter(Boolean).join(", ") || "—";
-  const rows: { label: string; value: string; step: Step }[] = [
-    { label: "Name", value: `${person.firstName} ${person.lastName}`.trim() || "—", step: "seller" },
-    { label: "Title", value: person.title || "—", step: "seller" },
-    { label: "Photo", value: person.photoUrl ? "Added" : "—", step: "seller" },
-    { label: "Phone", value: person.phone || "—", step: "seller" },
-    { label: "Company", value: joining ? `${c?.name} (asked to join)` : [name, dba.trim() ? `DBA ${dba.trim()}` : null, btName].filter(Boolean).join(" · "), step: "company" },
-    ...(owner
-      ? locs.map((l, i) => ({ label: locs.length > 1 ? `Location ${i + 1}` : "Location", value: locLine(l, { seller: true }), step: "locations" as Step }))
-      : [{ label: "Location", value: `${addr(own)} · Where I work`, step: "locations" as Step }]),
-  ];
+  const btGroup = types.find((t) => t.id === businessTypeId)?.group;
+  const shown = dba.trim() || name.trim();
+  const reviewLocs = owner ? locs.map((l) => locParts(l, { seller: true })) : [locParts(own, { seller: true, work: true })];
+  const firstPlace = placeOf(owner ? locs[0] : own);
   return (
     <WizardShell
       {...shell}
-      title="Here's your registration. Check it, then finish."
-      subtitle="Everything here is editable later. Next: get found by buyers, from your dashboard."
-      continueLabel="Finish"
+      title="Here's how you'll look. Check it, then finish."
+      subtitle="This is the top of the profile buyers see. Everything is editable later."
+      continueLabel="Next: Dashboard"
       onContinue={() => run(async () => { await post("/api/onboarding/provider/registration", "POST", { complete: true }); onDone(); })}
     >
-      <div className="w-full max-w-2xl" data-seller-review>
-        {error && <div className="mb-4"><Notice>{error}</Notice></div>}
-        <dl className="overflow-hidden border border-line">
-          {rows.map((r) => (
-            <div key={r.label} className="flex flex-wrap items-baseline gap-3 border-b border-line px-5 py-4 last:border-0">
-              <dt className="w-40 shrink-0 text-[13.5px] font-bold uppercase tracking-wide text-ink-2">{r.label}</dt>
-              <dd className="min-w-0 flex-1 text-[15.5px]">{r.value}</dd>
-              <button type="button" onClick={() => go(r.step)} className="text-[13.5px] font-bold text-magenta hover:underline">Edit</button>
-            </div>
-          ))}
-        </dl>
-      </div>
+      {error && <div className="mx-auto mb-4 w-full max-w-2xl"><Notice>{error}</Notice></div>}
+      <ReviewProfile
+        person={{ ...person, email: reg.email }}
+        companyLine={[joining ? c?.name : shown, firstPlace].filter(Boolean).join(" · ")}
+        notLive
+        companyRows={
+          joining
+            ? [{ label: "Company Name", value: `${c?.name ?? ""} (asked to join)` }]
+            : [
+                { label: "Company Name", value: name.trim() },
+                { label: "DBA", value: dba.trim() },
+                { label: "Company Email", value: `${remitEmail.trim() || reg.email} · payment notices` },
+                { label: "Tax ID", value: tin.trim() },
+                { label: "Business Type", value: [btGroup, btName].filter(Boolean).join(" › ") },
+                { label: "Description", value: description.trim() },
+              ]
+        }
+        locations={reviewLocs}
+        next="On your Dashboard: Get Found by buyers. Upload your résumé, set your rates, go live (about 10 minutes)."
+        onEdit={(sec) => go(sec === "person" ? "seller" : sec === "company" ? "company" : "locations")}
+      />
     </WizardShell>
   );
 }
