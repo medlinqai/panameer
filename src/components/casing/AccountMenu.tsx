@@ -263,6 +263,7 @@ export function AccountMenu({
               lastName={last}
               photoUrl={me?.person?.photoUrl}
               size={32}
+              onDark={onDark}
             />
             {attention > 0 && (
               <span data-avatar-count aria-label={`${attention} need you`} className="absolute -right-2 -top-2 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-magenta px-1 text-[11px] font-bold text-white ring-2 ring-[var(--color-rail,#272334)]">
@@ -272,7 +273,7 @@ export function AccountMenu({
           </span>
           {/* SO-E004: a seller who hasn't gone live yet. */}
           {me?.providerProfile && !me.providerProfile.published && (
-            <span data-not-live className="ml-2 hidden border border-magenta px-1.5 py-px text-[11px] font-bold text-magenta-dark sm:inline">Not live yet</span>
+            <span data-not-live className={"ml-2 hidden border border-magenta px-1.5 py-px text-[11px] font-bold sm:inline " + (onDark ? "text-magenta" : "text-magenta-dark")}>Not live yet</span>
           )}
         </button>
       )}
