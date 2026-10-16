@@ -415,19 +415,21 @@ export default function RequesterStepsPage() {
                 onWebsiteBlur={() => void checkMatch(draft.coWebsite)}
                 legalHint="The name on your invoices, if it's different from the company name."
                 waitNote="ordering"
+                nameSide={
+                  <Field label="Company Email *" hint="Where we send invoices. No tax ID or W-9 needed.">
+                    <TextInput type="email" value={draft.coInvoiceEmail} onChange={(e) => edit({ coInvoiceEmail: e.target.value })} placeholder={draft.email} autoComplete="email" />
+                  </Field>
+                }
               />
               {/* LS-E004: a joiner sees the company's name only — the rest isn't rendered. */}
               {!joining && (
               <div className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="sm:w-1/2 sm:pr-1.5">
               <Field label="Industry">
                 <select aria-label="Industry" value={draft.coIndustryId} onChange={(e) => edit({ coIndustryId: e.target.value })} className="h-11 w-full border border-line bg-surface px-3 text-[15px] text-ink">
                   <option value="">Choose…</option>
                   {industries.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                 </select>
-              </Field>
-              <Field label="Company Email *" hint="Where we send invoices. No tax ID or W-9 needed.">
-                <TextInput type="email" value={draft.coInvoiceEmail} onChange={(e) => edit({ coInvoiceEmail: e.target.value })} placeholder={draft.email} autoComplete="email" />
               </Field>
               </div>
               <Field label="Description (optional)">

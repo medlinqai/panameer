@@ -222,17 +222,19 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
             onWebsiteBlur={() => void findCoMatch(website).then(setMatch)}
             legalHint="The name on your checks and payments, if it's different from the company name."
             waitNote="selling"
+            nameSide={
+              <Field label="Company Email *" hint="Where we send payment notices.">
+                <TextInput type="email" value={remitEmail} onChange={(e) => setRemitEmail(e.target.value)} placeholder={reg?.email ?? ""} autoComplete="email" />
+              </Field>
+            }
           />
           {!joining && !match && (
             <div className="space-y-4">
               {types.length > 0 && (
-                <BusinessTypePicker types={types} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog. You can add more later." />
+                <div className="sm:w-1/2 sm:pr-1.5">
+                  <BusinessTypePicker types={types} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog. You can add more later." />
+                </div>
               )}
-              <div className="sm:w-1/2 sm:pr-1.5">
-                <Field label="Company Email *" hint="Where we send payment notices.">
-                  <TextInput type="email" value={remitEmail} onChange={(e) => setRemitEmail(e.target.value)} placeholder={reg?.email ?? ""} autoComplete="email" />
-                </Field>
-              </div>
               <Field label="Description (optional)">
                 <TextArea value={description} maxLength={DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder={`What the company does, in a sentence or two (up to ${DESCRIPTION_MAX} characters).`} className="min-h-0! h-[60px]" />
               </Field>

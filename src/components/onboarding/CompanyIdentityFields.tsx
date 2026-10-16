@@ -28,6 +28,7 @@ export function CompanyIdentityFields({
   onWebsiteBlur,
   legalHint,
   waitNote,
+  nameSide,
 }: {
   name: string;
   legal: string;
@@ -43,14 +44,25 @@ export function CompanyIdentityFields({
   legalHint: string;
   /** What waits on approval: "ordering" (buyers) or "selling" (sellers). */
   waitNote: string;
+  /** Scott 10-16: Company Email sits beside Company Name (both sides). */
+  nameSide?: React.ReactNode;
 }) {
   const [showLegal, setShowLegal] = useState(false);
   return (
     <>
       <div className="space-y-3">
-        <Field label="Company Name *">
-          <TextInput value={joining ? joinedName : name} onChange={(e) => onChange({ name: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" className="sm:max-w-[50%]" disabled={joining} />
-        </Field>
+        {nameSide && !joining ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Company Name *">
+              <TextInput value={name} onChange={(e) => onChange({ name: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" />
+            </Field>
+            {nameSide}
+          </div>
+        ) : (
+          <Field label="Company Name *">
+            <TextInput value={joining ? joinedName : name} onChange={(e) => onChange({ name: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" className="sm:max-w-[50%]" disabled={joining} />
+          </Field>
+        )}
         {!joining && (showLegal || legal ? (
           <Field label="Legal Name" hint={legalHint}>
             <TextInput value={legal} onChange={(e) => onChange({ legal: e.target.value })} placeholder="Acme Holdings LLC" className="sm:max-w-[50%]" />
