@@ -473,10 +473,10 @@ export async function applyParsedResume(
   if (!profile) return applied;
   const capPicks: { skillIds: string[]; text: string; systems?: boolean }[] = [];
 
-  // --- Headline + bio: fill only when empty (never overwrite typed text) ---
+  // --- Headline: the résumé's title REPLACES the one typed at registration (Scott 10-16). Bio: fill only when empty. ---
   const data: Prisma.ProviderProfileUpdateInput = {};
   const personData: Prisma.PersonUpdateInput = {};
-  if (!(profile.person.title ?? "").trim() && parsed.headline) {
+  if (parsed.headline?.trim()) {
     personData.title = parsed.headline.slice(0, 200);
     applied.headline = true;
   }

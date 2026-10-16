@@ -131,7 +131,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   // ---- Who Is Selling? (= the buyer's Who Is Buying?) ------------------------
   if (step === "seller") {
     const next = () => run(async () => {
-      await post("/api/onboarding/provider/registration", "POST", { seller: { firstName: person.firstName, lastName: person.lastName, phone: toE164(person.phone, phoneCountry) ?? person.phone } });
+      await post("/api/onboarding/provider/registration", "POST", { seller: { firstName: person.firstName, lastName: person.lastName, title: person.title, phone: toE164(person.phone, phoneCountry) ?? person.phone } });
       await load();
       go("company");
     });
@@ -141,7 +141,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
         title="Who Is Selling?"
         subtitle="This is the person buyers see on your profile and on proposals."
         continueLabel="Next: Company"
-        continueDisabled={!personComplete(person, phoneCountry, { title: false })}
+        continueDisabled={!personComplete(person, phoneCountry)}
         onContinue={next}
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-seller-person-step>
@@ -153,7 +153,6 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
             onPhoneCountry={setPhoneCountry}
             titleHint="What you do, in one line — for example, Oracle Procurement Consultant."
             titlePlaceholder="Oracle Procurement Consultant"
-            showTitle={false}
             photoLine="Buyers see this next to your name on your profile and proposals. A clear headshot gets a faster response than an empty circle."
           />
         </div>
@@ -287,6 +286,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   const addr = (a: LocationValue) => [a.line1, a.city, a.state, a.postalCode, countryName(a.country, a.country)].filter(Boolean).join(", ") || "—";
   const rows: { label: string; value: string; step: Step }[] = [
     { label: "Name", value: `${person.firstName} ${person.lastName}`.trim() || "—", step: "seller" },
+    { label: "Title", value: person.title || "—", step: "seller" },
     { label: "Photo", value: person.photoUrl ? "Added" : "—", step: "seller" },
     { label: "Phone", value: person.phone || "—", step: "seller" },
     { label: "Company", value: joining ? `${c?.name} (asked to join)` : [name, legal && legal !== name ? `Legal name ${legal}` : null, btName].filter(Boolean).join(" · "), step: "company" },
