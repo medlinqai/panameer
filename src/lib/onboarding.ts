@@ -48,14 +48,16 @@ export const PROVIDER_STEPS = [
   "roles", //    1 — typed, or pre-filled by the résumé
   "skills", //   2 — typed, or pre-filled by the résumé
   "rate", //     3 — provider only; the match needs a price
-  "picture", //  4 — required to publish (skipped when registration filled it)
-  "title", //    5 — what you do, now that everything else is defined
-  "finish", //   6 — Review + publish
+  // Scott 10-16: no "picture" step — registration already took photo, phone and location.
+  "title", //    4 — what you do, now that everything else is defined
+  "finish", //   5 — Review + publish
 ] as const;
 export type ProviderStep =
   | (typeof PROVIDER_STEPS)[number]
   // STILL RENDERABLE, JUST NOT COUNTED. These screens exist — `tell_us` as the
   | "tell_us"
+  // Scott 10-16: still renderable (profile edits), no longer in the run.
+  | "picture"
   // WS-4 — no longer STOPS, still writable. Settings posts them and so does a
   // this union through the first branch and are NOT listed again here — a
   // HOUSE RULE : a retired screen stays on disk, unimported. So
@@ -99,7 +101,6 @@ export const SAVEABLE_STEPS: readonly ProviderStep[] = [
 export const RECRUITER_STEPS = [
   "roles",
   "skills",
-  "picture",
   "title",
   "finish",
 ] as const satisfies readonly ProviderStep[];
@@ -1992,6 +1993,10 @@ export async function publishProfile(viewer: Viewer) {
 
   // THE PUBLISH GATE IS THE REQUIRED SET (WS6) — and it is the same set the
   const productCount = await prisma.serviceProduct.count({ where: { provider_profile_id: pp.id } });
+  // Scott 10-16: registration's Locations step counts as the address (the person's own, or their company's).
+  const coLoc = p.site?.addresses?.[0]?.line1?.trim()
+    ? null
+    : await prisma.address.findFirst({ where: { site: { company: { memberships: { some: { person_id: p.id, status: "APPROVED" } } } }, line1: { not: "" } }, select: { line1: true, city: true } });
   const missing = missingRequired({
     headline: p.title,
     role_id: pp.role_id,
@@ -2003,7 +2008,7 @@ export async function publishProfile(viewer: Viewer) {
     rate_max_cents: pp.rate_max_cents,
     onsite_rate_cents: pp.onsite_rate_cents,
     remote_rate_cents: pp.remote_rate_cents,
-    hasAddress: Boolean(p.site?.addresses?.[0]?.line1?.trim()),
+    hasAddress: Boolean(p.site?.addresses?.[0]?.line1?.trim() || coLoc?.line1?.trim()),
     hasPhone: Boolean(p.phone?.trim()),
     overview: pp.overview,
     specializations: pp.specializations,
