@@ -63,3 +63,23 @@ export function GetFoundProducts() {
     </div>
   );
 }
+
+/** Enable My Catalog: the products buyers will see, with Edit back to Products. */
+export function GoLiveProducts({ onEdit }: { onEdit: () => void }) {
+  const [d, setD] = useState<{ products: { id: string; status: string; form: { title: string; priceCents: number | null } }[] } | null>(null);
+  useEffect(() => {
+    fetch("/api/onboarding/provider/products").then((r) => (r.ok ? r.json() : null)).then(setD).catch(() => setD(null));
+  }, []);
+  const list = d?.products ?? [];
+  return (
+    <section data-go-live-products className="mb-5 border border-line">
+      <div className="flex items-center justify-between border-b border-line px-5 py-3">
+        <b className="text-[15px]">Your Products</b>
+        <button type="button" onClick={onEdit} className="text-[13.5px] font-bold text-magenta hover:underline">Edit</button>
+      </div>
+      {!d ? <p className="px-5 py-3 text-[14px] text-ink-2">Loading…</p> : list.length ? (
+        <ul>{list.map((p) => <li key={p.id} className="flex justify-between gap-3 border-b border-line px-5 py-2.5 text-[14px] last:border-0"><span>{p.form.title}</span><span className="tabular-nums text-ink-2">{p.form.priceCents != null ? `$${(p.form.priceCents / 100).toLocaleString()}` : "—"}</span></li>)}</ul>
+      ) : <p className="px-5 py-3 text-[14px] text-ink-2">None yet. That's fine if you sell your time.</p>}
+    </section>
+  );
+}

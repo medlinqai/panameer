@@ -18,7 +18,7 @@ import {
   type SignUpValues,
 } from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
-import { GetFoundRates, GetFoundProducts, GoLiveRates } from "@/components/onboarding/GetFoundRates";
+import { GetFoundRates, GetFoundProducts, GoLiveRates, GoLiveProducts } from "@/components/onboarding/GetFoundRates";
 import { RunIndustries } from "@/components/onboarding/RunIndustries";
 // WS-B) — 's disambiguation belongs with the picker that
 import { isSkillShown } from "@/lib/shown-skills";
@@ -287,6 +287,8 @@ const emptyAddress = (country = "United States"): AddressDraft => ({
 
 // Scott 10-16: Create What You Sell runs in five parts — Define Skills (résumé, roles) · Get Found (skills
 // buyers search on) · Rates · Products · Go Live (title, review). Going live needs a rate OR a product.
+// Scott 10-16: the Enable My Catalog review shows what the run made; the full profile stays on /profile.
+const SHOW_FULL_PROFILE_ON_REVIEW = Boolean(process.env.NEXT_PUBLIC_FULL_REVIEW);
 const SELL_RUN = [
   { key: "define", label: "Define Skills" },
   { key: "found", label: "Get Found" },
@@ -2371,6 +2373,23 @@ setScreen(target);
 
           {/* The soft page background the published profile sits on, so the
               white section cards read the same way here as they do there. */}
+          {/* Scott 10-16: the review is what THIS run made — title, kind of work, skills, rates, products — not the whole profile. */}
+          <section data-sell-summary className="mb-5 border border-line">
+            {[
+              { k: "Your Title", v: profile.headline || "—", go: "title" as Step },
+              { k: "Kind of Work", v: profile.roleTypeIds.map((id) => fieldRoles.find((r) => r.id === id)?.name).filter(Boolean).join(" · ") || "—", go: "roles" as Step },
+              { k: "Skills", v: shownSkillNames.slice(0, 12).join(" · ") + (shownSkillNames.length > 12 ? ` · +${shownSkillNames.length - 12} more` : "") || "—", go: "skills" as Step },
+            ].map((r) => (
+              <div key={r.k} className="flex flex-wrap items-baseline gap-3 border-b border-line px-5 py-3 last:border-0">
+                <b className="w-32 shrink-0 text-[14px]">{r.k}</b>
+                <span className="min-w-0 flex-1 text-[14px]">{r.v}</span>
+                <button type="button" onClick={() => { setReturnToReview(true); goTo(r.go); }} className="text-[13.5px] font-bold text-magenta hover:underline">Edit</button>
+              </div>
+            ))}
+          </section>
+          <GoLiveProducts onEdit={() => { setReturnToReview(true); goTo("products"); }} />
+          <p className="mb-2 text-[13px] text-ink-2">Your photo, contact details and work history are on <a href="/profile" className="font-semibold text-magenta-dark underline underline-offset-4">your profile</a>.</p>
+          {SHOW_FULL_PROFILE_ON_REVIEW && (
           <div className="mt-6 grid gap-x-12 gap-y-6 lg:grid-cols-[300px_minmax(0,1fr)]">
             <ProfileHero
               // The wizard title is the page h1; keep heading ranks sane.
@@ -2705,6 +2724,7 @@ setScreen(target);
             </div>
             </div>
           </div>
+          )}
 
           <PhotoCropModal
             open={photoModal}
