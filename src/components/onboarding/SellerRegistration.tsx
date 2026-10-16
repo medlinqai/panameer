@@ -225,7 +225,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
                 <BusinessTypePicker types={types} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells — it sets up your Service Catalog. You can add more later." />
               )}
               <Field label="Description (optional)" hint={`What the company does, in a sentence or two. Up to ${DESCRIPTION_MAX} characters.`}>
-                <TextArea value={description} maxLength={DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} className="min-h-24" />
+                <TextArea value={description} maxLength={DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} rows={2} className="min-h-0! h-[60px]" />
               </Field>
               {!c && (
                 <>

@@ -431,7 +431,7 @@ export default function RequesterStepsPage() {
               </Field>
               </div>
               <Field label="Description (optional)" hint={`What the company does, in a sentence or two. Up to ${DESCRIPTION_MAX} characters.`}>
-                <TextArea value={draft.coDescription} maxLength={DESCRIPTION_MAX} onChange={(e) => edit({ coDescription: e.target.value })} className="min-h-24" />
+                <TextArea value={draft.coDescription} maxLength={DESCRIPTION_MAX} onChange={(e) => edit({ coDescription: e.target.value })} rows={2} className="min-h-0! h-[60px]" />
               </Field>
               {!draft.companyBound && (
                 <>
