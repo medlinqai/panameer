@@ -1,3 +1,4 @@
+import { shortTitle } from "@/lib/short-title";
 import { parseEngagementTables, engagementsToProjects, roleNameFromText } from "@/lib/resume/engagements";
 import { cleanParsedResume, catalogKey, sourceOffsets } from "@/lib/resume/cleanup";
 import { applyResumeFixes } from "@/lib/resume/fixes";
@@ -477,7 +478,8 @@ export async function applyParsedResume(
   const data: Prisma.ProviderProfileUpdateInput = {};
   const personData: Prisma.PersonUpdateInput = {};
   if (!(profile.person.title ?? "").trim() && parsed.headline) {
-    personData.title = parsed.headline.slice(0, 200);
+    // Scott 10-16: fit the 42-character title box (AI shorten, else cut at a word).
+    personData.title = await shortTitle(parsed.headline);
     applied.headline = true;
   }
   if (!profile.overview?.trim() && parsed.overview) {

@@ -21,6 +21,7 @@ export function ResumeDropzone({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [got, setGot] = useState<ImportOutcome | null>(null);
 
   // Every busy transition goes through here, so the step's footer and this
   // control can never disagree about whether a parse is running.
@@ -82,6 +83,7 @@ export function ResumeDropzone({
         setError(data.error ?? "We couldn't read that file.");
         return;
       }
+      setGot(data);
       onImported(data);
       setProgress(100);
     };
@@ -149,9 +151,19 @@ export function ResumeDropzone({
             )}
             {busy && progress === 100 && <ParseHeartbeat className="mt-3" />}
             {!busy && (
-              <p className="mt-2 text-[13px] text-ink-2">
-                Imported. Review the details as you continue.
-              </p>
+              // Scott 10-16: show what the résumé gave them, so the upload feels worth it.
+              <div data-resume-got className="mt-3 text-left text-[13.5px]">
+                <p className="font-bold">We read your résumé and filled your profile:</p>
+                <ul className="mt-1 list-disc pl-5 text-ink-2">
+                  {got?.applied.headline && <li>Your title</li>}
+                  {!!got?.applied.experiences && <li>{got.applied.experiences} job{got.applied.experiences === 1 ? "" : "s"} in your work history</li>}
+                  {!!got?.applied.skillsMatched && <li>{got.applied.skillsMatched} skills buyers search for{got.applied.skillsMatchedNames?.length ? ` (${got.applied.skillsMatchedNames.slice(0, 4).join(", ")}${got.applied.skillsMatchedNames.length > 4 ? "…" : ""})` : ""}</li>}
+                  {!!got?.applied.education && <li>{got.applied.education} school{got.applied.education === 1 ? "" : "s"}</li>}
+                  {got?.applied.overview && <li>Your summary</li>}
+                  {!!got?.applied.languages && <li>{got.applied.languages} language{got.applied.languages === 1 ? "" : "s"}</li>}
+                </ul>
+                <p className="mt-1 text-[12.5px] text-ink-2">You'll see it all on your profile, and the skills come back when you Create What You Sell.</p>
+              </div>
             )}
             <button
               type="button"

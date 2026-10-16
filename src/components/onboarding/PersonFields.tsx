@@ -42,7 +42,7 @@ export function PersonFields({
         </Field>
       </div>
       <Field label="Title *" hint={titleHint}>
-        <TextInput value={values.title} onChange={(e) => onChange({ title: e.target.value })} placeholder={titlePlaceholder} autoComplete="organization-title" />
+        <TextInput value={values.title} onChange={(e) => onChange({ title: e.target.value.slice(0, 42) })} maxLength={42} placeholder={titlePlaceholder} autoComplete="organization-title" />
       </Field>
       <div className="flex flex-col items-center gap-5 border border-line p-6 sm:flex-row sm:items-center sm:text-left">
         <Avatar firstName={values.firstName} lastName={values.lastName} photoUrl={values.photoUrl} size={96} />
