@@ -5,7 +5,7 @@ import { countryName } from "@/lib/country";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
-import { CompanyIdentityFields, findCoMatch, companyIdentityOk, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
+import { CompanyIdentityFields, findCoMatch, companyIdentityOk, formatTin, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
 import { LegalLink } from "@/components/legal/LegalLink";
@@ -177,7 +177,7 @@ export default function RequesterStepsPage() {
       companyOwner: !!s.company?.owner,
       coIndustryId: s.company?.industryId ?? "",
       coLegal: s.company?.legalName ? s.company?.name ?? "" : "",
-      coTin: s.company?.tin ?? prev.coTin,
+      coTin: s.company?.tin ? formatTin(s.company.tin) : prev.coTin,
       coInvoiceEmail: s.company?.invoiceEmail ?? s.email ?? "",
       coDescription: s.company?.description ?? "",
       coAttest: prev.coAttest,

@@ -41,7 +41,9 @@ export function ReviewProfile({
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-6" data-review-profile>
       <section className="grid grid-cols-1 items-center gap-5 border border-line bg-surface p-6 sm:grid-cols-[auto_1fr_auto]">
-        <Avatar firstName={person.firstName} lastName={person.lastName} photoUrl={person.photoUrl} size={112} />
+        <div className="aspect-square h-[88px] w-[88px] shrink-0 sm:h-[112px] sm:w-[112px] [&>span]:!h-full [&>span]:!w-full">
+          <Avatar firstName={person.firstName} lastName={person.lastName} photoUrl={person.photoUrl} size={112} />
+        </div>
         <div className="min-w-0">
           <p className="text-[24px] font-extrabold leading-tight">{`${person.firstName} ${person.lastName}`.trim() || "—"}</p>
           {person.title && <p className="mt-0.5 text-[15.5px]">{person.title}</p>}
@@ -52,7 +54,7 @@ export function ReviewProfile({
           </p>
           {notLive && <span className="mt-2.5 inline-block border border-magenta px-1.5 py-px text-[11px] font-bold text-magenta-dark">Not live yet</span>}
         </div>
-        <div className="self-start">{edit("person")}</div>
+        <div className="order-first justify-self-end sm:order-none sm:self-start">{edit("person")}</div>
       </section>
 
       <section className="grid gap-2">
@@ -63,7 +65,7 @@ export function ReviewProfile({
         <dl className="grid grid-cols-1 gap-x-4 gap-y-1.5 text-[14px] sm:grid-cols-[150px_1fr]">
           {companyRows.map((r) => (
             <div key={r.label} className="contents">
-              <dt className="text-ink-2">{r.label}</dt>
+              <dt className="mt-2 text-[12px] font-semibold uppercase tracking-wide text-ink-2 sm:mt-0 sm:text-[14px] sm:font-normal sm:normal-case sm:tracking-normal">{r.label}</dt>
               <dd className="min-w-0">{r.value || "—"}</dd>
             </div>
           ))}

@@ -6,7 +6,7 @@ import { Field, Notice, TextArea, TextInput } from "@/components/onboarding/cont
 import { LegalLink } from "@/components/legal/LegalLink";
 import { ReviewProfile, locParts, placeOf } from "@/components/onboarding/ReviewProfile";
 import { BusinessTypePicker, type BT } from "@/components/company/BusinessTypePicker";
-import { CompanyIdentityFields, findCoMatch, companyIdentityOk, emailOk, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
+import { CompanyIdentityFields, findCoMatch, companyIdentityOk, emailOk, formatTin, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
 import { countryName } from "@/lib/country";
@@ -71,7 +71,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     if (c?.status === "APPROVED") {
       setName(c.legalName || c.name);
       setDba(c.legalName ? c.name : "");
-      setTin(c.tin ?? "");
+      setTin(formatTin(c.tin ?? ""));
       setWebsite(c.website ?? "");
       setDescription(c.description ?? "");
       if (c.businessTypeIds?.[0]) setBusinessTypeId(c.businessTypeIds[0]);
