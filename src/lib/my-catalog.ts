@@ -17,7 +17,7 @@ export async function publishGate(personId: string): Promise<{ ok: boolean; href
   }
   // IN-E002: professional sellers name an industry before publishing.
   const pp = await prisma.providerProfile.findUnique({ where: { person_id: personId }, select: { id: true } });
-  if (pp && (await industryGap(personId, pp.id))) return { ok: false, href: "/profile#industries", reason: "Add the industries you've worked in." };
+  if (pp && (await industryGap(personId, pp.id))) return { ok: false, href: "/profile#industries", reason: "To publish, first pick the industries you've worked in: go to Get Found (step 2 on the bar above), choose them under \"Which industries have you worked in?\", press Save Industries, then come back and publish. You can also add them on your Profile." };
   return { ok: true, href: "", reason: null };
 }
 
