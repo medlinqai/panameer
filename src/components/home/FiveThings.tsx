@@ -117,8 +117,8 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
         <Link href={reg.registered ? "/join/provider" : reg.step ? "/join/provider/register" : "/join/provider/start"} data-get-found className="group mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[14px] border-2 border-ink bg-surface p-5 transition-colors hover:border-magenta-dark sm:p-6">
           <span className="min-w-0">
             <span className="inline-block border border-magenta px-2 py-0.5 text-[11.5px] font-bold text-magenta-dark">Not live yet</span>
-            <b className="mt-2 block text-[20px] font-extrabold leading-snug">{reg.registered ? "Get found by buyers — 2 steps, about 10 minutes" : "Finish signing up — about 3 minutes"}</b>
-            <span className="mt-1 block text-[14px] text-ink-2">{reg.registered ? "Your profile, then your rates. Go live and buyers can find you and hire you." : "Who you are, your company and its addresses. Then get found by buyers."}</span>
+            <b className="mt-2 block text-[20px] font-extrabold leading-snug">{reg.registered ? "Create Products & Services — about 10 minutes" : "Finish signing up — about 3 minutes"}</b>
+            <span className="mt-1 block text-[14px] text-ink-2">{reg.registered ? "Your résumé and skills, your rates and products. Go live and buyers can find you and hire you." : "Who you are, your company and its addresses. Then get found by buyers."}</span>
           </span>
           <span className="inline-flex min-h-[44px] items-center bg-ink px-6 text-[14.5px] font-bold text-surface group-hover:bg-magenta-dark">{reg.registered ? "Start" : "Continue"}</span>
         </Link>

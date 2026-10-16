@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
+import { sellerRegistration } from "@/lib/seller-registration";
 import { payoutChecklist } from "@/lib/payout-requirements";
 import { BUYER_ROAD, PROVIDER_ROAD, lifecycleStatus, type LifecycleFacts } from "@/lib/user-levels";
 
@@ -62,9 +63,10 @@ export async function lifecycleFor(personId: string) {
     // Scott 10-15: like the buyer road — sign-up done (company linked or asked to join, or email already verified) = stop 1 done.
     register: !!m || pending || !!p.user?.email_verified,
     verify: !!p.user?.email_verified,
-    profile: provider ? (p.providerProfile?.completeness ?? 0) >= VISIBILITY_THRESHOLD : !!p.requesterProfile?.completed_at,
+    // Scott 10-16: a seller's profile is done when registration is; Create Products & Services is done when they go live.
+    profile: provider ? (await sellerRegistration(personId)).registered : !!p.requesterProfile?.completed_at,
     link: !!m,
-    list: (p.providerProfile?._count.serviceProducts ?? 0) + liveRates + proposals > 0,
+    list: provider ? !!p.providerProfile?.onboarding_completed_at : (p.providerProfile?._count.serviceProducts ?? 0) + liveRates + proposals > 0,
     validate: !!check?.ready,
     contract: contracts > 0,
     sell: contracts > 0,
@@ -87,7 +89,7 @@ export async function lifecycleFor(personId: string) {
   }
   // SO-E004: until they're live, stops 3 (profile) and 4 (products & services) point at the Get Found run.
   const live = !!p.providerProfile?.onboarding_completed_at;
-  const road = live ? PROVIDER_ROAD : PROVIDER_ROAD.map((s) => (s.key === "profile" || s.key === "list" ? { ...s, href: "/join/provider", next: "Get Found" } : s));
+  const road = live ? PROVIDER_ROAD : PROVIDER_ROAD.map((s) => (s.key === "list" ? { ...s, href: "/join/provider" } : s.key === "profile" ? { ...s, href: "/join/provider/register" } : s));
   return { steps: road, road: "provider" as const, ...lifecycleStatus(facts, PROVIDER_ROAD), waiting: (pending ? { key: "register", label: "Waiting for approval" } : null) as { key: string; label: string } | null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
 }
 

@@ -329,7 +329,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
               ]
         }
         locations={reviewLocs}
-        next="On your Dashboard: Get Found by buyers. Upload your résumé, set your rates, go live (about 10 minutes)."
+        next="On your Dashboard: Create Products & Services. Your résumé and skills, your rates and products, then go live (about 10 minutes)."
         onEdit={(sec) => go(sec === "person" ? "seller" : sec === "company" ? "company" : "locations")}
       />
     </WizardShell>
