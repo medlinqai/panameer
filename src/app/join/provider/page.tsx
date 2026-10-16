@@ -19,6 +19,7 @@ import {
 } from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { GetFoundRates, GetFoundProducts, GoLiveRates } from "@/components/onboarding/GetFoundRates";
+import { RunIndustries } from "@/components/onboarding/RunIndustries";
 // WS-B) — 's disambiguation belongs with the picker that
 import { isSkillShown } from "@/lib/shown-skills";
 /* THE ONE DEFINITION of the five proficiencies (`E723`, `E585`). */
@@ -1758,6 +1759,7 @@ setScreen(target);
           {/* GT-E004: renders nothing while taxonomy_v2 is off. */}
           <CapabilitiesEditor />
           <AttributesEditor />
+          <RunIndustries />
           {ed.body}
         </WizardShell>
       );

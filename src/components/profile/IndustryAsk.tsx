@@ -6,7 +6,7 @@ import { fieldHelp } from "@/lib/field-guide";
 import { useState } from "react";
 
 // IN-E002: asked once, only of professional sellers with no industry yet.
-export function IndustryAsk({ industries }: { industries: { id: string; name: string }[] }) {
+export function IndustryAsk({ industries, onSaved }: { industries: { id: string; name: string }[]; /** In the Create What You Sell run: called instead of a page refresh. */ onSaved?: () => void }) {
   const router = useRouter();
   const [picked, setPicked] = useState<string[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
@@ -17,6 +17,7 @@ export function IndustryAsk({ industries }: { industries: { id: string; name: st
     const j = await r.json().catch(() => ({}));
     setBusy(false);
     if (!r.ok) return setMsg(j.error ?? "Could not save that");
+    if (onSaved) return onSaved();
     router.refresh();
   };
   return (

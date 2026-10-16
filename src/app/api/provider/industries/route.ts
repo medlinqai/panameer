@@ -3,7 +3,7 @@ import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { ownedProviderProfile } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { addIndustries } from "@/lib/industry";
+import { addIndustries, industryRequired, hasIndustry } from "@/lib/industry";
 import { recomputeCompleteness } from "@/lib/onboarding";
 
 const Body = z.object({ ids: z.array(z.string().uuid()).min(1).max(20) });
@@ -19,4 +19,18 @@ export async function POST(req: Request) {
   const n = await addIndustries(p.id, b.data.ids);
   await recomputeCompleteness(p.id);
   return NextResponse.json({ ok: true, added: n });
+}
+
+/** Scott 10-16: Get Found asks for industries in the run — required?, already has?, the list. */
+export async function GET() {
+  const viewer = await guardApi("authenticated");
+  if (viewer instanceof NextResponse) return viewer;
+  const p = await prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer), select: { id: true, person_id: true } });
+  if (!p) return NextResponse.json({ required: false, has: false, industries: [] });
+  const [required, has, industries] = await Promise.all([
+    industryRequired(p.person_id),
+    hasIndustry(p.id),
+    prisma.specialization.findMany({ where: { kind: "INDUSTRY" }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  ]);
+  return NextResponse.json({ required, has, industries });
 }
