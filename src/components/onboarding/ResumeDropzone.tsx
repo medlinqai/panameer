@@ -107,10 +107,28 @@ export function ResumeDropzone({
           if (f) choose(f);
         }}
         className={
-          "grid place-items-center border border-dashed p-8 text-center transition-colors " +
+          "relative grid place-items-center border border-dashed p-8 text-center transition-colors " +
           (dragOver ? "border-magenta bg-magenta/[0.04]" : "border-line")
         }
       >
+        {/* Busy trace — four thin magenta segments circling the box, echoing the segmented logo mark. */}
+        {busy && (
+          <svg
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+          >
+            <rect
+              width="100%"
+              height="100%"
+              fill="none"
+              pathLength={100}
+              className="animate-dropzone-trace stroke-magenta"
+              strokeWidth={1.5}
+              strokeDasharray="7 18"
+              strokeLinecap="round"
+            />
+          </svg>
+        )}
         {file && !error ? (
           <div className="w-full max-w-sm">
             <p className="truncate font-bold">{file.name}</p>

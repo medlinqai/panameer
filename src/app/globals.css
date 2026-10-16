@@ -146,6 +146,23 @@ body {
   animation: parse-sweep 1.4s ease-in-out infinite;
 }
 
+@keyframes dropzone-trace {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+.animate-dropzone-trace {
+  opacity: 0.75;
+  animation: dropzone-trace 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-dropzone-trace {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-parse-sweep {
     animation: none;
