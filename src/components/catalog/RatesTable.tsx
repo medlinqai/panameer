@@ -125,7 +125,7 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
               <span className={on ? "min-w-0" : "min-w-0 text-ink-3"}>
                 <b className="text-[14px]">{t.name}</b>
                 {t.custom && <span data-custom-rate title="Your own rate type — Panameer may add it for everyone" className="ml-1.5 inline-block border border-dashed border-ink-3 px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em] text-ink-2">CUSTOM</span>}
-                {fromReg && <span data-from-registration className="ml-1.5 inline-block border border-magenta px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em] text-magenta-dark">FROM REGISTRATION</span>}
+                {fromReg && <span data-from-registration className="ml-1.5 inline-block border border-magenta px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em] text-magenta-dark">SUGGESTED · CHECK IT</span>}
                 {t.description && <small className="block text-[12px] text-ink-3">{t.description}</small>}
               </span>
               <span className={on ? "col-start-2 flex flex-wrap items-center gap-2 md:col-start-auto" : "col-start-2 flex flex-wrap items-center gap-2 opacity-45 md:col-start-auto"}>
