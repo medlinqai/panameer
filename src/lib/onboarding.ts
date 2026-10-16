@@ -2012,8 +2012,7 @@ export async function publishProfile(viewer: Viewer) {
   });
 
   // IN-E002: professional sellers also name the industries they've worked in.
-  const industry = await industryGap(p.id, pp.id);
-  if (industry && !missing.includes(industry)) missing.push(industry);
+  // Scott 10-16: industries are optional — they no longer block Enable My Catalog.
 
   if (missing.length > 0) {
     throw new OnboardingError(
