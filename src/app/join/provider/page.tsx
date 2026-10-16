@@ -1132,7 +1132,7 @@ setScreen(target);
   // SO-E004 Get Found: one run in three parts — Profile (résumé, roles, skills…) · Rates · Go Live.
   const GET_FOUND = SELL_RUN;
   const phaseOf = (k: Step) => sellPhaseOf(k);
-  const inRun = screen === "tell_us" || screen === "finish" || stepIndex >= 0;
+  const inRun = screen === "tell_us" || screen === "title" || screen === "finish" || stepIndex >= 0;
   const railIndex = inRun ? phaseOf(screen as Step) : -1;
   const firstOfPhase = (i: number): Step => sellFirstOfPhase(i) as Step;
   const upcoming = stepIndex >= 0 ? steps[stepIndex + 1] : screen === "tell_us" ? steps[0] : undefined;
