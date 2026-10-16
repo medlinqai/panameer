@@ -36,19 +36,23 @@ async function me(viewer: Viewer) {
 /** The business types' Service Product Types with their defaults, grouped by category. */
 export async function productTypes(personId: string) {
   const bts = await personBusinessTypes(personId);
-  if (!bts.length) return [];
-  // Stock types + the provider's own (Scott 2026-10-12: no waiting on the admin; they also land in the admin's suggestions).
-  const stock = await prisma.serviceType.findMany({
-    where: { kind: "SERVICE_PRODUCT", ...LIVE_TYPE, serviceCategory: { business_type_id: { in: bts.map((b) => b.id) }, hidden: false } },
-    orderBy: [{ serviceCategory: { sort_order: "asc" } }, { sort_order: "asc" }],
-    select: TYPE_SELECT,
+  // Scott 10-16: SORT, don't filter — every business type's stock types, the seller's own business type first,
+  // grouped by business type (like What We Buy: reorders, never hides).
+  const mine = new Set(bts.map((b) => b.id));
+  const all = await prisma.serviceType.findMany({
+    where: { kind: "SERVICE_PRODUCT", ...LIVE_TYPE, serviceCategory: { business_type_id: { not: null }, hidden: false } },
+    orderBy: [{ serviceCategory: { businessType: { name: "asc" } } }, { serviceCategory: { sort_order: "asc" } }, { sort_order: "asc" }],
+    select: { ...TYPE_SELECT, serviceCategory: { select: { name: true, business_type_id: true, businessType: { select: { name: true } } } } },
   });
+  const stock = [...all.filter((t) => mine.has(t.serviceCategory?.business_type_id ?? "")), ...all.filter((t) => !mine.has(t.serviceCategory?.business_type_id ?? ""))].map(
+    ({ serviceCategory, ...t }) => ({ ...t, serviceCategory: { name: serviceCategory?.name ?? "" }, group: serviceCategory?.businessType?.name ?? "Other" })
+  );
   const own = await prisma.serviceType.findMany({
     where: { ...OWN_PRODUCT_TYPE, OR: [{ created_by_person_id: personId }, { serviceProducts: { some: { providerProfile: { person_id: personId } } } }] },
     orderBy: { created_at: "asc" },
     select: TYPE_SELECT,
   });
-  return [...stock, ...own.map((t) => ({ ...t, serviceCategory: { name: "Your Types" } }))];
+  return [...own.map((t) => ({ ...t, serviceCategory: { name: "Your Types" }, group: "Your Types" })), ...stock];
 }
 const TYPE_SELECT = { id: true, name: true, pricing_model: true, units: true, delivery: true, lead_time_days: true, serviceCategory: { select: { name: true } } } as const;
 

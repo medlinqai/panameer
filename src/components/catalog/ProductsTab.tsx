@@ -7,7 +7,7 @@ import { formatCents } from "@/lib/display";
 import type { PayPlan, Pricing, ProductForm } from "@/lib/catalog-products";
 
 // MC-E006: My Catalog › Service Products — list + the Create card (mockup D). Saves as Draft; Publish checks the six must-haves.
-type PType = { id: string; name: string; pricing_model: string | null; units: string[]; delivery: string | null; lead_time_days: number | null; serviceCategory: { name: string } | null };
+type PType = { id: string; name: string; pricing_model: string | null; units: string[]; delivery: string | null; lead_time_days: number | null; serviceCategory: { name: string } | null; /** Business type heading (Scott 10-16: all types, yours first). */ group?: string };
 type Product = { id: string; status: string; typeName: string | null; form: ProductForm };
 type Domain = { id: string; process: string; name: string };
 const EMPTY: ProductForm = { title: "", serviceTypeId: null, summary: "", images: [], pricing: "FIXED", priceCents: null, delivery: null, leadTimeDays: null, durationWeeks: null, domainIds: [], skillIds: [], deliverables: [], payPlan: "ON_DELIVERY", coverStyle: "A", openToOffers: false, offerFloorCents: null };
@@ -143,7 +143,10 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
             <label className={LBL}>Type
               <select value={f.serviceTypeId ?? ""} onChange={(e) => pickType(e.target.value)} className={INPUT} aria-label="Type">
                 <option value="">Choose a type</option>
-                {allTypes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                {[...new Set(allTypes.map((t) => t.group ?? ""))].map((g) => {
+                  const opts = allTypes.filter((t) => (t.group ?? "") === g).map((t) => <option key={t.id} value={t.id}>{t.name}</option>);
+                  return g ? <optgroup key={g} label={g}>{opts}</optgroup> : opts;
+                })}
                 <option value="__new__">+ Add a Type…</option>
               </select>
               {newType !== null && (
