@@ -148,7 +148,7 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
               <span className="col-start-2 text-[13px] text-ink-2 md:col-start-auto">{t.delivery ? DELIVERY[t.delivery] : "—"}</span>
               <span data-buyers-see className={on ? "col-start-2 text-[13px] md:col-start-auto" : "col-start-2 text-[13px] text-ink-3 md:col-start-auto"}>
                 {on ? see ?? "Add a rate" : "Hidden until on"}
-                {s?.published ? <span className="ml-1.5 inline-block border border-ink px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em]">LIVE</span> : on && s?.rateCents != null ? <span data-draft className="ml-1.5 inline-block border border-dashed border-ink-3 px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em] text-ink-2">DRAFT</span> : null}
+                {inRun ? null : s?.published ? <span className="ml-1.5 inline-block border border-ink px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em]">LIVE</span> : on && s?.rateCents != null ? <span data-draft className="ml-1.5 inline-block border border-dashed border-ink-3 px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em] text-ink-2">DRAFT</span> : null}
                 {/* Lane 7: this Service's own Open to Offers (else the seller's switch). */}
                 {s && (
                   <label className="mt-1 flex items-center gap-1.5 text-[12px] text-ink-2" data-service-offers>
@@ -166,9 +166,9 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
           );
         })}
       </ul>
-      <p className="mt-4 text-[13.5px] text-ink-2">Fixed-price work — reports, dashboards, AI agents, integrations — goes in <Link href="/catalog/products" className="font-bold text-magenta-dark underline underline-offset-4">Service Products</Link>.</p>
+      {!inRun && <p className="mt-4 text-[13.5px] text-ink-2">Fixed-price work — reports, dashboards, AI agents, integrations — goes in <Link href="/catalog/products" className="font-bold text-magenta-dark underline underline-offset-4">Service Products</Link>.</p>}
       {inRun ? (
-        <p className="mt-6 border-t-2 border-ink pt-4 text-[13.5px] text-ink-2">Turn on the rates you charge, or skip to Products if you only sell fixed-price packages. Saved as you go; everything goes live when you Enable My Catalog.</p>
+        <p className="mt-6 border-t-2 border-ink pt-4 text-[13.5px] text-ink-2">Fixed-price packages (a report, a dashboard, an integration) come next, in Products. Only sell packages? Leave every rate off.</p>
       ) : (
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink pt-4">
         <span className="text-[13.5px] text-ink-2">

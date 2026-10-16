@@ -1137,7 +1137,8 @@ setScreen(target);
   const inRun = screen === "tell_us" || screen === "title" || screen === "products" || screen === "finish" || stepIndex >= 0;
   const railIndex = inRun ? phaseOf(screen as Step) : -1;
   const firstOfPhase = (i: number): Step => sellFirstOfPhase(i) as Step;
-  const upcoming = stepIndex >= 0 ? steps[stepIndex + 1] : screen === "tell_us" ? steps[0] : undefined;
+  // Scott 10-16: Rates leads to Products (uncounted), Products to the Title — label the button by where it really goes.
+  const upcoming = screen === "rate" ? ("products" as Step) : screen === "products" ? ("title" as Step) : stepIndex >= 0 ? steps[stepIndex + 1] : screen === "tell_us" ? steps[0] : undefined;
   const nextLabel =
     screen === "finish"
       ? "Enable My Catalog"
