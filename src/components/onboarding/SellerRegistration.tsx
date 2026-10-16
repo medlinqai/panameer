@@ -11,6 +11,7 @@ import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/com
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
 import { countryName } from "@/lib/country";
 import { ResumeDropzone } from "@/components/onboarding/ResumeDropzone";
+import { ResumeReview } from "@/components/onboarding/ResumeReview";
 import { PersonFields, personComplete, type PersonValues } from "@/components/onboarding/PersonFields";
 import { parseStoredPhone, toE164 } from "@/lib/phone";
 
@@ -61,6 +62,8 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   const [own, setOwn] = useState<LocationValue>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imported, setImported] = useState(false);
+  const [profileChecked, setProfileChecked] = useState(false);
 
   const load = useCallback(async () => {
     const r: Reg | null = await fetch("/api/onboarding/provider/registration").then((x) => (x.ok ? x.json() : null)).catch(() => null);
@@ -142,8 +145,25 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     const next = () => run(async () => {
       await post("/api/onboarding/provider/registration", "POST", { seller: { firstName: person.firstName, lastName: person.lastName, title: person.title, phone: toE164(person.phone, phoneCountry) ?? person.phone } });
       await load();
+      // Scott 10-16: registration builds the profile — after a résumé, check what we read before the company.
+      if (imported && !profileChecked) { setProfileChecked(true); return; }
       go("company");
     });
+    if (imported && profileChecked) {
+      return (
+        <WizardShell
+          {...shell}
+          title="Check your profile"
+          subtitle="This is what we read from your résumé. Fix anything that's wrong; buyers see it on your profile."
+          continueLabel="Next: Company"
+          onContinue={() => go("company")}
+          onBack={() => setProfileChecked(false)}
+          wide
+        >
+          <ResumeReview onContinue={() => go("company")} />
+        </WizardShell>
+      );
+    }
     return (
       <WizardShell
         {...shell}
@@ -164,6 +184,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
             <ResumeDropzone
               onBusyChange={setBusy}
               onImported={async () => {
+                setImported(true);
                 // Keep what was typed here; the import fills only what's still empty.
                 const typed = person;
                 await load();

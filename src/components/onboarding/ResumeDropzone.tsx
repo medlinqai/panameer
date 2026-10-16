@@ -162,7 +162,7 @@ export function ResumeDropzone({
                   {got?.applied.overview && <li>Your summary</li>}
                   {!!got?.applied.languages && <li>{got.applied.languages} language{got.applied.languages === 1 ? "" : "s"}</li>}
                 </ul>
-                <p className="mt-1 text-[12.5px] text-ink-2">You'll see it all on your profile, and the skills come back when you Create What You Sell.</p>
+                <p className="mt-1 text-[12.5px] text-ink-2">Press Next to check it.</p>
               </div>
             )}
             <button
