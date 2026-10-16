@@ -22,7 +22,7 @@ const INPUT = "w-full border border-line bg-surface px-2.5 py-2 text-[13px] font
 const SEC = "border-b border-[#ECEEF4] p-4";
 const N = "mb-2.5 text-[11px] font-extrabold tracking-[0.14em] text-magenta";
 
-export function ProductsTab({ types, products, domains, skills, sellGaps, editId, typeId = null }: { types: PType[]; products: Product[]; domains: Domain[]; skills: { id: string; name: string }[]; sellGaps: unknown[]; editId: string | null; typeId?: string | null }) {
+export function ProductsTab({ types, products, domains, skills, sellGaps, editId, typeId = null, onSaved }: { types: PType[]; products: Product[]; domains: Domain[]; skills: { id: string; name: string }[]; sellGaps: unknown[]; editId: string | null; typeId?: string | null; /** Embedded (Create What You Sell): reload in place instead of navigating to My Catalog. */ onSaved?: (editId: string | null) => void }) {
   const router = useRouter();
   const start = products.find((p) => p.id === editId);
   const [id, setId] = useState<string | null>(start?.id ?? null);
@@ -95,10 +95,11 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
     const j = await post({ action: "save", id, publish, form: { ...f, priceCents: price.trim() && n >= 0 ? Math.round(n * 100) : null } }, publish ? "publish" : "save");
     if (!j) return;
     setMsg(publish ? "Published — it's live in Shop and on your profile." : "Saved as a draft.");
+    if (onSaved) return onSaved(publish ? null : j.id);
     router.replace(publish ? "/catalog/products" : `/catalog/products?edit=${j.id}#create`, { scroll: false });
     router.refresh();
   };
-  const publishRow = async (pid: string) => { if (await post({ action: "publish", id: pid }, pid)) router.refresh(); };
+  const publishRow = async (pid: string) => { if (await post({ action: "publish", id: pid }, pid)) { if (onSaved) onSaved(null); else router.refresh(); } };
   const toggle = (k: "domainIds" | "skillIds", v: string) => set(k, f[k].includes(v) ? f[k].filter((x) => x !== v) : [...f[k], v]);
 
   return (

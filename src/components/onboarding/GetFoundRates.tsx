@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RatesTable, type RateRow, type RateType } from "@/components/catalog/RatesTable";
+import { ProductsTab } from "@/components/catalog/ProductsTab";
 
 type Data = { businessTypes: string[]; types: RateType[]; rows: RateRow[]; registration: { ONSITE: number | null; OFFSITE: number | null }; gate: { ok: boolean; reason: string | null; href: string }; multiProvider: boolean; openToOffers: boolean };
 
@@ -43,5 +44,22 @@ export function GoLiveRates({ onEdit }: { onEdit: () => void }) {
         <p className="px-5 py-3 text-[14px] text-magenta-dark">No rate yet — add at least one.</p>
       )}
     </section>
+  );
+}
+
+/** Scott 10-16: Create What You Sell › Products — My Catalog's Service Products, kept inside the run. Optional. */
+export function GetFoundProducts() {
+  type P = Parameters<typeof ProductsTab>[0];
+  const [d, setD] = useState<Omit<P, "editId" | "onSaved"> | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    fetch("/api/onboarding/provider/products").then((r) => (r.ok ? r.json() : null)).then(setD).catch(() => setD(null));
+  }, [n]);
+  if (!d) return <p className="text-[14px] text-ink-2">Loading your products…</p>;
+  return (
+    <div data-get-found-products>
+      <ProductsTab key={`${n}|${editId ?? ""}`} {...d} editId={editId} onSaved={(id) => { setEditId(id); setN((x) => x + 1); }} />
+    </div>
   );
 }

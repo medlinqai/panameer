@@ -18,7 +18,7 @@ import {
   type SignUpValues,
 } from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
-import { GetFoundRates, GoLiveRates } from "@/components/onboarding/GetFoundRates";
+import { GetFoundRates, GetFoundProducts, GoLiveRates } from "@/components/onboarding/GetFoundRates";
 // WS-B) — 's disambiguation belongs with the picker that
 import { isSkillShown } from "@/lib/shown-skills";
 /* THE ONE DEFINITION of the five proficiencies (`E723`, `E585`). */
@@ -121,7 +121,7 @@ import { formatPhone, isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/ph
 // Every screen this wizard can RENDER. The counted itinerary is a subset and
 // imported above — the section route names the same steps when it saves, so the
 // It has to ask the question WITHOUT touching `RECRUITER_STEPS`
-type Screen = "signup" | "check_email" | "work_method" | Step;
+type Screen = "signup" | "check_email" | "work_method" | "products" | Step;
 
 /** The review screen's in-place editors WS-1). Each value names a */
 type EditSection =
@@ -289,10 +289,10 @@ const emptyAddress = (country = "United States"): AddressDraft => ({
 const SELL_RUN = [
   { key: "define", label: "Define Skills" },
   { key: "found", label: "Get Found" },
-  { key: "rates", label: "Rates" },
+  { key: "rates", label: "Rates & Products" },
   { key: "live", label: "Go Live" },
 ];
-const sellPhaseOf = (k: string): number => (k === "finish" || k === "title" ? 3 : k === "rate" || k === "picture" ? 2 : k === "skills" ? 1 : 0);
+const sellPhaseOf = (k: string): number => (k === "finish" || k === "title" ? 3 : k === "rate" || k === "products" || k === "picture" ? 2 : k === "skills" ? 1 : 0);
 const sellFirstOfPhase = (i: number) => (i === 0 ? "tell_us" : i === 1 ? "skills" : i === 2 ? "rate" : "title");
 
 export default function JoinProviderPage() {
@@ -705,11 +705,12 @@ setScreen(target);
     if (stepIndex < 0) {
       // — THE RÉSUMÉ SCREEN NOW SITS AFTER THE TITLE, so "next" from it is
       // Résumé comes first now (2026-10-05): it leads on to Title.
-      if (screen === "tell_us") {
-        goTo("title");
+      // Scott 10-16: Title is near the end now — the résumé leads on to the first counted step (kind of work).
+      if (screen === "products") {
+        goTo(steps[steps.indexOf("rate") + 1] ?? "title");
         return;
       }
-      goTo(steps[0] ?? "title");
+      goTo(steps[0] ?? "roles");
       return;
     }
     if (stepIndex < steps.length - 1) goTo(steps[stepIndex + 1]);
@@ -1132,7 +1133,7 @@ setScreen(target);
   // SO-E004 Get Found: one run in three parts — Profile (résumé, roles, skills…) · Rates · Go Live.
   const GET_FOUND = SELL_RUN;
   const phaseOf = (k: Step) => sellPhaseOf(k);
-  const inRun = screen === "tell_us" || screen === "title" || screen === "finish" || stepIndex >= 0;
+  const inRun = screen === "tell_us" || screen === "title" || screen === "products" || screen === "finish" || stepIndex >= 0;
   const railIndex = inRun ? phaseOf(screen as Step) : -1;
   const firstOfPhase = (i: number): Step => sellFirstOfPhase(i) as Step;
   const upcoming = stepIndex >= 0 ? steps[stepIndex + 1] : screen === "tell_us" ? steps[0] : undefined;
@@ -1158,7 +1159,9 @@ setScreen(target);
           setReturnToReview(false);
           goTo("finish");
         }
-      : stepIndex > 0
+      : screen === "title" && steps.includes("rate" as Step)
+        ? () => goTo("products")
+        : stepIndex > 0
         ? goBack
         : stepIndex === 0
           ? () => goTo("tell_us")
@@ -2008,7 +2011,8 @@ setScreen(target);
         setError(null);
         const r = await fetch("/api/onboarding/provider/rates", { method: "POST" }).catch(() => null);
         if (!r?.ok) return setError(((await r?.json().catch(() => ({}))) as { error?: string })?.error ?? "Could not save your rates.");
-        goNext();
+        if (returnToReview) return goNext();
+        goTo("products");
       };
       return (
         <WizardShell
@@ -2021,6 +2025,26 @@ setScreen(target);
         >
           {error && <Notice>{error}</Notice>}
           <GetFoundRates />
+        </WizardShell>
+      );
+    }
+
+    // Scott 10-16: optional products screen — My Catalog's Service Products inside the run.
+    case "products": {
+      return (
+        <WizardShell
+          {...shell({
+            title: "Your Products",
+            subtitle: "Optional. Fixed-price packages buyers can order, like a report, a dashboard or an integration. Add one now or later in My Catalog.",
+            onContinue: goNext,
+            secondaryLabel: "Skip for Now",
+            onSecondary: goNext,
+            onBack: () => goTo("rate"),
+            wide: true,
+          })}
+        >
+          {error && <Notice>{error}</Notice>}
+          <GetFoundProducts />
         </WizardShell>
       );
     }
