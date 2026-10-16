@@ -21,6 +21,7 @@ export const SELLER_RAIL = [
 const STEPS = ["seller", "company", "locations", "review"] as const;
 type Step = (typeof STEPS)[number];
 const DESCRIPTION_MAX = 600;
+export const TIN_TAKEN = "A company with that Tax ID is already on Panameer. Check the number, or Message Support and we'll connect you.";
 
 type Reg = {
   email: string;
@@ -28,7 +29,7 @@ type Reg = {
   seller: PersonValues;
   step: Step | null;
   registered: boolean;
-  company: null | { status: "APPROVED" | "PENDING"; owner: boolean; id?: string; name: string; legalName?: string; website?: string; description?: string; companyEmail?: string; businessTypeIds?: string[] };
+  company: null | { status: "APPROVED" | "PENDING"; owner: boolean; id?: string; name: string; legalName?: string; tin?: string; website?: string; description?: string; companyEmail?: string; businessTypeIds?: string[] };
   locations: (LocRow & { id: string })[];
   own: (LocationValue & { line1?: string | null }) | null;
 };
@@ -41,7 +42,9 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   const [phoneCountry, setPhoneCountry] = useState<string | null>(null);
   const [reg, setReg] = useState<Reg | null>(null);
   const [name, setName] = useState("");
-  const [legal, setLegal] = useState("");
+  // Scott 10-16: `name` = the legal Company Name; `dba` = the name they trade under (shown across Panameer when set).
+  const [dba, setDba] = useState("");
+  const [tin, setTin] = useState("");
   const [website, setWebsite] = useState("");
   const [description, setDescription] = useState("");
   const [remitEmail, setRemitEmail] = useState("");
@@ -65,8 +68,9 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     setPhoneCountry((pc) => pc ?? parseStoredPhone(r.seller.phone).country ?? null);
     const c = r.company;
     if (c?.status === "APPROVED") {
-      setName(c.name);
-      setLegal(c.legalName ?? "");
+      setName(c.legalName || c.name);
+      setDba(c.legalName ? c.name : "");
+      setTin(c.tin ?? "");
       setWebsite(c.website ?? "");
       setDescription(c.description ?? "");
       if (c.businessTypeIds?.[0]) setBusinessTypeId(c.businessTypeIds[0]);
@@ -105,8 +109,8 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
 
   const post = async (url: string, method: string, body: object) => {
     const r = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const j = (await r.json().catch(() => ({}))) as { error?: string };
-    if (!r.ok) throw new Error(j.error ?? "Could not save that.");
+    const j = (await r.json().catch(() => ({}))) as { error?: string; match?: { kind: string } };
+    if (!r.ok) throw new Error(j.match?.kind === "tin" ? TIN_TAKEN : j.error ?? "Could not save that.");
   };
 
   if (!ready || !reg) return <div className="grid min-h-screen place-items-center bg-white font-body text-ink-2">Loading…</div>;
@@ -172,23 +176,24 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
       setMatch(null);
       await load();
     });
+    const shown = dba.trim() || name.trim();
     const next = () => run(async () => {
       if (match) return requestAccess();
       if (joining) return go("locations");
       if (!c) {
         if (await findCoMatch(website).then((m) => (setMatch(m), m))) return;
         try {
-          await post("/api/company/define", "POST", { name: name.trim(), website: website.trim() || null, attestation, companyTos });
+          await post("/api/company/define", "POST", { name: shown, website: website.trim() || null, attestation, companyTos });
         } catch (e) {
           // A match that only shows now becomes Request Access, not a dead end.
           if (await findCoMatch(website).then((m) => (setMatch(m), m))) return;
           throw e;
         }
-      } else if (owner && name.trim() !== c.name) {
-        await post("/api/company", "PATCH", { name: name.trim() });
+      } else if (owner && shown !== c.name) {
+        await post("/api/company", "PATCH", { name: shown });
       }
       if (owner || !c) {
-        await post("/api/company", "PATCH", { legalName: legal.trim() || name.trim(), description: description.trim() || null, companyEmail: remitEmail.trim() || reg?.email || null });
+        await post("/api/company", "PATCH", { legalName: name.trim(), ...(tin.trim() ? { ein: tin.trim() } : {}), description: description.trim() || null, companyEmail: remitEmail.trim() || reg?.email || null });
         if (businessTypeId && !(c?.businessTypeIds ?? []).includes(businessTypeId)) await post("/api/company/business-types", "POST", { businessTypeId, on: true });
       }
       await load();
@@ -210,9 +215,10 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
           {error && <Notice>{error}</Notice>}
           <CompanyIdentityFields
             name={name}
-            legal={legal}
+            dba={dba}
+            tin={tin}
             website={website}
-            onChange={(p) => { setError(null); if (p.name !== undefined) setName(p.name); if (p.legal !== undefined) setLegal(p.legal); if (p.website !== undefined) { setWebsite(p.website); setMatch(null); } }}
+            onChange={(p) => { setError(null); if (p.name !== undefined) setName(p.name); if (p.dba !== undefined) setDba(p.dba); if (p.tin !== undefined) setTin(p.tin); if (p.website !== undefined) { setWebsite(p.website); setMatch(null); } }}
             joining={joining}
             joinedName={c?.name ?? ""}
             match={match}
@@ -220,7 +226,6 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
             busy={busy}
             onRequestAccess={() => void requestAccess()}
             onWebsiteBlur={() => void findCoMatch(website).then(setMatch)}
-            legalHint="The name on your checks and payments, if it's different from the company name."
             waitNote="selling"
             nameSide={
               <Field label="Company Email *" hint="Where we send payment notices.">
@@ -300,7 +305,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     { label: "Title", value: person.title || "—", step: "seller" },
     { label: "Photo", value: person.photoUrl ? "Added" : "—", step: "seller" },
     { label: "Phone", value: person.phone || "—", step: "seller" },
-    { label: "Company", value: joining ? `${c?.name} (asked to join)` : [name, legal && legal !== name ? `Legal name ${legal}` : null, btName].filter(Boolean).join(" · "), step: "company" },
+    { label: "Company", value: joining ? `${c?.name} (asked to join)` : [name, dba.trim() ? `DBA ${dba.trim()}` : null, btName].filter(Boolean).join(" · "), step: "company" },
     ...(owner
       ? locs.map((l, i) => ({ label: locs.length > 1 ? `Location ${i + 1}` : "Location", value: locLine(l, { seller: true }), step: "locations" as Step }))
       : [{ label: "Location", value: `${addr(own)} · Where I work`, step: "locations" as Step }]),

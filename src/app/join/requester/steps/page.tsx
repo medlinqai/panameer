@@ -9,6 +9,7 @@ import { CompanyIdentityFields, findCoMatch, type CoMatch } from "@/components/o
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
 import { LegalLink } from "@/components/legal/LegalLink";
+import { TIN_TAKEN } from "@/components/onboarding/SellerRegistration";
 
 const DESCRIPTION_MAX = 600;
 import { parseStoredPhone, toE164 } from "@/lib/phone";
@@ -45,7 +46,9 @@ type Draft = {
   /** BC-E002: the company's industry, one address and invoice email (owner only). */
   companyOwner: boolean;
   coIndustryId: string;
+  /** Scott 10-16: coName = the legal Company Name; coLegal now holds the DBA (shown across Panameer when set). */
   coLegal: string;
+  coTin: string;
   coInvoiceEmail: string;
   coDescription: string;
   /** Scott 10-16: the seller's two checkboxes, same on the buyer side. */
@@ -81,6 +84,7 @@ const EMPTY: Draft = {
   companyOwner: false,
   coIndustryId: "",
   coLegal: "",
+  coTin: "",
   coInvoiceEmail: "",
   coDescription: "",
   coAttest: false,
@@ -128,7 +132,7 @@ export default function RequesterStepsPage() {
     completed: boolean;
     resumeStep: string;
     email?: string;
-    company?: { bound?: boolean; name?: string | null; owner?: boolean; industryId?: string | null; legalName?: string | null; invoiceEmail?: string | null; description?: string | null } | null;
+    company?: { bound?: boolean; name?: string | null; owner?: boolean; industryId?: string | null; legalName?: string | null; invoiceEmail?: string | null; description?: string | null; tin?: string | null } | null;
     locations?: { mode: Draft["locMode"]; addresses: ServerLoc[]; workAddressId: string | null; own: LocationValue | null };
     profile: {
       firstName: string; lastName: string; phone: string | null;
@@ -166,12 +170,13 @@ export default function RequesterStepsPage() {
       workLocationSet: !!p.workLocation?.country,
       companyName: s.company?.bound ? s.company?.name ?? "" : "",
       companyBound: !!s.company?.bound,
-      coName: s.company?.bound ? s.company?.name ?? "" : "",
+      coName: s.company?.bound ? s.company?.legalName || s.company?.name || "" : "",
       // LS-E004: keep the website they typed (the server never sends a pending joiner the company's).
       coWebsite: prev.coWebsite,
       companyOwner: !!s.company?.owner,
       coIndustryId: s.company?.industryId ?? "",
-      coLegal: s.company?.legalName ?? "",
+      coLegal: s.company?.legalName ? s.company?.name ?? "" : "",
+      coTin: s.company?.tin ?? prev.coTin,
       coInvoiceEmail: s.company?.invoiceEmail ?? s.email ?? "",
       coDescription: s.company?.description ?? "",
       coAttest: prev.coAttest,
@@ -343,7 +348,8 @@ export default function RequesterStepsPage() {
   // ---- 2/3 — Company (BC-E002): name · website · industry · one address · invoice email; joining skips the details ----
   if (step === "company") {
     const joining = draft.companyBound && !draft.companyOwner;
-    const details = { legalName: draft.coLegal.trim() || null, industryId: draft.coIndustryId || null, invoiceEmail: draft.coInvoiceEmail.trim() || draft.email, description: draft.coDescription.trim() || null };
+    const shown = draft.coLegal.trim() || draft.coName.trim();
+    const details = { legalName: draft.coName.trim() || null, industryId: draft.coIndustryId || null, invoiceEmail: draft.coInvoiceEmail.trim() || draft.email, description: draft.coDescription.trim() || null };
     const after = fromReview ? "review" : undefined;
     const askToJoin = async () => {
       if (!coMatch) return;
@@ -364,7 +370,7 @@ export default function RequesterStepsPage() {
     const submitCompany = async () => {
       if (coMatch) return askToJoin();
       if (joining) return save({ companyBound: true }, after);
-      const unchanged = draft.companyBound && draft.coName.trim() === draft.companyName.trim() && !draft.coWebsite.trim();
+      const unchanged = draft.companyBound && shown === draft.companyName.trim() && !draft.coWebsite.trim();
       // Scott 10-15: a match found only now lights up Request Access; nothing else moves.
       if (!unchanged && (await checkMatch(draft.coWebsite))) return;
       if (!unchanged) {
@@ -372,7 +378,7 @@ export default function RequesterStepsPage() {
         setError(null);
         try {
           const site = draft.coWebsite.trim();
-          const r = await fetch("/api/company/define", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: draft.coName.trim(), website: site || null, attestation: draft.coAttest, companyTos: draft.coTos }) });
+          const r = await fetch("/api/company/define", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: shown, website: site || null, attestation: draft.coAttest, companyTos: draft.coTos }) });
           const b = await r.json().catch(() => ({}));
           if (!r.ok) {
             // A match that only shows now becomes Ask to Join, not a dead end.
@@ -381,6 +387,15 @@ export default function RequesterStepsPage() {
           }
         } finally {
           setBusy(false);
+        }
+      }
+      if (draft.coTin.trim()) {
+        // Scott 10-16: optional TIN, saved on the company; a TIN another company holds stops here.
+        const r = await fetch("/api/company", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ein: draft.coTin.trim() }) });
+        if (!r.ok) {
+          const b = await r.json().catch(() => ({}));
+          setError(b.match?.kind === "tin" ? TIN_TAKEN : b.error ?? "Could not save the Tax ID.");
+          return;
         }
       }
       await save({ companyBound: true, companyDetails: details }, after);
@@ -403,9 +418,10 @@ export default function RequesterStepsPage() {
             <>
               <CompanyIdentityFields
                 name={draft.coName}
-                legal={draft.coLegal}
+                dba={draft.coLegal}
+                tin={draft.coTin}
                 website={draft.coWebsite}
-                onChange={(p) => { if (p.website !== undefined) setCoMatch(null); edit({ ...(p.name !== undefined ? { coName: p.name } : {}), ...(p.legal !== undefined ? { coLegal: p.legal } : {}), ...(p.website !== undefined ? { coWebsite: p.website } : {}) }); }}
+                onChange={(p) => { if (p.website !== undefined) setCoMatch(null); edit({ ...(p.name !== undefined ? { coName: p.name } : {}), ...(p.dba !== undefined ? { coLegal: p.dba } : {}), ...(p.tin !== undefined ? { coTin: p.tin } : {}), ...(p.website !== undefined ? { coWebsite: p.website } : {}) }); }}
                 joining={joining}
                 joinedName={draft.companyName}
                 match={coMatch}
@@ -413,10 +429,9 @@ export default function RequesterStepsPage() {
                 busy={busy}
                 onRequestAccess={() => void askToJoin()}
                 onWebsiteBlur={() => void checkMatch(draft.coWebsite)}
-                legalHint="The name on your invoices, if it's different from the company name."
                 waitNote="ordering"
                 nameSide={
-                  <Field label="Company Email *" hint="Where we send invoices. No tax ID or W-9 needed.">
+                  <Field label="Company Email *" hint="Where we send invoices.">
                     <TextInput type="email" value={draft.coInvoiceEmail} onChange={(e) => edit({ coInvoiceEmail: e.target.value })} placeholder={draft.email} autoComplete="email" />
                   </Field>
                 }

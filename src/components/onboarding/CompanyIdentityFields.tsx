@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { Field, TextInput } from "@/components/onboarding/controls";
 
 // The Company step's top block, shared by buyer and seller registration (SR-E002): Company Name (+ Legal Name),
@@ -16,7 +15,8 @@ export async function findCoMatch(site: string): Promise<CoMatch> {
 
 export function CompanyIdentityFields({
   name,
-  legal,
+  dba,
+  tin,
   website,
   onChange,
   joining,
@@ -26,14 +26,15 @@ export function CompanyIdentityFields({
   busy,
   onRequestAccess,
   onWebsiteBlur,
-  legalHint,
   waitNote,
   nameSide,
 }: {
+  /** Scott 10-16: Company Name is the LEGAL name; DBA is the name they trade under (optional). */
   name: string;
-  legal: string;
+  dba: string;
+  tin: string;
   website: string;
-  onChange: (patch: { name?: string; legal?: string; website?: string }) => void;
+  onChange: (patch: { name?: string; dba?: string; tin?: string; website?: string }) => void;
   joining: boolean;
   joinedName: string;
   match: CoMatch;
@@ -41,13 +42,11 @@ export function CompanyIdentityFields({
   busy: boolean;
   onRequestAccess: () => void;
   onWebsiteBlur: () => void;
-  legalHint: string;
   /** What waits on approval: "ordering" (buyers) or "selling" (sellers). */
   waitNote: string;
   /** Scott 10-16: Company Email sits beside Company Name (both sides). */
   nameSide?: React.ReactNode;
 }) {
-  const [showLegal, setShowLegal] = useState(false);
   return (
     <>
       <div className="space-y-3">
@@ -65,25 +64,24 @@ export function CompanyIdentityFields({
         )}
         {!match && (
           <>
-            {nameSide && !joining ? (
+            {!joining ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Company Name *">
-                  <TextInput value={name} onChange={(e) => onChange({ name: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" />
+                  <TextInput value={name} onChange={(e) => onChange({ name: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing LLC" />
+                </Field>
+                <Field label="Doing Business As (DBA) Name">
+                  <TextInput value={dba} onChange={(e) => onChange({ dba: e.target.value })} placeholder="Acme" />
                 </Field>
                 {nameSide}
+                <Field label="Tax ID Number (TIN)">
+                  <TextInput value={tin} onChange={(e) => onChange({ tin: e.target.value })} placeholder="12-3456789" inputMode="numeric" />
+                </Field>
               </div>
             ) : (
               <Field label="Company Name *">
-                <TextInput value={joining ? joinedName : name} onChange={(e) => onChange({ name: e.target.value })} autoComplete="organization" placeholder="Acme Manufacturing" className="sm:max-w-[50%]" disabled={joining} />
+                <TextInput value={joinedName} autoComplete="organization" className="sm:max-w-[50%]" disabled />
               </Field>
             )}
-            {!joining && (showLegal || legal ? (
-              <Field label="Legal Name" hint={legalHint}>
-                <TextInput value={legal} onChange={(e) => onChange({ legal: e.target.value })} placeholder="Acme Holdings LLC" className="sm:max-w-[50%]" />
-              </Field>
-            ) : (
-              <button type="button" onClick={() => setShowLegal(true)} className="-mt-1 text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Legal name is different?</button>
-            ))}
           </>
         )}
       </div>

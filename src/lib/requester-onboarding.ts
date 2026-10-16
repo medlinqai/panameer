@@ -140,7 +140,7 @@ async function loadRequester(viewer: Viewer) {
         select: {
           status: true,
           role: true,
-          company: { select: { id: true, name: true, tax_type: true, industry_id: true, invoice_email: true, legal_name: true, description: true } },
+          company: { select: { id: true, name: true, tax_type: true, industry_id: true, invoice_email: true, legal_name: true, description: true, tin: true } },
         },
       },
       site: {
@@ -227,6 +227,7 @@ export async function getRequesterState(viewer: Viewer) {
       industryId: membership?.status === "APPROVED" ? membership.company.industry_id ?? null : null,
       invoiceEmail: membership?.status === "APPROVED" ? membership.company.invoice_email ?? null : null,
       description: membership?.status === "APPROVED" ? membership.company.description ?? null : null,
+      tin: membership?.status === "APPROVED" ? membership.company.tin ?? null : null,
       // Only when it differs from the company name (v1 stores them the same).
       legalName: membership?.status === "APPROVED" && membership.company.legal_name && membership.company.legal_name !== membership.company.name ? membership.company.legal_name : null,
     },
