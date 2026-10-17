@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMe } from "@/components/MeProvider";
 import { formatCents } from "@/lib/display";
+import { waitingLine as waitingText } from "@/lib/pending-join-copy";
 import type { CartGroup } from "@/lib/cart";
 
 const BTN_K = "inline-flex min-h-11 items-center justify-center bg-ink px-6 text-[14px] font-semibold text-surface hover:bg-ink-hover disabled:opacity-40";
@@ -14,7 +15,9 @@ type WR = { id: string; wrNumber: string | null; description: string; descriptio
 // JW-E008: the buyer's Work Request (Incomplete) — lines by provider, a description, then Submit (one work order per seller).
 export function CartView({ groups, totalCents, currency, hasCompany, workRequest }: { groups: CartGroup[]; totalCents: number; currency: string; hasCompany: boolean; workRequest?: WR }) {
   const router = useRouter();
-  const { refresh } = useMe();
+  const { me, refresh } = useMe();
+  // PB-E002: while the company admin hasn't approved them, Submit stays visible but waits.
+  const waiting = me?.pendingJoin ?? null;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gate, setGate] = useState<{ items: { company: string; item: string; done: boolean; href?: string }[]; isAdmin: boolean } | null>(null);
@@ -98,11 +101,12 @@ export function CartView({ groups, totalCents, currency, hasCompany, workRequest
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink pt-4">
         <span className="text-[18px] font-bold">Total {formatCents(totalCents, currency)}</span>
         {hasCompany ? (
-          <button type="button" data-place-order disabled={busy || needsDescription} title={needsDescription ? "Add a description first" : undefined} onClick={() => post({ action: "place", description })} className={BTN_K}>{busy ? "Submitting…" : "Submit"}</button>
+          <button type="button" data-place-order disabled={busy || needsDescription || !!waiting} title={needsDescription ? "Add a description first" : undefined} onClick={() => post({ action: "place", description })} className={BTN_K}>{busy ? "Submitting…" : "Submit"}</button>
         ) : (
           <Link href="/company" className={BTN_K}>Add Your Company to Submit</Link>
         )}
       </div>
+      {waiting && <p data-waiting-line className="mt-2 text-right text-[13px] text-ink-2">{waitingText(waiting)}</p>}
       {groups.length > 1 && <p className="mt-2 text-right text-[12.5px] text-ink-2">One work order per provider.</p>}
       {error && <p role="alert" className="mt-2 text-right text-[13.5px] font-semibold text-magenta-dark">{error}</p>}
       {gate && (

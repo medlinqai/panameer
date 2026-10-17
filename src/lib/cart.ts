@@ -1,5 +1,6 @@
 import type { PaymentEvent, PaymentTerms, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { pendingJoin, waitingLine } from "@/lib/pending-join";
 import { notify } from "@/lib/notifications";
 import { formatCents } from "@/lib/display";
 import { resolveCommissionBps } from "@/lib/application-commissions";
@@ -175,6 +176,9 @@ export async function setDescription(viewer: Viewer, description: string) {
 export async function placeOrder(viewer: Viewer, input: { description?: string | null } = {}): Promise<{ orderId: string; providerName: string; open: boolean }[]> {
   const p = await me(viewer);
   if (!p.company?.p_account_id) throw new CartError("Add your company before placing an order", "NO_COMPANY");
+  // PB-E002: only Submit waits for the company admin; everything built is kept.
+  const waiting = await pendingJoin(p.id);
+  if (waiting) throw new CartError(waitingLine(waiting));
   const pAccountId = p.company.p_account_id;
   const lines = await loadLines(p.id);
   if (!lines.length) throw new CartError("Your work request is empty");

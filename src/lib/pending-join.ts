@@ -15,8 +15,8 @@ export async function pendingJoin(personId: string): Promise<PendingJoin | null>
   return { companyId: pending.company.id, company: pending.company.name, admin: name };
 }
 
-/** PB-E002: the one line on every button that waits. */
-export const waitingLine = (p: PendingJoin) => `Waiting for ${p.admin} at ${p.company} to approve you. We'll email you the moment they do.`;
+export { waitingLine } from "@/lib/pending-join-copy";
+import { waitingLine } from "@/lib/pending-join-copy";
 
 export class PendingJoinError extends Error {
   constructor(public pending: PendingJoin) {

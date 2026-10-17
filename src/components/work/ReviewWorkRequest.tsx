@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useMe } from "@/components/MeProvider";
+import { waitingLine as waitingText } from "@/lib/pending-join-copy";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 
 function AppWizardShell(props: React.ComponentProps<typeof WizardShell>) {
@@ -66,6 +68,8 @@ export function ReviewStep({
       ? [draft?.startDate, draft?.endDate].filter(Boolean).join(" → ")
       : null;
 
+  // PB-E002: Post waits for the company admin; the draft is kept.
+  const waiting = useMe().me?.pendingJoin ?? null;
   return (
     <AppWizardShell
       title="Looking Good — Here's Your Work Request"
@@ -77,6 +81,7 @@ export function ReviewStep({
       onContinue={() => setConfirm(true)}
       continueLabel="Post Work Request"
       continueDisabled={
+        !!waiting ||
         !draft ||
         draft.skillIds.length === 0 ||
         identityGaps.length > 0 ||
@@ -84,6 +89,7 @@ export function ReviewStep({
       }
     >
       {error && <Notice>{error}</Notice>}
+      {waiting && <p data-waiting-line className="mb-4 text-[13.5px] text-ink-2">{waitingText(waiting)}</p>}
 
       {/* WHO IS ASKING — THE POST GATE, STATED BEFORE THE BUTTON */}
       {identityGaps.length > 0 && (

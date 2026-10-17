@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { pendingJoin, waitingLine } from "@/lib/pending-join";
 import { scopedToPAccount, withPAccount, type Viewer } from "@/lib/access";
 import { sendEmail } from "@/lib/resend";
 import { appBaseUrl } from "@/lib/verification";
@@ -518,7 +519,10 @@ export async function missingIdentityForPerson(buyerPersonId: string): Promise<P
 
 /** Post a DRAFT → POSTED + posted_at (PAccount-scoped; immutable after). */
 export async function postWorkRequest(viewer: Viewer, id: string) {
-  const { pAccountId } = await resolveBuyer(viewer);
+  const { pAccountId, personId } = await resolveBuyer(viewer);
+  // PB-E002: publishing waits for the company admin; the draft is kept.
+  const waiting = await pendingJoin(personId);
+  if (waiting) throw new WorkRequestError(waitingLine(waiting), "INVALID");
   const wr = await loadOwned(viewer, id, pAccountId);
   if (wr.status === "OPEN") {
     // Idempotent-friendly: already posted.

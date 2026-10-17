@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { pendingJoin } from "@/lib/pending-join";
 import { isVisible, missingForBuyers } from "@/lib/visibility";
 import {
   scopedToPAccount,
@@ -133,5 +134,6 @@ export async function getMe(viewer: Viewer) {
         }
       : null,
     orgCompanyCount,
+    pendingJoin: await pendingJoin(person.id),
   };
 }

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMe } from "@/components/MeProvider";
+import { waitingLine as waitingText } from "@/lib/pending-join-copy";
 import { BTN, BTN_K } from "@/components/catalog/WizardParts";
 
 // CAT-E006: the customer's Accept · Ask for Changes · Decline; the provider's Send / Revise.
@@ -12,6 +14,8 @@ export function EstimateActions({ id, party, status, sent, workOrderId }: { id: 
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // PB-E002: accepting into an order waits for the company admin.
+  const waiting = useMe().me?.pendingJoin ?? null;
   const post = async (body: object) => {
     setBusy(true);
     setError(null);
@@ -28,7 +32,7 @@ export function EstimateActions({ id, party, status, sent, workOrderId }: { id: 
       {workOrderId && <Link href={`/orders/${workOrderId}`} className={BTN_K}>Open the Work Order</Link>}
       {party === "CUSTOMER" && status === "SENT" && !mode && (
         <div className="flex flex-wrap gap-3">
-          <button type="button" disabled={busy} onClick={() => post({ action: "decide", id, decision: "ACCEPT" })} data-accept className={BTN_K}>Accept</button>
+          <button type="button" disabled={busy || !!waiting} onClick={() => post({ action: "decide", id, decision: "ACCEPT" })} data-accept className={BTN_K}>Accept</button>
           <button type="button" onClick={() => setMode("CHANGES")} className={BTN}>Ask for Changes</button>
           <button type="button" onClick={() => setMode("DECLINE")} className={BTN}>Decline</button>
         </div>
@@ -42,6 +46,7 @@ export function EstimateActions({ id, party, status, sent, workOrderId }: { id: 
           </div>
         </div>
       )}
+      {party === "CUSTOMER" && status === "SENT" && waiting && <p data-waiting-line className="mt-2 text-[12.5px] text-ink-2">{waitingText(waiting)}</p>}
       {party === "CUSTOMER" && status === "SENT" && <p className="mt-2 text-[12.5px] text-ink-2">Accept turns this into a work order; the provider then accepts its terms.</p>}
       {party === "PROVIDER" && (status === "DRAFT" || status === "CHANGES_REQUESTED") && (
         <div className="flex flex-wrap gap-3">

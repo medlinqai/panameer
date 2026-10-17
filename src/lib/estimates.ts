@@ -2,6 +2,7 @@ import { assertCanSign } from "@/lib/your-path";
 import { randomBytes } from "node:crypto";
 import { Prisma, type BillingCycle, type EstimateLineKind, type PaymentTerms } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { pendingJoin, waitingLine } from "@/lib/pending-join";
 import { wrNumber } from "@/lib/requisition";
 import { notify } from "@/lib/notifications";
 import { sendEmail } from "@/lib/resend";
@@ -179,6 +180,10 @@ export async function decideEstimate(viewer: Viewer, id: string, decision: "ACCE
   const note = clean(comment, 2000);
   if (decision === "CHANGES" && (!note || note.length < 3)) throw new EstimateError("Say what you'd like changed", "INVALID");
   // WN-E001: accepting needs the buyer's billing details and the provider's company linked (no tax forms).
+  if (decision === "ACCEPT" && e.customer_person_id) {
+    const waiting = await pendingJoin(e.customer_person_id);
+    if (waiting) throw new EstimateError(waitingLine(waiting), "INVALID");
+  }
   if (decision === "ACCEPT" && e.customer_person_id) await assertCanSign(e.customer_person_id, e.customer_person_id, e.provider_person_id);
   const rev = e.revisions[0];
   const now = new Date();

@@ -63,6 +63,8 @@ export type Me = {
     subscriptionTier: "BASIC" | "BUSINESS_PLUS";
   } | null;
   orgCompanyCount: number;
+  /** PB-E001: the company this person is waiting to join (null once they belong to one). */
+  pendingJoin: { companyId: string; company: string; admin: string } | null;
 };
 
 export type PublicProviderProfile = {
