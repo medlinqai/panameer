@@ -48,7 +48,7 @@ export function CreateWhatYouSell() {
   if (!s) return <p className="py-10 text-ink-2">{error ?? "Loading…"}</p>;
 
   const shell = (body: React.ReactNode, next: { label: string; onClick: () => void; disabled?: boolean }) => (
-    <div className="mx-auto w-full max-w-3xl" data-create-what-you-sell>
+    <div className="mx-auto w-full max-w-5xl" data-create-what-you-sell>
       <StepRail steps={STOPS} current={stop} review={false} reached={reached} onPick={go} />
       <p className="mt-4 text-[12px] font-bold tracking-[0.1em] text-magenta-dark">STEP {stop + 1} OF 3 · {STOPS[stop].label.toUpperCase()}</p>
       {body}

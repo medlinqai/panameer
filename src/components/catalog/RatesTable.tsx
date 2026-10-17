@@ -12,7 +12,7 @@ export type RateRow = { id: string; serviceTypeId: string; rateCents: number | n
 const PER: Record<string, string> = { HOUR: "/hr", DAY: "/day", WEEK: "/wk", MONTH: "/mo", SESSION: "/session", VISIT: "/visit", EACH: "each" };
 const DELIVERY: Record<string, string> = { ONSITE: "Onsite", OFFSITE: "Offsite", EITHER: "Either" };
 const EXPENSES = ["AT_COST", "INCLUDED", "NOT_APPLICABLE"] as const;
-const COLS = "md:grid-cols-[56px_minmax(0,1.5fr)_minmax(0,1.15fr)_minmax(0,1fr)_72px_84px_minmax(0,1.3fr)]";
+const COLS = "md:grid-cols-[56px_minmax(0,1.4fr)_minmax(150px,1fr)_minmax(140px,1fr)_72px_84px_minmax(0,1.2fr)]";
 export const ADD_RATE_EVENT = "pm:add-rate";
 const dollars = (c: number | null | undefined) => (c != null ? String(c / 100) : "");
 
