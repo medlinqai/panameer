@@ -20,6 +20,7 @@ export function WhatYouDoModes({ skills, isAdmin, onSkip }: { skills: { id: stri
   const [enabled, setEnabled] = useState(true);
   const [adding, setAdding] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [allBusy, setAllBusy] = useState(false);
 
   const read = useCallback(() => fetch("/api/provider/capabilities").then((r) => (r.ok ? r.json() : null)).catch(() => null), []);
   useEffect(() => {
@@ -70,8 +71,43 @@ export function WhatYouDoModes({ skills, isAdmin, onSkip }: { skills: { id: stri
     await post({ action: "addMany", mode, domainIds: [g[0].domainId], systemItemIds: g[0].systemItemId ? [g[0].systemItemId] : [] });
   };
 
+  // Scott 10-17: like the old Kind of Work page — tick once for ALL lines, then change only the odd one.
+  const rows = [...groups.values()];
+  const [busyAll, setBusyAll] = [allBusy, setAllBusy];
+  const allHave = (mode: Mode) => rows.length > 0 && rows.every((g) => g.some((c) => c.mode === mode));
+  const setAll = async (mode: Mode, on: boolean) => {
+    setBusyAll(true); setMsg(null);
+    const send = (body: object) => fetch("/api/provider/capabilities", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
+    const jobs: Promise<unknown>[] = [];
+    for (const g of rows) {
+      const hit = g.find((c) => c.mode === mode);
+      if (on && !hit) {
+        if (g.length === 1 && !g[0].confirmed) jobs.push(send({ action: "confirm", id: g[0].id, mode }));
+        else if (g[0].domainId) jobs.push(send({ action: "addMany", mode, domainIds: [g[0].domainId], systemItemIds: g[0].systemItemId ? [g[0].systemItemId] : [] }));
+      } else if (!on && hit && g.length > 1) jobs.push(send({ action: "remove", id: hit.id }));
+    }
+    await Promise.all(jobs);
+    const b = await read();
+    if (b?.capabilities) setCaps(b.capabilities);
+    setBusyAll(false);
+  };
+
   return (
     <div className="mt-3" data-modes>
+      {rows.length > 0 && (
+        <fieldset data-modes-all disabled={busyAll} className="mb-2 border border-line bg-surface p-3">
+          <legend className="px-1 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">For all of these</legend>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            {MODES.map((m) => (
+              <label key={m.mode} className="flex cursor-pointer items-center gap-2 text-[14.5px] font-semibold">
+                <input type="checkbox" className="h-4 w-4 accent-[var(--color-ink,#272334)]" checked={allHave(m.mode)} onChange={(e) => void setAll(m.mode, e.target.checked)} />
+                {m.label}
+              </label>
+            ))}
+          </div>
+          <p className="mt-1.5 text-[12.5px] text-ink-2">{busyAll ? "Saving…" : "Tick once for every line below, then change only the odd one."}</p>
+        </fieldset>
+      )}
       {groups.size === 0 && <p className="text-[14px] text-ink-2">Nothing on your profile yet — add what you know below.</p>}
       {[...groups.entries()].map(([k, g]) => (
         <div key={k} data-capability-row className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2.5">
