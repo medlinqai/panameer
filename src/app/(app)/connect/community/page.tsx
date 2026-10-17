@@ -10,7 +10,7 @@ import { unreadCount } from "@/lib/messages";
 import { Avatar } from "@/components/Avatar";
 import { ConnectControls } from "@/components/community/ConnectControls";
 import { ConnectionsControls } from "@/components/community/ConnectionsControls";
-import { membersView, parseFilters, appliedChips } from "@/lib/connections-filter";
+import { membersView, connectionsView, parseFilters, appliedChips } from "@/lib/connections-filter";
 import { getProviderFieldTree } from "@/lib/catalog";
 import type { PickerTree } from "@/components/console/SkillTreePicker";
 
@@ -22,9 +22,10 @@ export default async function CommunityPage({ searchParams }: { searchParams: Pr
   const viewer = await getSessionViewer();
   if (!viewer) return null;
   const f = parseFilters(await searchParams);
-  const [unread, view, fieldTree, skills] = await Promise.all([
+  const [unread, view, mine, fieldTree, skills] = await Promise.all([
     unreadCount(viewer),
     membersView(viewer, f),
+    connectionsView(viewer, f),
     getProviderFieldTree(),
     prisma.skill.findMany({ where: { status: "ACTIVE", visible_to_members: true, pillar_id: { not: null }, review_pending: false, merged_into_id: null }, orderBy: { name: "asc" }, select: { id: true, name: true, role_id: true, pillar_id: true } }),
   ]);
@@ -39,7 +40,18 @@ export default async function CommunityPage({ searchParams }: { searchParams: Pr
     <>
       <PageTabs wrap eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/connect/community" />
       <div className="mx-auto max-w-5xl">
-        <h1 className="mb-4 font-display text-[26px] font-bold tracking-[-0.5px]">Community</h1>
+        <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">Community</h1>
+        {/* Scott 10-17 (like LinkedIn): Community is people you're not connected to yet — say so, and link to your connections. */}
+        <p className="mb-4 mt-1 text-[13.5px] text-ink-2">
+          People on Panameer you're not connected to yet.{" "}
+          <Link href="/connect/connections" className="font-semibold text-magenta-dark underline underline-offset-4">See My Connections ({mine.total}) →</Link>
+        </p>
+        {f.q && mine.rows.length > 0 && (
+          <p data-in-connections className="mb-3 border border-line bg-surface px-3 py-2 text-[13.5px]">
+            <b>{mine.rows.length}</b> of your connections match &ldquo;{f.q}&rdquo;.{" "}
+            <Link href={`/connect/connections?q=${encodeURIComponent(f.q)}`} className="font-semibold text-magenta-dark underline underline-offset-4">See them in My Connections →</Link>
+          </p>
+        )}
         <ConnectionsControls
           scope="members"
           f={f}
