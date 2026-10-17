@@ -135,12 +135,12 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
           </button>
           <label className="block min-w-0 flex-1">
             <span className={LABEL}>Name</span>
-            <input value={row.name} maxLength={NAME_MAX} onChange={(e) => set({ name: e.target.value })} placeholder={typeName} aria-label={`${typeName} name`} className={FIELD} />
+            <input value={row.name} maxLength={NAME_MAX} onChange={(e) => set({ name: e.target.value })} placeholder="Product name" aria-label={`${typeName} name`} className={FIELD} />
           </label>
         </div>
         <label className="block min-[1151px]:order-2">
           <span className={LABEL}>Price</span>
-          <span className="flex items-center gap-1"><input inputMode="decimal" value={row.price} onChange={(e) => set({ price: e.target.value })} aria-label={`${typeName} price`} className={FIELD} />{row.pricing === "RECURRING" && <span className="text-[12px] text-ink-2">/mo</span>}</span>
+          <span className="flex items-center gap-1"><span className="text-[13px] text-ink-2">$</span><input inputMode="decimal" placeholder="0.00" value={row.price} onChange={(e) => set({ price: e.target.value.replace(/[^\d.,]/g, "") })} aria-label={`${typeName} price`} className={FIELD} />{row.pricing === "RECURRING" && <span className="text-[12px] text-ink-2">/mo</span>}</span>
         </label>
         <label className="block min-[1151px]:order-3">
           <span className={LABEL}>Per</span>
