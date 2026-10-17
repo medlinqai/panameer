@@ -7,13 +7,7 @@ import { GetFoundRates } from "@/components/onboarding/GetFoundRates";
 import { ProductsGrid } from "@/components/catalog/ProductsGrid";
 
 // CWS-E002–E005: Create What You Sell, slimmed — three stops in the app casing. Plain words; fits one screen.
-type Item = { id: string; name: string };
-type Pkg = { id?: string | null; name: string; included: string; priceCents: number | null; perMonth: boolean; readyDays: number | null };
-type State = {
-  doLines: string[]; servicesOn: { name: string; rateCents: number; unit: string | null }[]; productsOn: { name: string; priceCents: number; monthly: boolean }[];
-  live: boolean; title: string; skills: Item[]; suggestions: Item[]; industries: Item[]; allIndustries: Item[];
-  hourlyCents: number | null; monthly: { priceCents: number | null; hours: number | null } | null; packages: (Pkg & { status?: string })[];
-};
+type State = { live: boolean; servicesOn: { name: string; rateCents: number; unit: string | null }[]; productsOn: { name: string; priceCents: number; monthly: boolean }[] };
 // CG-E001: four stops (Scott 10-17).
 // RF-E006 (Scott 10-17): the catalog is services and products only — skills are built at registration.
 const STOPS = [{ key: "services", label: "Your Services" }, { key: "products", label: "Your Service Products" }, { key: "enable", label: "Enable" }];

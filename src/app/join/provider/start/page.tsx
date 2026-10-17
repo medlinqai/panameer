@@ -6,10 +6,11 @@ import { displayFirstName } from "@/lib/display";
 import { sellerRegistration } from "@/lib/seller-registration";
 
 // SO-E002: the seller's registration start page — the buyer's /join/requester/start with seller words.
+// RF-E007: Résumé · Seller · Company (addresses are part of Company).
 const CARDS = [
-  { title: "Seller", blurb: "Who you are, and how buyers reach you." },
-  { title: "Company", blurb: "Your company, what it does and its industry." },
-  { title: "Locations", blurb: "Your company's addresses and where you work." },
+  { title: "Résumé", blurb: "We read it and build the profile buyers search on." },
+  { title: "Seller", blurb: "Your photo, title and where you work." },
+  { title: "Company", blurb: "Your company, what it does, and where payments go." },
 ];
 
 export default async function SellerStartPage() {
@@ -26,7 +27,7 @@ export default async function SellerStartPage() {
   return (
     <StartPage
       headline={`Hey ${displayFirstName(person.first_name)}. Let's get you set up to sell.`}
-      lead="Tell us who you are, who your company is, and where the work happens. Then build your profile and catalog."
+      lead="Upload your résumé, check what we read, then tell us who you are and who your company is. Your catalog comes after."
       icon="people"
       cards={CARDS}
       footnote="It takes about 3 minutes and you can edit it later. We'll save as you go."
