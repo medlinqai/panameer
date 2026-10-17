@@ -91,7 +91,14 @@ export async function capabilityOptions() {
 
 export async function myCapabilities(viewer: Viewer) {
   const p = await me(viewer);
-  return capabilitiesFor(p.id);
+  const have = await capabilitiesFor(p.id);
+  if (have.length) return have;
+  // Scott 10-17: a résumé read before taxonomy v2 left What You Do empty — build the lines from the profile's skills once.
+  const skills = await prisma.providerSkill.findMany({ where: { provider_profile_id: p.id }, orderBy: { weight: "desc" }, take: 60, select: { skill_id: true } });
+  const made = skills.length ? await capabilitiesFromSkills(p.id, [{ skillIds: skills.map((s) => s.skill_id), text: "" }]).catch(() => 0) : 0;
+  const { capabilitiesFromSpecializations } = await import("@/lib/spec-to-capability");
+  const more = await capabilitiesFromSpecializations(p.id).catch(() => 0);
+  return made + more ? capabilitiesFor(p.id) : have;
 }
 
 export async function addCapability(viewer: Viewer, input: { mode: WorkMode; domainId: string; knowledgeSkillId?: string | null; systemItemId?: string | null; workRoleId?: string | null }) {
