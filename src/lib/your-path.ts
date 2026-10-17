@@ -85,12 +85,12 @@ export async function lifecycleFor(personId: string) {
       payments,
     ]);
     const buyerFacts: LifecycleFacts = { link: !!m || pending, find: jobs + wrs + estimates + orders > 0, order: orders > 0, approve: approved > 0, pay: paid > 0 };
-    return { steps: BUYER_ROAD, road: "buyer" as const, ...lifecycleStatus(buyerFacts, BUYER_ROAD), waiting: pending ? { key: "link", label: "Waiting for approval" } : null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
+    return { steps: BUYER_ROAD, road: "buyer" as const, ...lifecycleStatus(buyerFacts, BUYER_ROAD), waiting: pending ? { key: "link", label: "Waiting for Company Approval" } : null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
   }
   // SO-E004: until they're live, stops 3 (profile) and 4 (products & services) point at the Get Found run.
   const live = !!p.providerProfile?.onboarding_completed_at;
   const road = live ? PROVIDER_ROAD : PROVIDER_ROAD.map((s) => (s.key === "list" ? { ...s, href: "/catalog/create" } : s.key === "profile" ? { ...s, href: "/join/provider/register" } : s));
-  return { steps: road, road: "provider" as const, ...lifecycleStatus(facts, PROVIDER_ROAD), waiting: (pending ? { key: "register", label: "Waiting for approval" } : null) as { key: string; label: string } | null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
+  return { steps: road, road: "provider" as const, ...lifecycleStatus(facts, PROVIDER_ROAD), waiting: (pending ? { key: "register", label: "Waiting for Company Approval" } : null) as { key: string; label: string } | null, isAdmin: m?.role === "ADMIN", companyName: check?.company ?? null };
 }
 
 export async function lifecycleForUser(userId: string) {
