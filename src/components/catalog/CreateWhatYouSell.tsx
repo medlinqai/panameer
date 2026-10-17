@@ -9,7 +9,7 @@ import { GetFoundRates } from "@/components/onboarding/GetFoundRates";
 import { ProductsGrid } from "@/components/catalog/ProductsGrid";
 
 // CWS-E002–E005: Create What You Sell, slimmed — three stops in the app casing. Plain words; fits one screen.
-type State = { live: boolean; servicesOn: { name: string; rateCents: number; unit: string | null }[]; productsOn: { name: string; priceCents: number; monthly: boolean }[] };
+type State = { live: boolean; servicesOn: { name: string; rateCents: number; unit: string | null }[]; productsOn: { name: string; priceCents: number; monthly: boolean }[]; missing?: { key: string; label: string; href: string }[] };
 // CG-E001: four stops (Scott 10-17).
 // RF-E006 (Scott 10-17): the catalog is services and products only — skills are built at registration.
 const STOPS = [{ key: "services", label: "Your Services" }, { key: "products", label: "Your Service Products" }, { key: "enable", label: "Enable" }];
@@ -99,7 +99,9 @@ export function CreateWhatYouSell() {
       {lines.length ? <ul className="mt-1 text-[15px]">{lines.map((l, i) => <li key={i}>{l}</li>)}</ul> : <p className="mt-1 text-[14px] text-ink-3">{empty}</p>}
     </section>
   );
-  const ready = s.servicesOn.length > 0 || s.productsOn.length > 0;
+  // VR-E003: the same rule as the hidden-profile bar — Enable stays off until nothing is missing.
+  const missing = s.missing ?? [];
+  const ready = (s.servicesOn.length > 0 || s.productsOn.length > 0) && missing.length === 0;
   return shell(
     <div className="mt-1" data-stop="enable">
       <h1 className="text-[26px] font-extrabold">{s.live ? "You're live" : "Ready to go live?"}</h1>
@@ -107,7 +109,18 @@ export function CreateWhatYouSell() {
         {block("Your services", s.servicesOn.map((x) => `${x.name} — ${money(x.rateCents)}${per(x.unit)}`), 0, "No services on.")}
         {block("Your service products", s.productsOn.map((x) => `${x.name} — ${money(x.priceCents)}${x.monthly ? "/mo" : ""}`), 1, "No products on.")}
       </div>
-      {!ready && <p className="mt-3 text-[13.5px] font-semibold text-magenta-dark">Turn on at least one service or one product to enable your catalog.</p>}
+      {!s.servicesOn.length && !s.productsOn.length && <p className="mt-3 text-[13.5px] font-semibold text-magenta-dark">Turn on at least one service or one product to enable your catalog.</p>}
+      {missing.length > 0 && (
+        <p className="mt-3 text-[13.5px]" data-enable-missing>
+          <b>Before you enable, add:</b>{" "}
+          {missing.map((m, i) => (
+            <span key={m.key}>
+              {i > 0 && " · "}
+              <a href={m.href} className="font-semibold text-magenta-dark underline underline-offset-4">{m.label}</a>
+            </span>
+          ))}
+        </p>
+      )}
     </div>,
     { label: "Enable My Catalog", disabled: !ready, onClick: async () => { if (await post({ stop: "enable" })) { refreshMe(); router.push("/dashboard"); router.refresh(); } } },
   );

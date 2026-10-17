@@ -19,14 +19,16 @@ async function me(viewer: Viewer) {
 export async function createState(viewer: Viewer) {
   const p = await me(viewer);
   await ensureDefaultRates(viewer).catch(() => null);
-  const [svcOn, prodOn] = await Promise.all([
+  const [svcOn, prodOn, missing] = await Promise.all([
     prisma.providerService.findMany({ where: { provider_profile_id: p.id, active: true, rate_cents: { not: null } }, orderBy: { sort_order: "asc" }, select: { name: true, rate_cents: true, uom: true } }),
     prisma.serviceProduct.findMany({ where: { provider_profile_id: p.id, offered: true, price_cents: { not: null } }, orderBy: [{ sort_order: "asc" }, { created_at: "asc" }], select: { title: true, price_cents: true, pricing_type: true } }),
+    missingBeforeEnable(p.id),
   ]);
   return {
     live: !!p.onboarding_completed_at,
     servicesOn: svcOn.map((x) => ({ name: x.name, rateCents: x.rate_cents!, unit: x.uom })),
     productsOn: prodOn.map((x) => ({ name: x.title, priceCents: x.price_cents!, monthly: x.pricing_type === "RECURRING" })),
+    missing,
   };
 }
 
