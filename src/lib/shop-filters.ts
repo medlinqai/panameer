@@ -55,7 +55,7 @@ export const STORE_PRICE = [
 export const STORE_DELIVERY = [
   { value: "site", label: "At your site" },
   { value: "shipped", label: "Shipped" },
-  { value: "remote", label: "Remote" },
+  { value: "offsite", label: "Offsite" },
 ];
 export const ORACLE_PROCESSES = ["P2P", "R2R", "SCM", "HCM", "CX", "EPM"];
 export const ORACLE_CATEGORY = "Technology";
@@ -63,7 +63,7 @@ export const ORACLE_CATEGORY = "Technology";
 const deliveryOk = (p: ShopProduct, d: string) => {
   const site = p.delivery === "ONSITE" || p.delivery === "EITHER" || p.delivery == null;
   const away = p.delivery === "OFFSITE" || p.delivery === "EITHER" || p.delivery == null;
-  return d === "site" ? site : d === "remote" ? p.talent && away : d === "shipped" ? !p.talent && away : true;
+  return d === "site" ? site : d === "offsite" ? p.talent && away : d === "shipped" ? !p.talent && away : true;
 };
 const processText = (p: ShopProduct) => `${p.title} ${p.summary ?? ""} ${p.maskLabel}`;
 export const hasProcess = (p: ShopProduct, process: string) => new RegExp(`\\b${process}\\b`, "i").test(processText(p));

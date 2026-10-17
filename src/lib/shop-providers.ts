@@ -52,7 +52,7 @@ export async function listShopProviders(seesTest: boolean, f: { q?: string; cate
     if (f.category && !groups.includes(f.category)) continue;
     if (f.delivery === "site" && !p.delivery.some((d) => d === "ONSITE" || d === "EITHER")) continue;
     if (f.delivery === "shipped" && !p.delivery.some((d) => d === "OFFSITE" || d === "EITHER")) continue;
-    if (f.delivery === "remote") continue; // remote is for talent; trades are at your site or shipped
+    if (f.delivery === "offsite") continue; // offsite is for talent; trades come to your site or ship
     out.push(p);
   }
   return out.sort((a, b) => a.company.localeCompare(b.company));

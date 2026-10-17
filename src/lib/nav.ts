@@ -145,7 +145,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Find Jobs", href: "/find-work" },
     { label: "Best Matches", href: "/find-work?tab=best" },
     { label: "All Jobs", href: "/find-work?tab=recent" },
-    { label: "My Jobs", href: "/hire", requires: "canHireTalent" },
+    { label: "My Jobs", href: "/hire/jobs", requires: "canHireTalent" },
     { label: "Proposal Requests", href: "/find-work?tab=invitations" },
     { label: "My Proposals", href: "/find-work?tab=proposals" },
     { label: "Saved", href: "/find-work?tab=saved" },
@@ -161,7 +161,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
   ],
   "/hire": [
     { label: "Find Jobs", href: "/find-work", requires: "canProvideServices" },
-    { label: "My Jobs", href: "/hire", requires: "canHireTalent" },
+    { label: "My Jobs", href: "/hire/jobs", requires: "canHireTalent" },
     { label: "Post a Job", href: "/create-work", requires: "canHireTalent" },
     { label: "My Proposals", href: "/find-work?tab=proposals", requires: "canProvideServices" },
   ],

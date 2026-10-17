@@ -1,134 +1,105 @@
 import Link from "next/link";
-import { FreeLine } from "@/components/marketing/FreeLine";
 import { redirect } from "next/navigation";
-import { checkTransact, guardPage } from "@/lib/guard";
-import { getSessionViewer } from "@/lib/session";
-import { Button } from "@/components/casing/Button";
-import { formatCents } from "@/lib/display";
-import { listWorkRequests, type WorkRequestRow } from "@/lib/hire";
-import {
-  JOB_STATUS_LABEL,
-  jobStatusPillClass,
-} from "@/lib/work-request-status";
+import { guardPage } from "@/lib/guard";
+import { seesTestAccounts } from "@/lib/admin/test-accounts";
+import { ShopTabs } from "@/components/shop/ShopTabs";
+import { taxonomyV2 } from "@/lib/platform-settings";
+import { BUDGET, HOW_LONG, HireTalentError, talentSupply, tellUsWhatYouNeed, WHERE } from "@/lib/hire-talent";
+import { WorkRequestError } from "@/lib/work-request";
 
-export const metadata = { title: "My Jobs · Panameer" };
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Hire Talent · Panameer" };
 
-function budgetLine(r: WorkRequestRow): string | null {
-  if (r.budgetAmountCents != null)
-    return `${formatCents(r.budgetAmountCents, r.currency)}${r.budgetType === "HOURLY" ? " / hr" : ""}`;
-  if (r.budgetMinCents != null && r.budgetMaxCents != null)
-    return `${formatCents(r.budgetMinCents, r.currency)}–${formatCents(r.budgetMaxCents, r.currency)}${
-      r.budgetType === "HOURLY" ? " / hr" : ""
-    }`;
-  if (r.budgetMinCents != null) return `From ${formatCents(r.budgetMinCents, r.currency)}`;
-  return null;
-}
+const FIELD = "border border-line bg-bg-soft px-2.5 py-2 text-[14px] text-ink";
 
-function dateLine(r: WorkRequestRow): string | null {
-  if (r.startDate && r.endDate) return `${r.startDate} → ${r.endDate}`;
-  if (r.startDate) return `From ${r.startDate}`;
-  if (r.endDate) return `Until ${r.endDate}`;
-  return null;
-}
+// SH-E004: Tell us what you need (who · how long · budget · where) → a Work Request and its matches; below, who's available — masked.
+export default async function Page({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const viewer = await guardPage("canHireTalent");
+  const { error } = await searchParams;
+  const { who, groups } = await talentSupply(await seesTestAccounts(viewer));
 
-export default async function Page() {
-  await guardPage("canHireTalent");
-  const viewer = await getSessionViewer();
-  if (!viewer) redirect("/login?callbackUrl=%2Fhire");
-
-  // THE COMPANY GATE, SAME AS `/create-work`. A work request commits a company
-  const transact = await checkTransact(viewer);
-  if (!transact.ok) {
-    redirect(`/company?blocked=${transact.reason}&from=${encodeURIComponent("/hire")}`);
+  async function seeMatches(form: FormData) {
+    "use server";
+    const v = await guardPage("canHireTalent");
+    let id: string;
+    try {
+      id = await tellUsWhatYouNeed(v, await seesTestAccounts(v), {
+        who: String(form.get("who") ?? ""), other: String(form.get("other") ?? ""), howLong: String(form.get("howLong") ?? ""), budget: String(form.get("budget") ?? ""), where: String(form.get("where") ?? ""),
+      });
+    } catch (e) {
+      if (e instanceof HireTalentError || e instanceof WorkRequestError) redirect(`/hire?error=${encodeURIComponent(e.message)}`);
+      throw e;
+    }
+    redirect(`/work-requests/${id}`);
   }
 
-  const requests = await listWorkRequests(viewer);
-  const drafts = requests.filter((r) => r.status === "DRAFT").length;
-  const posted = requests.filter((r) => r.status === "OPEN").length;
-
   return (
-    <div className="mx-auto w-full max-w-5xl">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="pm-white-page mx-auto w-full max-w-6xl">
+      <ShopTabs services={await taxonomyV2()} />
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
-            My Jobs
-          </h1>
-          {/* NARROWED TO WHAT IS PROVEN. The brief's line ended *"You pay only for */}
-          <FreeLine claim="Post work and search providers, free." />
-          <p className="mt-1.5 text-[15px] text-ink-2">
-            {requests.length === 0
-              ? "You haven't posted a job yet."
-              : `${requests.length} request${requests.length === 1 ? "" : "s"} · ${drafts} draft${
-                  drafts === 1 ? "" : "s"
-                } · ${posted} posted`}
-          </p>
+          <h1 className="mt-4 text-[26px] font-extrabold">Hire Talent</h1>
+          <p className="text-[14px] text-ink-2">Who&apos;s available, without names. Tell us what you need and we&apos;ll match you — then you see who they are.</p>
         </div>
-        <Button href="/create-work">Post a Job</Button>
+        <Link href="/hire/jobs" className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">My Jobs →</Link>
       </div>
 
-      {requests.length === 0 ? (
-        <div className="mt-8 rounded-brand border border-dashed border-line px-6 py-12 text-center">
-          <p className="text-[16px] font-bold">Nothing here yet</p>
-          <p className="mx-auto mt-2 max-w-md text-[14.5px] leading-relaxed text-ink-2">
-            A job describes what you need done. The wizard walks you
-            through it in nine short steps and saves as you go, so you can stop
-            and come back.
-          </p>
-          <Button href="/create-work" className="mt-6">
-            Post your first Job
-          </Button>
+      <form action={seeMatches} className="mt-4 rounded-[10px] border-2 border-ink bg-white p-4" data-tell-us>
+        <b className="text-[16px]">Tell us what you need</b>
+        {error && <p role="alert" className="mt-2 text-[13.5px] font-semibold text-magenta-dark">{error}</p>}
+        <div className="mt-2.5 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+          <label className="flex flex-col gap-1 text-[12px] font-bold">
+            Who
+            <select name="who" className={FIELD} defaultValue={who[0] ?? "other"}>
+              {who.map((w) => <option key={w} value={w}>{w}</option>)}
+              <option value="other">Something else…</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[12px] font-bold">
+            How long
+            <select name="howLong" className={FIELD} defaultValue="ONE_TO_3_MONTHS">
+              {HOW_LONG.map((h) => <option key={h.value} value={h.value}>{h.label}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[12px] font-bold">
+            Budget
+            <select name="budget" className={FIELD} defaultValue="100to150">
+              {BUDGET.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[12px] font-bold">
+            Where
+            <select name="where" className={FIELD} defaultValue="either">
+              {WHERE.map((w) => <option key={w.value} value={w.value}>{w.label}</option>)}
+            </select>
+          </label>
         </div>
-      ) : (
-        <ul className="mt-7 grid gap-3">
-          {requests.map((r) => {
-            const budget = budgetLine(r);
-            const dates = dateLine(r);
-            return (
-              <li key={r.id} className="rounded-brand border border-line bg-white p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <Link
-                      href={`/work-requests/${r.id}`}
-                      className="block truncate text-[16.5px] font-bold hover:text-magenta"
-                    >
-                      {r.title.trim() || "Untitled request"}
-                    </Link>
-                    <p className="mt-1 text-[13.5px] text-ink-2">
-                      {r.lineCount} line{r.lineCount === 1 ? "" : "s"}
-                      {r.providerNames.length > 0 && (
-                        <> · {r.providerNames.join(", ")}</>
-                      )}
-                      {dates && <> · {dates}</>}
-                      {budget && <> · {budget}</>}
-                    </p>
-                  </div>
-                  {/* ONE PLACE . This read */}
-                  <span className={jobStatusPillClass(r.status)}>
-                    {JOB_STATUS_LABEL[r.status]}
-                  </span>
-                </div>
+        <label className="mt-3 flex flex-col gap-1 text-[12px] font-bold">
+          Something else? Say who
+          <input name="other" placeholder="e.g. Oracle Payroll lead for a UK rollout" className={FIELD} />
+        </label>
+        <button type="submit" className="mt-3.5 inline-flex min-h-10 w-full max-w-[360px] items-center justify-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover">See my matches</button>
+        <p className="mt-2 text-[12.5px] text-ink-3">This is your Work Request. You can add details later.</p>
+      </form>
 
-                {/* THE COMPLETE GATE, SAID OUT LOUD ON THE LIST TOO. It reads */}
-                <p className="mt-2.5 text-[13.5px]">
-                  {r.completeness.complete ? (
-                    <span className="font-semibold text-emerald-700">
-                      ✓ Every line has a provider and a price
-                    </span>
-                  ) : r.completeness.reason === "NO_LINES" ? (
-                    <span className="text-ink-2">No lines yet</span>
-                  ) : (
-                    <span className="text-amber-700">
-                      {r.completeness.gaps.length} of {r.lineCount} line
-                      {r.lineCount === 1 ? "" : "s"} still need
-                      {r.completeness.gaps.length === 1 ? "s" : ""} a{" "}
-                      {[...new Set(r.completeness.gaps.flatMap((g) => g.missing))].join(" or ")}
-                    </span>
-                  )}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
+      <h2 className="mb-2.5 mt-7 text-[18px] font-bold">Available now</h2>
+      {groups.length === 0 ? (
+        <p className="text-[14px] text-ink-3">No talent is live yet — tell us what you need and we&apos;ll find them.</p>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3" data-available-now>
+          {groups.map((g) => (
+            <div key={g.area} className="flex items-center gap-3 rounded-[10px] border border-line bg-white p-3.5" data-talent-group>
+              <span aria-hidden className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full bg-bg-soft text-ink-3">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-7 w-7"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
+              </span>
+              <div className="min-w-0">
+                <p><span className="text-[22px] font-extrabold">{g.count}</span> <b>{g.area}</b></p>
+                <p className="text-[12.5px] text-ink-2">{g.kinds}</p>
+                <p className="text-[12px] text-ink-3">{g.rate ? `${g.rate} · ` : ""}names after you tell us what you need</p>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

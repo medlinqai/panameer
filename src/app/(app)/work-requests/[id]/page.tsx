@@ -90,7 +90,7 @@ export default async function Page({
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <BackLink href="/hire" label="My Jobs" />
+      <BackLink href="/hire/jobs" label="My Jobs" />
 
       <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
@@ -314,7 +314,7 @@ export default async function Page({
       )}
 
       <div className="mt-9 flex flex-wrap items-center gap-4 border-t border-line pt-6">
-        <Button href="/hire" variant="ghost">
+        <Button href="/hire/jobs" variant="ghost">
           My Jobs
         </Button>
         {posted && (
