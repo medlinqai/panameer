@@ -5,6 +5,8 @@ import { saveCatalogService, publishCatalog, ensureDefaultRates } from "@/lib/bu
 import { saveCatalogProduct, publishCatalogProduct, productTypes } from "@/lib/catalog-products";
 import { addIndustries } from "@/lib/industry";
 import { publishProfile, recomputeCompleteness } from "@/lib/onboarding";
+import { capabilitiesFor } from "@/lib/capabilities";
+import { taxonomyV2 } from "@/lib/platform-settings";
 import { SELF_ADDED_WEIGHT } from "@/lib/provider-rollup";
 
 // CWS-E002–E005: Create What You Sell, slimmed — What You Do · What You Charge · Enable My Catalog. Owner-scoped from the session.
@@ -44,7 +46,17 @@ export async function createState(viewer: Viewer) {
     : [];
   const hourly = services.find((s) => HOURLY.includes(s.name));
   const monthly = services.find((s) => s.name === MONTHLY);
+  // CG-E004: the Enable summary — what you do (line + how), services on, products on.
+  const v2 = await taxonomyV2();
+  const doLines = v2 ? (await capabilitiesFor(p.id)).map((c) => c.line) : skills.map((x) => x.skill.name);
+  const [svcOn, prodOn] = await Promise.all([
+    prisma.providerService.findMany({ where: { provider_profile_id: p.id, active: true, rate_cents: { not: null } }, orderBy: { sort_order: "asc" }, select: { name: true, rate_cents: true, uom: true } }),
+    prisma.serviceProduct.findMany({ where: { provider_profile_id: p.id, offered: true, price_cents: { not: null } }, orderBy: [{ sort_order: "asc" }, { created_at: "asc" }], select: { title: true, price_cents: true, pricing_type: true } }),
+  ]);
   return {
+    doLines,
+    servicesOn: svcOn.map((x) => ({ name: x.name, rateCents: x.rate_cents!, unit: x.uom })),
+    productsOn: prodOn.map((x) => ({ name: x.title, priceCents: x.price_cents!, monthly: x.pricing_type === "RECURRING" })),
     live: !!p.onboarding_completed_at,
     title: person?.title ?? "",
     skills: skills.map((s) => s.skill),
@@ -132,6 +144,11 @@ export async function saveWhatYouCharge(viewer: Viewer, input: { hourlyCents: nu
 /** Stop 3. Publish the rates and packages, then the profile. */
 export async function enableMyCatalog(viewer: Viewer) {
   const p = await me(viewer);
+  const [rates, products] = await Promise.all([
+    prisma.providerService.count({ where: { provider_profile_id: p.id, active: true, rate_cents: { not: null } } }),
+    prisma.serviceProduct.count({ where: { provider_profile_id: p.id, offered: true, price_cents: { not: null } } }),
+  ]);
+  if (!rates && !products) throw new CwsError("Turn on at least one service or one product first");
   await publishCatalog(viewer);
   // CG-E003: a row switched off stays a Draft.
   const drafts = await prisma.serviceProduct.findMany({ where: { provider_profile_id: p.id, status: "DRAFT", offered: true }, select: { id: true } });

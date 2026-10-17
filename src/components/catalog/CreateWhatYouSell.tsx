@@ -11,6 +11,7 @@ import { ProductsGrid } from "@/components/catalog/ProductsGrid";
 type Item = { id: string; name: string };
 type Pkg = { id?: string | null; name: string; included: string; priceCents: number | null; perMonth: boolean; readyDays: number | null };
 type State = {
+  doLines: string[]; servicesOn: { name: string; rateCents: number; unit: string | null }[]; productsOn: { name: string; priceCents: number; monthly: boolean }[];
   live: boolean; title: string; skills: Item[]; suggestions: Item[]; industries: Item[]; allIndustries: Item[];
   hourlyCents: number | null; monthly: { priceCents: number | null; hours: number | null } | null; packages: (Pkg & { status?: string })[];
 };
@@ -115,30 +116,28 @@ export function CreateWhatYouSell({ isAdmin = false }: { isAdmin?: boolean }) {
     );
   }
 
-  // ---- Stop 3: Enable My Catalog ---------------------------------------------
-  const charge = [
-    s.hourlyCents != null && `${money(s.hourlyCents)} an hour`,
-    s.monthly?.priceCents && `${money(s.monthly.priceCents)} a month${s.monthly.hours ? ` (${s.monthly.hours} hours)` : ""}`,
-    ...s.packages.map((p) => `${p.name} — ${money(p.priceCents)}${p.perMonth ? " a month" : ""}`),
-  ].filter(Boolean) as string[];
-  const row = (label: string, value: string, to: number) => (
-    <div className="flex flex-wrap items-baseline gap-3 border-b border-line px-5 py-3 last:border-0">
-      <dt className="w-32 shrink-0 text-[13px] font-bold uppercase tracking-wide text-ink-2">{label}</dt>
-      <dd className="min-w-0 flex-1 text-[15px]">{value || "—"}</dd>
-      <button type="button" onClick={() => go(to)} className="text-[13.5px] font-bold text-magenta hover:underline">Edit</button>
-    </div>
+  // ---- Stop 4: Enable (CG-E004) ------------------------------------------------
+  const per = (u: string | null) => ({ HOUR: "/hr", DAY: "/day", WEEK: "/wk", MONTH: "/mo", SESSION: "/session", VISIT: "/visit" } as Record<string, string>)[u ?? ""] ?? "";
+  const block = (title: string, lines: string[], to: number, empty: string) => (
+    <section className="border-b border-line px-5 py-3 last:border-0" data-enable-block={title}>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-[13px] font-bold uppercase tracking-wide text-ink-2">{title}</h2>
+        <button type="button" onClick={() => go(to)} className="text-[13.5px] font-bold text-magenta hover:underline">Edit</button>
+      </div>
+      {lines.length ? <ul className="mt-1 text-[15px]">{lines.map((l, i) => <li key={i}>{l}</li>)}</ul> : <p className="mt-1 text-[14px] text-ink-3">{empty}</p>}
+    </section>
   );
+  const ready = s.servicesOn.length > 0 || s.productsOn.length > 0;
   return shell(
     <div className="mt-1" data-stop="enable">
       <h1 className="text-[26px] font-extrabold">{s.live ? "You're live" : "Ready to go live?"}</h1>
-      <dl className="mt-4 overflow-hidden border border-line">
-        {row("Title", s.title, 0)}
-        {row("Skills", s.skills.map((x) => x.name).join(", "), 0)}
-        {row("Industries", s.industries.map((x) => x.name).join(", "), 0)}
-        {row("You charge", charge.join(" · "), 1)}
-      </dl>
-      <p className="mt-4 text-[13.5px] text-ink-2">Later, in My Catalog (optional): expenses, onsite vs. remote, open to offers, package pictures, process areas, deliverables, payment terms.</p>
+      <div className="mt-4 overflow-hidden border border-line">
+        {block("What you do", s.doLines, 0, "Nothing yet.")}
+        {block("Your services", s.servicesOn.map((x) => `${x.name} — ${money(x.rateCents)}${per(x.unit)}`), 1, "No services on.")}
+        {block("Your service products", s.productsOn.map((x) => `${x.name} — ${money(x.priceCents)}${x.monthly ? "/mo" : ""}`), 2, "No products on.")}
+      </div>
+      {!ready && <p className="mt-3 text-[13.5px] font-semibold text-magenta-dark">Turn on at least one service or one product to enable your catalog.</p>}
     </div>,
-    { label: "Enable My Catalog", onClick: async () => { if (await post({ stop: "enable" })) router.push("/dashboard"); } },
+    { label: "Enable My Catalog", disabled: !ready, onClick: async () => { if (await post({ stop: "enable" })) router.push("/dashboard"); } },
   );
 }
