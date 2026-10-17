@@ -528,6 +528,18 @@ export const NOTIFICATION_EVENTS = {
     body: () => "Approve or decline on your company's People tab.",
     href: () => "/company/team",
   },
+  // PB-E005: a join request has waited 2 business days — one reminder to the company's admins.
+  "company.join_reminder": {
+    event: "company.join_reminder",
+    recipient: "the company's admins",
+    category: "community.activity",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `${str(v, "askerName", "Someone")} is still waiting to join ${str(v, "companyName", "your company")}`,
+    body: () => "They can't submit their work request until you approve. Approve or decline on your company's People tab.",
+    href: () => "/company/team",
+  },
   "company.join_approved": {
     event: "company.join_approved",
     recipient: "the person who asked",

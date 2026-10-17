@@ -38,7 +38,7 @@ export const TICKETS_TERMINAL_STATUSES = statusesOwnedBy("done");
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-function newTicketCode(): string {
+export function newTicketCode(): string {
   const bytes = randomBytes(6);
   let out = "";
   for (const b of bytes) out += CODE_ALPHABET[b % CODE_ALPHABET.length];

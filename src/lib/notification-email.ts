@@ -29,6 +29,7 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "catalog.term_catches_on",
   "company.payout_changed",
   "company.join_approved",
+  "company.join_reminder",
   "company.join_declined",
   "group.question_asked",
   "work.proposal_received",

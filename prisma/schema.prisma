@@ -453,6 +453,9 @@ model CompanyMembership {
   /// How the request matched: "website:x.com" · "email:x.com" · "tin" (company v3).
   matched_on              String?
   auto_approved           Boolean          @default(false)
+  /// PB-E005: join-reminder stages — admin reminded at 2 business days, support ticket at 4 (one each).
+  reminded_at             DateTime?
+  escalated_at            DateTime?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
