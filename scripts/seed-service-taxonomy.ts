@@ -40,6 +40,7 @@ const ERP: C[] = [
   ] },
   { name: "Run", kind: "SERVICE_PRODUCT", types: [
     { name: "AI Agents", units: ["MONTH"], pricing: "RECURRING" },
+    { name: "App Extensions", units: ["MONTH"], pricing: "RECURRING", description: "A ready-made app that extends a procurement application" },
     { name: "Health Checks & Assessments", units: ["EACH"], pricing: "FIXED" },
     { name: "Configuration & Setup", units: ["EACH"], pricing: "FIXED", code: "81111500" },
   ] },
@@ -49,6 +50,7 @@ const SAAS: C[] = [
     { name: "App Subscription", units: ["MONTH"], pricing: "RECURRING" },
     { name: "Add-On Module", units: ["MONTH"], pricing: "RECURRING" },
     { name: "AI Agent", units: ["MONTH"], pricing: "RECURRING" },
+    { name: "App Extension", units: ["MONTH"], pricing: "RECURRING", description: "A ready-made app that extends a business application" },
   ] },
 ];
 // Decision 4: pillars fold into areas where the match is clear; the rest are listed for Scott.
