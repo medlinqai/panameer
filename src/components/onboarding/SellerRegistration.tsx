@@ -38,7 +38,7 @@ type Reg = {
   own: (LocationValue & { line1?: string | null }) | null;
 };
 
-export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; onLeave: () => void }) {
+export function SellerRegistration({ onDone, onLeave, preview = null, onRefresh }: { onDone: () => void; onLeave: () => void; preview?: React.ReactNode; onRefresh?: () => void }) {
   const [ready, setReady] = useState(false);
   const [step, setStep] = useState<Step>("resume");
   const [reached, setReached] = useState(0);
@@ -128,6 +128,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
 
   const go = (s: Step) => {
     setError(null);
+    if (s === "review") onRefresh?.();
     setStep(s);
     setReached((n) => Math.max(n, STEPS.indexOf(s)));
     void fetch("/api/onboarding/provider/registration", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ step: s }) }).catch(() => {});
@@ -379,9 +380,18 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
               ]
         }
         locations={reviewLocs}
-        next="On your Dashboard: Create What You Sell. Your résumé and skills, your rates and products, then enable your catalog (about 10 minutes)."
+        next="On your Dashboard: Create What You Sell — your services and rates, your service products, then enable your catalog."
         onEdit={(sec) => go(sec === "work" ? "resume" : sec === "person" ? "seller" : "company")}
       />
+      {preview && (
+        <section data-review-profile className="mx-auto mt-8 w-full max-w-5xl">
+          <div className="mb-3 flex items-baseline justify-between border-b border-line pb-2">
+            <h2 className="text-[12px] font-bold uppercase tracking-[0.12em]">Your profile, as buyers see it</h2>
+            <button type="button" onClick={() => go("resume")} className="text-[13px] font-bold text-magenta-dark">Edit</button>
+          </div>
+          {preview}
+        </section>
+      )}
     </WizardShell>
   );
 }
