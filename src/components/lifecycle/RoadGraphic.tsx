@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { BUYER_ROAD, BUYER_PHASE_LABELS, PROVIDER_ROAD, ROAD_PHASES, roadLabelThree, type LifecycleStep, type RoadPhase } from "@/lib/user-levels";
 
 // Provider road v6.1 (mockup provider_road_v6_1_mockup_2026-10-13): built from boxes and text, not a scaled SVG,
@@ -15,8 +16,10 @@ function Lock({ color }: { color: string }) {
 
 /** `current` = index of the stop you're on (0-based); `road.length` = every stop done. BD-E005: buyers pass BUYER_ROAD;
  *  `waiting` marks a stop counted done but not yet confirmed (a pending company join). */
-export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider road", waiting }: { current: number; hereLabel?: string; road?: LifecycleStep[]; label?: string; waiting?: { key: string; label: string } | null }) {
-  const here = Math.min(Math.max(current, 0), road.length);
+export type RoadCount = { n: number; label: string; sub?: ReactNode; href?: string };
+/** `counts` (admin): every stop drawn in its colour, no "you are here", with a count block under each stop. */
+export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider road", waiting, counts }: { current: number; hereLabel?: string; road?: LifecycleStep[]; label?: string; waiting?: { key: string; label: string } | null; counts?: RoadCount[] }) {
+  const here = counts ? -1 : Math.min(Math.max(current, 0), road.length);
   const n = road.length;
   const phases = (["join", "win", "paid"] as RoadPhase[]).map((ph) => ({ ph, span: road.filter((s) => s.phase === ph).length })).filter((x) => x.span > 0);
   return (
@@ -48,6 +51,13 @@ export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider r
                 {a}<br />{b}<br />{c}
               </span>
               {wait && <span className="mt-1 text-[11.5px] font-bold text-magenta-dark">{waiting!.label}</span>}
+              {counts?.[i] && (
+                <a href={counts[i].href} data-box={road[i].key} className="mt-2 block w-[calc(100%-8px)] border border-line bg-surface px-1 py-1.5 hover:border-ink">
+                  <b className="block text-[24px] leading-tight" data-box-count>{counts[i].n}</b>
+                  <span className="block text-[12px] font-bold">{counts[i].label}</span>
+                  {counts[i].sub && <span className="mt-0.5 block text-[11px] text-ink-2">{counts[i].sub}</span>}
+                </a>
+              )}
             </div>
           );
         })}

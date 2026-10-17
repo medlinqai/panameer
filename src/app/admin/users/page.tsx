@@ -1,5 +1,5 @@
 import { StoppedPartway } from "@/components/admin/StoppedPartway";
-import { Fragment } from "react";
+import { RoadGraphic } from "@/components/lifecycle/RoadGraphic";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TestAccountControls } from "@/components/admin/TestAccountControls";
@@ -429,7 +429,7 @@ export default async function Page({
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
               <h2 className="text-[20px] font-bold">User Progression</h2>
-              <p className="text-[13px] text-ink-2">Where every user is right now. Each person is in exactly one box.</p>
+              <p className="text-[13px] text-ink-2">Where every user is right now. Each person is counted at one stop. Click a count to see who.</p>
             </div>
             <nav className="flex gap-1 text-[12.5px]" aria-label="Period">
               {(["7", "30", "all"] as const).map((k) => {
@@ -442,36 +442,24 @@ export default async function Page({
               })}
             </nav>
           </div>
-          <ol className="mt-3 flex flex-col gap-1 md:flex-row md:items-stretch md:gap-0">
-            {BOXES.map((b, i) => (
-              <Fragment key={b.key}>
-                <li className="min-w-0 md:flex-1">
-                  <a href={`?stage=${b.key}`} data-box={b.key} className="block h-full border border-ink bg-surface p-2.5 hover:bg-surface-hover" style={{ borderTop: "4px solid #5C6485" }}>
-                    <span className="block truncate text-[10.5px] font-bold tracking-[0.08em] text-ink-3">STEP {i + 1} · {LIFECYCLE[i].step.toUpperCase()}</span>
-                    <b className="block text-[28px] leading-tight" data-box-count>{boxCounts[i]}</b>
-                    <span className="block text-[13.5px] font-bold">{b.label}</span>
-                    <span className="block text-[12px] text-ink-2">{b.hint}</span>
-                    <span className="mt-1.5 block text-[12px] text-ink-3">
-                      {i === 0
-                        ? <span className={oldestWaiting > 7 ? "font-semibold text-[#b26b00]" : ""}>oldest: {oldestWaiting} days</span>
-                        : movedOn[i] !== undefined
-                          ? `${movedOn[i]} moved on ${period ? `in ${period} days` : "all time"}`
-                          : "—"}
-                    </span>
-                  </a>
-                </li>
-                {i < LIFECYCLE.length - 1 && (
-                  <li aria-hidden data-pass={rates[i] ?? ""} className="flex shrink-0 items-center justify-center py-0.5 text-[11.5px] font-bold text-ink-2 md:w-[30px] md:flex-col md:py-0">
-                    <span className="md:hidden">↓&nbsp;</span>
-                    <span className="max-md:hidden">→</span>
-                    <span>{rates[i] === null ? "—" : `${rates[i]}%`}</span>
-                  </li>
-                )}
-              </Fragment>
-            ))}
-          </ol>
+          {/* Scott 10-17: the same road users see, with the count under each stop */}
+          <div className="mt-3 overflow-x-auto"><div className="min-w-[760px]">
+            <RoadGraphic
+              current={-1}
+              road={LIFECYCLE}
+              label="User progression"
+              counts={BOXES.map((bx, i) => ({
+                n: boxCounts[i],
+                label: bx.label,
+                href: `?stage=${bx.key}`,
+                sub: i === 0
+                  ? <span className={oldestWaiting > 7 ? "font-semibold text-[#b26b00]" : ""}>Oldest: {oldestWaiting} days</span>
+                  : rates[i - 1] === null ? "—" : `${rates[i - 1]}% got here`,
+              }))}
+            />
+          </div></div>
           <p className="mt-2 text-[12.5px] text-ink-2" data-progression-total>
-            <b className="text-ink">{realPeople.length}</b> users · the boxes add up to this
+            <b className="text-ink">{realPeople.length}</b> users · the counts add up to this
             {drop && <> · Biggest drop: {BOXES[drop.i].label} → {BOXES[drop.i + 1].label} ({drop.r}%)</>}
           </p>
         </section>
