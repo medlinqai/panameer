@@ -98,7 +98,8 @@ export async function isSellerCompany(companyId: string): Promise<boolean> {
 
 /** SR-E003: a joiner's own work address (their own site; the company's addresses stay private until approval). */
 export async function saveOwnAddress(personId: string, l: Omit<Loc, "corporate" | "billTo" | "shipTo" | "remitTo">) {
-  if (!l.line1?.trim() || !l.country) throw new OnboardingError("Add the country and street", "INVALID");
+  // RF-E003: "Where you work" is city / state / country — the street is optional.
+  if (!l.country) throw new OnboardingError("Add the country you work in", "INVALID");
   const p = await prisma.person.findUniqueOrThrow({ where: { id: personId }, select: { company_id: true, site_id: true, site: { select: { company_id: true, addresses: { take: 1, orderBy: { created_at: "asc" }, select: { id: true } } } } } });
   const data = { ...addrData({ ...l, corporate: false, billTo: false, shipTo: true, remitTo: false }) };
   const own = p.site && p.site.company_id === p.company_id ? p.site : null;
@@ -115,5 +116,5 @@ export async function saveOwnAddress(personId: string, l: Omit<Loc, "corporate" 
 export async function ownAddress(personId: string): Promise<SavedLoc | null> {
   const p = await prisma.person.findUnique({ where: { id: personId }, select: { site: { select: { addresses: { take: 1, orderBy: { created_at: "asc" }, select: SELECT } } } } });
   const a = p?.site?.addresses[0];
-  return a && a.line1 ? toLoc(a) : null;
+  return a && (a.line1 || a.city || a.country) ? toLoc(a) : null;
 }

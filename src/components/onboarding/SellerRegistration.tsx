@@ -146,6 +146,8 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   if (step === "seller") {
     const next = () => run(async () => {
       await post("/api/onboarding/provider/registration", "POST", { seller: { firstName: person.firstName, lastName: person.lastName, title: person.title, phone: toE164(person.phone, phoneCountry) ?? person.phone } });
+      // RF-E003: the person's own work address (what the old Locations step saved for a non-owner).
+      await post("/api/onboarding/provider/registration", "POST", { own: { line1: own.line1 ?? null, city: own.city ?? null, state: own.state ?? null, country: own.country ?? null } });
       await load();
       go("company");
     });
@@ -153,9 +155,9 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
       <WizardShell
         {...shell}
         title="Who Is Selling?"
-        subtitle="This is the person buyers see on your profile and on proposals."
+        subtitle="Add your photo and check what we filled in."
         continueLabel="Next: Company"
-        continueDisabled={!personComplete(person, phoneCountry)}
+        continueDisabled={!personComplete(person, phoneCountry) || !own.country}
         onContinue={next}
       >
         <div className="mx-auto w-full max-w-xl space-y-4" data-seller-person-step>
@@ -168,6 +170,14 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
             titleHint="What you do, in one line — for example, Oracle Procurement Consultant."
             titlePlaceholder="Oracle Procurement Consultant"
             photoLine="Buyers see this next to your name on your profile and proposals. A clear headshot gets a faster response than an empty circle."
+            photoFirst
+            titleNote={imported && person.title ? "from your résumé — check it" : null}
+            after={
+              <div data-where-you-work>
+                <p className="mb-2 text-[14px] font-bold">Where you work *</p>
+                <LocationFields value={own} onChange={(p) => setOwn((o) => ({ ...o, ...p }))} compact />
+              </div>
+            }
           />
         </div>
       </WizardShell>

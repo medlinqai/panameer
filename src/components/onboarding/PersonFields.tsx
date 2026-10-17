@@ -21,6 +21,9 @@ export function PersonFields({
   titleHint,
   titlePlaceholder,
   photoLine,
+  photoFirst = false,
+  titleNote,
+  after,
 }: {
   values: PersonValues;
   onChange: (patch: Partial<PersonValues>) => void;
@@ -29,21 +32,15 @@ export function PersonFields({
   titleHint: string;
   titlePlaceholder: string;
   photoLine: string;
+  /** RF-E003: the seller page leads with the photo. */
+  photoFirst?: boolean;
+  /** e.g. "from your résumé — check it" */
+  titleNote?: string | null;
+  /** Extra fields after the phone (the seller's Where you work). */
+  after?: React.ReactNode;
 }) {
   const [photoModal, setPhotoModal] = useState(false);
-  return (
-    <>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="First Name *">
-          <TextInput value={values.firstName} onChange={(e) => onChange({ firstName: e.target.value })} autoComplete="given-name" />
-        </Field>
-        <Field label="Last Name *">
-          <TextInput value={values.lastName} onChange={(e) => onChange({ lastName: e.target.value })} autoComplete="family-name" />
-        </Field>
-      </div>
-      <Field label="Title *" hint={titleHint}>
-        <TextInput value={values.title} onChange={(e) => onChange({ title: e.target.value.slice(0, 42) })} maxLength={42} placeholder={titlePlaceholder} autoComplete="organization-title" />
-      </Field>
+  const photo = (
       <div className="flex flex-col items-center gap-5 border border-line p-6 sm:flex-row sm:items-center sm:text-left">
         <Avatar firstName={values.firstName} lastName={values.lastName} photoUrl={values.photoUrl} size={96} />
         <div className="min-w-0">
@@ -54,9 +51,26 @@ export function PersonFields({
           </button>
         </div>
       </div>
+  );
+  return (
+    <>
+      {photoFirst && photo}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="First Name *">
+          <TextInput value={values.firstName} onChange={(e) => onChange({ firstName: e.target.value })} autoComplete="given-name" />
+        </Field>
+        <Field label="Last Name *">
+          <TextInput value={values.lastName} onChange={(e) => onChange({ lastName: e.target.value })} autoComplete="family-name" />
+        </Field>
+      </div>
+      <Field label="Title *" hint={titleNote ? `${titleNote} · ${titleHint}` : titleHint}>
+        <TextInput value={values.title} onChange={(e) => onChange({ title: e.target.value.slice(0, 42) })} maxLength={42} placeholder={titlePlaceholder} autoComplete="organization-title" />
+      </Field>
+      {!photoFirst && photo}
       <div className="grid gap-3">
         <PhoneField value={values.phone} onChange={(next) => onChange({ phone: next })} country={phoneCountry} onCountryChange={onPhoneCountry} />
       </div>
+      {after}
       {/* `onUploaded` fires only after /api/profile/photo has saved it. */}
       <PhotoCropModal open={photoModal} onClose={() => setPhotoModal(false)} onUploaded={(photoUrl) => onChange({ photoUrl })} />
     </>
