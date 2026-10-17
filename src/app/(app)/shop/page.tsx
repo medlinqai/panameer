@@ -34,7 +34,7 @@ export default async function Page() {
       </form>
       <h1 className="mt-5 text-[26px] font-extrabold">Shop</h1>
       <p className="text-[14px] text-ink-2">
-        Things with a price, and vendors you can shop openly. Looking for people? <Link href="/hire" className="font-bold text-magenta-dark">Hire Talent →</Link>
+        Things with a price, and vendors you can shop openly. Looking to post your job? <Link href="/hire" className="font-bold text-magenta-dark">Hire Talent →</Link>
       </p>
       <div className="mt-3.5 grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-3" data-category-tiles>
         {groups.map((g) => {
