@@ -273,7 +273,7 @@ export function AccountMenu({
           </span>
           {/* SO-E004: a seller who hasn't gone live yet. */}
           {me?.providerProfile && !me.providerProfile.published && (
-            <span data-not-live className={"ml-2 hidden border px-1.5 py-px text-[11px] font-bold sm:inline " + (active ? "border-white text-white" : onDark ? "border-magenta text-magenta" : "border-magenta text-magenta-dark")}>Not live yet</span>
+            <span data-not-live className={"ml-2 hidden rounded-[4px] border px-1.5 py-px text-[11px] font-bold sm:inline " + (active ? "border-white text-white" : onDark ? "border-magenta text-magenta" : "border-magenta text-magenta-dark")}>Not live yet</span>
           )}
         </button>
       )}
