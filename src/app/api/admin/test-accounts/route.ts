@@ -8,6 +8,10 @@ import {
   removeTestAccounts,
   setTestFlag,
 } from "@/lib/admin/test-accounts";
+import { createMarketplaceTestSet } from "@/lib/admin/marketplace-test-set";
+
+// TD-E002: the marketplace set takes about a minute (23 accounts, photos, catalogs).
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const gate = await guardApi("canAdminister");
@@ -29,6 +33,8 @@ export async function POST(request: Request) {
       }
       case "create":
         return NextResponse.json({ ok: true, ...(await createTestSet(gate)) });
+      case "create-marketplace":
+        return NextResponse.json({ ok: true, ...(await createMarketplaceTestSet({ apply: true, actor: gate })) });
       case "remove":
         return NextResponse.json({
           ok: true,

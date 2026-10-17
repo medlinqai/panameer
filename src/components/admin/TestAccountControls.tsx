@@ -80,6 +80,18 @@ export function TestAccountControls({ filter }: { filter: "all" | "real" | "test
           {busy === "create" ? "Creating…" : "Create Test Set"}
         </button>
 
+        {/* TD-E002: 16 Oracle consultants, 5 other businesses, 2 buyers — live in Shop for test viewers. */}
+        <button type="button" className={BTN_2} disabled={busy !== null} onClick={async () => {
+          const json = await call("create-marketplace");
+          if (!json) return;
+          const rows = (json.rows as { result: string }[]) ?? [];
+          const created = rows.filter((r) => r.result === "created").length;
+          setSaid(`Marketplace set: created ${created}` + (rows.length - created ? ` · skipped ${rows.length - created} that already exist` : ""));
+          router.refresh();
+        }}>
+          {busy === "create-marketplace" ? "Creating… (about a minute)" : "Create Marketplace Test Set"}
+        </button>
+
         <button type="button" className={BTN_2} disabled={busy !== null} onClick={async () => {
           const json = await call("preview");
           if (!json) return;

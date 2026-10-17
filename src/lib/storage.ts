@@ -401,3 +401,12 @@ export async function uploadProductDetailsPdf(folder: string, file: { type: stri
   }
   return bucket.getPublicUrl(objectPath).data.publicUrl;
 }
+
+/** TD-E002: remove every profile photo in these people's folders (test-account clean-up). */
+export async function removePersonPhotos(personIds: string[]): Promise<void> {
+  const bucket = getStorageClient().from(PROFILE_PHOTO_BUCKET);
+  for (const id of personIds) {
+    const { data } = await bucket.list(id);
+    if (data?.length) await bucket.remove(data.map((f) => `${id}/${f.name}`));
+  }
+}

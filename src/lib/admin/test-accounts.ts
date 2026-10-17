@@ -125,9 +125,28 @@ export async function removeTestAccounts(
     rowCount: ids.length,
   });
 
+  await removeTestCompanies(ids);
   /** would be enough; the flag is repeated so that no single edit can turn this */
   const { count } = await prisma.user.deleteMany({ where: { id: { in: ids }, is_test: true } });
   return { removed: count, emails };
+}
+
+/** TD-E002: an account whose companies hold only test people goes too — companies, sites, people, profiles, rates, products, photos. */
+export async function removeTestCompanies(userIds: string[]): Promise<number> {
+  const persons = await prisma.person.findMany({ where: { user_id: { in: userIds } }, select: { id: true, company: { select: { p_account_id: true } } } });
+  const accts = await prisma.pAccount.findMany({
+    where: { id: { in: [...new Set(persons.map((p) => p.company.p_account_id))] } },
+    select: { id: true, companies: { select: { people: { select: { id: true, user: { select: { is_test: true } } } } } } },
+  });
+  const gone = accts.filter((a) => a.companies.every((c) => c.people.every((x) => x.user?.is_test === true)));
+  const people = gone.flatMap((a) => a.companies.flatMap((c) => c.people.map((x) => x.id)));
+  if (!people.length) return 0;
+  const profiles = await prisma.providerProfile.findMany({ where: { person_id: { in: people } }, select: { id: true } });
+  // provider_services has no relation to the profile, so it doesn't cascade.
+  await prisma.providerService.deleteMany({ where: { provider_profile_id: { in: profiles.map((p) => p.id) } } });
+  await (await import("@/lib/storage")).removePersonPhotos(people).catch((e) => console.error("[test-accounts] photo clean-up failed:", e));
+  await prisma.pAccount.deleteMany({ where: { id: { in: gone.map((a) => a.id) } } });
+  return gone.length;
 }
 
 /* ── the flag itself ────────────────────────────────────────────────────── */
