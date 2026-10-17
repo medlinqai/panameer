@@ -14,7 +14,7 @@ type Row = {
 };
 type Grid = { sellerName: string; types: { id: string; name: string; own: boolean }[]; rows: (Omit<Row, "key" | "leadDays" | "price"> & { leadDays: number | null; priceCents: number | null })[] };
 const NAME_MAX = 40;
-const SHORT_MAX = 50;
+const SHORT_MAX = 120;
 const EVENTS: { v: PayEvent; label: string }[] = [{ v: "ACCEPTANCE", label: "Acceptance" }, { v: "DOWNLOAD", label: "Download" }, { v: "INSTALLATION", label: "Installation" }, { v: "PAYMENT_REQUEST", label: "Payment Request" }];
 const defaultEvent = (pricing: Row["pricing"]): PayEvent => (pricing === "RECURRING" ? "INSTALLATION" : "ACCEPTANCE");
 let seq = 0;

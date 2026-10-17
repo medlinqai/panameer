@@ -20,7 +20,7 @@ const TONE: Record<string, [string, string]> = {
 };
 export const KIND_LABEL: Record<string, string> = { DELIVERABLE: "Deliverable", DEPLOYABLE: "AI Agent", HOURS: "Hours", BLANKET: "Blanket" };
 
-export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "providerProfileId" | "coverCode" | "coverUrl" | "coverStyle" | "typeName" | "terms" | "orders" | "fresh"> & { openToOffers?: boolean };
+export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "providerProfileId" | "coverCode" | "coverUrl" | "coverStyle" | "typeName" | "terms" | "orders" | "fresh"> & { summary?: string | null } & { openToOffers?: boolean };
 
 const code = (p: CardProduct) => (p.coverCode || p.title.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("")).toUpperCase().slice(0, 3);
 
@@ -62,6 +62,8 @@ export function ProductCard({ p, signedIn, own = false, inCartLineId = null }: {
       <div className="min-w-0">
         {tag && <span className="text-[10.5px] font-bold tracking-[0.12em] text-magenta-dark">{tag.toUpperCase()}</span>}
         <h3 className="text-[15px] font-bold leading-snug"><Link href={`/shop/${p.id}`} className="hover:underline">{p.title}</Link></h3>
+        {/* Scott 10-17: the short description (up to 120) shows on the card, two lines at most. */}
+        {p.summary && <p data-card-summary className="mt-0.5 line-clamp-2 text-[12.5px] leading-snug text-ink-2">{p.summary}</p>}
         <p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-ink-2">
           <Link href={`/providers/${p.providerProfileId}`} data-provider-link className="flex min-w-0 items-center gap-1.5 hover:underline">
             <Avatar firstName={p.providerFirst} lastName={p.providerLast} photoUrl={p.providerPhotoUrl} size={22} />

@@ -46,7 +46,7 @@ export async function enableMyCatalog(viewer: Viewer) {
 
 // ---- CG-E003: Your Service Products — a grid, one row per product, grouped by type ----------------------------
 export const NAME_MAX = 40;
-export const SHORT_MAX = 50;
+export const SHORT_MAX = 120;
 export type ProductRow = {
   id?: string | null; serviceTypeId: string; offered: boolean; name: string; short: string; pricing: "FIXED" | "RECURRING";
   paymentEvent: "ACCEPTANCE" | "DOWNLOAD" | "INSTALLATION" | "PAYMENT_REQUEST"; offers: boolean; leadDays: number | null; priceCents: number | null; imageUrl: string | null; pdfUrl: string | null;
