@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { shortTime } from "@/lib/short-time";
 import { SwipeRow } from "@/components/notifications/SwipeRow";
+import { useMe } from "@/components/MeProvider";
 
 export type Row = { id: string; title: string; body: string | null; href: string | null; category: string; at: string; unread: boolean; needsAction: boolean; dismissed?: boolean };
 export type Chip = { key: string; label: string; n: number };
@@ -14,9 +15,11 @@ const BTN = "inline-flex min-h-10 shrink-0 items-center whitespace-nowrap border
 // M-E014: Notifications is a plain list — dot · title · one-line summary · time; tap opens and marks read. Acting lives on the Worklist.
 export function NotificationList({ rows, chips, filter, more, openCount, unreadCount, now }: { rows: Row[]; chips: Chip[]; filter: string; more: boolean; openCount: number; unreadCount: number; now: number }) {
   const router = useRouter();
+  const { refresh: refreshMe } = useMe();
   const [busy, startTransition] = useTransition();
+  // Scott 10-17: the avatar / menu count updates as soon as you read or dismiss.
   const post = (action: string, ids?: string[]) =>
-    fetch("/api/notifications/act", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, ids }) }).then(() => startTransition(() => router.refresh()));
+    fetch("/api/notifications/act", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, ids }) }).then(() => { refreshMe(); startTransition(() => router.refresh()); });
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [undo, setUndo] = useState<{ ids: string[]; n: number } | null>(null);
   useEffect(() => {
@@ -33,6 +36,7 @@ export function NotificationList({ rows, chips, filter, more, openCount, unreadC
     const r = await fetch("/api/notifications/act", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "dismiss_all" }) });
     const j = (await r.json().catch(() => ({}))) as { ids?: string[]; count?: number };
     setUndo({ ids: j.ids ?? [], n: j.count ?? 0 });
+    refreshMe();
     startTransition(() => router.refresh());
   };
   const open = (r: Row) => {
