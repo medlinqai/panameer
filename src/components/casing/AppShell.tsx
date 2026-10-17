@@ -9,7 +9,7 @@ import { LifecycleHelpHost } from "@/components/lifecycle/LifecycleHelp";
 import { TaskPanel } from "@/components/console/TaskPanel";
 import { UsageBeacon } from "@/components/casing/UsageBeacon";
 
-export async function AppShell({ children }: { children: ReactNode }) {
+export async function AppShell({ children, locked = false }: { children: ReactNode; locked?: boolean }) {
 
   const viewer = await getSessionViewer();
   // Dynamic Branding: only approved members of the company get its theme; everyone else sees Panameer's.
@@ -35,13 +35,13 @@ export async function AppShell({ children }: { children: ReactNode }) {
       <LifecycleHelpHost />
       {viewer && <UsageBeacon />}
       <div className="flex min-w-0 flex-1 flex-col">
-        <AppBand />
+        <AppBand locked={locked} />
 
         {}
-        <HiddenProfileBanner />
+        {!locked && <HiddenProfileBanner />}
 
         {}
-        <main className={"flex-1 overflow-x-clip px-5 py-6 sm:px-8" + (isAdmin ? " lg:pr-[84px]" : "")}>{children}</main>
+        <main className={locked ? "pm-in-casing flex flex-1 flex-col" : "flex-1 overflow-x-clip px-5 py-6 sm:px-8" + (isAdmin ? " lg:pr-[84px]" : "")}>{children}</main>
 
         {}
         <MarketingFooter />

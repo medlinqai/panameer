@@ -177,7 +177,7 @@ export function ResumeDropzone({
           <>
             <p className="font-bold">Drag and drop your résumé here</p>
             <p className="mt-1 text-[14px] text-ink-2">
-              PDF, Word, or rich text · up to 5 MB
+              Word works best (it can also bring in your photo) · PDF and rich text work too · up to 5 MB
             </p>
             {/* E184 — the upload IS the consent now. The AI pass used to be a */}
             <p className="mt-1 text-[13px] text-ink-2">

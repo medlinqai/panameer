@@ -22,7 +22,8 @@ import {
 } from "@/lib/nav";
 import "./app-band.css";
 
-export function AppBand() {
+/** `locked` (Scott 10-17): registration shows the casing, but the menu isn't clickable until sign-up is finished. */
+export function AppBand({ locked = false }: { locked?: boolean } = {}) {
   const { me } = useMe();
   const pathname = usePathname();
 
@@ -88,6 +89,12 @@ export function AppBand() {
         <div className="pm-band-menu-row">
           {items.map((item) => {
             const active = isActive(item.href);
+            if (locked) return (
+              <span key={item.href} title="Open once you finish signing up" aria-disabled className={`pm-band-item flex flex-col items-center gap-0.5 ${BAND_TILE} px-3 py-1.5 text-[11.5px] font-medium leading-[14px] whitespace-nowrap cursor-not-allowed opacity-40 ` + BAND_IDLE}>
+                <RailIcon name={item.icon} />
+                <span className="pm-band-label">{item.label}</span>
+              </span>
+            );
             return (
               <Link
                 key={item.href}
