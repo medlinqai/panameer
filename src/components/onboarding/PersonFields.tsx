@@ -24,6 +24,7 @@ export function PersonFields({
   photoFirst = false,
   titleNote,
   after,
+  compact = false,
 }: {
   values: PersonValues;
   onChange: (patch: Partial<PersonValues>) => void;
@@ -38,6 +39,8 @@ export function PersonFields({
   titleNote?: string | null;
   /** Extra fields after the phone (the seller's Where you work). */
   after?: React.ReactNode;
+  /** Scott 10-17: one screen — photo left of name + title, short hints. */
+  compact?: boolean;
 }) {
   const [photoModal, setPhotoModal] = useState(false);
   const photo = (
@@ -52,6 +55,37 @@ export function PersonFields({
         </div>
       </div>
   );
+  if (compact) {
+    return (
+      <>
+        <div className="grid gap-4 sm:grid-cols-[150px_1fr]">
+          <div className="flex flex-col items-center gap-2 border border-line p-3 text-center" data-photo-compact>
+            <Avatar firstName={values.firstName} lastName={values.lastName} photoUrl={values.photoUrl} size={84} />
+            <p className="text-[13px] font-bold text-ink">Your Photo *</p>
+            <button type="button" onClick={() => setPhotoModal(true)} className="border border-ink bg-surface px-3 py-1.5 text-[12.5px] font-semibold text-ink transition-colors hover:bg-surface-hover">
+              {values.photoUrl ? "Change Photo" : "Add a Photo"}
+            </button>
+          </div>
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="First Name *">
+                <TextInput value={values.firstName} onChange={(e) => onChange({ firstName: e.target.value })} autoComplete="given-name" />
+              </Field>
+              <Field label="Last Name *">
+                <TextInput value={values.lastName} onChange={(e) => onChange({ lastName: e.target.value })} autoComplete="family-name" />
+              </Field>
+            </div>
+            <Field label="Title *" hint={titleNote ?? undefined}>
+              <TextInput value={values.title} onChange={(e) => onChange({ title: e.target.value.slice(0, 42) })} maxLength={42} placeholder={titlePlaceholder} autoComplete="organization-title" />
+            </Field>
+          </div>
+        </div>
+        <PhoneField value={values.phone} onChange={(next) => onChange({ phone: next })} country={phoneCountry} onCountryChange={onPhoneCountry} />
+        {after}
+        <PhotoCropModal open={photoModal} onClose={() => setPhotoModal(false)} onUploaded={(photoUrl) => onChange({ photoUrl })} />
+      </>
+    );
+  }
   return (
     <>
       {photoFirst && photo}

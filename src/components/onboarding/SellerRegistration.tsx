@@ -88,7 +88,8 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     setReg(r);
     if (r.hasResume) setImported(true);
     setPerson({ ...r.seller, phone: parseStoredPhone(r.seller.phone).display });
-    setPhoneCountry((pc) => pc ?? parseStoredPhone(r.seller.phone).country ?? null);
+    // Scott 10-17: no country on the stored phone → use where you work (US for "Jacksonville, FL").
+    setPhoneCountry((pc) => pc ?? parseStoredPhone(r.seller.phone).country ?? r.own?.country ?? null);
     const c = r.company;
     if (c?.status === "APPROVED") {
       setName(c.legalName || c.name);
@@ -174,7 +175,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
         continueDisabled={!personComplete(person, phoneCountry) || !own.country}
         onContinue={next}
       >
-        <div className="mx-auto w-full max-w-xl space-y-4" data-seller-person-step>
+        <div className="mx-auto w-full max-w-2xl space-y-3" data-seller-person-step>
           {error && <Notice>{error}</Notice>}
           <PersonFields
             values={person}
@@ -185,10 +186,11 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
             titlePlaceholder="Oracle Procurement Consultant"
             photoLine="Buyers see this next to your name on your profile and proposals. A clear headshot gets a faster response than an empty circle."
             photoFirst
+            compact
             titleNote={imported && person.title ? "from your résumé — check it" : null}
             after={
               <div data-where-you-work>
-                <p className="mb-2 text-[14px] font-bold">Where you work *</p>
+                <p className="mb-1 text-[14px] font-bold">Where you work *</p>
                 <LocationFields value={own} onChange={(p) => setOwn((o) => ({ ...o, ...p }))} compact />
               </div>
             }
