@@ -23,7 +23,7 @@ const toCents = (v: string) => (v.trim() && Number(v) > 0 ? Math.round(Number(v)
 
 const LABEL = "block text-[10.5px] font-bold uppercase tracking-[0.08em] text-ink-3 min-[1151px]:hidden";
 const FIELD = "w-full border border-line bg-surface px-2 py-1.5 text-[13.5px]";
-const WIDE_COLS = "min-[1151px]:grid min-[1151px]:grid-cols-[minmax(0,1.6fr)_96px_104px_72px_minmax(0,1.6fr)_64px_72px_128px_88px_52px] min-[1151px]:items-center min-[1151px]:gap-2";
+const WIDE_COLS = "min-[1151px]:grid min-[1151px]:grid-cols-[minmax(0,2fr)_110px_104px_80px_64px_72px_128px_88px_52px] min-[1151px]:items-center min-[1151px]:gap-2";
 
 export function ProductsGrid() {
   const [g, setG] = useState<Grid | null>(null);
@@ -47,7 +47,7 @@ export function ProductsGrid() {
   return (
     <div data-products-grid>
       <div className={`hidden border-b border-line pb-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-ink-3 ${WIDE_COLS}`}>
-        <span>Offer · Name</span><span>Price</span><span>Per</span><span>Lead time</span><span>Short description</span><span>Image</span><span>Offers</span><span>Payment Event</span><span>Details PDF</span><span />
+        <span>Offer · Name</span><span>Price</span><span>Per</span><span>Lead time</span><span>Image</span><span>Offers</span><span>Payment Event</span><span>Details PDF</span><span />
       </div>
       {g.types.map((t) => (
         <section key={t.id} data-type-group={t.name} className="mt-4">
@@ -121,7 +121,6 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
     <label className="block min-w-0">
       <span className={LABEL}>Short description <span className="font-normal normal-case">{row.short.length}/{SHORT_MAX}</span></span>
       <input value={row.short} maxLength={SHORT_MAX} onChange={(e) => set({ short: e.target.value })} placeholder="The line on the Shop card" aria-label={`${typeName} short description`} className={FIELD} />
-      <span className="hidden text-[10.5px] text-ink-3 min-[1151px]:block">{row.short.length}/{SHORT_MAX}</span>
     </label>
   );
 
@@ -179,7 +178,7 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
             <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => void upload(e.target.files?.[0], "image")} aria-label={`${typeName} picture`} />
           </label>
         </div>
-        <div className="max-[700px]:hidden min-[1151px]:order-5">{short}</div>
+        <div className="max-[700px]:hidden min-[1151px]:order-[99] min-[1151px]:col-span-full min-[1151px]:max-w-[640px]">{short}</div>
         <label className="block min-[1151px]:order-7">
           <span className={LABEL}>Offers</span>
           <select value={row.offers ? "yes" : "no"} onChange={(e) => set({ offers: e.target.value === "yes" })} aria-label={`${typeName} open to offers`} className={FIELD}>
