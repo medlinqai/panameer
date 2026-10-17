@@ -35,7 +35,8 @@ export function ProductsGrid() {
       setG(d);
       const have: Row[] = d.rows.map((r) => ({ ...r, key: r.id ?? `n${++seq}`, leadDays: r.leadDays != null ? String(r.leadDays) : "", price: r.priceCents != null ? String(r.priceCents / 100) : "" }));
       // Each type group starts with one row (an existing product of that type, else empty).
-      setRows([...have, ...d.types.filter((t) => !have.some((r) => r.serviceTypeId === t.id)).map((t) => blank(t.id))]);
+      // Scott 10-17: no pre-made empty product under each type — the type stays, "+ Add" makes a line.
+      setRows(have);
     }).catch(() => setMsg("Couldn't load your products."));
   }, []);
 
@@ -52,7 +53,7 @@ export function ProductsGrid() {
         <section key={t.id} data-type-group={t.name} className="mt-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2 border-b-2 border-ink pb-1">
             <h3 className="text-[15px] font-bold">{t.name}{t.own && <span className="ml-2 text-[11px] font-semibold text-ink-3">Your type</span>}</h3>
-            <button type="button" onClick={() => setRows((v) => [...v, blank(t.id)])} className="text-[13px] font-semibold text-magenta-dark underline underline-offset-4">+ Add another {t.name}</button>
+            <button type="button" onClick={() => setRows((v) => [...v, { ...blank(t.id), offered: true }])} className="text-[13px] font-semibold text-magenta-dark underline underline-offset-4">{rows.some((r) => r.serviceTypeId === t.id) ? `+ Add another ${t.name}` : `+ Add a ${t.name}`}</button>
           </div>
           {rows.filter((r) => r.serviceTypeId === t.id).map((r) => (
             <ProductLine key={r.key} row={r} typeName={t.name} onChange={(next) => setRows((v) => v.map((x) => (x.key === r.key ? next : x)))} />
