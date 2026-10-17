@@ -7,9 +7,8 @@ import { LegalLink } from "@/components/legal/LegalLink";
 import { ReviewProfile, locParts, placeOf } from "@/components/onboarding/ReviewProfile";
 import { BusinessTypePicker, type BT } from "@/components/company/BusinessTypePicker";
 import { CompanyIdentityFields, findCoMatch, companyIdentityOk, emailOk, formatTin, type CoMatch } from "@/components/onboarding/CompanyIdentityFields";
-import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
+import { LocationsBlock, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
-import { countryName } from "@/lib/country";
 import { ResumeFirst } from "@/components/onboarding/ResumeFirst";
 import { PersonFields, personComplete, type PersonValues } from "@/components/onboarding/PersonFields";
 import { parseStoredPhone, toE164 } from "@/lib/phone";
@@ -232,12 +231,15 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
       if (owner || !c) {
         await post("/api/company", "PATCH", { legalName: name.trim(), ...(tin.trim() ? { ein: tin.trim() } : {}), description: description.trim() || null, companyEmail: remitEmail.trim() || reg?.email || null });
         if (businessTypeId && !(c?.businessTypeIds ?? []).includes(businessTypeId)) await post("/api/company/business-types", "POST", { businessTypeId, on: true });
+        // RF-E004: the company's addresses (at least one Remit To) live on this page now.
+        await post("/api/company/locations", "POST", { locations: locs, seller: true });
       }
       await load();
       go("review");
     });
     const remitOk = emailOk(remitEmail.trim() || reg?.email || "");
-    const ok = match || joining || (name.trim().length >= 2 && remitOk && companyIdentityOk({ website, tin }) && (!types.length || !!businessTypeId) && (c ? true : attestation && companyTos));
+    const locProblem = owner || !c ? locsProblem(locs, { buyer: false, seller: true }) : null;
+    const ok = match || joining || (!locProblem && name.trim().length >= 2 && remitOk && companyIdentityOk({ website, tin }) && (!types.length || !!businessTypeId) && (c ? true : attestation && companyTos));
     return (
       <WizardShell
         {...shell}
@@ -279,6 +281,13 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
               <Field label="Description (optional)">
                 <TextArea value={description} maxLength={DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder={`What the company does, in a sentence or two (up to ${DESCRIPTION_MAX} characters).`} className="min-h-0! h-[60px]" />
               </Field>
+              {(owner || !c) && (
+                <div data-seller-locations>
+                  <p className="mb-2 text-[14px] font-bold">Company addresses *</p>
+                  <LocationsBlock rows={locs} onChange={setLocs} buyer={false} seller />
+                  {locProblem && <p className="mt-2 text-[13px] text-ink-2">{locProblem}</p>}
+                </div>
+              )}
               {!c && (
                 <div className="divide-y divide-line border border-line">
                   <label className="flex cursor-pointer items-start gap-3 px-3 py-2.5">
