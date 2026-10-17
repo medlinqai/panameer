@@ -10,8 +10,8 @@ type Thing = { key: string; icon: typeof Users; cue: Cue; title: string; line: s
 const THINGS: Thing[] = [
   { key: "connect", icon: Users, cue: "people", title: "Connect with Colleagues", line: "Meet people who buy what you buy, and the colleagues you work with.", cta: "Go to Connect", href: "/connect", menu: "/connect" },
   { key: "learn", icon: BookOpen, cue: "book", title: "Learn from Experts", line: "Free courses on the skills and systems you're buying.", cta: "Go to Learn", href: "/learn", menu: "/learn" },
-  { key: "post", icon: Briefcase, cue: "brief", title: "Hire Experts", line: "Post a job; providers send proposals and you pick who to hire.", cta: "Go to Hire", href: "/hire", menu: "/hire" },
-  { key: "shop", icon: Tag, cue: "tag", title: "Shop Products", line: "Fixed-price service products and providers' rates, ready to order.", cta: "Go to Shop", href: "/shop", menu: "/shop" },
+  { key: "post", icon: Briefcase, cue: "brief", title: "Hire Talent", line: "Tell us who you need, for how long and your budget — we match you.", cta: "Go to Hire", href: "/hire", menu: "/hire" },
+  { key: "shop", icon: Tag, cue: "tag", title: "Shop", line: "Products and vendors — business cards to freight — ready to order.", cta: "Go to Shop", href: "/shop", menu: "/shop" },
   { key: "estimate", icon: MessageSquareQuote, cue: "quote", title: "Get an Estimate", line: "Ask a provider for a price on exactly what you need.", cta: "Go to Estimates", href: "/estimates", menu: "/shop" },
 ];
 // Scott 10-15: the seller's four directions in the same card style.
