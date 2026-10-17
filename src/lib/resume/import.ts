@@ -455,6 +455,20 @@ function emptyApplied(): ImportResult["applied"] {
   };
 }
 
+const CO_SUFFIX = /\b(inc|llc|ltd|corp|corporation|co|company|group|digital services|services|consulting|solutions|plc|gmbh|sa|ai)\b|\.(com|ai|io|net)\b/g;
+const coKey = (n: string) => n.toLowerCase().replace(/\([^)]*\)/g, " ").replace(CO_SUFFIX, " ").replace(/[^a-z0-9]+/g, " ").trim();
+/** The employer whose name is the same company: equal after dropping Inc/LLC/.ai/"Digital Services", or one name starts the other. */
+function closeEmployer(name: string, byName: Map<string, string>): string | null {
+  const k = coKey(name);
+  if (!k) return null;
+  for (const [n, id] of byName) {
+    const e = coKey(n);
+    if (!e) continue;
+    if (e === k || (e.length >= 4 && k.startsWith(e + " ")) || (k.length >= 4 && e.startsWith(k + " "))) return id;
+  }
+  return null;
+}
+
 export async function applyParsedResume(
   profileId: string,
   parsed: ParsedResume,
@@ -583,9 +597,8 @@ export async function applyParsedResume(
     const pk = pKey((pr.name || "Untitled project").slice(0, 200), (pr.client ?? "").slice(0, 200), pr.startDate);
     if (haveProject.has(pk)) continue;
     haveProject.add(pk);
-    const employerId = pr.employerName
-      ? (employerIdByName.get(pr.employerName) ?? null)
-      : null;
+    // Scott 10-17: "Panameer Digital Services" / "Medlinq.ai" landed in Solo next to an employer named "Panameer" / "Medlinq" — match close names.
+    const employerId = pr.employerName ? (employerIdByName.get(pr.employerName) ?? closeEmployer(pr.employerName, employerIdByName)) : null;
     const description =
       [
         pr.description,
