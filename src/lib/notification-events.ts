@@ -547,7 +547,7 @@ export const NOTIFICATION_EVENTS = {
     visibility: "FEED",
     requiresAction: false,
     title: (v) => `Your request to join ${str(v, "companyName", "a company")} wasn't approved`,
-    body: () => "The company's admins decide who joins. You can still use Panameer on your own.",
+    body: () => "Your work request is still yours — add your own company to submit it.",
     href: () => "/company",
   },
   "group.reply_posted": {

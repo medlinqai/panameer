@@ -469,6 +469,17 @@ async function moveInto(personId: string, companyId: string, fromCompanyId: stri
     data: { company_id: companyId },
   });
 
+  // PB-E001: what they built while pending (Work Requests, Jobs) now belongs to the company — moved, not copied,
+  // and before the placeholder is cleaned up (deleting its account would cascade them away).
+  const [from, to] = await Promise.all([
+    prisma.company.findUnique({ where: { id: fromCompanyId }, select: { p_account_id: true } }),
+    prisma.company.findUnique({ where: { id: companyId }, select: { p_account_id: true } }),
+  ]);
+  if (from && to && from.p_account_id !== to.p_account_id) {
+    await prisma.workRequest.updateMany({ where: { buyer_person_id: personId, p_account_id: from.p_account_id }, data: { p_account_id: to.p_account_id } });
+    await prisma.job.updateMany({ where: { buyer_person_id: personId, p_account_id: from.p_account_id }, data: { p_account_id: to.p_account_id } });
+  }
+
   await cleanUpPlaceholder(fromCompanyId);
 }
 
