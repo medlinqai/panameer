@@ -53,6 +53,8 @@ export type Me = {
     /** J2.4 WS-B — the persona menu's "Online for messages" state. */
     availableForMessages: boolean;
     visible: boolean;
+    /** VR-E002: what still hides the profile from buyers, each with the page that fixes it. */
+    missing: { key: string; label: string; href: string }[];
     rating: number | null;
     rates: Rates;
   } | null;
