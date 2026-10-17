@@ -47,7 +47,7 @@ export function ProductsGrid() {
   return (
     <div data-products-grid>
       <div className={`hidden border-b border-line pb-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-ink-3 ${WIDE_COLS}`}>
-        <span>Offer · Name</span><span>Price</span><span>Per</span><span>Lead time</span><span>Image</span><span>Offers</span><span>Payment Event</span><span>Details PDF</span><span />
+        <span>Offer · Name</span><span>Price</span><span>Per</span><span>Lead time</span><span>Image</span><span title="Can buyers Make an Offer on this product?">Open to offers</span><span>Payment Event</span><span>Details PDF</span><span />
       </div>
       {g.types.map((t) => (
         <section key={t.id} data-type-group={t.name} className="mt-4">
@@ -180,7 +180,7 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
         </div>
         <div className="max-[700px]:hidden min-[1151px]:order-[99] min-[1151px]:col-span-full min-[1151px]:max-w-[640px]">{short}</div>
         <label className="block min-[1151px]:order-7">
-          <span className={LABEL}>Offers</span>
+          <span className={LABEL}>Open to offers</span>
           <select value={row.offers ? "yes" : "no"} onChange={(e) => set({ offers: e.target.value === "yes" })} aria-label={`${typeName} open to offers`} className={FIELD}>
             <option value="no">No</option>
             <option value="yes">Yes</option>
