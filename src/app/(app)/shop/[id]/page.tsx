@@ -24,7 +24,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     <div className="pm-white-page mx-auto w-full max-w-5xl">
       <ShopTabs />
       <div className="max-w-3xl">
-      <BackLink href="/shop" label="Service Products" />
+      <BackLink href="/shop/products" label="Products" />
       <h1 className="mt-2 text-[28px] font-bold">{p.title}</h1>
       <p className="mt-1 text-[14px] text-ink-2">
         by <Link href={`/providers/${p.providerProfileId}`} className="underline">{p.providerName}</Link>
