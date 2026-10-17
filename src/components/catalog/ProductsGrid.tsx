@@ -104,7 +104,12 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
     latest.current = next;
     onChange(next);
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => void save(latest.current), 600);
+    // Scott 10-17: saving on every keystroke made the page jump — save when you leave the row (or after 2s idle).
+    timer.current = setTimeout(() => void save(latest.current), 2000);
+  };
+  const flush = (e: React.FocusEvent<HTMLDivElement>) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; void save(latest.current); }
   };
   const upload = async (file: File | undefined, kind: "image" | "details") => {
     if (!file) return;
@@ -125,7 +130,7 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
   );
 
   return (
-    <div data-product-row data-offered={row.offered ? "1" : "0"} className={(off ? "opacity-60 " : "") + `grid gap-2 border-b border-line py-3 ${WIDE_COLS}`}>
+    <div data-product-row data-offered={row.offered ? "1" : "0"} onBlur={flush} className={(off ? "opacity-60 " : "") + `relative grid gap-2 border-b border-line py-3 ${WIDE_COLS}`}>
       {/* Line 1 — slider · Name · Price · Per · Lead time · More */}
       <div className="grid grid-cols-[minmax(0,1.6fr)_96px_104px_72px_52px] items-end gap-2 max-[700px]:grid-cols-3 min-[1151px]:contents">
         <div className="flex items-end gap-2 max-[700px]:col-span-3 min-[1151px]:order-1">
@@ -202,7 +207,7 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
         </div>
         {open && row.id && <Link href={`/catalog/products?edit=${row.id}`} className="col-span-2 hidden text-[13px] font-semibold text-magenta-dark underline underline-offset-4 max-[700px]:block">Open the full page</Link>}
       </div>
-      {(state === "saving" || state === "error") && <p role="status" className="text-[12px] text-ink-2 min-[1151px]:order-11 min-[1151px]:col-span-10">{state === "saving" ? "Saving…" : err}</p>}
+      {(state === "saving" || state === "error") && <p role="status" className={"pointer-events-none absolute right-0 top-0 text-[11px] " + (state === "error" ? "font-semibold text-magenta-dark" : "text-ink-3")}>{state === "saving" ? "Saving…" : err}</p>}
     </div>
   );
 }
