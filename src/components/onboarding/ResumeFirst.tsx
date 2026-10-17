@@ -117,7 +117,7 @@ export function ResumeFirst({ hasResume, onState }: { hasResume: boolean; onStat
                 <label key={r.id} className="flex cursor-pointer items-start gap-3 border-b border-line px-1 py-2.5">
                   <input type="checkbox" checked={on} onChange={() => void saveRoles(on ? picked.filter((x) => x !== r.id) : [...picked, r.id])} className="mt-1 h-4 w-4 accent-[var(--color-ink,#272334)]" />
                   <span className="min-w-0">
-                    <span className="text-[15px] font-bold">{roleLong(`${r.display || r.name} Roles`)}</span>
+                    <span className="text-[15px] font-bold">{roleLong(`${(r.display || r.name).replace(/\s*Roles\s*$/i, "")} Roles`)}</span>
                     {on && derived.has(r.id) && <span className="ml-2 border border-line px-1.5 py-px text-[11px] font-semibold text-ink-2">from your résumé</span>}
                     {on && (
                       <span className="mt-1 flex flex-wrap gap-1">
