@@ -1,3 +1,4 @@
+import { resolveNotifications } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { countryColumns } from "@/lib/country";
 import { validateEntity } from "@/lib/company-validation";
@@ -824,7 +825,7 @@ export async function cancelJoinRequest(viewer: Viewer, companyId: string) {
   const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   if (!person) throw new OnboardingError("No person record", "INVALID");
   await prisma.companyMembership.deleteMany({ where: { person_id: person.id, company_id: companyId, status: "PENDING" } });
-  await prisma.notification.updateMany({ where: { dedupe_key: { startsWith: `company.join_requested:${companyId}:${person.id}:` }, resolved_at: null }, data: { resolved_at: new Date() } });
+  await resolveNotifications({ dedupe_key: { startsWith: `company.join_requested:${companyId}:${person.id}:` } });
   return { ok: true as const };
 }
 

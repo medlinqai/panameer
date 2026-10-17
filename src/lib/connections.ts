@@ -1,6 +1,6 @@
 import { memberVisibleWhere } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { notify } from "@/lib/notifications";
+import { notify, resolveNotifications } from "@/lib/notifications";
 import type { Viewer } from "@/lib/access";
 
 export type ConnectionKindValue = "COLLEAGUE" | "MENTOR";
@@ -122,12 +122,7 @@ export async function requestColleague(viewer: Viewer, toUserId: string) {
 
 /** CLEAR THE INVITE'S WORKLIST ITEM. Ruling 34e: *"an item disappears when */
 async function clearInviteWorklist(connectionId: string) {
-  await prisma.notification
-    .updateMany({
-      where: { dedupe_key: `colleague.invite:${connectionId}`, resolved_at: null },
-      data: { resolved_at: new Date() },
-    })
-    .catch(() => {});
+  await resolveNotifications({ dedupe_key: `colleague.invite:${connectionId}` });
 }
 
 /** MENTOR — a request the mentor accepts or declines (2026-10-08). Shaped so a payment step can sit before Accept (R2). */
@@ -175,9 +170,7 @@ export async function followMentor(viewer: Viewer, toUserId: string) {
 }
 
 async function clearMentorWorklist(connectionId: string) {
-  await prisma.notification
-    .updateMany({ where: { dedupe_key: { startsWith: `mentor.request:${connectionId}:` }, resolved_at: null }, data: { resolved_at: new Date() } })
-    .catch(() => {});
+  await resolveNotifications({ dedupe_key: { startsWith: `mentor.request:${connectionId}:` } });
 }
 
 /** The mentor accepts or declines a request addressed to them. */
@@ -573,5 +566,7 @@ export async function withdrawRequest(viewer: Viewer, connectionId: string): Pro
     where: { id: connectionId, from_user_id: viewer.userId, kind: "COLLEAGUE", status: "PENDING" },
     data: { status: "WITHDRAWN" },
   });
+  // NT-E001: the recipient's request item goes too.
+  if (res.count === 1) await clearInviteWorklist(connectionId);
   return res.count === 1;
 }

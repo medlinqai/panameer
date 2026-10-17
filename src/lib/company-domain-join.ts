@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
-import { notify } from "@/lib/notifications";
+import { notify, resolveNotifications } from "@/lib/notifications";
 import { emailDomain, isWorkDomain } from "@/lib/tos";
 import { OnboardingError } from "@/lib/onboarding";
 
@@ -60,10 +60,6 @@ export async function notifyJoinDecided(companyId: string, askerPersonId: string
     dedupeKey: `company.join_decided:${companyId}:${askerPersonId}`,
     vars: { companyName: company?.name ?? "the company" },
   });
-  await prisma.notification
-    .updateMany({
-      where: { dedupe_key: { startsWith: `company.join_requested:${companyId}:${askerPersonId}:` }, resolved_at: null },
-      data: { resolved_at: new Date() },
-    })
-    .catch(() => {});
+  // NT-E001: every admin's item for this request is settled, whoever decided and wherever.
+  await resolveNotifications({ dedupe_key: { startsWith: `company.join_requested:${companyId}:${askerPersonId}:` } });
 }

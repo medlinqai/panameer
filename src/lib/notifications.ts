@@ -257,3 +257,10 @@ async function emailFor(a: {
     console.error("[notify] email path failed:", a.event, e);
   }
 }
+
+/** NT-E001: a decision settles every open notification about it, for every recipient — resolved and read. */
+export async function resolveNotifications(where: Prisma.NotificationWhereInput) {
+  const now = new Date();
+  await prisma.notification.updateMany({ where: { ...where, resolved_at: null }, data: { resolved_at: now } }).catch(() => {});
+  await prisma.notification.updateMany({ where: { ...where, read_at: null }, data: { read_at: now } }).catch(() => {});
+}
