@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { countryName } from "@/lib/country";
 import { formatPlace } from "@/lib/location";
-import { marketplaceVisibleWhere } from "@/lib/access";
+import { marketplaceWhere } from "@/lib/visibility";
 import { experienceLabel, experienceYears, type Span } from "@/lib/experience";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { buildCompletenessInput, buildCompletenessInputs } from "@/lib/onboarding";
@@ -14,16 +14,10 @@ export const CARD_LOCK_COPY = "Name, employers and rates shown after you join";
 
 export const EMPLOYER_LOCK_COPY = "Employer shown after you join";
 
-export function visitorPreviewWhere() {
-  const base = marketplaceVisibleWhere();
-  return {
-    ...base,
-    preview_hidden_at: null,
-    person: {
-      ...base.person,
-      photo_url: undefined,
-    },
-  };
+/** The visitor preview: the marketplace rule without the photo (the preview hides photos anyway). */
+export async function visitorPreviewWhere() {
+  const base = await marketplaceWhere(false, { photo: false });
+  return { ...base, preview_hidden_at: null };
 }
 
 const MIN_NEEDLE = 3;
@@ -219,7 +213,7 @@ export async function browseTalent(
 ): Promise<{ cards: MaskedCard[]; hasMore: boolean }> {
   const take = f.take ?? BROWSE_PAGE_SIZE;
   const q = f.q?.trim();
-  const base = visitorPreviewWhere();
+  const base = await visitorPreviewWhere();
   const where = {
     ...base,
     ...(q ? textFilter(q) : {}),
@@ -340,7 +334,7 @@ export async function getMaskedProfile(
   profileId: string
 ): Promise<MaskedProfile | null> {
   const p = await prisma.providerProfile.findFirst({
-    where: { id: profileId, ...visitorPreviewWhere() },
+    where: { id: profileId, ...(await visitorPreviewWhere()) },
     select: {
       id: true,
       overview: true,
@@ -519,7 +513,7 @@ export async function previewCountries(): Promise<
   { code: string; name: string; count: number }[]
 > {
   const rows = await prisma.providerProfile.findMany({
-    where: visitorPreviewWhere(),
+    where: await visitorPreviewWhere(),
     select: {
       person: {
         select: {

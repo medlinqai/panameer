@@ -1,4 +1,5 @@
 import type { CredentialKind } from "@prisma/client";
+import { isVisible, missingForBuyers } from "@/lib/visibility";
 import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
 import { creditInviteForNewUser } from "@/lib/colleague-invite";
 import type { ResumePrefill } from "@/lib/resume/prefill";
@@ -25,7 +26,6 @@ import {
 } from "@/lib/completeness";
 import type { Viewer } from "@/lib/access";
 /* `P2-J3-E590` WS-A0 — the ONE gate. This file used to hand-roll it. */
-import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { createHash } from "node:crypto";
 import { recordParseAudit } from "@/lib/resume/audit";
@@ -637,15 +637,7 @@ export async function getOnboardingState(viewer: Viewer) {
   const pp = p.providerProfile!;
   const emailVerified = p.user?.email_verified != null;
   // A THIRD COPY OF THE GATE, FOUND AND CLOSED WS-A0)
-  const visible = isMarketplaceVisible({
-    status: pp.status,
-    completeness: pp.completeness,
-    paused_at: pp.paused_at,
-    meetsRequired: providerMeetsRequired({
-      ...pp,
-      person: { title: p.title, photo_url: p.photo_url, phone: p.phone, site: p.site },
-    }),
-  });
+  const visible = await isVisible(pp.id);
 
   const address = p.site?.addresses?.[0] ?? null;
   // BT-E004: no saved address yet → pre-fill the one the résumé names; it saves when the provider saves Contact.
@@ -1991,27 +1983,8 @@ export async function publishProfile(viewer: Viewer) {
   }
   const pp = p.providerProfile!;
 
-  // THE PUBLISH GATE IS THE REQUIRED SET (WS6) — and it is the same set the
-  const productCount = await prisma.serviceProduct.count({ where: { provider_profile_id: pp.id } });
-  // Scott 10-16: registration's Locations step counts as the address (the person's own, or their company's).
-  const coLoc = p.site?.addresses?.[0]?.line1?.trim()
-    ? null
-    : await prisma.address.findFirst({ where: { site: { company: { memberships: { some: { person_id: p.id, status: "APPROVED" } } } }, line1: { not: "" } }, select: { line1: true, city: true } });
-  // Scott 10-16: Enable My Catalog needs only what the slimmed run asks for — a title, a rate or a product, and the
-  // photo / phone / location registration already took. Roles, 3+ skills, bio, specializations and languages
-  // still raise the Search Score but no longer block enabling the catalog.
-  const hasRate = [pp.hourly_rate_cents, pp.rate_min_cents, pp.rate_max_cents, pp.onsite_rate_cents, pp.remote_rate_cents].some((c) => c != null)
-    || (await prisma.providerService.count({ where: { provider_profile_id: pp.id, active: true, rate_cents: { not: null } } })) > 0;
-  const missing = [
-    !p.title?.trim() && "a title",
-    !hasRate && productCount === 0 && "a rate or a product",
-    !p.photo_url && "a photo",
-    !p.phone?.trim() && "your phone number",
-    !(p.site?.addresses?.[0]?.line1?.trim() || coLoc?.line1?.trim()) && "your address",
-  ].filter(Boolean) as string[];
-
-  // IN-E002: professional sellers also name the industries they've worked in.
-  // Scott 10-16: industries are optional — they no longer block Enable My Catalog.
+  // VR-E001: the one rule — the same list the hidden-profile bar shows.
+  const missing = (await missingForBuyers(pp.id)).map((m) => m.label.toLowerCase());
 
   if (missing.length > 0) {
     throw new OnboardingError(

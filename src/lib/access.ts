@@ -215,6 +215,7 @@ export function assertOneJobParent(link: {
 
 // Marketplace visibility (brief_K — supersedes brief_E/H approval gating).
 
+/** ⚠ VR-E001: superseded by lib/visibility.ts (the one rule). Kept only for old scripts — app code must not use these. */
 /** Is this provider marketplace-visible? Operates on the stored columns. */
 export function isMarketplaceVisible(p: {
   status: string;

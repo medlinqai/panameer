@@ -1,10 +1,10 @@
 import { formatSkillName } from "@/lib/skill-match";
+import { isVisible } from "@/lib/visibility";
 import { roleLong } from "@/lib/role-labels";
 import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
 import { countryName } from "@/lib/country";
 import { canSeeRate } from "@/lib/rate-visibility";
-import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { aiExtractionAvailable } from "@/lib/resume/ai-extract";
 import { missingRequired, profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
@@ -128,13 +128,8 @@ export async function getProviderProfileView(
 
   const isOwner =
     opts.viewerUserId != null && profile.person.user_id === opts.viewerUserId;
-  if (
-    !isOwner &&
-    !isMarketplaceVisible({
-      ...profile,
-      meetsRequired: providerMeetsRequired(profile),
-    })
-  ) {
+  const visibleNow = await isVisible(profile.id);
+  if (!isOwner && !visibleNow) {
     return null;
   }
 
@@ -194,10 +189,7 @@ export async function getProviderProfileView(
     isOwner,
     validated: profile.validation_status === "VALIDATED",
     openForMentoring: profile.open_for_mentoring,
-    visible: isMarketplaceVisible({
-      ...profile,
-      meetsRequired: providerMeetsRequired(profile),
-    }),
+    visible: visibleNow,
     viewerIsPlus: isPlus,
     completeness: profile.completeness,
     visibilityThreshold: VISIBILITY_THRESHOLD,

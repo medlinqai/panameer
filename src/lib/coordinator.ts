@@ -1,9 +1,10 @@
 import { randomBytes } from "crypto";
+import { visibleIds } from "@/lib/visibility";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/resend";
 import { hashToken, appBaseUrl } from "@/lib/verification";
 import { inviteProviderTemplate } from "@/lib/email/templates/invite-provider";
-import { isMarketplaceVisible, providerMeetsRequired, type Viewer } from "@/lib/access";
+import { type Viewer } from "@/lib/access";
 import { normalizeEmail, sameEmail } from "@/lib/normalizeEmail";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -198,6 +199,8 @@ export async function getRoster(viewer: Viewer) {
     orderBy: { created_at: "desc" },
   });
 
+  // VR-E001: the one visibility rule, batched.
+  const vis = await visibleIds(reps.map((p) => p.id));
   return {
     coordinatorName: coordinatorName(coordinator),
     providers: reps.map((p) => ({
@@ -209,7 +212,7 @@ export async function getRoster(viewer: Viewer) {
       status: p.status,
       validationStatus: p.validation_status,
       completeness: p.completeness,
-      visible: isMarketplaceVisible({ ...p, meetsRequired: providerMeetsRequired(p) }),
+      visible: vis.has(p.id),
     })),
     pendingInvites: pending.map((i) => ({
       id: i.id,

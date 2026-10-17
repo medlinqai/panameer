@@ -20,8 +20,9 @@ export async function POST() {
     // SO-E004 Go Live: the profile and the catalog go live together; publishing needs a linked company (a pending joiner is told why).
     const gate = await publishGate(viewer);
     if (!gate.ok) return NextResponse.json({ error: gate.reason ?? "Add your company to go live.", code: "GATE" }, { status: 400 });
-    const out = await publishProfile(viewer);
+    // VR-E001: the catalog first, so the profile's check sees the live rate.
     const rates = await publishCatalog(viewer).catch(() => 0);
+    const out = await publishProfile(viewer);
     return NextResponse.json({ ...out, ratesPublished: rates });
   } catch (e) {
     if (e instanceof OnboardingError) {

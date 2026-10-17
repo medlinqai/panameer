@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { marketplaceVisibleWhere } from "@/lib/access";
+import { marketplaceWhere } from "@/lib/visibility";
 import { experienceYears } from "@/lib/experience";
 
 export type MentorCard = {
@@ -43,7 +43,7 @@ export async function listMentors(
   const like = { contains: q ?? "", mode: "insensitive" as const };
   const rows = await prisma.providerProfile.findMany({
     where: {
-      ...marketplaceVisibleWhere(),
+      ...(await marketplaceWhere()),
       ...(opts.openOnly ? { open_for_mentoring: true } : {}),
       ...(opts.skill
         ? { skills: { some: { skill: { name: { contains: opts.skill, mode: "insensitive" } } } } }

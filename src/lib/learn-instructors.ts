@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { marketplaceVisibleWhere , memberVisibleWhere } from "@/lib/access";
+import { memberVisibleWhere } from "@/lib/access";
+import { marketplaceWhere } from "@/lib/visibility";
 import type { Instructor, LessonExpertRef } from "@/lib/learn-instructor-format";
 
 // Re-exported so server callers have one import for the whole concern; the
@@ -39,7 +40,7 @@ export async function loadInstructors(
     profileIds.length > 0
       ? (
           await prisma.providerProfile.findMany({
-            where: { id: { in: profileIds }, ...marketplaceVisibleWhere() },
+            where: { id: { in: profileIds }, ...(await marketplaceWhere()) },
             select: { id: true },
           })
         ).map((r) => r.id)

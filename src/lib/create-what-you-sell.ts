@@ -4,6 +4,7 @@ import { personBusinessTypes } from "@/lib/business-types";
 import { publishCatalog, ensureDefaultRates } from "@/lib/build-catalog";
 import { publishCatalogProduct, productTypes } from "@/lib/catalog-products";
 import { publishProfile } from "@/lib/onboarding";
+import { missingBeforeEnable } from "@/lib/visibility";
 
 // CWS-E002–E005: Create What You Sell, slimmed — What You Do · What You Charge · Enable My Catalog. Owner-scoped from the session.
 export class CwsError extends Error {}
@@ -37,6 +38,9 @@ export async function enableMyCatalog(viewer: Viewer) {
     prisma.serviceProduct.count({ where: { provider_profile_id: p.id, offered: true, price_cents: { not: null } } }),
   ]);
   if (!rates && !products) throw new CwsError("Turn on at least one service or one product first");
+  // VR-E003: Enable can't leave you hidden — the same rule as the bar (the offer is what Enable publishes now).
+  const missing = await missingBeforeEnable(p.id);
+  if (missing.length) throw new CwsError(`Before you enable, add: ${missing.map((m) => m.label).join(" · ")}`);
   await publishCatalog(viewer);
   // CG-E003: a row switched off stays a Draft.
   const drafts = await prisma.serviceProduct.findMany({ where: { provider_profile_id: p.id, status: "DRAFT", offered: true }, select: { id: true } });

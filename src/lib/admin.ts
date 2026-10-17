@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { visibleIds } from "@/lib/visibility";
 import {
   requireAdmin,
-  isMarketplaceVisible,
-  providerMeetsRequired,
   type Viewer,
 } from "@/lib/access";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
@@ -92,6 +91,7 @@ export async function getAdminDashboard(viewer: Viewer) {
       is_support: true,
       providerProfile: {
         select: {
+          id: true,
           status: true,
           completeness: true,
           validation_status: true,
@@ -114,6 +114,8 @@ export async function getAdminDashboard(viewer: Viewer) {
     byAccount.get(key)!.push(p);
   }
 
+  // VR-E001: the one visibility rule, batched over every provider here.
+  const vis = await visibleIds(people.map((p) => p.providerProfile?.id).filter((x): x is string => !!x));
   const usage = accounts.map((a) => {
     const ppl = byAccount.get(a.id) ?? [];
     const provs = ppl
@@ -122,14 +124,7 @@ export async function getAdminDashboard(viewer: Viewer) {
     const validated = provs.filter((p) => p.validation_status === "VALIDATED").length;
     const live = ppl.filter(
       (p) =>
-        p.providerProfile != null &&
-        isMarketplaceVisible({
-          ...p.providerProfile,
-          meetsRequired: providerMeetsRequired({
-            ...p.providerProfile,
-            person: { title: p.title, photo_url: p.photo_url, phone: p.phone, site: p.site },
-          }),
-        })
+        p.providerProfile != null && vis.has(p.providerProfile.id)
     ).length;
     return {
       id: a.id,

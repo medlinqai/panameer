@@ -1,7 +1,7 @@
 import { roleLong } from "@/lib/role-labels";
+import { isVisible } from "@/lib/visibility";
 import { prisma } from "@/lib/prisma";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
-import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 
 export async function getPublicProviderProfile(
   id: string,
@@ -73,13 +73,7 @@ export async function getPublicProviderProfile(
   // be marketplace-visible.
   const isOwner =
     opts.viewerUserId != null && profile.person.user_id === opts.viewerUserId;
-  if (
-    !isOwner &&
-    !isMarketplaceVisible({
-      ...profile,
-      meetsRequired: providerMeetsRequired(profile),
-    })
-  ) {
+  if (!isOwner && !(await isVisible(profile.id))) {
     return null;
   }
 

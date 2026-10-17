@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { isVisible } from "@/lib/visibility";
 import {
   ownedProviderProfile,
-  isMarketplaceVisible, providerMeetsRequired,
   type Viewer,
 } from "@/lib/access";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
@@ -110,10 +110,7 @@ export async function getProviderSettings(viewer: Viewer) {
     completeness: profile.completeness,
     visibilityThreshold: VISIBILITY_THRESHOLD,
     paused: profile.paused_at != null,
-    visible: isMarketplaceVisible({
-      ...profile,
-      meetsRequired: providerMeetsRequired(profile),
-    }),
+    visible: await isVisible(profile.id),
     rating: profile.rating === null ? null : Number(profile.rating),
     preferences: {
       notifyEmail: profile.notify_email,

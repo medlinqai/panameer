@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { isMarketplaceVisible, providerMeetsRequired, type Viewer } from "@/lib/access";
+import { visibleIds } from "@/lib/visibility";
+import { type Viewer } from "@/lib/access";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 
@@ -87,6 +88,7 @@ export async function getMyTeams(viewer: Viewer): Promise<MyTeams> {
 
   const up = person.providerProfile?.coordinator ?? null;
 
+  const vis = await visibleIds(reps.map((p) => p.id));
   return {
     isCoordinator: person.is_service_coordinator,
     represents: reps.map((p) => ({
@@ -95,7 +97,7 @@ export async function getMyTeams(viewer: Viewer): Promise<MyTeams> {
       // THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
       headline: p.person.title || null,
       photoUrl: p.person.photo_url,
-      visible: isMarketplaceVisible({ ...p, meetsRequired: providerMeetsRequired(p) }),
+      visible: vis.has(p.id),
       validated: p.validation_status === "VALIDATED",
       completeness: p.completeness,
     })),

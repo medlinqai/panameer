@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import { isVisible, missingForBuyers } from "@/lib/visibility";
 import {
   scopedToPAccount,
   withPAccount,
-  isMarketplaceVisible, providerMeetsRequired,
   type Viewer,
 } from "@/lib/access";
 
@@ -115,18 +115,9 @@ export async function getMe(viewer: Viewer) {
           paused: provider.paused_at != null,
           published: provider.onboarding_completed_at != null,
           availableForMessages: provider.available_for_messages,
-          visible: isMarketplaceVisible({
-            ...provider,
-            meetsRequired: providerMeetsRequired({
-              ...provider,
-              person: {
-                title: person.title,
-                photo_url: person.photo_url,
-                phone: person.phone,
-                site: person.site,
-              },
-            }),
-          }),
+          visible: await isVisible(provider.id),
+          // VR-E002: what still stops buyers seeing them, each with its fix.
+          missing: await missingForBuyers(provider.id),
           rating: provider.rating === null ? null : Number(provider.rating),
           rates: {
             currency: provider.currency,

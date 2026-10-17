@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
-import { marketplaceVisibleWhere, type Viewer } from "@/lib/access";
+import { type Viewer } from "@/lib/access";
+import { marketplaceWhere } from "@/lib/visibility";
 import { getWorkRequest } from "@/lib/work-request";
 import { suiteFromPillar } from "@/lib/suite";
 import { growthScore } from "@/lib/growth-score";
@@ -86,7 +87,7 @@ export async function matchProvidersForSkills(input: {
 
   const rows = await prisma.providerProfile.findMany({
     where: {
-      ...marketplaceVisibleWhere(),
+      ...(await marketplaceWhere()),
       skills: { some: { skill_id: { in: skillIds } } },
       ...(input.industryFilter ? { specializations: { some: { specialization_id: input.industryFilter, specialization: { kind: "INDUSTRY" } } } } : {}),
     },

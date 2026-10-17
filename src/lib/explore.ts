@@ -6,7 +6,7 @@ import { viewerIsPlus } from "@/lib/plus";
 import { countryName } from "@/lib/country";
 import { canSeeRate } from "@/lib/rate-visibility";
 import type { Viewer } from "@/lib/access";
-import { marketplaceVisibleWhere } from "@/lib/access";
+import { marketplaceWhere } from "@/lib/visibility";
 import { capitalizeName } from "@/lib/display";
 import { formatPlace } from "@/lib/location";
 import { formatRate } from "@/lib/types";
@@ -76,7 +76,7 @@ export async function searchProvidersTeaser(
 ): Promise<{ cards: TeaserProvider[]; total: number }> {
   const term = q.trim();
   const where = {
-    ...marketplaceVisibleWhere(),
+    ...(await marketplaceWhere()),
     ...(term ? providerTextFilter(term) : {}),
   };
 
