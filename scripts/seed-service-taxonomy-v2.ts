@@ -11,7 +11,9 @@ const APPLY = process.argv.includes("--apply");
 type Item = { name: string; unit: ServiceUnit; pricing: PricingModel; delivery?: ServiceDelivery };
 type Bt = { code: string; name: string; was: string[]; description: string; products: Item[] };
 type Commodity = { name: string; was: string[]; description: string; hidden: boolean; sort_order: number; rates: Item[]; businessTypes: Bt[] };
-const DATA = JSON.parse(readFileSync("scripts/data/service-taxonomy-2026-10-14.json", "utf8")) as { commodities: Commodity[] };
+// Scott 10-17: --file=scripts/data/service-taxonomy-2026-10-17.json adds Printing & Signs and the test-business gaps.
+const FILE = process.argv.find((a) => a.startsWith("--file="))?.slice(7) ?? "scripts/data/service-taxonomy-2026-10-14.json";
+const DATA = JSON.parse(readFileSync(FILE, "utf8")) as { commodities: Commodity[] };
 const SKILLS_BT = "PANAMEER_V1";
 const TECH = "Technology";
 
