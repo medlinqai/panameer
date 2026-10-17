@@ -9,9 +9,17 @@ const QUESTION =
   "Is this image a photo of exactly one real adult person whose face is clearly visible, suitable as a professional profile picture? " +
   "Answer false for animals, objects, furniture, scenery, cartoons, drawings, logos, screenshots, more than one person, or a child.";
 
+/** Uploads: a broken or missing check lets the photo through. */
 export async function photoLooksLikePerson(bytes: ArrayBuffer, mime: string): Promise<boolean> {
+  return (await checkPerson(bytes, mime)) ?? true;
+}
+/** Scott 10-17: a photo taken from a résumé is used only when the check says YES (no model → not used). */
+export async function photoIsSurelyPerson(bytes: ArrayBuffer, mime: string): Promise<boolean> {
+  return (await checkPerson(bytes, mime)) === true;
+}
+async function checkPerson(bytes: ArrayBuffer, mime: string): Promise<boolean | null> {
   const cfg = resolveProvider();
-  if (!cfg) return true;
+  if (!cfg) return null;
   const b64 = Buffer.from(bytes).toString("base64");
   try {
     if (cfg.provider === "anthropic") {
@@ -29,7 +37,7 @@ export async function photoLooksLikePerson(bytes: ArrayBuffer, mime: string): Pr
         { timeout: 20_000 }
       );
       const text = r.content.map((c) => ("text" in c ? c.text : "")).join("").toLowerCase();
-      return !text.includes("false");
+      return text.includes("false") ? false : text.includes("true") ? true : null;
     }
     const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
@@ -49,12 +57,12 @@ export async function photoLooksLikePerson(bytes: ArrayBuffer, mime: string): Pr
       }),
       signal: AbortSignal.timeout(20_000),
     });
-    if (!res.ok) return true;
+    if (!res.ok) return null;
     const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const parsed = JSON.parse(body.choices?.[0]?.message?.content ?? "{}") as { ok?: boolean };
-    return parsed.ok !== false;
+    return typeof parsed.ok === "boolean" ? parsed.ok : null;
   } catch (e) {
     console.warn("[photo-check] skipped:", (e as Error).message);
-    return true;
+    return null;
   }
 }

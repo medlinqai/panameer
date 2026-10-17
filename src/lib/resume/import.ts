@@ -11,6 +11,7 @@ import { splitCertificationName } from "@/lib/resume/certification-names";
 import { markResumePrefill } from "@/lib/resume/prefill";
 import { capabilitiesFromSkills } from "@/lib/capabilities";
 import { capabilitiesFromSpecializations } from "@/lib/spec-to-capability";
+import { photoFromResume } from "@/lib/resume/photo-from-resume";
 import { prisma } from "@/lib/prisma";
 import { extractText, ExtractError } from "@/lib/resume/extract";
 import { parseResume, type ParsedResume } from "@/lib/resume/parse";
@@ -181,6 +182,8 @@ export async function importProfileDocument({
   if (apply && applied.skillsUnmatched.length) await addTerms(profileId, applied.skillsUnmatched);
   // The member's review fixes survive any re-read.
   if (apply) await applyResumeFixes(profileId);
+  // Scott 10-17: a headshot in a Word résumé becomes the profile photo (only if none yet).
+  if (apply && !reuse) await photoFromResume(profileId, bytes, mimeType, fileName);
   const offsets = sourceOffsets(text, [
     ...companies.map((c) => ({ kind: "company", name: c.name })),
     ...parsed.experiences.map((e) => ({ kind: "company", name: e.employer ?? "" })),
