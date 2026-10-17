@@ -56,7 +56,7 @@ export function ProductsGrid() {
             <button type="button" onClick={() => setRows((v) => [...v, { ...blank(t.id), offered: true }])} className="text-[13px] font-semibold text-magenta-dark underline underline-offset-4">{rows.some((r) => r.serviceTypeId === t.id) ? `+ Add another ${t.name}` : `+ Add a ${t.name}`}</button>
           </div>
           {rows.filter((r) => r.serviceTypeId === t.id).map((r) => (
-            <ProductLine key={r.key} row={r} typeName={t.name} onChange={(next) => setRows((v) => v.map((x) => (x.key === r.key ? next : x)))} />
+            <ProductLine key={r.key} row={r} typeName={t.name} onChange={(next) => setRows((v) => v.map((x) => (x.key === r.key ? next : x)))} onRemove={() => setRows((v) => v.filter((x) => x.key !== r.key))} />
           ))}
         </section>
       ))}
@@ -80,7 +80,7 @@ export function ProductsGrid() {
   );
 }
 
-function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; onChange: (r: Row) => void }) {
+function ProductLine({ row, typeName, onChange, onRemove }: { row: Row; typeName: string; onChange: (r: Row) => void; onRemove: () => void }) {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
@@ -105,13 +105,25 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
     setState(j.id ? "saved" : "idle");
     if (j.id && j.id !== latest.current.id) { latest.current = { ...latest.current, id: j.id }; onChange(latest.current); }
   };
-  const set = (patch: Partial<Row>) => {
+  const set = (patch: Partial<Row>, now = false) => {
     const next = { ...row, ...patch };
     latest.current = next;
     onChange(next);
     if (timer.current) clearTimeout(timer.current);
+    // The slider saves at once (so Enable never shows a product you just switched off).
+    if (now) { timer.current = null; void save(next); return; }
     // Scott 10-17: saving on every keystroke made the page jump — save when you leave the row (or after 2s idle).
     timer.current = setTimeout(() => void save(latest.current), 2000);
+  };
+  const remove = async () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    await inflight.current.catch(() => {});
+    const id = latest.current.id;
+    if (id) {
+      const res = await fetch("/api/catalog/create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stop: "remove", id }) }).catch(() => null);
+      if (!res?.ok) { setState("error"); setErr("Couldn't remove it"); return; }
+    }
+    onRemove();
   };
   const flush = (e: React.FocusEvent<HTMLDivElement>) => {
     if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
@@ -140,7 +152,7 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
       {/* Line 1 — slider · Name · Price · Per · Lead time · More */}
       <div className="grid grid-cols-[minmax(0,1.6fr)_96px_104px_72px_52px] items-end gap-2 max-[700px]:grid-cols-3 min-[1151px]:contents">
         <div className="flex items-end gap-2 max-[700px]:col-span-3 min-[1151px]:order-1">
-          <button type="button" role="switch" aria-checked={row.offered} aria-label={`Offer ${row.name || typeName}`} onClick={() => set({ offered: !row.offered })} className={row.offered ? "relative mb-1 h-[22px] w-[38px] shrink-0 rounded-full bg-ink" : "relative mb-1 h-[22px] w-[38px] shrink-0 rounded-full bg-[#C9CDDC]"}>
+          <button type="button" role="switch" aria-checked={row.offered} aria-label={`Offer ${row.name || typeName}`} onClick={() => set({ offered: !row.offered }, true)} className={row.offered ? "relative mb-1 h-[22px] w-[38px] shrink-0 rounded-full bg-ink" : "relative mb-1 h-[22px] w-[38px] shrink-0 rounded-full bg-[#C9CDDC]"}>
             <span className={row.offered ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white"} />
           </button>
           <label className="block min-w-0 flex-1">
@@ -167,11 +179,17 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
         <div className="flex items-end max-[700px]:col-span-3 min-[1151px]:order-10">
           {row.id ? (
             <>
-              <Link href={`/catalog/products?edit=${row.id}`} className="mb-1.5 text-[13px] font-semibold text-magenta-dark underline underline-offset-4 max-[700px]:hidden">More</Link>
+              <span className="mb-1.5 flex flex-col gap-0.5 max-[700px]:hidden">
+                <Link href={`/catalog/products?edit=${row.id}`} className="text-[13px] font-semibold text-magenta-dark underline underline-offset-4">More</Link>
+                <button type="button" onClick={() => void remove()} className="text-left text-[12px] text-ink-3 underline underline-offset-4 hover:text-ink">Remove</button>
+              </span>
               <button type="button" onClick={() => setOpen((v) => !v)} className="hidden text-[13px] font-semibold text-magenta-dark underline underline-offset-4 max-[700px]:inline">{open ? "Less" : "More"}</button>
             </>
           ) : (
+            <>
+            <button type="button" onClick={() => void remove()} className="mb-1.5 text-[12px] text-ink-3 underline underline-offset-4 hover:text-ink max-[700px]:hidden">Remove</button>
             <button type="button" onClick={() => setOpen((v) => !v)} className="hidden text-[13px] font-semibold text-magenta-dark underline underline-offset-4 max-[700px]:inline">{open ? "Less" : "More"}</button>
+            </>
           )}
         </div>
       </div>

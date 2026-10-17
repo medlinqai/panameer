@@ -52,6 +52,20 @@ export type ProductRow = {
   paymentEvent: "ACCEPTANCE" | "DOWNLOAD" | "INSTALLATION" | "PAYMENT_REQUEST"; offers: boolean; leadDays: number | null; priceCents: number | null; imageUrl: string | null; pdfUrl: string | null;
 };
 
+/** Scott 10-17: Remove from the grid. Deleted when nothing points at it; otherwise taken off (Draft, slider off). */
+export async function removeProductRow(viewer: Viewer, id: string): Promise<"deleted" | "hidden" | "gone"> {
+  const p = await me(viewer);
+  const sp = await prisma.serviceProduct.findFirst({ where: { id, provider_profile_id: p.id }, select: { id: true } });
+  if (!sp) return "gone";
+  try {
+    await prisma.serviceProduct.delete({ where: { id } });
+    return "deleted";
+  } catch {
+    await prisma.serviceProduct.update({ where: { id }, data: { offered: false, status: "DRAFT" } });
+    return "hidden";
+  }
+}
+
 /** Groups = the stock Service Product types of the company's business type(s) + the seller's own types; rows = their products. */
 export async function productGrid(viewer: Viewer) {
   const p = await me(viewer);
