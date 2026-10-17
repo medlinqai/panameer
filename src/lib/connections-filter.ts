@@ -203,8 +203,10 @@ const chipMatch = (p: Person, chip: string) =>
 function panelMatch(p: Person, f: ConnFilters) {
   const lc = (s: string) => s.toLowerCase();
   if (f.q) {
-    const n = lc(f.q);
-    if (![p.name, p.title ?? "", p.company ?? "", ...p.skillNames.values(), ...p.keywords].some((x) => lc(x).includes(n))) return false;
+    // Scott 10-17: "anne" found Priya via "Channel" — match the start of a word, not the middle.
+    const esc = f.q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`(^|[^a-z0-9])${esc}`, "i");
+    if (![p.name, p.title ?? "", p.company ?? "", ...p.skillNames.values(), ...p.keywords].some((x) => re.test(x))) return false;
   }
   if (f.rel.length && !f.rel.some((r) => p.rel.has(r))) return false;
   if (f.how.length && !f.how.some((h) => p.how.has(h))) return false;
@@ -230,7 +232,7 @@ function why(p: Person, f: ConnFilters) {
     : p.how.has("course") ? "From Learn · same course"
     : p.how.has("team") ? "Same team"
     : `Connected ${p.connectedAt.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`;
-  const skill = f.skills.map((s) => p.skillNames.get(s)).find(Boolean) ?? (f.q ? [...p.skillNames.values()].find((n) => n.toLowerCase().includes(f.q.toLowerCase())) : undefined);
+  const skill = f.skills.map((s) => p.skillNames.get(s)).find(Boolean) ?? (f.q ? [...p.skillNames.values()].find((n) => new RegExp(`(^|[^a-z0-9])${f.q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i").test(n)) : undefined);
   return { tags, how, skill: skill ?? null };
 }
 
