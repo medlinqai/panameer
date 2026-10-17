@@ -9,7 +9,7 @@ import { personalFollowupTemplate, registrationReminderTemplate } from "@/lib/em
 // Activity = a registration save (touchRegistration) or a sign-in (users.last_login).
 const H = 3600_000;
 const BUYER_STEP: Record<string, string> = { REQUESTER_INFO: "Buyer", COMPANY: "Company", WORK_LOCATION: "Locations", REVIEW: "Review" };
-const SELLER_STEP: Record<string, string> = { seller: "Seller", company: "Company", locations: "Locations", review: "Review" };
+const SELLER_STEP: Record<string, string> = { resume: "Résumé", profile: "Résumé", seller: "Seller", company: "Company", locations: "Company", review: "Review" };
 export const STOP_REASONS = ["No time", "Didn't understand", "Not a fit", "Company/approval issue", "Testing", "Other"] as const;
 
 export async function touchRegistration(personId: string) {
@@ -47,7 +47,7 @@ export async function stoppedPartway(now = new Date(), idleHours = 24): Promise<
     const last = new Date(Math.max(p.user.created_at.getTime(), p.user.last_login?.getTime() ?? 0, f?.last_activity_at.getTime() ?? 0));
     if (now.getTime() - last.getTime() < idleHours * H) continue;
     const seller = !!p.providerProfile && !(p.requesterProfile && !p.requesterProfile.completed_at);
-    const stoppedAt = !p.user.email_verified ? "Verify Your Email" : seller ? SELLER_STEP[p.providerProfile?.registration_step ?? "seller"] ?? "Seller" : BUYER_STEP[p.requesterProfile?.onboarding_step ?? "REQUESTER_INFO"] ?? "Buyer";
+    const stoppedAt = !p.user.email_verified ? "Verify Your Email" : seller ? SELLER_STEP[p.providerProfile?.registration_step ?? "resume"] ?? "Résumé" : BUYER_STEP[p.requesterProfile?.onboarding_step ?? "REQUESTER_INFO"] ?? "Buyer";
     out.push({
       personId: p.id, userId: p.user.id, email: p.user.email, firstName: p.first_name ?? "", name: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || p.user.email,
       side: seller ? "Seller" : "Buyer", stoppedAt, verified: !!p.user.email_verified, signedUp: p.user.created_at, lastActivity: last,

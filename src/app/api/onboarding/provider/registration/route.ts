@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { OnboardingError } from "@/lib/onboarding";
 import { companyLocations, ownAddress, saveOwnAddress } from "@/lib/locations";
 import { companyBusinessTypeIds } from "@/lib/business-types";
-import { SELLER_REG_STEPS, sellerRegistration, type SellerRegStep } from "@/lib/seller-registration";
+import { SELLER_REG_STEPS, regStep, sellerRegistration, type SellerRegStep } from "@/lib/seller-registration";
 import { touchRegistration } from "@/lib/registration-followup";
 
 // SR-E001–E004: the seller's pre-verify Company · Locations · Review state, so a refresh returns to the step.
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
   await touchRegistration(p.id);
   const pp = p.providerProfile;
   // The step only moves forward (as the buyer's resume point).
-  const forward = (s: SellerRegStep) => SELLER_REG_STEPS.indexOf(s) > SELLER_REG_STEPS.indexOf((pp.registration_step as SellerRegStep) ?? "seller") || !pp.registration_step;
+  const forward = (s: SellerRegStep) => !regStep(pp.registration_step) || SELLER_REG_STEPS.indexOf(s) > SELLER_REG_STEPS.indexOf(regStep(pp.registration_step)!);
   try {
     const d = b.data;
     if ("own" in d) await saveOwnAddress(p.id, d.own);

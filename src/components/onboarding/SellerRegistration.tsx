@@ -16,13 +16,13 @@ import { PersonFields, personComplete, type PersonValues } from "@/components/on
 import { parseStoredPhone, toE164 } from "@/lib/phone";
 
 // SO-E003: seller registration after Verify + the start page — Who Is Selling? · Company · Locations · Review, the buyer's shell and pieces.
+// RF-E001 (Scott 10-17): Résumé · Seller · Company · Review — the résumé builds the searchable profile first.
 export const SELLER_RAIL = [
+  { key: "resume", label: "Résumé" },
   { key: "seller", label: "Seller" },
-  { key: "profile", label: "Profile" },
   { key: "company", label: "Company" },
-  { key: "locations", label: "Locations" },
 ];
-const STEPS = ["seller", "profile", "company", "locations", "review"] as const;
+const STEPS = ["resume", "seller", "company", "review"] as const;
 type Step = (typeof STEPS)[number];
 const DESCRIPTION_MAX = 600;
 export const TIN_TAKEN = "A company with that Tax ID is already on Panameer. Check the number, or Message Support and we'll connect you.";
@@ -41,7 +41,7 @@ type Reg = {
 
 export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; onLeave: () => void }) {
   const [ready, setReady] = useState(false);
-  const [step, setStep] = useState<Step>("seller");
+  const [step, setStep] = useState<Step>("resume");
   const [reached, setReached] = useState(0);
   const [person, setPerson] = useState<PersonValues>({ firstName: "", lastName: "", title: "", photoUrl: null, phone: "" });
   const [phoneCountry, setPhoneCountry] = useState<string | null>(null);
@@ -97,9 +97,8 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
       ]);
       // Refresh returns to the step they were on (saved on the server), never past what's missing.
       const c = r?.company;
-      const hasLocs = c?.owner ? r!.locations.some((l) => l.remitTo) : !!r?.own?.line1;
-      const saved: Step = r?.step && STEPS.includes(r.step) ? r.step : "seller";
-      const s: Step = saved === "seller" ? "seller" : !c ? "company" : !hasLocs && saved === "review" ? "locations" : saved;
+      const saved: Step = r?.step && STEPS.includes(r.step) ? r.step : "resume";
+      const s: Step = saved === "review" && !c ? "company" : saved;
       setStep(s);
       setReached(STEPS.indexOf(s));
       if (!c) setMatch(await findCoMatch(""));
@@ -128,7 +127,6 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   const idx = STEPS.indexOf(step);
   const shell = {
     rail: { steps: SELLER_RAIL, current: idx, reached, onPick: (i: number) => go(STEPS[i]) },
-    // Scott 10-16: Seller · Profile · Company · Locations · Review.
     eyebrow: `Step ${idx + 1} of ${STEPS.length} · ${step === "review" ? "Review" : SELLER_RAIL[idx].label}`,
     busy,
     canBack: idx > 0,
@@ -147,14 +145,14 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     const next = () => run(async () => {
       await post("/api/onboarding/provider/registration", "POST", { seller: { firstName: person.firstName, lastName: person.lastName, title: person.title, phone: toE164(person.phone, phoneCountry) ?? person.phone } });
       await load();
-      go("profile");
+      go("company");
     });
     return (
       <WizardShell
         {...shell}
         title="Who Is Selling?"
         subtitle="This is the person buyers see on your profile and on proposals."
-        continueLabel="Next: Profile"
+        continueLabel="Next: Company"
         continueDisabled={!personComplete(person, phoneCountry)}
         onContinue={next}
       >
@@ -175,22 +173,22 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   }
 
   // ---- Profile (Scott 10-16): the profile-building page from before — upload the résumé, then check what we read ----
-  if (step === "profile") {
+  if (step === "resume") {
     return (
       <WizardShell
         {...shell}
         title={imported ? "Here's what we have — check it over" : "How would you like to tell us about yourself?"}
         subtitle={imported ? "Edit anything that's wrong or missing. This is what buyers will see." : "Just upload your résumé and let our AI do the rest."}
-        continueLabel="Next: Company"
-        onContinue={() => go("company")}
+        continueLabel="Next: Seller"
+        onContinue={() => go("seller")}
         secondaryLabel={imported ? undefined : "Skip for Now"}
-        onSecondary={imported ? undefined : () => go("company")}
+        onSecondary={imported ? undefined : () => go("seller")}
         wide
       >
         <div className="w-full space-y-4" data-seller-profile-step>
           {error && <Notice>{error}</Notice>}
           {imported ? (
-            <ResumeReview onContinue={() => go("company")} />
+            <ResumeReview onContinue={() => go("seller")} />
           ) : (
             <section className="mx-auto max-w-2xl">
               <div className="mb-3 flex items-center gap-2">
@@ -223,7 +221,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     const shown = dba.trim() || name.trim();
     const next = () => run(async () => {
       if (match) return requestAccess();
-      if (joining) return go("locations");
+      if (joining) return go("review");
       if (!c) {
         if (await findCoMatch(website).then((m) => (setMatch(m), m))) return;
         try {
@@ -241,7 +239,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
         if (businessTypeId && !(c?.businessTypeIds ?? []).includes(businessTypeId)) await post("/api/company/business-types", "POST", { businessTypeId, on: true });
       }
       await load();
-      go("locations");
+      go("review");
     });
     const remitOk = emailOk(remitEmail.trim() || reg?.email || "");
     const ok = match || joining || (name.trim().length >= 2 && remitOk && companyIdentityOk({ website, tin }) && (!types.length || !!businessTypeId) && (c ? true : attestation && companyTos));
@@ -250,7 +248,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
         {...shell}
         title="Which company do you sell through?"
         subtitle="Panameer contracts with and pays companies. A one-person business is a company too."
-        continueLabel={match ? "Request Access" : "Next: Locations"}
+        continueLabel={match ? "Request Access" : "Next: Review"}
         continueDisabled={!ok}
         onContinue={next}
       >
@@ -305,41 +303,6 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     );
   }
 
-  // ---- Locations -----------------------------------------------------------
-  if (step === "locations") {
-    const ownOk = !!own.line1?.trim() && !!own.country;
-    const problem = owner ? locsProblem(locs, { buyer: false, seller: true }) : ownOk ? null : "Add the country and street";
-    const next = () => run(async () => {
-      if (owner) await post("/api/company/locations", "POST", { locations: locs, seller: true });
-      else await post("/api/onboarding/provider/registration", "POST", { own });
-      await load();
-      go("review");
-    });
-    return (
-      <WizardShell
-        {...shell}
-        title={owner ? "Where is your company?" : "Where do you work?"}
-        subtitle={owner ? "Tick what each address is for. You need at least one Remit To — it's where payments to you go." : "Your own work address. Your company's addresses are kept by its admin."}
-        continueLabel="Next: Review"
-        continueDisabled={!!problem}
-        onContinue={next}
-      >
-        <div className="mx-auto w-full max-w-2xl space-y-4" data-seller-locations>
-          {error && <Notice>{error}</Notice>}
-          {owner ? (
-            <LocationsBlock rows={locs} onChange={setLocs} buyer={false} seller />
-          ) : (
-            <div data-own-address className="border border-line p-4">
-              <p className="mb-2 text-[14px] font-bold">Where you work *</p>
-              <LocationFields value={own} onChange={(p) => setOwn((o) => ({ ...o, ...p }))} withStreet compact />
-            </div>
-          )}
-          {problem && owner && <p className="text-[13px] text-ink-2">{problem}</p>}
-        </div>
-      </WizardShell>
-    );
-  }
-
   // ---- Review (Scott 10-16): the top of the profile, then Company and Locations — same component as the buyer ----
   const btName = types.find((t) => t.id === businessTypeId)?.name;
   const btGroup = types.find((t) => t.id === businessTypeId)?.group;
@@ -373,7 +336,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
         }
         locations={reviewLocs}
         next="On your Dashboard: Create What You Sell. Your résumé and skills, your rates and products, then enable your catalog (about 10 minutes)."
-        onEdit={(sec) => go(sec === "person" ? "seller" : sec === "company" ? "company" : "locations")}
+        onEdit={(sec) => go(sec === "person" ? "seller" : "company")}
       />
     </WizardShell>
   );
