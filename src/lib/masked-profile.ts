@@ -331,10 +331,12 @@ export async function browseTalent(
 
 /** Null when the profile does not exist, is not marketplace-visible, or its */
 export async function getMaskedProfile(
-  profileId: string
+  profileId: string,
+  /** SH-E005: a signed-in buyer's masked view — test sellers for test viewers; the signed-out preview switch doesn't apply. */
+  member?: { seesTest: boolean }
 ): Promise<MaskedProfile | null> {
   const p = await prisma.providerProfile.findFirst({
-    where: { id: profileId, ...(await visitorPreviewWhere()) },
+    where: { id: profileId, ...(member ? await marketplaceWhere(member.seesTest, { photo: false }) : await visitorPreviewWhere()) },
     select: {
       id: true,
       overview: true,

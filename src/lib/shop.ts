@@ -168,3 +168,13 @@ export function newThisWeek(list: ShopProduct[], take = 8): ShopProduct[] {
   const week = list.filter((p) => Date.now() - Date.parse(p.createdAt) < 7 * 86_400_000);
   return (week.length >= 4 ? week : list).slice(0, take);
 }
+
+/** SH-E005: which of these provider profiles this viewer sees masked — talent sellers they haven't bought from, matched, invited or connected to. */
+export async function maskedProfileIds(viewer: Viewer | null, profileIds: string[]): Promise<Set<string>> {
+  if (!profileIds.length) return new Set();
+  const [canSee, rows] = await Promise.all([
+    talentVisibleTo(viewer),
+    prisma.providerProfile.findMany({ where: { id: { in: profileIds } }, select: { id: true, person_id: true, person: { select: { company: { select: { businessTypes: { select: { businessType: { select: { commodityGroup: { select: { name: true } } } } } } } } } } } }),
+  ]);
+  return new Set(rows.filter((r) => (r.person.company?.businessTypes ?? []).some((b) => isTalentCategory(b.businessType.commodityGroup?.name)) && !canSee(r.person_id)).map((r) => r.id));
+}

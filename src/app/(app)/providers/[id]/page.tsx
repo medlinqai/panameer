@@ -17,7 +17,7 @@ import { ConnectControls } from "@/components/community/ConnectControls";
 import { BackButton } from "@/components/casing/BackButton";
 import { viewerCanHire } from "@/lib/rate-visibility";
 import { getSessionViewer } from "@/lib/session";
-import { listShopProducts } from "@/lib/shop";
+import { listShopProducts, maskedProfileIds } from "@/lib/shop";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
@@ -25,6 +25,7 @@ import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { canMessage } from "@/lib/messages";
 import { recordProfileView } from "@/lib/profile-views";
 import { MaskedProviderPage } from "@/components/public/MaskedProviderPage";
+import { MemberMaskedProfile } from "@/components/public/MemberMaskedProfile";
 import { getMaskedProfile } from "@/lib/masked-profile";
 import type { Metadata } from "next";
 
@@ -122,6 +123,10 @@ export default async function PublicProviderPage({
   // SIGNED OUT NOW GETS A MASKED PREVIEW, NOT A LOGIN WALL
   if (!viewer) {
     return <MaskedProviderPage id={id} />;
+  }
+  // SH-E005: a talent seller stays masked for a buyer until they've bought from, matched, invited or connected with them.
+  if ((await maskedProfileIds(viewer, [id])).has(id)) {
+    return <MemberMaskedProfile id={id} seesTest={await seesTestAccounts(viewer)} />;
   }
 
   const profile = await getProviderProfileView(id, {

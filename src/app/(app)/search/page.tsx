@@ -8,6 +8,7 @@ import {
 import { matchProvidersForSkills } from "@/lib/work-request-match";
 import { formatCents } from "@/lib/display";
 import { prisma } from "@/lib/prisma";
+import { maskLabel, maskedProfileIds } from "@/lib/shop";
 
 export const metadata = { title: "Search · Panameer" };
 
@@ -18,7 +19,7 @@ export default async function Page({
 }: {
   searchParams: Promise<SP>;
 }) {
-  await guardPage("authenticated");
+  const viewer = await guardPage("authenticated");
   const sp = await searchParams;
 
   const tree = await getProviderFieldTree();
@@ -41,6 +42,8 @@ export default async function Page({
   const result = searched
     ? await matchProvidersForSkills({ skillIds, pillarId: domain?.id ?? null, industryFilter: industry?.id ?? null })
     : null;
+  // SH-E005: talent shows masked until this buyer has bought from, matched, invited or connected with them.
+  const masked = await maskedProfileIds(viewer, result?.providers.map((p) => p.profileId) ?? []);
 
   const sel =
     "min-h-11 w-full rounded-brand border border-line bg-white px-3 text-[15px] text-ink";
@@ -164,7 +167,7 @@ export default async function Page({
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h2 className="text-[17px] font-bold text-ink">
                     <Link href={`/providers/${p.profileId}`} className="hover:underline">
-                      {p.name}
+                      {masked.has(p.profileId) ? maskLabel(p.headline, null) : p.name}
                     </Link>
                   </h2>
                   {/* THE RATE IS A RANGE (a locked decision), so both ends print. */}
