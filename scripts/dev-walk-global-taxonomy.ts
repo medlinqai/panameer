@@ -34,9 +34,9 @@ async function main() {
   const lines = await capabilitiesFor(s.profileId!);
   check("on: profile line reads as the brief", lines[0]?.line === "Supports Oracle Fusion Cloud Payables · Invoice Processing & Matching", lines[0]?.line);
   await prisma.providerService.create({ data: { provider_profile_id: s.profileId!, name: "Offsite Hourly", service_type: "SERVICE_BY_QTY", uom: "HOUR", rate_cents: 11000, published_at: new Date() } });
-  const found = await listServiceProviders({ mode: "SUPPORT", domain: domain.id, vendor: item.product.vendor_id }, { includeTestPersonId: s.personId });
+  const found = await listServiceProviders({ mode: "SUPPORT", domain: domain.id, vendor: item.product.vendor_id }, { seesTest: true });
   check("on: Shop › Services filter (Support · Invoice Processing · Oracle) finds them", found.some((r) => r.profileId === s.profileId && r.capabilities.includes(lines[0].line)));
-  const other = await listServiceProviders({ mode: "IMPLEMENT", domain: domain.id }, { includeTestPersonId: s.personId });
+  const other = await listServiceProviders({ mode: "IMPLEMENT", domain: domain.id }, { seesTest: true });
   check("on: …and Implement doesn't", !other.some((r) => r.profileId === s.profileId));
   const legacyItem = await prisma.systemItem.findFirst({ where: { legacy_skill_id: { not: null }, NOT: { id: item.id } }, select: { id: true, legacy_skill_id: true, name: true } });
   if (legacyItem) {

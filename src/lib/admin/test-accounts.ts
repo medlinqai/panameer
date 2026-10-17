@@ -31,6 +31,12 @@ export async function viewerIsTest(viewer: Viewer | null): Promise<boolean> {
   return u?.is_test === true;
 }
 
+/** TD-E003: test sellers show to test viewers and admins; real members never see them. */
+export async function seesTestAccounts(viewer: Viewer | null): Promise<boolean> {
+  if (!viewer) return false;
+  return viewer.isSystemAdmin || viewer.isAdmin || (await viewerIsTest(viewer));
+}
+
 /* ── create ─────────────────────────────────────────────────────────────── */
 
 export type CreateResult = { created: string[]; skipped: string[] };

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getShopProduct } from "@/lib/shop";
+import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { formatCents } from "@/lib/display";
 import { prisma } from "@/lib/prisma";
 import { ShopTabs } from "@/components/shop/ShopTabs";
@@ -14,7 +15,7 @@ export const metadata = { title: "Service Product · Panameer" };
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const viewer = await guardPage("authenticated");
   const { id } = await params;
-  const p = await getShopProduct(id);
+  const p = await getShopProduct(id, await seesTestAccounts(viewer));
   if (!p) notFound();
   const me = await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true } });
   const own = me?.id === p.providerPersonId;

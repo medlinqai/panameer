@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { listShopProducts } from "@/lib/shop";
+import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { prisma } from "@/lib/prisma";
 import { ShopTabs } from "@/components/shop/ShopTabs";
 import { taxonomyV2 } from "@/lib/platform-settings";
@@ -20,7 +21,7 @@ export const metadata = { title: "Service Products · Panameer" };
 export default async function Page({ searchParams }: { searchParams: Promise<ShopQuery> }) {
   const viewer = await memberOrPublicTwin("/shop");
   const sp = await searchParams;
-  const [all, me] = await Promise.all([listShopProducts(), prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } })]);
+  const [all, me] = await Promise.all([listShopProducts(undefined, await seesTestAccounts(viewer)), prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } })]);
   const cartLines = me ? await prisma.workRequestLine.findMany({ where: { workRequest: { buyer_person_id: me.id, source: "SHOP", status: "INCOMPLETE" } }, select: { id: true, service_product_id: true } }) : [];
   const inCart = new Map(cartLines.map((l) => [l.service_product_id, l.id]));
   // BR-E004: buyers see everything; What We Buy only orders it — business types they buy come first.

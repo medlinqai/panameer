@@ -8,7 +8,7 @@ import { buyersSee } from "@/lib/rate-display";
 export type ServicesQuery = { q?: string; mode?: string; process?: string; domain?: string; vendor?: string; product?: string; industry?: string } & Record<string, string | undefined>;
 const MODES = new Set(["IMPLEMENT", "SUPPORT", "OPERATE"]);
 
-export async function listServiceProviders(f: ServicesQuery, opts: { includeTestPersonId?: string | null } = {}) {
+export async function listServiceProviders(f: ServicesQuery, opts: { seesTest?: boolean } = {}) {
   const capWhere: Prisma.ProviderCapabilityWhereInput = {
     ...(f.mode && MODES.has(f.mode) ? { mode: f.mode as WorkMode } : {}),
     ...(f.domain ? { domain_id: f.domain } : f.process ? { domain: { process: f.process } } : {}),
@@ -29,7 +29,8 @@ export async function listServiceProviders(f: ServicesQuery, opts: { includeTest
       ...(f.industry ? { specializations: { some: { specialization_id: f.industry, specialization: { kind: "INDUSTRY" } } } } : {}),
       // Lane 6: attribute filters arrive as a_<attributeId>=<value>; each must match.
       ...(attrFilters(f).length ? { AND: attrFilters(f).map(([id, v]) => ({ attributeValues: { some: { attribute_id: id, values: { has: v } } } })) } : {}),
-      person: { OR: [{ user: { is_test: false } }, ...(opts.includeTestPersonId ? [{ id: opts.includeTestPersonId }] : [])], ...(term ? { OR: [{ first_name: { contains: term, mode: "insensitive" } }, { last_name: { contains: term, mode: "insensitive" } }, { title: { contains: term, mode: "insensitive" } }] } : {}) },
+      // TD-E003: test sellers only for test viewers and admins (a search term no longer drops this filter).
+      person: { ...(opts.seesTest ? {} : { user: { is_test: false } }), ...(term ? { OR: [{ first_name: { contains: term, mode: "insensitive" } }, { last_name: { contains: term, mode: "insensitive" } }, { title: { contains: term, mode: "insensitive" } }] } : {}) },
     },
     select: { id: true, person: { select: { id: true, first_name: true, last_name: true, title: true, photo_url: true } } },
     take: 200,

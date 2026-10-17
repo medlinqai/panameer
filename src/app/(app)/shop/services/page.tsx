@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { prisma } from "@/lib/prisma";
 import { taxonomyV2 } from "@/lib/platform-settings";
+import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { attributeFilterOptions, listServiceProviders, servicesFilterOptions, type ServicesQuery } from "@/lib/shop-services";
 import { HelpTip } from "@/components/ui/HelpTip";
 import { fieldHelp } from "@/lib/field-guide";
@@ -18,8 +19,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Ser
   if (!(await taxonomyV2())) notFound();
   const viewer = await memberOrPublicTwin("/shop");
   const sp = await searchParams;
-  const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
-  const [rows, o, attrs] = await Promise.all([listServiceProviders(sp, { includeTestPersonId: me?.id ?? null }), servicesFilterOptions(), attributeFilterOptions()]);
+  const [rows, o, attrs] = await Promise.all([listServiceProviders(sp, { seesTest: await seesTestAccounts(viewer) }), servicesFilterOptions(), attributeFilterOptions()]);
   const filters: FilterDef[] = [
     { key: "mode", label: "How They Work", options: [{ value: "IMPLEMENT", label: "Implement" }, { value: "SUPPORT", label: "Support" }, { value: "OPERATE", label: "Do the Work" }] },
     { key: "process", label: "Process", options: o.processes.map((p) => ({ value: p, label: p })) },

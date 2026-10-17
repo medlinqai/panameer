@@ -74,8 +74,8 @@ async function main() {
   await saveAttribute(seller.viewer, attrs.find((a) => a.name === "Credential")!.id, ["CPA"]);
   check("seller: Accounting needs an industry (Professional Services)", !!(await industryGap(seller.personId, seller.profileId!)));
   await prisma.providerService.create({ data: { provider_profile_id: seller.profileId!, name: "Offsite Hourly", service_type: "SERVICE_BY_QTY", uom: "HOUR", rate_cents: 9000, published_at: new Date() } });
-  const found = await listServiceProviders({ [`a_${lic.id}`]: "FL" }, { includeTestPersonId: seller.personId });
-  const notFound = await listServiceProviders({ [`a_${lic.id}`]: "NY" }, { includeTestPersonId: seller.personId });
+  const found = await listServiceProviders({ [`a_${lic.id}`]: "FL" }, { seesTest: true });
+  const notFound = await listServiceProviders({ [`a_${lic.id}`]: "NY" }, { seesTest: true });
   check("Shop › Services: Licensed in FL finds them, NY doesn't", found.some((r) => r.profileId === seller.profileId) && !notFound.some((r) => r.profileId === seller.profileId));
   delete process.env.TAXONOMY_V2_FORCE;
 

@@ -51,9 +51,9 @@ const SELECT = {
 
 const TERMS: Record<string, string> = { IMMEDIATE: "due on receipt", NET15: "net 15", NET30: "net 30", NET45: "net 45", NET60: "net 60" };
 
-export async function listShopProducts(providerProfileId?: string): Promise<ShopProduct[]> {
+export async function listShopProducts(providerProfileId?: string, seesTest = false): Promise<ShopProduct[]> {
   const rows = await prisma.serviceProduct.findMany({
-    where: { status: "PUBLISHED", ...(providerProfileId ? { provider_profile_id: providerProfileId } : {}), providerProfile: { person: memberVisibleWhere() } },
+    where: { status: "PUBLISHED", ...(providerProfileId ? { provider_profile_id: providerProfileId } : {}), providerProfile: { person: memberVisibleWhere(seesTest) } },
     orderBy: [{ created_at: "desc" }],
     select: SELECT,
     take: 500,
@@ -102,7 +102,7 @@ function shape(p: Row, orders: number): ShopProduct {
   };
 }
 
-export async function getShopProduct(id: string): Promise<ShopProduct | null> {
-  const row = await prisma.serviceProduct.findFirst({ where: { id, status: "PUBLISHED", providerProfile: { person: memberVisibleWhere() } }, select: SELECT });
+export async function getShopProduct(id: string, seesTest = false): Promise<ShopProduct | null> {
+  const row = await prisma.serviceProduct.findFirst({ where: { id, status: "PUBLISHED", providerProfile: { person: memberVisibleWhere(seesTest) } }, select: SELECT });
   return row ? shape(row, 0) : null;
 }
