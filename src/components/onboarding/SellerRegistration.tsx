@@ -102,6 +102,8 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     // Prefilled like the buyer's: the company's email if it has one, else theirs.
     setRemitEmail((v) => v || (c?.status === "APPROVED" ? c.companyEmail : "") || r.email || "");
     if (r.locations.length) setLocs(r.locations);
+    // Scott 10-17: a new company's first address starts from where you work (street + ZIP left to type).
+    else if (r.own) setLocs((ls) => (ls.length === 1 && !ls[0].line1 && !ls[0].city ? [{ ...ls[0], country: r.own!.country ?? ls[0].country, city: r.own!.city ?? undefined, state: r.own!.state ?? undefined, line1: r.own!.line1 || undefined, postalCode: r.own!.postalCode ?? undefined }] : ls));
     if (r.own) setOwn(r.own);
     return r;
   }, []);
@@ -295,9 +297,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
               {types.length > 0 && (
                 <BusinessTypePicker inline types={types} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells. It sets up your Service Catalog; you can add more later." />
               )}
-              <Field label="Description (optional)">
-                <TextArea value={description} maxLength={DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder={`What the company does, in a sentence or two (up to ${DESCRIPTION_MAX} characters).`} className="min-h-0! h-[60px]" />
-              </Field>
+              {/* Scott 10-17 (one page): the optional company description moved to My Company. */}
               {(owner || !c) && (
                 <div data-seller-locations>
                   <p className="mb-2 text-[14px] font-bold">Company addresses *</p>
