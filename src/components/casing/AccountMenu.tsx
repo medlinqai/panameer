@@ -86,8 +86,8 @@ export function AccountMenu({
   /* The company the rail chip used to name. See the My Company block below. */
   const company = me?.company;
   const rows = isAdmin ? ADMIN_PERSONA_NAV : PERSONA_NAV;
-  // One count on the avatar: unread messages + notifications that need the person.
-  const attention = (me?.messagesUnread ?? 0) + (me?.notificationsNeedAction ?? 0);
+  // Scott 10-17: one count on the avatar = unread messages + ALL unread notifications ("otherwise, why notify").
+  const attention = (me?.messagesUnread ?? 0) + (me?.notificationsUnread ?? 0);
 
   const toggleAvailable = async () => {
     if (available === null) return;
@@ -358,7 +358,7 @@ export function AccountMenu({
           <PathMenuBlock onNavigate={close} rowClass={rowClass} />
           {/* Messages and Notifications live here now (2026-10-07); each row shows its own count. */}
           <CountRow href="/messages" label="Messages" count={me?.messagesUnread ?? 0} onClick={close} className={rowClass} />
-          <CountRow href="/notifications" label="Notifications" count={me?.notificationsNeedAction ?? 0} onClick={close} className={rowClass} />
+          <CountRow href="/notifications" label="Notifications" count={me?.notificationsUnread ?? 0} onClick={close} className={rowClass} />
           <div className="border-t border-line" />
           {/* MY COMPANY (E099, and it REVERSES E225) */}
 
