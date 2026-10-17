@@ -87,7 +87,13 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef(row);
 
-  const save = async (r: Row) => {
+  // Scott 10-17: two saves in flight both created a product ("Compliance Agent — $1" and "— $199/mo"). Saves run one at a time, each with the id the last one got.
+  const inflight = useRef<Promise<void>>(Promise.resolve());
+  const save = (r: Row) => {
+    inflight.current = inflight.current.then(() => saveNow({ ...latest.current, id: latest.current.id ?? r.id }));
+    return inflight.current;
+  };
+  const saveNow = async (r: Row) => {
     setState("saving");
     setErr(null);
     const res = await fetch("/api/catalog/create", {
@@ -97,7 +103,7 @@ function ProductLine({ row, typeName, onChange }: { row: Row; typeName: string; 
     const j = await res?.json().catch(() => ({}));
     if (!res?.ok) { setState("error"); setErr(j?.error ?? "Didn't save"); return; }
     setState(j.id ? "saved" : "idle");
-    if (j.id && j.id !== latest.current.id) onChange({ ...latest.current, id: j.id });
+    if (j.id && j.id !== latest.current.id) { latest.current = { ...latest.current, id: j.id }; onChange(latest.current); }
   };
   const set = (patch: Partial<Row>) => {
     const next = { ...row, ...patch };
