@@ -932,16 +932,16 @@ export function ConnectProfile({
 
         <CleanSection
           id="solo-projects"
-          title="Solo Projects"
+          title="Projects"
           count={soloProjects.length}
           showWhenEmpty={owner}
-          action={owner ? <CleanEdit href={editHref("solo-projects")} title="Solo Projects" /> : undefined}
+          action={owner ? <CleanEdit href={editHref("solo-projects")} title="Projects" /> : undefined}
         >
           <SoloProjectsBody
             projects={soloProjects}
             isOwner={owner}
             // THE EXPLANATION IS `SoloProjectsBody`'s OWN LINE AND IS ALREADY ON SCREEN
-            empty="No solo projects yet."
+            empty="No projects yet."
           />
         </CleanSection>
 

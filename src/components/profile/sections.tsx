@@ -1008,7 +1008,7 @@ export function SoloProjectsBody({
     <>
       {/* THE SENTENCE IS SAID ONCE item 7) */}
       <p className="mb-4 text-[13px] text-ink-2">
-        Employee projects are under their Employer in Work History.
+        Projects are listed on their own, like LinkedIn. Each one names its client.
       </p>
       {projects.length === 0 ? (
         <Empty>{empty}</Empty>

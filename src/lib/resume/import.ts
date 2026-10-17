@@ -616,7 +616,9 @@ export async function applyParsedResume(
     if (ck && haveClient.has(ck)) continue;
     if (ck) haveClient.add(ck);
     // Scott 10-17: "Panameer Digital Services" / "Medlinq.ai" landed in Solo next to an employer named "Panameer" / "Medlinq" — match close names.
-    const employerId = (pr.employerName ? (employerIdByName.get(pr.employerName) ?? closeEmployer(pr.employerName, employerIdByName)) : null) ?? coveringEmployer(pr.startDate);
+    // Scott 10-17: like LinkedIn — Employers are one list, Projects another. Linking guessed wrong and took effort to undo, so projects aren't attached.
+    void closeEmployer; void coveringEmployer; void employerIdByName;
+    const employerId: string | null = null;
     const description =
       [
         pr.description,
