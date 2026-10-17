@@ -8,6 +8,7 @@ import { taxonomyV2 } from "@/lib/platform-settings";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ShowMore } from "@/components/shop/ShowMore";
 import { StoreFilters } from "@/components/shop/StoreFilters";
+import { listShopProviders } from "@/lib/shop-providers";
 import { byPopular, filterStore, filterStoreExceptCategory, ORACLE_CATEGORY, type StoreQuery } from "@/lib/shop-filters";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sto
   const categories = names.map((c) => ({ value: c, label: c, count: forCounts.filter((p) => p.category === c).length }));
   const tech = masked.filter((p) => p.category === ORACLE_CATEGORY);
   const types = [...new Set(tech.map((p) => p.typeName).filter((t): t is string => !!t))].sort().map((t) => ({ value: t, label: t, count: tech.filter((p) => p.typeName === t).length }));
-  const providerHits: number = 0;
+  const providerHits = f.q?.trim() ? (await listShopProviders(seesTest, { q: f.q })).length : 0;
 
   return (
     <div className="pm-white-page mx-auto w-full max-w-6xl">
