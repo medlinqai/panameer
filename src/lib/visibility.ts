@@ -25,7 +25,8 @@ export async function liveSellerIds(among?: string[]): Promise<string[]> {
 }
 
 const hasAddress: Prisma.PersonWhereInput = { OR: [{ site: { addresses: { some: {} } } }, { company: { sites: { some: { addresses: { some: {} } } } } }] };
-const hasWork: Prisma.ProviderProfileWhereInput = { OR: [{ skills: { some: {} } }, { roles: { some: {} } }, { role_id: { not: null } }, { capabilities: { some: {} } }] };
+// A business type that doesn't use skills (printing, HVAC, freight…) is itself the kind of work.
+const hasWork: Prisma.ProviderProfileWhereInput = { OR: [{ skills: { some: {} } }, { roles: { some: {} } }, { role_id: { not: null } }, { capabilities: { some: {} } }, { person: { company: { businessTypes: { some: { businessType: { uses_skills: false } } } } } }] };
 
 /** The required set as a filter (status / switch / test filters are the caller's). */
 export function requiredWhere(liveIds: string[], opts: { photo?: boolean } = {}): Prisma.ProviderProfileWhereInput {
@@ -67,7 +68,7 @@ export async function missingForBuyers(profileId: string): Promise<Missing[]> {
     select: {
       role_id: true,
       _count: { select: { skills: true, roles: true, capabilities: true } },
-      person: { select: { title: true, photo_url: true, phone: true, site: { select: { _count: { select: { addresses: true } } } }, company: { select: { sites: { select: { _count: { select: { addresses: true } } } } } } } },
+      person: { select: { title: true, photo_url: true, phone: true, site: { select: { _count: { select: { addresses: true } } } }, company: { select: { sites: { select: { _count: { select: { addresses: true } } } }, businessTypes: { select: { businessType: { select: { uses_skills: true } } } } } } } },
     },
   });
   if (!p) return [];
@@ -76,7 +77,7 @@ export async function missingForBuyers(profileId: string): Promise<Missing[]> {
   if (!p.person.photo_url) out.push("photo");
   if (!p.person.phone?.trim()) out.push("phone");
   if (!(p.person.site?._count.addresses || p.person.company?.sites.some((s) => s._count.addresses))) out.push("address");
-  if (!(p._count.skills || p._count.roles || p._count.capabilities || p.role_id)) out.push("skill");
+  if (!(p._count.skills || p._count.roles || p._count.capabilities || p.role_id || p.person.company?.businessTypes.some((b) => !b.businessType.uses_skills))) out.push("skill");
   if (!(await liveSellerIds([profileId])).length) out.push("offer");
   return out.map((key) => ({ key, ...FIX[key] }));
 }
