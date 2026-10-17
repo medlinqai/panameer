@@ -1,5 +1,7 @@
 "use client";
 
+import { useMe } from "@/components/MeProvider";
+
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StepRail } from "@/components/onboarding/StepRail";
@@ -17,6 +19,8 @@ const money = (c: number | null) => (c != null ? `$${(c / 100).toLocaleString("e
 
 export function CreateWhatYouSell() {
   const router = useRouter();
+  // Scott 10-17: the avatar still said "Not live yet" after Enable — re-read /api/me.
+  const { refresh: refreshMe } = useMe();
   const [s, setS] = useState<State | null>(null);
   const [stop, setStop] = useState(0);
   const [reached, setReached] = useState(0);
@@ -105,6 +109,6 @@ export function CreateWhatYouSell() {
       </div>
       {!ready && <p className="mt-3 text-[13.5px] font-semibold text-magenta-dark">Turn on at least one service or one product to enable your catalog.</p>}
     </div>,
-    { label: "Enable My Catalog", disabled: !ready, onClick: async () => { if (await post({ stop: "enable" })) router.push("/dashboard"); } },
+    { label: "Enable My Catalog", disabled: !ready, onClick: async () => { if (await post({ stop: "enable" })) { refreshMe(); router.push("/dashboard"); router.refresh(); } } },
   );
 }
