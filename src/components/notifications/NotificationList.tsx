@@ -49,9 +49,48 @@ export function NotificationList({ rows, chips, filter, more, openCount, unreadC
     if (r.unread) void post("read", [r.id]);
     if (r.href) router.push(r.href);
   };
+
+  // NT-E004: J/↓ next · K/↑ previous · A accept/approve · D decline · X dismiss · Enter open. Acting keeps focus on the
+  // same slot, which is now the next row. Keys are ignored while typing.
+  const visible = rows.filter((r) => !gone.has(r.id));
+  const [focusRaw, setFocus] = useState(-1);
+  // After the last row leaves, focus sits on the new last row.
+  const focus = Math.min(focusRaw, visible.length - 1);
+  const [keyMsg, setKeyMsg] = useState<string | null>(null);
+  const decidable = (r: Row) => !!r.action && (r.action.kind === "join" || r.action.kind === "connect" || r.action.kind === "mentor") && r.action.pending && !r.dismissed;
+  const decide = async (r: Row, decision: "APPROVED" | "REJECTED") => {
+    setKeyMsg(null);
+    leave(r.id);
+    const res = await fetch("/api/worklist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: r.id, action: "decide", decision }) }).catch(() => null);
+    if (!res?.ok) setKeyMsg(((await res?.json().catch(() => ({}))) as { error?: string })?.error ?? "That didn't work.");
+    refreshMe();
+    startTransition(() => router.refresh());
+  };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey || (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable))) return;
+      const k = e.key.toLowerCase();
+      const row = visible[focus];
+      if (k === "j" || k === "arrowdown") { e.preventDefault(); setFocus(Math.min(visible.length - 1, focus + 1)); }
+      else if (k === "k" || k === "arrowup") { e.preventDefault(); setFocus(Math.max(0, focus - 1)); }
+      else if (!row) return;
+      else if (k === "a" && decidable(row)) void decide(row, "APPROVED");
+      else if (k === "d" && decidable(row)) void decide(row, "REJECTED");
+      else if (k === "x" && !row.dismissed) dismissOne(row.id);
+      else if (k === "enter") { e.preventDefault(); open(row); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+  useEffect(() => {
+    if (focus >= 0) document.querySelector(`[data-row-index="${focus}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [focus]);
   return (
     <div className="mx-auto w-full max-w-[760px]">
       <h1 className="font-display text-[22px] font-bold">Notifications</h1>
+      <p className="mt-0.5 hidden text-[12.5px] text-ink-3 sm:block" data-keys-hint>J/K to move · A accept · D decline · X dismiss</p>
+      {keyMsg && <p role="alert" className="mt-1 text-[13px] font-semibold text-magenta-dark">{keyMsg}</p>}
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <Link href="/worklist" className={BTN}>Worklist{openCount > 0 ? ` (${openCount})` : ""} →</Link>
         {unreadCount > 0 && <button type="button" disabled={busy} onClick={() => post("read_all")} className={BTN}>Mark All Read</button>}
@@ -78,7 +117,7 @@ export function NotificationList({ rows, chips, filter, more, openCount, unreadC
         <p className="mt-8 text-center text-[14px] text-ink-2">Nothing here.</p>
       ) : (
         <ul data-notification-list className="mt-3 border-t border-line">
-          {rows.filter((r) => !gone.has(r.id)).map((r) => {
+          {visible.map((r, i) => {
             const muted = r.dismissed || hidden.has(r.id);
             const acts = !muted && r.action && r.action.kind !== "dismiss" && r.action.kind !== "reply" && !(("pending" in r.action) && !r.action.pending);
             const body = (
@@ -95,7 +134,7 @@ export function NotificationList({ rows, chips, filter, more, openCount, unreadC
               </div>
             );
             return (
-              <li key={r.id} data-unread={r.unread ? "yes" : "no"} data-dismissed={muted ? "yes" : "no"} className="border-b border-line">
+              <li key={r.id} data-row-index={i} data-unread={r.unread ? "yes" : "no"} data-dismissed={muted ? "yes" : "no"} onMouseDown={() => setFocus(i)} className={i === focus ? "border-b border-line outline outline-2 -outline-offset-2 outline-ink" : "border-b border-line"}>
                 {muted ? body : <SwipeRow label={r.title} onDismiss={() => dismissOne(r.id)}>{body}</SwipeRow>}
               </li>
             );
