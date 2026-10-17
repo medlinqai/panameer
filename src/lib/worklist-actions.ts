@@ -5,6 +5,9 @@ import { decideRequest } from "@/lib/company";
 // Act from the row (Oracle-style): Approve / Decline a join request, Reply to a message, Dismiss an item with nothing to do.
 export type RowAction =
   | { kind: "join"; pending: boolean }
+  // NT-E002: a connection request and a mentor request are decided from the row too.
+  | { kind: "connect"; pending: boolean }
+  | { kind: "mentor"; pending: boolean }
   | { kind: "reply"; href: string }
   | { kind: "message"; href: string; label: string }
   | { kind: "dismiss" }
@@ -15,6 +18,8 @@ const joinParts = (key: string | null) => {
   const m = key?.match(/^company\.join_requested:([0-9a-f-]{36}):([0-9a-f-]{36}):/i);
   return m ? { companyId: m[1], askerPersonId: m[2] } : null;
 };
+
+const connParts = (key: string | null) => /^(?:colleague\.invite|mentor\.request):([0-9a-f-]{36})/i.exec(key ?? "")?.[1] ?? null;
 
 const INSTRUCTOR_EVENTS = new Set(["learn.path_enrolled.instructor", "learn.course_completed.instructor", "learn.path_completed.instructor"]);
 
@@ -29,7 +34,14 @@ export async function actionsFor(rows: Row[]): Promise<Record<string, RowAction>
   // L-E035..L-E037: instructor events act as "Message {First}" (the learner's user id is in the href).
   const learnerIds = rows.filter((r) => INSTRUCTOR_EVENTS.has(r.eventKey)).map((r) => /with=([0-9a-f-]{36})/i.exec(r.href ?? "")?.[1]).filter((x): x is string => !!x);
   const firsts = learnerIds.length ? new Map((await prisma.user.findMany({ where: { id: { in: learnerIds } }, select: { id: true, first_name: true } })).map((u) => [u.id, u.first_name])) : new Map<string, string | null>();
+  const connIds = rows.filter((r) => r.eventKey === "colleague.invite_received" || r.eventKey === "mentor.request_received").map((r) => connParts(r.dedupeKey)).filter((x): x is string => !!x);
+  const openConns = connIds.length ? new Set((await prisma.connection.findMany({ where: { id: { in: connIds }, status: "PENDING" }, select: { id: true } })).map((c) => c.id)) : new Set<string>();
   for (const r of rows) {
+    if (r.eventKey === "colleague.invite_received" || r.eventKey === "mentor.request_received") {
+      const id = connParts(r.dedupeKey);
+      out[r.id] = id ? { kind: r.eventKey === "mentor.request_received" ? "mentor" : "connect", pending: !r.resolved && openConns.has(id) } : null;
+      continue;
+    }
     if (INSTRUCTOR_EVENTS.has(r.eventKey)) {
       const id = /with=([0-9a-f-]{36})/i.exec(r.href ?? "")?.[1];
       out[r.id] = id && !r.resolved ? { kind: "message", href: r.href!, label: `Message ${firsts.get(id)?.trim() || "Them"}` } : r.resolved ? null : { kind: "dismiss" };
@@ -48,9 +60,24 @@ export async function actionsFor(rows: Row[]): Promise<Record<string, RowAction>
 
 export class WorklistActionError extends Error {}
 
-/** Approve / Decline from the row: the same decision as Company › Team › asking (admin-checked there). */
+/** Approve / Decline from the row: the same decision as Company › Team › asking (admin-checked there),
+ *  and (NT-E002) Accept / Decline on a connection or mentor request — the same calls as Connect › Requests. */
 export async function decideFromRow(viewer: Viewer, notificationId: string, decision: "APPROVED" | "REJECTED") {
   const n = await ownNotification(viewer, notificationId);
+  if (n.event_key === "colleague.invite_received" || n.event_key === "mentor.request_received") {
+    const id = connParts(n.dedupe_key);
+    if (!id) throw new WorklistActionError("That request can't be found.");
+    const { acceptColleague, declineColleague, decideMentor } = await import("@/lib/connections");
+    try {
+      if (n.event_key === "mentor.request_received") await decideMentor(viewer, id, decision === "APPROVED");
+      else if (decision === "APPROVED") await acceptColleague(viewer, id);
+      else await declineColleague(viewer, id);
+    } catch (e) {
+      await prisma.notification.update({ where: { id: n.id }, data: { resolved_at: new Date(), read_at: new Date() } });
+      throw new WorklistActionError((e as Error).message || "That request has already been decided.");
+    }
+    return;
+  }
   const j = joinParts(n.dedupe_key);
   if (n.event_key !== "company.join_requested" || !j) throw new WorklistActionError("That isn't a join request.");
   const m = await prisma.companyMembership.findFirst({ where: { company_id: j.companyId, person_id: j.askerPersonId, status: "PENDING" }, select: { id: true } });

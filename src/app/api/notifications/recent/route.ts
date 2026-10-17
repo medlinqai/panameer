@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { displayTitle } from "@/lib/notification-events";
 import { guardApi } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
+import { actionsFor } from "@/lib/worklist-actions";
 
 const TAKE = 6;
 
@@ -32,8 +33,13 @@ export async function GET() {
       created_at: true,
       requires_action: true,
       resolved_at: true,
+      event_key: true,
+      entity_id: true,
+      dedupe_key: true,
     },
   });
+  // NT-E002: request rows get their buttons in the bell too.
+  const actions = await actionsFor(rows.map((n) => ({ id: n.id, eventKey: n.event_key, entityId: n.entity_id, dedupeKey: n.dedupe_key, needsAction: n.requires_action, resolved: n.resolved_at !== null, href: n.href })));
 
   return NextResponse.json({
     rows: rows.map((n) => ({
@@ -43,6 +49,7 @@ export async function GET() {
       unread: n.read_at === null,
       needsAction: n.requires_action && n.resolved_at === null,
       at: n.created_at,
+      action: actions[n.id] ?? null,
     })),
   });
 }

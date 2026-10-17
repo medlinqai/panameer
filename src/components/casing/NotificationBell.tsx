@@ -5,6 +5,9 @@ import Link from "next/link";
 import { BAND_LIT, BAND_IDLE } from "@/components/casing/band-lit";
 import { useRouter } from "next/navigation";
 import { SwipeRow } from "@/components/notifications/SwipeRow";
+import { RowActions } from "@/components/notifications/RowActions";
+import type { RowAction } from "@/lib/worklist-actions";
+import "@/components/notifications/triage.css";
 
 type Row = {
   id: string;
@@ -13,6 +16,7 @@ type Row = {
   unread: boolean;
   needsAction: boolean;
   at: string;
+  action?: RowAction;
 };
 
 export function NotificationBell({
@@ -189,6 +193,12 @@ export function NotificationBell({
                       </span>
                     </span>
                   </button>
+                  {/* NT-E002: decide in place; the row leaves once it's done. */}
+                  {n.action && (n.action.kind === "join" || n.action.kind === "connect" || n.action.kind === "mentor") && n.action.pending && (
+                    <div className="pb-2.5 pl-8 pr-2" data-bell-actions>
+                      <RowActions id={n.id} action={n.action} href={null} onDone={() => setRows((v) => (v ?? []).filter((x) => x.id !== n.id))} />
+                    </div>
+                  )}
                   </SwipeRow>
                 </li>
               ))}

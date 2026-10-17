@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RowAction } from "@/lib/worklist-actions";
 
-// The buttons on a Worklist / Notifications row: Approve · Decline, Reply, or Dismiss — with Open as the secondary.
+// The buttons on a Worklist / Notifications row: Approve · Decline (join), Accept · Decline (connection, mentor), Reply, Message, or Dismiss — with Open as the secondary.
 export function RowActions({ id, action, href, onDone }: { id: string; action: RowAction; href: string | null; onDone?: (label: string) => void }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -30,6 +30,12 @@ export function RowActions({ id, action, href, onDone }: { id: string; action: R
       {action?.kind === "join" && action.pending && (
         <>
           <button type="button" data-approve disabled={busy} onClick={() => post({ action: "decide", decision: "APPROVED" }, "Approved")} className="pm-triage-btn pm-triage-btn-p">Approve</button>
+          <button type="button" data-decline disabled={busy} onClick={() => post({ action: "decide", decision: "REJECTED" }, "Declined")} className="pm-triage-btn pm-triage-btn-s">Decline</button>
+        </>
+      )}
+      {(action?.kind === "connect" || action?.kind === "mentor") && action.pending && (
+        <>
+          <button type="button" data-approve disabled={busy} onClick={() => post({ action: "decide", decision: "APPROVED" }, "Accepted")} className="pm-triage-btn pm-triage-btn-p">Accept</button>
           <button type="button" data-decline disabled={busy} onClick={() => post({ action: "decide", decision: "REJECTED" }, "Declined")} className="pm-triage-btn pm-triage-btn-s">Decline</button>
         </>
       )}

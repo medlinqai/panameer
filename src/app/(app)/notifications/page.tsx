@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { findCategory } from "@/lib/notification-categories";
 import { getTriage, getTriageCounts, countWorklist } from "@/lib/worklist";
 import { NotificationList, type Chip } from "@/components/notifications/NotificationList";
+import { actionsFor } from "@/lib/worklist-actions";
+import "@/components/notifications/triage.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Notifications · Panameer" };
@@ -28,6 +30,8 @@ export default async function Page({
     countWorklist(person.id),
   ]);
 
+  // NT-E002: action rows get their buttons (the same source as the Worklist).
+  const actions = await actionsFor(rows);
   const chips: Chip[] = [
     { key: "all", label: "All", n: counts.all },
     { key: "unread", label: "Unread", n: counts.unread },
@@ -41,7 +45,7 @@ export default async function Page({
   return (
     <div className="account-surface px-4 py-6 sm:px-6">
       <NotificationList
-        rows={rows.map((r) => ({ ...r, at: r.at.toISOString() }))}
+        rows={rows.map((r) => ({ ...r, at: r.at.toISOString(), action: actions[r.id] ?? null }))}
         chips={chips}
         filter={filter}
         more={more}

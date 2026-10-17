@@ -6,13 +6,15 @@ import { useRouter } from "next/navigation";
 import { shortTime } from "@/lib/short-time";
 import { SwipeRow } from "@/components/notifications/SwipeRow";
 import { useMe } from "@/components/MeProvider";
+import { RowActions } from "@/components/notifications/RowActions";
+import type { RowAction } from "@/lib/worklist-actions";
 
-export type Row = { id: string; title: string; body: string | null; href: string | null; category: string; at: string; unread: boolean; needsAction: boolean; dismissed?: boolean };
+export type Row = { id: string; title: string; body: string | null; href: string | null; category: string; at: string; unread: boolean; needsAction: boolean; dismissed?: boolean; resolved?: boolean; action?: RowAction };
 export type Chip = { key: string; label: string; n: number };
 
 const BTN = "inline-flex min-h-10 shrink-0 items-center whitespace-nowrap border border-ink bg-surface px-3 text-[13px] font-semibold text-ink hover:bg-surface-hover disabled:opacity-40";
 
-// M-E014: Notifications is a plain list — dot · title · one-line summary · time; tap opens and marks read. Acting lives on the Worklist.
+// M-E014: dot · title · one-line summary · time; tap opens and marks read. NT-E002: request rows act in place (Accept / Approve · Decline, Message).
 export function NotificationList({ rows, chips, filter, more, openCount, unreadCount, now }: { rows: Row[]; chips: Chip[]; filter: string; more: boolean; openCount: number; unreadCount: number; now: number }) {
   const router = useRouter();
   const { refresh: refreshMe } = useMe();
@@ -74,8 +76,10 @@ export function NotificationList({ rows, chips, filter, more, openCount, unreadC
         <ul data-notification-list className="mt-3 border-t border-line">
           {rows.map((r) => {
             const muted = r.dismissed || hidden.has(r.id);
+            const acts = !muted && r.action && r.action.kind !== "dismiss" && r.action.kind !== "reply" && !(("pending" in r.action) && !r.action.pending);
             const body = (
-              <button type="button" onClick={() => open(r)} className="grid w-full grid-cols-[10px_minmax(0,1fr)_auto] items-start gap-x-3 py-3 pl-1 pr-1 text-left hover:bg-bg-soft">
+              <div className="flex flex-wrap items-center gap-x-2 hover:bg-bg-soft">
+              <button type="button" onClick={() => open(r)} className="grid min-w-0 flex-1 grid-cols-[10px_minmax(0,1fr)_auto] items-start gap-x-3 py-3 pl-1 pr-1 text-left">
                 <span aria-label={r.unread ? "Unread" : undefined} className={"mt-[7px] h-2 w-2 rounded-full " + (r.unread && !muted ? "bg-magenta" : "bg-transparent")} />
                 <span className="min-w-0">
                   <span className={"block truncate text-[14.5px] " + (muted ? "font-normal text-ink-3" : r.unread ? "font-bold text-ink" : "font-semibold text-ink-2")}>{r.title}</span>
@@ -83,6 +87,8 @@ export function NotificationList({ rows, chips, filter, more, openCount, unreadC
                 </span>
                 <span className="pt-0.5 text-[12px] text-ink-3">{muted ? "Dismissed" : shortTime(new Date(r.at), now)}</span>
               </button>
+              {acts && <span className="pb-2 pl-6 sm:pb-0 sm:pl-0" data-notification-actions><RowActions id={r.id} action={r.action!} href={null} /></span>}
+              </div>
             );
             return (
               <li key={r.id} data-unread={r.unread ? "yes" : "no"} data-dismissed={muted ? "yes" : "no"} className="border-b border-line">
