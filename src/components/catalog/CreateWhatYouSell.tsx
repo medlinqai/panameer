@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StepRail } from "@/components/onboarding/StepRail";
 import { WhatYouDoModes } from "@/components/catalog/WhatYouDoModes";
+import { GetFoundRates } from "@/components/onboarding/GetFoundRates";
 
 // CWS-E002–E005: Create What You Sell, slimmed — three stops in the app casing. Plain words; fits one screen.
 type Item = { id: string; name: string };
@@ -16,9 +17,6 @@ type State = {
 const STOPS = [{ key: "do", label: "What You Do" }, { key: "services", label: "Your Services" }, { key: "products", label: "Your Service Products" }, { key: "enable", label: "Enable" }];
 const BTN = "inline-flex min-h-[44px] items-center justify-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40";
 const GHOST = "inline-flex min-h-[44px] items-center justify-center border border-ink px-5 text-[14.5px] font-semibold";
-const INPUT = "block w-full border border-line bg-surface px-3 py-2 text-[15px]";
-const dollars = (c: number | null | undefined) => (c != null ? String(c / 100) : "");
-const cents = (v: string) => (v.trim() && Number(v) > 0 ? Math.round(Number(v) * 100) : null);
 const money = (c: number | null) => (c != null ? `$${(c / 100).toLocaleString("en-US")}` : "—");
 
 export function CreateWhatYouSell({ isAdmin = false }: { isAdmin?: boolean }) {
@@ -42,19 +40,10 @@ export function CreateWhatYouSell({ isAdmin = false }: { isAdmin?: boolean }) {
     setStop(1);
     setReached((r) => Math.max(r, 1));
   }, []);
-  // Stop 2
-  const [picks, setPicks] = useState({ hour: false, month: false, pkg: false });
-  const [hourly, setHourly] = useState("");
-  const [monthly, setMonthly] = useState({ price: "", hours: "" });
-  const [pkgs, setPkgs] = useState<{ id?: string | null; name: string; included: string; price: string; perMonth: boolean; ready: string }[]>([]);
 
   const apply = useCallback((r: State | null) => {
     if (!r) return setError("Couldn't load your catalog.");
     setS(r);
-    setHourly(dollars(r.hourlyCents));
-    setMonthly({ price: dollars(r.monthly?.priceCents), hours: r.monthly?.hours ? String(r.monthly.hours) : "" });
-    setPkgs(r.packages.map((p) => ({ id: p.id, name: p.name, included: p.included, price: dollars(p.priceCents), perMonth: p.perMonth, ready: p.readyDays != null ? String(p.readyDays) : "" })));
-    setPicks({ hour: r.hourlyCents != null, month: !!r.monthly?.priceCents, pkg: r.packages.length > 0 });
   }, []);
   const fetchState = () => fetch("/api/catalog/create").then((x) => (x.ok ? (x.json() as Promise<State>) : null)).catch(() => null);
   const load = async () => apply(await fetchState());
@@ -101,64 +90,15 @@ export function CreateWhatYouSell({ isAdmin = false }: { isAdmin?: boolean }) {
     );
   }
 
-  // ---- Stop 2: What You Charge -----------------------------------------------
+  // ---- Stop 2: Your Services (CG-E002) — the Your Rates grid --------------------
   if (stop === 1) {
-    const card = (k: keyof typeof picks, label: string, line: string) => (
-      <button type="button" aria-pressed={picks[k]} onClick={() => setPicks((v) => ({ ...v, [k]: !v[k] }))} className={"flex-1 rounded-[12px] border-2 p-4 text-left " + (picks[k] ? "border-ink bg-ink text-surface" : "border-line hover:border-ink")}>
-        <b className="block text-[16px]">{label}</b>
-        <span className={"mt-1 block text-[13px] " + (picks[k] ? "text-surface/80" : "text-ink-2")}>{line}</span>
-      </button>
-    );
-    const ok = (picks.hour && !!cents(hourly)) || (picks.month && !!cents(monthly.price)) || (picks.pkg && pkgs.some((p) => p.name.trim() && cents(p.price)));
-    const save = async () => {
-      const body = {
-        stop: "charge",
-        hourlyCents: picks.hour ? cents(hourly) : null,
-        monthly: picks.month && cents(monthly.price) ? { priceCents: cents(monthly.price)!, hours: monthly.hours ? Number(monthly.hours) : null } : null,
-        packages: picks.pkg ? pkgs.filter((p) => p.name.trim()).map((p) => ({ id: p.id ?? null, name: p.name, included: p.included, priceCents: cents(p.price), perMonth: p.perMonth, readyDays: p.ready ? Number(p.ready) : null })) : [],
-      };
-      if (await post(body)) { await load(); go(3); }
-    };
     return shell(
-      <div className="mt-1 space-y-5" data-stop="charge">
-        <h1 className="text-[26px] font-extrabold">How do you charge? <span className="font-normal text-ink-2">Pick any that fit.</span></h1>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          {card("hour", "By the hour", "One hourly price.")}
-          {card("month", "Monthly", "A monthly price for a set number of hours.")}
-          {card("pkg", "Fixed package", "A set piece of work at a set price.")}
-        </div>
-        {picks.hour && (
-          <label className="block max-w-xs text-[14px] font-bold">Your hourly price ($)
-            <input inputMode="decimal" value={hourly} onChange={(e) => setHourly(e.target.value)} placeholder="140" className={`mt-1 ${INPUT}`} />
-          </label>
-        )}
-        {picks.month && (
-          <div className="grid max-w-md grid-cols-2 gap-3">
-            <label className="text-[14px] font-bold">Monthly price ($)<input inputMode="decimal" value={monthly.price} onChange={(e) => setMonthly((m) => ({ ...m, price: e.target.value }))} className={`mt-1 ${INPUT}`} /></label>
-            <label className="text-[14px] font-bold">Hours a month<input inputMode="numeric" value={monthly.hours} onChange={(e) => setMonthly((m) => ({ ...m, hours: e.target.value }))} className={`mt-1 ${INPUT}`} /></label>
-          </div>
-        )}
-        {picks.pkg && (
-          <div className="space-y-3">
-            {(pkgs.length ? pkgs : []).map((p, i) => (
-              <div key={p.id ?? `n${i}`} className="grid gap-2 border border-line p-3 sm:grid-cols-2" data-package>
-                <label className="text-[13px] font-bold">Name<input value={p.name} onChange={(e) => setPkgs((v) => v.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} placeholder="Procurement Health Check" className={`mt-1 ${INPUT}`} /></label>
-                <div className="grid grid-cols-[1fr_auto] items-end gap-2">
-                  <label className="text-[13px] font-bold">Price ($)<input inputMode="decimal" value={p.price} onChange={(e) => setPkgs((v) => v.map((x, j) => (j === i ? { ...x, price: e.target.value } : x)))} className={`mt-1 ${INPUT}`} /></label>
-                  <select aria-label="Fixed or per month" value={p.perMonth ? "m" : "f"} onChange={(e) => setPkgs((v) => v.map((x, j) => (j === i ? { ...x, perMonth: e.target.value === "m" } : x)))} className="border border-line bg-surface px-2 py-2 text-[14px]"><option value="f">fixed</option><option value="m">per month</option></select>
-                </div>
-                <label className="text-[13px] font-bold sm:col-span-2">What&apos;s included<textarea value={p.included} onChange={(e) => setPkgs((v) => v.map((x, j) => (j === i ? { ...x, included: e.target.value } : x)))} rows={2} className={`mt-1 ${INPUT}`} /></label>
-                <div className="flex items-end justify-between gap-3 sm:col-span-2">
-                  <label className="text-[13px] font-bold">Ready in (days)<input inputMode="numeric" value={p.ready} onChange={(e) => setPkgs((v) => v.map((x, j) => (j === i ? { ...x, ready: e.target.value } : x)))} className={`mt-1 w-28 ${INPUT}`} /></label>
-                  {!p.id && <button type="button" onClick={() => setPkgs((v) => v.filter((_, j) => j !== i))} className="text-[13px] font-semibold underline underline-offset-4">Remove</button>}
-                </div>
-              </div>
-            ))}
-            {pkgs.length < 3 && <button type="button" onClick={() => setPkgs((v) => [...v, { name: "", included: "", price: "", perMonth: false, ready: "" }])} className="text-[14px] font-semibold text-magenta-dark underline underline-offset-4">+ Add a package</button>}
-          </div>
-        )}
+      <div className="mt-1" data-stop="services">
+        <h1 className="text-[26px] font-extrabold">Your Services</h1>
+        <p className="mt-1 text-[14.5px] text-ink-2">Turn on the services you offer and add your rate. Saved as you go.</p>
+        <div className="mt-3"><GetFoundRates /></div>
       </div>,
-      { label: "Next: Enable", disabled: !ok, onClick: save },
+      { label: "Next: Your Service Products", onClick: async () => { await load(); go(2); } },
     );
   }
 

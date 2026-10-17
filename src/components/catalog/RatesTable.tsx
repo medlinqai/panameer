@@ -12,7 +12,7 @@ export type RateRow = { id: string; serviceTypeId: string; rateCents: number | n
 const PER: Record<string, string> = { HOUR: "/hr", DAY: "/day", WEEK: "/wk", MONTH: "/mo", SESSION: "/session", VISIT: "/visit", EACH: "each" };
 const DELIVERY: Record<string, string> = { ONSITE: "Onsite", OFFSITE: "Offsite", EITHER: "Either" };
 const EXPENSES = ["AT_COST", "INCLUDED", "NOT_APPLICABLE"] as const;
-const COLS = "md:grid-cols-[56px_minmax(0,1.5fr)_minmax(0,1.15fr)_minmax(0,1fr)_72px_minmax(0,1.3fr)]";
+const COLS = "md:grid-cols-[56px_minmax(0,1.5fr)_minmax(0,1.15fr)_minmax(0,1fr)_72px_84px_minmax(0,1.3fr)]";
 export const ADD_RATE_EVENT = "pm:add-rate";
 const dollars = (c: number | null | undefined) => (c != null ? String(c / 100) : "");
 
@@ -106,7 +106,7 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
         </div>
       )}
       <div className={`mt-5 hidden border-b border-line pb-2 text-[10.5px] font-bold tracking-[0.1em] text-ink-3 md:grid md:gap-3 ${COLS}`}>
-        <span>OFFER</span><span>RATE TYPE</span><span>YOUR RATE</span><span>EXPENSES</span><span>DELIVERY</span><span>BUYERS SEE</span>
+        <span>OFFER</span><span>SERVICE</span><span>YOUR RATE</span><span>EXPENSES</span><span>DELIVERY</span><span>OPEN TO OFFERS</span><span>BUYERS SEE</span>
       </div>
       <ul className="mt-2 md:mt-0">
         {types.map((t) => {
@@ -146,16 +146,16 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
                 </select>
               </span>
               <span className="col-start-2 text-[13px] text-ink-2 md:col-start-auto">{t.delivery ? DELIVERY[t.delivery] : "—"}</span>
+              {/* CG-E002: Open to offers, per service (its own override, else the seller's switch). */}
+              <span className={on ? "col-start-2 md:col-start-auto" : "col-start-2 opacity-45 md:col-start-auto"} data-service-offers>
+                <select aria-label={`${t.name} open to offers`} disabled={!on} value={(s?.offersOverride ?? openToOffers) ? "yes" : "no"} onChange={(e) => s && save(t, true, { offersOverride: (e.target.value === "yes") === openToOffers ? null : e.target.value === "yes" })} className="w-full border border-line bg-surface px-2 py-2 text-[13px]">
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </span>
               <span data-buyers-see className={on ? "col-start-2 text-[13px] md:col-start-auto" : "col-start-2 text-[13px] text-ink-3 md:col-start-auto"}>
                 {on ? see ?? "Add a rate" : "Hidden until on"}
                 {inRun ? null : s?.published ? <span className="ml-1.5 inline-block border border-ink px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em]">LIVE</span> : on && s?.rateCents != null ? <span data-draft className="ml-1.5 inline-block border border-dashed border-ink-3 px-1.5 py-px align-middle text-[10px] font-bold tracking-[0.08em] text-ink-2">DRAFT</span> : null}
-                {/* Lane 7: this Service's own Open to Offers (else the seller's switch). */}
-                {s && (
-                  <label className="mt-1 flex items-center gap-1.5 text-[12px] text-ink-2" data-service-offers>
-                    <input type="checkbox" checked={s.offersOverride ?? openToOffers} onChange={(e) => save(t, true, { offersOverride: e.target.checked === openToOffers ? null : e.target.checked })} className="h-3.5 w-3.5 accent-ink" />
-                    Open to offers
-                  </label>
-                )}
                 {multiProvider && s && (
                   <button type="button" onClick={() => override(t, s)} data-override-rate className="block text-[12px] font-semibold text-magenta-dark underline underline-offset-4">
                     {s.overrideCents != null ? `Your rate $${s.overrideCents / 100}` : "Override My Rate"}
