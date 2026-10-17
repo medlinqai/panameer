@@ -121,7 +121,7 @@ export function ResumeFirst({ hasResume, onState }: { hasResume: boolean; onStat
                     {on && derived.has(r.id) && <span className="ml-2 border border-line px-1.5 py-px text-[11px] font-semibold text-ink-2">from your résumé</span>}
                     {on && (
                       <span className="mt-1 flex flex-wrap gap-1">
-                        {skills.filter((k) => k.roleTypeId === r.id).map((k) => <span key={k.id} className="border border-line bg-bg-soft px-1.5 py-0.5 text-[12.5px]">{k.name}</span>)}
+                        {skills.filter((k, i, all) => k.roleTypeId === r.id && all.findIndex((x) => x.roleTypeId === r.id && x.name === k.name) === i).map((k) => <span key={k.id} className="border border-line bg-bg-soft px-1.5 py-0.5 text-[12.5px]">{k.name}</span>)}
                       </span>
                     )}
                   </span>

@@ -106,7 +106,7 @@ export function WhatYouDoModes({ skills, isAdmin, onSkip, allOnly = false, legen
               </label>
             ))}
           </div>
-          <p className="mt-1.5 text-[12.5px] text-ink-2">{busyAll ? "Saving…" : allOnly ? "Applies to everything below; change single lines later in Create What You Sell or My Profile." : "Tick once for every line below, then change only the odd one."}</p>
+          <p className="mt-1.5 text-[12.5px] text-ink-2">{busyAll ? "Saving…" : allOnly ? "Applies to everything below; change single lines later in My Profile." : "Tick once for every line below, then change only the odd one."}</p>
         </fieldset>
       )}
       {allOnly ? null : (<>
