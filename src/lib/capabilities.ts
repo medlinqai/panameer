@@ -69,6 +69,8 @@ export async function capabilitiesFor(profileId: string) {
   const rows = await prisma.providerCapability.findMany({ where: { provider_profile_id: profileId }, include: INCLUDE, orderBy: [{ confirmed_at: { sort: "desc", nulls: "last" } }, { created_at: "asc" }] });
   return rows.map((c) => ({
     id: c.id, line: capabilityLine(c), mode: c.mode, source: c.source, confirmed: !!c.confirmed_at || c.source === "SELF",
+    // CG-E005: what a second mode is added against.
+    domainId: c.domain?.id ?? null, systemItemId: c.systemItem?.id ?? null,
     // For grouped display: "Implements · Oracle Fusion Cloud" › Procure-to-Pay › Purchase Orders.
     system: c.systemItem ? productName(c.systemItem.product) : c.systemProduct ? productName(c.systemProduct) : null,
     process: c.domain?.process ?? null,

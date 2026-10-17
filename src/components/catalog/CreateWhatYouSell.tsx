@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StepRail } from "@/components/onboarding/StepRail";
-import { TitleEditor } from "@/components/onboarding/editors/TitleEditor";
+import { WhatYouDoModes } from "@/components/catalog/WhatYouDoModes";
 
 // CWS-E002–E005: Create What You Sell, slimmed — three stops in the app casing. Plain words; fits one screen.
 type Item = { id: string; name: string };
@@ -17,25 +17,31 @@ const STOPS = [{ key: "do", label: "What You Do" }, { key: "services", label: "Y
 const BTN = "inline-flex min-h-[44px] items-center justify-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40";
 const GHOST = "inline-flex min-h-[44px] items-center justify-center border border-ink px-5 text-[14.5px] font-semibold";
 const INPUT = "block w-full border border-line bg-surface px-3 py-2 text-[15px]";
-const CHIP = "inline-flex items-center gap-1 border border-ink bg-ink px-2.5 py-1 text-[13px] text-surface";
 const dollars = (c: number | null | undefined) => (c != null ? String(c / 100) : "");
 const cents = (v: string) => (v.trim() && Number(v) > 0 ? Math.round(Number(v) * 100) : null);
 const money = (c: number | null) => (c != null ? `$${(c / 100).toLocaleString("en-US")}` : "—");
 
-export function CreateWhatYouSell() {
+export function CreateWhatYouSell({ isAdmin = false }: { isAdmin?: boolean }) {
   const router = useRouter();
   const [s, setS] = useState<State | null>(null);
   const [stop, setStop] = useState(0);
   const [reached, setReached] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Stop 1
-  const [title, setTitle] = useState("");
-  const [skills, setSkills] = useState<Item[]>([]);
-  const [industries, setIndustries] = useState<Item[]>([]);
-  const [q, setQ] = useState("");
-  const [found, setFound] = useState<Item[]>([]);
-  const [addInd, setAddInd] = useState("");
+  // Stop 1: Next confirms the modes; without Global Taxonomy a non-admin goes straight to Your Services.
+  const skipDo = useCallback(() => { setStop((v) => (v === 0 ? 1 : v)); setReached((r) => Math.max(r, 1)); }, []);
+  const nextFromDo = useCallback(async () => {
+    setBusy(true);
+    // Each row's pre-selected mode (the résumé's guess) is confirmed — Scott's "confirm the mode".
+    const b = await fetch("/api/provider/capabilities").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    for (const c of (b?.capabilities ?? []) as { id: string; mode: string; confirmed: boolean }[]) {
+      if (!c.confirmed) await fetch("/api/provider/capabilities", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "confirm", id: c.id, mode: c.mode }) }).catch(() => null);
+    }
+    setBusy(false);
+    setError(null);
+    setStop(1);
+    setReached((r) => Math.max(r, 1));
+  }, []);
   // Stop 2
   const [picks, setPicks] = useState({ hour: false, month: false, pkg: false });
   const [hourly, setHourly] = useState("");
@@ -45,9 +51,6 @@ export function CreateWhatYouSell() {
   const apply = useCallback((r: State | null) => {
     if (!r) return setError("Couldn't load your catalog.");
     setS(r);
-    setTitle(r.title);
-    setSkills(r.skills);
-    setIndustries(r.industries);
     setHourly(dollars(r.hourlyCents));
     setMonthly({ price: dollars(r.monthly?.priceCents), hours: r.monthly?.hours ? String(r.monthly.hours) : "" });
     setPkgs(r.packages.map((p) => ({ id: p.id, name: p.name, included: p.included, price: dollars(p.priceCents), perMonth: p.perMonth, ready: p.readyDays != null ? String(p.readyDays) : "" })));
@@ -59,11 +62,6 @@ export function CreateWhatYouSell() {
     fetchState().then(apply);
   }, [apply]);
 
-  useEffect(() => {
-    if (q.trim().length < 2) return;
-    const t = setTimeout(() => fetch(`/api/catalog/create?q=${encodeURIComponent(q)}`).then((r) => r.json()).then((b) => setFound(b.skills ?? [])).catch(() => {}), 200);
-    return () => clearTimeout(t);
-  }, [q]);
 
   const go = (i: number) => { setError(null); setStop(i); setReached((r) => Math.max(r, i)); };
   const post = async (body: object) => {
@@ -78,7 +76,6 @@ export function CreateWhatYouSell() {
 
   if (!s) return <p className="py-10 text-ink-2">{error ?? "Loading…"}</p>;
 
-  const has = new Set(skills.map((x) => x.id));
   const shell = (body: React.ReactNode, next: { label: string; onClick: () => void; disabled?: boolean }) => (
     <div className="mx-auto w-full max-w-3xl" data-create-what-you-sell>
       <StepRail steps={STOPS} current={stop} review={false} reached={reached} onPick={go} />
@@ -92,49 +89,15 @@ export function CreateWhatYouSell() {
     </div>
   );
 
-  // ---- Stop 1: What You Do ---------------------------------------------------
+  // ---- Stop 1: What You Do (CG-E005) -----------------------------------------
   if (stop === 0) {
-    const suggestions = s.suggestions.filter((x) => !has.has(x.id));
     return shell(
-      <div className="mt-1 space-y-5" data-stop="do">
-        <h1 className="text-[26px] font-extrabold">What do you do?</h1>
-        <section>
-          <p className="mb-1 text-[14px] font-bold">Your title</p>
-          <TitleEditor value={title} onChange={setTitle} />
-        </section>
-        <section>
-          <p className="text-[14px] font-bold">Skills buyers can find you by</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {skills.map((x) => <button key={x.id} type="button" onClick={() => setSkills((v) => v.filter((y) => y.id !== x.id))} className={CHIP} aria-label={`Remove ${x.name}`}>{x.name} <span aria-hidden>×</span></button>)}
-            {!skills.length && <span className="text-[13.5px] text-ink-2">No skills yet — add a few below.</span>}
-          </div>
-          {suggestions.length > 0 && (
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <span className="text-[12.5px] text-ink-2">Suggested:</span>
-              {suggestions.map((x) => <button key={x.id} type="button" onClick={() => setSkills((v) => [...v, x])} className="border border-line px-2.5 py-1 text-[13px] hover:border-ink">+ {x.name}</button>)}
-            </div>
-          )}
-          <div className="relative mt-2 max-w-sm">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="+ Add a skill" aria-label="Add a skill" className={INPUT} />
-            {q.trim().length >= 2 && found.length > 0 && (
-              <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto border border-line bg-surface shadow-sm">
-                {found.filter((x) => !has.has(x.id)).map((x) => <li key={x.id}><button type="button" onClick={() => { setSkills((v) => [...v, x]); setQ(""); setFound([]); }} className="block w-full px-3 py-2 text-left text-[14px] hover:bg-surface-hover">{x.name}</button></li>)}
-              </ul>
-            )}
-          </div>
-        </section>
-        <section>
-          <p className="text-[14px] font-bold">Industries you&apos;ve worked in <span className="font-normal text-ink-2">(optional)</span></p>
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            {industries.map((x) => <button key={x.id} type="button" onClick={() => setIndustries((v) => v.filter((y) => y.id !== x.id))} className={CHIP} aria-label={`Remove ${x.name}`}>{x.name} <span aria-hidden>×</span></button>)}
-            <select value={addInd} onChange={(e) => { const it = s.allIndustries.find((x) => x.id === e.target.value); if (it) setIndustries((v) => (v.some((y) => y.id === it.id) ? v : [...v, it])); setAddInd(""); }} aria-label="Add an industry" className="border border-line bg-surface px-2 py-1 text-[13px]">
-              <option value="">+ Add</option>
-              {s.allIndustries.filter((x) => !industries.some((y) => y.id === x.id)).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-            </select>
-          </div>
-        </section>
+      <div className="mt-1" data-stop="do">
+        <h1 className="text-[26px] font-extrabold">How do you work with what you know?</h1>
+        <p className="mt-1 text-[14.5px] text-ink-2">We read these from your profile. Tell buyers how you work with each one.</p>
+        <WhatYouDoModes skills={s.skills} isAdmin={isAdmin} onSkip={skipDo} />
       </div>,
-      { label: "Next: Your Services", disabled: !title.trim() || !skills.length, onClick: async () => { if (await post({ stop: "do", title, skillIds: skills.map((x) => x.id), industryIds: industries.map((x) => x.id) })) { await load(); go(1); } } },
+      { label: "Next: Your Services", onClick: nextFromDo },
     );
   }
 
