@@ -46,7 +46,7 @@ export function ProductsGrid() {
 
   return (
     <div data-products-grid>
-      <div className={`hidden border-b border-line pb-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-ink-3 ${WIDE_COLS}`}>
+      <div className={`sticky top-0 z-10 hidden border-b border-line bg-canvas pb-2 pt-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-ink-3 ${WIDE_COLS}`}>
         <span>Offer · Name</span><span>Price</span><span>Per</span><span>Lead time</span><span>Image</span><span title="Can buyers Make an Offer on this product?">Open to offers</span><span>Payment Event</span><span>Details PDF</span><span />
       </div>
       {g.types.map((t) => (
