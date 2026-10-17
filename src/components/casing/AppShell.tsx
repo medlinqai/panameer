@@ -1,5 +1,6 @@
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import type { ReactNode } from "react";
+import { PendingJoinBanner } from "@/components/casing/PendingJoinBanner";
 import { HiddenProfileBanner } from "@/components/casing/HiddenProfileBanner";
 import { AppBand } from "@/components/casing/AppBand";
 import { getSessionViewer } from "@/lib/session";
@@ -39,6 +40,7 @@ export async function AppShell({ children, locked = false }: { children: ReactNo
 
         {}
         {!locked && <HiddenProfileBanner />}
+        {!locked && <PendingJoinBanner />}
 
         {}
         <main className={locked ? "pm-in-casing flex flex-1 flex-col" : "flex-1 overflow-x-clip px-5 py-6 sm:px-8" + (isAdmin ? " lg:pr-[84px]" : "")}>{children}</main>
