@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   } catch (e) {
     if (e instanceof OnboardingError) {
       const status = e.code === "NOT_A_PROVIDER" ? 404 : 400;
-      return NextResponse.json({ error: e.message, code: e.code }, { status });
+      return NextResponse.json({ error: e.message, code: e.code, missing: e.fields?.map((f) => ({ key: f.key, label: f.field, href: f.href })) }, { status });
     }
     console.error("[settings] pause failed:", e);
     return NextResponse.json({ error: "Could not update visibility" }, { status: 500 });

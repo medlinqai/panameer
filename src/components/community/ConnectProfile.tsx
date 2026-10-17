@@ -1,4 +1,5 @@
 import { CredentialsBody } from "@/components/profile/CredentialsBody";
+import { VisibleSwitch } from "@/components/profile/VisibleSwitch";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
@@ -426,6 +427,7 @@ export function ConnectProfile({
                   {/* SCOTT, WS-B: rename to "How Others See My Profile". */}
                   How Others See My Profile
                 </Link>
+                <VisibleSwitch className="mt-2" />
                 {/* SCOTT: *"a magenta text link under How Others See My Profile"* — and */}
                 <OwnerResumeRebuild />
               </div>

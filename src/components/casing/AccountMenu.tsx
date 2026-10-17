@@ -8,6 +8,7 @@ import { Avatar } from "@/components/Avatar";
 import { Popover } from "@/components/casing/Popover";
 import { BAND_LIT, BAND_TILE } from "@/components/casing/band-lit";
 import { useMe } from "@/components/MeProvider";
+import { VisibleSwitch } from "@/components/profile/VisibleSwitch";
 import { membershipBadge } from "@/lib/membership";
 import {
   ADMIN_PERSONA_NAV,
@@ -353,6 +354,7 @@ export function AccountMenu({
                 </span>
               </button>
             )}
+            <VisibleSwitch className="mt-2" onNavigate={close} />
           </div>
 
           <PathMenuBlock onNavigate={close} rowClass={rowClass} />

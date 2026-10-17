@@ -2,20 +2,18 @@
 
 import { useState } from "react";
 import { ToggleRow, postSetting } from "@/components/settings/controls";
-import { visibilityHelp } from "@/lib/visibility-copy";
 
 export function ProfileVisibilityCard({
-  paused,
   previewHidden = false,
   publicName = false,
   publicUrl = null,
 }: {
-  paused: boolean;
+  /** VR-E005: the Visible to buyers switch moved to the top of My Profile (VisibleSwitch). */
+  paused?: boolean;
   previewHidden?: boolean;
   publicName?: boolean;
   publicUrl?: string | null;
 }) {
-  const [visible, setVisible] = useState(!paused);
   const [preview, setPreview] = useState(!previewHidden);
   const [named, setNamed] = useState(publicName);
   return (
@@ -23,22 +21,8 @@ export function ProfileVisibilityCard({
       <h4 className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-3">
         Visibility
       </h4>
-      <ToggleRow
-        label="Visible to buyers"
-        checked={!paused}
-        tone="ink"
-        onValueChange={setVisible}
-        onChange={async (next) =>
-          (await postSetting("/api/settings/profile", { paused: !next })) === null
-        }
-      />
       {}
-      <p className="mt-2 text-[12.5px] leading-relaxed text-ink-3">
-        {visibilityHelp(visible)}
-      </p>
-
-      {}
-      <div className="mt-4 border-t border-line pt-4">
+      <div className="mt-2">
         <ToggleRow
           label="Show My Masked Preview to Visitors"
           checked={!previewHidden}

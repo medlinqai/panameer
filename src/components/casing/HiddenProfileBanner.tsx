@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useMe } from "@/components/MeProvider";
+import { MissingList, useVisibleSwitch } from "@/components/profile/VisibleSwitch";
 import "@/components/notifications/triage.css";
 
 export function HiddenProfileBanner() {
   const { me, loading } = useMe();
+  const sw = useVisibleSwitch();
   if (loading) return null;
   const p = me?.providerProfile;
 
@@ -35,9 +37,10 @@ export function HiddenProfileBanner() {
     <div className="pm-hidden-banner" role="status">
       <p>
         <strong>Your profile is hidden from buyers.</strong>{" "}
-        <span className="pm-hidden-banner-why">You switched it off.</span>
+        <span className="pm-hidden-banner-why">You switched it off</span>
       </p>
-      <Link href="/profile" className="pm-hidden-banner-act">Turn Visibility On</Link>
+      <button type="button" disabled={sw.busy} onClick={() => void sw.set(true)} className="pm-hidden-banner-act" data-turn-visibility-on>Turn Visibility On</button>
+      <MissingList missing={sw.missing} />
     </div>
   );
 }

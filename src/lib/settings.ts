@@ -7,6 +7,7 @@ import { w9Signature } from "@/lib/w9";
 import type { TaxType } from "@prisma/client";
 import { formFor } from "@/lib/tax";
 import { saveProviderAddress } from "@/lib/onboarding";
+import { missingForBuyers } from "@/lib/visibility";
 
 export class SettingsError extends Error {
   constructor(message: string, public code: "NOT_FOUND" | "INVALID" | "GATED") {
@@ -170,6 +171,10 @@ export async function updateProfileSettings(
   }
 ) {
   const { profileId } = await ownIds(viewer);
+  if (patch.paused === false) {
+    const missing = await missingForBuyers(profileId);
+    if (missing.length) throw new SettingsError(`Before buyers can see you, add: ${missing.map((m) => m.label).join(" · ")}`, "GATED");
+  }
   await prisma.providerProfile.update({
     where: { id: profileId },
     data: {

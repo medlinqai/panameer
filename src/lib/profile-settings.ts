@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isVisible } from "@/lib/visibility";
+import { isVisible, missingForBuyers } from "@/lib/visibility";
 import {
   ownedProviderProfile,
   type Viewer,
@@ -181,6 +181,11 @@ export async function saveProviderSection(
 /** Pause / unpause the profile (brief_K). Paused = hidden from the marketplace */
 export async function setPaused(viewer: Viewer, paused: boolean) {
   const owned = await loadOwned(viewer);
+  // VR-E005: turning visibility on only works when nothing is missing.
+  if (!paused) {
+    const missing = await missingForBuyers(owned.id);
+    if (missing.length) throw new OnboardingError(`Before buyers can see you, add: ${missing.map((m) => m.label).join(" · ")}`, "GATE_UNMET", missing.map((m) => ({ key: m.key, field: m.label, reason: "missing", href: m.href })));
+  }
   await prisma.providerProfile.update({
     where: { id: owned.id },
     data: { paused_at: paused ? new Date() : null },
