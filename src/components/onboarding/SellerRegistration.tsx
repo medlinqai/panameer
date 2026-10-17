@@ -319,7 +319,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
       <WizardShell
         {...shell}
         title={owner ? "Where is your company?" : "Where do you work?"}
-        subtitle={owner ? "Tick what each address is for. You need at least one Remit To — it's where payments to you go." : "Your own work address for now. Your company's addresses show once its admin approves you."}
+        subtitle={owner ? "Tick what each address is for. You need at least one Remit To — it's where payments to you go." : "Your own work address. Your company's addresses are kept by its admin."}
         continueLabel="Next: Review"
         continueDisabled={!!problem}
         onContinue={next}
