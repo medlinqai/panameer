@@ -35,6 +35,7 @@ export default async function Page({
   const chips: Chip[] = [
     { key: "all", label: "All", n: counts.all },
     { key: "unread", label: "Unread", n: counts.unread },
+    { key: "done", label: "Done", n: counts.done },
     ...counts.byCategory.map((c) => ({
       key: c.key,
       label: findCategory(c.key)?.label ?? c.key,

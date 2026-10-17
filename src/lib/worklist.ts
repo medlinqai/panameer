@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { displayTitle } from "@/lib/notification-events";
 import { prisma } from "@/lib/prisma";
 
@@ -77,12 +78,21 @@ export async function countWorklist(personId: string): Promise<number> {
   });
 }
 
-/** N-E002: Show All lists every notification, dismissed ones included (they render muted). */
+/** Every delivered notification of the person (all states). */
 export function triageWhere(personId: string) {
   return {
     person_id: personId,
     delivered_in_app_at: { not: null },
   };
+}
+
+/** NT-E003: All = what's still to see — not dismissed, and no action item that's already been done. */
+export function allWhere(personId: string): Prisma.NotificationWhereInput {
+  return { ...triageWhere(personId), dismissed_at: null, NOT: { requires_action: true, resolved_at: { not: null } } };
+}
+/** NT-E003: Done = dismissed, or an action item that's been decided / done. */
+export function doneWhere(personId: string): Prisma.NotificationWhereInput {
+  return { ...triageWhere(personId), OR: [{ dismissed_at: { not: null } }, { requires_action: true, resolved_at: { not: null } }] };
 }
 
 export function actWhere(personId: string) {
@@ -156,9 +166,11 @@ export async function getTriage(
   opts: { filter?: string; take?: number; cursor?: string } = {}
 ): Promise<{ rows: TriageRow[]; more: boolean }> {
   const take = opts.take ?? 25;
-  const where: Record<string, unknown> = { ...triageWhere(personId) };
-  if (opts.filter === "unread") where.read_at = null;
-  else if (opts.filter && opts.filter !== "all") where.category = opts.filter;
+  const where: Prisma.NotificationWhereInput =
+    opts.filter === "done" ? doneWhere(personId)
+    : opts.filter === "unread" ? { ...allWhere(personId), read_at: null }
+    : opts.filter && opts.filter !== "all" ? { ...allWhere(personId), category: opts.filter }
+    : allWhere(personId);
 
   const rows = await prisma.notification.findMany({
     where,
@@ -172,9 +184,9 @@ export async function getTriage(
 
 export async function getTriageCounts(
   personId: string
-): Promise<{ all: number; unread: number; byCategory: { key: string; n: number }[] }> {
-  const base = triageWhere(personId);
-  const [all, unread, grouped] = await Promise.all([
+): Promise<{ all: number; unread: number; done: number; byCategory: { key: string; n: number }[] }> {
+  const base = allWhere(personId);
+  const [all, unread, grouped, done] = await Promise.all([
     prisma.notification.count({ where: base }),
     prisma.notification.count({ where: { ...base, read_at: null } }),
     prisma.notification.groupBy({
@@ -182,10 +194,12 @@ export async function getTriageCounts(
       where: base,
       _count: { _all: true },
     }),
+    prisma.notification.count({ where: doneWhere(personId) }),
   ]);
   return {
     all,
     unread,
+    done,
     byCategory: grouped
       .map((g) => ({ key: g.category, n: g._count._all }))
       .sort((a, b) => b.n - a.n || a.key.localeCompare(b.key)),

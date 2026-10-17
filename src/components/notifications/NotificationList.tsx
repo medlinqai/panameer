@@ -29,8 +29,12 @@ export function NotificationList({ rows, chips, filter, more, openCount, unreadC
     const t = setTimeout(() => setUndo(null), 5000);
     return () => clearTimeout(t);
   }, [undo]);
+  // NT-E003: a done row leaves the list at once; counts (bell, Worklist, All) follow on the refresh.
+  const [gone, setGone] = useState<Set<string>>(new Set());
+  const leave = (id: string) => setGone((g) => new Set(g).add(id));
   const dismissOne = (id: string) => {
-    setHidden((h) => new Set(h).add(id));
+    if (filter === "done") setHidden((h) => new Set(h).add(id));
+    else leave(id);
     void post("dismiss", [id]);
   };
   // N-E002: no confirm — it's reversible for 5 seconds.
@@ -74,7 +78,7 @@ export function NotificationList({ rows, chips, filter, more, openCount, unreadC
         <p className="mt-8 text-center text-[14px] text-ink-2">Nothing here.</p>
       ) : (
         <ul data-notification-list className="mt-3 border-t border-line">
-          {rows.map((r) => {
+          {rows.filter((r) => !gone.has(r.id)).map((r) => {
             const muted = r.dismissed || hidden.has(r.id);
             const acts = !muted && r.action && r.action.kind !== "dismiss" && r.action.kind !== "reply" && !(("pending" in r.action) && !r.action.pending);
             const body = (
@@ -87,7 +91,7 @@ export function NotificationList({ rows, chips, filter, more, openCount, unreadC
                 </span>
                 <span className="pt-0.5 text-[12px] text-ink-3">{muted ? "Dismissed" : shortTime(new Date(r.at), now)}</span>
               </button>
-              {acts && <span className="pb-2 pl-6 sm:pb-0 sm:pl-0" data-notification-actions><RowActions id={r.id} action={r.action!} href={null} /></span>}
+              {acts && <span className="pb-2 pl-6 sm:pb-0 sm:pl-0" data-notification-actions><RowActions id={r.id} action={r.action!} href={null} onDone={() => { leave(r.id); refreshMe(); startTransition(() => router.refresh()); }} /></span>}
               </div>
             );
             return (
