@@ -4,6 +4,7 @@ import { guardApi } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { OnboardingError } from "@/lib/onboarding";
 import { companyLocations, ownAddress, saveOwnAddress } from "@/lib/locations";
+import { contactFromResume } from "@/lib/resume/contact";
 import { companyBusinessTypeIds } from "@/lib/business-types";
 import { SELLER_REG_STEPS, regStep, sellerRegistration, type SellerRegStep } from "@/lib/seller-registration";
 import { touchRegistration } from "@/lib/registration-followup";
@@ -29,11 +30,15 @@ export async function GET() {
   if (!p) return NextResponse.json({ error: "No person" }, { status: 404 });
   const m = p.companyMemberships[0];
   const approved = m?.status === "APPROVED";
+  // Scott 10-17: phone and "where you work" come from the résumé header when they're still empty (saved on Next).
+  const own = await ownAddress(p.id);
+  const lastRead = !own || !p.phone ? await prisma.profileImport.findFirst({ where: { providerProfile: { person_id: p.id }, status: "PARSED" }, orderBy: { created_at: "desc" }, select: { raw_text: true } }) : null;
+  const cv = contactFromResume(lastRead?.raw_text);
   return NextResponse.json({
     email: p.user?.email ?? "",
     name: [p.first_name, p.last_name].filter(Boolean).join(" "),
     // SO-E003: Who Is Selling? (same person fields the profile wizard's Title and Photo steps read).
-    seller: { firstName: p.first_name ?? "", lastName: p.last_name ?? "", title: p.title ?? "", photoUrl: p.photo_url, phone: p.phone ?? "" },
+    seller: { firstName: p.first_name ?? "", lastName: p.last_name ?? "", title: p.title ?? "", photoUrl: p.photo_url, phone: p.phone ?? cv.phone ?? "" },
     ...(await sellerRegistration(p.id).then((r) => ({ step: r.step, registered: r.registered }))),
     company: m
       ? approved
@@ -41,7 +46,7 @@ export async function GET() {
         : { status: m.status, owner: false, name: m.company.name }
       : null,
     locations: approved ? await companyLocations(m.company.id) : [],
-    own: await ownAddress(p.id),
+    own: own ?? (cv.city || cv.country ? { line1: "", line2: null, city: cv.city ?? null, state: cv.state ?? null, postalCode: null, country: cv.country ?? null } : null),
     // Scott 10-16: the Profile step shows the review instead of the upload once a résumé has been read.
     hasResume: (await prisma.profileImport.count({ where: { providerProfile: { person_id: p.id }, status: "PARSED" } })) > 0,
   });
