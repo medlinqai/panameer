@@ -65,6 +65,21 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   const [imported, setImported] = useState(false);
   // RF-E002: Continue needs a résumé read (or Skip for Now) and at least one kind of work.
   const [resumeOk, setResumeOk] = useState(false);
+  // RF-E005: Review's Kind of Work — the roles ticked and how they work (from their capabilities).
+  const [kow, setKow] = useState<{ roles: string[]; how: string } | null>(null);
+  useEffect(() => {
+    if (step !== "review") return;
+    Promise.all([
+      fetch("/api/onboarding/status").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch("/api/provider/capabilities").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ]).then(([st, caps]) => {
+      const p = st?.profile ?? {};
+      const names = new Map<string, string>(((p.roleTypes ?? []) as { id: string; display?: string; name: string }[]).map((r) => [r.id, r.display || r.name]));
+      const modes = new Set<string>(((caps?.capabilities ?? []) as { mode: string }[]).map((c) => c.mode));
+      const how = [modes.has("IMPLEMENT") && "I implement it", modes.has("SUPPORT") && "I support it", modes.has("OPERATE") && "I do the work"].filter(Boolean).join(" · ");
+      setKow({ roles: ((p.roleTypeIds ?? []) as string[]).map((id) => names.get(id) ?? "").filter(Boolean), how });
+    });
+  }, [step]);
   const onResumeState = useCallback((x: { canContinue: boolean }) => setResumeOk(x.canContinue), []);
 
   const load = useCallback(async () => {
@@ -324,7 +339,8 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
       {error && <div className="mx-auto mb-4 w-full max-w-2xl"><Notice>{error}</Notice></div>}
       <ReviewProfile
         person={{ ...person, email: reg.email }}
-        companyLine={[joining ? c?.name : shown, firstPlace].filter(Boolean).join(" · ")}
+        companyLine={[joining ? c?.name : shown, placeOf(own) || firstPlace].filter(Boolean).join(" · ")}
+        kindOfWork={kow ?? { roles: [], how: "" }}
         notLive
         companyRows={
           joining
@@ -340,7 +356,7 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
         }
         locations={reviewLocs}
         next="On your Dashboard: Create What You Sell. Your résumé and skills, your rates and products, then enable your catalog (about 10 minutes)."
-        onEdit={(sec) => go(sec === "person" ? "seller" : "company")}
+        onEdit={(sec) => go(sec === "work" ? "resume" : sec === "person" ? "seller" : "company")}
       />
     </WizardShell>
   );

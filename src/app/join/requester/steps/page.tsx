@@ -538,7 +538,7 @@ export default function RequesterStepsPage() {
         ? [locParts(draft.locs.find((l) => l.id === draft.workAddressId) ?? newLoc(), { work: true })]
         : [locParts(draft.own, { work: true })];
   const firstLoc = draft.locMode === "owner" ? draft.locs[draft.workIdx] ?? draft.locs[0] : draft.locMode === "member" && draft.workAddressId ? draft.locs.find((l) => l.id === draft.workAddressId) : draft.own;
-  const editStep: Record<ReviewSection, RequesterStep> = { person: "requester_info", company: "company", locations: "work_location" };
+  const editStep: Record<ReviewSection, RequesterStep> = { person: "requester_info", company: "company", locations: "work_location", work: "requester_info" };
   return (
     <WizardShell
       {...shell}

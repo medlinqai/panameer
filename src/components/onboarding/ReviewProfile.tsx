@@ -5,7 +5,7 @@ import { Avatar } from "@/components/Avatar";
 import type { LocRow } from "@/components/onboarding/LocationsBlock";
 import type { LocationValue } from "@/components/onboarding/LocationFields";
 
-export type ReviewSection = "person" | "company" | "locations";
+export type ReviewSection = "person" | "company" | "locations" | "work";
 export type ReviewLocation = { where: string; uses: string[] };
 
 export function locParts(r: LocRow | LocationValue, opts: { seller?: boolean; work?: boolean } = {}): ReviewLocation {
@@ -26,6 +26,7 @@ export function ReviewProfile({
   locations,
   next,
   onEdit,
+  kindOfWork,
 }: {
   person: { firstName: string; lastName: string; title: string; photoUrl: string | null; phone: string; email: string };
   companyLine: string;
@@ -34,6 +35,8 @@ export function ReviewProfile({
   locations: ReviewLocation[];
   next: string;
   onEdit: (s: ReviewSection) => void;
+  /** RF-E005: the seller's Kind of Work (roles + how they work). */
+  kindOfWork?: { roles: string[]; how: string };
 }) {
   const edit = (s: ReviewSection) => (
     <button type="button" onClick={() => onEdit(s)} className="text-[13.5px] font-bold text-magenta-dark hover:underline">Edit</button>
@@ -56,6 +59,17 @@ export function ReviewProfile({
         </div>
         <div className="order-first justify-self-end sm:order-none sm:self-start">{edit("person")}</div>
       </section>
+
+      {kindOfWork && (
+        <section className="grid gap-2" data-review-kind-of-work>
+          <div className="flex items-baseline justify-between border-b border-line pb-1.5">
+            <h2 className="text-[12px] font-bold uppercase tracking-[0.12em]">Kind of Work</h2>
+            {edit("work")}
+          </div>
+          <p className="text-[14px]">{kindOfWork.roles.join(" · ") || "—"}</p>
+          {kindOfWork.how && <p className="text-[13.5px] text-ink-2">How you work: {kindOfWork.how}</p>}
+        </section>
+      )}
 
       <section className="grid gap-2">
         <div className="flex items-baseline justify-between border-b border-line pb-1.5">
