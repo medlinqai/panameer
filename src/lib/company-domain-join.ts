@@ -52,13 +52,21 @@ export async function notifyJoinRequested(companyId: string, askerPersonId: stri
 /** Tell the asker the outcome and clear the admins' worklist rows. */
 export async function notifyJoinDecided(companyId: string, askerPersonId: string, approved: boolean) {
   const company = await prisma.company.findUnique({ where: { id: companyId }, select: { name: true } });
+  // PB-E004: link straight to what they built while waiting — the open Shop work request, else a draft Job.
+  const [cart, job] = approved
+    ? await Promise.all([
+        prisma.workRequestLine.findFirst({ where: { workRequest: { buyer_person_id: askerPersonId, source: "SHOP", status: "INCOMPLETE" } }, select: { id: true } }),
+        prisma.job.findFirst({ where: { buyer_person_id: askerPersonId, status: "DRAFT" }, orderBy: { updated_at: "desc" }, select: { id: true } }),
+      ])
+    : [null, null];
+  const readyHref = cart ? "/cart" : job ? "/create-work" : "";
   await notify({
     event: approved ? "company.join_approved" : "company.join_declined",
     personId: askerPersonId,
     entityType: "company",
     entityId: companyId,
     dedupeKey: `company.join_decided:${companyId}:${askerPersonId}`,
-    vars: { companyName: company?.name ?? "the company" },
+    vars: { companyName: company?.name ?? "the company", readyHref },
   });
   // NT-E001: every admin's item for this request is settled, whoever decided and wherever.
   await resolveNotifications({ dedupe_key: { startsWith: `company.join_requested:${companyId}:${askerPersonId}:` } });

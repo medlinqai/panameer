@@ -535,9 +535,10 @@ export const NOTIFICATION_EVENTS = {
     aiMode: "DO_IT",
     visibility: "FEED",
     requiresAction: false,
-    title: (v) => `You're in ${str(v, "companyName", "the company")} on Panameer`,
-    body: () => "Your company's page and people are on the Company tab.",
-    href: () => "/company",
+    // PB-E004: a buyer who built a work request while waiting goes straight to it.
+    title: (v) => (str(v, "readyHref", "") ? "You're in. Your work request is ready to submit." : `You're in ${str(v, "companyName", "the company")} on Panameer`),
+    body: (v) => (str(v, "readyHref", "") ? `${str(v, "companyName", "Your company")} approved you — submit when you're ready.` : "Your company's page and people are on the Company tab."),
+    href: (v) => str(v, "readyHref", "") || "/company",
   },
   "company.join_declined": {
     event: "company.join_declined",
