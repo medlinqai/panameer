@@ -19,8 +19,9 @@ export const SELLER_RAIL = [
   { key: "resume", label: "Résumé" },
   { key: "seller", label: "Seller" },
   { key: "company", label: "Company" },
+  { key: "locations", label: "Locations" },
 ];
-const STEPS = ["resume", "seller", "company", "review"] as const;
+const STEPS = ["resume", "seller", "company", "locations", "review"] as const;
 type Step = (typeof STEPS)[number];
 const DESCRIPTION_MAX = 600;
 export const TIN_TAKEN = "A company with that Tax ID is already on Panameer. Check the number, or Message Support and we'll connect you.";
@@ -250,21 +251,19 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
       if (owner || !c) {
         await post("/api/company", "PATCH", { legalName: name.trim(), ...(tin.trim() ? { ein: tin.trim() } : {}), description: description.trim() || null, companyEmail: remitEmail.trim() || reg?.email || null });
         if (businessTypeId && !(c?.businessTypeIds ?? []).includes(businessTypeId)) await post("/api/company/business-types", "POST", { businessTypeId, on: true });
-        // RF-E004: the company's addresses (at least one Remit To) live on this page now.
-        await post("/api/company/locations", "POST", { locations: locs, seller: true });
       }
       await load();
-      go("review");
+      // Scott 10-17: addresses are their own page again (company owners); joiners go straight to Review.
+      go(owner || !c ? "locations" : "review");
     });
     const remitOk = emailOk(remitEmail.trim() || reg?.email || "");
-    const locProblem = owner || !c ? locsProblem(locs, { buyer: false, seller: true }) : null;
-    const ok = match || joining || (!locProblem && name.trim().length >= 2 && remitOk && companyIdentityOk({ website, tin }) && (!types.length || !!businessTypeId) && (c ? true : attestation && companyTos));
+    const ok = match || joining || (name.trim().length >= 2 && remitOk && companyIdentityOk({ website, tin }) && (!types.length || !!businessTypeId) && (c ? true : attestation && companyTos));
     return (
       <WizardShell
         {...shell}
         title="Which company do you sell through?"
         subtitle="Panameer contracts with and pays companies. A one-person business is a company too."
-        continueLabel={match ? "Request Access" : "Next: Review"}
+        continueLabel={match ? "Request Access" : joining ? "Next: Review" : "Next: Locations"}
         continueDisabled={!ok}
         onContinue={next}
       >
@@ -298,13 +297,6 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
                 <BusinessTypePicker inline types={types} commodities={commodities} value={businessTypeId} onChange={setBusinessTypeId} hint="What your company sells. It sets up your Service Catalog; you can add more later." />
               )}
               {/* Scott 10-17 (one page): the optional company description moved to My Company. */}
-              {(owner || !c) && (
-                <div data-seller-locations>
-                  <p className="mb-2 text-[14px] font-bold">Company addresses *</p>
-                  <LocationsBlock rows={locs} onChange={setLocs} buyer={false} seller />
-                  {locProblem && <p className="mt-2 text-[13px] text-ink-2">{locProblem}</p>}
-                </div>
-              )}
               {!c && (
                 <div className="divide-y divide-line border border-line">
                   <label className="flex cursor-pointer items-start gap-3 px-3 py-2.5">
@@ -319,6 +311,36 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
               )}
             </div>
           )}
+        </div>
+      </WizardShell>
+    );
+  }
+
+  // ---- Locations (Scott 10-17): its own page again — the company's addresses, use checkboxes per address ----
+  if (step === "locations") {
+    const locProblem = owner ? locsProblem(locs, { buyer: false, seller: true }) : null;
+    const next = () => run(async () => {
+      if (owner) await post("/api/company/locations", "POST", { locations: locs, seller: true });
+      await load();
+      go("review");
+    });
+    return (
+      <WizardShell
+        {...shell}
+        title="Where is your company?"
+        subtitle="We started from where you work — add the street. Tick what each address is for; at least one Remit To (where payments go)."
+        continueLabel="Next: Review"
+        continueDisabled={!!locProblem}
+        onContinue={next}
+      >
+        <div className="mx-auto w-full max-w-2xl space-y-3" data-seller-locations>
+          {error && <Notice>{error}</Notice>}
+          {owner ? (
+            <LocationsBlock rows={locs} onChange={setLocs} buyer={false} seller />
+          ) : (
+            <p className="text-[14px] text-ink-2">Your company&apos;s addresses are kept by its admin — nothing to add here.</p>
+          )}
+          {locProblem && <p className="text-[13px] text-ink-2">{locProblem}</p>}
         </div>
       </WizardShell>
     );
