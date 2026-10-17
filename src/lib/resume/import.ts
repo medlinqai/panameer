@@ -590,15 +590,33 @@ export async function applyParsedResume(
   // Scott 10-17: a second read of the same résumé doubled every project — skip one already there (name + client + start).
   const pKey = (name: string, client: string | null | undefined, start: Date | string | null | undefined) =>
     `${name.toLowerCase().replace(/[^a-z0-9]/g, "")}|${(client ?? "").toLowerCase().replace(/[^a-z0-9]/g, "")}|${start ? new Date(start).toISOString().slice(0, 7) : ""}`;
-  const haveProject = new Set(
-    (await prisma.project.findMany({ where: { provider_profile_id: profileId }, select: { name: true, client_name: true, start_date: true } })).map((x) => pKey(x.name, x.client_name, x.start_date)),
-  );
+  const existingProjects = await prisma.project.findMany({ where: { provider_profile_id: profileId }, select: { name: true, client_name: true, start_date: true } });
+  const haveProject = new Set(existingProjects.map((x) => pKey(x.name, x.client_name, x.start_date)));
+  // Scott 10-17: the same engagement read twice under another name ("NYC Hospital (via recruiter) — Oracle Cloud SCM") — same client + same start month = same project.
+  const cKey = (client: string | null | undefined, start: Date | string | null | undefined) => {
+    const c = (client ?? "").toLowerCase().replace(/\([^)]*\)/g, " ").replace(/[^a-z0-9]+/g, " ").trim();
+    return c && start ? `${c}|${new Date(start).toISOString().slice(0, 7)}` : null;
+  };
+  const haveClient = new Set(existingProjects.map((x) => cKey(x.client_name, x.start_date)).filter(Boolean) as string[]);
+  // A project naming no employer goes to the one employer whose dates cover its start.
+  const spans = (await prisma.employer.findMany({ where: { provider_profile_id: profileId }, select: { id: true, start_date: true, end_date: true, is_current: true } }))
+    .filter((e) => e.start_date)
+    .map((e) => ({ id: e.id, from: e.start_date!.getTime(), to: e.end_date ? e.end_date.getTime() : e.is_current ? Date.now() : e.start_date!.getTime() }));
+  const coveringEmployer = (start: string | null | undefined) => {
+    if (!start) return null;
+    const t = new Date(start).getTime();
+    const hits = spans.filter((x) => t >= x.from && t <= x.to + 31 * 864e5);
+    return hits.length === 1 ? hits[0].id : null;
+  };
   for (const [i, pr] of parsed.projects.entries()) {
     const pk = pKey((pr.name || "Untitled project").slice(0, 200), (pr.client ?? "").slice(0, 200), pr.startDate);
     if (haveProject.has(pk)) continue;
     haveProject.add(pk);
+    const ck = cKey((pr.client ?? "").slice(0, 200), pr.startDate);
+    if (ck && haveClient.has(ck)) continue;
+    if (ck) haveClient.add(ck);
     // Scott 10-17: "Panameer Digital Services" / "Medlinq.ai" landed in Solo next to an employer named "Panameer" / "Medlinq" — match close names.
-    const employerId = pr.employerName ? (employerIdByName.get(pr.employerName) ?? closeEmployer(pr.employerName, employerIdByName)) : null;
+    const employerId = (pr.employerName ? (employerIdByName.get(pr.employerName) ?? closeEmployer(pr.employerName, employerIdByName)) : null) ?? coveringEmployer(pr.startDate);
     const description =
       [
         pr.description,
