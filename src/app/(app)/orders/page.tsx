@@ -32,6 +32,11 @@ export default async function Page() {
   return (
     <div className="mx-auto w-full max-w-5xl">
       <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">Work Orders</h1>
+      {/* SH-E001: Estimates and the open cart left the Shop tabs; they're reached from Orders. */}
+      <p className="mt-1 flex flex-wrap gap-4 text-[13.5px] font-semibold" data-orders-shop-links>
+        <Link href="/cart" className="text-magenta-dark underline underline-offset-4">Work Request (Incomplete)</Link>
+        <Link href="/estimates" className="text-magenta-dark underline underline-offset-4">My Estimates</Link>
+      </p>
       <p className="mt-1.5 text-[15px] text-ink-2">
         {orders.length === 0
           ? "No work orders yet."

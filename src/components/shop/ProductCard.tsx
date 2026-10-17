@@ -10,6 +10,8 @@ import { BuyButtons } from "@/components/shop/BuyButtons";
 import { useMe } from "@/components/MeProvider";
 import { formatCents } from "@/lib/display";
 import type { ShopProduct } from "@/lib/shop";
+import { categoryGradient, categoryLook } from "@/lib/shop-categories";
+import { CategoryIcon } from "@/components/shop/CategoryIcon";
 
 // WS-E006: the compact product card — Shop, All Service Products and the profile, 2-up.
 const TONE: Record<string, [string, string]> = {
@@ -20,7 +22,7 @@ const TONE: Record<string, [string, string]> = {
 };
 export const KIND_LABEL: Record<string, string> = { DELIVERABLE: "Deliverable", DEPLOYABLE: "AI Agent", HOURS: "Hours", BLANKET: "Blanket" };
 
-export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "providerProfileId" | "coverCode" | "coverUrl" | "coverStyle" | "typeName" | "terms" | "orders" | "fresh"> & { summary?: string | null } & { openToOffers?: boolean };
+export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "providerProfileId" | "coverCode" | "coverUrl" | "coverStyle" | "typeName" | "terms" | "orders" | "fresh"> & { summary?: string | null } & { openToOffers?: boolean } & Partial<Pick<ShopProduct, "category" | "masked" | "leadDays" | "companyName">>;
 
 const code = (p: CardProduct) => (p.coverCode || p.title.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("")).toUpperCase().slice(0, 3);
 
@@ -30,7 +32,61 @@ export function priceLabel(p: Pick<CardProduct, "priceCents" | "currency" | "pri
   return `${formatCents(p.priceCents, p.currency)}${per}`;
 }
 
-export function ProductCard({ p, signedIn, own = false, inCartLineId = null }: { p: CardProduct; signedIn: boolean; own?: boolean; inCartLineId?: string | null }) {
+export function ProductCard({ p, signedIn, own = false, inCartLineId = null, tile = false }: { p: CardProduct; signedIn: boolean; own?: boolean; inCartLineId?: string | null; tile?: boolean }) {
+  if (tile) return <ProductTile p={p} signedIn={signedIn} own={own} inCartLineId={inCartLineId} />;
+  return <ProductRow p={p} signedIn={signedIn} own={own} inCartLineId={inCartLineId} />;
+}
+
+// SH-E002: the store card — picture on top, name, two-line description, seller · lead time, price, Buy Now · Add to Cart (or Request a Quote).
+function ProductTile({ p, signedIn, own, inCartLineId }: { p: CardProduct; signedIn: boolean; own: boolean; inCartLineId: string | null }) {
+  const look = categoryLook(p.category);
+  const per = p.pricingType === "RECURRING" ? (p.billingPeriod === "ANNUAL" ? "/yr" : "/mo") : p.pricingType === "HOURLY" ? "/hr" : "";
+  const lead = p.leadDays ? `${p.leadDays} day${p.leadDays === 1 ? "" : "s"}` : null;
+  const seller = p.masked ? p.providerName : p.companyName || p.providerName;
+  return (
+    <article data-product-card data-masked={p.masked ? "yes" : "no"} className="flex flex-col overflow-hidden rounded-[10px] border border-line bg-white">
+      <Link href={`/shop/${p.id}`} aria-hidden tabIndex={-1} className="relative flex h-[130px] items-end p-2.5 text-[10.5px] font-extrabold tracking-[0.08em] text-white" style={p.coverUrl ? undefined : { background: categoryGradient(p.category) }}>
+        {p.coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={p.coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <>
+            <CategoryIcon icon={look.icon} className="absolute inset-0 m-auto h-[46px] w-[46px] opacity-85" />
+            <span className="relative">{(p.category ?? "").toUpperCase()}</span>
+          </>
+        )}
+      </Link>
+      <div className="flex flex-1 flex-col gap-1 p-3">
+        {inCartLineId && <span className="text-[10.5px] font-bold tracking-[0.12em] text-magenta-dark">IN YOUR CART</span>}
+        <h3 className="text-[15px] font-extrabold leading-snug"><Link href={`/shop/${p.id}`} className="hover:underline">{p.title}</Link></h3>
+        {p.summary && <p data-card-summary className="line-clamp-2 text-[12.5px] leading-snug text-ink-2">{p.summary}</p>}
+        <p className="flex min-w-0 items-center gap-1.5 text-[12px] text-ink-3" data-card-seller>
+          {p.masked ? (
+            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink-3 text-[9px] font-extrabold text-white" aria-hidden>?</span>
+          ) : (
+            <Avatar firstName={p.providerFirst} lastName={p.providerLast} photoUrl={p.providerPhotoUrl} size={20} />
+          )}
+          <span className="truncate">{seller}{lead ? ` · ${lead}` : ""}</span>
+        </p>
+        <p className="mt-auto pt-1.5 text-[17px] font-extrabold tabular-nums">
+          {p.priceCents == null ? "Quote" : formatCents(p.priceCents, p.currency)}
+          {p.priceCents != null && per && <small className="text-[12px] font-medium text-ink-2">{per}</small>}
+        </p>
+        {own ? (
+          <p data-own-product className="text-[12.5px] text-ink-2">Your Service Product. <Link href={`/catalog/products?edit=${p.id}`} className="font-bold text-magenta-dark underline underline-offset-4">Edit</Link></p>
+        ) : inCartLineId ? (
+          <Link href="/cart" className="mt-1 inline-flex min-h-9 items-center justify-center bg-ink px-4 text-[13px] font-semibold text-surface hover:bg-ink-hover">Checkout</Link>
+        ) : p.priceCents == null ? (
+          <Link href={`/estimates/request?provider=${p.providerPersonId}&product=${p.id}`} data-request-quote className="mt-1 inline-flex min-h-9 items-center justify-center bg-ink px-4 text-[13px] font-semibold text-surface hover:bg-ink-hover">Request a Quote</Link>
+        ) : (
+          <div className="mt-1"><BuyButtons productId={p.id} signedIn={signedIn} size="sm" openToOffers={p.openToOffers} /></div>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function ProductRow({ p, signedIn, own = false, inCartLineId = null }: { p: CardProduct; signedIn: boolean; own?: boolean; inCartLineId?: string | null }) {
   const router = useRouter();
   const { refresh } = useMe();
   const [busy, setBusy] = useState(false);

@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { memberVisibleWhere } from "@/lib/access";
 import { scheduleLine } from "@/lib/cart";
+import type { Viewer } from "@/lib/access";
+import { isTalentCategory } from "@/lib/shop-categories";
+
+export { isTalentCategory };
 
 // R1 Chain C: what a buyer can browse and buy — published service products only.
 export type ShopProduct = {
@@ -39,14 +43,25 @@ export type ShopProduct = {
   createdAt: string;
   /** Published in the last 30 days — "New". */
   fresh: boolean;
+  /** SH: the Category (commodity group) and whether it's talent (masked for buyers). */
+  category: string | null;
+  talent: boolean;
+  /** SH-E005: true when the seller is shown masked ("Oracle P2P consultant"). */
+  masked: boolean;
+  maskLabel: string;
+  companyName: string | null;
+  city: string | null;
+  leadDays: number | null;
+  delivery: string | null;
 };
 
 const SELECT = {
   id: true, title: true, summary: true, details_pdf_url: true, pricing_type: true, billing_period: true, kind: true, price_cents: true, open_to_offers: true, offers_override: true, currency: true, duration_weeks: true, cover_code: true, cover_image_url: true, cover_style: true,
-  payment_terms: true, payment_event: true, product_type_id: true, service_type_id: true, serviceType: { select: { name: true, serviceCategory: { select: { business_type_id: true } } } }, created_at: true,
+  payment_terms: true, payment_event: true, product_type_id: true, service_type_id: true, created_at: true, lead_time_days: true, delivery: true,
+  serviceType: { select: { name: true, serviceCategory: { select: { business_type_id: true, businessType: { select: { commodityGroup: { select: { name: true } } } }, commodityGroup: { select: { name: true } } } } } },
   milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, payment_event: true } },
   deliverables: { orderBy: { sequence: "asc" as const }, select: { text: true } },
-  providerProfile: { select: { id: true, person_id: true, open_to_offers: true, person: { select: { first_name: true, last_name: true, photo_url: true, company: { select: { country: true } } } } } },
+  providerProfile: { select: { id: true, person_id: true, open_to_offers: true, person: { select: { first_name: true, last_name: true, photo_url: true, title: true, site: { select: { addresses: { take: 1, select: { city: true, state: true } } } }, company: { select: { name: true, country: true, businessTypes: { take: 1, select: { businessType: { select: { commodityGroup: { select: { name: true } } } } } } } } } } } },
 };
 
 const TERMS: Record<string, string> = { IMMEDIATE: "due on receipt", NET15: "net 15", NET30: "net 30", NET45: "net 45", NET60: "net 60" };
@@ -66,8 +81,17 @@ export async function listShopProducts(providerProfileId?: string, seesTest = fa
 
 type Row = Awaited<ReturnType<typeof prisma.serviceProduct.findMany<{ select: typeof SELECT }>>>[number];
 
+/** SH-E005: what a buyer sees instead of a talent seller's name. */
+export function maskLabel(title: string | null | undefined, category: string | null): string {
+  const t = (title ?? "").replace(/\s*\(.*?\)/g, "").replace(/\b(Functional|Technical)\s+/gi, "").replace(/\bConsultant\b/, "consultant").trim();
+  return t || `A ${category ?? "Panameer"} provider`;
+}
+
 function shape(p: Row, orders: number): ShopProduct {
   const person = p.providerProfile.person;
+  const sc = p.serviceType?.serviceCategory;
+  const category = sc?.businessType?.commodityGroup?.name ?? sc?.commodityGroup?.name ?? person?.company?.businessTypes[0]?.businessType.commodityGroup?.name ?? null;
+  const addr = person?.site?.addresses[0];
   return {
     id: p.id,
     title: p.title,
@@ -99,10 +123,48 @@ function shape(p: Row, orders: number): ShopProduct {
     orders,
     createdAt: p.created_at.toISOString(),
     fresh: Date.now() - p.created_at.getTime() < 30 * 86_400_000,
+    category,
+    talent: isTalentCategory(category),
+    masked: false,
+    maskLabel: maskLabel(person?.title, category),
+    companyName: person?.company?.name ?? null,
+    city: addr?.city ? [addr.city, addr.state].filter(Boolean).join(", ") : null,
+    leadDays: p.lead_time_days,
+    delivery: p.delivery,
   };
+}
+
+/** SH-E005: whom this viewer may see by name — themselves, admins see all, and talent they bought from, matched, invited or are connected to. */
+export async function talentVisibleTo(viewer: Viewer | null): Promise<(providerPersonId: string) => boolean> {
+  if (!viewer) return () => false;
+  if (viewer.isSystemAdmin || viewer.isAdmin) return () => true;
+  const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+  if (!me) return () => false;
+  const [orders, lines, invites, proposals, links] = await Promise.all([
+    prisma.workOrder.findMany({ where: { buyer_person_id: me.id }, select: { provider_person_id: true } }),
+    prisma.workRequestLine.findMany({ where: { workRequest: { buyer_person_id: me.id, status: { not: "INCOMPLETE" } }, provider_person_id: { not: null } }, select: { provider_person_id: true } }),
+    prisma.proposalRequest.findMany({ where: { invited_by_person_id: me.id }, select: { provider_person_id: true } }),
+    prisma.proposal.findMany({ where: { job: { buyer_person_id: me.id } }, select: { provider_person_id: true } }),
+    prisma.connection.findMany({ where: { status: "ACCEPTED", OR: [{ from_user_id: viewer.userId }, { to_user_id: viewer.userId }] }, select: { from_user_id: true, to_user_id: true } }),
+  ]);
+  const linkedUsers = links.map((l) => (l.from_user_id === viewer.userId ? l.to_user_id : l.from_user_id));
+  const linked = linkedUsers.length ? await prisma.person.findMany({ where: { user_id: { in: linkedUsers } }, select: { id: true } }) : [];
+  const ok = new Set<string>([me.id, ...orders.map((o) => o.provider_person_id), ...lines.map((l) => l.provider_person_id!), ...invites.map((i) => i.provider_person_id), ...proposals.map((x) => x.provider_person_id), ...linked.map((x) => x.id)]);
+  return (id) => ok.has(id);
+}
+
+/** SH-E005: talent products show the seller masked unless this viewer may see them. */
+export function maskProducts(list: ShopProduct[], canSee: (providerPersonId: string) => boolean): ShopProduct[] {
+  return list.map((p) => (p.talent && !canSee(p.providerPersonId) ? { ...p, masked: true, providerName: p.maskLabel, providerFirst: "", providerLast: "", providerPhotoUrl: null, companyName: null } : p));
 }
 
 export async function getShopProduct(id: string, seesTest = false): Promise<ShopProduct | null> {
   const row = await prisma.serviceProduct.findFirst({ where: { id, status: "PUBLISHED", providerProfile: { person: memberVisibleWhere(seesTest) } }, select: SELECT });
   return row ? shape(row, 0) : null;
+}
+
+/** SH-E001: published in the last 7 days (newest first), topped up with the newest when the week is thin. */
+export function newThisWeek(list: ShopProduct[], take = 8): ShopProduct[] {
+  const week = list.filter((p) => Date.now() - Date.parse(p.createdAt) < 7 * 86_400_000);
+  return (week.length >= 4 ? week : list).slice(0, take);
 }

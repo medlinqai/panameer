@@ -6,18 +6,17 @@ import { useEffect, useRef, useState } from "react";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { useMe } from "@/components/MeProvider";
 
-// WS-E004: SHOP | Service Products · My Estimates · Cart (count), and a black Sell on Panameer menu at the right.
+// SH-E001: Shop Home · Products · Providers · Hire Talent (+ Services while taxonomy_v2 is on). Estimates and the cart live under Orders.
 export function ShopTabs({ services = false }: { services?: boolean } = {}) {
   const pathname = usePathname() ?? "";
   const { me } = useMe();
-  const cart = me?.cartCount ?? 0;
-  const current = pathname.startsWith("/cart") ? "/cart" : pathname.startsWith("/estimates") ? "/estimates" : pathname.startsWith("/shop/services") ? "/shop/services" : "/shop";
-  // GT-E005: Services tab only while taxonomy_v2 is on (the server page passes it).
+  const current = pathname.startsWith("/shop/products") ? "/shop/products" : pathname.startsWith("/shop/providers") ? "/shop/providers" : pathname.startsWith("/shop/services") ? "/shop/services" : pathname.startsWith("/hire") ? "/hire" : "/shop";
   const tabs = [
-    { label: "Service Products", href: "/shop" },
+    { label: "Shop Home", href: "/shop" },
+    { label: "Products", href: "/shop/products" },
+    { label: "Providers", href: "/shop/providers" },
     ...(services ? [{ label: "Services", href: "/shop/services" }] : []),
-    { label: "My Estimates", href: "/estimates" },
-    { label: "Work Request (Incomplete)", href: "/cart", badge: cart },
+    { label: "Hire Talent", href: "/hire" },
   ];
   return (
     <PageTabs wrap eyebrow="Shop" tabs={tabs} current={current}>
