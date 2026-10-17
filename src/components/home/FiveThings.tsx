@@ -95,7 +95,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
           </div>
           <div className="mt-3 hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} waiting={path.waiting} /></div></div>
           <div className="mt-4 sm:hidden"><RoadStepper current={path.current} waiting={path.waiting} /></div>
-          <p className="mt-2 text-[13.5px] text-ink-2">Learn, Connect and Build Your Catalog are open now.</p>
+          <p className="mt-2 text-[13.5px] text-ink-2">Learn, Connect and Create What You Sell are open now.</p>
         </div>
       )}
       {path && !onRoad && (
@@ -118,7 +118,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
           <span className="min-w-0">
             <span className="inline-block border border-magenta px-2 py-0.5 text-[11.5px] font-bold text-magenta-dark">Not live yet</span>
             <b className="mt-2 block text-[20px] font-extrabold leading-snug">{reg.registered ? "Create What You Sell — about 10 minutes" : "Finish signing up — about 3 minutes"}</b>
-            <span className="mt-1 block text-[14px] text-ink-2">{reg.registered ? "Your résumé and skills, your rates and products. Enable your catalog and buyers can find you and hire you." : "Who you are, your company and its addresses. Then get found by buyers."}</span>
+            <span className="mt-1 block text-[14px] text-ink-2">{reg.registered ? "Your services and rates, your service products. Enable your catalog and buyers can buy from you." : "Your résumé, who you are, your company and its addresses."}</span>
           </span>
           <span className="inline-flex min-h-[44px] items-center bg-ink px-6 text-[14.5px] font-bold text-surface group-hover:bg-magenta-dark">{reg.registered ? "Start" : "Continue"}</span>
         </Link>
