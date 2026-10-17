@@ -15,7 +15,7 @@ const strip = (line: string) => MODES.reduce((l, m) => (l.startsWith(m.verb) ? l
 const ON = "border-2 border-ink bg-ink px-3 py-1.5 text-[13px] font-bold text-surface";
 const OFF = "border-2 border-line px-3 py-1.5 text-[13px] font-semibold hover:border-ink disabled:opacity-40 disabled:hover:border-line";
 
-export function WhatYouDoModes({ skills, isAdmin, onSkip }: { skills: { id: string; name: string }[]; isAdmin: boolean; onSkip: () => void }) {
+export function WhatYouDoModes({ skills, isAdmin, onSkip, allOnly = false, legend = "For all of these" }: { skills: { id: string; name: string }[]; isAdmin: boolean; onSkip: () => void; /** RF-E002: only the "for all of these" checkboxes (registration's Kind of Work). */ allOnly?: boolean; legend?: string }) {
   const [caps, setCaps] = useState<Cap[] | null>(null);
   const [enabled, setEnabled] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -38,6 +38,7 @@ export function WhatYouDoModes({ skills, isAdmin, onSkip }: { skills: { id: stri
     if (j.capabilities) setCaps(j.capabilities);
   };
 
+  if (!enabled && allOnly) return null;
   if (!enabled) {
     return (
       <div className="mt-3 space-y-2" data-modes-off>
@@ -96,7 +97,7 @@ export function WhatYouDoModes({ skills, isAdmin, onSkip }: { skills: { id: stri
     <div className="mt-3" data-modes>
       {rows.length > 0 && (
         <fieldset data-modes-all disabled={busyAll} className="mb-2 border border-line bg-surface p-3">
-          <legend className="px-1 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">For all of these</legend>
+          <legend className="px-1 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">{legend}</legend>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             {MODES.map((m) => (
               <label key={m.mode} className="flex cursor-pointer items-center gap-2 text-[14.5px] font-semibold">
@@ -105,9 +106,10 @@ export function WhatYouDoModes({ skills, isAdmin, onSkip }: { skills: { id: stri
               </label>
             ))}
           </div>
-          <p className="mt-1.5 text-[12.5px] text-ink-2">{busyAll ? "Saving…" : "Tick once for every line below, then change only the odd one."}</p>
+          <p className="mt-1.5 text-[12.5px] text-ink-2">{busyAll ? "Saving…" : allOnly ? "Applies to everything below; change single lines later in Create What You Sell or My Profile." : "Tick once for every line below, then change only the odd one."}</p>
         </fieldset>
       )}
+      {allOnly ? null : (<>
       {groups.size === 0 && <p className="text-[14px] text-ink-2">Nothing on your profile yet — add what you know below.</p>}
       {[...groups.entries()].map(([k, g]) => (
         <div key={k} data-capability-row className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2.5">
@@ -125,6 +127,7 @@ export function WhatYouDoModes({ skills, isAdmin, onSkip }: { skills: { id: stri
         {adding ? "Done adding" : "+ Add something you know"}
       </button>
       {adding && <div className="mt-3 border border-line p-4"><CapabilitiesEditor /></div>}
+      </>)}
     </div>
   );
 }

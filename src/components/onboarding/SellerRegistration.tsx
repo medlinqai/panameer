@@ -10,8 +10,7 @@ import { CompanyIdentityFields, findCoMatch, companyIdentityOk, emailOk, formatT
 import { LocationsBlock, locLine, locsProblem, newLoc, type LocRow } from "@/components/onboarding/LocationsBlock";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
 import { countryName } from "@/lib/country";
-import { ResumeDropzone } from "@/components/onboarding/ResumeDropzone";
-import { ResumeReview } from "@/components/onboarding/ResumeReview";
+import { ResumeFirst } from "@/components/onboarding/ResumeFirst";
 import { PersonFields, personComplete, type PersonValues } from "@/components/onboarding/PersonFields";
 import { parseStoredPhone, toE164 } from "@/lib/phone";
 
@@ -65,6 +64,9 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imported, setImported] = useState(false);
+  // RF-E002: Continue needs a résumé read (or Skip for Now) and at least one kind of work.
+  const [resumeOk, setResumeOk] = useState(false);
+  const onResumeState = useCallback((x: { canContinue: boolean }) => setResumeOk(x.canContinue), []);
 
   const load = useCallback(async () => {
     const r: Reg | null = await fetch("/api/onboarding/provider/registration").then((x) => (x.ok ? x.json() : null)).catch(() => null);
@@ -172,38 +174,21 @@ export function SellerRegistration({ onDone, onLeave }: { onDone: () => void; on
     );
   }
 
-  // ---- Profile (Scott 10-16): the profile-building page from before — upload the résumé, then check what we read ----
+  // ---- Résumé (RF-E002): build the searchable profile first --------------------
   if (step === "resume") {
     return (
       <WizardShell
         {...shell}
-        title={imported ? "Here's what we have — check it over" : "How would you like to tell us about yourself?"}
-        subtitle={imported ? "Edit anything that's wrong or missing. This is what buyers will see." : "Just upload your résumé and let our AI do the rest."}
+        title="Build your profile from your résumé"
+        subtitle="We read it and fill your profile. Check each section — this is what buyers search on."
         continueLabel="Next: Seller"
+        continueDisabled={!resumeOk}
         onContinue={() => go("seller")}
-        secondaryLabel={imported ? undefined : "Skip for Now"}
-        onSecondary={imported ? undefined : () => go("seller")}
         wide
       >
-        <div className="w-full space-y-4" data-seller-profile-step>
+        <div className="w-full space-y-4" data-seller-resume-step>
           {error && <Notice>{error}</Notice>}
-          {imported ? (
-            <ResumeReview onContinue={() => go("seller")} />
-          ) : (
-            <section className="mx-auto max-w-2xl">
-              <div className="mb-3 flex items-center gap-2">
-                <h2 className="text-[17px] font-bold">Upload Your Résumé</h2>
-                <span className="border border-ink px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-ink">Fastest</span>
-              </div>
-              <ResumeDropzone
-                onBusyChange={setBusy}
-                onImported={async () => {
-                  setImported(true);
-                  await load();
-                }}
-              />
-            </section>
-          )}
+          <ResumeFirst hasResume={imported} onState={onResumeState} />
         </div>
       </WizardShell>
     );
