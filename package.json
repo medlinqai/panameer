@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "prisma generate && next dev -p 3100",
+    "fresh": "rm -rf .next && npm run dev",
     "build": "prisma generate && npm run -s mail:state && next build",
     "seed": "ts-node --project tsconfig.seed.json prisma/seed.ts",
     "start": "next start -p 3100",
