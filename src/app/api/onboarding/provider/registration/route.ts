@@ -32,7 +32,7 @@ export async function GET() {
   const approved = m?.status === "APPROVED";
   // Scott 10-17: phone and "where you work" come from the résumé header when they're still empty (saved on Next).
   const own = await ownAddress(p.id);
-  const lastRead = !own || !own.city || !own.state || !p.phone ? await prisma.profileImport.findFirst({ where: { providerProfile: { person_id: p.id }, status: "PARSED" }, orderBy: { created_at: "desc" }, select: { raw_text: true } }) : null;
+  const lastRead = !own || !own.line1 || !own.city || !own.state || !own.postalCode || !p.phone ? await prisma.profileImport.findFirst({ where: { providerProfile: { person_id: p.id }, status: "PARSED" }, orderBy: { created_at: "desc" }, select: { raw_text: true } }) : null;
   const cv = contactFromResume(lastRead?.raw_text);
   return NextResponse.json({
     email: p.user?.email ?? "",
@@ -47,8 +47,8 @@ export async function GET() {
       : null,
     locations: approved ? await companyLocations(m.company.id) : [],
     own: own
-      ? { ...own, city: own.city || cv.city || null, state: own.state || ((!own.country || own.country === cv.country) ? cv.state ?? null : null) }
-      : cv.city || cv.country ? { line1: "", line2: null, city: cv.city ?? null, state: cv.state ?? null, postalCode: null, country: cv.country ?? null } : null,
+      ? (() => { const same = !own.country || own.country === cv.country; return { ...own, line1: own.line1 || (same ? cv.line1 ?? "" : ""), city: own.city || (same ? cv.city ?? null : null), state: own.state || (same ? cv.state ?? null : null), postalCode: own.postalCode || (same ? cv.postalCode ?? null : null) }; })()
+      : cv.city || cv.country || cv.line1 ? { line1: cv.line1 ?? "", line2: null, city: cv.city ?? null, state: cv.state ?? null, postalCode: cv.postalCode ?? null, country: cv.country ?? null } : null,
     // Scott 10-16: the Profile step shows the review instead of the upload once a résumé has been read.
     hasResume: (await prisma.profileImport.count({ where: { providerProfile: { person_id: p.id }, status: "PARSED" } })) > 0,
   });
