@@ -2452,6 +2452,10 @@ model ServiceProduct {
   lead_time_days Int?
   /// MO-E001: buyers may Make an Offer; offers below the floor (private to the provider) are declined automatically.
   open_to_offers    Boolean @default(false)
+  /// CG-E003: an optional "Details" PDF (public bucket product-details, PDF only, 10 MB).
+  details_pdf_url   String?
+  /// CG-E003: the grid's Offer slider — off keeps the row (Draft) but Enable skips it.
+  offered           Boolean @default(true)
   /// Lane 7: per-product override of the seller's switch (null = follow it). open_to_offers stays for old rows.
   offers_override   Boolean?
   offer_floor_cents Int?

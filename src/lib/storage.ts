@@ -384,3 +384,20 @@ export async function signedEstimateRequestFileUrl(objectPath: string, expiresIn
   if (error) return null;
   return data?.signedUrl ?? null;
 }
+
+/** CG-E003: a Service Product's "Details" PDF (public bucket, PDF only, 10 MB). */
+export const PRODUCT_DETAILS_BUCKET = "product-details";
+export const MAX_DETAILS_PDF_BYTES = 10 * 1024 * 1024;
+export async function uploadProductDetailsPdf(folder: string, file: { type: string; size: number; bytes: ArrayBuffer }): Promise<string> {
+  if (file.type !== "application/pdf") throw new StorageError("Upload a PDF.", "INVALID_TYPE");
+  if (file.size > MAX_DETAILS_PDF_BYTES) throw new StorageError("That PDF is larger than 10 MB.", "TOO_LARGE");
+  if (file.size === 0) throw new StorageError("That file is empty.", "INVALID_TYPE");
+  const objectPath = `${folder}/${randomUUID()}.pdf`;
+  const bucket = getStorageClient().from(PRODUCT_DETAILS_BUCKET);
+  const { error } = await bucket.upload(objectPath, file.bytes, { contentType: "application/pdf", upsert: false, cacheControl: "3600" });
+  if (error) {
+    console.error("[storage] product details upload failed:", error);
+    throw new StorageError("Could not upload that PDF.", "UPLOAD_FAILED");
+  }
+  return bucket.getPublicUrl(objectPath).data.publicUrl;
+}

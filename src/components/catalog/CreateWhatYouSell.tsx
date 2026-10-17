@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { StepRail } from "@/components/onboarding/StepRail";
 import { WhatYouDoModes } from "@/components/catalog/WhatYouDoModes";
 import { GetFoundRates } from "@/components/onboarding/GetFoundRates";
+import { ProductsGrid } from "@/components/catalog/ProductsGrid";
 
 // CWS-E002–E005: Create What You Sell, slimmed — three stops in the app casing. Plain words; fits one screen.
 type Item = { id: string; name: string };
@@ -104,7 +105,14 @@ export function CreateWhatYouSell({ isAdmin = false }: { isAdmin?: boolean }) {
 
   // ---- Stop 3: Your Service Products (CG-E003) -------------------------------
   if (stop === 2) {
-    return shell(<div className="mt-1" data-stop="products"><h1 className="text-[26px] font-extrabold">Your Service Products</h1></div>, { label: "Next: Enable", onClick: () => go(3) });
+    return shell(
+      <div className="mt-1" data-stop="products">
+        <h1 className="text-[26px] font-extrabold">Your Service Products</h1>
+        <p className="mt-1 text-[14.5px] text-ink-2">One row per product. Turn on the ones you sell and fill in the row. Need two of the same type? Add another. Pictures and a PDF are optional.</p>
+        <div className="mt-3"><ProductsGrid /></div>
+      </div>,
+      { label: "Next: Enable", onClick: async () => { await load(); go(3); } },
+    );
   }
 
   // ---- Stop 3: Enable My Catalog ---------------------------------------------
