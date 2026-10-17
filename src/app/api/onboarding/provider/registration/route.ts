@@ -32,7 +32,7 @@ export async function GET() {
   const approved = m?.status === "APPROVED";
   // Scott 10-17: phone and "where you work" come from the résumé header when they're still empty (saved on Next).
   const own = await ownAddress(p.id);
-  const lastRead = !own || !p.phone ? await prisma.profileImport.findFirst({ where: { providerProfile: { person_id: p.id }, status: "PARSED" }, orderBy: { created_at: "desc" }, select: { raw_text: true } }) : null;
+  const lastRead = !own || !own.city || !own.state || !p.phone ? await prisma.profileImport.findFirst({ where: { providerProfile: { person_id: p.id }, status: "PARSED" }, orderBy: { created_at: "desc" }, select: { raw_text: true } }) : null;
   const cv = contactFromResume(lastRead?.raw_text);
   return NextResponse.json({
     email: p.user?.email ?? "",
@@ -46,7 +46,9 @@ export async function GET() {
         : { status: m.status, owner: false, name: m.company.name }
       : null,
     locations: approved ? await companyLocations(m.company.id) : [],
-    own: own ?? (cv.city || cv.country ? { line1: "", line2: null, city: cv.city ?? null, state: cv.state ?? null, postalCode: null, country: cv.country ?? null } : null),
+    own: own
+      ? { ...own, city: own.city || cv.city || null, state: own.state || ((!own.country || own.country === cv.country) ? cv.state ?? null : null) }
+      : cv.city || cv.country ? { line1: "", line2: null, city: cv.city ?? null, state: cv.state ?? null, postalCode: null, country: cv.country ?? null } : null,
     // Scott 10-16: the Profile step shows the review instead of the upload once a résumé has been read.
     hasResume: (await prisma.profileImport.count({ where: { providerProfile: { person_id: p.id }, status: "PARSED" } })) > 0,
   });
