@@ -12,7 +12,8 @@ type State = {
   live: boolean; title: string; skills: Item[]; suggestions: Item[]; industries: Item[]; allIndustries: Item[];
   hourlyCents: number | null; monthly: { priceCents: number | null; hours: number | null } | null; packages: (Pkg & { status?: string })[];
 };
-const STOPS = [{ key: "do", label: "What You Do" }, { key: "charge", label: "What You Charge" }, { key: "enable", label: "Enable My Catalog" }];
+// CG-E001: four stops (Scott 10-17).
+const STOPS = [{ key: "do", label: "What You Do" }, { key: "services", label: "Your Services" }, { key: "products", label: "Your Service Products" }, { key: "enable", label: "Enable" }];
 const BTN = "inline-flex min-h-[44px] items-center justify-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40";
 const GHOST = "inline-flex min-h-[44px] items-center justify-center border border-ink px-5 text-[14.5px] font-semibold";
 const INPUT = "block w-full border border-line bg-surface px-3 py-2 text-[15px]";
@@ -81,7 +82,7 @@ export function CreateWhatYouSell() {
   const shell = (body: React.ReactNode, next: { label: string; onClick: () => void; disabled?: boolean }) => (
     <div className="mx-auto w-full max-w-3xl" data-create-what-you-sell>
       <StepRail steps={STOPS} current={stop} review={false} reached={reached} onPick={go} />
-      <p className="mt-4 text-[12px] font-bold tracking-[0.1em] text-magenta-dark">STEP {stop + 1} OF 3 · {STOPS[stop].label.toUpperCase()}</p>
+      <p className="mt-4 text-[12px] font-bold tracking-[0.1em] text-magenta-dark">STEP {stop + 1} OF 4 · {STOPS[stop].label.toUpperCase()}</p>
       {body}
       {error && <p role="alert" className="mt-4 text-[14px] font-semibold text-magenta-dark">{error}</p>}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
@@ -133,7 +134,7 @@ export function CreateWhatYouSell() {
           </div>
         </section>
       </div>,
-      { label: "Next: What You Charge", disabled: !title.trim() || !skills.length, onClick: async () => { if (await post({ stop: "do", title, skillIds: skills.map((x) => x.id), industryIds: industries.map((x) => x.id) })) { await load(); go(1); } } },
+      { label: "Next: Your Services", disabled: !title.trim() || !skills.length, onClick: async () => { if (await post({ stop: "do", title, skillIds: skills.map((x) => x.id), industryIds: industries.map((x) => x.id) })) { await load(); go(1); } } },
     );
   }
 
@@ -153,7 +154,7 @@ export function CreateWhatYouSell() {
         monthly: picks.month && cents(monthly.price) ? { priceCents: cents(monthly.price)!, hours: monthly.hours ? Number(monthly.hours) : null } : null,
         packages: picks.pkg ? pkgs.filter((p) => p.name.trim()).map((p) => ({ id: p.id ?? null, name: p.name, included: p.included, priceCents: cents(p.price), perMonth: p.perMonth, readyDays: p.ready ? Number(p.ready) : null })) : [],
       };
-      if (await post(body)) { await load(); go(2); }
+      if (await post(body)) { await load(); go(3); }
     };
     return shell(
       <div className="mt-1 space-y-5" data-stop="charge">
@@ -194,8 +195,13 @@ export function CreateWhatYouSell() {
           </div>
         )}
       </div>,
-      { label: "Next: Enable My Catalog", disabled: !ok, onClick: save },
+      { label: "Next: Enable", disabled: !ok, onClick: save },
     );
+  }
+
+  // ---- Stop 3: Your Service Products (CG-E003) -------------------------------
+  if (stop === 2) {
+    return shell(<div className="mt-1" data-stop="products"><h1 className="text-[26px] font-extrabold">Your Service Products</h1></div>, { label: "Next: Enable", onClick: () => go(3) });
   }
 
   // ---- Stop 3: Enable My Catalog ---------------------------------------------
