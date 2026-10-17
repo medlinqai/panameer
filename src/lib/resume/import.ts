@@ -570,7 +570,16 @@ export async function applyParsedResume(
     if (found.needsSuite) applied.needsSuite++;
   }
 
+  // Scott 10-17: a second read of the same résumé doubled every project — skip one already there (name + client + start).
+  const pKey = (name: string, client: string | null | undefined, start: Date | string | null | undefined) =>
+    `${name.toLowerCase().replace(/[^a-z0-9]/g, "")}|${(client ?? "").toLowerCase().replace(/[^a-z0-9]/g, "")}|${start ? new Date(start).toISOString().slice(0, 7) : ""}`;
+  const haveProject = new Set(
+    (await prisma.project.findMany({ where: { provider_profile_id: profileId }, select: { name: true, client_name: true, start_date: true } })).map((x) => pKey(x.name, x.client_name, x.start_date)),
+  );
   for (const [i, pr] of parsed.projects.entries()) {
+    const pk = pKey((pr.name || "Untitled project").slice(0, 200), (pr.client ?? "").slice(0, 200), pr.startDate);
+    if (haveProject.has(pk)) continue;
+    haveProject.add(pk);
     const employerId = pr.employerName
       ? (employerIdByName.get(pr.employerName) ?? null)
       : null;
