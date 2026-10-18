@@ -1,10 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { memberVisibleWhere } from "@/lib/access";
 import { scheduleLine } from "@/lib/cart";
-import type { Viewer } from "@/lib/access";
-import { isTalentCategory } from "@/lib/shop-categories";
-
-export { isTalentCategory };
 
 // R1 Chain C: what a buyer can browse and buy — published service products only.
 export type ShopProduct = {
@@ -43,12 +39,8 @@ export type ShopProduct = {
   createdAt: string;
   /** Published in the last 30 days — "New". */
   fresh: boolean;
-  /** SH: the Category (commodity group) and whether it's talent (masked for buyers). */
+  /** SH: the Category (commodity group). */
   category: string | null;
-  talent: boolean;
-  /** SH-E005: true when the seller is shown masked ("Oracle P2P consultant"). */
-  masked: boolean;
-  maskLabel: string;
   companyName: string | null;
   city: string | null;
   leadDays: number | null;
@@ -80,12 +72,6 @@ export async function listShopProducts(providerProfileId?: string, seesTest = fa
 }
 
 type Row = Awaited<ReturnType<typeof prisma.serviceProduct.findMany<{ select: typeof SELECT }>>>[number];
-
-/** SH-E005: what a buyer sees instead of a talent seller's name. */
-export function maskLabel(title: string | null | undefined, category: string | null): string {
-  const t = (title ?? "").replace(/\s*\(.*?\)/g, "").replace(/\b(Functional|Technical)\s+/gi, "").replace(/\bConsultant\b/, "consultant").trim();
-  return t || `A ${category ?? "Panameer"} provider`;
-}
 
 function shape(p: Row, orders: number): ShopProduct {
   const person = p.providerProfile.person;
@@ -124,38 +110,11 @@ function shape(p: Row, orders: number): ShopProduct {
     createdAt: p.created_at.toISOString(),
     fresh: Date.now() - p.created_at.getTime() < 30 * 86_400_000,
     category,
-    talent: isTalentCategory(category),
-    masked: false,
-    maskLabel: maskLabel(person?.title, category),
     companyName: person?.company?.name ?? null,
     city: addr?.city ? [addr.city, addr.state].filter(Boolean).join(", ") : null,
     leadDays: p.lead_time_days,
     delivery: p.delivery,
   };
-}
-
-/** SH-E005: whom this viewer may see by name — themselves, admins see all, and talent they bought from, matched, invited or are connected to. */
-export async function talentVisibleTo(viewer: Viewer | null): Promise<(providerPersonId: string) => boolean> {
-  if (!viewer) return () => false;
-  if (viewer.isSystemAdmin || viewer.isAdmin) return () => true;
-  const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
-  if (!me) return () => false;
-  const [orders, lines, invites, proposals, links] = await Promise.all([
-    prisma.workOrder.findMany({ where: { buyer_person_id: me.id }, select: { provider_person_id: true } }),
-    prisma.workRequestLine.findMany({ where: { workRequest: { buyer_person_id: me.id, status: { not: "INCOMPLETE" } }, provider_person_id: { not: null } }, select: { provider_person_id: true } }),
-    prisma.proposalRequest.findMany({ where: { invited_by_person_id: me.id }, select: { provider_person_id: true } }),
-    prisma.proposal.findMany({ where: { job: { buyer_person_id: me.id } }, select: { provider_person_id: true } }),
-    prisma.connection.findMany({ where: { status: "ACCEPTED", OR: [{ from_user_id: viewer.userId }, { to_user_id: viewer.userId }] }, select: { from_user_id: true, to_user_id: true } }),
-  ]);
-  const linkedUsers = links.map((l) => (l.from_user_id === viewer.userId ? l.to_user_id : l.from_user_id));
-  const linked = linkedUsers.length ? await prisma.person.findMany({ where: { user_id: { in: linkedUsers } }, select: { id: true } }) : [];
-  const ok = new Set<string>([me.id, ...orders.map((o) => o.provider_person_id), ...lines.map((l) => l.provider_person_id!), ...invites.map((i) => i.provider_person_id), ...proposals.map((x) => x.provider_person_id), ...linked.map((x) => x.id)]);
-  return (id) => ok.has(id);
-}
-
-/** SH-E005: talent products show the seller masked unless this viewer may see them. */
-export function maskProducts(list: ShopProduct[], canSee: (providerPersonId: string) => boolean): ShopProduct[] {
-  return list.map((p) => (p.talent && !canSee(p.providerPersonId) ? { ...p, masked: true, providerName: p.maskLabel, providerFirst: "", providerLast: "", providerPhotoUrl: null, companyName: null } : p));
 }
 
 export async function getShopProduct(id: string, seesTest = false): Promise<ShopProduct | null> {
@@ -169,12 +128,3 @@ export function newThisWeek(list: ShopProduct[], take = 8): ShopProduct[] {
   return (week.length >= 4 ? week : list).slice(0, take);
 }
 
-/** SH-E005: which of these provider profiles this viewer sees masked — talent sellers they haven't bought from, matched, invited or connected to. */
-export async function maskedProfileIds(viewer: Viewer | null, profileIds: string[]): Promise<Set<string>> {
-  if (!profileIds.length) return new Set();
-  const [canSee, rows] = await Promise.all([
-    talentVisibleTo(viewer),
-    prisma.providerProfile.findMany({ where: { id: { in: profileIds } }, select: { id: true, person_id: true, person: { select: { company: { select: { businessTypes: { select: { businessType: { select: { commodityGroup: { select: { name: true } } } } } } } } } } } }),
-  ]);
-  return new Set(rows.filter((r) => (r.person.company?.businessTypes ?? []).some((b) => isTalentCategory(b.businessType.commodityGroup?.name)) && !canSee(r.person_id)).map((r) => r.id));
-}

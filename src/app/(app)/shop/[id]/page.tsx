@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { guardPage } from "@/lib/guard";
-import { getShopProduct, maskProducts, talentVisibleTo } from "@/lib/shop";
+import { getShopProduct } from "@/lib/shop";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { formatCents } from "@/lib/display";
 import { prisma } from "@/lib/prisma";
@@ -15,10 +15,8 @@ export const metadata = { title: "Service Product · Panameer" };
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const viewer = await guardPage("authenticated");
   const { id } = await params;
-  const found = await getShopProduct(id, await seesTestAccounts(viewer));
-  if (!found) notFound();
-  // SH-E005: a talent seller shows masked ("Oracle P2P consultant") until this buyer may see them.
-  const [p] = maskProducts([found], await talentVisibleTo(viewer));
+  const p = await getShopProduct(id, await seesTestAccounts(viewer));
+  if (!p) notFound();
   const me = await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true } });
   const own = me?.id === p.providerPersonId;
 
@@ -29,7 +27,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <BackLink href="/shop/products" label="Products" />
       <h1 className="mt-2 text-[28px] font-bold">{p.title}</h1>
       <p className="mt-1 text-[14px] text-ink-2">
-        by {p.masked ? <span data-masked-seller>{p.providerName}</span> : <Link href={`/providers/${p.providerProfileId}`} className="underline">{p.providerName}</Link>}
+        by <Link href={`/providers/${p.providerProfileId}`} className="underline">{p.providerName}</Link>
         {p.durationWeeks ? ` · about ${p.durationWeeks} week${p.durationWeeks === 1 ? "" : "s"}` : ""}
       </p>
       <p className="mt-4 text-[22px] font-semibold">

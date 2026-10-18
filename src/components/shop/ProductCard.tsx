@@ -22,7 +22,7 @@ const TONE: Record<string, [string, string]> = {
 };
 export const KIND_LABEL: Record<string, string> = { DELIVERABLE: "Deliverable", DEPLOYABLE: "AI Agent", HOURS: "Hours", BLANKET: "Blanket" };
 
-export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "providerProfileId" | "coverCode" | "coverUrl" | "coverStyle" | "typeName" | "terms" | "orders" | "fresh"> & { summary?: string | null } & { openToOffers?: boolean } & Partial<Pick<ShopProduct, "category" | "masked" | "leadDays" | "companyName">>;
+export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "providerPersonId" | "providerProfileId" | "coverCode" | "coverUrl" | "coverStyle" | "typeName" | "terms" | "orders" | "fresh"> & { summary?: string | null } & { openToOffers?: boolean } & Partial<Pick<ShopProduct, "category" | "leadDays" | "companyName">>;
 
 const code = (p: CardProduct) => (p.coverCode || p.title.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("")).toUpperCase().slice(0, 3);
 
@@ -42,9 +42,9 @@ function ProductTile({ p, signedIn, own, inCartLineId }: { p: CardProduct; signe
   const look = categoryLook(p.category);
   const per = p.pricingType === "RECURRING" ? (p.billingPeriod === "ANNUAL" ? "/yr" : "/mo") : p.pricingType === "HOURLY" ? "/hr" : "";
   const lead = p.leadDays ? `${p.leadDays} day${p.leadDays === 1 ? "" : "s"}` : null;
-  const seller = p.masked ? p.providerName : p.companyName || p.providerName;
+  const seller = p.companyName || p.providerName;
   return (
-    <article data-product-card data-masked={p.masked ? "yes" : "no"} className="flex flex-col overflow-hidden rounded-[10px] border border-line bg-white">
+    <article data-product-card className="flex flex-col overflow-hidden rounded-[10px] border border-line bg-white">
       <Link href={`/shop/${p.id}`} aria-hidden tabIndex={-1} className="relative flex h-[130px] items-end p-2.5 text-[10.5px] font-extrabold tracking-[0.08em] text-white" style={p.coverUrl ? undefined : { background: categoryGradient(p.category) }}>
         {p.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -61,11 +61,7 @@ function ProductTile({ p, signedIn, own, inCartLineId }: { p: CardProduct; signe
         <h3 className="text-[15px] font-extrabold leading-snug"><Link href={`/shop/${p.id}`} className="hover:underline">{p.title}</Link></h3>
         {p.summary && <p data-card-summary className="line-clamp-2 text-[12.5px] leading-snug text-ink-2">{p.summary}</p>}
         <p className="flex min-w-0 items-center gap-1.5 text-[12px] text-ink-3" data-card-seller>
-          {p.masked ? (
-            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink-3 text-[9px] font-extrabold text-white" aria-hidden>?</span>
-          ) : (
-            <Avatar firstName={p.providerFirst} lastName={p.providerLast} photoUrl={p.providerPhotoUrl} size={20} />
-          )}
+          <Avatar firstName={p.providerFirst} lastName={p.providerLast} photoUrl={p.providerPhotoUrl} size={20} />
           <span className="truncate">{seller}{lead ? ` · ${lead}` : ""}</span>
         </p>
         <p className="mt-auto pt-1.5 text-[17px] font-extrabold tabular-nums">

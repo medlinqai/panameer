@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { memberOrPublicTwin } from "@/lib/public-twin";
-import { listShopProducts, maskProducts, newThisWeek, talentVisibleTo } from "@/lib/shop";
+import { listShopProducts, newThisWeek } from "@/lib/shop";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { prisma } from "@/lib/prisma";
 import { ShopTabs } from "@/components/shop/ShopTabs";
@@ -15,13 +15,12 @@ export const metadata = { title: "Shop · Panameer" };
 // SH-E001: Shop Home — one search, a picture tile per Category (→ Products in that Category), New this week.
 export default async function Page() {
   const viewer = await memberOrPublicTwin("/shop");
-  const [all, me, groups, canSee] = await Promise.all([
+  const [all, me, groups] = await Promise.all([
     listShopProducts(undefined, await seesTestAccounts(viewer)),
     prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }),
     prisma.commodityGroup.findMany({ where: { hidden: false }, orderBy: { sort_order: "asc" }, select: { name: true } }),
-    talentVisibleTo(viewer),
   ]);
-  const products = maskProducts(all, canSee);
+  const products = all;
   const count = (name: string) => products.filter((p) => p.category === name).length;
   const fresh = newThisWeek(products);
 

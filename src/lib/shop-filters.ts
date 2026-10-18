@@ -63,9 +63,9 @@ export const ORACLE_CATEGORY = "Technology";
 const deliveryOk = (p: ShopProduct, d: string) => {
   const site = p.delivery === "ONSITE" || p.delivery === "EITHER" || p.delivery == null;
   const away = p.delivery === "OFFSITE" || p.delivery === "EITHER" || p.delivery == null;
-  return d === "site" ? site : d === "offsite" ? p.talent && away : d === "shipped" ? !p.talent && away : true;
+  return d === "site" ? site : d === "offsite" || d === "shipped" ? away : true;
 };
-const processText = (p: ShopProduct) => `${p.title} ${p.summary ?? ""} ${p.maskLabel}`;
+const processText = (p: ShopProduct) => `${p.title} ${p.summary ?? ""} ${p.providerName}`;
 export const hasProcess = (p: ShopProduct, process: string) => new RegExp(`\\b${process}\\b`, "i").test(processText(p));
 
 /** Everything but the Category — so the Category counts reflect the other filters. */

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { memberOrPublicTwin } from "@/lib/public-twin";
-import { listShopProducts, maskProducts, talentVisibleTo } from "@/lib/shop";
+import { listShopProducts } from "@/lib/shop";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { prisma } from "@/lib/prisma";
 import { ShopTabs } from "@/components/shop/ShopTabs";
@@ -19,12 +19,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sto
   const viewer = await memberOrPublicTwin("/shop");
   const f = await searchParams;
   const seesTest = await seesTestAccounts(viewer);
-  const [all, me, canSee] = await Promise.all([
+  const [all, me] = await Promise.all([
     listShopProducts(undefined, seesTest),
     prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }),
-    talentVisibleTo(viewer),
   ]);
-  const masked = maskProducts(all, canSee);
+  const masked = all;
   const cartLines = me ? await prisma.workRequestLine.findMany({ where: { workRequest: { buyer_person_id: me.id, source: "SHOP", status: "INCOMPLETE" } }, select: { id: true, service_product_id: true } }) : [];
   const inCart = new Map(cartLines.map((l) => [l.service_product_id, l.id]));
   const products = filterStore(masked, f).sort(byPopular);
