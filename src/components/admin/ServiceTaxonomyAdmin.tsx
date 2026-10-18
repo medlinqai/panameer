@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { HelpTip } from "@/components/ui/HelpTip";
 
-// TX-E005 / MC-E007: Commodity Group › Business Type › Rate Types (Services) and Service Product Types.
+// CH-E001 (was TX-E005 / MC-E007): Category › Business Type › Service Types (rates) and Service Product Types.
 // Add · Rename (inline: Enter saves, Esc cancels) · Hide · Delete at every level; Delete only when nothing uses it.
 type Unit = "HOUR" | "DAY" | "WEEK" | "MONTH" | "SESSION" | "VISIT" | "EACH";
 const DELIVERY = [["OFFSITE", "Offsite"], ["ONSITE", "Onsite"], ["EITHER", "Either"]] as const;
@@ -68,7 +68,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
   // TX2-E003: one rate table, used for a commodity's Rates and any business-type-level service categories.
   const rateTable = (rows: TType[]) => (
   <table className="mt-1 w-full border-collapse" data-rate-types>
-    <thead><tr><th className={TH}>RATE TYPE</th><th className={TH}>UNIT</th><th className={TH}>DELIVERY</th><th className={TH}>COMMODITY CODE</th><th className={TH}>ON BY DEFAULT</th><th className={TH}>IN USE</th><th className={TH} /></tr></thead>
+    <thead><tr><th className={TH}>SERVICE TYPE</th><th className={TH}>UNIT</th><th className={TH}>DELIVERY</th><th className={TH}>COMMODITY CODE</th><th className={TH}>ON BY DEFAULT</th><th className={TH}>IN USE</th><th className={TH} /></tr></thead>
     <tbody>
       {rows.map((t) => (
         <tr key={t.id} data-type={t.name} className={t.hidden ? "text-ink-3" : ""}>
@@ -107,7 +107,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
             <HelpTip label={g.name} text={g.description} />
             <button type="button" onClick={() => open(`d:${g.id}`, g.description ?? "")} className={LNK}>{g.description ? "Edit description" : "+ Description"}</button>
             <span className="text-[12px] text-ink-3">UNSPSC {g.segments.join(" · ")}</span>
-            {g.hidden && <span className="text-[11px] font-bold text-ink-3">PARKED</span>}
+            {g.hidden && <span className="text-[11px] font-bold text-ink-3">HIDDEN</span>}
             <span className="ml-auto inline-flex items-center gap-1">
               <Move level="group" id={g.id} />
               <button type="button" onClick={() => call({ action: "hide", level: "group", id: g.id, hidden: !g.hidden })} className={BTN}>{g.hidden ? "Show" : "Hide"}</button>
@@ -119,7 +119,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
           {g.description && <p className="mt-1 text-[13px] text-ink-2">{g.description}</p>}
           {/* TX2-E003: rates are set per commodity — every business type in it offers these. */}
           <div data-commodity-rates={g.name} className="mt-3 border border-line bg-white p-4">
-            <div className="flex items-center gap-2 text-[10.5px] font-extrabold tracking-[0.12em] text-ink-2">{`RATES · ALL ${g.name.toUpperCase()} BUSINESS TYPES`} <button type="button" onClick={() => open(`atg:${g.id}`)} className={LNK}>+ Add Rate Type</button></div>
+            <div className="flex items-center gap-2 text-[10.5px] font-extrabold tracking-[0.12em] text-ink-2">{`SERVICE TYPES (RATES) · ALL ${g.name.toUpperCase()} BUSINESS TYPES`} <button type="button" onClick={() => open(`atg:${g.id}`)} className={LNK}>+ Add Service Type</button></div>
             {inline({ k: `atg:${g.id}`, initial: "", placeholder: "Rate type name", onSave: (v) => call({ action: "addType", id: g.id, to: "commodity", name: v }) })}
             {g.rates.length ? rateTable(g.rates) : <p className="mt-1 text-[13px] text-ink-3">No rates yet.</p>}
           </div>
@@ -143,7 +143,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
 
                 {rateCats.some((c) => c.types.length) && (
                   <>
-                    <div className="mt-4 text-[10.5px] font-extrabold tracking-[0.12em] text-ink-2">{`RATE TYPES · ONLY ${b.name.toUpperCase()}`}</div>
+                    <div className="mt-4 text-[10.5px] font-extrabold tracking-[0.12em] text-ink-2">{`SERVICE TYPES (RATES) · ONLY ${b.name.toUpperCase()}`}</div>
                     {rateTable(rateCats.flatMap((c) => c.types))}
                   </>
                 )}
@@ -197,7 +197,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
             {suggested.map((s) => (
               <li key={s.id} className="flex flex-wrap items-center gap-2 border-t border-line py-2 text-[13.5px]">
                 {edit?.key === `s:${s.id}` ? inline({ k: `s:${s.id}`, initial: s.name, onSave: (v) => call({ action: "rename", id: s.id, name: v }) }) : <b className="min-w-[180px]">{s.name}</b>}
-                <span className="text-[11.5px] text-ink-3">{s.kind === "SERVICE_PRODUCT" ? "Service Product Type" : "Rate Type"}</span>
+                <span className="text-[11.5px] text-ink-3">{s.kind === "SERVICE_PRODUCT" ? "Service Product Type" : "Service Type"}</span>
                 <select aria-label="Approve into category" value={pick[`a${s.id}`] ?? ""} onChange={(e) => setPick({ ...pick, [`a${s.id}`]: e.target.value })} className={SEL}>
                   <option value="">Category…</option>
                   {categories.filter((c) => c.kind === s.kind).map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}

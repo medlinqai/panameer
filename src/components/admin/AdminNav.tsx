@@ -12,7 +12,7 @@ const ITEMS: { label: string; href: string; soon?: boolean }[] = [
   { label: "Companies", href: "/admin/companies" },
   { label: "Providers", href: "/admin/providers" },
   { label: "Learn", href: "/admin/learn" },
-  { label: "Service Taxonomy", href: "/admin/service-taxonomy" },
+  { label: "Category Hierarchy", href: "/admin/category-hierarchy" },
   { label: "Areas & Skills", href: "/admin/skill-catalog" },
   { label: "Glossary", href: "/admin/glossary" },
   { label: "Informational Items", href: "/admin/informational-items" },
