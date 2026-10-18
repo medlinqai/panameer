@@ -1,35 +1,27 @@
 import Link from "next/link";
-import { ORACLE_CATEGORY, ORACLE_PROCESSES, STORE_DELIVERY, STORE_PRICE, storeHref, type StoreQuery } from "@/lib/shop-filters";
+import { STORE_BILLING, STORE_DELIVERY, STORE_PRICE, storeHref, type StoreQuery } from "@/lib/shop-filters";
 
-// SH-E002: e-procurement style filters on the left (a collapsible block on phones). Every option is a link; the URL holds the state.
+// SH2-E003: e-procurement style filters on the left (a collapsible block on phones). Every option is a link; the URL holds the state.
 type Opt = { value: string; label: string; count?: number };
-export function StoreFilters({ base, f, categories, types = [], prices = true }: { base: string; f: StoreQuery; categories: Opt[]; types?: Opt[]; prices?: boolean }) {
+export function StoreFilters({ base, f, categories }: { base: string; f: StoreQuery; categories: Opt[] }) {
   const body = (
     <div className="text-[13.5px]" data-store-filters>
       <Group title="Category">
         <Row href={storeHref(base, f, "category", null)} on={!f.category} label="All" radio />
         {categories.map((c) => <Row key={c.value} href={storeHref(base, f, "category", c.value)} on={f.category === c.value} label={c.label} count={c.count} radio />)}
       </Group>
-      {prices && (
-        <Group title="Price">
-          {STORE_PRICE.map((o) => <Row key={o.value} href={storeHref(base, f, "price", o.value)} on={f.price === o.value} label={o.label} />)}
-        </Group>
-      )}
+      <Group title="Price">
+        {STORE_PRICE.map((o) => <Row key={o.value} href={storeHref(base, f, "price", o.value)} on={f.price === o.value} label={o.label} />)}
+      </Group>
+      <Group title="Billing">
+        {STORE_BILLING.map((o) => <Row key={o.value} href={storeHref(base, f, "billing", o.value)} on={f.billing === o.value} label={o.label} />)}
+      </Group>
       <Group title="Delivery">
         {STORE_DELIVERY.map((o) => <Row key={o.value} href={storeHref(base, f, "delivery", o.value)} on={f.delivery === o.value} label={o.label} />)}
       </Group>
-      {f.category === ORACLE_CATEGORY && (
-        <>
-          <Group title="Oracle Process">
-            {ORACLE_PROCESSES.map((x) => <Row key={x} href={storeHref(base, f, "process", x)} on={f.process === x} label={x} />)}
-          </Group>
-          {types.length > 0 && (
-            <Group title="Oracle Product">
-              {types.map((t) => <Row key={t.value} href={storeHref(base, f, "type", t.value)} on={f.type === t.value} label={t.label} count={t.count} />)}
-            </Group>
-          )}
-        </>
-      )}
+      <Group title="Offers">
+        <Row href={storeHref(base, f, "offers", "1")} on={f.offers === "1"} label="Open to offers" />
+      </Group>
     </div>
   );
   return (

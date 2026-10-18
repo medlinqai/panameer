@@ -5,7 +5,6 @@ import { getShopProduct } from "@/lib/shop";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { formatCents } from "@/lib/display";
 import { prisma } from "@/lib/prisma";
-import { ShopTabs } from "@/components/shop/ShopTabs";
 import { BuyButtons } from "@/components/shop/BuyButtons";
 import { BackLink } from "@/components/console/BackLink";
 
@@ -22,9 +21,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl">
-      <ShopTabs />
       <div className="max-w-3xl">
-      <BackLink href="/shop/products" label="Products" />
+      <BackLink href="/shop" label="Shop" />
       <h1 className="mt-2 text-[28px] font-bold">{p.title}</h1>
       <p className="mt-1 text-[14px] text-ink-2">
         by <Link href={`/providers/${p.providerProfileId}`} className="underline">{p.providerName}</Link>

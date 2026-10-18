@@ -5,7 +5,8 @@ import { useState } from "react";
 import { useMe } from "@/components/MeProvider";
 
 // SH-E001 / MO-E002: Buy Now (primary) · Add to Cart · Make an Offer (only when open to offers). Signed out → sign in first.
-export function BuyButtons({ productId, signedIn, size = "md", openToOffers = false }: { productId: string; signedIn: boolean; size?: "sm" | "md"; openToOffers?: boolean }) {
+// SH2-E003: `pair` = the Shop card's two buttons — Buy Now, then Make an Offer (open to offers) or Add to Work Request.
+export function BuyButtons({ productId, signedIn, size = "md", openToOffers = false, pair = false }: { productId: string; signedIn: boolean; size?: "sm" | "md"; openToOffers?: boolean; pair?: boolean }) {
   const { refresh } = useMe();
   const [busy, setBusy] = useState(false);
   const [added, setAdded] = useState(false);
@@ -18,7 +19,7 @@ export function BuyButtons({ productId, signedIn, size = "md", openToOffers = fa
     return (
       <div data-buy-buttons className="flex flex-wrap items-center gap-2">
         <Link href={back} className={primary}>Buy Now</Link>
-        <Link href={back} className={secondary}>Add to Cart</Link>
+        {!(pair && openToOffers) && <Link href={back} className={secondary}>{pair ? "Add to Work Request" : "Add to Cart"}</Link>}
         {openToOffers && <Link href={`/login?callbackUrl=${encodeURIComponent(`/shop/${productId}`)}`} className={secondary}>Make an Offer</Link>}
       </div>
     );
@@ -54,10 +55,10 @@ export function BuyButtons({ productId, signedIn, size = "md", openToOffers = fa
   return (
     <div data-buy-buttons className="flex flex-wrap items-center gap-2">
       <button type="button" disabled={busy} onClick={() => add(true)} className={primary}>Buy Now</button>
-      {added ? (
-        <Link href="/cart" className={secondary}>Added · View Cart</Link>
+      {pair && openToOffers ? null : added ? (
+        <Link href="/cart" className={secondary}>{pair ? "Added · View" : "Added · View Cart"}</Link>
       ) : (
-        <button type="button" disabled={busy} onClick={() => add(false)} className={secondary}>Add to Cart</button>
+        <button type="button" disabled={busy} onClick={() => add(false)} className={secondary}>{pair ? "Add to Work Request" : "Add to Cart"}</button>
       )}
       {openToOffers && !offer.sent && <button type="button" disabled={busy} onClick={() => setOffer((o) => ({ ...o, open: !o.open }))} data-make-offer className={secondary}>Make an Offer</button>}
       {offer.open && (

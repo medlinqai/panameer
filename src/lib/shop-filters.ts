@@ -45,39 +45,35 @@ export function filterProducts(list: ShopProduct[], f: ShopQuery): ShopProduct[]
 /** Popular first (bought most), then newest. */
 export const byPopular = (a: ShopProduct, b: ShopProduct) => b.orders - a.orders || b.createdAt.localeCompare(a.createdAt);
 
-// SH-E002: the store's left filters. Category · Price (one time / monthly / quote) · Delivery · Oracle Process + Product inside Technology.
-export type StoreQuery = { q?: string; category?: string; price?: string; delivery?: string; process?: string; type?: string };
+// SH2-E003: Shop's left filters — Category (with counts) · Price · Billing · Delivery · Open to offers. Values live in the URL.
+export type StoreQuery = { q?: string; category?: string; price?: string; billing?: string; delivery?: string; offers?: string };
 export const STORE_PRICE = [
+  { value: "u100", label: "Under $100", test: (c: number) => c < 10_000 },
+  { value: "100to500", label: "$100–$500", test: (c: number) => c >= 10_000 && c <= 50_000 },
+  { value: "500to2k", label: "$500–$2,000", test: (c: number) => c > 50_000 && c <= 200_000 },
+  { value: "o2k", label: "Over $2,000", test: (c: number) => c > 200_000 },
+  { value: "quote", label: "Quote", test: () => false },
+];
+export const STORE_BILLING = [
   { value: "one", label: "One time" },
   { value: "monthly", label: "Monthly" },
-  { value: "quote", label: "Quote" },
 ];
 export const STORE_DELIVERY = [
   { value: "site", label: "At your site" },
-  { value: "shipped", label: "Shipped" },
   { value: "offsite", label: "Offsite" },
 ];
-export const ORACLE_PROCESSES = ["P2P", "R2R", "SCM", "HCM", "CX", "EPM"];
-export const ORACLE_CATEGORY = "Technology";
-
-const deliveryOk = (p: ShopProduct, d: string) => {
-  const site = p.delivery === "ONSITE" || p.delivery === "EITHER" || p.delivery == null;
-  const away = p.delivery === "OFFSITE" || p.delivery === "EITHER" || p.delivery == null;
-  return d === "site" ? site : d === "offsite" || d === "shipped" ? away : true;
-};
-const processText = (p: ShopProduct) => `${p.title} ${p.summary ?? ""} ${p.providerName}`;
-export const hasProcess = (p: ShopProduct, process: string) => new RegExp(`\\b${process}\\b`, "i").test(processText(p));
 
 /** Everything but the Category — so the Category counts reflect the other filters. */
 export function filterStoreExceptCategory(list: ShopProduct[], f: StoreQuery): ShopProduct[] {
   const qs = f.q?.trim() ? searchVariants(f.q.trim().toLowerCase()) : null;
+  const price = STORE_PRICE.find((x) => x.value === f.price);
   return list.filter(
     (p) =>
       (!qs || [p.title, p.summary ?? "", p.providerName, p.companyName ?? "", p.category ?? "", p.typeName ?? ""].some((t) => qs.some((q) => t.toLowerCase().includes(q)))) &&
-      (!f.price || (f.price === "quote" ? p.priceCents == null : f.price === "monthly" ? p.priceCents != null && p.pricingType === "RECURRING" : p.priceCents != null && p.pricingType !== "RECURRING")) &&
-      (!f.delivery || deliveryOk(p, f.delivery)) &&
-      (!f.process || f.category !== ORACLE_CATEGORY || hasProcess(p, f.process)) &&
-      (!f.type || f.category !== ORACLE_CATEGORY || p.typeName === f.type)
+      (!price || (price.value === "quote" ? p.priceCents == null : p.priceCents != null && price.test(p.priceCents))) &&
+      (!f.billing || (f.billing === "monthly" ? p.pricingType === "RECURRING" : p.pricingType !== "RECURRING")) &&
+      (!f.delivery || (f.delivery === "site" ? p.delivery !== "OFFSITE" : p.delivery !== "ONSITE")) &&
+      (!f.offers || p.openToOffers)
   );
 }
 
@@ -91,8 +87,6 @@ export function storeHref(base: string, f: StoreQuery, key: keyof StoreQuery, va
   for (const [k, v] of Object.entries(f)) if (v) next[k] = v;
   if (value == null || next[key] === value) delete next[key];
   else next[key] = value;
-  // Oracle filters belong to Technology only.
-  if (key === "category") { delete next.process; delete next.type; }
   const qs = new URLSearchParams(next).toString();
   return qs ? `${base}?${qs}` : base;
 }
