@@ -9333,3 +9333,29 @@ model RegistrationFollowup {
 
   @@map("registration_followups")
 }
+
+/// SH2-E008: beginner links on /help (Shop's Help tile), kept by admins in Admin › Help Links.
+model HelpLink {
+  id          String       @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  type        HelpLinkType
+  url         String
+  sort        Int          @default(100)
+  active      Boolean      @default(true)
+  /// Seeded examples, to be replaced by real links.
+  sample      Boolean      @default(false)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  @@index([active, sort])
+  @@map("help_links")
+}
+
+enum HelpLinkType {
+  VIDEO
+  INSTAGRAM
+  WORD
+  PDF
+  WEB_PAGE
+}

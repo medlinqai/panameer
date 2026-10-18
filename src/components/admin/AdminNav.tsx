@@ -15,6 +15,7 @@ const ITEMS: { label: string; href: string; soon?: boolean }[] = [
   { label: "Service Taxonomy", href: "/admin/service-taxonomy" },
   { label: "Areas & Skills", href: "/admin/skill-catalog" },
   { label: "Glossary", href: "/admin/glossary" },
+  { label: "Help Links", href: "/admin/help-links" },
   { label: "Support", href: "/admin/support", soon: true },
 ];
 
