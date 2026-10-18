@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { HireInput, HireMatch } from "@/lib/hire-questionnaire";
 
 // SH2-E004: Hire — the need first (Upwork-style), then named matches; checked ones get proposal requests on the Job.
-const STEPS = ["The work", "Skills", "Scope", "Budget", "Details", "Request proposals"];
+const STEPS = ["The Work", "Skills", "Scope", "Budget", "Details", "Request Proposals"];
 const CHIP_ON = "rounded-full border border-magenta-dark bg-[#fbeafb] px-3.5 py-1.5 text-[13px] font-semibold text-magenta-dark";
 const CHIP_OFF = "rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink hover:border-magenta-dark";
 const OPT_ON = "flex flex-col items-start rounded-[10px] border border-magenta-dark bg-white p-3 text-left ring-1 ring-magenta-dark";
@@ -182,7 +182,7 @@ export function HireQuestionnaire({ categories, howLong, sizes, shipTos }: Props
             )}
             {matches.length > 0 && (
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                <button type="button" className={BTN} disabled={busy || !picked.size || sent != null} onClick={request} data-request-proposals>{sent != null ? "Requests sent" : "Request proposals"}</button>
+                <button type="button" className={BTN} disabled={busy || !picked.size || sent != null} onClick={request} data-request-proposals>{sent != null ? "Requests Sent" : "Request Proposals"}</button>
                 <span className="text-[13px] text-ink-2">{picked.size} selected</span>
                 {sent != null && <Link href={`/work-requests/${jobId}`} className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View the job →</Link>}
               </div>
@@ -194,7 +194,7 @@ export function HireQuestionnaire({ categories, howLong, sizes, shipTos }: Props
         {step < 5 && (
           <div className="mt-5 flex justify-between gap-3 border-t border-line pt-4">
             <button type="button" className={GHOST} disabled={step === 0 || busy} onClick={() => setStep(step - 1)}>Back</button>
-            <button type="button" className={BTN} disabled={busy} onClick={next}>{busy ? "Saving…" : step === 4 ? "Show my matches" : `Next: ${STEPS[step + 1]}`}</button>
+            <button type="button" className={BTN} disabled={busy} onClick={next}>{busy ? "Saving…" : step === 4 ? "Show My Matches" : `Next: ${STEPS[step + 1]}`}</button>
           </div>
         )}
         {step === 5 && <button type="button" className="mt-4 text-[13px] font-semibold text-ink-2 underline" onClick={() => { setStep(4); setSent(null); }}>Change my answers</button>}
