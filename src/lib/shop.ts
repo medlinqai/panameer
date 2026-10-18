@@ -122,9 +122,4 @@ export async function getShopProduct(id: string, seesTest = false): Promise<Shop
   return row ? shape(row, 0) : null;
 }
 
-/** SH-E001: published in the last 7 days (newest first), topped up with the newest when the week is thin. */
-export function newThisWeek(list: ShopProduct[], take = 8): ShopProduct[] {
-  const week = list.filter((p) => Date.now() - Date.parse(p.createdAt) < 7 * 86_400_000);
-  return (week.length >= 4 ? week : list).slice(0, take);
-}
 

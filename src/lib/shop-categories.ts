@@ -23,10 +23,3 @@ export const SHOP_CATEGORY_NAMES = DAY1_CATEGORIES.filter((c) => !c.href).map((c
 
 export const categoryLook = (name: string | null | undefined): Day1Category =>
   DAY1_CATEGORIES.find((c) => c.name === name) ?? { name: name ?? "", icon: "erp", examples: "" };
-
-// SH-E001 leftovers, removed with the old Shop pages (SH2-E002 / E003).
-export const TALENT_CATEGORIES = ["Professional Services", "Technology", "Staffing & Contingent Labor", "Education & Training"] as const;
-export function isTalentCategory(commodityGroup: string | null | undefined): boolean {
-  return !!commodityGroup && (TALENT_CATEGORIES as readonly string[]).includes(commodityGroup);
-}
-export const categoryGradient = (name: string | null | undefined) => (name ? "var(--color-ink)" : "var(--color-ink)");

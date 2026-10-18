@@ -1,5 +1,5 @@
 import { guardPage } from "@/lib/guard";
-import { ShopTabs } from "@/components/shop/ShopTabs";
+import Link from "next/link";
 import { EstimatesBody } from "@/components/catalog/EstimatesBody";
 import { canProvideServices } from "@/lib/access";
 import { redirect } from "next/navigation";
@@ -12,5 +12,5 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
   const viewer = await guardPage("authenticated");
   const seller = canProvideServices(viewer);
   if ((await searchParams).tab === "sent" && seller) redirect("/catalog/estimates");
-  return <EstimatesBody viewer={viewer} side="buyer" seller={seller} tabs={<ShopTabs />} />;
+  return <EstimatesBody viewer={viewer} side="buyer" seller={seller} tabs={<p className="mt-2 text-[13px] font-semibold"><Link href="/orders" className="text-magenta-dark">← Orders</Link></p>} />;
 }
