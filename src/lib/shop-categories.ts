@@ -19,8 +19,6 @@ export const DAY1_CATEGORIES: Day1Category[] = [
   { name: "Help", icon: "help", examples: "Don't know what to do? Start here.", href: "/help" },
 ];
 
-/** The 11 Categories that are commodity groups (Help is not). */
-export const SHOP_CATEGORY_NAMES = DAY1_CATEGORIES.filter((c) => !c.href).map((c) => c.name);
-
-export const categoryLook = (name: string | null | undefined): Day1Category =>
-  DAY1_CATEGORIES.find((c) => c.name === name) ?? { name: name ?? "", icon: "erp", examples: "" };
+/** CH-E003: the Help tile is fixed and last (not a Category). The Categories themselves come from the hierarchy (lib/shop-category-list.ts);
+ *  DAY1_CATEGORIES above is only the seed for their icon and line (scripts/seed-category-tiles.ts). */
+export const HELP_TILE: Day1Category = DAY1_CATEGORIES.find((c) => c.href === "/help")!;

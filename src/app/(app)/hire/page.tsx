@@ -2,7 +2,7 @@ import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { HireQuestionnaire } from "@/components/hire/HireQuestionnaire";
 import { HOW_LONG, SIZES, shipTos } from "@/lib/hire-questionnaire";
-import { SHOP_CATEGORY_NAMES } from "@/lib/shop-categories";
+import { shopCategoryNames } from "@/lib/shop-category-list";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Hire · Panameer" };
@@ -19,7 +19,7 @@ export default async function Page() {
         </div>
         <Link href="/hire/jobs" className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">My Jobs →</Link>
       </div>
-      <HireQuestionnaire categories={SHOP_CATEGORY_NAMES} howLong={HOW_LONG} sizes={SIZES} shipTos={(await shipTos(viewer)).map((s) => ({ id: s.id, label: s.label }))} />
+      <HireQuestionnaire categories={await shopCategoryNames()} howLong={HOW_LONG} sizes={SIZES} shipTos={(await shipTos(viewer)).map((s) => ({ id: s.id, label: s.label }))} />
     </div>
   );
 }

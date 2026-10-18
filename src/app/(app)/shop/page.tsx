@@ -8,7 +8,8 @@ import { ShowMore } from "@/components/shop/ShowMore";
 import { StoreFilters } from "@/components/shop/StoreFilters";
 import { SellOnPanameer } from "@/components/shop/SellMenu";
 import { CategoryIcon } from "@/components/shop/CategoryIcon";
-import { DAY1_CATEGORIES, SHOP_CATEGORY_NAMES } from "@/lib/shop-categories";
+import { HELP_TILE } from "@/lib/shop-categories";
+import { shopCategories } from "@/lib/shop-category-list";
 import { byPopular, filterStore, filterStoreExceptCategory, type StoreQuery } from "@/lib/shop-filters";
 import { HELP_TYPES, searchHelpLinks } from "@/lib/help-links";
 import { HelpTypeIcon } from "@/components/help/HelpTypeIcon";
@@ -32,7 +33,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sto
   const forCounts = filterStoreExceptCategory(all, f);
   // II-E002: Informational Items a search finds — after the products, never in Category counts, hidden under a Category filter.
   const info = browsing && f.q?.trim() && !f.category ? await searchHelpLinks(f.q) : [];
-  const categories = SHOP_CATEGORY_NAMES.map((c) => ({ value: c, label: c, count: forCounts.filter((p) => p.category === c).length }));
+  const tiles = await shopCategories();
+  const names = tiles.map((t) => t.name);
+  const categories = names.map((c) => ({ value: c, label: c, count: forCounts.filter((p) => p.category === c).length }));
 
   return (
     <div className="pm-white-page mx-auto w-full max-w-6xl">
@@ -44,7 +47,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sto
         <input name="q" defaultValue={f.q ?? ""} placeholder="Search products — business cards, AC tune-up, Google Ads…" aria-label="Search products" className="min-w-0 flex-1 border-2 border-ink bg-white px-3.5 py-3 text-[15px] sm:border-r-0" />
         <select name="category" defaultValue={f.category ?? ""} aria-label="Category" className="border-2 border-ink bg-white px-2.5 py-3 text-[14px] sm:border-r-0">
           <option value="">All categories</option>
-          {SHOP_CATEGORY_NAMES.map((c) => <option key={c} value={c}>{c}</option>)}
+          {names.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <button type="submit" className="bg-ink px-6 py-3 text-[14px] font-bold text-surface hover:bg-ink-hover">Search</button>
       </form>
@@ -54,7 +57,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sto
 
       {!browsing ? (
         <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3" data-category-tiles>
-          {DAY1_CATEGORIES.map((c) => (
+          {[...tiles, HELP_TILE].map((c) => (
             <Link key={c.name} href={c.href ?? `/shop?category=${encodeURIComponent(c.name)}`} data-category-tile={c.name} className="flex items-start gap-3 rounded-[10px] border border-line bg-white p-4 hover:border-magenta focus-visible:outline focus-visible:outline-2 focus-visible:outline-magenta">
               <CategoryIcon icon={c.icon} className="h-7 w-7 shrink-0 text-magenta" />
               <span className="min-w-0">

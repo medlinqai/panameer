@@ -6,7 +6,7 @@ import { createDraft, resolveBuyer, loadOwned } from "@/lib/work-request";
 import { requisitionForJob } from "@/lib/requisition";
 import { ensureFirstLine } from "@/lib/work-request-lines";
 import { inviteProviders } from "@/lib/work-request-invite";
-import { SHOP_CATEGORY_NAMES } from "@/lib/shop-categories";
+import { shopCategoryNames } from "@/lib/shop-category-list";
 
 // SH2-E004: Hire starts with the need — The work · Skills · Scope · Budget · Details — saved as a draft Job,
 // then named matches ranked by skill fit and rate inside budget; checked ones get proposal requests on that Job.
@@ -62,7 +62,7 @@ async function vocabulary(category: string): Promise<string[]> {
 
 /** Skills suggested from the title: the Category's names that share a word with it, else its most common types. */
 export async function suggestSkills(category: string, title: string): Promise<string[]> {
-  if (!SHOP_CATEGORY_NAMES.includes(category)) return [];
+  if (!(await shopCategoryNames()).includes(category)) return [];
   const vocab = await vocabulary(category);
   const t = new Set(words(title));
   const scored = vocab.map((v) => ({ v, n: words(v).filter((w) => t.has(w) || [...t].some((x) => x.length > 3 && (w.startsWith(x) || x.startsWith(w)))).length })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n);
@@ -72,7 +72,7 @@ export async function suggestSkills(category: string, title: string): Promise<st
 
 /** Save (create or update) the draft Job from the questionnaire. */
 export async function saveHireJob(viewer: Viewer, jobId: string | null, input: HireInput): Promise<string> {
-  if (!SHOP_CATEGORY_NAMES.includes(input.category)) throw new HireError("Pick a Category.");
+  if (!(await shopCategoryNames()).includes(input.category)) throw new HireError("Pick a Category.");
   const title = input.title.trim().slice(0, 140);
   if (title.length < 3) throw new HireError("Give it a short title.");
   const ship = input.where === "ONSITE" && input.shipToId ? (await shipTos(viewer)).find((s) => s.id === input.shipToId) ?? null : null;
