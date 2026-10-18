@@ -213,16 +213,16 @@ export default async function DashboardPage({
         </Card>
       ) : person?.buyerProfile ? (
         <Card>
-          <h2 className="text-lg">Hire Talent</h2>
+          <h2 className="text-lg">Hire</h2>
           <p className="mt-2 text-black/70 dark:text-white/70">
-            Post a work request and match with validated experts across the
-            enterprise-application catalog.
+            Tell us what you need done. We show you who fits, and you choose
+            who sends a proposal.
           </p>
           <Link
-            href="/find-work/new"
+            href="/hire"
             className="mt-5 inline-flex bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
-            Create Work Request
+            Start Hiring
           </Link>
         </Card>
       ) : (

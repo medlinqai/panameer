@@ -113,7 +113,7 @@ export const REQUESTER_NAV: NavItem[] = [
   {
     // DC-E003: buyers see this section as Hire (sellers see Jobs).
     label: "Hire",
-    heading: "Hire Talent",
+    heading: "Hire",
     href: "/hire",
     icon: "ClipboardList",
     requires: "canHireTalent",
