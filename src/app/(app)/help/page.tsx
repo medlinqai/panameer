@@ -14,7 +14,7 @@ export default async function Page() {
     <div className="pm-white-page mx-auto w-full max-w-3xl">
       <p className="mt-2 text-[13px]"><Link href="/shop" className="font-semibold text-magenta-dark">← Shop</Link></p>
       <h1 className="mt-1 text-[26px] font-extrabold">Help</h1>
-      <p className="text-[14px] text-ink-2">Don&apos;t know what to do? Start here.</p>
+      <p className="text-[14px] text-ink-2">Informational items to get you started.</p>
       {links.length === 0 ? (
         <p className="mt-5 text-[14px] text-ink-3">No links yet.</p>
       ) : (

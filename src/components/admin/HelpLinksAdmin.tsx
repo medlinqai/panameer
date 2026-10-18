@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-// SH2-E008: the list Scott keeps — title, one line, type, URL; up / down to reorder; On / Off; samples flagged.
+// II-E001: Informational Items (Oracle term) — the list Scott keeps — title, one line, type, URL; up / down to reorder; On / Off; samples flagged.
 type Row = { id: string; title: string; description: string | null; type: string; url: string; active: boolean; sample: boolean };
 const TYPES = [["VIDEO", "Video"], ["INSTAGRAM", "Instagram"], ["WORD", "Word"], ["PDF", "PDF"], ["WEB_PAGE", "Web page"]] as const;
 const FIELD = "w-full border border-line bg-white px-2.5 py-2 text-[14px]";
@@ -28,10 +28,10 @@ export function HelpLinksAdmin({ rows }: { rows: Row[] }) {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold">Help Links</h1>
-          <p className="text-[13.5px] text-ink-2">The links on /help (Shop › Help). Videos, PDFs, Word files and pages open inside Panameer when the source allows it.</p>
+          <h1 className="text-[22px] font-bold">Informational Items</h1>
+          <p className="text-[13.5px] text-ink-2">Catalog entries that point to helpful content instead of being bought. They list on /help (Shop › Help), show in Shop search, and open inside Panameer when the source allows it.</p>
         </div>
-        <button type="button" className={BTN} onClick={() => setEdit({ id: null, ...empty })}>+ Add Link</button>
+        <button type="button" className={BTN} onClick={() => setEdit({ id: null, ...empty })}>+ Add Informational Item</button>
       </div>
       {error && <p role="alert" className="mt-2 text-[13.5px] font-semibold text-magenta-dark">{error}</p>}
       {edit && (
