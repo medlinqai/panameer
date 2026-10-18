@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { taxonomyTree } from "@/lib/service-taxonomy-admin";
 import { ServiceTaxonomyAdmin } from "@/components/admin/ServiceTaxonomyAdmin";
+import { CategoryHierarchyIO } from "@/components/admin/CategoryHierarchyIO";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Category Hierarchy · Admin · Panameer" };
@@ -15,6 +16,7 @@ export default async function Page() {
       <p className="mb-5 mt-1 text-[14px] text-ink-2">
         Category (the Shop tile) › Business Type › Service Type (rates) and Service Product Type — the leaves sellers pick. Delete works only when nothing uses the item; otherwise use Hide. Areas and Skills: <Link href="/admin/skill-catalog" className="font-semibold underline">Areas &amp; Skills</Link>.
       </p>
+      <CategoryHierarchyIO />
       {homeless.length > 0 && (
         <section data-homeless-pillars className="mb-6 border border-line bg-white p-4">
           <h2 className="text-[17px] font-bold">Pillars Needing a Home ({homeless.length})</h2>
