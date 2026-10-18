@@ -60,7 +60,7 @@ export async function viewerSrc(link: { type: HelpLinkType; url: string }): Prom
   }
 }
 
-export type HelpLinkInput = { title: string; description?: string | null; type: HelpLinkType; url: string; active?: boolean };
+export type HelpLinkInput = { title: string; description?: string | null; keywords?: string | null; type: HelpLinkType; url: string; active?: boolean };
 
 export function cleanHelpLink(i: HelpLinkInput): HelpLinkInput {
   const title = i.title?.trim().slice(0, 120);
@@ -69,7 +69,7 @@ export function cleanHelpLink(i: HelpLinkInput): HelpLinkInput {
   let url: URL;
   try { url = new URL(i.url.trim()); } catch { throw new Error("That URL isn't valid."); }
   if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("Use an http(s) link.");
-  return { title, description: i.description?.trim().slice(0, 240) || null, type: i.type, url: url.toString(), active: i.active ?? true };
+  return { title, description: i.description?.trim().slice(0, 240) || null, keywords: i.keywords?.trim().slice(0, 300) || null, type: i.type, url: url.toString(), active: i.active ?? true };
 }
 
 export async function saveHelpLink(id: string | null, input: HelpLinkInput) {
@@ -90,12 +90,12 @@ export async function moveHelpLink(id: string, dir: "up" | "down") {
 
 export const setHelpLinkActive = (id: string, active: boolean) => prisma.helpLink.update({ where: { id }, data: { active } });
 
-/** II-E002: Informational Items a Shop search finds (title or description). */
+/** II-E002/E003: Informational Items a Shop search finds (title, description or keywords). */
 export async function searchHelpLinks(q: string) {
   const words = q.trim().toLowerCase().split(/\s+/).filter((w) => w.length > 1);
   if (!words.length) return [];
   const rows = await listHelpLinks();
-  const text = (r: (typeof rows)[number]) => [r.title, r.description ?? ""].join(" ").toLowerCase();
+  const text = (r: (typeof rows)[number]) => [r.title, r.description ?? "", r.keywords ?? ""].join(" ").toLowerCase();
   const phrase = q.trim().toLowerCase();
   return rows.filter((r) => text(r).includes(phrase) || words.every((w) => text(r).includes(w)));
 }

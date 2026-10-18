@@ -9341,6 +9341,8 @@ model HelpLink {
   description String?
   type        HelpLinkType
   url         String
+  /// II-E003: extra words that find it in Shop search ("post a job, hire, start").
+  keywords    String?
   sort        Int          @default(100)
   active      Boolean      @default(true)
   /// Seeded examples, to be replaced by real links.
