@@ -12,7 +12,7 @@ import { writeAudit } from "./audit";
 // Idempotent by email: an existing account is skipped. Remove with Admin › Remove Test Accounts.
 
 type Rate = { group: string; type: string; cents: number; hours?: number };
-type Product = { bt: string; type: string; title: string; summary: string; cents: number | null; monthly?: boolean; agent?: boolean; lead: number; cover: string };
+type Product = { bt: string; type: string; title: string; summary: string; cents: number | null; monthly?: boolean; agent?: boolean; lead: number; cover: string; offers?: boolean };
 type Seller = {
   nn: number; first: string; last: string; title: string; city: string; state: string; area: string; company: string; bts: string[];
   roles: string[]; skills: string[]; modes: [WorkMode, string][]; rates: Rate[]; products: Product[]; photo?: string; about: string;
@@ -20,7 +20,7 @@ type Seller = {
 type Buyer = { nn: number; first: string; last: string; title: string; city: string; state: string; area: string; company: string };
 
 const CS = "PANAMEER_V1"; // Technology › Corporate Systems
-const T = "Technology";
+const T = "ERP & Oracle"; // SH2-E001: Technology's rates now live under ERP & Oracle
 const func = (offsite: number): Rate[] => [
   { group: T, type: "Offsite Hourly", cents: offsite * 100 },
   { group: T, type: "Onsite Hourly", cents: (offsite + 20) * 100 },
@@ -105,8 +105,8 @@ export const MARKETPLACE_SELLERS: Seller[] = [
     products: [p("Health Checks & Assessments", "Quarterly Update Regression Test Pack", "Regression scripts run against each Oracle quarterly update, with a report.", 3500, 7, "QA"), p("Dashboards & Analytics", "UAT Defect Dashboard", "Defects by area, severity and age in one dashboard.", 1500, 5, "UAT")],
     about: "Test strategy, SIT/UAT and quarterly update regression." },
   // Non-Oracle businesses: their business types don't use skills, so the business type is their kind of work.
-  { nn: 54, first: "Dave", last: "Ortiz", title: "Owner, Commercial Printer", city: "Jacksonville", state: "FL", area: "904", company: "Coastal Print Co", bts: ["PRINT_PROMOTIONAL", "SIGNS_LARGE_FORMAT"], roles: [], skills: [], modes: [],
-    rates: [{ group: "Printing & Signs", type: "Design Hourly", cents: 8500 }, { group: "Printing & Signs", type: "Rush Fee", cents: 7500 }],
+  { nn: 54, first: "Dave", last: "Ortiz", title: "Owner, Commercial Printer", city: "Jacksonville", state: "FL", area: "904", company: "Harbor Print Co.", bts: ["PRINT_PROMOTIONAL", "SIGNS_LARGE_FORMAT"], roles: [], skills: [], modes: [],
+    rates: [{ group: "Printing", type: "Design Hourly", cents: 8500 }, { group: "Printing", type: "Rush Fee", cents: 7500 }],
     products: [
       { bt: "PRINT_PROMOTIONAL", type: "Business Cards (500)", title: "Business Cards (500)", summary: "500 full-colour cards on 16 pt stock, matte or gloss.", cents: 4900, lead: 3, cover: "BC" },
       { bt: "PRINT_PROMOTIONAL", type: "Brochures & Flyers", title: "Brochures & Flyers", summary: "Tri-fold brochures or flyers, 250 printed and folded.", cents: 35000, lead: 5, cover: "BRO" },
@@ -114,29 +114,66 @@ export const MARKETPLACE_SELLERS: Seller[] = [
       { bt: "SIGNS_LARGE_FORMAT", type: "Trade Show Display", title: "Trade Show Display", summary: "10 ft pop-up display with printed graphic and case.", cents: 120000, lead: 10, cover: "TSD" },
     ], about: "Commercial printing and signs for Northeast Florida businesses." },
   { nn: 55, first: "James", last: "Patel", title: "Contract Project Manager (PMP)", city: "Charlotte", state: "NC", area: "980", company: "Patel PM Services", bts: ["CONTRACT_STAFFING"], roles: [], skills: [], modes: [],
-    rates: [{ group: "Staffing & Contingent Labor", type: "Hourly Bill Rate", cents: 9500 }, { group: "Staffing & Contingent Labor", type: "Weekly Rate", cents: 360000 }],
+    rates: [{ group: "Mentoring & Advisory", type: "Hourly Bill Rate", cents: 9500 }, { group: "Mentoring & Advisory", type: "Weekly Rate", cents: 360000 }],
     products: [], about: "Contract project manager for construction and IT projects." },
   { nn: 56, first: "Luis", last: "Romero", title: "Licensed HVAC Contractor", city: "Orlando", state: "FL", area: "407", company: "Romero Heating & Air", bts: ["HVAC"], roles: [], skills: [], modes: [],
-    rates: [{ group: "Facilities & Property", type: "Hourly Labor", cents: 11000 }, { group: "Facilities & Property", type: "Per Visit", cents: 12900 }, { group: "Facilities & Property", type: "Emergency Call-Out", cents: 22500 }],
+    rates: [{ group: "Facilities", type: "Hourly Labor", cents: 11000 }, { group: "Facilities", type: "Per Visit", cents: 12900 }, { group: "Facilities", type: "Emergency Call-Out", cents: 22500 }],
     products: [
       { bt: "HVAC", type: "Seasonal Tune-Up", title: "Seasonal Tune-Up", summary: "Clean, check and tune one system before summer or winter.", cents: 14900, lead: 2, cover: "HV" },
       { bt: "HVAC", type: "Preventive Maintenance", title: "Preventive Maintenance", summary: "Monthly filter, coil and drain checks for one building.", cents: 8900, monthly: true, lead: 7, cover: "PM" },
       { bt: "HVAC", type: "HVAC Repair", title: "HVAC Repair", summary: "Diagnosis and repair, priced after the visit.", cents: null, lead: 2, cover: "REP" },
     ], about: "Commercial HVAC service and maintenance across Central Florida." },
   { nn: 57, first: "Kim", last: "Nguyen", title: "Commercial Grounds Manager", city: "Tampa", state: "FL", area: "813", company: "GreenEdge Landscaping", bts: ["LANDSCAPING_GROUNDS"], roles: [], skills: [], modes: [],
-    rates: [{ group: "Facilities & Property", type: "Per Visit", cents: 9500 }, { group: "Facilities & Property", type: "Monthly Service Contract", cents: 65000 }],
+    rates: [{ group: "Facilities", type: "Per Visit", cents: 9500 }, { group: "Facilities", type: "Monthly Service Contract", cents: 65000 }],
     products: [
       { bt: "LANDSCAPING_GROUNDS", type: "Monthly Grounds Contract", title: "Monthly Grounds Contract", summary: "Weekly mowing, edging, beds and litter pick-up.", cents: 65000, monthly: true, lead: 7, cover: "GR" },
       { bt: "LANDSCAPING_GROUNDS", type: "Spring / Fall Cleanup", title: "Spring / Fall Cleanup", summary: "Leaves, beds, pruning and mulch refresh, one visit.", cents: 49500, lead: 7, cover: "CL" },
       { bt: "LANDSCAPING_GROUNDS", type: "Irrigation Check", title: "Irrigation Check", summary: "Zone-by-zone test, head adjustments and a repair list.", cents: 12000, lead: 3, cover: "IRR" },
     ], about: "Commercial grounds care for office parks and HOAs in Tampa Bay." },
   { nn: 58, first: "Ray", last: "Dobbs", title: "Owner-Operator, Long Haul", city: "Savannah", state: "GA", area: "912", company: "Dobbs Freight LLC", bts: ["FREIGHT_TRUCKING"], roles: [], skills: [], modes: [],
-    rates: [{ group: "Logistics & Transportation", type: "Per Load / Shipment", cents: 180000 }, { group: "Logistics & Transportation", type: "Detention (Hourly)", cents: 7500 }],
+    rates: [{ group: "Transportation", type: "Per Load / Shipment", cents: 180000 }, { group: "Transportation", type: "Detention (Hourly)", cents: 7500 }],
     products: [
       { bt: "FREIGHT_TRUCKING", type: "Dedicated Lane (Monthly)", title: "Dedicated Lane (Monthly)", summary: "One truck on your lane, five days a week.", cents: 1450000, monthly: true, lead: 14, cover: "DL" },
       { bt: "FREIGHT_TRUCKING", type: "Expedited / Team Load", title: "Expedited / Team Load", summary: "Team drivers, coast to coast in under three days.", cents: 320000, lead: 2, cover: "EXP" },
     ], about: "Dry van long haul out of the Port of Savannah." },
 ];
+
+// SH2-E005: one seller per new Day-1 Category (test61–68), as in the Shop & Hire mockup.
+const prod = (bt: string, type: string, title: string, summary: string, dollars: number, lead: number, cover: string, extra: Partial<Product> = {}): Product => ({ bt, type, title, summary, cents: dollars * 100, lead, cover, ...extra });
+MARKETPLACE_SELLERS.push(
+  { nn: 61, first: "Maya", last: "Chen", title: "Owner, Brightpath Local", city: "Orlando", state: "FL", area: "407", company: "Brightpath Local", bts: ["DIGITAL_MARKETING"], roles: [], skills: [], modes: [],
+    rates: [{ group: "Marketing", type: "Hourly", cents: 7500 }],
+    products: [prod("DIGITAL_MARKETING", "Local SEO Setup", "Local SEO setup (Google Business Profile)", "Profile built and verified, categories, photos, and the first 10 reviews asked for.", 499, 7, "SEO", { offers: true }), prod("DIGITAL_MARKETING", "Google Ads Management", "Google Ads management", "Search ads for local service businesses, managed and reported monthly.", 750, 5, "ADS", { monthly: true, offers: true })],
+    about: "Local marketing agency for home-service businesses." },
+  { nn: 62, first: "Owen", last: "Price", title: "Founder, Pixel & Pine Studio", city: "Asheville", state: "NC", area: "828", company: "Pixel & Pine Studio", bts: ["WEB_DESIGN_DEVELOPMENT"], roles: [], skills: [], modes: [],
+    rates: [{ group: "Websites", type: "Hourly", cents: 8500 }],
+    products: [prod("WEB_DESIGN_DEVELOPMENT", "Website Design", "5-page small business website", "Home, about, services, reviews and contact — mobile-ready, launched in three weeks.", 2400, 21, "WEB", { offers: true }), prod("WEB_DESIGN_DEVELOPMENT", "Website Care Plan", "Website care plan", "Updates, backups, security and an hour of changes every month.", 150, 3, "CARE", { monthly: true })],
+    about: "Small studio building websites for local businesses." },
+  { nn: 63, first: "Leo", last: "Martin", title: "Founder, Callwise AI", city: "Austin", state: "TX", area: "512", company: "Callwise AI", bts: ["DATA_AI"], roles: [], skills: [], modes: [],
+    rates: [{ group: "AI & Automation", type: "Hourly", cents: 9500 }],
+    products: [prod("DATA_AI", "AI Receptionist", "AI receptionist (answers calls 24/7)", "Answers, books and texts back — every call, day and night.", 199, 5, "AIR", { monthly: true, agent: true }), prod("DATA_AI", "Chatbot", "Website chatbot, trained on your site", "A chatbot that answers from your pages and hands leads to you.", 900, 10, "BOT", { offers: true })],
+    about: "AI receptionists and chatbots for small businesses." },
+  { nn: 64, first: "Grace", last: "Kim", title: "Owner, Ledgerly Books", city: "Charlotte", state: "NC", area: "704", company: "Ledgerly Books", bts: ["ACCOUNTING", "VIRTUAL_ASSISTANTS"], roles: [], skills: [], modes: [],
+    rates: [{ group: "Finance & Admin", type: "Hourly", cents: 4500 }],
+    products: [prod("ACCOUNTING", "Bookkeeping", "Monthly bookkeeping (QuickBooks)", "Books reconciled and closed every month, with a one-page report.", 350, 7, "BK", { monthly: true, offers: true }), prod("VIRTUAL_ASSISTANTS", "Virtual Assistant (10 Hours)", "Virtual assistant, 10 hours", "Inbox, calendar, invoices and data entry — use the hours as you need.", 250, 2, "VA")],
+    about: "Bookkeeping and virtual assistants for small businesses." },
+  { nn: 65, first: "Marcus", last: "Hill", title: "Owner, Bastion IT", city: "Tampa", state: "FL", area: "813", company: "Bastion IT", bts: ["IT_SERVICES_SUPPORT", "CYBERSECURITY"], roles: [], skills: [], modes: [],
+    rates: [{ group: "IT", type: "Hourly Technician", cents: 11000 }],
+    products: [prod("IT_SERVICES_SUPPORT", "Managed IT (per user)", "Managed IT, up to 10 users", "Help desk, patching, backups and monitoring for up to 10 people.", 600, 7, "MIT", { monthly: true, offers: true }), prod("CYBERSECURITY", "Cybersecurity Check-Up", "Small business security check-up", "Passwords, devices, email and backups reviewed, with a fix list.", 1200, 10, "SEC")],
+    about: "Managed IT and security for offices of 5 to 50." },
+  { nn: 66, first: "Zoe", last: "Turner", title: "Producer, Reelhouse Media", city: "Atlanta", state: "GA", area: "404", company: "Reelhouse Media", bts: ["VIDEO_PHOTOGRAPHY", "CONTENT_COPYWRITING"], roles: [], skills: [], modes: [],
+    rates: [{ group: "Marketing", type: "Hourly", cents: 6500 }],
+    products: [prod("VIDEO_PHOTOGRAPHY", "Short-Form Clips", "10 short-form clips a month", "Ten edited clips for Reels, TikTok and Shorts from your footage.", 400, 7, "CLIP", { monthly: true, offers: true }), prod("CONTENT_COPYWRITING", "Copywriting", "4 blog posts, 1,000 words each", "Four researched posts written for your customers and search.", 480, 14, "BLOG")],
+    about: "Video editing, short clips and copy for small brands." },
+  { nn: 67, first: "Daniel", last: "Ford", title: "Managing Partner, Fractional Bench", city: "Nashville", state: "TN", area: "615", company: "Fractional Bench", bts: ["MANAGEMENT_CONSULTING", "COACHING_MENTORING"], roles: [], skills: [], modes: [],
+    rates: [{ group: "Mentoring & Advisory", type: "Offsite Hourly", cents: 20000 }],
+    products: [prod("MANAGEMENT_CONSULTING", "Strategy Session", "90-minute strategy session", "One focused session on your biggest question, with written next steps.", 350, 3, "STR"), prod("MANAGEMENT_CONSULTING", "Fractional CFO", "Fractional CFO, 2 days a month", "Cash flow, pricing and board-ready numbers from a part-time CFO.", 3500, 14, "CFO", { monthly: true, offers: true })],
+    about: "Fractional executives and mentors for growing companies." },
+  { nn: 68, first: "Tony", last: "Russo", title: "Owner, Hotline Leads", city: "Jacksonville", state: "FL", area: "904", company: "Hotline Leads", bts: ["LEAD_GENERATION"], roles: [], skills: [], modes: [],
+    rates: [{ group: "Lead Generation", type: "Per Lead", cents: 6500 }],
+    products: [prod("LEAD_GENERATION", "Trade Lead Package", "20 exclusive HVAC leads", "Twenty phone-verified HVAC leads in your service area, sold only to you.", 900, 7, "HVL", { offers: true }), prod("LEAD_GENERATION", "Pay-Per-Lead", "Roofing leads, pay per lead", "Exclusive roofing leads, billed per lead delivered.", 65, 3, "ROOF")],
+    about: "Exclusive leads for HVAC, roofing and plumbing companies." },
+);
 
 export const MARKETPLACE_BUYERS: Buyer[] = [
   { nn: 59, first: "Anna", last: "Lopez", title: "Procurement Manager", city: "Houston", state: "TX", area: "713", company: "Lopez Manufacturing" },
@@ -196,20 +233,28 @@ async function lookups() {
 export type MarketplaceRow = { nn: number; email: string; name: string; kind: "seller" | "buyer"; result: "created" | "skipped (exists)" | "would create" };
 export type MarketplaceResult = { rows: MarketplaceRow[]; misses: string[]; applied: boolean };
 
-export async function createMarketplaceTestSet(opts: { apply: boolean; actor?: Viewer | null }): Promise<MarketplaceResult> {
+export async function createMarketplaceTestSet(opts: { apply: boolean; actor?: Viewer | null; password?: string }): Promise<MarketplaceResult> {
   const L = await lookups();
   const everyone = [...MARKETPLACE_SELLERS.map((s) => ({ ...s, kind: "seller" as const })), ...MARKETPLACE_BUYERS.map((b) => ({ ...b, kind: "buyer" as const }))];
   const existing = new Set((await prisma.user.findMany({ where: { email: { in: everyone.map((e) => email(e.nn)) } }, select: { email: true } })).map((u) => u.email.toLowerCase()));
   const rows: MarketplaceRow[] = everyone.map((e) => ({ nn: e.nn, email: email(e.nn), name: `${e.first} ${lastName(e.last, e.nn)}`, kind: e.kind, result: existing.has(email(e.nn)) ? "skipped (exists)" : opts.apply ? "created" : "would create" }));
   if (!opts.apply) return { rows, misses: L.misses, applied: false };
   if (L.misses.length) throw new TestAccountError(`The catalog is missing: ${L.misses.join(", ")}`, "INVALID");
-  const password = process.env.TEST_ACCOUNT_PASSWORD;
-  if (!password || password.length < 10) throw new TestAccountError("Set TEST_ACCOUNT_PASSWORD (10+ characters) in the environment before creating test accounts.", "CONFIG");
+  const password = opts.password ?? process.env.TEST_ACCOUNT_PASSWORD;
+  if (!password || (!opts.password && password.length < 10)) throw new TestAccountError("Set TEST_ACCOUNT_PASSWORD (10+ characters) in the environment before creating test accounts.", "CONFIG");
   const hash = await (await import("bcryptjs")).hash(password, 10);
   const now = new Date();
 
   for (const e of everyone) {
-    if (existing.has(email(e.nn))) continue;
+    if (existing.has(email(e.nn))) {
+      // SH2-E005: an existing test seller's company follows a renamed definition (Coastal Print Co → Harbor Print Co.).
+      const co = await prisma.company.findFirst({ where: { people: { some: { user: { email: email(e.nn), is_test: true } } } }, select: { id: true, name: true, p_account_id: true } });
+      if (co && co.name !== e.company) {
+        await prisma.company.update({ where: { id: co.id }, data: { name: e.company, legal_name: e.company } });
+        await prisma.pAccount.update({ where: { id: co.p_account_id }, data: { name: e.company } });
+      }
+      continue;
+    }
     const isSeller = e.kind === "seller";
     const acct = await prisma.pAccount.create({ data: { kind: isSeller ? "PROVIDER" : "BUYER", name: e.company }, select: { id: true } });
     const co = await prisma.company.create({
@@ -260,7 +305,7 @@ export async function createMarketplaceTestSet(opts: { apply: boolean; actor?: V
           provider_profile_id: pp.id, company_id: co.id, title: x.title, summary: x.summary.slice(0, 120), price_cents: x.cents,
           kind: x.agent ? "DEPLOYABLE" : recurring ? "HOURS" : "DELIVERABLE", pricing_type: recurring ? "RECURRING" : "FIXED", billing_period: recurring ? "MONTHLY" : null,
           payment_terms: "NET30", payment_event: x.agent ? "ORDER_ACCEPTED" : recurring ? "INVOICE" : "ACCEPTANCE",
-          status: "PUBLISHED", offered: true, delivery: "EITHER", lead_time_days: x.lead, cover_code: x.cover, cover_style: "D", sort_order: 100 + i,
+          status: "PUBLISHED", offered: true, open_to_offers: !!x.offers, delivery: "EITHER", lead_time_days: x.lead, cover_code: x.cover, cover_style: "D", sort_order: 100 + i,
           service_type_id: L.productType.get(`${x.bt}|${x.type}`)!.id, product_type_id: L.spt.get(x.type) ?? null,
         },
       });
