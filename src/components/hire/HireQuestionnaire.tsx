@@ -5,12 +5,12 @@ import { useState } from "react";
 import type { HireInput, HireMatch } from "@/lib/hire-questionnaire";
 
 // SH2-E004: Hire — the need first (Upwork-style), then named matches; checked ones get proposal requests on the Job.
-const STEPS = ["The work", "Skills", "Scope", "Budget", "Details"];
-const CHIP_ON = "border border-ink bg-ink px-3 py-1.5 text-[13px] font-semibold text-surface";
-const CHIP_OFF = "border border-line bg-white px-3 py-1.5 text-[13px] font-semibold text-ink hover:border-ink";
-const OPT_ON = "flex flex-col items-start border-2 border-ink bg-white p-3 text-left";
-const OPT_OFF = "flex flex-col items-start border border-line bg-white p-3 text-left hover:border-ink";
-const FIELD = "mt-1 block w-full border border-line bg-white px-3 py-2.5 text-[14.5px] font-normal text-ink";
+const STEPS = ["The work", "Skills", "Scope", "Budget", "Details", "Request proposals"];
+const CHIP_ON = "rounded-full border border-magenta-dark bg-[#fbeafb] px-3.5 py-1.5 text-[13px] font-semibold text-magenta-dark";
+const CHIP_OFF = "rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink hover:border-magenta-dark";
+const OPT_ON = "flex flex-col items-start rounded-[10px] border border-magenta-dark bg-white p-3 text-left ring-1 ring-magenta-dark";
+const OPT_OFF = "flex flex-col items-start rounded-[10px] border border-line bg-white p-3 text-left hover:border-magenta-dark";
+const FIELD = "mt-1 block w-full rounded-[8px] border border-line bg-white px-3 py-2.5 text-[14.5px] font-normal text-ink";
 const BTN = "inline-flex min-h-10 items-center justify-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40";
 const GHOST = "inline-flex min-h-10 items-center justify-center border border-ink bg-white px-5 text-[14px] font-bold text-ink hover:bg-surface-hover disabled:opacity-40";
 
@@ -72,17 +72,17 @@ export function HireQuestionnaire({ categories, howLong, sizes, shipTos }: Props
   const toggleSkill = (k: string) => set({ skills: f.skills.includes(k) ? f.skills.filter((x) => x !== k) : [...f.skills, k] });
 
   return (
-    <div className="mt-4 grid gap-5 md:grid-cols-[200px_minmax(0,1fr)]" data-hire>
-      <ol className="flex gap-3 overflow-x-auto text-[13.5px] md:block md:space-y-2" data-hire-rail>
+    <div className="mt-4 grid gap-7 rounded-[14px] border border-line bg-white p-5 md:grid-cols-[220px_minmax(0,1fr)] md:p-6" data-hire>
+      <ol className="flex gap-1 overflow-x-auto text-[14px] md:block md:space-y-1" data-hire-rail>
         {STEPS.map((s, i) => (
-          <li key={s} className={i === step ? "whitespace-nowrap font-bold text-magenta-dark" : i < step ? "whitespace-nowrap font-semibold text-ink" : "whitespace-nowrap text-ink-3"}>
-            <span aria-hidden className={i < step ? "mr-2 inline-grid h-5 w-5 place-items-center rounded-full bg-ink text-[11px] text-white" : i === step ? "mr-2 inline-grid h-5 w-5 place-items-center rounded-full bg-magenta text-[11px] text-white" : "mr-2 inline-grid h-5 w-5 place-items-center rounded-full bg-[#C9CDDC] text-[11px] text-white"}>{i < step ? "✓" : i + 1}</span>
+          <li key={s} className={"flex items-center gap-2.5 whitespace-nowrap rounded-[8px] px-2.5 py-2 font-semibold " + (i === step ? "bg-[#fbeafb] text-magenta-dark" : i < step ? "text-ink" : "text-ink-2")}>
+            <span aria-hidden className={"inline-grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full text-[11.5px] " + (i < step ? "bg-magenta-dark text-white" : i === step ? "border-[1.5px] border-magenta-dark" : "border-[1.5px] border-line")}>{i < step ? "✓" : i + 1}</span>
             {s}
           </li>
         ))}
       </ol>
 
-      <section className="min-w-0 rounded-[10px] border border-line bg-white p-5">
+      <section className="min-w-0">
         {step === 0 && (
           <>
             <h2 className="text-[19px] font-extrabold">What do you need done?</h2>
@@ -105,7 +105,7 @@ export function HireQuestionnaire({ categories, howLong, sizes, shipTos }: Props
               {[...new Set([...suggested, ...f.skills])].map((k) => <button key={k} type="button" aria-pressed={f.skills.includes(k)} onClick={() => toggleSkill(k)} className={f.skills.includes(k) ? CHIP_ON : CHIP_OFF}>{k}</button>)}
             </div>
             <div className="mt-3 flex gap-2">
-              <input value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="Add a skill" aria-label="Add a skill" className="min-w-0 flex-1 border border-line px-3 py-2 text-[14px]" />
+              <input value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="Add a skill" aria-label="Add a skill" className="min-w-0 flex-1 rounded-[8px] border border-line px-3 py-2 text-[14px]" />
               <button type="button" className={GHOST} onClick={() => { const k = extra.trim(); if (k && !f.skills.includes(k)) set({ skills: [...f.skills, k] }); setExtra(""); }}>Add</button>
             </div>
           </>
