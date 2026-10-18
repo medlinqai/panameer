@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { writeAudit } from "@/lib/admin/audit";
-import { addBusinessType, addCategory, addType, approve, merge, move, removeAt, rename, renameAt, setDefaultOn, setDescription, setHidden, updateType } from "@/lib/service-taxonomy-admin";
+import { addBusinessType, addCategory, addTopCategory, addType, approve, merge, move, removeAt, removeTopCategory, rename, renameAt, renameTopCategory, setCategoryTile, setDefaultOn, setDescription, setHidden, updateType } from "@/lib/service-taxonomy-admin";
 
 const UNITS = ["HOUR", "DAY", "WEEK", "MONTH", "SESSION", "VISIT", "EACH"] as const;
 const Body = z.discriminatedUnion("action", [
@@ -19,6 +19,10 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("approve"), id: z.string().uuid(), categoryId: z.string().uuid() }),
   z.object({ action: z.literal("rename"), id: z.string().uuid(), name: z.string().min(3).max(60) }),
   z.object({ action: z.literal("merge"), id: z.string().uuid(), into: z.string().uuid() }),
+  z.object({ action: z.literal("addTopCategory"), name: z.string().min(2).max(60), id: z.string().optional() }),
+  z.object({ action: z.literal("renameTopCategory"), id: z.string().uuid(), name: z.string().min(2).max(60) }),
+  z.object({ action: z.literal("tile"), id: z.string().uuid(), icon: z.string().max(20).nullable().optional(), tile_line: z.string().max(120).nullable().optional(), show_in_shop: z.boolean().optional() }),
+  z.object({ action: z.literal("deleteTopCategory"), id: z.string().uuid() }),
 ]);
 
 // TX-E005: Admin › Service Taxonomy edits (system admins only), each written to the admin audit.
@@ -41,10 +45,14 @@ export async function POST(req: Request) {
     else if (d.action === "addCategory") await addCategory(d.id, d.name, d.kind);
     else if (d.action === "addType") await addType(d.to === "category" ? { categoryId: d.id } : d.to === "commodity" ? { commodityGroupId: d.id } : { businessTypeId: d.id }, d.name);
     else if (d.action === "describe") await setDescription(d.level, d.id, d.description);
+    else if (d.action === "addTopCategory") await addTopCategory(d.name);
+    else if (d.action === "renameTopCategory") await renameTopCategory(d.id, d.name);
+    else if (d.action === "tile") await setCategoryTile(d.id, { icon: d.icon, tile_line: d.tile_line, show_in_shop: d.show_in_shop });
+    else if (d.action === "deleteTopCategory") await removeTopCategory(d.id);
     else await merge(d.id, d.into);
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });
   }
-  await writeAudit(viewer, { action: `service_taxonomy.${d.action}`, targetTable: "service_types", targetId: d.id, detail: d, rowCount: 1 });
+  await writeAudit(viewer, { action: `category_hierarchy.${d.action}`, targetTable: "service_types", targetId: d.id ?? null, detail: d, rowCount: 1 });
   return NextResponse.json({ ok: true });
 }

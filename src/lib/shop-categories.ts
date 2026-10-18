@@ -1,5 +1,6 @@
 // SH2-E001: the 12 Day-1 Categories, in this order. The first 11 are commodity groups; Help is a tile that opens /help.
-export type CategoryIconKey = "erp" | "print" | "mkt" | "web" | "ai" | "fin" | "it" | "truck" | "fac" | "exp" | "lead" | "help";
+export const CATEGORY_ICONS = ["erp", "print", "mkt", "web", "ai", "fin", "it", "truck", "fac", "exp", "lead", "help"] as const;
+export type CategoryIconKey = (typeof CATEGORY_ICONS)[number];
 
 export type Day1Category = { name: string; icon: CategoryIconKey; examples: string; href?: string };
 

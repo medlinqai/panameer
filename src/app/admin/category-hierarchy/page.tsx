@@ -30,7 +30,7 @@ export default async function Page() {
         <ServiceTaxonomyAdmin
           suggested={suggested.map((s) => ({ id: s.id, name: s.name, kind: s.kind }))}
           groups={groups.map((g) => ({
-            id: g.id, name: g.name, segments: g.unspsc_segments, hidden: g.hidden, description: g.description,
+            id: g.id, name: g.name, segments: g.unspsc_segments, hidden: g.hidden, description: g.description, icon: g.icon, tileLine: g.tile_line, showInShop: g.show_in_shop,
             rates: g.serviceCategories.filter((c) => c.kind === "SERVICE").flatMap((c) => c.serviceTypes.map((t) => ({ id: t.id, name: t.name, description: t.description, pricing_model: t.pricing_model, units: t.units, delivery: t.delivery, lead_time_days: t.lead_time_days, commodity_code: t.commodity_code, default_on: t.default_on, hidden: t.hidden, used: (used.get(t.id) ?? 0) + t._count.serviceProducts }))),
             businessTypes: g.businessTypes.map((b) => ({
               id: b.id, name: b.name, hidden: b.hidden, uses_skills: b.uses_skills, companies: b._count.companies, description: b.description,

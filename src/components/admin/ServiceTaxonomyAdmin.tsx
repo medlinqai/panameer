@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { HelpTip } from "@/components/ui/HelpTip";
+import { CategoryIcon } from "@/components/shop/CategoryIcon";
+import { CATEGORY_ICONS, type CategoryIconKey } from "@/lib/shop-categories";
 
 // CH-E001 (was TX-E005 / MC-E007): Category › Business Type › Service Types (rates) and Service Product Types.
 // Add · Rename (inline: Enter saves, Esc cancels) · Hide · Delete at every level; Delete only when nothing uses it.
@@ -13,7 +15,7 @@ const UNITS: Unit[] = ["HOUR", "DAY", "WEEK", "MONTH", "SESSION", "VISIT", "EACH
 export type TType = { id: string; name: string; description: string | null; pricing_model: string | null; units: Unit[]; delivery: string | null; lead_time_days: number | null; commodity_code: string | null; default_on: boolean; hidden: boolean; used: number };
 export type TCat = { id: string; name: string; kind: string; hidden: boolean; types: TType[] };
 export type TBt = { id: string; name: string; hidden: boolean; uses_skills: boolean; companies: number; description: string | null; categories: TCat[] };
-export type TGroup = { id: string; name: string; segments: string[]; hidden: boolean; description: string | null; rates: TType[]; businessTypes: TBt[] };
+export type TGroup = { id: string; name: string; segments: string[]; hidden: boolean; description: string | null; icon: string | null; tileLine: string | null; showInShop: boolean; rates: TType[]; businessTypes: TBt[] };
 const SEL = "h-8 border border-line bg-white px-1.5 text-[12.5px]";
 const BTN = "border border-line bg-white px-2 py-0.5 text-[12px] font-semibold hover:border-ink";
 const LNK = "ml-2 text-[12px] font-bold text-magenta-dark underline";
@@ -99,11 +101,18 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
   return (
     <div data-service-taxonomy-admin>
       {error && <p role="alert" className="mb-3 text-[13px] font-semibold text-magenta-dark">{error}</p>}
+      {/* CH-E002: the top level is editable — a new Category starts with no Business Types. */}
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <button type="button" onClick={() => open("addTop")} className={BTN}>+ Add Category</button>
+        {inline({ k: "addTop", initial: "", placeholder: "Category name", onSave: (v) => call({ action: "addTopCategory", name: v }) })}
+      </div>
 
       {groups.map((g) => (
         <section key={g.id} data-commodity-group={g.name} className={g.hidden ? "mb-8 opacity-60" : "mb-8"}>
           <div className="flex flex-wrap items-center gap-2 border-b-2 border-ink pb-1.5">
-            <h2 className="text-[18px] font-bold">{g.name}</h2>
+            {g.icon && <CategoryIcon icon={g.icon as CategoryIconKey} className="h-6 w-6 text-magenta" />}
+            {edit?.key === `rg:${g.id}` ? inline({ k: `rg:${g.id}`, initial: g.name, onSave: (v) => call({ action: "renameTopCategory", id: g.id, name: v }) }) : <h2 className="text-[18px] font-bold">{g.name}</h2>}
+            <button type="button" onClick={() => open(`rg:${g.id}`, g.name)} className={LNK}>Rename</button>
             <HelpTip label={g.name} text={g.description} />
             <button type="button" onClick={() => open(`d:${g.id}`, g.description ?? "")} className={LNK}>{g.description ? "Edit description" : "+ Description"}</button>
             <span className="text-[12px] text-ink-3">UNSPSC {g.segments.join(" · ")}</span>
@@ -111,12 +120,27 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
             <span className="ml-auto inline-flex items-center gap-1">
               <Move level="group" id={g.id} />
               <button type="button" onClick={() => call({ action: "hide", level: "group", id: g.id, hidden: !g.hidden })} className={BTN}>{g.hidden ? "Show" : "Hide"}</button>
+              {g.businessTypes.length === 0 && g.rates.every((t) => t.used === 0) && <button type="button" onClick={() => window.confirm(`Delete ${g.name}? Nothing uses it.`) && call({ action: "deleteTopCategory", id: g.id })} className={RED}>Delete</button>}
               <button type="button" onClick={() => open(`ab:${g.id}`)} className={LNK}>+ Add Business Type</button>
             </span>
           </div>
           <div className="mt-2">{inline({ k: `ab:${g.id}`, initial: "", placeholder: "Business Type name", onSave: (v) => call({ action: "addBusinessType", id: g.id, name: v }) })}</div>
           <div>{inline({ k: `d:${g.id}`, initial: g.description ?? "", placeholder: "Examples, in plain words", onSave: (v) => call({ action: "describe", level: "group", id: g.id, description: v }) })}</div>
           {g.description && <p className="mt-1 text-[13px] text-ink-2">{g.description}</p>}
+          {/* CH-E002: the Shop tile — icon, one line, shown in Shop and Hire or not. */}
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[12.5px]" data-category-tile-fields>
+            <span className="text-[10.5px] font-extrabold tracking-[0.12em] text-ink-2">SHOP TILE</span>
+            <select aria-label="Icon" value={g.icon ?? ""} onChange={(e) => call({ action: "tile", id: g.id, icon: e.target.value || null })} className={SEL}>
+              <option value="">Icon…</option>
+              {CATEGORY_ICONS.map((k) => <option key={k} value={k}>{k}</option>)}
+            </select>
+            {edit?.key === `tl:${g.id}` ? inline({ k: `tl:${g.id}`, initial: g.tileLine ?? "", placeholder: "One line under the name", onSave: (v) => call({ action: "tile", id: g.id, tile_line: v }) }) : <span className="text-ink-2">{g.tileLine ?? "No line yet"}</span>}
+            <button type="button" onClick={() => open(`tl:${g.id}`, g.tileLine ?? "")} className={LNK}>Edit line</button>
+            <button type="button" role="switch" aria-checked={g.showInShop} aria-label={`${g.name} shows in Shop`} onClick={() => call({ action: "tile", id: g.id, show_in_shop: !g.showInShop })} className={g.showInShop ? "relative ml-2 h-[22px] w-[38px] rounded-full bg-ink" : "relative ml-2 h-[22px] w-[38px] rounded-full bg-[#C9CDDC]"}>
+              <span className={g.showInShop ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white"} />
+            </button>
+            <span className="text-ink-2">Show in Shop and Hire</span>
+          </div>
           {/* TX2-E003: rates are set per commodity — every business type in it offers these. */}
           <div data-commodity-rates={g.name} className="mt-3 border border-line bg-white p-4">
             <div className="flex items-center gap-2 text-[10.5px] font-extrabold tracking-[0.12em] text-ink-2">{`SERVICE TYPES (RATES) · ALL ${g.name.toUpperCase()} BUSINESS TYPES`} <button type="button" onClick={() => open(`atg:${g.id}`)} className={LNK}>+ Add Service Type</button></div>

@@ -8868,6 +8868,10 @@ model CommodityGroup {
   hidden          Boolean        @default(false)
   /// TX2-E001: plain-words examples shown behind the ? in the Business Type picker.
   description     String?
+  /// CH-E002: the Category's Shop tile — line icon key, one-sentence line, and whether it shows in Shop and Hire.
+  icon            String?
+  tile_line       String?
+  show_in_shop    Boolean        @default(true)
   created_at      DateTime       @default(now())
   businessTypes   BusinessType[]
   buySettings     BuySetting[]

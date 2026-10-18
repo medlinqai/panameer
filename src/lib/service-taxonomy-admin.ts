@@ -174,3 +174,30 @@ export async function merge(id: string, into: string) {
     prisma.serviceType.update({ where: { id }, data: { status: "MERGED", merged_into_id: into, reviewed_at: new Date() } }),
   ]);
 }
+
+// CH-E002: the top level — add, rename, tile (icon · line · show in Shop), delete only when nothing uses it.
+export async function addTopCategory(name: string) {
+  const n = cleanName(name);
+  if (await prisma.commodityGroup.findFirst({ where: { name: { equals: n, mode: "insensitive" } }, select: { id: true } })) throw new Error("A Category with that name already exists");
+  const sibs = await prisma.commodityGroup.findMany({ select: { sort_order: true } });
+  await prisma.commodityGroup.create({ data: { name: n, unspsc_segments: [], sort_order: nextSort(sibs), show_in_shop: true } });
+}
+export async function renameTopCategory(id: string, name: string) {
+  const n = cleanName(name);
+  if (await prisma.commodityGroup.findFirst({ where: { name: { equals: n, mode: "insensitive" }, NOT: { id } }, select: { id: true } })) throw new Error("A Category with that name already exists");
+  await prisma.commodityGroup.update({ where: { id }, data: { name: n } });
+}
+export async function setCategoryTile(id: string, f: { icon?: string | null; tile_line?: string | null; show_in_shop?: boolean }) {
+  await prisma.commodityGroup.update({ where: { id }, data: { ...(f.icon !== undefined ? { icon: f.icon || null } : {}), ...(f.tile_line !== undefined ? { tile_line: f.tile_line?.trim().slice(0, 120) || null } : {}), ...(f.show_in_shop !== undefined ? { show_in_shop: f.show_in_shop } : {}) } });
+}
+export async function removeTopCategory(id: string) {
+  const g = await prisma.commodityGroup.findUniqueOrThrow({ where: { id }, select: { _count: { select: { businessTypes: true } }, serviceCategories: { select: { id: true } } } });
+  const catIds = g.serviceCategories.map((c) => c.id);
+  const typeIds = (await prisma.serviceType.findMany({ where: { service_category_id: { in: catIds } }, select: { id: true } })).map((t) => t.id);
+  if (g._count.businessTypes > 0 || (await typeUse(typeIds))) throw new Error("It's in use — hide it instead");
+  await prisma.$transaction([
+    prisma.serviceType.deleteMany({ where: { id: { in: typeIds } } }),
+    prisma.serviceCategory.deleteMany({ where: { id: { in: catIds } } }),
+    prisma.commodityGroup.delete({ where: { id } }),
+  ]);
+}
