@@ -89,3 +89,13 @@ export async function moveHelpLink(id: string, dir: "up" | "down") {
 }
 
 export const setHelpLinkActive = (id: string, active: boolean) => prisma.helpLink.update({ where: { id }, data: { active } });
+
+/** II-E002: Informational Items a Shop search finds (title or description). */
+export async function searchHelpLinks(q: string) {
+  const words = q.trim().toLowerCase().split(/\s+/).filter((w) => w.length > 1);
+  if (!words.length) return [];
+  const rows = await listHelpLinks();
+  const text = (r: (typeof rows)[number]) => [r.title, r.description ?? ""].join(" ").toLowerCase();
+  const phrase = q.trim().toLowerCase();
+  return rows.filter((r) => text(r).includes(phrase) || words.every((w) => text(r).includes(w)));
+}
