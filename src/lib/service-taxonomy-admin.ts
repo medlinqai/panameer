@@ -26,7 +26,7 @@ export async function taxonomyTree() {
   // TL-E006: pillars still without an area or role (the AI ones carry an admin note).
   const homeless = await prisma.pillar.findMany({ where: { visible_to_members: true, area_id: null, role_id: null, retired_at: null }, orderBy: { name: "asc" }, select: { id: true, name: true, admin_note: true, _count: { select: { skills: true } } } });
   const used = new Map((await prisma.providerService.groupBy({ by: ["service_type_id"], where: { active: true }, _count: { _all: true } })).map((g) => [g.service_type_id, g._count._all]));
-  return { groups, suggested, used, homeless };
+  return { groups, suggested, used, homeless, uses: await typeUseCounts() };
 }
 
 export type TypeFields = { pricing_model?: PricingModel | null; units?: ServiceUnit[]; delivery?: ServiceDelivery | null; lead_time_days?: number | null; commodity_code?: string | null; required?: boolean; description?: string | null };
@@ -200,4 +200,48 @@ export async function removeTopCategory(id: string) {
     prisma.serviceCategory.deleteMany({ where: { id: { in: catIds } } }),
     prisma.commodityGroup.delete({ where: { id } }),
   ]);
+}
+
+// CH-E004: where-used counts, "Used by", and moves (rows keep their ids, so every seller, rate and product stays attached).
+export type Use = { sellers: number; products: number; rates: number };
+export async function typeUseCounts(): Promise<Map<string, Use>> {
+  const [svc, prod] = await Promise.all([
+    prisma.providerService.findMany({ where: { service_type_id: { not: null } }, select: { service_type_id: true, provider_profile_id: true } }),
+    prisma.serviceProduct.findMany({ where: { service_type_id: { not: null } }, select: { service_type_id: true, provider_profile_id: true } }),
+  ]);
+  const out = new Map<string, Use & { s: Set<string> }>();
+  const at = (id: string) => out.get(id) ?? (out.set(id, { sellers: 0, products: 0, rates: 0, s: new Set() }), out.get(id)!);
+  for (const r of svc) { const u = at(r.service_type_id!); u.rates++; u.s.add(r.provider_profile_id); }
+  for (const r of prod) { const u = at(r.service_type_id!); u.products++; u.s.add(r.provider_profile_id); }
+  return new Map([...out].map(([k, v]) => [k, { sellers: v.s.size, products: v.products, rates: v.rates }]));
+}
+
+/** Who uses a type or business type — up to 25 names (company · person). */
+export async function usedBy(level: "businessType" | "type", id: string): Promise<string[]> {
+  const typeIds = level === "type" ? [id] : (await prisma.serviceType.findMany({ where: { serviceCategory: { business_type_id: id } }, select: { id: true } })).map((t) => t.id);
+  const [svc, prod, cos] = await Promise.all([
+    prisma.providerService.findMany({ where: { service_type_id: { in: typeIds } }, distinct: ["provider_profile_id"], select: { provider_profile_id: true }, take: 50 }),
+    prisma.serviceProduct.findMany({ where: { service_type_id: { in: typeIds } }, distinct: ["provider_profile_id"], select: { provider_profile_id: true }, take: 50 }),
+    level === "businessType" ? prisma.companyBusinessType.findMany({ where: { business_type_id: id }, select: { company: { select: { name: true } } }, take: 50 }) : Promise.resolve([]),
+  ]);
+  const ids = [...new Set([...svc, ...prod].map((r) => r.provider_profile_id))];
+  const people = await prisma.providerProfile.findMany({ where: { id: { in: ids } }, select: { person: { select: { first_name: true, last_name: true, company: { select: { name: true } } } } } });
+  const sellerNames = people.map((p) => `${p.person.company?.name ?? ""} · ${p.person.first_name} ${p.person.last_name}`.replace(/^ · /, ""));
+  const names = [...sellerNames, ...cos.map((c) => c.company.name).filter((n) => !sellerNames.some((s) => s.startsWith(`${n} · `)))];
+  return [...new Set(names)].sort().slice(0, 25);
+}
+
+export async function moveBusinessType(id: string, groupId: string) {
+  const sibs = await prisma.businessType.findMany({ where: { commodity_group_id: groupId }, select: { sort_order: true } });
+  await prisma.businessType.update({ where: { id }, data: { commodity_group_id: groupId, sort_order: nextSort(sibs) } });
+}
+
+/** A type moves into the target business type's category of the same kind (created when it has none). */
+export async function moveTypeTo(typeId: string, businessTypeId: string) {
+  const t = await prisma.serviceType.findUniqueOrThrow({ where: { id: typeId }, select: { name: true, kind: true } });
+  const cat = (await prisma.serviceCategory.findFirst({ where: { business_type_id: businessTypeId, kind: t.kind }, orderBy: { sort_order: "asc" }, select: { id: true } }))
+    ?? (await addCategory(businessTypeId, t.kind === "SERVICE" ? "Rates" : "Stock Products", t.kind));
+  if (await prisma.serviceType.findFirst({ where: { service_category_id: cat.id, name: { equals: t.name, mode: "insensitive" }, NOT: { id: typeId } }, select: { id: true } })) throw new Error("A type with that name is already there");
+  const sibs = await prisma.serviceType.findMany({ where: { service_category_id: cat.id }, select: { sort_order: true } });
+  await prisma.serviceType.update({ where: { id: typeId }, data: { service_category_id: cat.id, sort_order: nextSort(sibs) } });
 }

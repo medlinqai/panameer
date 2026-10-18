@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { writeAudit } from "@/lib/admin/audit";
-import { addBusinessType, addCategory, addTopCategory, addType, approve, merge, move, removeAt, removeTopCategory, rename, renameAt, renameTopCategory, setCategoryTile, setDefaultOn, setDescription, setHidden, updateType } from "@/lib/service-taxonomy-admin";
+import { addBusinessType, addCategory, addTopCategory, addType, approve, merge, move, removeAt, moveBusinessType, moveTypeTo, removeTopCategory, rename, usedBy, renameAt, renameTopCategory, setCategoryTile, setDefaultOn, setDescription, setHidden, updateType } from "@/lib/service-taxonomy-admin";
 
 const UNITS = ["HOUR", "DAY", "WEEK", "MONTH", "SESSION", "VISIT", "EACH"] as const;
 const Body = z.discriminatedUnion("action", [
@@ -23,6 +23,9 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("renameTopCategory"), id: z.string().uuid(), name: z.string().min(2).max(60) }),
   z.object({ action: z.literal("tile"), id: z.string().uuid(), icon: z.string().max(20).nullable().optional(), tile_line: z.string().max(120).nullable().optional(), show_in_shop: z.boolean().optional() }),
   z.object({ action: z.literal("deleteTopCategory"), id: z.string().uuid() }),
+  z.object({ action: z.literal("moveBusinessType"), id: z.string().uuid(), to: z.string().uuid() }),
+  z.object({ action: z.literal("moveType"), id: z.string().uuid(), to: z.string().uuid() }),
+  z.object({ action: z.literal("usedBy"), level: z.enum(["businessType", "type"]), id: z.string().uuid() }),
 ]);
 
 // TX-E005: Admin › Service Taxonomy edits (system admins only), each written to the admin audit.
@@ -32,6 +35,7 @@ export async function POST(req: Request) {
   const b = Body.safeParse(await req.json().catch(() => null));
   if (!b.success) return NextResponse.json({ error: b.error.issues[0]?.message ?? "Bad request" }, { status: 400 });
   const d = b.data;
+  if (d.action === "usedBy") return NextResponse.json({ names: await usedBy(d.level, d.id) });
   try {
     if (d.action === "update") await updateType(d.id, { ...d.fields, commodity_code: d.fields.commodity_code === "" ? null : d.fields.commodity_code });
     else if (d.action === "move") await move(d.level, d.id, d.dir);
@@ -49,6 +53,8 @@ export async function POST(req: Request) {
     else if (d.action === "renameTopCategory") await renameTopCategory(d.id, d.name);
     else if (d.action === "tile") await setCategoryTile(d.id, { icon: d.icon, tile_line: d.tile_line, show_in_shop: d.show_in_shop });
     else if (d.action === "deleteTopCategory") await removeTopCategory(d.id);
+    else if (d.action === "moveBusinessType") await moveBusinessType(d.id, d.to);
+    else if (d.action === "moveType") await moveTypeTo(d.id, d.to);
     else await merge(d.id, d.into);
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });

@@ -12,7 +12,7 @@ type Unit = "HOUR" | "DAY" | "WEEK" | "MONTH" | "SESSION" | "VISIT" | "EACH";
 const DELIVERY = [["OFFSITE", "Offsite"], ["ONSITE", "Onsite"], ["EITHER", "Either"]] as const;
 const PRICING = [["TIME", "Hourly"], ["FIXED", "Fixed"], ["RECURRING", "Monthly"], ["QUOTE", "Quote"]] as const;
 const UNITS: Unit[] = ["HOUR", "DAY", "WEEK", "MONTH", "SESSION", "VISIT", "EACH"];
-export type TType = { id: string; name: string; description: string | null; pricing_model: string | null; units: Unit[]; delivery: string | null; lead_time_days: number | null; commodity_code: string | null; default_on: boolean; hidden: boolean; used: number };
+export type TType = { id: string; name: string; description: string | null; pricing_model: string | null; units: Unit[]; delivery: string | null; lead_time_days: number | null; commodity_code: string | null; default_on: boolean; hidden: boolean; used: number; use: { sellers: number; products: number; rates: number } };
 export type TCat = { id: string; name: string; kind: string; hidden: boolean; types: TType[] };
 export type TBt = { id: string; name: string; hidden: boolean; uses_skills: boolean; companies: number; description: string | null; categories: TCat[] };
 export type TGroup = { id: string; name: string; segments: string[]; hidden: boolean; description: string | null; icon: string | null; tileLine: string | null; showInShop: boolean; rates: TType[]; businessTypes: TBt[] };
@@ -26,6 +26,19 @@ const unitLabel = (u: string) => u[0] + u.slice(1).toLowerCase();
 
 export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; suggested: { id: string; name: string; kind: string }[] }) {
   const router = useRouter();
+  // CH-E004: "Used by" lists, loaded on demand.
+  const [usedBy, setUsedBy] = useState<Record<string, string[] | null>>({});
+  const showUsedBy = async (level: "businessType" | "type", id: string) => {
+    if (usedBy[id] !== undefined) { setUsedBy((u) => { const n = { ...u }; delete n[id]; return n; }); return; }
+    setUsedBy((u) => ({ ...u, [id]: null }));
+    const r = await fetch("/api/admin/service-taxonomy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "usedBy", level, id }) });
+    const j = (await r.json().catch(() => ({}))) as { names?: string[] };
+    setUsedBy((u) => ({ ...u, [id]: j.names ?? [] }));
+  };
+  const UsedBy = ({ id }: { id: string }) => usedBy[id] === undefined ? null : (
+    <span className="mt-1 block text-[12px] text-ink-2" data-used-by>{usedBy[id] === null ? "Loading…" : usedBy[id]!.length ? `Used by: ${usedBy[id]!.join(" · ")}` : "Nobody uses it yet."}</span>
+  );
+  const counts = (u: { sellers: number; products: number; rates: number }) => `${u.sellers} seller${u.sellers === 1 ? "" : "s"} · ${u.products} product${u.products === 1 ? "" : "s"} · ${u.rates} rate${u.rates === 1 ? "" : "s"}`;
   const [error, setError] = useState<string | null>(null);
   const [pick, setPick] = useState<Record<string, string>>({});
   const [edit, setEdit] = useState<{ key: string; value: string } | null>(null);
@@ -70,7 +83,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
   // TX2-E003: one rate table, used for a commodity's Rates and any business-type-level service categories.
   const rateTable = (rows: TType[]) => (
   <table className="mt-1 w-full border-collapse" data-rate-types>
-    <thead><tr><th className={TH}>SERVICE TYPE</th><th className={TH}>UNIT</th><th className={TH}>DELIVERY</th><th className={TH}>COMMODITY CODE</th><th className={TH}>ON BY DEFAULT</th><th className={TH}>IN USE</th><th className={TH} /></tr></thead>
+    <thead><tr><th className={TH}>SERVICE TYPE</th><th className={TH}>UNIT</th><th className={TH}>DELIVERY</th><th className={TH}>COMMODITY CODE</th><th className={TH}>ON BY DEFAULT</th><th className={TH}>USED BY (SELLERS · PRODUCTS · RATES)</th><th className={TH} /></tr></thead>
     <tbody>
       {rows.map((t) => (
         <tr key={t.id} data-type={t.name} className={t.hidden ? "text-ink-3" : ""}>
@@ -87,7 +100,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
               <span className={t.default_on ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white"} />
             </button>
           </td>
-          <td className={`${TD} tabular-nums`}>{t.used}</td>
+          <td className={`${TD} whitespace-nowrap text-[12px] tabular-nums`}>{counts(t.use)}{t.use.sellers + t.use.products + t.use.rates > 0 && <button type="button" onClick={() => showUsedBy("type", t.id)} className={LNK}>Used by</button>}<UsedBy id={t.id} /></td>
           <td className={`${TD} text-right`}><Move level="type" id={t.id} /><Acts level="type" id={t.id} name={t.name} used={t.used} hidden={t.hidden} /></td>
         </tr>
       ))}
@@ -97,6 +110,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
   const categories = groups.flatMap((g) => g.businessTypes.flatMap((b) => b.categories.map((c) => ({ id: c.id, label: `${b.name} › ${c.name}`, kind: c.kind }))));
   const allTypes = groups.flatMap((g) => g.businessTypes.flatMap((b) => b.categories.flatMap((c) => c.types.map((t) => ({ id: t.id, label: `${b.name} › ${t.name}` })))));
   const update = (id: string, fields: object) => call({ action: "update", id, fields });
+  const allBts = groups.flatMap((g) => g.businessTypes.map((b) => ({ id: b.id, label: `${g.name} › ${b.name}` })));
 
   return (
     <div data-service-taxonomy-admin>
@@ -159,11 +173,17 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
                   <HelpTip label={b.name} text={b.description} />
                   <button type="button" onClick={() => open(`d:${b.id}`, b.description ?? "")} className={LNK}>{b.description ? "Edit description" : "+ Description"}</button>
                   {b.uses_skills && <span className="border border-line px-1.5 text-[10px] font-bold tracking-[0.08em] text-ink-2">USES SKILLS</span>}
-                  <span className="text-[12px] text-ink-3">{`${b.companies} ${b.companies === 1 ? "COMPANY" : "COMPANIES"}`}</span>
+                  <span className="text-[12px] text-ink-3">{`${b.companies} ${b.companies === 1 ? "COMPANY" : "COMPANIES"}`} · {counts(b.categories.flatMap((c) => c.types).reduce((m, t) => ({ sellers: m.sellers + t.use.sellers, products: m.products + t.use.products, rates: m.rates + t.use.rates }), { sellers: 0, products: 0, rates: 0 }))}</span>
+                  <button type="button" onClick={() => showUsedBy("businessType", b.id)} className={LNK}>Used by</button>
+                  <select aria-label={`Move ${b.name} to…`} value="" onChange={(e) => e.target.value && call({ action: "moveBusinessType", id: b.id, to: e.target.value })} className={SEL}>
+                    <option value="">Move to…</option>
+                    {groups.filter((x) => x.id !== g.id).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                  </select>
                   {b.hidden && <span className="text-[11px] font-bold text-ink-3">HIDDEN</span>}
                   <span className="ml-auto inline-flex items-center"><Move level="businessType" id={b.id} /><Acts level="businessType" id={b.id} name={b.name} used={used} hidden={b.hidden} /></span>
                 </div>
                 {inline({ k: `d:${b.id}`, initial: b.description ?? "", placeholder: "Examples, in plain words", onSave: (v) => call({ action: "describe", level: "businessType", id: b.id, description: v }) })}
+                <UsedBy id={b.id} />
 
                 {rateCats.some((c) => c.types.length) && (
                   <>
@@ -175,7 +195,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
                 <div className="mt-6 flex items-center gap-2 text-[10.5px] font-extrabold tracking-[0.12em] text-ink-2">SERVICE PRODUCT TYPES <button type="button" onClick={() => open(`ac:${b.id}`)} className={LNK}>+ Add Category</button></div>
                 {inline({ k: `ac:${b.id}`, initial: "", placeholder: "Category name", onSave: (v) => call({ action: "addCategory", id: b.id, name: v, kind: "SERVICE_PRODUCT" }) })}
                 <table className="mt-1 w-full border-collapse" data-product-types>
-                  <thead><tr><th className={TH}>TYPE</th><th className={TH}>PRICING</th><th className={TH}>UNIT</th><th className={TH}>DELIVERY</th><th className={TH}>LEAD (DAYS)</th><th className={TH}>COMMODITY CODE</th><th className={TH}>IN USE</th><th className={TH} /></tr></thead>
+                  <thead><tr><th className={TH}>TYPE</th><th className={TH}>PRICING</th><th className={TH}>UNIT</th><th className={TH}>DELIVERY</th><th className={TH}>LEAD (DAYS)</th><th className={TH}>COMMODITY CODE</th><th className={TH}>USED BY (SELLERS · PRODUCTS · RATES)</th><th className={TH} /></tr></thead>
                   {productCats.map((c) => {
                     const cUsed = c.types.reduce((n, t) => n + t.used, 0);
                     return (
@@ -198,8 +218,14 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
                             <td className={TD}><select aria-label="Delivery" value={t.delivery ?? ""} onChange={(e) => update(t.id, { delivery: e.target.value || null })} className={SEL}><option value="">—</option>{DELIVERY.map(([x, l]) => <option key={x} value={x}>{l}</option>)}</select></td>
                             <td className={TD}><input defaultValue={t.lead_time_days ?? ""} aria-label="Lead time days" inputMode="numeric" onBlur={(e) => update(t.id, { lead_time_days: e.target.value ? Number(e.target.value) : null })} className={`${SEL} w-14`} /></td>
                             <td className={TD}><input defaultValue={t.commodity_code ?? ""} aria-label="Commodity code" maxLength={8} onBlur={(e) => e.target.value !== (t.commodity_code ?? "") && update(t.id, { commodity_code: e.target.value.trim() || null })} className={`${SEL} w-24 font-mono`} /></td>
-                            <td className={`${TD} tabular-nums`}>{t.used}</td>
-                            <td className={`${TD} text-right`}><Move level="type" id={t.id} /><Acts level="type" id={t.id} name={t.name} used={t.used} hidden={t.hidden} /></td>
+                            <td className={`${TD} whitespace-nowrap text-[12px] tabular-nums`}>{counts(t.use)}{t.use.sellers + t.use.products + t.use.rates > 0 && <button type="button" onClick={() => showUsedBy("type", t.id)} className={LNK}>Used by</button>}<UsedBy id={t.id} /></td>
+                            <td className={`${TD} text-right`}>
+                              <select aria-label={`Move ${t.name} to…`} value="" onChange={(e) => e.target.value && call({ action: "moveType", id: t.id, to: e.target.value })} className={`${SEL} mr-1 w-28`}>
+                                <option value="">Move to…</option>
+                                {allBts.filter((x) => x.id !== b.id).map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+                              </select>
+                              <Move level="type" id={t.id} /><Acts level="type" id={t.id} name={t.name} used={t.used} hidden={t.hidden} />
+                            </td>
                           </tr>
                         ))}
                       </tbody>
