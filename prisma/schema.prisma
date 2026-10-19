@@ -1209,6 +1209,9 @@ model ProviderProfile {
   rating                  Decimal?           @db.Decimal(3, 2)
   id_badge                String?
   // Account lifecycle (brief_K): PENDING on sign-up → ACTIVE on email verify.
+  /// AN-E001: what buyers see instead of the name until a Work Order exists (P-1001…, join order, never reused —
+  /// uniqueness comes from the atomic counter in lib/provider-number.ts).
+  provider_number         String?
   status                  ProviderStatus     @default(PENDING)
   // Merit-based Validation track (brief_K) — separate from visibility. Provider
   // requests it; an admin grants on merit. Never purchasable.
@@ -1400,6 +1403,7 @@ model ProviderProfile {
   @@index([coordinator_person_id])
   @@index([pillar_id])
   @@index([role_id])
+  @@index([provider_number])
   @@map("provider_profiles")
   capabilities      ProviderCapability[]
   attributeValues   ProviderAttributeValue[]
