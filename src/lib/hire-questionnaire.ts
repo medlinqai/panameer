@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { marketplaceWhere } from "@/lib/visibility";
 import { createDraft, resolveBuyer, loadOwned } from "@/lib/work-request";
+import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
 import { productPillarName, writeServiceDescription, type ServiceDescription } from "@/lib/service-description";
 import { requisitionForJob } from "@/lib/requisition";
 import { ensureFirstLine } from "@/lib/work-request-lines";
@@ -116,7 +117,7 @@ export type HireMatch = { personId: string; profileId: string; name: string; com
 
 /** SD-E004: named matches — ranked by Role, then skill overlap, then Product, then location (Onsite/Hybrid = same state),
  *  then rate inside the budget. Each says why it matched. */
-export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: string | null): Promise<HireMatch[]> {
+export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: string | null, viewer?: Viewer | null): Promise<HireMatch[]> {
   const hiddenSet = new Set(jobId ? (await prisma.jobHiddenProvider.findMany({ where: { job_id: jobId }, select: { provider_person_id: true } })).map((h) => h.provider_person_id) : []);
   const pillarName = productPillarName(input.product);
   const [rows, pillar] = await Promise.all([
@@ -202,10 +203,13 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
     return { m, key: [Number(!(onsite && !placeHit)), jobDomains.size ? Number(sharedDomains.length > 0) : 1, score, Number(inBudget)] };
   });
   const relevant = scored.filter((x) => x.key[2] > 0);
-  return (relevant.length ? relevant : scored)
+  const top = (relevant.length ? relevant : scored)
     .sort((a, b) => { for (let i = 0; i < a.key.length; i++) if (b.key[i] !== a.key[i]) return b.key[i] - a.key[i]; return a.m.name.localeCompare(b.m.name); })
     .slice(0, 40)
     .map((x) => x.m);
+  // AN-E003: no name or company until a Work Order exists — "Provider P-1038" (title, city, rate and skills stay).
+  const [seen, numbers] = await Promise.all([identityVisibleTo(viewer ?? null, top.map((m) => m.personId)), providerNumbers(top.map((m) => m.profileId))]);
+  return top.map((m) => (seen.has(m.personId) ? m : { ...m, name: providerLabel(numbers.get(m.profileId)), company: null }));
 }
 
 /** MQ-E005: hide a provider from this job's matches, or bring them back (owner only). */

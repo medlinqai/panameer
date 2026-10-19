@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { providerMaskFor } from "@/lib/messages";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -42,6 +43,9 @@ export default async function MessagesPage({
       ])
     : [null, null, null];
 
+  // AN-E003: a provider this buyer has no Work Order with stays "Provider P-…" in the thread too.
+  const maskedAs = viewer && withUserId ? (await providerMaskFor(viewer, [withUserId])).get(withUserId) : undefined;
+  if (maskedAs && other) Object.assign(other, { first_name: maskedAs, last_name: "", photo_url: null });
   const otherName = other ? `${other.first_name} ${other.last_name}`.trim() : "This member";
   const otherHref = profileHrefFor(other?.providerProfile);
 

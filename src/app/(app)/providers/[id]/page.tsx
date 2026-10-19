@@ -17,7 +17,7 @@ import { ConnectControls } from "@/components/community/ConnectControls";
 import { BackButton } from "@/components/casing/BackButton";
 import { viewerCanHire } from "@/lib/rate-visibility";
 import { getSessionViewer } from "@/lib/session";
-import { listShopProducts } from "@/lib/shop";
+import { hideProviderIdentity, listShopProducts } from "@/lib/shop";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
@@ -228,7 +228,7 @@ export default async function PublicProviderPage({
           // BOTH previews — a peer sees no owner tools either. The rate
           previewAsBuyer
           signedIn={!!viewer}
-          shopCards={await listShopProducts(profile.id, await seesTestAccounts(viewer))}
+          shopCards={await hideProviderIdentity(await listShopProducts(profile.id, await seesTestAccounts(viewer)), viewer)}
           catalogServices={await catalogServicesFor(profile.id, false)}
         />
         </div>

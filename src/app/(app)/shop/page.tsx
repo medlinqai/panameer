@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { memberOrPublicTwin } from "@/lib/public-twin";
-import { listShopProducts } from "@/lib/shop";
+import { hideProviderIdentity, listShopProducts } from "@/lib/shop";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/shop/ProductCard";
@@ -24,7 +24,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sto
   const f = await searchParams;
   const browsing = !!(f.q?.trim() || f.category || f.price || f.billing || f.delivery || f.offers);
   const [all, me] = await Promise.all([
-    listShopProducts(undefined, await seesTestAccounts(viewer)),
+    listShopProducts(undefined, await seesTestAccounts(viewer)).then((l) => hideProviderIdentity(l, viewer)),
     prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }),
   ]);
   const cartLines = me && browsing ? await prisma.workRequestLine.findMany({ where: { workRequest: { buyer_person_id: me.id, source: "SHOP", status: "INCOMPLETE" } }, select: { id: true, service_product_id: true } }) : [];

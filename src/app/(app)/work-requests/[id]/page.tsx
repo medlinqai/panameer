@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
 import { PENDING_ON_LABEL, WORK_ORDER_LABEL, waitingOn } from "@/lib/oracle-status";
 import { VerifiedTag } from "@/components/company/VerifiedTag";
 import { CompanyLink } from "@/components/company/CompanyLink";
@@ -78,12 +79,13 @@ export default async function Page({
     select: { id: true, person_id: true },
   });
   const personOf = new Map(profiles.map((p) => [p.id, p.person_id]));
+  // AN-E003: the Job's matches show a Provider number until a Work Order exists with them.
+  const [seen, numbers] = await Promise.all([identityVisibleTo(viewer, profiles.map((p) => p.person_id)), providerNumbers(profiles.map((p) => p.id))]);
   const options = providers
-    .map((p) => ({
-      personId: personOf.get(p.profileId) ?? "",
-      name: p.name,
-      headline: p.headline,
-    }))
+    .map((p) => {
+      const personId = personOf.get(p.profileId) ?? "";
+      return { personId, name: seen.has(personId) ? p.name : providerLabel(numbers.get(p.profileId)), headline: p.headline };
+    })
     .filter((p) => p.personId);
 
   const posted = detail.status === "OPEN";

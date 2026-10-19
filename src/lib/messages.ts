@@ -1,3 +1,4 @@
+import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
 import { memberVisibleWhere } from "@/lib/access";
 import { teachesEnrolled } from "@/lib/learn-instructor";
 import { prisma } from "@/lib/prisma";
@@ -183,6 +184,12 @@ export async function listConversations(viewer: Viewer): Promise<ConversationSum
     entry.photoUrl = p.photo_url;
   }
 
+  // AN-E003: a buyer messaging a provider they have no Work Order with sees "Provider P-…" and no photo.
+  for (const [userId, label] of await providerMaskFor(viewer, [...byOther.keys()])) {
+    const entry = byOther.get(userId);
+    if (entry) { entry.name = label; entry.photoUrl = null; }
+  }
+
   // A conversation with somebody who has no Person row still lists, with an
   return [...byOther.values()].sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime());
 }
@@ -246,4 +253,18 @@ export function tabsWithUnread<T extends { href: string; badge?: number }>(
 ): T[] {
   if (unread <= 0) return tabs;
   return tabs.map((t) => (t.href === "/messages" ? { ...t, badge: unread } : t));
+}
+
+/** AN-E003: for a buyer-only viewer, the providers among these users they may not see yet (no Work Order, not connected) → "Provider P-…". */
+export async function providerMaskFor(viewer: Viewer, userIds: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (!viewer.isServiceBuyer || viewer.isServiceProvider || !userIds.length) return out;
+  const providers = await prisma.person.findMany({ where: { user_id: { in: userIds }, providerProfile: { isNot: null } }, select: { id: true, user_id: true, providerProfile: { select: { id: true } } } });
+  if (!providers.length) return out;
+  const seen = await identityVisibleTo(viewer, providers.map((p) => p.id));
+  const linked = new Set((await prisma.connection.findMany({ where: { status: "ACCEPTED", OR: [{ from_user_id: viewer.userId }, { to_user_id: viewer.userId }] }, select: { from_user_id: true, to_user_id: true } })).map((c) => (c.from_user_id === viewer.userId ? c.to_user_id : c.from_user_id)));
+  const hide = providers.filter((p) => !seen.has(p.id) && p.user_id && !linked.has(p.user_id));
+  const numbers = await providerNumbers(hide.map((p) => p.providerProfile!.id));
+  for (const p of hide) out.set(p.user_id!, providerLabel(numbers.get(p.providerProfile!.id)));
+  return out;
 }

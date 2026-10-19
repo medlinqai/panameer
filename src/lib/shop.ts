@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { memberVisibleWhere } from "@/lib/access";
 import { scheduleLine } from "@/lib/cart";
+import type { Viewer } from "@/lib/access";
+import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
 
 // R1 Chain C: what a buyer can browse and buy — published service products only.
 export type ShopProduct = {
@@ -41,6 +43,8 @@ export type ShopProduct = {
   fresh: boolean;
   /** SH: the Category (commodity group). */
   category: string | null;
+  /** AN-E003: shown instead of the name until a Work Order exists. */
+  providerNumber: string | null;
   companyName: string | null;
   city: string | null;
   leadDays: number | null;
@@ -53,7 +57,7 @@ const SELECT = {
   serviceType: { select: { name: true, serviceCategory: { select: { business_type_id: true, businessType: { select: { commodityGroup: { select: { name: true } } } }, commodityGroup: { select: { name: true } } } } } },
   milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, payment_event: true } },
   deliverables: { orderBy: { sequence: "asc" as const }, select: { text: true } },
-  providerProfile: { select: { id: true, person_id: true, open_to_offers: true, person: { select: { first_name: true, last_name: true, photo_url: true, title: true, site: { select: { addresses: { take: 1, select: { city: true, state: true } } } }, company: { select: { name: true, country: true, businessTypes: { take: 1, select: { businessType: { select: { commodityGroup: { select: { name: true } } } } } } } } } } } },
+  providerProfile: { select: { id: true, person_id: true, open_to_offers: true, provider_number: true, person: { select: { first_name: true, last_name: true, photo_url: true, title: true, site: { select: { addresses: { take: 1, select: { city: true, state: true } } } }, company: { select: { name: true, country: true, businessTypes: { take: 1, select: { businessType: { select: { commodityGroup: { select: { name: true } } } } } } } } } } } },
 };
 
 const TERMS: Record<string, string> = { IMMEDIATE: "due on receipt", NET15: "net 15", NET30: "net 30", NET45: "net 45", NET60: "net 60" };
@@ -110,6 +114,7 @@ function shape(p: Row, orders: number): ShopProduct {
     createdAt: p.created_at.toISOString(),
     fresh: Date.now() - p.created_at.getTime() < 30 * 86_400_000,
     category,
+    providerNumber: p.providerProfile.provider_number,
     companyName: person?.company?.name ?? null,
     city: addr?.city ? [addr.city, addr.state].filter(Boolean).join(", ") : null,
     leadDays: p.lead_time_days,
@@ -123,3 +128,11 @@ export async function getShopProduct(id: string, seesTest = false): Promise<Shop
 }
 
 
+
+/** AN-E003: no name, company or photo for a provider this viewer has no Work Order with — "Provider P-1038". */
+export async function hideProviderIdentity<T extends Pick<ShopProduct, "providerPersonId" | "providerProfileId" | "providerNumber" | "providerName" | "providerFirst" | "providerLast" | "providerPhotoUrl" | "companyName">>(list: T[], viewer: Viewer | null): Promise<T[]> {
+  const seen = await identityVisibleTo(viewer, list.map((p) => p.providerPersonId));
+  const missing = list.filter((p) => !p.providerNumber && !seen.has(p.providerPersonId)).map((p) => p.providerProfileId);
+  const numbers = missing.length ? await providerNumbers(missing) : new Map<string, string>();
+  return list.map((p) => (seen.has(p.providerPersonId) ? p : { ...p, providerName: providerLabel(p.providerNumber ?? numbers.get(p.providerProfileId)), providerFirst: "", providerLast: "", providerPhotoUrl: null, companyName: null }));
+}

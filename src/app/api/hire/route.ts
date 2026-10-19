@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       case "matches": {
         const jobId = await saveHireJob(gate, body.jobId ?? null, body.input!);
         await jobPosted(gate, jobId, body.input!.title);
-        return NextResponse.json({ jobId, matches: await hireMatches(body.input!, await seesTestAccounts(gate), jobId) });
+        return NextResponse.json({ jobId, matches: await hireMatches(body.input!, await seesTestAccounts(gate), jobId, gate) });
       }
       case "reparseWho": {
         // PC-E002: the buyer changed the Business Type — pass 2 again for WHO only.
