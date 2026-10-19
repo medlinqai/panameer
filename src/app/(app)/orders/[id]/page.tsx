@@ -90,7 +90,7 @@ export default async function Page({
             {o.buyerName} <span className="text-ink-2/60">→</span> {o.providerName}
           </p>
         </div>
-        <StatusPill status={o.status} waiting={o.waiting} frozen={o.frozen} pendingChange={pendingChange} />
+        <StatusPill status={o.status} waiting={o.waiting} frozen={o.frozen} pendingChange={pendingChange} pendingOn={o.pendingOn} />
       </div>
 
       <OrderTabs id={o.id} current="overview" />

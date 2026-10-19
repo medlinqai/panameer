@@ -255,6 +255,8 @@ export type OrderRow = {
   jobId: string | null;
   externalRef: string | null;
   waiting: string | null;
+  /** WA-E002: whose acceptance the order is waiting for. */
+  pendingOn: "BUYER" | "PROVIDER" | null;
   frozen: boolean;
   /** X-E007: from the customer's ERP. */
   erp: boolean;
@@ -360,6 +362,7 @@ export async function listOrders(viewer: Viewer): Promise<OrderRow[]> {
       jobId: o.workRequest.job_id,
       externalRef: o.external_ref,
       waiting: waitingLine(o, party, { buyer: names.get(o.buyer_person_id) ?? "the buyer", provider: names.get(o.provider_person_id) ?? "the provider" }),
+      pendingOn: waitingOn(o),
       frozen: !!o.frozen_at,
       erp: !!o.erp_connection_id,
     };
@@ -422,6 +425,7 @@ export type OrderDetail = {
   buyerReleasedAt: string | null;
   buyerAcceptedAt: string | null;
   waiting: string | null;
+  pendingOn: "BUYER" | "PROVIDER" | null;
   termsVersion: string | null;
   lines: OrderLineView[];
   valueCents: number;
@@ -597,6 +601,7 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     buyerReleasedAt: o.buyer_released_at ? o.buyer_released_at.toISOString() : null,
     buyerAcceptedAt: o.buyer_accepted_at ? o.buyer_accepted_at.toISOString() : null,
     waiting: waitingLine(o, party, { buyer: names.get(o.buyer_person_id) ?? "the buyer", provider: names.get(o.provider_person_id) ?? "the provider" }),
+    pendingOn: waitingOn(o),
     termsVersion: o.terms_version,
     lines: views,
     valueCents,

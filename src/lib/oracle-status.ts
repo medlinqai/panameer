@@ -33,7 +33,7 @@ export const WORK_ORDER_LABEL: Record<WorkOrderStatus, string> = {
   DRAFT: "Incomplete",
   ISSUED: "Pending Acceptance",
   ACCEPTED: "Pending Acceptance",
-  RELEASED: "Open",
+  RELEASED: "Released",
   ACTIVE: "Open",
   CLOSED: "Closed",
   CANCELLED: "Canceled",
@@ -63,13 +63,15 @@ export const SETTLEMENT_LABEL: Record<PaymentRequestStatus, string> = {
   PAID: "Paid",
 };
 
-/** Who a Pending Acceptance order is waiting on, from the two acceptance stamps. */
+/** WA-E002: who a pending order is waiting on — the buyer accepts first, then the provider. (An older order the provider
+ *  already accepted — status ACCEPTED — still waits on the buyer.) */
 export function waitingOn(o: { status: WorkOrderStatus; provider_accepted_at?: Date | string | null; buyer_accepted_at?: Date | string | null }): "PROVIDER" | "BUYER" | null {
   if (o.status !== "ISSUED" && o.status !== "ACCEPTED") return null;
-  if (!o.provider_accepted_at) return "PROVIDER";
   if (!o.buyer_accepted_at) return "BUYER";
+  if (!o.provider_accepted_at) return "PROVIDER";
   return null;
 }
+export const PENDING_ON_LABEL = { BUYER: "Pending Buyer Acceptance", PROVIDER: "Pending Provider Acceptance" } as const;
 
 // Pill tones: magenta = waiting on someone, ink = open/live, grey = finished or not started. No green.
 const QUIET = "bg-ink/[0.05] text-ink-2";
