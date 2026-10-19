@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { OrderTermsBlock } from "@/components/orders/OrderTermsBlock";
 import { notFound, redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
@@ -90,6 +91,8 @@ export default async function Page({
           <p className="mt-1.5 text-[14.5px] text-ink-2">
             {o.buyerName} <span className="text-ink-2/60">→</span> {o.providerName}
           </p>
+          {/* WA-E005: the chain — Job → Work Request → this Work Order. */}
+          {await chainLine(o.id)}
         </div>
         <StatusPill status={o.status} waiting={o.waiting} frozen={o.frozen} pendingChange={pendingChange} pendingOn={o.pendingOn} />
       </div>
@@ -345,5 +348,17 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
       <dt className="text-[12.5px] font-bold uppercase tracking-[0.08em] text-ink-2">{label}</dt>
       <dd className="mt-0.5 truncate text-[14.5px]">{children}</dd>
     </div>
+  );
+}
+
+async function chainLine(orderId: string) {
+  const w = await prisma.workOrder.findUnique({ where: { id: orderId }, select: { workRequest: { select: { wr_number: true, job: { select: { id: true, title: true } } } } } });
+  const wr = w?.workRequest;
+  if (!wr) return null;
+  return (
+    <p className="mt-0.5 text-[13px] text-ink-2" data-order-chain>
+      From Work Request {wr.job ? <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.wr_number ?? "—"}</Link> : <b>{wr.wr_number ?? "—"}</b>}
+      {wr.job && <> · Job: <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.job.title || "Untitled"}</Link></>}
+    </p>
   );
 }

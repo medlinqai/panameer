@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PENDING_ON_LABEL, WORK_ORDER_LABEL, waitingOn } from "@/lib/oracle-status";
 import { VerifiedTag } from "@/components/company/VerifiedTag";
 import { CompanyLink } from "@/components/company/CompanyLink";
 import { notFound, redirect } from "next/navigation";
@@ -293,6 +294,11 @@ export default async function Page({
       {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && (
         <AssignDirectly workRequestId={detail.id} providers={options} />
       )}
+      {(await jobOrders(detail.id)).map((wo) => (
+        <p key={wo.id} data-job-work-order className="mt-4 text-[13.5px] text-ink-2">
+          Work Order: <Link href={`/orders/${wo.id}`} className="font-semibold text-ink underline underline-offset-2">{wo.order_number}</Link> · {wo.label}
+        </p>
+      ))}
       <p data-job-requisition className="mt-4 text-[13.5px] text-ink-2">
         Work Request: <Link href="/orders/work-requests" className="font-semibold text-ink underline underline-offset-2">{WORK_REQUEST_STATUS_LABEL[detail.workRequestStatus]}</Link>
         {awarded && " · every line has a provider and a price — Submit creates the work order"}
@@ -358,4 +364,10 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
       <dd className="mt-0.5 truncate text-[14.5px]">{children}</dd>
     </div>
   );
+}
+
+/** WA-E005: the Work Orders this Job's Work Requests produced, with their acceptance status. */
+async function jobOrders(jobId: string) {
+  const rows = await prisma.workOrder.findMany({ where: { workRequest: { job_id: jobId }, status: { not: "CANCELLED" } }, orderBy: { created_at: "desc" }, select: { id: true, order_number: true, status: true, buyer_accepted_at: true, provider_accepted_at: true } });
+  return rows.map((r) => { const w = waitingOn(r); return { ...r, label: w ? PENDING_ON_LABEL[w] : WORK_ORDER_LABEL[r.status] }; });
 }
