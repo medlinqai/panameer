@@ -7,7 +7,7 @@ import type { Viewer } from "@/lib/access";
 import { waitingOn } from "@/lib/oracle-status";
 import { queueConfirmation } from "@/lib/erp/outbound";
 
-/** The Pending Acknowledgment sub-line, worded for the viewer. */
+/** The Pending Acceptance sub-line, worded for the viewer. */
 export function waitingLine(o: { status: WorkOrderStatus; provider_accepted_at?: Date | null; buyer_accepted_at?: Date | null }, party: OrderParty, names: { buyer: string; provider: string }): string | null {
   const w = waitingOn(o);
   if (!w) return null;

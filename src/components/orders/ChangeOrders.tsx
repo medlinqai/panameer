@@ -78,7 +78,7 @@ export function ChangeOrders(props: {
 
       {pending && (
         <div data-pending-change className="mt-3 border border-magenta p-4">
-          <p className="text-[15px] font-bold">Change order {pending.number} · Pending Change Acknowledgment</p>
+          <p className="text-[15px] font-bold">Change order {pending.number} · Pending Change Acceptance</p>
           <p className="mt-0.5 text-[13px] text-ink-2">{props.party === "PROVIDER" ? "The current terms stay in force until you accept." : "Waiting on the provider. The current terms stay in force until they accept."}</p>
           <ul className="mt-2 grid gap-1 text-[14px]">{pending.lines.map((t) => <li key={t}>{t}</li>)}</ul>
           {props.party === "PROVIDER" && (

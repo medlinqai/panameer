@@ -31,8 +31,8 @@ export const PROPOSAL_LABEL: Record<ProposalStatus, string> = {
 
 export const WORK_ORDER_LABEL: Record<WorkOrderStatus, string> = {
   DRAFT: "Incomplete",
-  ISSUED: "Pending Acknowledgment",
-  ACCEPTED: "Pending Acknowledgment",
+  ISSUED: "Pending Acceptance",
+  ACCEPTED: "Pending Acceptance",
   RELEASED: "Open",
   ACTIVE: "Open",
   CLOSED: "Closed",
@@ -45,7 +45,7 @@ export const WORK_ORDER_LABEL: Record<WorkOrderStatus, string> = {
 export const ERP_PENDING_LABEL = "Sent to ERP · Pending Requester Approval";
 
 /** O-E003: shown instead of Open while a change order waits on the provider. */
-export const PENDING_CHANGE_LABEL = "Pending Change Acknowledgment";
+export const PENDING_CHANGE_LABEL = "Pending Change Acceptance";
 
 export const WORK_ORDER_LINE_LABEL: Record<WorkOrderLineStatus, string> = {
   OPEN: "Open",
@@ -63,7 +63,7 @@ export const SETTLEMENT_LABEL: Record<PaymentRequestStatus, string> = {
   PAID: "Paid",
 };
 
-/** Who a Pending Acknowledgment order is waiting on, from the two acceptance stamps. */
+/** Who a Pending Acceptance order is waiting on, from the two acceptance stamps. */
 export function waitingOn(o: { status: WorkOrderStatus; provider_accepted_at?: Date | string | null; buyer_accepted_at?: Date | string | null }): "PROVIDER" | "BUYER" | null {
   if (o.status !== "ISSUED" && o.status !== "ACCEPTED") return null;
   if (!o.provider_accepted_at) return "PROVIDER";
