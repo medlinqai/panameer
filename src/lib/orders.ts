@@ -702,7 +702,8 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
     return getOrderDetail(viewer, id);
   }
   if (party === "PROVIDER" && order.buyer_accepted_at) {
-    await acknowledgeErpOrder(order);
+    // WA-E004: the second acceptance releases the order — settlement is allowed from here; both are told.
+    if (await acknowledgeErpOrder(order)) await notifyReleased(order.id);
     await nudgeTaxBanking(order.provider_person_id);
     return getOrderDetail(viewer, id);
   }
@@ -739,6 +740,7 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
   if (done.count === 0) {
     throw new OrderError("This order is not waiting for your acceptance", "INVALID");
   }
+  await notifyReleased(order.id);
   // And the invariant holds by construction: the row now carries both
   return getOrderDetail(viewer, id);
 }
@@ -853,4 +855,13 @@ export async function requestOrderChanges(viewer: Viewer, id: string): Promise<{
   ]);
   await prisma.notification.updateMany({ where: { dedupe_key: `work.order_created:${order.id}`, resolved_at: null }, data: { resolved_at: new Date() } }).catch(() => {});
   return { jobId: head.workRequest.job_id, providerPersonId: head.provider_person_id };
+}
+
+/** WA-E004: "Work Order WO-… is released." to both parties. */
+export async function notifyReleased(orderId: string) {
+  const o = await prisma.workOrder.findUnique({ where: { id: orderId }, select: { order_number: true, buyer_person_id: true, provider_person_id: true } });
+  if (!o) return;
+  for (const personId of [o.buyer_person_id, o.provider_person_id]) {
+    await notify({ event: "work.order_released", personId, entityType: "work_order", entityId: orderId, dedupeKey: `work.order_released:${orderId}:${personId}`, vars: { orderId, orderNumber: o.order_number } });
+  }
 }

@@ -387,6 +387,10 @@ export async function declineWorkOrder(
     }
   });
 
+  // WA-E004: the buyer hears it, with the reason; the Job is open again.
+  const head = await prisma.workOrder.findUnique({ where: { id: order.id }, select: { order_number: true, buyer_person_id: true, workRequest: { select: { job_id: true } } } });
+  const who = await prisma.person.findUnique({ where: { id: me.id }, select: { first_name: true, last_name: true } });
+  if (head) await notify({ event: "work.order_declined", personId: head.buyer_person_id, entityType: "work_order", entityId: order.id, dedupeKey: `work.order_declined:${order.id}`, vars: { orderNumber: head.order_number, providerName: who ? `${who.first_name} ${who.last_name}`.trim() : "The provider", reason: reason?.trim() ? `Reason: ${reason.trim()}` : "", jobId: head.workRequest.job_id ?? "" } });
   // X-E005: an ERP order's rejection goes back to the ERP as a ConfirmationRequest.
   if (order.erp_connection_id) await queueConfirmation(order.id, "reject", reason?.trim() || null);
   // The provider's own worklist item goes — they answered it. Resolved
