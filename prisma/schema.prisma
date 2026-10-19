@@ -9282,6 +9282,24 @@ model Job {
   sole_sourced          Boolean              @default(false)
   created_at            DateTime             @default(now())
   updated_at            DateTime             @updatedAt
+  /// SD-E001: the Service Description standard — WHAT · WHERE · TYPE · WHO · WHEN · RATE (summary = description).
+  commodity_group_id    String?              @db.Uuid
+  business_type_id      String?              @db.Uuid
+  city                  String?
+  state                 String?
+  onsite_days_per_week  Int?
+  contract_types        ContractType[]
+  product               String?
+  domains               String[]
+  custom_skills         String[]
+  years_experience      Int?
+  education             String?
+  responsibilities      String?
+  required              String?
+  nice_to_have          String?
+  start_text            String?
+  /// The pasted posting, contact details stripped.
+  source_text           String?
 
   buyer           Person              @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
   pAccount        PAccount            @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
@@ -9292,6 +9310,7 @@ model Job {
   skills          JobPostingSkill[]
   specializations JobSpecialization[]
   proposals       Proposal[]
+  credentials     JobCredential[]
   workRequests    WorkRequest[]
 
   @@index([p_account_id])
@@ -9364,4 +9383,25 @@ enum HelpLinkType {
   WORD
   PDF
   WEB_PAGE
+}
+
+/// SD-E001: the four ways a contract worker is engaged (captured only; no flows hang off it yet).
+enum ContractType {
+  C2C
+  W2
+  C2H
+  ONE_099
+}
+
+/// SD-E001: a credential a Service Description asks for, matched to a known credential name when one exists.
+model JobCredential {
+  id            String   @id @default(uuid()) @db.Uuid
+  job_id        String   @db.Uuid
+  name          String
+  credential_id String?  @db.Uuid
+  created_at    DateTime @default(now())
+  job           Job      @relation(fields: [job_id], references: [id], onDelete: Cascade)
+
+  @@index([job_id])
+  @@map("job_credentials")
 }
