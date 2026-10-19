@@ -2,24 +2,43 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { HireInput, HireMatch } from "@/lib/hire-questionnaire";
+import type { HireMatch } from "@/lib/hire-questionnaire";
+import type { SdContract, ServiceDescription } from "@/lib/service-description";
 
-// SH2-E004: Hire — the need first (Upwork-style), then named matches; checked ones get proposal requests on the Job.
-const STEPS = ["The Work", "Skills", "Scope", "Budget", "Details", "Request Proposals"];
+// SD-E003: Hire follows the Service Description standard. Step 1 can start from an uploaded posting (read like a résumé);
+// every step is then prefilled with "from your posting" hints; Next saves the draft Job.
+const STEPS = ["The Work", "Where", "Contract", "Who", "When & Rate", "Request Proposals"];
 const CHIP_ON = "rounded-full border border-magenta-dark bg-[#fbeafb] px-3.5 py-1.5 text-[13px] font-semibold text-magenta-dark";
 const CHIP_OFF = "rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink hover:border-magenta-dark";
 const OPT_ON = "flex flex-col items-start rounded-[10px] border border-magenta-dark bg-white p-3 text-left ring-1 ring-magenta-dark";
 const OPT_OFF = "flex flex-col items-start rounded-[10px] border border-line bg-white p-3 text-left hover:border-magenta-dark";
 const FIELD = "mt-1 block w-full rounded-[8px] border border-line bg-white px-3 py-2.5 text-[14.5px] font-normal text-ink";
+const LABEL = "mt-4 block text-[13px] font-bold";
 const BTN = "inline-flex min-h-10 items-center justify-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40";
 const GHOST = "inline-flex min-h-10 items-center justify-center border border-ink bg-white px-5 text-[14px] font-bold text-ink hover:bg-surface-hover disabled:opacity-40";
+const CONTRACTS: { value: SdContract; line: string }[] = [
+  { value: "C2C", line: "Corp-to-corp, through their company" },
+  { value: "W2", line: "On a staffing firm's payroll" },
+  { value: "C2H", line: "Contract to hire" },
+  { value: "1099", line: "Independent contractor" },
+];
+const WORKSITES = [["OFFSITE", "Offsite", "Works from their own place"], ["ONSITE", "Onsite", "At your site"], ["HYBRID", "Hybrid", "Some days at your site"]] as const;
 
-type Props = { categories: string[]; howLong: { value: string; label: string }[]; sizes: { value: string; line: string }[]; shipTos: { id: string; label: string }[] };
+type Props = {
+  categories: string[];
+  howLong: { value: string; label: string }[];
+  roles: { id: string; label: string }[];
+  initial: ServiceDescription;
+  initialJobId: string | null;
+  initialStep: number;
+};
 
-export function HireQuestionnaire({ categories, howLong, sizes, shipTos }: Props) {
-  const [step, setStep] = useState(0);
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [f, setF] = useState<HireInput>({ category: "", title: "", skills: [], size: "Medium", howLong: "ONE_TO_3_MONTHS", where: "OFFSITE", shipToId: shipTos[0]?.id ?? null, budgetType: "HOURLY", budgetMin: null, budgetMax: null, details: "" });
+export function HireQuestionnaire({ categories, howLong, roles, initial, initialJobId, initialStep }: Props) {
+  const [step, setStep] = useState(initialStep);
+  const [jobId, setJobId] = useState<string | null>(initialJobId);
+  const [f, setF] = useState<ServiceDescription>(initial);
+  const [start, setStart] = useState<"choose" | "upload" | "form">(initialJobId || initial.title ? "form" : "choose");
+  const [paste, setPaste] = useState("");
   const [suggested, setSuggested] = useState<string[]>([]);
   const [extra, setExtra] = useState("");
   const [busy, setBusy] = useState(false);
@@ -27,7 +46,8 @@ export function HireQuestionnaire({ categories, howLong, sizes, shipTos }: Props
   const [matches, setMatches] = useState<HireMatch[] | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [sent, setSent] = useState<number | null>(null);
-  const set = (patch: Partial<HireInput>) => setF((x) => ({ ...x, ...patch }));
+  const set = (patch: Partial<ServiceDescription>) => setF((x) => ({ ...x, ...patch }));
+  const from = (k: string) => (f.fromPosting.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-posting>from your posting</span> : null);
 
   const call = async (body: object) => {
     setBusy(true);
@@ -39,14 +59,27 @@ export function HireQuestionnaire({ categories, howLong, sizes, shipTos }: Props
     return j;
   };
 
+  const read = async (file: File | null) => {
+    setBusy(true);
+    setError(null);
+    const body = new FormData();
+    if (file) body.set("file", file);
+    else body.set("text", paste);
+    const r = await fetch("/api/hire/parse", { method: "POST", body }).catch(() => null);
+    const j = (await r?.json().catch(() => ({}))) as { sd?: ServiceDescription; error?: string };
+    setBusy(false);
+    if (!r?.ok || !j.sd) { setError(j.error ?? "We couldn't read that posting."); return; }
+    setF({ ...j.sd, category: j.sd.category || f.category });
+    setStart("form");
+  };
+
   const next = async () => {
     if (step === 0) {
       if (!f.category || f.title.trim().length < 3) { setError("Pick a Category and give it a short title."); return; }
-      const j = await call({ action: "suggest", category: f.category, title: f.title });
-      if (!j) return;
-      const skills = (j.skills as string[]) ?? [];
-      setSuggested(skills);
-      if (!f.skills.length) set({ skills: skills.slice(0, 4) });
+      if (!f.skills.length && !f.customSkills.length) {
+        const j = await call({ action: "suggest", category: f.category, title: f.title });
+        if (j) setSuggested((j.skills as string[]) ?? []);
+      }
     }
     if (step < 4) {
       const j = await call({ action: "save", jobId, input: f });
@@ -69,7 +102,20 @@ export function HireQuestionnaire({ categories, howLong, sizes, shipTos }: Props
     if (j) setSent(((j.created as unknown[]) ?? []).length + ((j.alreadyInvited as unknown[]) ?? []).length);
   };
 
-  const toggleSkill = (k: string) => set({ skills: f.skills.includes(k) ? f.skills.filter((x) => x !== k) : [...f.skills, k] });
+  const addSkill = async (name: string) => {
+    const n = name.trim();
+    if (!n) return;
+    const j = await call({ action: "resolveSkill", name: n });
+    const hit = j?.skill as { id: string; name: string } | null | undefined;
+    if (hit && !f.skills.some((s) => s.id === hit.id)) set({ skills: [...f.skills, hit] });
+    else if (!hit && !f.customSkills.includes(n)) set({ customSkills: [...f.customSkills, n] });
+    setExtra("");
+  };
+  const listField = (k: "credentials" | "domains", label: string, hint: string) => (
+    <label className={LABEL}>{label} <span className="font-normal text-ink-3">{hint}</span>{from(k)}
+      <input value={f[k].join(", ")} onChange={(e) => set({ [k]: e.target.value.split(",").map((x) => x.trimStart()).filter((x, i, a) => x || i === a.length - 1) } as Partial<ServiceDescription>)} onBlur={(e) => set({ [k]: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) } as Partial<ServiceDescription>)} className={FIELD} />
+    </label>
+  );
 
   return (
     <div className="mt-4 grid gap-7 rounded-[14px] border border-line bg-white p-5 md:grid-cols-[220px_minmax(0,1fr)] md:p-6" data-hire>
@@ -83,81 +129,139 @@ export function HireQuestionnaire({ categories, howLong, sizes, shipTos }: Props
       </ol>
 
       <section className="min-w-0">
-        {step === 0 && (
+        {step === 0 && start === "choose" && (
+          <div data-hire-start>
+            <h2 className="text-[19px] font-extrabold">What do you need done?</h2>
+            <p className="text-[13.5px] text-ink-2">Start from a posting you already have, or fill it in yourself.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <button type="button" onClick={() => setStart("upload")} className={OPT_OFF} data-upload-posting><b className="text-[15px]">Upload a Posting</b><small className="text-[12.5px] text-ink-2">Paste it or drop a Word / PDF file — we fill in the steps, you check them.</small></button>
+              <button type="button" onClick={() => setStart("form")} className={OPT_OFF}><b className="text-[15px]">Fill It In Myself</b><small className="text-[12.5px] text-ink-2">Five short steps.</small></button>
+            </div>
+          </div>
+        )}
+        {step === 0 && start === "upload" && (
+          <div data-hire-upload>
+            <h2 className="text-[19px] font-extrabold">Upload a posting</h2>
+            <p className="text-[13.5px] text-ink-2">From LinkedIn or anywhere. Names, emails and phone numbers are taken out before we read it.</p>
+            <label className="mt-4 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[12px] border-2 border-dashed border-line bg-bg-soft px-4 py-6 text-center hover:border-magenta-dark"
+              onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); const file = e.dataTransfer.files?.[0]; if (file) void read(file); }}>
+              <b className="text-[14.5px]">Drop a .docx or .pdf here</b>
+              <span className="text-[12.5px] text-ink-2">or click to choose a file</span>
+              <input type="file" accept=".docx,.pdf,.doc,.txt" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void read(file); }} />
+            </label>
+            <label className={LABEL}>Or paste the posting
+              <textarea value={paste} onChange={(e) => setPaste(e.target.value)} rows={8} className={FIELD} placeholder="Paste the whole posting here" />
+            </label>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <button type="button" className={BTN} disabled={busy || paste.trim().length < 60} onClick={() => read(null)}>{busy ? "Reading…" : "Read My Posting"}</button>
+              <button type="button" className={GHOST} disabled={busy} onClick={() => setStart("form")}>Fill It In Myself</button>
+            </div>
+          </div>
+        )}
+        {step === 0 && start === "form" && (
           <>
             <h2 className="text-[19px] font-extrabold">What do you need done?</h2>
-            <p className="text-[13.5px] text-ink-2">Pick the closest category and give it a short title.</p>
-            <p className="mb-1.5 mt-4 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">Category</p>
+            <p className="text-[13.5px] text-ink-2">Pick the closest category, give it a short title and say what the work is.</p>
+            <p className="mb-1.5 mt-4 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">Category{from("category")}</p>
             <div className="flex flex-wrap gap-2">
-              {categories.map((c) => <button key={c} type="button" aria-pressed={f.category === c} onClick={() => set({ category: c, skills: [] })} className={f.category === c ? CHIP_ON : CHIP_OFF}>{c}</button>)}
+              {categories.map((c) => <button key={c} type="button" aria-pressed={f.category === c} onClick={() => set({ category: c })} className={f.category === c ? CHIP_ON : CHIP_OFF}>{c}</button>)}
             </div>
-            <label className="mt-4 block text-[13px] font-bold">
-              Title <span className="font-normal text-ink-3">e.g. “Google Ads + local SEO for an HVAC company”</span>
-              <input value={f.title} onChange={(e) => set({ title: e.target.value })} maxLength={140} className={FIELD} />
+            <label className={LABEL}>Title{from("title")}
+              <input value={f.title} onChange={(e) => set({ title: e.target.value })} maxLength={140} className={FIELD} placeholder="e.g. Oracle Cloud Procurement Functional Consultant" />
+            </label>
+            <label className={LABEL}>Summary{from("summary")}
+              <textarea value={f.summary} onChange={(e) => set({ summary: e.target.value })} rows={3} maxLength={4000} className={FIELD} />
             </label>
           </>
         )}
         {step === 1 && (
           <>
-            <h2 className="text-[19px] font-extrabold">What skills should they have?</h2>
-            <p className="text-[13.5px] text-ink-2">We suggested these from your title. Add or remove any.</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {[...new Set([...suggested, ...f.skills])].map((k) => <button key={k} type="button" aria-pressed={f.skills.includes(k)} onClick={() => toggleSkill(k)} className={f.skills.includes(k) ? CHIP_ON : CHIP_OFF}>{k}</button>)}
+            <h2 className="text-[19px] font-extrabold">Where is the work?</h2>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {WORKSITES.map(([v, t, l]) => <button key={v} type="button" aria-pressed={f.worksite === v} onClick={() => set({ worksite: v })} className={f.worksite === v ? OPT_ON : OPT_OFF}><b className="text-[14px]">{t}</b><small className="text-[12px] text-ink-2">{l}</small></button>)}
             </div>
-            <div className="mt-3 flex gap-2">
-              <input value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="Add a skill" aria-label="Add a skill" className="min-w-0 flex-1 rounded-[8px] border border-line px-3 py-2 text-[14px]" />
-              <button type="button" className={GHOST} onClick={() => { const k = extra.trim(); if (k && !f.skills.includes(k)) set({ skills: [...f.skills, k] }); setExtra(""); }}>Add</button>
+            {f.fromPosting.includes("worksite") && <p className="mt-1">{from("worksite")}</p>}
+            <div className="grid gap-x-3 sm:grid-cols-3">
+              <label className={LABEL}>City{from("city")}<input value={f.city} onChange={(e) => set({ city: e.target.value })} className={FIELD} /></label>
+              <label className={LABEL}>State<input value={f.state} onChange={(e) => set({ state: e.target.value })} className={FIELD} /></label>
+              <label className={LABEL}>Country<input value={f.country} onChange={(e) => set({ country: e.target.value })} className={FIELD} /></label>
             </div>
+            {f.worksite && f.worksite !== "OFFSITE" && (
+              <label className={LABEL}>Onsite days per week{from("onsiteDays")}
+                <input inputMode="numeric" value={f.onsiteDays ?? ""} onChange={(e) => set({ onsiteDays: e.target.value ? Math.min(7, Number(e.target.value.replace(/\D/g, ""))) : null })} className={`${FIELD} max-w-[120px]`} />
+              </label>
+            )}
           </>
         )}
         {step === 2 && (
           <>
-            <h2 className="text-[19px] font-extrabold">How big is it?</h2>
-            <p className="text-[13.5px] text-ink-2">This helps us match the right size of supplier.</p>
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {sizes.map((o) => <button key={o.value} type="button" aria-pressed={f.size === o.value} onClick={() => set({ size: o.value })} className={f.size === o.value ? OPT_ON : OPT_OFF}><b className="text-[14px]">{o.value}</b><small className="text-[12px] text-ink-2">{o.line}</small></button>)}
+            <h2 className="text-[19px] font-extrabold">How will you contract them?</h2>
+            <p className="text-[13.5px] text-ink-2">Pick every type you accept.{from("contractTypes")}</p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {CONTRACTS.map((c) => {
+                const on = f.contractTypes.includes(c.value);
+                return <button key={c.value} type="button" aria-pressed={on} onClick={() => set({ contractTypes: on ? f.contractTypes.filter((x) => x !== c.value) : [...f.contractTypes, c.value] })} className={on ? OPT_ON : OPT_OFF}><b className="text-[14px]">{c.value}</b><small className="text-[12px] text-ink-2">{c.line}</small></button>;
+              })}
             </div>
-            <label className="mt-4 block text-[13px] font-bold">How long
-              <select value={f.howLong} onChange={(e) => set({ howLong: e.target.value })} className={FIELD}>{howLong.map((h) => <option key={h.value} value={h.value}>{h.label}</option>)}</select>
-            </label>
-            <label className="mt-3 block text-[13px] font-bold">Where
-              <select value={f.where === "ONSITE" ? `ONSITE:${f.shipToId ?? ""}` : f.where} onChange={(e) => { const v = e.target.value; if (v.startsWith("ONSITE:")) set({ where: "ONSITE", shipToId: v.slice(7) || null }); else set({ where: v as HireInput["where"] }); }} className={FIELD}>
-                <option value="OFFSITE">Offsite</option>
-                {shipTos.length ? shipTos.map((s) => <option key={s.id} value={`ONSITE:${s.id}`}>Onsite — {s.label}</option>) : <option value="ONSITE:">Onsite</option>}
-                <option value="EITHER">Either</option>
-              </select>
-            </label>
           </>
         )}
         {step === 3 && (
           <>
-            <h2 className="text-[19px] font-extrabold">What&apos;s your budget?</h2>
-            <p className="text-[13.5px] text-ink-2">You can change it later. Suppliers propose their own rate.</p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {([["HOURLY", "Hourly rate", "Pay for time worked"], ["FIXED", "Fixed price", "One price for the job"]] as const).map(([v, t, l]) => <button key={v} type="button" aria-pressed={f.budgetType === v} onClick={() => set({ budgetType: v })} className={f.budgetType === v ? OPT_ON : OPT_OFF}><b className="text-[14px]">{t}</b><small className="text-[12px] text-ink-2">{l}</small></button>)}
+            <h2 className="text-[19px] font-extrabold">Who do you need?</h2>
+            <div className="grid gap-x-3 sm:grid-cols-2">
+              <label className={LABEL}>Role{from("roleId")}
+                <select value={f.roleId ?? ""} onChange={(e) => set({ roleId: e.target.value || null })} className={FIELD}><option value="">Any role</option>{roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}</select>
+              </label>
+              <label className={LABEL}>Product{from("product")}<input value={f.product} onChange={(e) => set({ product: e.target.value })} className={FIELD} placeholder="Fusion Cloud, EBS, PeopleSoft…" /></label>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <label className="text-[13px] font-bold">From ($)<input inputMode="numeric" value={f.budgetMin ?? ""} onChange={(e) => set({ budgetMin: e.target.value ? Number(e.target.value.replace(/[^0-9.]/g, "")) : null })} className={FIELD} /></label>
-              <label className="text-[13px] font-bold">To ($)<input inputMode="numeric" value={f.budgetMax ?? ""} onChange={(e) => set({ budgetMax: e.target.value ? Number(e.target.value.replace(/[^0-9.]/g, "")) : null })} className={FIELD} /></label>
+            {listField("domains", "Domain", "(P2P, O2C, R2R…)")}
+            <p className="mb-1.5 mt-4 text-[13px] font-bold">Skills{from("skills")}</p>
+            <div className="flex flex-wrap gap-2" data-hire-skills>
+              {f.skills.map((s) => <button key={s.id} type="button" onClick={() => set({ skills: f.skills.filter((x) => x.id !== s.id) })} className={CHIP_ON} aria-label={`Remove ${s.name}`}>{s.name} ×</button>)}
+              {f.customSkills.map((s) => <button key={s} type="button" onClick={() => set({ customSkills: f.customSkills.filter((x) => x !== s) })} className={CHIP_OFF} aria-label={`Remove ${s}`}>{s} ×</button>)}
+              {suggested.filter((s) => !f.customSkills.includes(s) && !f.skills.some((k) => k.name === s)).map((s) => <button key={s} type="button" onClick={() => addSkill(s)} className="rounded-full border border-dashed border-line px-3.5 py-1.5 text-[13px] text-ink-2 hover:border-magenta-dark">+ {s}</button>)}
             </div>
-            <p className="mt-1 text-[12.5px] text-ink-3">{f.budgetType === "HOURLY" ? "Per hour." : "For the whole job."}</p>
+            <div className="mt-2 flex gap-2">
+              <input value={extra} onChange={(e) => setExtra(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void addSkill(extra); } }} placeholder="Add a skill" aria-label="Add a skill" className="min-w-0 flex-1 rounded-[8px] border border-line px-3 py-2 text-[14px]" />
+              <button type="button" className={GHOST} onClick={() => addSkill(extra)}>Add</button>
+            </div>
+            <div className="grid gap-x-3 sm:grid-cols-2">
+              <label className={LABEL}>Years of experience{from("years")}<input inputMode="numeric" value={f.years ?? ""} onChange={(e) => set({ years: e.target.value ? Number(e.target.value.replace(/\D/g, "")) : null })} className={FIELD} /></label>
+              <label className={LABEL}>Education{from("education")}<input value={f.education} onChange={(e) => set({ education: e.target.value })} className={FIELD} /></label>
+            </div>
+            {listField("credentials", "Credentials", "(comma separated)")}
+            <label className={LABEL}>Responsibilities <span className="font-normal text-ink-3">(one per line)</span>{from("responsibilities")}<textarea value={f.responsibilities} onChange={(e) => set({ responsibilities: e.target.value })} rows={4} className={FIELD} /></label>
+            <label className={LABEL}>Required{from("required")}<textarea value={f.required} onChange={(e) => set({ required: e.target.value })} rows={3} className={FIELD} /></label>
+            <label className={LABEL}>Nice to have{from("niceToHave")}<textarea value={f.niceToHave} onChange={(e) => set({ niceToHave: e.target.value })} rows={2} className={FIELD} /></label>
           </>
         )}
         {step === 4 && (
           <>
-            <h2 className="text-[19px] font-extrabold">Anything else they should know?</h2>
-            <p className="text-[13.5px] text-ink-2">Describe it in your own words.</p>
-            <label className="mt-4 block text-[13px] font-bold">Details
-              <textarea value={f.details} onChange={(e) => set({ details: e.target.value })} rows={6} maxLength={4000} className={FIELD} />
-            </label>
+            <h2 className="text-[19px] font-extrabold">When, and what&apos;s your budget?</h2>
+            <div className="grid gap-x-3 sm:grid-cols-3">
+              <label className={LABEL}>Start{from("startText")}<input value={f.startText} onChange={(e) => set({ startText: e.target.value })} className={FIELD} placeholder="ASAP, within 2 weeks…" /></label>
+              <label className={LABEL}>Or a date<input type="date" value={f.startDate} onChange={(e) => set({ startDate: e.target.value })} className={FIELD} /></label>
+              <label className={LABEL}>How long{from("duration")}
+                <select value={f.duration ?? ""} onChange={(e) => set({ duration: (e.target.value || null) as ServiceDescription["duration"] })} className={FIELD}><option value="">Not sure yet</option>{howLong.map((h) => <option key={h.value} value={h.value}>{h.label}</option>)}</select>
+              </label>
+            </div>
+            <p className="mb-1.5 mt-5 text-[13px] font-bold">Rate{from("budget")}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {([["HOURLY", "Hourly rate", "Pay for time worked"], ["FIXED", "Fixed price", "One price for the job"]] as const).map(([v, t, l]) => <button key={v} type="button" aria-pressed={f.budgetType === v} onClick={() => set({ budgetType: v })} className={f.budgetType === v ? OPT_ON : OPT_OFF}><b className="text-[14px]">{t}</b><small className="text-[12px] text-ink-2">{l}</small></button>)}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label className="text-[13px] font-bold">From ($)<input inputMode="numeric" value={f.budgetMin ?? ""} onChange={(e) => set({ budgetMin: e.target.value ? Number(e.target.value.replace(/[^0-9.]/g, "")) : null })} className={FIELD} /></label>
+              <label className="text-[13px] font-bold">To ($)<input inputMode="numeric" value={f.budgetMax ?? ""} onChange={(e) => set({ budgetMax: e.target.value ? Number(e.target.value.replace(/[^0-9.]/g, "")) : null })} className={FIELD} /></label>
+            </div>
+            <p className="mt-1 text-[12.5px] text-ink-3">{f.budgetType === "FIXED" ? "For the whole job." : "Per hour. Postings often leave this out — add yours."}</p>
           </>
         )}
         {step === 5 && matches && (
           <div data-hire-matches>
             <h2 className="text-[19px] font-extrabold">Your matches</h2>
-            <p className="text-[13.5px] text-ink-2">Ranked by skill fit, then rate inside your budget. Pick who should send a proposal.</p>
+            <p className="text-[13.5px] text-ink-2">Ranked by role, skills, product and location, then rate inside your budget. Pick who should send a proposal.</p>
             {matches.length === 0 ? (
-              <p className="mt-4 text-[14px] text-ink-3">No one in {f.category} matches yet. Your job is saved as a draft — <Link href={`/work-requests/${jobId}`} className="font-semibold text-magenta-dark underline">open it</Link> to post it so suppliers can find it.</p>
+              <p className="mt-4 text-[14px] text-ink-3">No one in {f.category} matches yet. Your Service Description is saved as a draft — <Link href={`/work-requests/${jobId}`} className="font-semibold text-magenta-dark underline">open it</Link>.</p>
             ) : (
               <ul className="mt-3 divide-y divide-line border-y border-line">
                 {matches.map((m) => (
@@ -166,10 +270,10 @@ export function HireQuestionnaire({ categories, howLong, sizes, shipTos }: Props
                     <div className="min-w-0 flex-1">
                       <p className="text-[15px] font-bold">{m.company ? `${m.company} · ` : ""}{m.name}</p>
                       <p className="text-[13px] text-ink-2">{m.line}</p>
-                      <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]">
-                        {m.matched.map((k) => <span key={k} className="border border-line bg-bg-soft px-1.5">{k}</span>)}
-                        <span className="border border-ink px-1.5 font-semibold">{m.fit}% fit</span>
-                        {m.inBudget && <span className="border border-line px-1.5">In budget</span>}
+                      <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]" data-why>
+                        {m.why.map((k) => <span key={k} className="rounded-full border border-magenta-dark bg-[#fbeafb] px-2 font-semibold text-magenta-dark">{k}</span>)}
+                        {m.matched.map((k) => <span key={k} className="rounded-full border border-line bg-bg-soft px-2">{k}</span>)}
+                        {m.inBudget && <span className="rounded-full border border-line px-2">In budget</span>}
                       </p>
                     </div>
                     <div className="text-right text-[13px]">
@@ -184,16 +288,16 @@ export function HireQuestionnaire({ categories, howLong, sizes, shipTos }: Props
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <button type="button" className={BTN} disabled={busy || !picked.size || sent != null} onClick={request} data-request-proposals>{sent != null ? "Requests Sent" : "Request Proposals"}</button>
                 <span className="text-[13px] text-ink-2">{picked.size} selected</span>
-                {sent != null && <Link href={`/work-requests/${jobId}`} className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View the job →</Link>}
+                {sent != null && <Link href={`/work-requests/${jobId}`} className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View the Service Description →</Link>}
               </div>
             )}
           </div>
         )}
 
         {error && <p role="alert" className="mt-3 text-[13.5px] font-semibold text-magenta-dark">{error}</p>}
-        {step < 5 && (
+        {step < 5 && !(step === 0 && start !== "form") && (
           <div className="mt-5 flex justify-between gap-3 border-t border-line pt-4">
-            <button type="button" className={GHOST} disabled={step === 0 || busy} onClick={() => setStep(step - 1)}>Back</button>
+            <button type="button" className={GHOST} disabled={busy} onClick={() => (step === 0 ? setStart("choose") : setStep(step - 1))}>Back</button>
             <button type="button" className={BTN} disabled={busy} onClick={next}>{busy ? "Saving…" : step === 4 ? "Show My Matches" : `Next: ${STEPS[step + 1]}`}</button>
           </div>
         )}

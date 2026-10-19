@@ -104,3 +104,61 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string): 
   ];
   return sd;
 }
+
+// ── SD-E003: save the standard onto the draft Job, and read it back for editing ────────────────────────────────
+export async function writeServiceDescription(jobId: string, sd: ServiceDescription) {
+  const [group, pillar] = await Promise.all([
+    sd.category ? prisma.commodityGroup.findFirst({ where: { name: sd.category }, select: { id: true } }) : null,
+    productPillarName(sd.product) ? prisma.pillar.findFirst({ where: { name: productPillarName(sd.product)! }, select: { id: true } }) : null,
+  ]);
+  const lines = (t: string) => t.trim().slice(0, 6000) || null;
+  await prisma.job.update({
+    where: { id: jobId },
+    data: {
+      title: sd.title.trim().slice(0, 140), description: sd.summary.trim().slice(0, 4000) || null,
+      commodity_group_id: group?.id ?? null,
+      worksite: sd.worksite, city: sd.city.trim() || null, state: sd.state.trim() || null, location_country: sd.country.trim() || null,
+      onsite_days_per_week: sd.worksite && sd.worksite !== "OFFSITE" ? sd.onsiteDays : null,
+      contract_types: [...new Set(sd.contractTypes)].map((c) => CONTRACT_TO_DB[c]),
+      role_id: sd.roleId, pillar_id: pillar?.id ?? null, product: sd.product.trim() || null, domains: sd.domains.slice(0, 8),
+      custom_skills: [...new Set(sd.customSkills.map((s) => s.trim()).filter(Boolean))].slice(0, 30),
+      years_experience: sd.years, education: sd.education.trim() || null,
+      responsibilities: lines(sd.responsibilities), required: lines(sd.required), nice_to_have: lines(sd.niceToHave),
+      start_text: sd.startText.trim() || null, start_date: /^\d{4}-\d{2}-\d{2}$/.test(sd.startDate) ? new Date(sd.startDate) : null, duration: sd.duration,
+      budget_type: sd.budgetType, budget_min_cents: sd.budgetMin != null ? Math.round(sd.budgetMin * 100) : null, budget_max_cents: sd.budgetMax != null ? Math.round(sd.budgetMax * 100) : null, budget_amount_cents: null,
+      ...(sd.sourceText ? { source_text: sd.sourceText.slice(0, 20000) } : {}),
+    },
+  });
+  // Skills (catalog), credentials (matched to a known name), specialties (industries) — replaced as a set.
+  const known = sd.credentials.length ? await prisma.credential.findMany({ where: { name: { in: sd.credentials, mode: "insensitive" } }, distinct: ["name"], select: { id: true, name: true } }) : [];
+  const industries = sd.specialties.length ? await prisma.specialization.findMany({ where: { kind: "INDUSTRY", status: "ACTIVE", name: { in: sd.specialties, mode: "insensitive" } }, select: { id: true } }) : [];
+  await prisma.$transaction([
+    prisma.jobPostingSkill.deleteMany({ where: { job_id: jobId } }),
+    prisma.jobPostingSkill.createMany({ data: sd.skills.map((s) => ({ job_id: jobId, skill_id: s.id })), skipDuplicates: true }),
+    prisma.jobCredential.deleteMany({ where: { job_id: jobId } }),
+    prisma.jobCredential.createMany({ data: sd.credentials.map((name) => ({ job_id: jobId, name, credential_id: known.find((k) => k.name.toLowerCase() === name.toLowerCase())?.id ?? null })) }),
+    prisma.jobSpecialization.deleteMany({ where: { job_id: jobId } }),
+    prisma.jobSpecialization.createMany({ data: industries.map((i) => ({ job_id: jobId, specialization_id: i.id })), skipDuplicates: true }),
+  ]);
+}
+
+export async function readServiceDescription(jobId: string): Promise<ServiceDescription | null> {
+  const j = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: { skills: { include: { skill: { select: { id: true, name: true } } } }, credentials: true, specializations: { include: { specialization: { select: { name: true } } } } },
+  });
+  if (!j) return null;
+  const group = j.commodity_group_id ? await prisma.commodityGroup.findUnique({ where: { id: j.commodity_group_id }, select: { name: true } }) : null;
+  return {
+    ...emptySd(),
+    category: group?.name ?? "", title: j.title, summary: j.description ?? "",
+    worksite: j.worksite, city: j.city ?? "", state: j.state ?? "", country: j.location_country ?? "", onsiteDays: j.onsite_days_per_week,
+    contractTypes: j.contract_types.map((c) => CONTRACT_FROM_DB[c]),
+    roleId: j.role_id, domains: j.domains, product: j.product ?? "", skills: j.skills.map((s) => ({ id: s.skill.id, name: s.skill.name })), customSkills: j.custom_skills,
+    years: j.years_experience, education: j.education ?? "", credentials: j.credentials.map((c) => c.name), specialties: j.specializations.map((s) => s.specialization.name),
+    responsibilities: j.responsibilities ?? "", required: j.required ?? "", niceToHave: j.nice_to_have ?? "",
+    startText: j.start_text ?? "", startDate: j.start_date ? j.start_date.toISOString().slice(0, 10) : "", duration: j.duration,
+    budgetType: j.budget_type, budgetMin: j.budget_min_cents != null ? j.budget_min_cents / 100 : null, budgetMax: j.budget_max_cents != null ? j.budget_max_cents / 100 : null,
+    sourceText: "",
+  };
+}
