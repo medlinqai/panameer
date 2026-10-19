@@ -137,9 +137,16 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
     prisma.providerService.findMany({ where: { provider_profile_id: { in: ids }, active: true, published_at: { not: null } }, select: { provider_profile_id: true, name: true, rate_cents: true, uom: true } }),
     prisma.serviceProduct.findMany({ where: { provider_profile_id: { in: ids }, status: "PUBLISHED", offered: true }, select: { provider_profile_id: true, title: true, summary: true, price_cents: true } }),
   ]);
-  const wantIds = new Set(input.skills.map((k) => k.id));
-  const wantNames = [...input.skills.map((k) => k.name), ...input.customSkills];
-  const fallback = wantNames.length ? [] : await suggestSkills(input.category, input.title);
+  // MQ-E004: count against the job's 10 most important skills — the ones its Required list names first.
+  const req = input.required.toLowerCase();
+  const ranked = [...input.skills.map((k) => ({ id: k.id as string | null, name: k.name })), ...input.customSkills.map((n) => ({ id: null as string | null, name: n }))]
+    .map((k, i) => ({ ...k, i, inReq: req.includes(k.name.toLowerCase()) }))
+    .sort((a, b) => Number(b.inReq) - Number(a.inReq) || a.i - b.i)
+    .slice(0, 10);
+  const wantIds = new Set(ranked.filter((k) => k.id).map((k) => k.id!));
+  const wantNames = ranked.map((k) => k.name);
+  const customTop = ranked.filter((k) => !k.id).map((k) => k.name);
+  const fallback = wantNames.length ? [] : (await suggestSkills(input.category, input.title)).slice(0, 10);
   const min = input.budgetMin != null ? input.budgetMin * 100 : null;
   const max = input.budgetMax != null ? input.budgetMax * 100 : null;
   const onsite = !!input.worksite && input.worksite !== "OFFSITE" && !!input.state.trim();
@@ -152,7 +159,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
     const prods = products.filter((x) => x.provider_profile_id === r.id);
     const corpus = [r.person.title ?? "", r.overview ?? "", ...r.skills.map((k) => k.skill.name), ...mine.map((x) => x.name), ...prods.flatMap((x) => [x.title, x.summary ?? ""])].join(" ").toLowerCase();
     const byId = r.skills.filter((k) => wantIds.has(k.skill_id)).map((k) => k.skill.name);
-    const byName = [...input.customSkills, ...fallback].filter((k) => corpus.includes(k.toLowerCase()));
+    const byName = [...customTop, ...fallback].filter((k) => corpus.includes(k.toLowerCase()));
     const matched = [...new Set([...byId, ...byName])];
     const roleHit = !!input.roleId && r.roles.some((x) => x.role_id === input.roleId);
     const theirDeep = new Set([...r.capabilities.map((c) => c.workRole?.name).filter((n): n is string => !!n), ...deepRolesIn(r.person.title ?? "")]);
@@ -173,7 +180,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
       ...sharedDomains,
       // Only the deepest shared level is worth a chip — the top level ("Application-Specific Roles") says nothing.
       ...(deepHit ? [deepHit] : []),
-      ...(matched.length ? [`${matched.length}${total ? `/${total}` : ""} skills`] : []),
+      ...(matched.length ? [`${matched.length} of ${total} skills`] : []),
       ...(productHit && pillar ? [`Product: ${pillar.name}`] : []),
       ...(placeHit ? [`In ${addr!.state}`] : []),
       ...(years ? [`${years} yrs`] : []),
