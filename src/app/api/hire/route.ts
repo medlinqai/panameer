@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
-import { HireError, hireMatches, requestProposals, resolveSkill, saveHireJob, suggestSkills, type HireInput } from "@/lib/hire-questionnaire";
+import { HireError, hireMatches, requestProposals, resolveSkill, saveHireJob, setHidden, suggestSkills, type HireInput } from "@/lib/hire-questionnaire";
 import { WorkRequestError } from "@/lib/work-request";
 import { reparseWho } from "@/lib/service-description";
 import { jobPosted } from "@/lib/hire-direct";
@@ -20,13 +20,18 @@ export async function POST(request: Request) {
       case "matches": {
         const jobId = await saveHireJob(gate, body.jobId ?? null, body.input!);
         await jobPosted(gate, jobId, body.input!.title);
-        return NextResponse.json({ jobId, matches: await hireMatches(body.input!, await seesTestAccounts(gate)) });
+        return NextResponse.json({ jobId, matches: await hireMatches(body.input!, await seesTestAccounts(gate), jobId) });
       }
       case "reparseWho": {
         // PC-E002: the buyer changed the Business Type — pass 2 again for WHO only.
         const who = await reparseWho(String(body.sourceText ?? ""), String(body.businessTypeId ?? ""));
         return who ? NextResponse.json({ who }) : NextResponse.json({ error: "We couldn't re-read the posting for that Business Type." }, { status: 422 });
       }
+      case "hide":
+      case "unhide":
+        if (!body.jobId || !body.personIds?.[0]) return NextResponse.json({ error: "Pick a provider." }, { status: 400 });
+        await setHidden(gate, body.jobId, body.personIds[0], body.action === "hide");
+        return NextResponse.json({ ok: true });
       case "resolveSkill":
         return NextResponse.json({ skill: await resolveSkill(String(body.name ?? "")) });
       case "request":

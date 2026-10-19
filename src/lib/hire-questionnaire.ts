@@ -110,11 +110,14 @@ export function deepRolesIn(text: string): string[] {
 
 export type HireMatch = { personId: string; profileId: string; name: string; company: string | null; line: string; rate: string | null; matched: string[]; why: string[]; fit: number; inBudget: boolean;
   /** MQ-E001: an Onsite/Hybrid job lists only providers in its state; the rest come after, behind "Show providers outside". */
-  outside: boolean };
+  outside: boolean;
+  /** MQ-E005: hidden by the buyer on this job (restorable). */
+  hidden: boolean };
 
 /** SD-E004: named matches — ranked by Role, then skill overlap, then Product, then location (Onsite/Hybrid = same state),
  *  then rate inside the budget. Each says why it matched. */
-export async function hireMatches(input: HireInput, seesTest: boolean): Promise<HireMatch[]> {
+export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: string | null): Promise<HireMatch[]> {
+  const hiddenSet = new Set(jobId ? (await prisma.jobHiddenProvider.findMany({ where: { job_id: jobId }, select: { provider_person_id: true } })).map((h) => h.provider_person_id) : []);
   const pillarName = productPillarName(input.product);
   const [rows, pillar] = await Promise.all([
     prisma.providerProfile.findMany({
@@ -192,6 +195,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
       rate: hourly.length ? `$${Math.round(hourly[0] / 100)}/hr` : priced.length ? `from $${Math.round(priced[0] / 100)}` : null,
       matched: matched.slice(0, 8), why, fit: total ? Math.round((matched.length / total) * 100) : 0, inBudget,
       outside: onsite && !placeHit,
+      hidden: hiddenSet.has(r.person.id),
     };
     // Role + Domain (strong) + skills + Product + years; with job domains, a provider sharing none ranks below all who share one.
     const score = (deepHit ? 45 : roleHit ? 15 : 0) + sharedDomains.length * 40 + matched.length * 5 + Number(productHit) * 10 + Math.min(years ?? 0, 20) / 2;
@@ -202,6 +206,14 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
     .sort((a, b) => { for (let i = 0; i < a.key.length; i++) if (b.key[i] !== a.key[i]) return b.key[i] - a.key[i]; return a.m.name.localeCompare(b.m.name); })
     .slice(0, 40)
     .map((x) => x.m);
+}
+
+/** MQ-E005: hide a provider from this job's matches, or bring them back (owner only). */
+export async function setHidden(viewer: Viewer, jobId: string, providerPersonId: string, hidden: boolean) {
+  const { pAccountId } = await resolveBuyer(viewer);
+  await loadOwned(viewer, jobId, pAccountId);
+  if (hidden) await prisma.jobHiddenProvider.upsert({ where: { job_id_provider_person_id: { job_id: jobId, provider_person_id: providerPersonId } }, create: { job_id: jobId, provider_person_id: providerPersonId }, update: {} });
+  else await prisma.jobHiddenProvider.deleteMany({ where: { job_id: jobId, provider_person_id: providerPersonId } });
 }
 
 /** "Request proposals": proposal requests on the Job's requisition line, answer within 7 days. */
