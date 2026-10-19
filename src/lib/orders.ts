@@ -42,24 +42,28 @@ export function partyFor(
   return "NONE";
 }
 
-export type OrderAction = "ACCEPT";
+export type OrderAction = "ACCEPT" | "REQUEST_CHANGES" | "DECLINE";
 
+/** WA-E003/E004: the buyer accepts first (or asks for changes); then the provider accepts or declines. */
 export function availableActions(
-  order: { status: WorkOrderStatus; provider_accepted_at?: Date | null },
+  order: { status: WorkOrderStatus; provider_accepted_at?: Date | null; buyer_accepted_at?: Date | null },
   party: OrderParty
 ): OrderAction[] {
-  return canAcceptNow(order, party) ? ["ACCEPT"] : [];
+  if (!canAcceptNow(order, party)) return [];
+  if (party === "BUYER") return order.status === "ISSUED" ? ["ACCEPT", "REQUEST_CHANGES"] : ["ACCEPT"];
+  return ["ACCEPT", "DECLINE"];
 }
 
 export function canAcceptNow(
-  order: { status: WorkOrderStatus; provider_accepted_at?: Date | null },
+  order: { status: WorkOrderStatus; provider_accepted_at?: Date | null; buyer_accepted_at?: Date | null },
   party: OrderParty
 ): boolean {
-  if (party === "PROVIDER") {
-    return order.status === "ISSUED";
-  }
   if (party === "BUYER") {
-    return order.status === "ACCEPTED" && order.provider_accepted_at != null;
+    // Buyer first; an older order the provider already accepted (ACCEPTED) still waits on the buyer.
+    return (order.status === "ISSUED" && !order.buyer_accepted_at) || (order.status === "ACCEPTED" && order.provider_accepted_at != null && !order.buyer_accepted_at);
+  }
+  if (party === "PROVIDER") {
+    return order.status === "ISSUED" && order.buyer_accepted_at != null && !order.provider_accepted_at;
   }
   return false;
 }
@@ -71,14 +75,18 @@ export function bothPartiesAccepted(order: {
   return order.provider_accepted_at != null && order.buyer_accepted_at != null;
 }
 
-export function activationMessage(status: WorkOrderStatus, party: OrderParty): string {
+export function activationMessage(status: WorkOrderStatus, party: OrderParty, o: { buyer_accepted_at?: Date | null } = {}): string {
   switch (status) {
     case "DRAFT":
       return "This order has not been issued yet.";
     case "ISSUED":
+      if (!o.buyer_accepted_at)
+        return party === "BUYER"
+          ? "Review the terms and accept the Work Order — then the provider is asked to accept it. Something wrong? Request changes."
+          : "The buyer is reviewing this Work Order. You'll be asked to accept it once they have.";
       return party === "PROVIDER"
-        ? "Review the terms below and accept them to start."
-        : "Waiting for the provider to accept the terms.";
+        ? "The buyer has accepted. Review the terms and accept — or decline with a reason."
+        : "You've accepted. Waiting for the provider to accept the Work Order.";
     case "ACCEPTED":
       return party === "BUYER"
         ? "The provider has accepted. Review the terms and accept to open the order for settlement."
@@ -620,7 +628,7 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     frozen: !!o.frozen_at,
     erp: !!o.erp_connection_id,
     pendingRequests: await prisma.paymentRequest.count({ where: { work_order_id: o.id, status: "SUBMITTED" } }),
-    activationMessage: activationMessage(o.status, party),
+    activationMessage: activationMessage(o.status, party, o),
     hasChanges: views.some((v) => v.changes.length > 0),
   };
 }
@@ -683,6 +691,16 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
   const parties = await prisma.workOrder.findUnique({ where: { id: order.id }, select: { buyer_person_id: true, provider_person_id: true } });
   const actor = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   if (parties && actor) await assertCanSign(actor.id, parties.buyer_person_id, parties.provider_person_id);
+  // WA-E003: the buyer accepts first — stamped, then the provider is asked.
+  if (party === "BUYER" && order.status === "ISSUED") {
+    const now = new Date();
+    const moved = await prisma.workOrder.updateMany({ where: { id: order.id, status: "ISSUED", buyer_accepted_at: null }, data: { buyer_accepted_at: now } });
+    if (!moved.count) throw new OrderError("This order is not waiting for your acceptance", "INVALID");
+    await prisma.notification.updateMany({ where: { dedupe_key: `work.order_created:${order.id}`, resolved_at: null }, data: { resolved_at: now } }).catch(() => {});
+    const head = await prisma.workOrder.findUnique({ where: { id: order.id }, select: { order_number: true, description: true } });
+    await notify({ event: "work.order_offered", personId: order.provider_person_id, entityType: "work_order", entityId: order.id, dedupeKey: `work.order_offered:${order.id}`, vars: { orderId: order.id, orderNumber: head?.order_number ?? "", requestTitle: head?.description ?? "" } });
+    return getOrderDetail(viewer, id);
+  }
   if (party === "PROVIDER" && order.buyer_accepted_at) {
     await acknowledgeErpOrder(order);
     await nudgeTaxBanking(order.provider_person_id);
@@ -820,4 +838,19 @@ export async function closeIfFullyPaid(orderId: string): Promise<boolean> {
   if ((paid._sum.amount_cents ?? 0) < cap || cap <= 0) return false;
   const done = await prisma.workOrder.updateMany({ where: { id: orderId, status: { in: ["RELEASED", "ACTIVE"] } }, data: { status: "CLOSED" } });
   return done.count === 1;
+}
+
+/** WA-E003: the buyer asks for changes before accepting — this Work Order is withdrawn and the Work Request reopens for editing. */
+export async function requestOrderChanges(viewer: Viewer, id: string): Promise<{ jobId: string | null; providerPersonId: string }> {
+  const { order, party } = await loadParty(viewer, id);
+  if (party !== "BUYER" || order.status !== "ISSUED" || order.buyer_accepted_at) throw new OrderError("Changes can only be asked for before you accept", "INVALID");
+  const head = await prisma.workOrder.findUniqueOrThrow({ where: { id: order.id }, select: { work_request_id: true, provider_person_id: true, workRequest: { select: { job_id: true } } } });
+  await prisma.$transaction([
+    prisma.workOrder.update({ where: { id: order.id }, data: { status: "CANCELLED" } }),
+    prisma.workRequestLine.updateMany({ where: { work_order_id: order.id }, data: { work_order_id: null, status: "ASSIGNED" } }),
+    prisma.workRequest.update({ where: { id: head.work_request_id }, data: { status: "RETURNED" } }),
+    ...(head.workRequest.job_id ? [prisma.job.update({ where: { id: head.workRequest.job_id }, data: { status: "DRAFT" } })] : []),
+  ]);
+  await prisma.notification.updateMany({ where: { dedupe_key: `work.order_created:${order.id}`, resolved_at: null }, data: { resolved_at: new Date() } }).catch(() => {});
+  return { jobId: head.workRequest.job_id, providerPersonId: head.provider_person_id };
 }

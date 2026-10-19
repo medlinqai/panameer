@@ -7,11 +7,15 @@ import { SignGateModal, type SignGate } from "@/components/work/SignGateModal";
 import type { OrderAction } from "@/lib/orders";
 
 const LABEL: Record<OrderAction, string> = {
-  ACCEPT: "Accept Terms",
+  ACCEPT: "Accept Work Order",
+  REQUEST_CHANGES: "Request Changes",
+  DECLINE: "Decline",
 };
 
 const ENDPOINT: Record<OrderAction, string> = {
   ACCEPT: "accept",
+  REQUEST_CHANGES: "request-changes",
+  DECLINE: "decline",
 };
 
 export function OrderActivation({
@@ -32,10 +36,13 @@ export function OrderActivation({
   const [gate, setGate] = useState<SignGate | null>(null);
 
   async function run(action: OrderAction) {
+    // WA-E004: a decline carries the provider's reason.
+    const reason = action === "DECLINE" ? window.prompt("Why are you declining? The buyer sees this.") : null;
+    if (action === "DECLINE" && reason === null) return;
     setBusy(action);
     setError(null);
     try {
-      const r = await fetch(`/api/orders/${orderId}/${ENDPOINT[action]}`, { method: "POST" });
+      const r = await fetch(`/api/orders/${orderId}/${ENDPOINT[action]}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(reason ? { reason } : {}) });
       const out = await r.json().catch(() => ({}));
       if (r.status === 409 && out.code === "SIGN_GATE") {
         setGate(out.gate);
@@ -45,6 +52,8 @@ export function OrderActivation({
         setError(out.error ?? "That didn't work.");
         return;
       }
+      // WA-E003: Request Changes reopens the Work Request page.
+      if (action === "REQUEST_CHANGES" && out.jobId) { router.push(`/hire/terms?job=${out.jobId}&provider=${out.providerPersonId}`); return; }
       // A REFRESH, NOT A LOCAL STATE PATCH. Accepting changes the status, which
       router.refresh();
     } finally {
@@ -64,7 +73,7 @@ export function OrderActivation({
         <p className="min-w-0 flex-1 text-[14.5px] leading-relaxed text-ink-2">{message}</p>
         {/* THE ONLY PLACE EITHER BUTTON CAN COME FROM. */}
         {actions.map((a) => (
-          <Button key={a} disabled={busy !== null} onClick={() => run(a)}>
+          <Button key={a} variant={a === "ACCEPT" ? undefined : "ghost"} disabled={busy !== null} onClick={() => run(a)}>
             {busy === a ? "Working…" : LABEL[a]}
           </Button>
         ))}

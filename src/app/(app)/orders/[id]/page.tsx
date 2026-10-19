@@ -1,3 +1,4 @@
+import { OrderTermsBlock } from "@/components/orders/OrderTermsBlock";
 import { notFound, redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
@@ -96,7 +97,8 @@ export default async function Page({
       <OrderTabs id={o.id} current="overview" />
       {o.party === "PROVIDER" && <BuyerCard personId={o.buyerPersonId} />}
 
-      {}
+      {/* WA-E003/E004: the terms each party is accepting. */}
+      {o.pendingOn && <OrderTermsBlock orderId={o.id} />}
       <div className="mt-6">
         <OrderActivation orderId={o.id} actions={o.actions} message={o.activationMessage} payNote={o.party === "PROVIDER" && !(await providerPayReady((await prisma.workOrder.findUniqueOrThrow({ where: { id: o.id }, select: { provider_person_id: true } })).provider_person_id))} />
       </div>
