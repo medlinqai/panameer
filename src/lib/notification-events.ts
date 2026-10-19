@@ -528,6 +528,18 @@ export const NOTIFICATION_EVENTS = {
     body: () => "Approve or decline on your company's People tab.",
     href: () => "/company/team",
   },
+  // HS-E001: Hire step 4 — the buyer's job is saved and matched.
+  "work.job_posted": {
+    event: "work.job_posted",
+    recipient: "the buyer who created the job",
+    category: "work_request.matched",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `Your job ${str(v, "title", "")} is posted — see your matches.`.replace("job  is", "job is"),
+    body: () => "Pick who to hire, or ask a few for proposals.",
+    href: (v) => `/hire?job=${str(v, "jobId", "")}&step=4`,
+  },
   // PB-E005: a join request has waited 2 business days — one reminder to the company's admins.
   "company.join_reminder": {
     event: "company.join_reminder",

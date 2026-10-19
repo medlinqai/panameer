@@ -4,6 +4,7 @@ import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { HireError, hireMatches, requestProposals, resolveSkill, saveHireJob, suggestSkills, type HireInput } from "@/lib/hire-questionnaire";
 import { WorkRequestError } from "@/lib/work-request";
 import { reparseWho } from "@/lib/service-description";
+import { jobPosted } from "@/lib/hire-direct";
 
 // SH2-E004: the Hire questionnaire — suggest skills, save the draft Job, show matches, request proposals.
 export async function POST(request: Request) {
@@ -18,6 +19,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ jobId: await saveHireJob(gate, body.jobId ?? null, body.input!) });
       case "matches": {
         const jobId = await saveHireJob(gate, body.jobId ?? null, body.input!);
+        await jobPosted(gate, jobId, body.input!.title);
         return NextResponse.json({ jobId, matches: await hireMatches(body.input!, await seesTestAccounts(gate)) });
       }
       case "reparseWho": {
