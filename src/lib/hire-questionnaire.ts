@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { marketplaceWhere } from "@/lib/visibility";
 import { createDraft, resolveBuyer, loadOwned } from "@/lib/work-request";
-import { writeServiceDescription, type ServiceDescription } from "@/lib/service-description";
+import { productPillarName, writeServiceDescription, type ServiceDescription } from "@/lib/service-description";
 import { requisitionForJob } from "@/lib/requisition";
 import { ensureFirstLine } from "@/lib/work-request-lines";
 import { inviteProviders } from "@/lib/work-request-invite";
@@ -78,47 +78,76 @@ export async function resolveSkill(name: string): Promise<{ id: string; name: st
 
 export type HireMatch = { personId: string; profileId: string; name: string; company: string | null; line: string; rate: string | null; matched: string[]; why: string[]; fit: number; inBudget: boolean };
 
-/** Named matches for the questionnaire: sellers in the Category, ranked by skill fit, then rate inside the budget. */
+/** SD-E004: named matches — ranked by Role, then skill overlap, then Product, then location (Onsite/Hybrid = same state),
+ *  then rate inside the budget. Each says why it matched. */
 export async function hireMatches(input: HireInput, seesTest: boolean): Promise<HireMatch[]> {
-  const rows = await prisma.providerProfile.findMany({
-    where: { AND: [await marketplaceWhere(seesTest), { person: { company: { businessTypes: { some: { businessType: { commodityGroup: { name: input.category } } } } } } }] },
-    select: {
-      id: true, overview: true,
-      person: { select: { id: true, first_name: true, last_name: true, title: true, site: { select: { addresses: { take: 1, select: { city: true, state: true } } } }, company: { select: { name: true } } } },
-      skills: { select: { skill: { select: { name: true } } } },
-    },
-    take: 300,
-  });
+  const pillarName = productPillarName(input.product);
+  const [rows, role, pillar] = await Promise.all([
+    prisma.providerProfile.findMany({
+      where: { AND: [await marketplaceWhere(seesTest), { person: { company: { businessTypes: { some: { businessType: { commodityGroup: { name: input.category } } } } } } }] },
+      select: {
+        id: true, overview: true,
+        person: { select: { id: true, first_name: true, last_name: true, title: true, site: { select: { addresses: { take: 1, select: { city: true, state: true } } } }, company: { select: { name: true } } } },
+        roles: { select: { role_id: true } },
+        skills: { select: { skill_id: true, skill: { select: { name: true, pillar: { select: { name: true } } } } } },
+        employers: { select: { start_date: true } },
+      },
+      take: 400,
+    }),
+    input.roleId ? prisma.role.findUnique({ where: { id: input.roleId }, select: { display: true, name: true } }) : null,
+    pillarName ? prisma.pillar.findFirst({ where: { name: pillarName }, select: { name: true } }) : null,
+  ]);
   const ids = rows.map((r) => r.id);
   const [services, products] = await Promise.all([
     prisma.providerService.findMany({ where: { provider_profile_id: { in: ids }, active: true, published_at: { not: null } }, select: { provider_profile_id: true, name: true, rate_cents: true, uom: true } }),
     prisma.serviceProduct.findMany({ where: { provider_profile_id: { in: ids }, status: "PUBLISHED", offered: true }, select: { provider_profile_id: true, title: true, summary: true, price_cents: true } }),
   ]);
-  const named = [...input.skills.map((k) => k.name), ...input.customSkills];
-  const wanted = named.length ? named : await suggestSkills(input.category, input.title);
+  const wantIds = new Set(input.skills.map((k) => k.id));
+  const wantNames = [...input.skills.map((k) => k.name), ...input.customSkills];
+  const fallback = wantNames.length ? [] : await suggestSkills(input.category, input.title);
   const min = input.budgetMin != null ? input.budgetMin * 100 : null;
   const max = input.budgetMax != null ? input.budgetMax * 100 : null;
-  const out: HireMatch[] = [];
-  for (const r of rows) {
+  const onsite = !!input.worksite && input.worksite !== "OFFSITE" && !!input.state.trim();
+  const scored = rows.map((r) => {
     const addr = r.person.site?.addresses[0];
-    if (input.worksite && input.worksite !== "OFFSITE" && input.state && addr?.state && addr.state.toLowerCase() !== input.state.toLowerCase()) continue;
-    const mine = services.filter((s) => s.provider_profile_id === r.id);
-    const corpus = [r.person.title ?? "", r.overview ?? "", ...r.skills.map((s) => s.skill.name), ...mine.map((s) => s.name), ...products.filter((p) => p.provider_profile_id === r.id).flatMap((p) => [p.title, p.summary ?? ""])].join(" ").toLowerCase();
-    const matched = wanted.filter((k) => corpus.includes(k.toLowerCase()) || words(k).every((w) => corpus.includes(w)));
-    const hourly = mine.filter((s) => s.uom === "HOUR" && s.rate_cents != null).map((s) => s.rate_cents!).sort((a, b) => a - b);
-    const priced = products.filter((p) => p.provider_profile_id === r.id && p.price_cents != null).map((p) => p.price_cents!).sort((a, b) => a - b);
-    const basis = input.budgetType === "HOURLY" ? hourly : priced;
-    const inBudget = basis.length > 0 && basis.some((c) => (min == null || c >= min * 0.8) && (max == null || c <= max));
+    const mine = services.filter((x) => x.provider_profile_id === r.id);
+    const prods = products.filter((x) => x.provider_profile_id === r.id);
+    const corpus = [r.person.title ?? "", r.overview ?? "", ...r.skills.map((k) => k.skill.name), ...mine.map((x) => x.name), ...prods.flatMap((x) => [x.title, x.summary ?? ""])].join(" ").toLowerCase();
+    const byId = r.skills.filter((k) => wantIds.has(k.skill_id)).map((k) => k.skill.name);
+    const byName = [...input.customSkills, ...fallback].filter((k) => corpus.includes(k.toLowerCase()));
+    const matched = [...new Set([...byId, ...byName])];
+    const roleHit = !!input.roleId && r.roles.some((x) => x.role_id === input.roleId);
+    const productHit = !!pillar && r.skills.some((k) => k.skill.pillar?.name === pillar.name);
+    const placeHit = onsite && !!addr?.state && addr.state.toLowerCase() === input.state.trim().toLowerCase();
+    const hourly = mine.filter((x) => x.uom === "HOUR" && x.rate_cents != null).map((x) => x.rate_cents!).sort((a, b) => a - b);
+    const priced = prods.filter((x) => x.price_cents != null).map((x) => x.price_cents!).sort((a, b) => a - b);
+    const basis = input.budgetType === "FIXED" ? priced : hourly;
+    const budgetSet = min != null || max != null;
+    const inBudget = budgetSet && basis.some((c) => (min == null || c >= min * 0.8) && (max == null || c <= max));
+    const starts = r.employers.map((e) => e.start_date?.getTime()).filter((t): t is number => !!t);
+    const years = starts.length ? Math.floor((Date.now() - Math.min(...starts)) / (365.25 * 86_400_000)) : null;
+    const total = wantNames.length + fallback.length;
+    const why = [
+      ...(roleHit && role ? [`Role: ${role.display || role.name}`] : []),
+      ...(matched.length ? [`${matched.length}${total ? `/${total}` : ""} skills`] : []),
+      ...(productHit && pillar ? [`Product: ${pillar.name}`] : []),
+      ...(placeHit ? [`In ${addr!.state}`] : []),
+      ...(years ? [`${years} yrs`] : []),
+    ];
     const company = r.person.company?.name && !r.person.company.name.includes(r.person.last_name) ? r.person.company.name : null;
-    out.push({
-      personId: r.person.id, profileId: r.id,
-      name: `${r.person.first_name} ${r.person.last_name}`.trim(), company,
+    const m: HireMatch = {
+      personId: r.person.id, profileId: r.id, name: `${r.person.first_name} ${r.person.last_name}`.trim(), company,
       line: [r.person.title, addr?.city ? [addr.city, addr.state].filter(Boolean).join(", ") : null].filter(Boolean).join(" · "),
       rate: hourly.length ? `$${Math.round(hourly[0] / 100)}/hr` : priced.length ? `from $${Math.round(priced[0] / 100)}` : null,
-      matched, why: [], fit: wanted.length ? Math.round((matched.length / wanted.length) * 100) : 0, inBudget,
-    });
-  }
-  return out.sort((a, b) => b.fit - a.fit || Number(b.inBudget) - Number(a.inBudget) || a.name.localeCompare(b.name)).slice(0, 20);
+      matched: matched.slice(0, 8), why, fit: total ? Math.round((matched.length / total) * 100) : 0, inBudget,
+    };
+    return { m, key: [Number(roleHit), matched.length, Number(productHit), Number(placeHit), Number(inBudget)] };
+  });
+  const relevant = scored.filter((x) => x.key[0] || x.key[1] || x.key[2]);
+  return (relevant.length ? relevant : scored)
+    .sort((a, b) => { for (let i = 0; i < a.key.length; i++) if (b.key[i] !== a.key[i]) return b.key[i] - a.key[i]; return a.m.name.localeCompare(b.m.name); })
+    .slice(0, 20)
+    .map((x) => x.m);
 }
 
 /** "Request proposals": proposal requests on the Job's requisition line, answer within 7 days. */

@@ -175,6 +175,8 @@ function sanitize(d: AiJob): AiJob {
 // ── SD-E002: the Service Description standard — WHAT · WHERE · TYPE · WHO · WHEN · RATE ────────────────────────
 export const ROLE_KINDS = ["Functional", "Technical", "Techno-Functional", "Project Manager", "Solution Architect", "Tester", "Change & Training", "AI Specialist", "Other"] as const;
 
+// A model sometimes sends null for an empty list.
+const strList = z.preprocess((v) => v ?? [], z.array(z.string()));
 export const AI_SD_SCHEMA = z.object({
   title: z.string().nullable(),
   summary: z.string().nullable(),
@@ -183,18 +185,18 @@ export const AI_SD_SCHEMA = z.object({
   state: z.string().nullable(),
   country: z.string().nullable(),
   onsiteDaysPerWeek: z.number().nullable(),
-  contractTypes: z.array(z.enum(["C2C", "W2", "C2H", "1099"])),
+  contractTypes: z.preprocess((v) => v ?? [], z.array(z.enum(["C2C", "W2", "C2H", "1099"]))),
   roleKind: z.enum(ROLE_KINDS).nullable(),
-  domains: z.array(z.string()),
+  domains: strList,
   product: z.string().nullable(),
-  skills: z.array(z.string()),
+  skills: strList,
   yearsExperience: z.number().nullable(),
   education: z.string().nullable(),
-  credentials: z.array(z.string()),
-  specialties: z.array(z.string()),
-  responsibilities: z.array(z.string()),
-  mustHave: z.array(z.string()),
-  niceToHave: z.array(z.string()),
+  credentials: strList,
+  specialties: strList,
+  responsibilities: strList,
+  mustHave: strList,
+  niceToHave: strList,
   startText: z.string().nullable(),
   startDate: z.string().nullable(),
   duration: z.enum(["LT_1_MONTH", "ONE_TO_3_MONTHS", "THREE_TO_6_MONTHS", "GT_6_MONTHS"]).nullable(),
