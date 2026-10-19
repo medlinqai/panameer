@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { HireMatch } from "@/lib/hire-questionnaire";
 import type { SdContract, ServiceDescription } from "@/lib/service-description";
 
@@ -106,10 +107,14 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
     setStep(5);
   };
 
-  // Back from a profile returns to the same job and step: keep ?job=&step= in the address bar.
+  // Back from a profile returns to the same job and step: the address carries ?job=&step=. router.replace (not
+  // history.replaceState) so the router's cached page for Back is this URL, not the bare /hire it started on.
+  const router = useRouter();
   useEffect(() => {
-    if (jobId) window.history.replaceState(null, "", `/hire?job=${jobId}&step=${step}`);
-  }, [jobId, step]);
+    if (!jobId) return;
+    const want = `/hire?job=${jobId}&step=${step}`;
+    if (window.location.pathname + window.location.search !== want) router.replace(want, { scroll: false });
+  }, [jobId, step, router]);
   const reopened = useRef(false);
   useEffect(() => {
     if (reopened.current || initialStep !== 5 || !initialJobId) return;
