@@ -21,6 +21,7 @@ import {
 } from "@/lib/work-request-status";
 import { WorkRequestError } from "@/lib/work-request";
 import { BackLink } from "@/components/console/BackLink";
+import { ServiceDescriptionView } from "@/components/hire/ServiceDescriptionView";
 
 export const metadata = { title: "Job · Panameer" };
 
@@ -113,6 +114,9 @@ export default async function Page({
           {awarded && erpReturned && <span className="mt-1 text-[12px] text-ink-2">Returned to ERP — waiting for the PO</span>}
         </span>
       </div>
+
+      {/* SD-E005: the Service Description, in the standard order. */}
+      <ServiceDescriptionView jobId={id} editable={detail.status === "DRAFT"} />
 
       {/* ══ HEADER FACTS ═══════════════════════════════════════════════════ */}
       <dl className="mt-6 grid gap-x-8 gap-y-3.5 rounded-brand border border-line bg-white p-5 sm:grid-cols-3">
