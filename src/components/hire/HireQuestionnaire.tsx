@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { HireMatch } from "@/lib/hire-questionnaire";
 import type { SdContract, ServiceDescription } from "@/lib/service-description";
 
@@ -93,6 +93,10 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
       setStep(step + 1);
       return;
     }
+    await loadMatches();
+  };
+
+  const loadMatches = async () => {
     const j = await call({ action: "matches", jobId, input: f });
     if (!j) return;
     setJobId(j.jobId as string);
@@ -101,6 +105,18 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
     setPicked(new Set(m.slice(0, 2).map((x) => x.personId)));
     setStep(5);
   };
+
+  // Back from a profile returns to the same job and step: keep ?job=&step= in the address bar.
+  useEffect(() => {
+    if (jobId) window.history.replaceState(null, "", `/hire?job=${jobId}&step=${step}`);
+  }, [jobId, step]);
+  const reopened = useRef(false);
+  useEffect(() => {
+    if (reopened.current || initialStep !== 5 || !initialJobId) return;
+    reopened.current = true;
+    void loadMatches();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const request = async () => {
     const j = await call({ action: "request", jobId, personIds: [...picked] });

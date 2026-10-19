@@ -142,7 +142,8 @@ export async function getProviderProfileView(
   // Staff see unredacted client names — they arbitrate validation disputes and
   const isAdmin = Boolean(opts.viewer?.isSystemAdmin);
 
-  const { showSurname } = identityVisibility({ isOwner, isAdmin });
+  // Scott 10-18/10-19: no masking for signed-in viewers — full name shows (signed-out visitors get MaskedProviderPage instead).
+  const showSurname = Boolean(opts.viewer) || identityVisibility({ isOwner, isAdmin }).showSurname;
 
   const experience = experienceLabel([
     ...profile.employers.map((e) => ({

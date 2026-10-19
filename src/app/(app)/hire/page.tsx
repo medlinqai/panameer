@@ -35,7 +35,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
         </div>
         <Link href="/hire/jobs" className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">My Jobs →</Link>
       </div>
-      <HireQuestionnaire hierarchy={(await postingHierarchy()).groups.map((g) => ({ name: g.name, businessTypes: g.businessTypes.map((b) => ({ id: b.id, name: b.name, usesSkills: b.uses_skills })) }))} howLong={HOW_LONG} roles={roles} initial={sd} initialJobId={jobId} initialStep={jobId ? Math.min(4, Math.max(0, Number(sp.step ?? 0) || 0)) : 0} />
+      <HireQuestionnaire hierarchy={(await postingHierarchy()).groups.map((g) => ({ name: g.name, businessTypes: g.businessTypes.map((b) => ({ id: b.id, name: b.name, usesSkills: b.uses_skills })) }))} howLong={HOW_LONG} roles={roles} initial={sd} initialJobId={jobId} initialStep={jobId ? Math.min(5, Math.max(0, Number(sp.step ?? 0) || 0)) : 0} />
     </div>
   );
 }
