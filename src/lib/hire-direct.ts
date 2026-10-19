@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { notify } from "@/lib/notifications";
+import { buyerCanSeeIdentity, ensureProviderNumber, providerLabel } from "@/lib/provider-number";
+import { blurredPhotoDataUri } from "@/lib/masked-photo";
 
 // HS: the Hire (sole-source) journey — job posted (step 4), Hire on a match (8–9b), Terms (10–11), Work Order (12–13).
 
@@ -15,6 +17,8 @@ export async function jobPosted(viewer: Viewer, jobId: string, title: string) {
 export type HireDefaults = {
   jobId: string; jobTitle: string; description: string; location: string;
   providerPersonId: string; providerName: string; providerCompany: string | null;
+  /** AN-E004: blurred until the Work Order exists. */
+  providerPhotoUrl: string | null; identityShown: boolean;
   unitPriceCents: number | null; uom: string; billingCycle: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "EVERY_90_DAYS";
   start: string; end: string; duration: string | null;
   paymentEvent: string; overtimeAllowed: boolean; overtimeMultiplier: number; expensesAllowed: boolean; expensesCapCents: number | null;
@@ -29,7 +33,7 @@ export async function hireDefaults(viewer: Viewer, jobId: string, providerPerson
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   const job = await prisma.job.findUnique({ where: { id: jobId }, select: { id: true, buyer_person_id: true, title: true, description: true, worksite: true, city: true, state: true, location_country: true, start_date: true, end_date: true, duration: true, budget_max_cents: true } });
   if (!me || !job || job.buyer_person_id !== me.id) return null;
-  const provider = await prisma.person.findUnique({ where: { id: providerPersonId }, select: { first_name: true, last_name: true, company: { select: { name: true } }, providerProfile: { select: { id: true } } } });
+  const provider = await prisma.person.findUnique({ where: { id: providerPersonId }, select: { first_name: true, last_name: true, photo_url: true, company: { select: { name: true } }, providerProfile: { select: { id: true } } } });
   if (!provider?.providerProfile) return null;
   const services = await prisma.providerService.findMany({ where: { provider_profile_id: provider.providerProfile.id, active: true, published_at: { not: null }, rate_cents: { not: null } }, orderBy: { rate_cents: "asc" }, select: { rate_cents: true, uom: true, billing_cycle: true, payment_event: true } });
   const listed = services.find((s) => s.uom === "HOUR") ?? services[0] ?? null;
@@ -38,10 +42,14 @@ export async function hireDefaults(viewer: Viewer, jobId: string, providerPerson
   const start = prior?.service_start ?? job.start_date ?? new Date(Date.now() + 7 * 86_400_000);
   const end = prior?.service_end ?? job.end_date ?? new Date(start.getTime() + (MONTHS[job.duration ?? ""] ?? 3) * 30 * 86_400_000);
   const company = provider.company?.name && !provider.company.name.includes(provider.last_name) ? provider.company.name : null;
+  // AN-E004: the Work Request still shows the Provider number — the name arrives with the Work Order.
+  const shown = await buyerCanSeeIdentity(viewer, providerPersonId);
+  const label = shown ? null : providerLabel(await ensureProviderNumber(provider.providerProfile.id));
   return {
     jobId, jobTitle: job.title, description: req?.description ?? job.title,
     location: [job.worksite ? job.worksite[0] + job.worksite.slice(1).toLowerCase() : null, [job.city, job.state, job.location_country].filter(Boolean).join(", ")].filter(Boolean).join(" · "),
-    providerPersonId, providerName: `${provider.first_name} ${provider.last_name}`.trim(), providerCompany: company,
+    providerPersonId, providerName: label ?? `${provider.first_name} ${provider.last_name}`.trim(), providerCompany: shown ? company : null,
+    providerPhotoUrl: shown ? provider.photo_url : await blurredPhotoDataUri(provider.photo_url), identityShown: shown,
     unitPriceCents: prior?.unit_price_cents ?? listed?.rate_cents ?? job.budget_max_cents ?? null,
     uom: prior?.uom ?? listed?.uom ?? "HOUR",
     billingCycle: prior?.billing_cycle ?? listed?.billing_cycle ?? "MONTHLY",

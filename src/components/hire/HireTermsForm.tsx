@@ -43,7 +43,14 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
   return (
     <div className="mt-4 rounded-[14px] border border-line bg-white p-5" data-hire-terms>
       <label className={LABEL}>Work<textarea value={t.description} onChange={(e) => set({ description: e.target.value })} rows={3} maxLength={500} className={FIELD} /></label>
-      <p className={LABEL}>Provider<span className="mt-1 block text-[14.5px] font-normal">{d.providerCompany ? `${d.providerCompany} · ` : ""}{d.providerName}</span></p>
+      <p className={LABEL}>Provider
+        <span className="mt-1 flex items-center gap-2.5 text-[14.5px] font-normal">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {d.providerPhotoUrl && <img src={d.providerPhotoUrl} alt="" className="h-9 w-9 rounded-full object-cover" />}
+          <span>{d.providerCompany ? `${d.providerCompany} · ` : ""}{d.providerName}</span>
+        </span>
+        {!d.identityShown && <span className="mt-1 block text-[12.5px] font-normal text-ink-2">Name and company show once the Work Order exists.</span>}
+      </p>
       <div className="grid gap-x-3 sm:grid-cols-3">
         <label className={LABEL}>Rate ($)<input inputMode="decimal" value={t.rate} onChange={(e) => set({ rate: e.target.value.replace(/[^0-9.]/g, "") })} className={FIELD} /></label>
         <label className={LABEL}>Per<select value={t.uom} onChange={(e) => set({ uom: e.target.value })} className={FIELD}>{UNITS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>

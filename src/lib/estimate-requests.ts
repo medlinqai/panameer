@@ -1,3 +1,4 @@
+import { providerNameForBuyer } from "@/lib/provider-number";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import { uploadEstimateRequestFile } from "@/lib/storage";
@@ -84,7 +85,7 @@ export async function declineRequest(viewer: Viewer, id: string, reason: string)
   const done = await prisma.estimateRequest.updateMany({ where: { id, status: "OPEN" }, data: { status: "DECLINED", decline_reason: note.slice(0, 2000) } });
   if (!done.count) throw new EstimateRequestError("This request isn't open", "INVALID");
   await prisma.notification.updateMany({ where: { dedupe_key: `estimate.requested:${id}`, resolved_at: null }, data: { resolved_at: new Date() } });
-  await notify({ event: "estimate.request_declined", personId: r.requester_person_id, entityType: "cost_estimate_request", entityId: id, dedupeKey: `estimate.request_declined:${id}`, vars: { requestId: id, providerName, reason: note } });
+  await notify({ event: "estimate.request_declined", personId: r.requester_person_id, entityType: "cost_estimate_request", entityId: id, dedupeKey: `estimate.request_declined:${id}`, vars: { requestId: id, providerName: await providerNameForBuyer(r.requester_person_id, r.provider_person_id, providerName), reason: note } });
 }
 
 export async function withdrawRequest(viewer: Viewer, id: string) {

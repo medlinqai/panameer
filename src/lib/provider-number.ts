@@ -56,3 +56,16 @@ export async function buyerCanSeeIdentity(viewer: Viewer | null, providerPersonI
 }
 
 export const providerLabel = (number: string | null | undefined) => `Provider ${number ?? "P-…"}`;
+
+/** AN-E004: the provider's name as this buyer may see it — real once a Work Order exists between them, else "Provider P-…".
+ *  For notifications and other places that know the buyer person, not a session. */
+export async function providerNameForBuyer(buyerPersonId: string, providerPersonId: string, realName: string): Promise<string> {
+  const [buyer, provider] = await Promise.all([
+    prisma.person.findUnique({ where: { id: buyerPersonId }, select: { company_id: true, company: { select: { p_account_id: true } } } }),
+    prisma.person.findUnique({ where: { id: providerPersonId }, select: { company_id: true, providerProfile: { select: { id: true } } } }),
+  ]);
+  if (!provider?.providerProfile) return realName;
+  if (buyer && buyer.company_id === provider.company_id) return realName;
+  const order = buyer ? await prisma.workOrder.findFirst({ where: { provider_person_id: providerPersonId, status: { not: "DRAFT" }, OR: [{ buyer_person_id: buyerPersonId }, { p_account_id: buyer.company.p_account_id }] }, select: { id: true } }) : null;
+  return order ? realName : providerLabel(await ensureProviderNumber(provider.providerProfile.id));
+}

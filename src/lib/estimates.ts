@@ -1,3 +1,4 @@
+import { providerNameForBuyer } from "@/lib/provider-number";
 import { assertCanSign } from "@/lib/your-path";
 import { randomBytes } from "node:crypto";
 import { Prisma, type BillingCycle, type EstimateLineKind, type PaymentTerms } from "@prisma/client";
@@ -137,7 +138,8 @@ export async function sendEstimate(viewer: Viewer, id: string) {
   await prisma.notification.updateMany({ where: { person_id: p.id, dedupe_key: { startsWith: `estimate.changes_requested:${e.id}:` }, resolved_at: null }, data: { resolved_at: now } });
   const vars = { estimateId: e.id, estimateNumber: e.estimate_number, title: e.title, providerName: nameOf(p), total: formatCents(rev.total_cents, e.currency), revision: rev.revision_number };
   if (customerId) {
-    await notify({ event: "estimate.received", personId: customerId, entityType: "cost_estimate", entityId: e.id, dedupeKey: `estimate.received:${e.id}:${rev.revision_number}`, vars });
+    // AN-E004: before a Work Order the buyer sees the Provider number, not the name.
+    await notify({ event: "estimate.received", personId: customerId, entityType: "cost_estimate", entityId: e.id, dedupeKey: `estimate.received:${e.id}:${rev.revision_number}`, vars: { ...vars, providerName: await providerNameForBuyer(customerId, p.id, vars.providerName) } });
   } else if (e.customer_email) {
     const url = `${appUrl()}/estimates/${e.id}`;
     const body = [
