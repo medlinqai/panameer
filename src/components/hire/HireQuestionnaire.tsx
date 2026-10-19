@@ -50,6 +50,8 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
   const [error, setError] = useState<string | null>(null);
   const [matches, setMatches] = useState<HireMatch[] | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  // MQ-E001: providers outside the job's state stay folded away until asked for.
+  const [showOutside, setShowOutside] = useState(false);
   const [sent, setSent] = useState<number | null>(null);
   const set = (patch: Partial<ServiceDescription>) => setF((x) => ({ ...x, ...patch }));
   const from = (k: string) => (f.fromPosting.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-posting>from your posting</span> : null);
@@ -321,7 +323,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
               <p className="mt-4 text-[14px] text-ink-3">No one in {f.category} matches yet. Your Service Description is saved as a draft — <Link href={`/work-requests/${jobId}`} className="font-semibold text-magenta-dark underline">open it</Link>.</p>
             ) : (
               <ul className="mt-3 divide-y divide-line border-y border-line">
-                {matches.map((m) => (
+                {matches.filter((m) => showOutside || !m.outside).map((m) => (
                   <li key={m.personId} className="flex items-start gap-3 py-3" data-hire-match={m.name}>
                     <input type="checkbox" checked={picked.has(m.personId)} onChange={() => setPicked((s) => { const n = new Set(s); if (n.has(m.personId)) n.delete(m.personId); else n.add(m.personId); return n; })} aria-label={`Select ${m.name}`} className="mt-1 h-4 w-4 accent-[var(--color-ink,#272334)]" />
                     <div className="min-w-0 flex-1">
@@ -341,6 +343,11 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
                   </li>
                 ))}
               </ul>
+            )}
+            {matches.some((m) => m.outside) && (
+              <button type="button" onClick={() => setShowOutside((v) => !v)} className="mt-3 text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4" data-show-outside>
+                {showOutside ? `Hide providers outside ${f.state.toUpperCase()}` : `Show providers outside ${f.state.toUpperCase()} (${matches.filter((m) => m.outside).length})`}
+              </button>
             )}
             {matches.length > 0 && (
               <div className="mt-4 flex flex-wrap items-center gap-3">

@@ -76,7 +76,9 @@ export async function resolveSkill(name: string): Promise<{ id: string; name: st
   return prisma.skill.findFirst({ where: { name: { equals: n, mode: "insensitive" }, is_custom: false, status: "ACTIVE" }, select: { id: true, name: true } });
 }
 
-export type HireMatch = { personId: string; profileId: string; name: string; company: string | null; line: string; rate: string | null; matched: string[]; why: string[]; fit: number; inBudget: boolean };
+export type HireMatch = { personId: string; profileId: string; name: string; company: string | null; line: string; rate: string | null; matched: string[]; why: string[]; fit: number; inBudget: boolean;
+  /** MQ-E001: an Onsite/Hybrid job lists only providers in its state; the rest come after, behind "Show providers outside". */
+  outside: boolean };
 
 /** SD-E004: named matches — ranked by Role, then skill overlap, then Product, then location (Onsite/Hybrid = same state),
  *  then rate inside the budget. Each says why it matched. */
@@ -141,13 +143,14 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
       line: [r.person.title, addr?.city ? [addr.city, addr.state].filter(Boolean).join(", ") : null].filter(Boolean).join(" · "),
       rate: hourly.length ? `$${Math.round(hourly[0] / 100)}/hr` : priced.length ? `from $${Math.round(priced[0] / 100)}` : null,
       matched: matched.slice(0, 8), why, fit: total ? Math.round((matched.length / total) * 100) : 0, inBudget,
+      outside: onsite && !placeHit,
     };
-    return { m, key: [Number(roleHit), matched.length, Number(productHit), Number(placeHit), Number(inBudget)] };
+    return { m, key: [Number(!(onsite && !placeHit)), Number(roleHit), matched.length, Number(productHit), Number(inBudget)] };
   });
-  const relevant = scored.filter((x) => x.key[0] || x.key[1] || x.key[2]);
+  const relevant = scored.filter((x) => x.key[1] || x.key[2] || x.key[3]);
   return (relevant.length ? relevant : scored)
     .sort((a, b) => { for (let i = 0; i < a.key.length; i++) if (b.key[i] !== a.key[i]) return b.key[i] - a.key[i]; return a.m.name.localeCompare(b.m.name); })
-    .slice(0, 20)
+    .slice(0, 40)
     .map((x) => x.m);
 }
 
