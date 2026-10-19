@@ -76,6 +76,21 @@ export async function resolveSkill(name: string): Promise<{ id: string; name: st
   return prisma.skill.findFirst({ where: { name: { equals: n, mode: "insensitive" }, is_custom: false, status: "ACTIVE" }, select: { id: true, name: true } });
 }
 
+// MQ-E002: business-process domains, read from a job's domains and a provider's title, skills and areas.
+const DOMAIN_WORDS: Record<string, RegExp> = {
+  P2P: /\bp2p\b|procure|purchas|payables|supplier|sourcing|\bprc\b|requisition|spend/i,
+  R2R: /\br2r\b|record.to.report|general ledger|\bgl\b|fixed assets|\bassets\b|month.end|\bclose\b|intercompany|subledger|cash management|financials?\b/i,
+  O2C: /\bo2c\b|order.to.cash|order management|receivables|billing|collections|pricing|configure price/i,
+  SCM: /\bscm\b|supply chain|inventory|warehouse|manufactur|logistics|shipping|planning central|product (information|lifecycle)/i,
+  HCM: /\bhcm\b|human capital|payroll|absence|benefits|core hr|global human|talent|recruiting|time (&|and) labor|\bhdl\b/i,
+  EPM: /\bepm\b|hyperion|planning|consolidation|fccs|epbcs|narrative reporting|essbase|account reconciliation/i,
+  CX: /\bcx\b|customer experience|sales cloud|\bservice cloud\b|fusion service|digital sales|cpq/i,
+  PPM: /\bppm\b|project (costing|billing|management|contracts)|grants/i,
+};
+export function domainsIn(text: string): Set<string> {
+  return new Set(Object.entries(DOMAIN_WORDS).filter(([, re]) => re.test(text)).map(([k]) => k));
+}
+
 export type HireMatch = { personId: string; profileId: string; name: string; company: string | null; line: string; rate: string | null; matched: string[]; why: string[]; fit: number; inBudget: boolean;
   /** MQ-E001: an Onsite/Hybrid job lists only providers in its state; the rest come after, behind "Show providers outside". */
   outside: boolean };
@@ -92,7 +107,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
         id: true, overview: true,
         person: { select: { id: true, first_name: true, last_name: true, title: true, site: { select: { addresses: { take: 1, select: { city: true, state: true } } } }, company: { select: { name: true } } } },
         roles: { select: { role_id: true } },
-        skills: { select: { skill_id: true, skill: { select: { name: true, pillar: { select: { name: true } } } } } },
+        skills: { select: { skill_id: true, skill: { select: { name: true, area: true, pillar: { select: { name: true } } } } } },
         employers: { select: { start_date: true } },
       },
       take: 400,
@@ -111,6 +126,8 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
   const min = input.budgetMin != null ? input.budgetMin * 100 : null;
   const max = input.budgetMax != null ? input.budgetMax * 100 : null;
   const onsite = !!input.worksite && input.worksite !== "OFFSITE" && !!input.state.trim();
+  // The job's domains: as written (P2P, SCM…) or read from its title when the posting named none.
+  const jobDomains = new Set([...input.domains.flatMap((d) => [...domainsIn(d), ...(DOMAIN_WORDS[d.toUpperCase()] ? [d.toUpperCase()] : [])]), ...(input.domains.length ? [] : domainsIn(input.title))]);
   const scored = rows.map((r) => {
     const addr = r.person.site?.addresses[0];
     const mine = services.filter((x) => x.provider_profile_id === r.id);
@@ -130,7 +147,10 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
     const starts = r.employers.map((e) => e.start_date?.getTime()).filter((t): t is number => !!t);
     const years = starts.length ? Math.floor((Date.now() - Math.min(...starts)) / (365.25 * 86_400_000)) : null;
     const total = wantNames.length + fallback.length;
+    const theirDomains = domainsIn([r.person.title ?? "", ...r.skills.map((k) => `${k.skill.name} ${k.skill.area ?? ""}`)].join(" "));
+    const sharedDomains = [...jobDomains].filter((d) => theirDomains.has(d));
     const why = [
+      ...sharedDomains,
       ...(roleHit && role ? [`Role: ${role.display || role.name}`] : []),
       ...(matched.length ? [`${matched.length}${total ? `/${total}` : ""} skills`] : []),
       ...(productHit && pillar ? [`Product: ${pillar.name}`] : []),
@@ -145,9 +165,11 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
       matched: matched.slice(0, 8), why, fit: total ? Math.round((matched.length / total) * 100) : 0, inBudget,
       outside: onsite && !placeHit,
     };
-    return { m, key: [Number(!(onsite && !placeHit)), Number(roleHit), matched.length, Number(productHit), Number(inBudget)] };
+    // Role + Domain (strong) + skills + Product + years; with job domains, a provider sharing none ranks below all who share one.
+    const score = Number(roleHit) * 30 + sharedDomains.length * 40 + matched.length * 5 + Number(productHit) * 10 + Math.min(years ?? 0, 20) / 2;
+    return { m, key: [Number(!(onsite && !placeHit)), jobDomains.size ? Number(sharedDomains.length > 0) : 1, score, Number(inBudget)] };
   });
-  const relevant = scored.filter((x) => x.key[1] || x.key[2] || x.key[3]);
+  const relevant = scored.filter((x) => x.key[2] > 0);
   return (relevant.length ? relevant : scored)
     .sort((a, b) => { for (let i = 0; i < a.key.length; i++) if (b.key[i] !== a.key[i]) return b.key[i] - a.key[i]; return a.m.name.localeCompare(b.m.name); })
     .slice(0, 40)
