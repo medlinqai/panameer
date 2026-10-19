@@ -271,6 +271,24 @@ export default async function Page({
       </div>
       )}
 
+      {/* HS-E002: the Job's matches — Hire (primary) next to Request Proposals. */}
+      {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && (
+        <section className="mt-6 rounded-brand border border-line bg-white p-5" data-job-matches>
+          <h2 className="text-[17px] font-bold">Matches</h2>
+          <ul className="mt-2 divide-y divide-line">
+            {options.slice(0, 10).map((p) => (
+              <li key={p.personId} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
+                <span className="min-w-0"><b className="block text-[14.5px]">{p.name}</b>{p.headline && <span className="block text-[13px] text-ink-2">{p.headline}</span>}</span>
+                <span className="flex gap-2">
+                  <Link href={`/hire/terms?job=${detail.id}&provider=${p.personId}`} data-hire-provider className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Hire</Link>
+                  <Link href={`/work-requests/${detail.id}/invite`} className="inline-flex min-h-9 items-center border border-ink px-4 text-[13px] font-bold hover:bg-surface-hover">Request Proposals</Link>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* THE OTHER ROUTE, AND THE SECOND TRANSITION ( WS-F) */}
       {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && (
         <AssignDirectly workRequestId={detail.id} providers={options} />

@@ -312,8 +312,9 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
                         {m.inBudget && <span className="rounded-full border border-line px-2">In budget</span>}
                       </p>
                     </div>
-                    <div className="text-right text-[13px]">
+                    <div className="flex flex-col items-end gap-1 text-right text-[13px]">
                       {m.rate && <b className="block">{m.rate}</b>}
+                      <Link href={`/hire/terms?job=${jobId}&provider=${m.personId}`} data-hire-provider className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Hire</Link>
                       <Link href={`/providers/${m.profileId}`} className="font-semibold text-magenta-dark underline underline-offset-4">View profile</Link>
                     </div>
                   </li>
