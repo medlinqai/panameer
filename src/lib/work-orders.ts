@@ -259,7 +259,7 @@ async function buildOne(wr: ReqForOrder, lines: ReqLine[], providerPersonId: str
     entityType: "work_order",
     entityId: built.id,
     dedupeKey: `work.order_offered:${built.id}`,
-    vars: { orderId: built.id, requestTitle: "" },
+    vars: { orderId: built.id, orderNumber: built.order_number, requestTitle: wr.description ?? "" },
   });
 
   return {
@@ -307,6 +307,10 @@ export async function hire(
   const job = await prisma.job.findUnique({ where: { id: input.jobId }, select: { sole_sourced: true } });
   const [order] = await submitWorkRequest(viewer, { workRequestId: req.id, sowText: input.sowText, soleSourced: job?.sole_sourced, description: input.description });
   await prisma.job.update({ where: { id: input.jobId }, data: { status: "FILLED" } });
+  // HS-E006: the buyer hears it too ("Work Order {no} created"); the provider was asked to accept in buildOne.
+  const head = await prisma.workOrder.findUnique({ where: { id: order!.id }, select: { buyer_person_id: true, provider_person_id: true } });
+  const provider = head ? await prisma.person.findUnique({ where: { id: head.provider_person_id }, select: { first_name: true, last_name: true } }) : null;
+  if (head) await notify({ event: "work.order_created", personId: head.buyer_person_id, entityType: "work_order", entityId: order!.id, dedupeKey: `work.order_created:${order!.id}`, vars: { orderId: order!.id, orderNumber: order!.orderNumber, providerName: provider ? `${provider.first_name} ${provider.last_name}`.trim() : "the provider" } });
   return order!;
 }
 

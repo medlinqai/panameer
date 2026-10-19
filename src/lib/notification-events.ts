@@ -785,8 +785,20 @@ export const NOTIFICATION_EVENTS = {
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: true,
-    title: () => "A work order is waiting for you to accept",
+    // HS-E006: names the order — "Work Order {no} created" — and asks the provider to Accept.
+    title: (v) => (str(v, "orderNumber", "") ? `Work Order ${str(v, "orderNumber", "")} created — please accept it` : "A work order is waiting for you to accept"),
     body: (v) => str(v, "requestTitle", "") || null,
+    href: (v) => `/orders/${str(v, "orderId", "")}`,
+  },
+  "work.order_created": {
+    event: "work.order_created",
+    recipient: "the buyer who created the work order",
+    category: "work_order.status",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `Work Order ${str(v, "orderNumber", "")} created`,
+    body: (v) => `Waiting for ${str(v, "providerName", "the provider")} to accept.`,
     href: (v) => `/orders/${str(v, "orderId", "")}`,
   },
   "work.order_control": {
