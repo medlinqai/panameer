@@ -53,11 +53,11 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
         <label className={LABEL}>End<input type="date" value={t.end} onChange={(e) => set({ end: e.target.value })} className={FIELD} /></label>
         <p className={LABEL}>Location<span className="mt-1 block text-[14.5px] font-normal">{d.location || "Not set on the job"}</span></p>
       </div>
-      <label className={LABEL}>Settlement trigger <span className="font-normal text-ink-3">(what releases each payment)</span>
+      <label className={LABEL}>Settlement Trigger <span className="font-normal text-ink-3">(what releases each payment)</span>
         <select value={t.paymentEvent} onChange={(e) => set({ paymentEvent: e.target.value })} className={FIELD}>{TRIGGERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
       </label>
       <fieldset className="mt-4">
-        <legend className="text-[13px] font-bold">Overtime allowed?</legend>
+        <legend className="text-[13px] font-bold">Overtime Allowed?</legend>
         <div className="mt-1 flex flex-wrap items-center gap-4 text-[14px]">
           <label><input type="radio" checked={!t.overtimeAllowed} onChange={() => set({ overtimeAllowed: false })} /> No</label>
           <label><input type="radio" checked={t.overtimeAllowed} onChange={() => set({ overtimeAllowed: true })} /> Yes, at</label>
@@ -66,7 +66,7 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
         </div>
       </fieldset>
       <fieldset className="mt-4">
-        <legend className="text-[13px] font-bold">Expenses allowed?</legend>
+        <legend className="text-[13px] font-bold">Expenses Allowed?</legend>
         <div className="mt-1 flex flex-wrap items-center gap-4 text-[14px]">
           <label><input type="radio" checked={!t.expensesAllowed} onChange={() => set({ expensesAllowed: false })} /> No</label>
           <label><input type="radio" checked={t.expensesAllowed} onChange={() => set({ expensesAllowed: true })} /> Yes, up to $</label>
@@ -76,7 +76,7 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
       {error && <p role="alert" className="mt-3 text-[13.5px] font-semibold text-magenta-dark">{error}</p>}
       <div className="mt-5 border-t border-line pt-4">
         <button type="button" disabled={busy || !t.rate} onClick={submit} data-create-work-order className="inline-flex min-h-11 items-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40">
-          {busy ? "Working…" : d.erpOrigin ? "Submit" : "Create Work Order"}
+          {busy ? "Working…" : d.erpOrigin ? "Submit" : "Submit Work Request"}
         </button>
         {d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">This request came from your ERP — Submit returns it there to raise the PO.</p>}
       </div>
