@@ -91,6 +91,23 @@ export function domainsIn(text: string): Set<string> {
   return new Set(Object.entries(DOMAIN_WORDS).filter(([, re]) => re.test(text)).map(([k]) => k));
 }
 
+// MQ-E003: the deepest role level (the work roles under each top role), read from a title.
+const DEEP_ROLES: [RegExp, string[]][] = [
+  [/techno.?functional/i, ["Functional Consultant", "Technical Consultant / Developer"]],
+  [/program (manager|director)|programme/i, ["Program Management"]],
+  [/project manager|\bpmp\b|delivery lead/i, ["Project Manager"]],
+  [/architect/i, ["Solution Architect", "Technical Architect"]],
+  [/test (lead|manager)|\bqa\b|testing|tester/i, ["Test Lead", "Testing Specialist"]],
+  [/training|change (management|lead)|\bocm\b|enablement/i, ["Training Lead", "Organizational Change Mgt"]],
+  [/functional/i, ["Functional Consultant"]],
+  [/technical|developer|integration|\boic\b/i, ["Technical Consultant / Developer"]],
+  [/support analyst|application support|\bams\b/i, ["Application Support Analyst"]],
+];
+export function deepRolesIn(text: string): string[] {
+  for (const [re, names] of DEEP_ROLES) if (re.test(text)) return names;
+  return [];
+}
+
 export type HireMatch = { personId: string; profileId: string; name: string; company: string | null; line: string; rate: string | null; matched: string[]; why: string[]; fit: number; inBudget: boolean;
   /** MQ-E001: an Onsite/Hybrid job lists only providers in its state; the rest come after, behind "Show providers outside". */
   outside: boolean };
@@ -99,7 +116,7 @@ export type HireMatch = { personId: string; profileId: string; name: string; com
  *  then rate inside the budget. Each says why it matched. */
 export async function hireMatches(input: HireInput, seesTest: boolean): Promise<HireMatch[]> {
   const pillarName = productPillarName(input.product);
-  const [rows, role, pillar] = await Promise.all([
+  const [rows, pillar] = await Promise.all([
     prisma.providerProfile.findMany({
       // PC-E002: the Business Type decides who is matched (the whole Category when none is picked).
       where: { AND: [await marketplaceWhere(seesTest), { person: { company: { businessTypes: { some: input.businessTypeId ? { business_type_id: input.businessTypeId } : { businessType: { commodityGroup: { name: input.category } } } } } } }] },
@@ -107,12 +124,12 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
         id: true, overview: true,
         person: { select: { id: true, first_name: true, last_name: true, title: true, site: { select: { addresses: { take: 1, select: { city: true, state: true } } } }, company: { select: { name: true } } } },
         roles: { select: { role_id: true } },
+        capabilities: { select: { workRole: { select: { name: true } } } },
         skills: { select: { skill_id: true, skill: { select: { name: true, area: true, pillar: { select: { name: true } } } } } },
         employers: { select: { start_date: true } },
       },
       take: 400,
     }),
-    input.roleId ? prisma.role.findUnique({ where: { id: input.roleId }, select: { display: true, name: true } }) : null,
     pillarName ? prisma.pillar.findFirst({ where: { name: pillarName }, select: { name: true } }) : null,
   ]);
   const ids = rows.map((r) => r.id);
@@ -127,6 +144,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
   const max = input.budgetMax != null ? input.budgetMax * 100 : null;
   const onsite = !!input.worksite && input.worksite !== "OFFSITE" && !!input.state.trim();
   // The job's domains: as written (P2P, SCM…) or read from its title when the posting named none.
+  const jobDeep = deepRolesIn(`${input.title} ${input.summary}`);
   const jobDomains = new Set([...input.domains.flatMap((d) => [...domainsIn(d), ...(DOMAIN_WORDS[d.toUpperCase()] ? [d.toUpperCase()] : [])]), ...(input.domains.length ? [] : domainsIn(input.title))]);
   const scored = rows.map((r) => {
     const addr = r.person.site?.addresses[0];
@@ -137,6 +155,8 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
     const byName = [...input.customSkills, ...fallback].filter((k) => corpus.includes(k.toLowerCase()));
     const matched = [...new Set([...byId, ...byName])];
     const roleHit = !!input.roleId && r.roles.some((x) => x.role_id === input.roleId);
+    const theirDeep = new Set([...r.capabilities.map((c) => c.workRole?.name).filter((n): n is string => !!n), ...deepRolesIn(r.person.title ?? "")]);
+    const deepHit = jobDeep.find((n) => theirDeep.has(n)) ?? null;
     const productHit = !!pillar && r.skills.some((k) => k.skill.pillar?.name === pillar.name);
     const placeHit = onsite && !!addr?.state && addr.state.toLowerCase() === input.state.trim().toLowerCase();
     const hourly = mine.filter((x) => x.uom === "HOUR" && x.rate_cents != null).map((x) => x.rate_cents!).sort((a, b) => a - b);
@@ -151,7 +171,8 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
     const sharedDomains = [...jobDomains].filter((d) => theirDomains.has(d));
     const why = [
       ...sharedDomains,
-      ...(roleHit && role ? [`Role: ${role.display || role.name}`] : []),
+      // Only the deepest shared level is worth a chip — the top level ("Application-Specific Roles") says nothing.
+      ...(deepHit ? [deepHit] : []),
       ...(matched.length ? [`${matched.length}${total ? `/${total}` : ""} skills`] : []),
       ...(productHit && pillar ? [`Product: ${pillar.name}`] : []),
       ...(placeHit ? [`In ${addr!.state}`] : []),
@@ -166,7 +187,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
       outside: onsite && !placeHit,
     };
     // Role + Domain (strong) + skills + Product + years; with job domains, a provider sharing none ranks below all who share one.
-    const score = Number(roleHit) * 30 + sharedDomains.length * 40 + matched.length * 5 + Number(productHit) * 10 + Math.min(years ?? 0, 20) / 2;
+    const score = (deepHit ? 45 : roleHit ? 15 : 0) + sharedDomains.length * 40 + matched.length * 5 + Number(productHit) * 10 + Math.min(years ?? 0, 20) / 2;
     return { m, key: [Number(!(onsite && !placeHit)), jobDomains.size ? Number(sharedDomains.length > 0) : 1, score, Number(inBudget)] };
   });
   const relevant = scored.filter((x) => x.key[2] > 0);
