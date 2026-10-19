@@ -6108,6 +6108,13 @@ model WorkRequestLine {
   positions        Int       @default(1)
   service_start    DateTime?
   service_end      DateTime?
+  /// HS-E005: the Hire Terms the buyer confirms — copied to the Work Order line.
+  payment_event       PaymentEvent?
+  billing_cycle       BillingCycle?
+  overtime_allowed    Boolean?
+  overtime_multiplier Decimal?          @db.Decimal(4, 2)
+  expenses_allowed    Boolean?
+  expenses_cap_cents  Int?
   note_to_supplier String?
   /// JW-E004: set when the price is an accepted offer (the agreed price, not the list price).
   offer_id         String?   @db.Uuid
@@ -6395,6 +6402,11 @@ model WorkOrderLine {
 
   service_start DateTime?
   service_end   DateTime?
+  /// HS-E005: overtime and expenses agreed on the Hire Terms.
+  overtime_allowed    Boolean?
+  overtime_multiplier Decimal?          @db.Decimal(4, 2)
+  expenses_allowed    Boolean?
+  expenses_cap_cents  Int?
 
   /// ⚠ MAINTAINED BY SETTLEMENT, NEVER TYPED. These are what rule 3 reads to
   /// stop a RATE line over-drawing and an AMOUNT line drawing twice.
