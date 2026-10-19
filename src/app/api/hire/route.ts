@@ -3,12 +3,13 @@ import { guardApi } from "@/lib/guard";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
 import { HireError, hireMatches, requestProposals, resolveSkill, saveHireJob, suggestSkills, type HireInput } from "@/lib/hire-questionnaire";
 import { WorkRequestError } from "@/lib/work-request";
+import { reparseWho } from "@/lib/service-description";
 
 // SH2-E004: the Hire questionnaire — suggest skills, save the draft Job, show matches, request proposals.
 export async function POST(request: Request) {
   const gate = await guardApi("canHireTalent");
   if (gate instanceof NextResponse) return gate;
-  const body = (await request.json().catch(() => ({}))) as { action?: string; jobId?: string | null; input?: HireInput; category?: string; title?: string; name?: string; personIds?: string[] };
+  const body = (await request.json().catch(() => ({}))) as { action?: string; jobId?: string | null; input?: HireInput; category?: string; title?: string; name?: string; personIds?: string[]; sourceText?: string; businessTypeId?: string };
   try {
     switch (body.action) {
       case "suggest":
@@ -18,6 +19,11 @@ export async function POST(request: Request) {
       case "matches": {
         const jobId = await saveHireJob(gate, body.jobId ?? null, body.input!);
         return NextResponse.json({ jobId, matches: await hireMatches(body.input!, await seesTestAccounts(gate)) });
+      }
+      case "reparseWho": {
+        // PC-E002: the buyer changed the Business Type — pass 2 again for WHO only.
+        const who = await reparseWho(String(body.sourceText ?? ""), String(body.businessTypeId ?? ""));
+        return who ? NextResponse.json({ who }) : NextResponse.json({ error: "We couldn't re-read the posting for that Business Type." }, { status: 422 });
       }
       case "resolveSkill":
         return NextResponse.json({ skill: await resolveSkill(String(body.name ?? "")) });

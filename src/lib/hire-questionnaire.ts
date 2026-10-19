@@ -84,7 +84,8 @@ export async function hireMatches(input: HireInput, seesTest: boolean): Promise<
   const pillarName = productPillarName(input.product);
   const [rows, role, pillar] = await Promise.all([
     prisma.providerProfile.findMany({
-      where: { AND: [await marketplaceWhere(seesTest), { person: { company: { businessTypes: { some: { businessType: { commodityGroup: { name: input.category } } } } } } }] },
+      // PC-E002: the Business Type decides who is matched (the whole Category when none is picked).
+      where: { AND: [await marketplaceWhere(seesTest), { person: { company: { businessTypes: { some: input.businessTypeId ? { business_type_id: input.businessTypeId } : { businessType: { commodityGroup: { name: input.category } } } } } } }] },
       select: {
         id: true, overview: true,
         person: { select: { id: true, first_name: true, last_name: true, title: true, site: { select: { addresses: { take: 1, select: { city: true, state: true } } } }, company: { select: { name: true } } } },

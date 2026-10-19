@@ -24,8 +24,9 @@ const CONTRACTS: { value: SdContract; line: string }[] = [
 ];
 const WORKSITES = [["OFFSITE", "Offsite", "Works from their own place"], ["ONSITE", "Onsite", "At your site"], ["HYBRID", "Hybrid", "Some days at your site"]] as const;
 
+type Hierarchy = { name: string; businessTypes: { id: string; name: string; usesSkills: boolean }[] }[];
 type Props = {
-  categories: string[];
+  hierarchy: Hierarchy;
   howLong: { value: string; label: string }[];
   roles: { id: string; label: string }[];
   initial: ServiceDescription;
@@ -33,13 +34,16 @@ type Props = {
   initialStep: number;
 };
 
-export function HireQuestionnaire({ categories, howLong, roles, initial, initialJobId, initialStep }: Props) {
+export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJobId, initialStep }: Props) {
+  const categories = hierarchy.map((h) => h.name);
   const [step, setStep] = useState(initialStep);
   const [jobId, setJobId] = useState<string | null>(initialJobId);
   const [f, setF] = useState<ServiceDescription>(initial);
   const [start, setStart] = useState<"choose" | "upload" | "form">(initialJobId || initial.title ? "form" : "choose");
   const [paste, setPaste] = useState("");
   const [suggested, setSuggested] = useState<string[]>([]);
+  // PC-E002: the parsed Category › Business Type is shown as a playback; Change opens the chips.
+  const [changing, setChanging] = useState(false);
   const [extra, setExtra] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,12 +74,13 @@ export function HireQuestionnaire({ categories, howLong, roles, initial, initial
     setBusy(false);
     if (!r?.ok || !j.sd) { setError(j.error ?? "We couldn't read that posting."); return; }
     setF({ ...j.sd, category: j.sd.category || f.category });
+    setChanging(j.sd.classConfidence === "low" || !j.sd.businessTypeId);
     setStart("form");
   };
 
   const next = async () => {
     if (step === 0) {
-      if (!f.category || f.title.trim().length < 3) { setError("Pick a Category and give it a short title."); return; }
+      if (!f.category || !f.businessTypeId || f.title.trim().length < 3) { setError("Pick a Category and Business Type, and give it a short title."); return; }
       if (!f.skills.length && !f.customSkills.length) {
         const j = await call({ action: "suggest", category: f.category, title: f.title });
         if (j) setSuggested((j.skills as string[]) ?? []);
@@ -100,6 +105,16 @@ export function HireQuestionnaire({ categories, howLong, roles, initial, initial
   const request = async () => {
     const j = await call({ action: "request", jobId, personIds: [...picked] });
     if (j) setSent(((j.created as unknown[]) ?? []).length + ((j.alreadyInvited as unknown[]) ?? []).length);
+  };
+
+  // PC-E002: a new Business Type re-reads WHO from the posting (pass 2 only); What, Where, Contract, When and Rate stay.
+  const pickBusinessType = async (b: { id: string; name: string; usesSkills: boolean }) => {
+    set({ businessTypeId: b.id, businessType: b.name, usesSkills: b.usesSkills, classConfidence: null });
+    setChanging(false);
+    if (!f.sourceText || b.id === f.businessTypeId) return;
+    const j = await call({ action: "reparseWho", sourceText: f.sourceText, businessTypeId: b.id });
+    const who = j?.who as Partial<ServiceDescription> | undefined;
+    if (who) setF((x) => ({ ...x, ...who, fromPosting: [...x.fromPosting.filter((k) => !["roleId", "domains", "product", "skills", "customSkills", "years", "education", "credentials", "specialties", "responsibilities", "required", "niceToHave"].includes(k)), ...(who.fromPosting ?? [])] }));
   };
 
   const addSkill = async (name: string) => {
@@ -162,10 +177,31 @@ export function HireQuestionnaire({ categories, howLong, roles, initial, initial
           <>
             <h2 className="text-[19px] font-extrabold">What do you need done?</h2>
             <p className="text-[13.5px] text-ink-2">Pick the closest category, give it a short title and say what the work is.</p>
-            <p className="mb-1.5 mt-4 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">Category{from("category")}</p>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((c) => <button key={c} type="button" aria-pressed={f.category === c} onClick={() => set({ category: c })} className={f.category === c ? CHIP_ON : CHIP_OFF}>{c}</button>)}
-            </div>
+            {f.businessTypeId && !changing ? (
+              <p className="mt-4 flex flex-wrap items-center gap-2 text-[14px]" data-class-playback>
+                <b>{f.category} › {f.businessType}</b>
+                {f.classConfidence && f.classConfidence !== "low" && from("businessType")}
+                <button type="button" onClick={() => setChanging(true)} className="text-[13px] font-semibold text-magenta-dark underline underline-offset-4">Change</button>
+              </p>
+            ) : (
+              <>
+                {f.classConfidence === "low" && <p className="mt-4 text-[13.5px] font-semibold text-magenta-dark">We weren&apos;t sure — pick the closest.</p>}
+                <p className="mb-1.5 mt-4 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">Category</p>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((c) => <button key={c} type="button" aria-pressed={f.category === c} onClick={() => set({ category: c, ...(c !== f.category ? { businessTypeId: null, businessType: "" } : {}) })} className={f.category === c ? CHIP_ON : CHIP_OFF}>{c}</button>)}
+                </div>
+                {f.category && (
+                  <>
+                    <p className="mb-1.5 mt-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">Business Type</p>
+                    <div className="flex flex-wrap gap-2" data-business-types>
+                      {(hierarchy.find((h) => h.name === f.category)?.businessTypes ?? []).map((b) => (
+                        <button key={b.id} type="button" aria-pressed={f.businessTypeId === b.id} onClick={() => pickBusinessType(b)} className={f.businessTypeId === b.id ? CHIP_ON : CHIP_OFF}>{b.name}</button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
             <label className={LABEL}>Title{from("title")}
               <input value={f.title} onChange={(e) => set({ title: e.target.value })} maxLength={140} className={FIELD} placeholder="e.g. Oracle Cloud Procurement Functional Consultant" />
             </label>
@@ -208,14 +244,14 @@ export function HireQuestionnaire({ categories, howLong, roles, initial, initial
         {step === 3 && (
           <>
             <h2 className="text-[19px] font-extrabold">Who do you need?</h2>
-            <div className="grid gap-x-3 sm:grid-cols-2">
+            {f.usesSkills && <div className="grid gap-x-3 sm:grid-cols-2">
               <label className={LABEL}>Role{from("roleId")}
                 <select value={f.roleId ?? ""} onChange={(e) => set({ roleId: e.target.value || null })} className={FIELD}><option value="">Any role</option>{roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}</select>
               </label>
               <label className={LABEL}>Product{from("product")}<input value={f.product} onChange={(e) => set({ product: e.target.value })} className={FIELD} placeholder="Fusion Cloud, EBS, PeopleSoft…" /></label>
-            </div>
-            {listField("domains", "Domain", "(P2P, O2C, R2R…)")}
-            <p className="mb-1.5 mt-4 text-[13px] font-bold">Skills{from("skills")}</p>
+            </div>}
+            {f.usesSkills && listField("domains", "Domain", "(P2P, O2C, R2R…)")}
+            <p className="mb-1.5 mt-4 text-[13px] font-bold">{f.usesSkills ? "Skills" : "What they provide"}{from("skills")}</p>
             <div className="flex flex-wrap gap-2" data-hire-skills>
               {f.skills.map((s) => <button key={s.id} type="button" onClick={() => set({ skills: f.skills.filter((x) => x.id !== s.id) })} className={CHIP_ON} aria-label={`Remove ${s.name}`}>{s.name} ×</button>)}
               {f.customSkills.map((s) => <button key={s} type="button" onClick={() => set({ customSkills: f.customSkills.filter((x) => x !== s) })} className={CHIP_OFF} aria-label={`Remove ${s}`}>{s} ×</button>)}

@@ -3,8 +3,7 @@ import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { HireQuestionnaire } from "@/components/hire/HireQuestionnaire";
 import { HOW_LONG, shipTos } from "@/lib/hire-questionnaire";
-import { shopCategoryNames } from "@/lib/shop-category-list";
-import { emptySd, readServiceDescription } from "@/lib/service-description";
+import { emptySd, postingHierarchy, readServiceDescription } from "@/lib/service-description";
 import { loadOwned, resolveBuyer } from "@/lib/work-request";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +35,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
         </div>
         <Link href="/hire/jobs" className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">My Jobs →</Link>
       </div>
-      <HireQuestionnaire categories={await shopCategoryNames()} howLong={HOW_LONG} roles={roles} initial={sd} initialJobId={jobId} initialStep={jobId ? Math.min(4, Math.max(0, Number(sp.step ?? 0) || 0)) : 0} />
+      <HireQuestionnaire hierarchy={(await postingHierarchy()).groups.map((g) => ({ name: g.name, businessTypes: g.businessTypes.map((b) => ({ id: b.id, name: b.name, usesSkills: b.uses_skills })) }))} howLong={HOW_LONG} roles={roles} initial={sd} initialJobId={jobId} initialStep={jobId ? Math.min(4, Math.max(0, Number(sp.step ?? 0) || 0)) : 0} />
     </div>
   );
 }
