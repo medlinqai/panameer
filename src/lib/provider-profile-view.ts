@@ -1,3 +1,4 @@
+import { buyerCanSeeIdentity } from "@/lib/provider-number";
 import { formatSkillName } from "@/lib/skill-match";
 import { isVisible } from "@/lib/visibility";
 import { roleLong } from "@/lib/role-labels";
@@ -142,8 +143,8 @@ export async function getProviderProfileView(
   // Staff see unredacted client names — they arbitrate validation disputes and
   const isAdmin = Boolean(opts.viewer?.isSystemAdmin);
 
-  // Scott 10-18/10-19: no masking for signed-in viewers — full name shows (signed-out visitors get MaskedProviderPage instead).
-  const showSurname = Boolean(opts.viewer) || identityVisibility({ isOwner, isAdmin }).showSurname;
+  // AN-E002: no PII to a buyer until a Work Order exists (owner, admin and colleagues excepted) — one helper decides.
+  const showSurname = identityVisibility({ isOwner, isAdmin }).showSurname || (await buyerCanSeeIdentity(opts.viewer ?? null, profile.person.id));
 
   const experience = experienceLabel([
     ...profile.employers.map((e) => ({

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { Viewer } from "@/lib/access";
 
 // AN-E001: Provider Number — P-1001, P-1002… in join order, unique, never reused (a high-water mark in platform_settings).
 const KEY = "provider_number_last";
@@ -33,3 +34,25 @@ export async function providerNumbers(profileIds: string[]): Promise<Map<string,
   for (const r of rows) out.set(r.id, r.provider_number ?? (await ensureProviderNumber(r.id)));
   return out;
 }
+
+// ── AN-E002: one rule — a buyer sees a provider's identity (PII) only once a Work Order exists between them ────────
+/** For each provider: may this viewer see who they are? The provider themself, an admin, a colleague in the
+ *  provider's own company, or a viewer whose company has a Work Order (past Draft) with the provider. */
+export async function identityVisibleTo(viewer: Viewer | null, providerPersonIds: string[]): Promise<Set<string>> {
+  const ids = [...new Set(providerPersonIds)].filter(Boolean);
+  if (!viewer || !ids.length) return new Set();
+  if (viewer.isSystemAdmin || viewer.isAdmin) return new Set(ids);
+  const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, company_id: true, company: { select: { p_account_id: true } } } });
+  if (!me) return new Set();
+  const [colleagues, orders] = await Promise.all([
+    prisma.person.findMany({ where: { id: { in: ids }, company_id: me.company_id }, select: { id: true } }),
+    prisma.workOrder.findMany({ where: { provider_person_id: { in: ids }, status: { not: "DRAFT" }, OR: [{ buyer_person_id: me.id }, { p_account_id: me.company.p_account_id }] }, distinct: ["provider_person_id"], select: { provider_person_id: true } }),
+  ]);
+  return new Set([...ids.filter((id) => id === me.id), ...colleagues.map((c) => c.id), ...orders.map((o) => o.provider_person_id)]);
+}
+
+export async function buyerCanSeeIdentity(viewer: Viewer | null, providerPersonId: string): Promise<boolean> {
+  return (await identityVisibleTo(viewer, [providerPersonId])).has(providerPersonId);
+}
+
+export const providerLabel = (number: string | null | undefined) => `Provider ${number ?? "P-…"}`;
