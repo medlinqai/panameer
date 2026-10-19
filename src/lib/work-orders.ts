@@ -58,8 +58,14 @@ export async function submitWorkRequest(
   if (!c.complete) throw new SourcingError(completenessMessage(c), "INCOMPLETE");
   const now = new Date();
   await prisma.workRequestLine.updateMany({ where: { work_request_id: input.workRequestId, work_order_id: null }, data: { status: "ASSIGNED" } });
-  await prisma.workRequest.update({ where: { id: input.workRequestId }, data: { description, status: "APPROVED", submitted_at: now, approved_at: now } });
+  await prisma.workRequest.update({ where: { id: input.workRequestId }, data: { description, status: "SUBMITTED", submitted_at: now } });
+  await approveWorkRequest(input.workRequestId);
   return buildWorkOrders(viewer, input, origin);
+}
+
+/** WA-E001: the approval hook. No approval rules yet, so a submitted Work Request is approved at once — routing goes here later. */
+export async function approveWorkRequest(workRequestId: string) {
+  await prisma.workRequest.update({ where: { id: workRequestId }, data: { status: "APPROVED", approved_at: new Date(), approval_note: "Auto-approved (no approval rules)" } });
 }
 
 async function buildWorkOrders(

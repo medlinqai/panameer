@@ -37,7 +37,8 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
     setBusy(false);
     if (!r?.ok) { setError(j.error ?? "That didn't work."); return; }
     if (j.erp) router.push("/punchout");
-    else if (j.orderId) router.push(`/orders/${j.orderId}`);
+    // WA-E001: Submit stays on a confirmation — the buyer opens the Work Order from there (or from the link we send).
+    else if (j.orderId) router.push(`/hire/submitted?wo=${j.orderId}`);
   };
   return (
     <div className="mt-4 rounded-[14px] border border-line bg-white p-5" data-hire-terms>

@@ -3576,6 +3576,8 @@ model WorkRequest {
   source                 WorkRequestSource?
   submitted_at           DateTime?
   approved_at            DateTime?
+  /// WA-E001: how it was approved ("Auto-approved (no approval rules)" until approval routing exists).
+  approval_note          String?
   erp_requisition_number String?
   job                    Job?               @relation(fields: [job_id], references: [id], onDelete: SetNull)
   workOrders             WorkOrder[]
