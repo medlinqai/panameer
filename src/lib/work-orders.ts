@@ -98,6 +98,12 @@ async function buildWorkOrders(
           service_start: true,
           service_end: true,
           work_order_id: true,
+          payment_event: true,
+          billing_cycle: true,
+          overtime_allowed: true,
+          overtime_multiplier: true,
+          expenses_allowed: true,
+          expenses_cap_cents: true,
         },
       },
     },
@@ -140,7 +146,7 @@ async function buildWorkOrders(
 }
 
 type ReqForOrder = { id: string; buyer_person_id: string; p_account_id: string; currency: string; description: string | null; sole_sourced?: boolean };
-type ReqLine = Awaited<ReturnType<typeof prisma.workRequestLine.findMany<{ select: { id: true; line_number: true; transaction_type: true; description: true; unspsc_code: true; uom: true; quantity: true; unit_price_cents: true; amount_cents: true; supplier_part_id: true; service_product_id: true; provider_service_id: true; provider_person_id: true; service_start: true; service_end: true; work_order_id: true } }>>>[number];
+type ReqLine = Awaited<ReturnType<typeof prisma.workRequestLine.findMany<{ select: { id: true; line_number: true; transaction_type: true; description: true; unspsc_code: true; uom: true; quantity: true; unit_price_cents: true; amount_cents: true; supplier_part_id: true; service_product_id: true; provider_service_id: true; provider_person_id: true; service_start: true; service_end: true; work_order_id: true; payment_event: true; billing_cycle: true; overtime_allowed: true; overtime_multiplier: true; expenses_allowed: true; expenses_cap_cents: true } }>>>[number];
 
 async function buildOne(wr: ReqForOrder, lines: ReqLine[], providerPersonId: string, input: OrderFromRequisition, origin: WorkOrderOrigin): Promise<BuiltOrder> {
 
@@ -223,6 +229,13 @@ async function buildOne(wr: ReqForOrder, lines: ReqLine[], providerPersonId: str
             service_start: l.service_start,
             service_end: l.service_end,
             ...lineTerms.get(l.id)!,
+            // HS-E005: the Terms the buyer confirmed win over the listing's.
+            ...(l.payment_event ? { payment_event: l.payment_event } : {}),
+            ...(l.billing_cycle ? { billing_cycle: l.billing_cycle } : {}),
+            overtime_allowed: l.overtime_allowed,
+            overtime_multiplier: l.overtime_multiplier,
+            expenses_allowed: l.expenses_allowed,
+            expenses_cap_cents: l.expenses_cap_cents,
           })),
         },
       },

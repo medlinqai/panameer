@@ -261,6 +261,11 @@ function LineCard({ line, currency, showFee, milestones }: { line: OrderLineView
           {termsLine({ billing_cycle: line.billingCycle, payment_terms: line.paymentTerms, payment_event: line.paymentEvent }) && (
             <p data-line-terms className="mt-0.5 text-[13px] text-ink-2">{termsLine({ billing_cycle: line.billingCycle, payment_terms: line.paymentTerms, payment_event: line.paymentEvent })}</p>
           )}
+          {(line.overtimeAllowed != null || line.expensesAllowed != null) && (
+            <p data-line-ot-expenses className="mt-0.5 text-[13px] text-ink-2">
+              {line.overtimeAllowed ? `Overtime at ${line.overtimeMultiplier ?? 1.5}× the rate` : "No overtime"} · {line.expensesAllowed ? (line.expensesCapCents != null ? `Expenses up to $${(line.expensesCapCents / 100).toLocaleString("en-US")}` : "Expenses allowed") : "No expenses"}
+            </p>
+          )}
           {(line.serviceStart || line.serviceEnd) && (
             <p className="mt-1 text-[13.5px] text-ink-2">
               {line.serviceStart ?? "…"} → {line.serviceEnd ?? "…"}

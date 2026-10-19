@@ -389,6 +389,11 @@ export type OrderLineView = {
   billingCycle: BillingCycle | null;
   paymentTerms: PaymentTerms | null;
   paymentEvent: PaymentEvent | null;
+  /** HS-E005: overtime and expenses from the Hire Terms (null = not set on this line). */
+  overtimeAllowed: boolean | null;
+  overtimeMultiplier: number | null;
+  expensesAllowed: boolean | null;
+  expensesCapCents: number | null;
 };
 
 export type OrderDetail = {
@@ -536,6 +541,10 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
       billingCycle: l.billing_cycle,
       paymentTerms: l.payment_terms,
       paymentEvent: l.payment_event,
+      overtimeAllowed: l.overtime_allowed,
+      overtimeMultiplier: l.overtime_multiplier != null ? Number(l.overtime_multiplier) : null,
+      expensesAllowed: l.expenses_allowed,
+      expensesCapCents: l.expenses_cap_cents,
     };
   });
 

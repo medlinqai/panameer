@@ -63,3 +63,34 @@ export async function hireAssign(viewer: Viewer, input: { jobId: string; provide
 }
 
 export class HireTermsError extends Error {}
+
+// ── HS-E005: the Terms the buyer confirms, written on the Work Request line, then Create Work Order ─────────────────
+export type HireTerms = {
+  jobId: string; providerPersonId: string; description: string;
+  unitPriceCents: number; uom: string; billingCycle: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "EVERY_90_DAYS";
+  start: string; end: string;
+  paymentEvent: "TIMESHEET" | "PAYMENT_REQUEST" | "INVOICE" | "ACCEPTANCE" | "ORDER_ACCEPTED";
+  overtimeAllowed: boolean; overtimeMultiplier: number | null; expensesAllowed: boolean; expensesCapCents: number | null;
+};
+
+export async function confirmTerms(viewer: Viewer, t: HireTerms): Promise<{ orderId: string | null; orderNumber: string | null; erp: boolean }> {
+  if (!Number.isInteger(t.unitPriceCents) || t.unitPriceCents <= 0) throw new HireTermsError("Enter the rate.");
+  if (t.overtimeAllowed && !(t.overtimeMultiplier && t.overtimeMultiplier >= 1 && t.overtimeMultiplier <= 3)) throw new HireTermsError("Overtime rate: between 1× and 3×.");
+  if (t.expensesAllowed && t.expensesCapCents != null && t.expensesCapCents < 0) throw new HireTermsError("The expenses cap can't be negative.");
+  const sel = await hireAssign(viewer, { jobId: t.jobId, providerPersonId: t.providerPersonId, unitPriceCents: t.unitPriceCents, uom: t.uom, start: t.start, end: t.end });
+  await prisma.workRequestLine.update({
+    where: { id: sel.workRequestLineId },
+    data: {
+      description: t.description.trim().slice(0, 500) || undefined,
+      payment_event: t.paymentEvent, billing_cycle: t.billingCycle,
+      overtime_allowed: t.overtimeAllowed, overtime_multiplier: t.overtimeAllowed ? t.overtimeMultiplier : null,
+      expenses_allowed: t.expensesAllowed, expenses_cap_cents: t.expensesAllowed ? t.expensesCapCents : null,
+    },
+  });
+  const req = await prisma.workRequest.findFirst({ where: { job_id: t.jobId }, orderBy: { created_at: "desc" }, select: { id: true, erp_connection_id: true } });
+  // ERP-origin requests go back through the punchout cart (the ERP raises the PO), not straight to a Work Order.
+  if (req?.erp_connection_id) return { orderId: null, orderNumber: null, erp: true };
+  const { hire } = await import("@/lib/work-orders");
+  const order = await hire(viewer, { jobId: t.jobId, description: t.description.trim().slice(0, 500) || undefined });
+  return { orderId: order.id, orderNumber: order.orderNumber, erp: false };
+}
