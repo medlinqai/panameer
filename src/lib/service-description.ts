@@ -2,13 +2,18 @@ import type { BudgetType, ContractType, WorkRequestDuration, WorksiteType } from
 import { prisma } from "@/lib/prisma";
 import { OFFERABLE } from "@/lib/catalog";
 import { matchSkills } from "@/lib/resume/match";
-import type { AiServiceDescription } from "@/lib/work-request/job-import";
+import { aiClassifyPosting, aiExtractServiceDescription, stripContacts, type AiServiceDescription, type HierarchyOption, type PostingClass } from "@/lib/work-request/job-import";
 
 // SD-E002: the Service Description standard (the posting a buyer creates in Hire, stored as a Job), and the map from
 // a parsed posting into it — role, product, skills matched like the résumé import; unmatched skills kept as custom.
 export type SdContract = "C2C" | "W2" | "C2H" | "1099";
 export type ServiceDescription = {
-  category: string; title: string; summary: string;
+  category: string; businessTypeId: string | null; businessType: string;
+  /** PC-E001: how sure pass 1 was about the Category › Business Type (null when the buyer picked it). */
+  classConfidence: "high" | "medium" | "low" | null;
+  /** PC-E002: WHO uses Role › Domain › Skill only when the Business Type uses skills. */
+  usesSkills: boolean;
+  title: string; summary: string;
   worksite: WorksiteType | null; city: string; state: string; country: string; onsiteDays: number | null;
   contractTypes: SdContract[];
   roleId: string | null; domains: string[]; product: string; skills: { id: string; name: string }[]; customSkills: string[];
@@ -22,7 +27,7 @@ export type ServiceDescription = {
 };
 
 export const emptySd = (): ServiceDescription => ({
-  category: "", title: "", summary: "", worksite: null, city: "", state: "", country: "", onsiteDays: null, contractTypes: [],
+  category: "", businessTypeId: null, businessType: "", classConfidence: null, usesSkills: true, title: "", summary: "", worksite: null, city: "", state: "", country: "", onsiteDays: null, contractTypes: [],
   roleId: null, domains: [], product: "", skills: [], customSkills: [], years: null, education: "", credentials: [], specialties: [],
   responsibilities: "", required: "", niceToHave: "", startText: "", startDate: "", duration: null, budgetType: null, budgetMin: null, budgetMax: null,
   sourceText: "", fromPosting: [],
@@ -59,7 +64,7 @@ const ALIASES: Record<string, string> = {
 const aliasOf = (term: string) => ALIASES[norm(term)] ?? term;
 const ERPISH = /oracle|fusion|\bebs\b|peoplesoft|workday|\bsap\b|netsuite|\berp\b|\bepm\b|hyperion/i;
 
-export async function fromParsed(ai: AiServiceDescription, sourceText: string): Promise<ServiceDescription> {
+export async function fromParsed(ai: AiServiceDescription, sourceText: string, pick?: { category: string; businessTypeId: string; businessType: string; usesSkills: boolean; confidence: PostingClass["confidence"] } | null): Promise<ServiceDescription> {
   const role = ai.roleKind && ROLE_CODE[ai.roleKind] ? await prisma.role.findUnique({ where: { code: ROLE_CODE[ai.roleKind] }, select: { id: true } }) : null;
   const pillarName = productPillarName(ai.product ?? ai.title);
   const pillar = pillarName ? await prisma.pillar.findFirst({ where: { name: pillarName }, select: { id: true } }) : null;
@@ -82,7 +87,8 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string): 
   const filled = (k: string, v: unknown) => (v != null && v !== "" && !(Array.isArray(v) && !v.length) ? [k] : []);
   const sd: ServiceDescription = {
     ...emptySd(),
-    category: ERPISH.test(`${ai.product ?? ""} ${ai.title ?? ""} ${ai.skills.join(" ")}`) ? "ERP & Oracle" : "",
+    category: pick?.category ?? (pick === undefined && ERPISH.test(`${ai.product ?? ""} ${ai.title ?? ""} ${ai.skills.join(" ")}`) ? "ERP & Oracle" : ""),
+    businessTypeId: pick?.businessTypeId ?? null, businessType: pick?.businessType ?? "", classConfidence: pick?.confidence ?? (pick === null ? "low" : null), usesSkills: pick?.usesSkills ?? true,
     title: ai.title ?? "", summary: ai.summary ?? "",
     worksite: ai.worksite, city: ai.city ?? "", state: ai.state ?? "", country: ai.country ?? "", onsiteDays: ai.onsiteDaysPerWeek,
     contractTypes: ai.contractTypes,
@@ -94,7 +100,7 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string): 
     sourceText,
   };
   sd.fromPosting = [
-    ...filled("category", sd.category), ...filled("title", sd.title), ...filled("summary", sd.summary),
+    ...filled("category", sd.category), ...filled("businessType", sd.businessTypeId), ...filled("title", sd.title), ...filled("summary", sd.summary),
     ...filled("worksite", sd.worksite), ...filled("city", sd.city), ...filled("onsiteDays", sd.onsiteDays),
     ...filled("contractTypes", sd.contractTypes),
     ...filled("roleId", sd.roleId), ...filled("domains", sd.domains), ...filled("product", sd.product), ...filled("skills", sd.skills),
@@ -116,7 +122,7 @@ export async function writeServiceDescription(jobId: string, sd: ServiceDescript
     where: { id: jobId },
     data: {
       title: sd.title.trim().slice(0, 140), description: sd.summary.trim().slice(0, 4000) || null,
-      commodity_group_id: group?.id ?? null,
+      commodity_group_id: group?.id ?? null, business_type_id: sd.businessTypeId,
       worksite: sd.worksite, city: sd.city.trim() || null, state: sd.state.trim() || null, location_country: sd.country.trim() || null,
       onsite_days_per_week: sd.worksite && sd.worksite !== "OFFSITE" ? sd.onsiteDays : null,
       contract_types: [...new Set(sd.contractTypes)].map((c) => CONTRACT_TO_DB[c]),
@@ -148,10 +154,13 @@ export async function readServiceDescription(jobId: string): Promise<ServiceDesc
     include: { skills: { include: { skill: { select: { id: true, name: true } } } }, credentials: true, specializations: { include: { specialization: { select: { name: true } } } } },
   });
   if (!j) return null;
-  const group = j.commodity_group_id ? await prisma.commodityGroup.findUnique({ where: { id: j.commodity_group_id }, select: { name: true } }) : null;
+  const [group, bt] = await Promise.all([
+    j.commodity_group_id ? prisma.commodityGroup.findUnique({ where: { id: j.commodity_group_id }, select: { name: true } }) : null,
+    j.business_type_id ? prisma.businessType.findUnique({ where: { id: j.business_type_id }, select: { name: true, uses_skills: true } }) : null,
+  ]);
   return {
     ...emptySd(),
-    category: group?.name ?? "", title: j.title, summary: j.description ?? "",
+    category: group?.name ?? "", businessTypeId: j.business_type_id, businessType: bt?.name ?? "", usesSkills: bt?.uses_skills ?? true, title: j.title, summary: j.description ?? "",
     worksite: j.worksite, city: j.city ?? "", state: j.state ?? "", country: j.location_country ?? "", onsiteDays: j.onsite_days_per_week,
     contractTypes: j.contract_types.map((c) => CONTRACT_FROM_DB[c]),
     roleId: j.role_id, domains: j.domains, product: j.product ?? "", skills: j.skills.map((s) => ({ id: s.skill.id, name: s.skill.name })), customSkills: j.custom_skills,
@@ -161,4 +170,50 @@ export async function readServiceDescription(jobId: string): Promise<ServiceDesc
     budgetType: j.budget_type, budgetMin: j.budget_min_cents != null ? j.budget_min_cents / 100 : null, budgetMax: j.budget_max_cents != null ? j.budget_max_cents / 100 : null,
     sourceText: "",
   };
+}
+
+// ── PC-E001/E002: classify first, then extract with that Business Type; a changed pick re-runs pass 2 only ─────────
+export async function postingHierarchy() {
+  const groups = await prisma.commodityGroup.findMany({
+    where: { hidden: false, show_in_shop: true }, orderBy: { sort_order: "asc" },
+    select: { name: true, businessTypes: { where: { hidden: false }, orderBy: { sort_order: "asc" }, select: { id: true, name: true, uses_skills: true, description: true } } },
+  });
+  const options: HierarchyOption[] = groups.map((g) => ({ category: g.name, businessTypes: g.businessTypes.map((b) => ({ name: b.name, usesSkills: b.uses_skills, description: b.description })) }));
+  return { groups, options };
+}
+
+async function btContext(businessTypeId: string) {
+  const bt = await prisma.businessType.findUnique({
+    where: { id: businessTypeId },
+    select: { id: true, name: true, uses_skills: true, commodityGroup: { select: { name: true } }, serviceCategories: { select: { serviceTypes: { where: { hidden: false, merged_into_id: null }, select: { name: true } } } } },
+  });
+  if (!bt?.commodityGroup) return null;
+  return { id: bt.id, category: bt.commodityGroup.name, name: bt.name, usesSkills: bt.uses_skills, types: bt.serviceCategories.flatMap((c) => c.serviceTypes.map((t) => t.name)) };
+}
+
+export type ParseResult = { ok: true; sd: ServiceDescription } | { ok: false; reason: string };
+
+export async function parsePosting(text: string): Promise<ParseResult> {
+  const { groups, options } = await postingHierarchy();
+  const cls = await aiClassifyPosting(text, options);
+  const hit = cls && cls.confidence !== "low" && cls.businessType ? groups.find((g) => g.name === cls.category)?.businessTypes.find((b) => b.name === cls.businessType) : undefined;
+  const ctx = hit ? await btContext(hit.id) : null;
+  const out = await aiExtractServiceDescription(text, ctx);
+  if (!out.ok) return { ok: false, reason: out.reason };
+  const pick = ctx && cls ? { category: ctx.category, businessTypeId: ctx.id, businessType: ctx.name, usesSkills: ctx.usesSkills, confidence: cls.confidence } : null;
+  return { ok: true, sd: await fromParsed(out.data, stripContacts(text), pick) };
+}
+
+const WHO_KEYS = ["roleId", "domains", "product", "skills", "customSkills", "years", "education", "credentials", "specialties", "responsibilities", "required", "niceToHave"] as const;
+/** PC-E002: the buyer changed the Business Type — pass 2 again for WHO only; What/Where/Contract/When/Rate stay as they are. */
+export async function reparseWho(sourceText: string, businessTypeId: string): Promise<Partial<ServiceDescription> | null> {
+  const ctx = await btContext(businessTypeId);
+  if (!ctx || sourceText.trim().length < 60) return null;
+  const out = await aiExtractServiceDescription(sourceText, ctx);
+  if (!out.ok) return null;
+  const sd = await fromParsed(out.data, sourceText, { category: ctx.category, businessTypeId: ctx.id, businessType: ctx.name, usesSkills: ctx.usesSkills, confidence: "high" });
+  const who: Partial<ServiceDescription> = { category: ctx.category, businessTypeId: ctx.id, businessType: ctx.name, usesSkills: ctx.usesSkills, classConfidence: null };
+  for (const k of WHO_KEYS) (who as Record<string, unknown>)[k] = sd[k];
+  if (!ctx.usesSkills) Object.assign(who, { roleId: null, domains: [], product: "" });
+  return { ...who, fromPosting: sd.fromPosting.filter((k) => (WHO_KEYS as readonly string[]).includes(k)) };
 }

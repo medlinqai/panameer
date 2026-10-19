@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
-import { aiExtractServiceDescription, stripContacts } from "@/lib/work-request/job-import";
-import { fromParsed } from "@/lib/service-description";
+import { parsePosting } from "@/lib/service-description";
 import { extractText, mimeFromName, ExtractError } from "@/lib/resume/extract";
 
 export const runtime = "nodejs";
@@ -28,7 +27,8 @@ export async function POST(request: Request) {
   }
   text = text.trim();
   if (text.length < 60) return NextResponse.json({ error: "Paste the whole posting — that's too short to read." }, { status: 400 });
-  const out = await aiExtractServiceDescription(text.slice(0, 40_000));
+  // PC-E001: pass 1 classifies the Business Type, pass 2 reads the six parts with it.
+  const out = await parsePosting(text.slice(0, 40_000));
   if (!out.ok) return NextResponse.json({ error: out.reason === "no_key" ? "The posting reader isn't switched on here. Fill it in yourself." : "We couldn't read that posting. Fill it in yourself, or try again." }, { status: out.reason === "no_key" ? 503 : 422 });
-  return NextResponse.json({ sd: await fromParsed(out.data, stripContacts(text)) });
+  return NextResponse.json({ sd: out.sd });
 }

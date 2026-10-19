@@ -270,10 +270,52 @@ export function stripContacts(text: string): string {
 
 export type SdImportOutcome = { ok: true; data: AiServiceDescription; ms: number } | { ok: false; reason: "no_key" | "truncated" | "error" | "refusal" | "deadline"; message: string };
 
-export async function aiExtractServiceDescription(text: string): Promise<SdImportOutcome> {
+// ── PC-E001: pass 1 — which Category › Business Type is this posting? (from the shown Category Hierarchy) ─────────
+export type HierarchyOption = { category: string; businessTypes: { name: string; usesSkills: boolean; description: string | null }[] };
+export type PostingClass = { category: string | null; businessType: string | null; confidence: "high" | "medium" | "low" };
+
+const CLASS_SCHEMA = z.object({ category: z.string().nullable(), businessType: z.string().nullable(), confidence: z.enum(["high", "medium", "low"]) });
+
+export async function aiClassifyPosting(text: string, hierarchy: HierarchyOption[]): Promise<PostingClass | null> {
+  const menu = hierarchy.map((h) => `${h.category}: ${h.businessTypes.map((b) => (b.description ? `${b.name} (${b.description})` : b.name)).join("; ")}`).join("\n");
+  const call = await callExtractionModel({
+    timeoutMs: 25_000,
+    system: `You classify a job posting into Panameer's Category Hierarchy. Pick exactly one Category and one of ITS Business Types, using the names exactly as listed.
+Oracle / ERP / Fusion / EBS / PeopleSoft / EPM / Workday implementation or support work is "ERP & Oracle" › "Corporate Systems".
+confidence: high = clearly this one; medium = probably; low = none fits well (then you may return nulls).
+
+${menu}`,
+    // Names only from the hierarchy — the model can't invent or merge them.
+    schema: { type: "object", additionalProperties: false, required: ["category", "businessType", "confidence"], properties: { category: { type: ["string", "null"], enum: [...hierarchy.map((h) => h.category), null] }, businessType: { type: ["string", "null"], enum: [...new Set(hierarchy.flatMap((h) => h.businessTypes.map((b) => b.name))), null] }, confidence: { type: "string", enum: ["high", "medium", "low"] } } },
+    schemaName: "classify_posting",
+    text: stripContacts(text).slice(0, 12_000),
+    instruction: "Which Category and Business Type is this posting?",
+    tag: "posting",
+    toolDescription: "Record the Category and Business Type for this posting.",
+    maxOutputTokens: 3_000,
+  });
+  if (!call.ok) return null;
+  const parsed = CLASS_SCHEMA.safeParse(call.value);
+  if (!parsed.success) return null;
+  // Only names that exist, and a Business Type inside the picked Category ("Category: Business Type" is split).
+  const [c0, b0] = (parsed.data.category ?? "").split(/\s*[:›]\s*/);
+  if (b0 && !hierarchy.some((h) => h.businessTypes.some((x) => x.name.toLowerCase() === (parsed.data.businessType ?? "").toLowerCase() && h.category.toLowerCase() === c0.toLowerCase()))) parsed.data.businessType = b0;
+  const cat = hierarchy.find((h) => h.category.toLowerCase() === (c0 ?? "").toLowerCase());
+  const bt = cat?.businessTypes.find((b) => b.name.toLowerCase() === (parsed.data.businessType ?? "").toLowerCase());
+  if (!cat || !bt) return { category: cat?.category ?? null, businessType: null, confidence: "low" };
+  return { category: cat.category, businessType: bt.name, confidence: parsed.data.confidence };
+}
+
+/** PC-E001: pass 2 — the six parts, using the picked Business Type's WHO fields (RDS only where it uses skills). */
+export async function aiExtractServiceDescription(text: string, bt?: { category: string; name: string; usesSkills: boolean; types: string[] } | null): Promise<SdImportOutcome> {
+  const who = !bt
+    ? ""
+    : bt.usesSkills
+      ? `\nThis posting is ${bt.category} › ${bt.name}: WHO uses Role › Domain › Skill (RDS) and the software Product.`
+      : `\nThis posting is ${bt.category} › ${bt.name}: there is no software role or product — leave roleKind, domains and product null/empty. Put what they must provide or work with (services, equipment, materials, coverage area) in skills, preferring these names when they fit: ${bt.types.slice(0, 40).join(", ")}.`;
   const call = await callExtractionModel({
     timeoutMs: 45_000,
-    system: SD_SYSTEM,
+    system: SD_SYSTEM + who,
     schema: SD_TOOL as unknown as Record<string, unknown>,
     schemaName: "record_service_description",
     text: stripContacts(text),
