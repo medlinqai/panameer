@@ -44,7 +44,32 @@ export type WorkCard = {
   identity: BuyerIdentity;
   /** How many of the viewer's skills the request asks for. */
   matched: number;
+  /** WP-E004: the provider's own proposal on My Proposals / Invitations ("Submitted · $110/hr · start Oct 26 · due Oct 22 1:53 PM"). */
+  myProposal?: string | null;
 };
+
+const PROPOSAL_LABEL: Record<string, string> = { SUBMITTED: "Submitted", SHORTLISTED: "Shortlisted", AWARDED: "Awarded", NOT_SELECTED: "Not selected", DECLINED: "Not selected", WITHDRAWN: "Withdrawn", DRAFT: "Draft" };
+const PER_UOM: Record<string, string> = { HOUR: "/hr", DAY: "/day", WEEK: "/wk", MONTH: "/mo" };
+
+async function myProposals(personId: string, jobIds: string[]): Promise<Map<string, string>> {
+  const [props, reqs] = await Promise.all([
+    prisma.proposal.findMany({ where: { provider_person_id: personId, job_id: { in: jobIds } }, select: { job_id: true, status: true, currency: true, lines: { take: 1, orderBy: { line_number: "asc" }, select: { unit_price_cents: true, uom: true, basis: true, available_from: true } } } }),
+    prisma.proposalRequest.findMany({ where: { provider_person_id: personId, job_id: { in: jobIds } }, select: { job_id: true, status: true, responds_by: true } }),
+  ]);
+  const fmt = (d: Date, time: boolean) => d.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", ...(time ? { hour: "numeric", minute: "2-digit" } : {}) });
+  const out = new Map<string, string>();
+  for (const id of jobIds) {
+    const p = props.find((x) => x.job_id === id);
+    const r = reqs.find((x) => x.job_id === id);
+    const l = p?.lines[0];
+    const parts = p
+      ? [PROPOSAL_LABEL[p.status] ?? p.status, l?.unit_price_cents != null ? `${money(l.unit_price_cents, p.currency)}${l.basis === "RATE" ? PER_UOM[l.uom ?? "HOUR"] ?? "" : ""}` : null, l?.available_from ? `start ${fmt(l.available_from, false)}` : null]
+      : r ? [r.status === "DECLINED" ? "You declined" : "Invited — no proposal yet"] : [];
+    if (r?.responds_by && (!p || ["SUBMITTED", "SHORTLISTED"].includes(p.status))) parts.push(`due ${fmt(r.responds_by, true)}`);
+    if (parts.length) out.set(id, parts.filter(Boolean).join(" · "));
+  }
+  return out;
+}
 
 function money(cents: number | null, currency: string): string | null {
   if (cents == null) return null;
@@ -247,5 +272,6 @@ export async function getWorkFeed(input: {
     cards.sort((a, b) => b._overlap - a._overlap);
   }
 
-  return cards.map(({ _overlap, ...card }) => ({ ...card, matched: _overlap }));
+  const mineMap = mine && input.personId ? await myProposals(input.personId, cards.map((c) => c.id)) : null;
+  return cards.map(({ _overlap, ...card }) => ({ ...card, matched: _overlap, myProposal: mineMap?.get(card.id) ?? null }));
 }
