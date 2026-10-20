@@ -9440,3 +9440,15 @@ model JobHiddenProvider {
   @@unique([job_id, provider_person_id])
   @@map("job_hidden_providers")
 }
+
+/// NB-E001: one counter per transaction prefix per buyer account — WR-STRAT-26-00000001. Keeps counting across years.
+model NumberSequence {
+  id           String   @id @default(uuid()) @db.Uuid
+  prefix       String
+  p_account_id String   @db.Uuid
+  last_value   Int      @default(0)
+  updated_at   DateTime @updatedAt
+
+  @@unique([prefix, p_account_id])
+  @@map("number_sequences")
+}
