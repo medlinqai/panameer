@@ -38,7 +38,9 @@ export async function hireDefaults(viewer: Viewer, jobId: string, providerPerson
   const listed = services.find((s) => s.uom === "HOUR") ?? services[0] ?? null;
   const req = await prisma.workRequest.findFirst({ where: { job_id: jobId }, orderBy: { created_at: "desc" }, select: { erp_connection_id: true, description: true, lines: { where: { line_number: 1 }, select: { provider_person_id: true, unit_price_cents: true, uom: true, payment_event: true, billing_cycle: true, overtime_allowed: true, overtime_multiplier: true, expenses_allowed: true, expenses_cap_cents: true, service_start: true, service_end: true } } } });
   const prior = req?.lines[0]?.provider_person_id === providerPersonId ? req.lines[0] : null;
-  const start = prior?.service_start ?? job.start_date ?? new Date(Date.now() + 7 * 86_400_000);
+  // SE-E005: Award = Hire at the proposed rate (and their earliest start).
+  const proposed = await (await import("@/lib/sourcing-events")).proposedRateFor(jobId, providerPersonId);
+  const start = prior?.service_start ?? proposed?.available_from ?? job.start_date ?? new Date(Date.now() + 7 * 86_400_000);
   const end = prior?.service_end ?? job.end_date ?? new Date(start.getTime() + (MONTHS[job.duration ?? ""] ?? 3) * 30 * 86_400_000);
   const company = provider.company?.name && !provider.company.name.includes(provider.last_name) ? provider.company.name : null;
   // AN-E004: the Work Request still shows the Provider number — the name arrives with the Work Order.
@@ -49,7 +51,7 @@ export async function hireDefaults(viewer: Viewer, jobId: string, providerPerson
     location: [job.worksite ? job.worksite[0] + job.worksite.slice(1).toLowerCase() : null, [job.city, job.state, job.location_country].filter(Boolean).join(", ")].filter(Boolean).join(" · "),
     providerPersonId, providerName: label ?? `${provider.first_name} ${provider.last_name}`.trim(), providerCompany: shown ? company : null,
     providerPhotoUrl: shown ? provider.photo_url : null, identityShown: shown,
-    unitPriceCents: prior?.unit_price_cents ?? listed?.rate_cents ?? job.budget_max_cents ?? null,
+    unitPriceCents: proposed?.unit_price_cents ?? prior?.unit_price_cents ?? listed?.rate_cents ?? job.budget_max_cents ?? null,
     uom: prior?.uom ?? listed?.uom ?? "HOUR",
     billingCycle: prior?.billing_cycle ?? listed?.billing_cycle ?? "MONTHLY",
     start: day(start), end: day(end), duration: job.duration,
@@ -99,5 +101,6 @@ export async function confirmTerms(viewer: Viewer, t: HireTerms): Promise<{ orde
   if (req?.erp_connection_id) return { orderId: null, orderNumber: null, erp: true };
   const { hire } = await import("@/lib/work-orders");
   const order = await hire(viewer, { jobId: t.jobId, description: t.description.trim().slice(0, 500) || undefined });
+  await (await import("@/lib/sourcing-events")).markAwarded(t.jobId, t.providerPersonId, order.id);
   return { orderId: order.id, orderNumber: order.orderNumber, erp: false };
 }

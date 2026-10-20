@@ -131,3 +131,73 @@ async function ownEvent(viewer: Viewer, eventId: string) {
   await ownJob(viewer, ev.job_id);
   return ev;
 }
+
+// ── SE-E005: the buyer's Sourcing Event page ─────────────────────────────────────────────────────────────────
+export type EventProposal = {
+  personId: string; requestStatus: string; declineReason: string | null;
+  proposal: { id: string; status: string; rateCents: number | null; start: string | null; note: string | null } | null;
+  match: import("@/lib/hire-questionnaire").HireMatch;
+};
+
+export async function eventForBuyer(viewer: Viewer, eventId: string) {
+  const ev = await ownEvent(viewer, eventId);
+  const [{ hireMatches }, { readServiceDescription }, { seesTestAccounts }, { providerLabel, providerNumbers }, { certificationTestForSkill }] = await Promise.all([
+    import("@/lib/hire-questionnaire"), import("@/lib/service-description"), import("@/lib/admin/test-accounts"), import("@/lib/provider-number"), import("@/lib/certification-tests"),
+  ]);
+  const sd = await readServiceDescription(ev.job_id);
+  const requests = await prisma.proposalRequest.findMany({
+    where: { sourcing_event_id: ev.id }, orderBy: { created_at: "asc" },
+    select: { provider_person_id: true, status: true, decline_reason: true, bid: { select: { id: true, status: true, cover_note: true, lines: { take: 1, orderBy: { line_number: "asc" }, select: { unit_price_cents: true, available_from: true } } } } },
+  });
+  const matches = sd ? await hireMatches(sd, await seesTestAccounts(viewer), ev.job_id, viewer) : [];
+  const byPerson = new Map(matches.map((m) => [m.personId, m]));
+  const missing = requests.filter((r) => !byPerson.has(r.provider_person_id));
+  if (missing.length) {
+    const profiles = await prisma.providerProfile.findMany({ where: { person_id: { in: missing.map((r) => r.provider_person_id) } }, select: { id: true, person_id: true, person: { select: { title: true } } } });
+    const nums = await providerNumbers(profiles.map((p) => p.id));
+    for (const p of profiles) byPerson.set(p.person_id, { personId: p.person_id, profileId: p.id, name: providerLabel(nums.get(p.id)), company: null, line: p.person.title ?? "", rate: null, matched: [], why: [], fit: 0, inBudget: false, outside: false, hidden: false, starred: false, detail: { summary: "", role: p.person.title, skillsMatched: "0 of 10", years: null, certifications: [], location: null, rates: [], products: [] } });
+  }
+  const proposals: EventProposal[] = requests.filter((r) => byPerson.has(r.provider_person_id)).map((r) => {
+    const line = r.bid?.lines[0];
+    return {
+      personId: r.provider_person_id, requestStatus: r.status, declineReason: r.decline_reason,
+      proposal: r.bid && r.bid.status !== "DRAFT" && r.bid.status !== "WITHDRAWN" ? { id: r.bid.id, status: r.bid.status, rateCents: line?.unit_price_cents ?? null, start: line?.available_from?.toISOString().slice(0, 10) ?? null, note: r.bid.cover_note } : null,
+      match: byPerson.get(r.provider_person_id)!,
+    };
+  });
+  let testId: string | null = null;
+  for (const s of sd?.skills ?? []) { const t = await certificationTestForSkill(s.id); if (t) { testId = t.assessmentId; break; } }
+  const job = await prisma.job.findUniqueOrThrow({ where: { id: ev.job_id }, select: { title: true, budget_type: true, budget_min_cents: true, budget_max_cents: true } });
+  return {
+    id: ev.id, number: ev.event_number, status: ev.status, deadlineAt: ev.deadline_at.toISOString(), hours: ev.deadline_hours, jobId: ev.job_id, job,
+    workOrderId: ev.work_order_id, othersNotifiedAt: ev.others_notified_at?.toISOString() ?? null,
+    counts: { requested: requests.length, proposed: proposals.filter((p) => p.proposal).length, declined: requests.filter((r) => r.status === "DECLINED").length },
+    proposals, certificationTestId: testId,
+  };
+}
+
+/** Shortlist / un-shortlist / Decline one proposal (Decline is silent — the not-awarded notice waits for Released). */
+export async function setProposalStatus(viewer: Viewer, eventId: string, proposalId: string, status: "SHORTLISTED" | "SUBMITTED" | "DECLINED") {
+  const ev = await ownEvent(viewer, eventId);
+  const p = await prisma.proposal.findFirst({ where: { id: proposalId, job_id: ev.job_id, proposalRequest: { sourcing_event_id: ev.id } }, select: { id: true, status: true } });
+  if (!p) throw new WorkRequestError("Proposal not found", "NOT_FOUND");
+  if (p.status === "AWARDED") throw new WorkRequestError("That proposal is awarded.", "INVALID");
+  await prisma.proposal.update({ where: { id: p.id }, data: status === "DECLINED" ? { status, declined_at: new Date() } : { status, declined_at: null } });
+}
+
+/** Award: Hire at the proposed rate — the proposal's rate for the terms page (null when not in a Sourcing Event). */
+export async function proposedRateFor(jobId: string, providerPersonId: string) {
+  const p = await prisma.proposal.findFirst({ where: { job_id: jobId, provider_person_id: providerPersonId, status: { in: ["SUBMITTED", "SHORTLISTED"] }, proposalRequest: { sourcing_event_id: { not: null } } }, select: { lines: { take: 1, orderBy: { line_number: "asc" }, select: { unit_price_cents: true, available_from: true } } } });
+  return p?.lines[0] ?? null;
+}
+
+/** After the Work Order is created from an awarded proposal: proposal → Awarded, event → Awarded (with the WO). */
+export async function markAwarded(jobId: string, providerPersonId: string, workOrderId: string | null) {
+  const p = await prisma.proposal.findFirst({ where: { job_id: jobId, provider_person_id: providerPersonId, proposalRequest: { sourcing_event_id: { not: null } } }, select: { id: true, proposalRequest: { select: { sourcing_event_id: true } } } });
+  const eventId = p?.proposalRequest?.sourcing_event_id;
+  if (!p || !eventId) return;
+  await prisma.$transaction([
+    prisma.proposal.update({ where: { id: p.id }, data: { status: "AWARDED" } }),
+    prisma.sourcingEvent.update({ where: { id: eventId }, data: { status: "AWARDED", awarded_proposal_id: p.id, work_order_id: workOrderId } }),
+  ]);
+}
