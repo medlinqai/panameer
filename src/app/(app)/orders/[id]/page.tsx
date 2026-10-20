@@ -18,7 +18,7 @@ import { History } from "@/components/orders/History";
 import { orderHistory } from "@/lib/transaction-history";
 import { BILLABLE } from "@/lib/orders";
 import { milestonesFor } from "@/lib/order-milestones";
-import { Milestones } from "@/components/orders/Milestones";
+import { OrderSchedule } from "@/components/orders/OrderSchedule";
 import { ChangeOrders } from "@/components/orders/ChangeOrders";
 import { changeBlocked, describeChanges, revisionsFor, type Diff, type LineField } from "@/lib/change-orders";
 import { BuyerCard } from "@/components/orders/BuyerCard";
@@ -174,7 +174,7 @@ export default async function Page({
           )}
           <ul className="mt-5 grid gap-3">
             {o.lines.map((l) => (
-              <LineCard key={l.id} line={l} currency={o.currency} showFee={o.party === "PROVIDER"} proposed={pending?.changes.lines.find((x) => x.lineId === l.id)?.fields ?? null} milestones={milestones.get(l.id) ? <Milestones orderId={o.id} rows={milestones.get(l.id)!} canReport={o.party === "PROVIDER" && BILLABLE.includes(o.status)} /> : null} />
+              <LineCard key={l.id} line={l} currency={o.currency} showFee={o.party === "PROVIDER"} proposed={pending?.changes.lines.find((x) => x.lineId === l.id)?.fields ?? null} milestones={milestones.get(l.id) ? <p className="mt-3 text-[13px] text-ink-2">{milestones.get(l.id)!.length} milestone{milestones.get(l.id)!.length === 1 ? "" : "s"} — <Link href={`/orders/${o.id}?tab=schedule`} className="font-semibold text-magenta-dark underline underline-offset-4">see Schedule</Link></p> : null} />
             ))}
           </ul>
         </section>
@@ -200,7 +200,11 @@ export default async function Page({
         </section>
       )}
 
-      {tab === "schedule" && <section data-tab="schedule" className="mt-6" />}
+      {tab === "schedule" && (
+        <section data-tab="schedule" className="mt-6">
+          <OrderSchedule orderId={o.id} lines={o.lines.map((l) => ({ id: l.id, lineNumber: l.lineNumber, description: l.description, serviceStart: l.serviceStart, serviceEnd: l.serviceEnd, percent: l.drawdown.percent }))} milestones={milestones} canReport={o.party === "PROVIDER" && BILLABLE.includes(o.status)} today={todayIso()} />
+        </section>
+      )}
 
       {o.party === "BUYER" && (
         <p className="mt-8 border-t border-line pt-5 text-[14px]">
@@ -335,4 +339,9 @@ async function chainLine(orderId: string) {
       {was}
     </p>
   );
+}
+
+/** Today in New York, YYYY-MM-DD (the schedule's "now"). */
+function todayIso() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
 }
