@@ -242,14 +242,19 @@ export async function submitProposal(
 
   await writeRate(created.id, draft.rate ?? null);
 
-  // THE BUYER IS TOLD, THROUGH THE ONE WRITER
+  // THE BUYER IS TOLD, THROUGH THE ONE WRITER — who (Provider Number: no PII before a Work Order) and at what rate.
+  const profile = await prisma.providerProfile.findUnique({ where: { person_id: provider.id }, select: { id: true } });
+  const providerNumber = profile ? await (await import("@/lib/provider-number")).ensureProviderNumber(profile.id) : "";
+  const job = await prisma.job.findUnique({ where: { id: request.id }, select: { budget_type: true } });
+  const cents = draft.rate?.unitPriceCents ?? null;
+  const rateText = cents ? `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}${job?.budget_type === "HOURLY" ? "/hr" : ""}` : "";
   await notify({
     event: "work.proposal_received",
     personId: request.buyerPersonId,
     entityType: "proposal",
     entityId: created.id,
     dedupeKey: `work.proposal_received:${created.id}`,
-    vars: { requestTitle: request.title, requestId: request.id },
+    vars: { requestTitle: request.title, requestId: request.id, providerNumber, rateText },
   });
 
   return { id: created.id, replaced: false };

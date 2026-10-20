@@ -718,8 +718,12 @@ export const NOTIFICATION_EVENTS = {
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: true,
-    title: (v) => `A proposal on ${str(v, "requestTitle", "your work request")}`,
-    body: () => "Respond from the work request.",
+    title: (v) => {
+      const who = str(v, "providerNumber", "");
+      const rate = str(v, "rateText", "");
+      return `Proposal from ${who || "a provider"}${rate ? ` at ${rate}` : ""} on ${str(v, "requestTitle", "your work request")}`;
+    },
+    body: () => "Open the work request to compare, shortlist or award.",
     href: (v) => `/work-requests/${str(v, "requestId", "")}`,
   },
   // THE ONE WORK-CHAIN EVENT WITH A LIVE WRITER
