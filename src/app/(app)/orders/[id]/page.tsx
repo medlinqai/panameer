@@ -133,6 +133,13 @@ export default async function Page({
 
       <OrderTabs id={o.id} current={tab} />
 
+      {/* WT-E005: Actions ▾ views — off the main page, each with a way back. */}
+      {view && (
+        <p className="mt-4 flex flex-wrap items-center justify-between gap-2">
+          <b className="text-[17px]">{view === "history" ? "Transaction History" : "Change History"}</b>
+          <Link href={`/orders/${o.id}`} className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">← Back to the order</Link>
+        </p>
+      )}
       {view === "history" && <section data-view="history" className="mt-2"><History events={await orderHistory(o.id)} /></section>}
       {view === "changes" && (
         <section data-view="changes" className="mt-2">
