@@ -61,6 +61,8 @@ const ALIASES: Record<string, string> = {
   fccs: "Financial Consolidation and Close", epbcs: "Planning", pbcs: "Planning", "epbcs planning": "Planning", eprcs: "Narrative Reporting", "narrative reporting eprcs": "Narrative Reporting",
   "hyperion financial reporting": "Financial Reporting Studio", "role based security": "RBAC Role Model", "approval workflows": "Approvals Management Extensions", fbdi: "FBDI", hdl: "HDL",
 };
+/** SM-E002: generic words on their own never match a skill. */
+const GENERIC = new Set(["accounting", "onboarding", "management", "processing", "order", "orders", "finance", "procurement", "reporting", "operations", "support"]);
 const aliasOf = (term: string) => ALIASES[norm(term)] ?? term;
 const ERPISH = /oracle|fusion|\bebs\b|peoplesoft|workday|\bsap\b|netsuite|\berp\b|\bepm\b|hyperion/i;
 
@@ -72,18 +74,10 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string, p
     where: { is_custom: false, ...OFFERABLE, ...(pillar ? { OR: [{ pillar_id: pillar.id }, { pillar_id: null }] } : {}) },
     select: { id: true, name: true, role_id: true },
   });
+  // SM-E002: exact (or alias) names only — the extraction already picked from the catalog; no prefix/suffix guessing.
   const first = matchSkills(ai.skills.map(aliasOf), catalog);
-  // Second pass for posting words the catalog spells longer ("Inventory" → "Inventory Management").
-  const byName = new Map(catalog.map((c) => [norm(c.name), c]));
-  const extra: { id: string; name: string }[] = [];
-  const unmatched: string[] = [];
-  for (const term of first.unmatched) {
-    const t = norm(term);
-    const hit = t.length >= 5 ? [...byName.entries()].filter(([n]) => n.split(" ").length <= 4 && (n.startsWith(`${t} `) || n.endsWith(` ${t}`) || n === t)).sort((x, y) => x[0].length - y[0].length)[0]?.[1] : undefined;
-    if (hit) extra.push({ id: hit.id, name: hit.name });
-    else unmatched.push(term);
-  }
-  const skills = [...new Map([...first.matched, ...extra].map((m) => [m.name.toLowerCase(), { id: m.id, name: m.name }])).values()];
+  const unmatched = first.unmatched.filter((t) => t.split(/\s+/).length <= 4 && !GENERIC.has(norm(t)));
+  const skills = [...new Map(first.matched.map((m) => [m.name.toLowerCase(), { id: m.id, name: m.name }])).values()];
   const filled = (k: string, v: unknown) => (v != null && v !== "" && !(Array.isArray(v) && !v.length) ? [k] : []);
   const sd: ServiceDescription = {
     ...emptySd(),
@@ -92,7 +86,7 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string, p
     title: ai.title ?? "", summary: ai.summary ?? "",
     worksite: ai.worksite, city: ai.city ?? "", state: ai.state ?? "", country: ai.country ?? "", onsiteDays: ai.onsiteDaysPerWeek,
     contractTypes: ai.contractTypes,
-    roleId: role?.id ?? null, domains: ai.domains, product: ai.product ?? "", skills, customSkills: unmatched.slice(0, 20),
+    roleId: role?.id ?? null, domains: ai.domains, product: ai.product ?? "", skills, customSkills: [...new Set([...ai.otherSkills, ...unmatched])].slice(0, 12),
     years: ai.yearsExperience, education: ai.education ?? "", credentials: ai.credentials, specialties: ai.specialties,
     responsibilities: ai.responsibilities.join("\n"), required: ai.mustHave.join("\n"), niceToHave: ai.niceToHave.join("\n"),
     startText: ai.startText ?? "", startDate: ai.startDate ?? "", duration: ai.duration,
@@ -198,7 +192,7 @@ export async function parsePosting(text: string): Promise<ParseResult> {
   const cls = await aiClassifyPosting(text, options);
   const hit = cls && cls.confidence !== "low" && cls.businessType ? groups.find((g) => g.name === cls.category)?.businessTypes.find((b) => b.name === cls.businessType) : undefined;
   const ctx = hit ? await btContext(hit.id) : null;
-  const out = await aiExtractServiceDescription(text, ctx);
+  const out = await aiExtractServiceDescription(text, ctx, ctx ? { skills: await skillCatalogFor(ctx.id, text) } : null);
   if (!out.ok) return { ok: false, reason: out.reason };
   const pick = ctx && cls ? { category: ctx.category, businessTypeId: ctx.id, businessType: ctx.name, usesSkills: ctx.usesSkills, confidence: cls.confidence } : null;
   return { ok: true, sd: await fromParsed(out.data, stripContacts(text), pick) };
@@ -209,11 +203,21 @@ const WHO_KEYS = ["roleId", "domains", "product", "skills", "customSkills", "yea
 export async function reparseWho(sourceText: string, businessTypeId: string): Promise<Partial<ServiceDescription> | null> {
   const ctx = await btContext(businessTypeId);
   if (!ctx || sourceText.trim().length < 60) return null;
-  const out = await aiExtractServiceDescription(sourceText, ctx);
+  const out = await aiExtractServiceDescription(sourceText, ctx, { skills: await skillCatalogFor(ctx.id, sourceText) });
   if (!out.ok) return null;
   const sd = await fromParsed(out.data, sourceText, { category: ctx.category, businessTypeId: ctx.id, businessType: ctx.name, usesSkills: ctx.usesSkills, confidence: "high" });
   const who: Partial<ServiceDescription> = { category: ctx.category, businessTypeId: ctx.id, businessType: ctx.name, usesSkills: ctx.usesSkills, classConfidence: null };
   for (const k of WHO_KEYS) (who as Record<string, unknown>)[k] = sd[k];
   if (!ctx.usesSkills) Object.assign(who, { roleId: null, domains: [], product: "" });
   return { ...who, fromPosting: sd.fromPosting.filter((k) => (WHO_KEYS as readonly string[]).includes(k)) };
+}
+
+/** SM-E001: the skill names pass 2 may pick from — the Business Type's catalog under the posting's product pillar (plus pillar-less skills). */
+export async function skillCatalogFor(businessTypeId: string, text: string): Promise<string[]> {
+  const bt = await prisma.businessType.findUnique({ where: { id: businessTypeId }, select: { uses_skills: true } });
+  if (!bt?.uses_skills) return [];
+  const pillarName = productPillarName(text) ?? "Oracle Fusion Cloud";
+  const pillar = await prisma.pillar.findFirst({ where: { name: pillarName }, select: { id: true } });
+  const rows = await prisma.skill.findMany({ where: { business_type_id: businessTypeId, is_custom: false, ...OFFERABLE, OR: [{ pillar_id: pillar?.id ?? undefined }, { pillar_id: null }] }, select: { name: true } });
+  return [...new Set(rows.map((r) => r.name))].sort();
 }

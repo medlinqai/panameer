@@ -190,6 +190,8 @@ export const AI_SD_SCHEMA = z.object({
   domains: strList,
   product: z.string().nullable(),
   skills: strList,
+  /** SM-E001: what the posting asks for that the catalog list doesn't have — short noun phrases (≤4 words). */
+  otherSkills: strList,
   yearsExperience: z.number().nullable(),
   education: z.string().nullable(),
   credentials: strList,
@@ -226,6 +228,7 @@ const SD_TOOL = {
     domains: list("Business process areas named or clearly implied by the modules: P2P, O2C, R2R, SCM, HCM, EPM, PPM, CX. Short codes."),
     product: str("The software product line: Fusion Cloud, EBS, PeopleSoft, EPM Cloud, Workday, Salesforce, … as written."),
     skills: list("Named modules, tools and skills, as written (e.g. Purchasing, Supplier Portal, OIC, BI Publisher). Terms only."),
+    otherSkills: list("Skills the posting asks for that are NOT in the skills list — short noun phrases of at most 4 words (e.g. Finance Transformation, Oracle Agent Studio). Never a sentence."),
     yearsExperience: num("Minimum years of experience asked for, as a number."),
     education: str("Degree asked for, if any."),
     credentials: list("Certifications asked for (e.g. Oracle Cloud Procurement Certified)."),
@@ -306,17 +309,31 @@ ${menu}`,
   return { category: cat.category, businessType: bt.name, confidence: parsed.data.confidence };
 }
 
-/** PC-E001: pass 2 — the six parts, using the picked Business Type's WHO fields (RDS only where it uses skills). */
-export async function aiExtractServiceDescription(text: string, bt?: { category: string; name: string; usesSkills: boolean; types: string[] } | null): Promise<SdImportOutcome> {
+/** SM-E003: the RDS domains a posting may name (themes like "Finance Transformation" are Specialties, not domains). */
+export const RDS_DOMAINS = ["P2P", "O2C", "R2R", "SCM", "HCM", "CX", "EPM", "PPM", "GRC"] as const;
+
+const SKILL_MAP_HINTS = `Map the posting's phrases to the catalog's module names; never copy a long phrase. Examples:
+"Procurement and Requisition Management" → Purchase Orders + Self-Service Procurement; "Contract Lifecycle Management" → Procurement Contracts;
+"Invoice Processing", "Matching", "Accounts Payable" → Payables; "Payment Processing" → Payments; "Supplier Registration and Onboarding",
+"Supplier Portal" → Supplier Registration / Supplier Qualification Management / Supplier Management. A generic word on its own
+(Accounting, Onboarding, Management, Processing, Order) is never a skill.`;
+
+/** PC-E001: pass 2 — the six parts, using the picked Business Type's WHO fields (RDS only where it uses skills).
+ *  SM-E001/E003: with a catalog, `skills` and `domains` may only be names from it (enums). */
+export async function aiExtractServiceDescription(text: string, bt?: { category: string; name: string; usesSkills: boolean; types: string[] } | null, catalog?: { skills: string[] } | null): Promise<SdImportOutcome> {
   const who = !bt
     ? ""
     : bt.usesSkills
       ? `\nThis posting is ${bt.category} › ${bt.name}: WHO uses Role › Domain › Skill (RDS) and the software Product.`
       : `\nThis posting is ${bt.category} › ${bt.name}: there is no software role or product — leave roleKind, domains and product null/empty. Put what they must provide or work with (services, equipment, materials, coverage area) in skills, preferring these names when they fit: ${bt.types.slice(0, 40).join(", ")}.`;
+  const props = { ...(SD_TOOL.properties as Record<string, unknown>) };
+  props.domains = { type: "array", items: { type: "string", enum: [...RDS_DOMAINS] }, description: "Business process domains (RDS) the work covers. Themes such as Finance Transformation go to specialties, not here." };
+  if (catalog?.skills.length) props.skills = { type: "array", items: { type: "string", enum: catalog.skills }, description: "Catalog skills the posting asks for — only names from this list." };
+  const schema = { ...SD_TOOL, properties: props };
   const call = await callExtractionModel({
-    timeoutMs: 45_000,
-    system: SD_SYSTEM + who,
-    schema: SD_TOOL as unknown as Record<string, unknown>,
+    timeoutMs: 60_000,
+    system: SD_SYSTEM + who + (catalog?.skills.length ? `\n${SKILL_MAP_HINTS}` : ""),
+    schema: schema as unknown as Record<string, unknown>,
     schemaName: "record_service_description",
     text: stripContacts(text),
     instruction: "Convert this job posting into a Service Description.",
@@ -340,7 +357,8 @@ export async function aiExtractServiceDescription(text: string, bt?: { category:
       title: d.title?.trim() || null,
       summary: d.summary?.trim() || null,
       skills: clean(d.skills),
-      domains: clean(d.domains, 8),
+      otherSkills: clean(d.otherSkills, 20).filter((x) => x.split(/\s+/).length <= 4),
+      domains: clean(d.domains, 8).filter((x) => (RDS_DOMAINS as readonly string[]).includes(x)),
       credentials: clean(d.credentials, 12),
       specialties: clean(d.specialties, 8),
       responsibilities: clean(d.responsibilities, 20),
