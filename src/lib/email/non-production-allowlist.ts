@@ -1,4 +1,8 @@
 export const NON_PRODUCTION_ALLOWLIST: readonly string[] = [
+  // Scott 10-20: his own inboxes get real emails when testing on localhost / previews.
+  "scott.walls@panameer.com",
+  "scott.walls@straterp.com",
+  "iamscottwalls@outlook.com",
 ];
 
 /** Resend's own test sink (delivered@resend.dev, with +labels): real sends that reach no person. */
