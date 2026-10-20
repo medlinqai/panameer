@@ -1,5 +1,6 @@
 "use client";
 
+import { CompanyCodeEditor } from "@/components/company/CompanyCodeEditor";
 import { use } from "react";
 import { Badge } from "@/components/Badge";
 import { AdminHeading, useAdminFetch, AdminState } from "@/components/admin/primitives";
@@ -25,6 +26,8 @@ type Company = {
   id: string;
   company: string;
   code: string;
+  companyId: string | null;
+  companyCode: string | null;
   kind: string;
   status: string;
   joinedAt: string;
@@ -61,6 +64,7 @@ export default function AdminCompanyDetailPage({
             subtitle={`${data.kind} · code ${data.code} · joined ${new Date(data.joinedAt).toLocaleDateString()} · ${data.users.total} people`}
           />
 
+          {data.companyId && <div className="mb-4"><CompanyCodeEditor companyId={data.companyId} initial={data.companyCode} canEdit /></div>}
           <div className="overflow-x-auto rounded-brand border border-line">
             <table className="w-full min-w-[720px] text-[14px]">
               <thead className="bg-black/[0.02] text-left text-[12px] font-bold uppercase tracking-wide text-ink-2">

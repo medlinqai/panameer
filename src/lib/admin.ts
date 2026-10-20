@@ -220,6 +220,9 @@ export async function getAdminCompany(viewer: Viewer, id: string) {
     id: account.id,
     company: account.companies[0]?.name ?? account.name,
     code: shortCode(account.id),
+    /** NB-E000: the first company's transaction code, editable here by Panameer admins. */
+    companyId: account.companies[0]?.id ?? null,
+    companyCode: account.companies[0]?.code ?? null,
     kind: humanKind(account.kind),
     status: account.status,
     joinedAt: account.created_at.toISOString(),

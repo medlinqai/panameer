@@ -262,6 +262,9 @@ model Company {
   /// a company trades under a name that isn't on its tax filing, and the
   /// contract has to carry the legal one.
   name         String
+  /// NB-E000: 3–6 uppercase letters/digits in every transaction number (WR-STRAT-26-00000001). Unique across Panameer
+  /// (checked in lib/company-code.ts); editable by the company's admins — issued numbers keep the code they had.
+  code         String?
   legal_name   String?
   tax_type     TaxType?
   /// Tax registration id (EIN · VAT/company number · SSN/ITIN). DEFERRED to the
@@ -417,6 +420,7 @@ model Company {
   /// before any account exists has no company, and that is the top of the funnel.
   assessments Assessment[]
 
+  @@index([code])
   @@index([p_account_id])
   @@index([website_domain])
   @@index([tin_digits])

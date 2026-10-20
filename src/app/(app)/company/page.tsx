@@ -1,3 +1,4 @@
+import { CompanyCodeEditor } from "@/components/company/CompanyCodeEditor";
 import { BusinessTypesEditor } from "@/components/company/BusinessTypesEditor";
 import { WhatWeBuyEditor } from "@/components/company/WhatWeBuyEditor";
 import { whatWeBuy } from "@/lib/what-we-buy";
@@ -120,6 +121,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
             ) : undefined
           }
         />
+        <CompanyCodeEditor companyId={c.id} initial={(await prisma.company.findUnique({ where: { id: c.id }, select: { code: true } }))?.code ?? null} canEdit={binding.isAdmin} />
         {track && <BuyerTrackRecord t={track} />}
         {bizTypes.length > 0 && <BusinessTypesEditor types={bizTypes.map((t) => ({ id: t.id, name: t.name, group: t.commodityGroup?.name ?? null }))} initial={bizOn} canEdit={binding.isAdmin} />}
         {seller && <IndustriesServedEditor industries={allIndustries} initial={served} canEdit={binding.isAdmin} />}
