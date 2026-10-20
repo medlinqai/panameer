@@ -70,7 +70,11 @@ export function OrderActivation({
         </p>
       )}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="min-w-0 flex-1 text-[14.5px] leading-relaxed text-ink-2">{message}</p>
+        <p className="min-w-0 flex-1 text-[14.5px] leading-relaxed text-ink-2">
+          {message}
+          {/* MS-E002: what Accept means. */}
+          {actions.includes("ACCEPT") && <span data-sow-accept className="mt-1 block text-[13px] font-semibold text-ink">I accept this Statement of Work under the Panameer Master Services Agreement.</span>}
+        </p>
         {/* THE ONLY PLACE EITHER BUTTON CAN COME FROM. */}
         {actions.map((a) => (
           <Button key={a} variant={a === "ACCEPT" ? undefined : "ghost"} disabled={busy !== null} onClick={() => run(a)}>

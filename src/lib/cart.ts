@@ -1,3 +1,4 @@
+import { activeMsa } from "@/lib/agreements";
 import { nextNumber } from "@/lib/numbering";
 import type { PaymentEvent, PaymentTerms, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -218,10 +219,12 @@ export async function placeOrder(viewer: Viewer, input: { description?: string |
     const fees = [...new Set(rows.map((r) => r.fee_bps))];
     const total = group.reduce((n, l) => n + (l.unit_price_cents ?? 0) * qtyOf(l), 0);
     const now = new Date();
+    const msaId = (await activeMsa()).id;
     const order = await prisma.$transaction(async (tx) => {
       const o = await tx.workOrder.create({
         data: {
           order_number: await nextNumber("WO", { pAccountId }, { tx }),
+          agreement_id: msaId,
           origin: "DIRECT", work_request_id: wrId, description, buyer_person_id: p.id, p_account_id: pAccountId, provider_person_id: providerPersonId, currency: group[0].currency,
           status: "RELEASED", buyer_accepted_at: now, provider_accepted_at: now,
           fee_bps: fees.length === 1 ? fees[0] : null, not_to_exceed_cents: total,

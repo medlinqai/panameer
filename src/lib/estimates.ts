@@ -1,3 +1,4 @@
+import { activeMsa } from "@/lib/agreements";
 import { nextNumber } from "@/lib/numbering";
 import { providerNameForBuyer } from "@/lib/provider-number";
 import { assertCanSign } from "@/lib/your-path";
@@ -215,6 +216,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
   for (const l of rev.lines) fees.set(l.id, (await resolveCommissionBps("SOLE_SOURCED", l.kind === "SERVICE" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT")).bps);
   const distinct = [...new Set(fees.values())];
   const now = new Date();
+  const msaId = (await activeMsa()).id;
   const order = await prisma.$transaction(async (tx) => {
     // JW-E004: an accepted estimate creates a complete Work Request (source ESTIMATE); its Work Order comes from it.
     const wrId = crypto.randomUUID();
@@ -236,6 +238,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
     const o = await tx.workOrder.create({
       data: {
         order_number: await nextNumber("WO", { pAccountId: buyer.company!.p_account_id }, { tx }),
+        agreement_id: msaId,
         origin: "INDIRECT", work_request_id: wrId, description, buyer_person_id: buyer.id, p_account_id: buyer.company!.p_account_id, provider_person_id: e.provider_person_id,
         currency: e.currency, status: "ISSUED", buyer_accepted_at: now, fee_bps: distinct.length === 1 ? distinct[0] : null, not_to_exceed_cents: rev.total_cents,
         external_ref: e.estimate_number, sow_text: [rev.scope, rev.assumptions && `Assumptions: ${rev.assumptions}`, rev.exclusions && `Not included: ${rev.exclusions}`].filter(Boolean).join("\n\n") || null,

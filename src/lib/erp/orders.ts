@@ -1,3 +1,4 @@
+import { activeMsa } from "@/lib/agreements";
 import { nextNumber } from "@/lib/numbering";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -94,10 +95,12 @@ async function createOrders(connectionId: string, pAccountId: string, poNumber: 
     const value = priced.reduce((n, p) => n + (p.byQty ? Math.round((p.quantity ?? 0) * (p.unit ?? 0)) : p.amount ?? 0), 0);
     const starts = lines.map((l) => l.service_start).filter((d): d is Date => !!d);
     const ends = lines.map((l) => l.service_end).filter((d): d is Date => !!d);
+    const msaId = (await activeMsa()).id;
     const order = await prisma.$transaction(async (tx) => {
       const o = await tx.workOrder.create({
         data: {
           order_number: await nextNumber("WO", { pAccountId: wr.p_account_id }, { tx }),
+          agreement_id: msaId,
           origin: "DIRECT", work_request_id: wr.id, description: wr.description ?? wr.title, buyer_person_id: wr.buyer_person_id, p_account_id: wr.p_account_id, provider_person_id: providerId,
           currency: wr.currency, status: "ISSUED", buyer_accepted_at: now, external_ref: poNumber, erp_po_number: poNumber, erp_po_revision: 0, erp_connection_id: connectionId,
           fee_bps: distinct.length === 1 ? distinct[0] : null, not_to_exceed_cents: value,

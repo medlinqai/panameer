@@ -341,7 +341,7 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 }
 
 async function chainLine(orderId: string) {
-  const w = await prisma.workOrder.findUnique({ where: { id: orderId }, select: { legacy_number: true, workRequest: { select: { wr_number: true, job: { select: { id: true, title: true } } } } } });
+  const w = await prisma.workOrder.findUnique({ where: { id: orderId }, select: { legacy_number: true, agreement_id: true, workRequest: { select: { wr_number: true, job: { select: { id: true, title: true } } } } } });
   const wr = w?.workRequest;
   if (!wr) return null;
   const was = w.legacy_number ? <> · was {w.legacy_number}</> : null;
@@ -350,6 +350,8 @@ async function chainLine(orderId: string) {
       From Work Request {wr.job ? <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.wr_number ?? "—"}</Link> : <b>{wr.wr_number ?? "—"}</b>}
       {wr.job && <> · Job: <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.job.title || "Untitled"}</Link></>}
       {was}
+      {/* MS-E002: this Work Order is a SOW under the Panameer MSA. */}
+      {await msaLine(w.agreement_id)}
     </p>
   );
 }
@@ -357,4 +359,14 @@ async function chainLine(orderId: string) {
 /** Today in New York, YYYY-MM-DD (the schedule's "now"). */
 function todayIso() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
+}
+
+async function msaLine(agreementId: string | null) {
+  const a = agreementId ? await prisma.agreement.findUnique({ where: { id: agreementId }, select: { id: true, agreement_number: true, version: true } }) : null;
+  if (!a) return null;
+  return (
+    <span className="block" data-order-msa>
+      SOW under MSA <Link href={`/agreements/${a.id}`} className="font-semibold text-ink underline underline-offset-2">{a.agreement_number}</Link> · <Link href="/terms" className="underline underline-offset-2">Panameer Terms of Service v{a.version} →</Link>
+    </span>
+  );
 }

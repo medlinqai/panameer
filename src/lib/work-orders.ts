@@ -1,3 +1,4 @@
+import { activeMsa } from "@/lib/agreements";
 import { nextNumber } from "@/lib/numbering";
 import { assertCanSign } from "@/lib/your-path";
 import { TransactionType, WorkOrderOrigin } from "@prisma/client";
@@ -191,12 +192,15 @@ async function buildOne(wr: ReqForOrder, lines: ReqLine[], providerPersonId: str
   }
 
   const orderNumber = await nextNumber("WO", { pAccountId: wr.p_account_id });
+  const msaId = (await activeMsa()).id;
 
   // THE ORDER, ITS LINES AND THE REQUISITION'S STATUS MOVE IN ONE
   const built = await prisma.$transaction(async (tx) => {
     const order = await tx.workOrder.create({
       data: {
         order_number: orderNumber,
+        // MS-E002: every Work Order is a SOW under the Active MSA.
+        agreement_id: msaId,
         /* THE ONE FIELD THAT DIFFERS BETWEEN THE DOORS. */
         origin,
         work_request_id: wr.id,
