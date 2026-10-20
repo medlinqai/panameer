@@ -42,7 +42,7 @@ export function WorkFeed({
         <EmptyFeed title={`No ${labelFor(tab)} yet`} detail={UNBACKED_TABS[tab]} />
       ) : cards.length === 0 ? (
         <EmptyFeed
-          title={query ? `Nothing matches “${query}”` : tab === "invitations" ? "No open proposal requests" : tab === "proposals" ? "No proposals yet" : "No work posted yet"}
+          title={query ? `Nothing matches “${query}”` : tab === "invitations" ? "No open proposal requests" : tab === "proposals" ? "No proposals yet" : tab === "best" ? "No posted jobs match your skills right now" : "No posted jobs right now"}
           detail={
             query
               // RULING 18: no promise, no date, no apology. *"when this
@@ -51,7 +51,7 @@ export function WorkFeed({
                 ? "When a buyer asks you to propose your rate, it shows here."
                 : tab === "proposals"
                   ? "Proposals you send on work requests show here."
-                  : "No buyer has posted a work request yet. Your profile is what they find you by, so keep it current."
+                  : "Jobs a buyer invites you to propose on show under Proposal Requests. Your profile is how buyers find you, so keep it current."
           }
         />
       ) : (
