@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { ServiceUnit, WorkMode } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { COMPANY_TOS_VERSION, USER_TOS_VERSION } from "@/lib/tos";
 import type { Viewer } from "@/lib/access";
 import { saveCatalogService, publishCatalog } from "@/lib/build-catalog";
 import { uploadProfilePhoto } from "@/lib/storage";
@@ -258,7 +259,7 @@ export async function createMarketplaceTestSet(opts: { apply: boolean; actor?: V
     const isSeller = e.kind === "seller";
     const acct = await prisma.pAccount.create({ data: { kind: isSeller ? "PROVIDER" : "BUYER", name: e.company }, select: { id: true } });
     const co = await prisma.company.create({
-      data: { p_account_id: acct.id, name: e.company, legal_name: e.company, invoice_email: email(e.nn), country: "United States", country_code: "US", company_tos_accepted_at: now, company_tos_version: "test-set" },
+      data: { p_account_id: acct.id, name: e.company, legal_name: e.company, invoice_email: email(e.nn), country: "United States", country_code: "US", company_tos_accepted_at: now, company_tos_version: COMPANY_TOS_VERSION },
       select: { id: true },
     });
     const site = await prisma.site.create({ data: { company_id: co.id, name: "Primary" }, select: { id: true } });
@@ -266,7 +267,7 @@ export async function createMarketplaceTestSet(opts: { apply: boolean; actor?: V
       data: { site_id: site.id, line1: `${100 + e.nn} Market Street`, city: e.city, state: e.state, postal_code: "00000", country: "United States", country_code: "US", is_corporate: true, is_remit_to: isSeller, is_bill_to: !isSeller, is_ship_to: !isSeller },
     });
     const user = await prisma.user.create({
-      data: { email: email(e.nn), password_hash: hash, first_name: e.first, last_name: lastName(e.last, e.nn), email_verified: now, is_test: true, is_active: true, tos_accepted_at: now, tos_version: "test-set" },
+      data: { email: email(e.nn), password_hash: hash, first_name: e.first, last_name: lastName(e.last, e.nn), email_verified: now, is_test: true, is_active: true, tos_accepted_at: now, tos_version: USER_TOS_VERSION },
       select: { id: true },
     });
     const person = await prisma.person.create({
