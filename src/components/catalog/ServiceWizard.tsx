@@ -86,7 +86,7 @@ export function ServiceWizard({ initial, types: initialTypes, gate, providerName
 
   const paid = [
     "Order accepted",
-    `Submit a ${PAYMENT_EVENT_LABEL[d.paymentEvent as keyof typeof PAYMENT_EVENT_LABEL].toLowerCase()} each ${BILLING_CYCLE_LABEL[d.billingCycle as keyof typeof BILLING_CYCLE_LABEL].toLowerCase().replace("every ", "")} cycle`,
+    `Submit a ${PAYMENT_EVENT_LABEL[d.paymentEvent as keyof typeof PAYMENT_EVENT_LABEL].toLowerCase().replace(/^approved /, "")} each ${BILLING_CYCLE_LABEL[d.billingCycle as keyof typeof BILLING_CYCLE_LABEL].toLowerCase().replace("every ", "")} cycle`,
     "Customer approves",
     `Paid ${PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL].toLowerCase()}`,
   ];
@@ -144,7 +144,7 @@ export function ServiceWizard({ initial, types: initialTypes, gate, providerName
               <label className={LABEL}>Billing cycle<select value={d.billingCycle} onChange={(e) => set("billingCycle", e.target.value)} className={INPUT}>{Object.entries(BILLING_CYCLE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
               <label className={LABEL}>Payment terms<select value={d.paymentTerms} onChange={(e) => set("paymentTerms", e.target.value)} className={INPUT}>{Object.entries(PAYMENT_TERMS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
               <label className={LABEL}>Payment Event<select value={d.paymentEvent} onChange={(e) => set("paymentEvent", e.target.value)} className={INPUT}>{(["TIMESHEET", "PAYMENT_REQUEST", "INVOICE"] as const).map((k) => <option key={k} value={k}>{PAYMENT_EVENT_LABEL[k]}</option>)}</select></label>
-              <p className="text-[13.5px] text-ink-2">You submit a {PAYMENT_EVENT_LABEL[d.paymentEvent as keyof typeof PAYMENT_EVENT_LABEL].toLowerCase()} at the end of each cycle. Terms start the day you submit, so a slow approval doesn&apos;t delay your pay. ERP buyers approve it in their own system.</p>
+              <p className="text-[13.5px] text-ink-2">You submit a {PAYMENT_EVENT_LABEL[d.paymentEvent as keyof typeof PAYMENT_EVENT_LABEL].toLowerCase().replace(/^approved /, "")} at the end of each cycle. Terms start the day you submit, so a slow approval doesn&apos;t delay your pay. ERP buyers approve it in their own system.</p>
             </>
           )}
           {step === 3 && (

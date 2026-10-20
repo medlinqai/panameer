@@ -1,6 +1,7 @@
 "use client";
 
 import { NeutralAvatar } from "@/components/Avatar";
+import { BILLING_CYCLE_LABEL, HIRE_BILLING_CYCLES, HIRE_PAYMENT_EVENTS, PAYMENT_EVENT_LABEL, PER_UOM_LABEL } from "@/lib/billing-terms";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { HireDefaults } from "@/lib/hire-direct";
@@ -8,9 +9,6 @@ import type { HireDefaults } from "@/lib/hire-direct";
 // HS-E005: work · provider · rate + recurrence · dates · location · payment event · overtime · expenses.
 const FIELD = "mt-1 block w-full rounded-[8px] border border-line bg-white px-3 py-2.5 text-[14.5px] font-normal text-ink";
 const LABEL = "mt-4 block text-[13px] font-bold";
-const UNITS = [["HOUR", "per hour"], ["DAY", "per day"], ["WEEK", "per week"], ["MONTH", "per month"]] as const;
-const CYCLES = [["WEEKLY", "Weekly"], ["BIWEEKLY", "Every 2 weeks"], ["MONTHLY", "Monthly"]] as const;
-const TRIGGERS = [["TIMESHEET", "Approved timesheet"], ["INVOICE", "Invoice"], ["PAYMENT_REQUEST", "Payment request"], ["ACCEPTANCE", "Acceptance of the work"], ["ORDER_ACCEPTED", "Order accepted"]] as const;
 
 export function HireTermsForm({ d }: { d: HireDefaults }) {
   const router = useRouter();
@@ -54,8 +52,8 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
       </p>
       <div className="grid gap-x-3 sm:grid-cols-3">
         <label className={LABEL}>Rate ($)<input inputMode="decimal" value={t.rate} onChange={(e) => set({ rate: e.target.value.replace(/[^0-9.]/g, "") })} className={FIELD} /></label>
-        <label className={LABEL}>Per<select value={t.uom} onChange={(e) => set({ uom: e.target.value })} className={FIELD}>{UNITS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-        <label className={LABEL}>Billed<select value={t.billingCycle} onChange={(e) => set({ billingCycle: e.target.value as typeof t.billingCycle })} className={FIELD}>{CYCLES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+        <label className={LABEL}>Per<select value={t.uom} onChange={(e) => set({ uom: e.target.value })} className={FIELD}>{Object.entries(PER_UOM_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+        <label className={LABEL}>Billed<select value={t.billingCycle} onChange={(e) => set({ billingCycle: e.target.value as typeof t.billingCycle })} className={FIELD}>{HIRE_BILLING_CYCLES.map((v) => <option key={v} value={v}>{BILLING_CYCLE_LABEL[v]}</option>)}</select></label>
       </div>
       <div className="grid gap-x-3 sm:grid-cols-3">
         <label className={LABEL}>Start<input type="date" value={t.start} onChange={(e) => set({ start: e.target.value })} className={FIELD} /></label>
@@ -63,7 +61,7 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
         <p className={LABEL}>Location<span className="mt-1 block text-[14.5px] font-normal">{d.location || "Not set on the job"}</span></p>
       </div>
       <label className={LABEL}>Payment Event <span className="font-normal text-ink-3">(what raises each payment request)</span>
-        <select value={t.paymentEvent} onChange={(e) => set({ paymentEvent: e.target.value })} className={FIELD}>{TRIGGERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+        <select value={t.paymentEvent} onChange={(e) => set({ paymentEvent: e.target.value })} className={FIELD}>{HIRE_PAYMENT_EVENTS.map((v) => <option key={v} value={v}>{PAYMENT_EVENT_LABEL[v]}</option>)}</select>
       </label>
       <fieldset className="mt-4">
         <legend className="text-[13px] font-bold">Overtime Allowed?</legend>

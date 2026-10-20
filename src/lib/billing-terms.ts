@@ -1,9 +1,13 @@
 import type { BillingCycle, PaymentTerms, PaymentEvent, TransactionType } from "@prisma/client";
 
 // O-E004: billing cycle, payment terms and payment trigger — labels, defaults and the due-date rule.
-export const BILLING_CYCLE_LABEL: Record<BillingCycle, string> = { WEEKLY: "Weekly", BIWEEKLY: "Every 2 weeks", MONTHLY: "Monthly", EVERY_90_DAYS: "Every 90 days" };
+export const BILLING_CYCLE_LABEL: Record<BillingCycle, string> = { WEEKLY: "Weekly", BIWEEKLY: "Every 2 Weeks", MONTHLY: "Monthly", EVERY_90_DAYS: "Every 90 Days" };
 export const PAYMENT_TERMS_LABEL: Record<PaymentTerms, string> = { IMMEDIATE: "Immediate", NET15: "Net 15", NET30: "Net 30", NET45: "Net 45", NET60: "Net 60" };
-export const PAYMENT_EVENT_LABEL: Record<PaymentEvent, string> = { TIMESHEET: "Timesheet", PAYMENT_REQUEST: "Payment request", INVOICE: "Invoice", DOWNLOAD: "Download", INSTALLATION: "Installation", ACCEPTANCE: "Acceptance", ORDER_ACCEPTED: "Order accepted" };
+export const PAYMENT_EVENT_LABEL: Record<PaymentEvent, string> = { TIMESHEET: "Approved Timesheet", PAYMENT_REQUEST: "Payment Request", INVOICE: "Invoice", DOWNLOAD: "Download", INSTALLATION: "Installation", ACCEPTANCE: "Acceptance of the Work", ORDER_ACCEPTED: "Order Accepted" };
+/** HF-E005: the Work Request / Work Order term lists, in Title Case. */
+export const HIRE_PAYMENT_EVENTS = ["TIMESHEET", "INVOICE", "PAYMENT_REQUEST", "ACCEPTANCE", "ORDER_ACCEPTED"] as const satisfies readonly PaymentEvent[];
+export const PER_UOM_LABEL = { HOUR: "Per Hour", DAY: "Per Day", WEEK: "Per Week", MONTH: "Per Month" } as const;
+export const HIRE_BILLING_CYCLES = ["WEEKLY", "BIWEEKLY", "MONTHLY"] as const satisfies readonly BillingCycle[];
 export const TERMS_DAYS: Record<PaymentTerms, number> = { IMMEDIATE: 0, NET15: 15, NET30: 30, NET45: 45, NET60: 60 };
 
 /** Terms start on submission, not approval. */
