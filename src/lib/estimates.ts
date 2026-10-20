@@ -1,10 +1,9 @@
+import { nextNumber } from "@/lib/numbering";
 import { providerNameForBuyer } from "@/lib/provider-number";
 import { assertCanSign } from "@/lib/your-path";
-import { randomBytes } from "node:crypto";
 import { Prisma, type BillingCycle, type EstimateLineKind, type PaymentTerms } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { pendingJoin, waitingLine } from "@/lib/pending-join";
-import { wrNumber } from "@/lib/requisition";
 import { notify } from "@/lib/notifications";
 import { sendEmail } from "@/lib/resend";
 import { emailShell, escapeHtml, paragraph, primaryButton } from "@/lib/email/shell";
@@ -39,8 +38,12 @@ export type EstimateInput = {
   lines: EstimateLineInput[];
 };
 
-const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const number = () => `EST-${[...randomBytes(5)].map((b) => ALPHA[b % ALPHA.length]).join("")}`;
+/** NB-E002: ES-CODE-YY-######## on the customer's company; an emailed customer with no company yet uses the provider's. */
+async function estimateNumber(customerPersonId: string | null, providerPersonId: string) {
+  const who = await prisma.person.findUnique({ where: { id: customerPersonId ?? providerPersonId }, select: { company_id: true } });
+  const fallback = who ? null : await prisma.person.findUnique({ where: { id: providerPersonId }, select: { company_id: true } });
+  return nextNumber("ES", { companyId: (who ?? fallback)!.company_id });
+}
 const appUrl = () => (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100").replace(/\/$/, "");
 const clean = (s?: string | null, max = 4000) => s?.trim().slice(0, max) || null;
 
@@ -95,7 +98,7 @@ export async function saveEstimate(viewer: Viewer, id: string | null, input: Est
   const head = { customer_person_id: input.customerPersonId || null, customer_email: input.customerPersonId ? null : email, work_request_id: input.workRequestId || null, title, valid_until: validUntil };
 
   if (!id) {
-    const e = await prisma.estimate.create({ data: { estimate_number: number(), provider_person_id: p.id, ...head, revisions: { create: { revision_number: 1, ...rev, lines: { create: rows } } } }, select: { id: true } });
+    const e = await prisma.estimate.create({ data: { estimate_number: await estimateNumber(input.customerPersonId ?? null, p.id), provider_person_id: p.id, ...head, revisions: { create: { revision_number: 1, ...rev, lines: { create: rows } } } }, select: { id: true } });
     if (input.requestId) await linkRequest(input.requestId, e.id, p.id);
     return e.id;
   }
@@ -218,7 +221,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
     const description = e.title || `Estimate ${e.estimate_number}`;
     await tx.workRequest.create({
       data: {
-        id: wrId, wr_number: wrNumber(wrId), source: "ESTIMATE", status: "ORDERED", submitted_at: now, approved_at: now, description, sole_sourced: true,
+        id: wrId, wr_number: await nextNumber("WR", { pAccountId: buyer.company!.p_account_id }, { tx }), source: "ESTIMATE", status: "ORDERED", submitted_at: now, approved_at: now, description, sole_sourced: true,
         job_id: e.work_request_id ? (await tx.job.findUnique({ where: { id: e.work_request_id }, select: { id: true } }))?.id ?? null : null,
         buyer_person_id: buyer.id, p_account_id: buyer.company!.p_account_id, currency: e.currency, proposal_access: "INVITE_ONLY",
         lines: {
@@ -232,7 +235,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
     const wrLines = new Map((await tx.workRequestLine.findMany({ where: { work_request_id: wrId }, select: { id: true, line_number: true } })).map((l) => [l.line_number, l.id]));
     const o = await tx.workOrder.create({
       data: {
-        order_number: `WO-${Date.now().toString(36).toUpperCase()}-${e.id.slice(0, 4)}`,
+        order_number: await nextNumber("WO", { pAccountId: buyer.company!.p_account_id }, { tx }),
         origin: "INDIRECT", work_request_id: wrId, description, buyer_person_id: buyer.id, p_account_id: buyer.company!.p_account_id, provider_person_id: e.provider_person_id,
         currency: e.currency, status: "ISSUED", buyer_accepted_at: now, fee_bps: distinct.length === 1 ? distinct[0] : null, not_to_exceed_cents: rev.total_cents,
         external_ref: e.estimate_number, sow_text: [rev.scope, rev.assumptions && `Assumptions: ${rev.assumptions}`, rev.exclusions && `Not included: ${rev.exclusions}`].filter(Boolean).join("\n\n") || null,

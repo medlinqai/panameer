@@ -1,3 +1,4 @@
+import { nextNumber } from "@/lib/numbering";
 import type { PaymentEvent, PaymentTerms, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { pendingJoin, waitingLine } from "@/lib/pending-join";
@@ -7,7 +8,7 @@ import { resolveCommissionBps } from "@/lib/application-commissions";
 import { snapshotMilestones } from "@/lib/order-milestones";
 import { assertCanSign, nudgeTaxBanking } from "@/lib/your-path";
 import type { Viewer } from "@/lib/access";
-import { descriptionRequired, wrNumber } from "@/lib/requisition";
+import { descriptionRequired } from "@/lib/requisition";
 
 // JW-E004: the cart is the buyer's INCOMPLETE Work Request (source SHOP); Submit makes one Work Order per seller.
 export class CartError extends Error {
@@ -52,7 +53,7 @@ export async function shopRequest(personId: string): Promise<{ id: string }> {
   const p = await prisma.person.findUnique({ where: { id: personId }, select: { company: { select: { p_account_id: true } } } });
   if (!p?.company?.p_account_id) throw new CartError("Add your company before you add to a work request", "NO_COMPANY");
   const id = crypto.randomUUID();
-  return prisma.workRequest.create({ data: { id, wr_number: wrNumber(id), buyer_person_id: personId, p_account_id: p.company.p_account_id, source: "SHOP", status: "INCOMPLETE", proposal_access: "INVITE_ONLY", sole_sourced: true }, select: { id: true } });
+  return prisma.workRequest.create({ data: { id, wr_number: await nextNumber("WR", { pAccountId: p.company.p_account_id }), buyer_person_id: personId, p_account_id: p.company.p_account_id, source: "SHOP", status: "INCOMPLETE", proposal_access: "INVITE_ONLY", sole_sourced: true }, select: { id: true } });
 }
 
 /** Put (or replace) one item on the Shop work request. Shop lines keep quantity × unit price; by-amount lines also carry the amount. */
@@ -220,7 +221,7 @@ export async function placeOrder(viewer: Viewer, input: { description?: string |
     const order = await prisma.$transaction(async (tx) => {
       const o = await tx.workOrder.create({
         data: {
-          order_number: `WO-${Date.now().toString(36).toUpperCase()}-${providerPersonId.slice(0, 4)}`,
+          order_number: await nextNumber("WO", { pAccountId }, { tx }),
           origin: "DIRECT", work_request_id: wrId, description, buyer_person_id: p.id, p_account_id: pAccountId, provider_person_id: providerPersonId, currency: group[0].currency,
           status: "RELEASED", buyer_accepted_at: now, provider_accepted_at: now,
           fee_bps: fees.length === 1 ? fees[0] : null, not_to_exceed_cents: total,

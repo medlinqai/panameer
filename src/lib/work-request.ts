@@ -1,3 +1,4 @@
+import { nextNumber } from "@/lib/numbering";
 import { prisma } from "@/lib/prisma";
 import { pendingJoin, waitingLine } from "@/lib/pending-join";
 import { scopedToPAccount, withPAccount, type Viewer } from "@/lib/access";
@@ -157,6 +158,7 @@ export async function createDraft(
   const { personId, pAccountId } = await resolveBuyer(viewer);
   const draft = await prisma.job.create({
     data: {
+      job_number: await nextNumber("JB", { pAccountId }),
       buyer_person_id: personId,
       p_account_id: pAccountId,
       status: "DRAFT",

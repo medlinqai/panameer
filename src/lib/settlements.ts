@@ -1,8 +1,8 @@
+import { nextNumber } from "@/lib/numbering";
 import { formatCents } from "@/lib/display";
 import { dueDate } from "@/lib/billing-terms";
 import { queueWorkConfirmation } from "@/lib/erp/settlement";
 import { notify } from "@/lib/notifications";
-import { randomBytes } from "node:crypto";
 import { LineBasis, Prisma, PaymentRequestStatus, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
@@ -23,13 +23,6 @@ export class SettlementError extends Error {
   }
 }
 
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-function newSettlementNumber(): string {
-  const bytes = randomBytes(6);
-  let out = "";
-  for (const b of bytes) out += CODE_ALPHABET[b % CODE_ALPHABET.length];
-  return `PR-${out}`;
-}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    WHAT CAN BE SETTLED — AND WHAT TO SAY WHEN NOTHING CAN
@@ -302,7 +295,7 @@ export async function createSettlement(
     // THE PERSISTED ROWS ARE THE PROVIDER'S OWN — one per timesheet day, one for
     const created = await tx.paymentRequest.create({
       data: {
-        payment_request_number: newSettlementNumber(),
+        payment_request_number: await nextNumber("ST", { pAccountId: (await tx.workOrder.findUniqueOrThrow({ where: { id: o.id }, select: { p_account_id: true } })).p_account_id }, { tx }),
         work_order_id: o.id,
         provider_person_id: await providerPersonIdOf(o.id),
         period_start: periodStart,

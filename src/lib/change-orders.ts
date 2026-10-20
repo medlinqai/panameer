@@ -1,3 +1,4 @@
+import { nextNumber } from "@/lib/numbering";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
@@ -84,7 +85,7 @@ export async function proposeChange(viewer: Viewer | null, orderId: string, inpu
   const blocked = changeBlocked(order, pending > 0);
   if (blocked) throw new OrderError(blocked, "INVALID");
   const rev = await prisma.workOrderRevision.create({
-    data: { work_order_id: orderId, revision_number: order.revision_number + 1, changes: changes as unknown as Prisma.InputJsonValue, requested_by_person_id: me, external_payload_id: opts?.externalPayloadId ?? null },
+    data: { work_order_id: orderId, change_order_number: await nextNumber("CO", { pAccountId: (await prisma.workOrder.findUniqueOrThrow({ where: { id: orderId }, select: { p_account_id: true } })).p_account_id }), revision_number: order.revision_number + 1, changes: changes as unknown as Prisma.InputJsonValue, requested_by_person_id: me, external_payload_id: opts?.externalPayloadId ?? null },
     select: { id: true, revision_number: true },
   });
   await prisma.workOrderEvent.create({ data: { work_order_id: orderId, person_id: me, kind: "change.proposed", text: `Change order ${rev.revision_number} sent to the provider` } });

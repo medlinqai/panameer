@@ -1,3 +1,4 @@
+import { nextNumber } from "@/lib/numbering";
 import { payoutChecklist } from "@/lib/payout-requirements";
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
@@ -116,7 +117,7 @@ export async function recordPayment(input: RecordPaymentInput): Promise<{ id: st
       throw new MoneyError(`${r.settlementNumber} has only ${r.remainingCents / 100} left to pay`, "OVER_ALLOCATED");
   }
 
-  const paymentNumber = `PAY-${randomBytes(3).toString("hex").toUpperCase()}`;
+  const paymentNumber = await nextNumber("PY", { pAccountId: input.pAccountId });
   const paid: string[] = [];
   const created = await prisma.$transaction(async (tx) => {
     // Re-read inside the transaction so two admins cannot both allocate the same balance.

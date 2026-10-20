@@ -1,3 +1,4 @@
+import { nextNumber } from "@/lib/numbering";
 import { assertCanSign } from "@/lib/your-path";
 import { TransactionType, WorkOrderOrigin } from "@prisma/client";
 import { defaultTerms, type LineTerms } from "@/lib/billing-terms";
@@ -189,7 +190,7 @@ async function buildOne(wr: ReqForOrder, lines: ReqLine[], providerPersonId: str
       : l.amount_cents ?? 0;
   }
 
-  const orderNumber = `WO-${Date.now().toString(36).toUpperCase()}-${providerPersonId.slice(0, 4)}`;
+  const orderNumber = await nextNumber("WO", { pAccountId: wr.p_account_id });
 
   // THE ORDER, ITS LINES AND THE REQUISITION'S STATUS MOVE IN ONE
   const built = await prisma.$transaction(async (tx) => {

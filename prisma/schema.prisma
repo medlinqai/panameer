@@ -8443,6 +8443,8 @@ model WorkOrderRevision {
   id                     String                  @id @default(uuid()) @db.Uuid
   work_order_id          String                  @db.Uuid
   revision_number        Int
+  /// NB-E002: CO-CODE-YY-######## (the buyer company's sequence).
+  change_order_number    String?
   /// { header: { field: { before, after } }, lines: [{ lineId, lineNumber, field: { before, after } }] }
   changes                Json
   status                 WorkOrderRevisionStatus @default(PENDING)
@@ -9276,6 +9278,8 @@ model ProviderAttributeValue {
 /// acceptance of a proposal belong to the Job. HIRE creates a Work Request (source JOB_HIRE).
 model Job {
   id                    String               @id @default(uuid()) @db.Uuid
+  /// NB-E002: JB-CODE-YY-######## (the buyer company's sequence).
+  job_number            String?
   buyer_person_id       String               @db.Uuid
   p_account_id          String               @db.Uuid
   role_id               String?              @db.Uuid
