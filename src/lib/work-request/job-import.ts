@@ -315,7 +315,9 @@ export const RDS_DOMAINS = ["P2P", "O2C", "R2R", "SCM", "HCM", "CX", "EPM", "PPM
 const SKILL_MAP_HINTS = `Map the posting's phrases to the catalog's module names; never copy a long phrase. Examples:
 "Procurement and Requisition Management" → Purchase Orders + Self-Service Procurement; "Contract Lifecycle Management" → Procurement Contracts;
 "Invoice Processing", "Matching", "Accounts Payable" → Payables; "Payment Processing" → Payments; "Supplier Registration and Onboarding",
-"Supplier Portal" → Supplier Registration / Supplier Qualification Management / Supplier Management. A generic word on its own
+"Supplier Portal" → Supplier Registration / Supplier Qualification Management / Supplier Management; "Payments" → Payments & Cash Management.
+"Purchase Order Management" is P2P (Purchase Orders / Purchase Order Management) — never Order Management, which is O2C sales orders.
+A generic word on its own
 (Accounting, Onboarding, Management, Processing, Order) is never a skill.`;
 
 /** PC-E001: pass 2 — the six parts, using the picked Business Type's WHO fields (RDS only where it uses skills).

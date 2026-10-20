@@ -57,6 +57,7 @@ const ALIASES: Record<string, string> = {
   "accounts payable": "Payables", ap: "Payables", "accounts receivable": "Receivables", ar: "Receivables", gl: "General Ledger",
   purchasing: "Purchase Orders", collections: "Advanced Collections", "supplier portal": "Supplier Management", "supplier qualification": "Supplier Qualification Management",
   "self service procurement": "Self-Service Procurement", ssp: "Self-Service Procurement", oic: "Oracle Integration Cloud", "oracle integration cloud oic": "Oracle Integration Cloud",
+  inventory: "Inventory Management",
   vbcs: "Visual Builder Studio", "vb studio": "Visual Builder Studio", bip: "BI Publisher", "product information management": "Product Lifecycle Management", pim: "Product Lifecycle Management",
   fccs: "Financial Consolidation and Close", epbcs: "Planning", pbcs: "Planning", "epbcs planning": "Planning", eprcs: "Narrative Reporting", "narrative reporting eprcs": "Narrative Reporting",
   "hyperion financial reporting": "Financial Reporting Studio", "role based security": "RBAC Role Model", "approval workflows": "Approvals Management Extensions", fbdi: "FBDI", hdl: "HDL",
@@ -71,13 +72,18 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string, p
   const pillarName = productPillarName(ai.product ?? ai.title);
   const pillar = pillarName ? await prisma.pillar.findFirst({ where: { name: pillarName }, select: { id: true } }) : null;
   const catalog = await prisma.skill.findMany({
-    where: { is_custom: false, ...OFFERABLE, ...(pillar ? { OR: [{ pillar_id: pillar.id }, { pillar_id: null }] } : {}) },
+    where: { is_custom: false, ...OFFERABLE, ...(pillar ? { OR: [{ pillar_id: pillar.id }, { pillar_id: null }, { role: { code: "OPERATIONS_SPECIFIC" } }] } : {}) },
     select: { id: true, name: true, role_id: true },
   });
   // SM-E002: exact (or alias) names only — the extraction already picked from the catalog; no prefix/suffix guessing.
-  const first = matchSkills(ai.skills.map(aliasOf), catalog);
-  const unmatched = first.unmatched.filter((t) => t.split(/\s+/).length <= 4 && !GENERIC.has(norm(t)));
-  const skills = [...new Map(first.matched.map((m) => [m.name.toLowerCase(), { id: m.id, name: m.name }])).values()];
+  // The model sometimes files a catalog name under "other" or misspells it ("Invoices …") — those still match, by spelling only.
+  const singular = (x: string) => norm(x).split(" ").map((w) => (w.length > 3 && w.endsWith("s") ? w.slice(0, -1) : w)).join(" ");
+  const bySpelling = new Map(catalog.map((c) => [singular(c.name), c]));
+  const terms = [...ai.skills, ...ai.otherSkills].map(aliasOf);
+  const first = matchSkills(terms, catalog);
+  const spelled = first.unmatched.map((t) => bySpelling.get(singular(t))).filter((c): c is (typeof catalog)[number] => !!c);
+  const unmatched = first.unmatched.filter((t) => !bySpelling.has(singular(t)) && t.split(/\s+/).length <= 4 && !GENERIC.has(norm(t)));
+  const skills = [...new Map([...first.matched, ...spelled].map((m) => [m.name.toLowerCase(), { id: m.id, name: m.name }])).values()];
   const filled = (k: string, v: unknown) => (v != null && v !== "" && !(Array.isArray(v) && !v.length) ? [k] : []);
   const sd: ServiceDescription = {
     ...emptySd(),
@@ -86,7 +92,7 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string, p
     title: ai.title ?? "", summary: ai.summary ?? "",
     worksite: ai.worksite, city: ai.city ?? "", state: ai.state ?? "", country: ai.country ?? "", onsiteDays: ai.onsiteDaysPerWeek,
     contractTypes: ai.contractTypes,
-    roleId: role?.id ?? null, domains: ai.domains, product: ai.product ?? "", skills, customSkills: [...new Set([...ai.otherSkills, ...unmatched])].slice(0, 12),
+    roleId: role?.id ?? null, domains: ai.domains, product: ai.product ?? "", skills, customSkills: [...new Set(unmatched)].slice(0, 12),
     years: ai.yearsExperience, education: ai.education ?? "", credentials: ai.credentials, specialties: ai.specialties,
     responsibilities: ai.responsibilities.join("\n"), required: ai.mustHave.join("\n"), niceToHave: ai.niceToHave.join("\n"),
     startText: ai.startText ?? "", startDate: ai.startDate ?? "", duration: ai.duration,
@@ -192,7 +198,10 @@ export async function parsePosting(text: string): Promise<ParseResult> {
   const cls = await aiClassifyPosting(text, options);
   const hit = cls && cls.confidence !== "low" && cls.businessType ? groups.find((g) => g.name === cls.category)?.businessTypes.find((b) => b.name === cls.businessType) : undefined;
   const ctx = hit ? await btContext(hit.id) : null;
-  const out = await aiExtractServiceDescription(text, ctx, ctx ? { skills: await skillCatalogFor(ctx.id, text) } : null);
+  const catalog = ctx ? { skills: await skillCatalogFor(ctx.id, text) } : null;
+  // One retry: the model occasionally returns a shape we can't read.
+  let out = await aiExtractServiceDescription(text, ctx, catalog);
+  if (!out.ok && out.reason === "error") out = await aiExtractServiceDescription(text, ctx, catalog);
   if (!out.ok) return { ok: false, reason: out.reason };
   const pick = ctx && cls ? { category: ctx.category, businessTypeId: ctx.id, businessType: ctx.name, usesSkills: ctx.usesSkills, confidence: cls.confidence } : null;
   return { ok: true, sd: await fromParsed(out.data, stripContacts(text), pick) };
@@ -218,6 +227,7 @@ export async function skillCatalogFor(businessTypeId: string, text: string): Pro
   if (!bt?.uses_skills) return [];
   const pillarName = productPillarName(text) ?? "Oracle Fusion Cloud";
   const pillar = await prisma.pillar.findFirst({ where: { name: pillarName }, select: { id: true } });
-  const rows = await prisma.skill.findMany({ where: { business_type_id: businessTypeId, is_custom: false, ...OFFERABLE, OR: [{ pillar_id: pillar?.id ?? undefined }, { pillar_id: null }] }, select: { name: true } });
+  // The product's modules plus the RDS process-domain skills (Procure-to-Pay › Payments & Cash Management …).
+  const rows = await prisma.skill.findMany({ where: { business_type_id: businessTypeId, is_custom: false, ...OFFERABLE, OR: [{ pillar_id: pillar?.id ?? undefined }, { pillar_id: null }, { role: { code: "OPERATIONS_SPECIFIC" } }] }, select: { name: true } });
   return [...new Set(rows.map((r) => r.name))].sort();
 }
