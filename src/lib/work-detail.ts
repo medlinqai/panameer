@@ -83,8 +83,9 @@ export async function getWorkDetailForProvider(input: {
   if (!w) return null;
 
   const [postedCount, account] = await Promise.all([
-    prisma.job.count({
-      where: { p_account_id: w.p_account_id, status: PROVIDER_OPENABLE_STATUS },
+    // WP-E005: same source as the Buyer Track Record — the account's Work Requests.
+    prisma.workRequest.count({
+      where: { p_account_id: w.p_account_id, status: { notIn: ["INCOMPLETE", "WITHDRAWN"] } },
     }),
     prisma.pAccount.findUnique({
       where: { id: w.p_account_id },

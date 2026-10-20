@@ -209,9 +209,10 @@ export async function getWorkFeed(input: {
   const accountIds = [...new Set(rows.map((w) => w.p_account_id))];
   const [postedCounts, accounts] = await Promise.all([
     accountIds.length
-      ? prisma.job.groupBy({
+      ? // WP-E005: the account's Work Requests (every Work Order comes from one) — "First work request" only when there's none before.
+        prisma.workRequest.groupBy({
           by: ["p_account_id"],
-          where: { p_account_id: { in: accountIds }, status: "OPEN" },
+          where: { p_account_id: { in: accountIds }, status: { notIn: ["INCOMPLETE", "WITHDRAWN"] } },
           _count: { _all: true },
         })
       : Promise.resolve([]),
