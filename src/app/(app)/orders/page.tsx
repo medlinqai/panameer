@@ -36,6 +36,7 @@ export default async function Page() {
       <p className="mt-1 flex flex-wrap gap-4 text-[13.5px] font-semibold" data-orders-shop-links>
         <Link href="/cart" className="text-magenta-dark underline underline-offset-4">Work Request (Incomplete)</Link>
         <Link href="/estimates" className="text-magenta-dark underline underline-offset-4">My Estimates</Link>
+        <Link href="/agreements" className="text-magenta-dark underline underline-offset-4">Agreements</Link>
       </p>
       <p className="mt-1.5 text-[15px] text-ink-2">
         {orders.length === 0

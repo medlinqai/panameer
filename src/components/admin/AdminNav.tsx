@@ -15,6 +15,7 @@ const ITEMS: { label: string; href: string; soon?: boolean }[] = [
   { label: "Category Hierarchy", href: "/admin/category-hierarchy" },
   { label: "Areas & Skills", href: "/admin/skill-catalog" },
   { label: "Glossary", href: "/admin/glossary" },
+  { label: "Agreements", href: "/admin/agreements" },
   { label: "Informational Items", href: "/admin/informational-items" },
   { label: "Support", href: "/admin/support", soon: true },
 ];
