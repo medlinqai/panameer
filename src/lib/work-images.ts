@@ -1,13 +1,10 @@
+// WP-E006: startup-team, woman-at-desk and woman-with-coffee carried a "Download free HD stock" watermark; woman-at-whiteboard duplicated engineer-at-work.
 export const WORK_CARD_IMAGES = [
   "/work-images/man-in-sweater.jpg",
-  "/work-images/woman-at-desk.jpg",
   "/work-images/woman-on-bench.jpg",
-  "/work-images/woman-with-coffee.jpg",
   "/work-images/man-on-couch.jpg",
-  "/work-images/startup-team.jpg",
   "/work-images/student-at-laptop.jpg",
   "/work-images/engineer-at-work.jpg",
-  "/work-images/woman-at-whiteboard.jpg",
 ] as const;
 
 /** Generic on purpose — see the note above. */
