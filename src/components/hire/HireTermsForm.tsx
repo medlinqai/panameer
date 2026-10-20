@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { HireDefaults } from "@/lib/hire-direct";
 
-// HS-E005: work · provider · rate + recurrence · dates · location · settlement trigger · overtime · expenses.
+// HS-E005: work · provider · rate + recurrence · dates · location · payment event · overtime · expenses.
 const FIELD = "mt-1 block w-full rounded-[8px] border border-line bg-white px-3 py-2.5 text-[14.5px] font-normal text-ink";
 const LABEL = "mt-4 block text-[13px] font-bold";
 const UNITS = [["HOUR", "per hour"], ["DAY", "per day"], ["WEEK", "per week"], ["MONTH", "per month"]] as const;
@@ -61,7 +61,7 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
         <label className={LABEL}>End<input type="date" value={t.end} onChange={(e) => set({ end: e.target.value })} className={FIELD} /></label>
         <p className={LABEL}>Location<span className="mt-1 block text-[14.5px] font-normal">{d.location || "Not set on the job"}</span></p>
       </div>
-      <label className={LABEL}>Settlement Trigger <span className="font-normal text-ink-3">(what releases each payment)</span>
+      <label className={LABEL}>Payment Event <span className="font-normal text-ink-3">(what raises each payment request)</span>
         <select value={t.paymentEvent} onChange={(e) => set({ paymentEvent: e.target.value })} className={FIELD}>{TRIGGERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
       </label>
       <fieldset className="mt-4">
