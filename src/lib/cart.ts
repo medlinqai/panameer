@@ -237,6 +237,7 @@ export async function placeOrder(viewer: Viewer, input: { description?: string |
       return o;
     });
     await snapshotMilestones(order.id);
+    await (await import("@/lib/integration-events")).recordWorkOrderReleased(order.id);
     const product = group.length === 1 ? first.title : `${first.title} + ${group.length - 1} more`;
     const amount = formatCents(total, group[0].currency);
     await notify({ event: "shop.order_received", personId: providerPersonId, entityType: "work_order", entityId: order.id, dedupeKey: `shop.order_received:${order.id}`, vars: { orderId: order.id, product, buyerName, amount, manual: 0 } });

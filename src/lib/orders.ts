@@ -865,4 +865,5 @@ export async function notifyReleased(orderId: string) {
     await notify({ event: "work.order_released", personId, entityType: "work_order", entityId: orderId, dedupeKey: `work.order_released:${orderId}:${personId}`, vars: { orderId, orderNumber: o.order_number } });
   }
   await (await import("@/lib/sourcing-events")).sourcingOnReleased(orderId);
+  await (await import("@/lib/integration-events")).recordWorkOrderReleased(orderId);
 }

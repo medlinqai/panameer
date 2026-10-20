@@ -9522,3 +9522,26 @@ model SourcingEvent {
   @@index([work_order_id])
   @@map("sourcing_events")
 }
+
+enum IntegrationEventStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+/// SE-E007: outbox for other systems (first: the provisioning app on work_order.released). No external call yet.
+model IntegrationEvent {
+  id            String                 @id @default(uuid()) @db.Uuid
+  type          String
+  status        IntegrationEventStatus @default(PENDING)
+  work_order_id String?                @db.Uuid
+  payload       Json
+  attempts      Int                    @default(0)
+  last_error    String?
+  sent_at       DateTime?
+  created_at    DateTime               @default(now())
+
+  @@index([type, status])
+  @@index([work_order_id])
+  @@map("integration_events")
+}
