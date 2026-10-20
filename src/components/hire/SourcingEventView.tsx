@@ -21,6 +21,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
   const [extendBy, setExtendBy] = useState("24");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState(ev.notifyOthers?.message ?? "");
   const per = ev.job.budget_type === "FIXED" ? "" : "/hr";
   const range = ev.job.budget_min_cents != null || ev.job.budget_max_cents != null ? `${usd(ev.job.budget_min_cents) ?? "…"} – ${usd(ev.job.budget_max_cents) ?? "…"}${per}` : null;
   const awarded = ev.status === "AWARDED" || ev.proposals.some((p) => p.proposal?.status === "AWARDED");
@@ -61,6 +62,16 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
           </div>
         )}
       </header>
+
+      {ev.notifyOthers && (
+        <section className="mt-5 rounded-brand border border-magenta-dark bg-[#fbeafb]/40 p-5" data-notify-others>
+          <h2 className="text-[16px] font-extrabold">Let the other candidates know</h2>
+          <p className="mt-1 text-[13.5px] text-ink-2">The Work Order is Released. This goes to the {ev.notifyOthers.count} provider{ev.notifyOthers.count === 1 ? "" : "s"} you didn&apos;t award (bell + email).</p>
+          <textarea value={notice} onChange={(e) => setNotice(e.target.value)} rows={4} maxLength={2000} aria-label="Message to the other candidates" className="mt-2 block w-full rounded-[8px] border border-line bg-white px-3 py-2.5 text-[14px]" />
+          <button type="button" className={`${BTN} mt-3`} disabled={busy || !notice.trim()} onClick={() => act("/api/sourcing", { action: "notifyOthers", eventId: ev.id, note: notice }, "Sent — the Sourcing Event is closed.")} data-send-not-awarded>Send</button>
+        </section>
+      )}
+      {ev.othersNotifiedAt && <p className="mt-4 text-[13.5px] text-ink-2">The other candidates were told on {new Date(ev.othersNotifiedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.</p>}
 
       <section className="mt-5">
         <div className="flex flex-wrap items-center justify-between gap-3">

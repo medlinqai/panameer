@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { WorkRequestError } from "@/lib/work-request";
 import { SourcingError } from "@/lib/sourcing";
-import { declineInEvent, extendDeadline, proposeInEvent, setProposalStatus } from "@/lib/sourcing-events";
+import { declineInEvent, extendDeadline, notifyOthers, proposeInEvent, setProposalStatus } from "@/lib/sourcing-events";
 
 // SE: Sourcing Event actions — the provider proposes or declines; the buyer runs the event.
 type Body = { action?: string; jobId?: string; eventId?: string; rateCents?: number; start?: string | null; note?: string | null; reason?: string; hours?: number; proposalId?: string };
@@ -26,6 +26,8 @@ export async function POST(request: Request) {
       case "declineProposal":
         await setProposalStatus(gate, String(body.eventId ?? ""), String(body.proposalId ?? ""), body.action === "shortlist" ? "SHORTLISTED" : body.action === "unshortlist" ? "SUBMITTED" : "DECLINED");
         return NextResponse.json({ ok: true });
+      case "notifyOthers":
+        return NextResponse.json(await notifyOthers(gate, String(body.eventId ?? ""), String(body.note ?? "")));
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     }

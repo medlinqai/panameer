@@ -171,6 +171,7 @@ export async function eventForBuyer(viewer: Viewer, eventId: string) {
   return {
     id: ev.id, number: ev.event_number, status: ev.status, deadlineAt: ev.deadline_at.toISOString(), hours: ev.deadline_hours, jobId: ev.job_id, job,
     workOrderId: ev.work_order_id, othersNotifiedAt: ev.others_notified_at?.toISOString() ?? null,
+    notifyOthers: (await canNotifyOthers(ev.id)) ? { count: await prisma.proposal.count({ where: notAwarded(ev.id) }), message: notAwardedMessage(job.title) } : null,
     counts: { requested: requests.length, proposed: proposals.filter((p) => p.proposal).length, declined: requests.filter((r) => r.status === "DECLINED").length },
     proposals, certificationTestId: testId,
   };
@@ -200,4 +201,47 @@ export async function markAwarded(jobId: string, providerPersonId: string, workO
     prisma.proposal.update({ where: { id: p.id }, data: { status: "AWARDED" } }),
     prisma.sourcingEvent.update({ where: { id: eventId }, data: { status: "AWARDED", awarded_proposal_id: p.id, work_order_id: workOrderId } }),
   ]);
+}
+
+// ── SE-E006: the other candidates hear only once the Work Order is Released ──────────────────────────────────
+const RELEASED_OR_LATER = ["RELEASED", "ACTIVE", "CLOSED", "FINALLY_CLOSED"] as const;
+const notAwarded = (eventId: string) => ({ proposalRequest: { sourcing_event_id: eventId }, status: { in: ["SUBMITTED" as const, "SHORTLISTED" as const, "DECLINED" as const] } });
+
+/** Called when a Work Order is Released: its Sourcing Event's buyer gets the worklist item. */
+export async function sourcingOnReleased(orderId: string) {
+  const ev = await prisma.sourcingEvent.findFirst({ where: { work_order_id: orderId, others_notified_at: null }, select: { id: true, created_by_person_id: true, job: { select: { title: true } } } });
+  if (!ev) return;
+  const count = await prisma.proposal.count({ where: notAwarded(ev.id) });
+  if (!count) { await prisma.sourcingEvent.update({ where: { id: ev.id }, data: { status: "CLOSED", others_notified_at: new Date() } }); return; }
+  const { notify } = await import("@/lib/notifications");
+  await notify({ event: "buyer.sourcing.notify_others", personId: ev.created_by_person_id, entityType: "SourcingEvent", entityId: ev.id, dedupeKey: `sourcing.notify_others:${ev.id}`, vars: { eventId: ev.id, workTitle: ev.job.title, count: String(count) } });
+}
+
+export const notAwardedMessage = (title: string) => `Thank you for your proposal on “${title}”. We've filled this role with another provider, so we won't be going ahead with your proposal this time. We'd be glad to work with you on a future job.`;
+
+/** Whether the buyer may send the not-awarded notice now (the WO is Released and nobody was told yet). */
+export async function canNotifyOthers(eventId: string) {
+  const ev = await prisma.sourcingEvent.findUnique({ where: { id: eventId }, select: { work_order_id: true, others_notified_at: true } });
+  if (!ev?.work_order_id || ev.others_notified_at) return false;
+  const wo = await prisma.workOrder.findUnique({ where: { id: ev.work_order_id }, select: { status: true } });
+  return !!wo && (RELEASED_OR_LATER as readonly string[]).includes(wo.status);
+}
+
+/** Send: one bell + email to every non-awarded proposer; the event closes. */
+export async function notifyOthers(viewer: Viewer, eventId: string, message: string) {
+  const ev = await ownEvent(viewer, eventId);
+  if (!(await canNotifyOthers(ev.id))) throw new WorkRequestError("The other candidates can be told once the Work Order is Released.", "INVALID");
+  const job = await prisma.job.findUniqueOrThrow({ where: { id: ev.job_id }, select: { title: true } });
+  const text = message.trim().slice(0, 2000) || notAwardedMessage(job.title);
+  const others = await prisma.proposal.findMany({ where: notAwarded(ev.id), select: { id: true, provider_person_id: true } });
+  const { notify } = await import("@/lib/notifications");
+  for (const p of others) {
+    await notify({ event: "work.not_awarded", personId: p.provider_person_id, entityType: "Proposal", entityId: p.id, dedupeKey: `work.not_awarded:${ev.id}:${p.provider_person_id}`, vars: { workTitle: job.title, message: text } });
+  }
+  await prisma.$transaction([
+    prisma.proposal.updateMany({ where: { id: { in: others.map((o) => o.id) } }, data: { status: "NOT_SELECTED" } }),
+    prisma.sourcingEvent.update({ where: { id: ev.id }, data: { status: "CLOSED", others_notified_at: new Date() } }),
+    prisma.notification.updateMany({ where: { dedupe_key: `sourcing.notify_others:${ev.id}`, resolved_at: null }, data: { resolved_at: new Date() } }),
+  ]);
+  return { sent: others.length };
 }

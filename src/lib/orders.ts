@@ -864,4 +864,5 @@ export async function notifyReleased(orderId: string) {
   for (const personId of [o.buyer_person_id, o.provider_person_id]) {
     await notify({ event: "work.order_released", personId, entityType: "work_order", entityId: orderId, dedupeKey: `work.order_released:${orderId}:${personId}`, vars: { orderId, orderNumber: o.order_number } });
   }
+  await (await import("@/lib/sourcing-events")).sourcingOnReleased(orderId);
 }
