@@ -110,10 +110,10 @@ export default async function PublicProviderPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ as?: string }>;
+  searchParams: Promise<{ as?: string; from?: string }>;
 }) {
   const { id } = await params;
-  const { as } = await searchParams;
+  const { as, from } = await searchParams;
   const viewer = await getSessionViewer();
   // PROFILE360 , ruling 11 keeps the name)
   const wantsPeerPreview = as === "provider";
@@ -161,7 +161,7 @@ export default async function PublicProviderPage({
       {/* Masked surname is blurred in the name itself (Scott 2026-10-08: "blur, don't bar"). */}
       {!profile.isOwner && (
         <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">
-          <BackButton fallback="/connect/community" />
+          <BackButton fallback={from === "matches" ? "/hire" : "/connect/community"} label={from === "matches" ? "Back to your matches" : "Back"} />
         </div>
       )}
 

@@ -365,7 +365,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
                     <div className="flex flex-col items-end gap-1 text-right text-[13px]">
                       {m.rate && <b className="block">{m.rate}</b>}
                       <Link href={`/hire/terms?job=${jobId}&provider=${m.personId}`} data-hire-provider className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Hire</Link>
-                      <Link href={`/providers/${m.profileId}`} className="font-semibold text-magenta-dark underline underline-offset-4">View profile</Link>
+                      <Link href={`/providers/${m.profileId}?from=matches`} className="font-semibold text-magenta-dark underline underline-offset-4">View profile</Link>
                       <button type="button" onClick={() => hide(m.personId, true)} className="text-[12.5px] text-ink-3 underline underline-offset-4 hover:text-ink" data-hide-match aria-label={`Hide ${m.name}`}>Hide ×</button>
                     </div>
                   </li>
