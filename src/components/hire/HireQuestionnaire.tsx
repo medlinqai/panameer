@@ -14,6 +14,8 @@ const CHIP_ON = "rounded-full border border-magenta-dark bg-[#fbeafb] px-3.5 py-
 const CHIP_OFF = "rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink hover:border-magenta-dark";
 const OPT_ON = "flex flex-col items-start rounded-[10px] border border-magenta-dark bg-white p-3 text-left ring-1 ring-magenta-dark";
 const OPT_OFF = "flex flex-col items-start rounded-[10px] border border-line bg-white p-3 text-left hover:border-magenta-dark";
+const RATE_ON = "flex flex-col items-start rounded-[10px] border-2 border-magenta-dark bg-[#fbeafb] p-3 text-left";
+const START_CHIPS = ["ASAP", "Within 2 weeks"] as const;
 const FIELD = "mt-1 block w-full rounded-[8px] border border-line bg-white px-3 py-2.5 text-[14.5px] font-normal text-ink";
 const LABEL = "mt-4 block text-[13px] font-bold";
 const BTN = "inline-flex min-h-10 items-center justify-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40";
@@ -41,6 +43,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
   const categories = hierarchy.map((h) => h.name);
   const [step, setStep] = useState(initialStep);
   // SM-E006: fields prefilled from the buyer's last job (cleared once the posting or the buyer sets them).
+  const [pickDate, setPickDate] = useState(!!initial.startDate);
   const [fromLast, setFromLast] = useState<string[]>(initialJobId ? [] : defaults.fromLast);
   const [jobId, setJobId] = useState<string | null>(initialJobId);
   const [f, setF] = useState<ServiceDescription>(initial);
@@ -108,7 +111,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
       }
     }
     if (step < 4) {
-      const j = await call({ action: "save", jobId, input: f });
+      const j = await call({ action: "save", jobId, input: { ...f, budgetType: f.budgetType ?? "HOURLY" } });
       if (!j) return;
       setJobId(j.jobId as string);
       setStep(step + 1);
@@ -118,7 +121,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
   };
 
   const loadMatches = async () => {
-    const j = await call({ action: "matches", jobId, input: f });
+    const j = await call({ action: "matches", jobId, input: { ...f, budgetType: f.budgetType ?? "HOURLY" } });
     if (!j) return;
     setJobId(j.jobId as string);
     const m = (j.matches as HireMatch[]) ?? [];
@@ -316,20 +319,25 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         {step === 4 && (
           <>
             <h2 className="text-[19px] font-extrabold">When, and what&apos;s your budget?</h2>
+            <p className={LABEL}>Start{from("startText")}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2" data-start-chips>
+              {f.startText && !pickDate && !(START_CHIPS as readonly string[]).includes(f.startText) && <button type="button" aria-pressed className={CHIP_ON}>{f.startText}</button>}
+              {START_CHIPS.map((c) => { const on = !pickDate && f.startText === c; return <button key={c} type="button" aria-pressed={on} onClick={() => { setPickDate(false); set({ startText: c, startDate: "" }); }} className={on ? CHIP_ON : CHIP_OFF}>{c}</button>; })}
+              <button type="button" aria-pressed={pickDate} onClick={() => { setPickDate(true); set({ startText: "" }); }} className={pickDate ? CHIP_ON : CHIP_OFF}>Pick a date</button>
+              {pickDate && <input type="date" aria-label="Start date" value={f.startDate} onChange={(e) => set({ startDate: e.target.value })} className="rounded-[8px] border border-line bg-white px-3 py-1.5 text-[14px]" />}
+            </div>
             <div className="grid gap-x-3 sm:grid-cols-3">
-              <label className={LABEL}>Start{from("startText")}<input value={f.startText} onChange={(e) => set({ startText: e.target.value })} className={FIELD} placeholder="ASAP, within 2 weeks…" /></label>
-              <label className={LABEL}>Or a date<input type="date" value={f.startDate} onChange={(e) => set({ startDate: e.target.value })} className={FIELD} /></label>
               <label className={LABEL}>How long{from("duration")}
                 <select value={f.duration ?? ""} onChange={(e) => set({ duration: (e.target.value || null) as ServiceDescription["duration"] })} className={FIELD}><option value="">Not sure yet</option>{howLong.map((h) => <option key={h.value} value={h.value}>{h.label}</option>)}</select>
               </label>
             </div>
             <p className="mb-1.5 mt-5 text-[13px] font-bold">Rate{from("budget") ?? from("budgetType")}</p>
             <div className="grid grid-cols-2 gap-2">
-              {([["HOURLY", "Hourly rate", "Pay for time worked"], ["FIXED", "Fixed price", "One price for the job"]] as const).map(([v, t, l]) => <button key={v} type="button" aria-pressed={f.budgetType === v} onClick={() => set({ budgetType: v })} className={f.budgetType === v ? OPT_ON : OPT_OFF}><b className="text-[14px]">{t}</b><small className="text-[12px] text-ink-2">{l}</small></button>)}
+              {([["HOURLY", "Hourly rate", "Pay for time worked"], ["FIXED", "Fixed price", "One price for the job"]] as const).map(([v, t, l]) => <button key={v} type="button" aria-pressed={(f.budgetType ?? "HOURLY") === v} onClick={() => set({ budgetType: v })} className={(f.budgetType ?? "HOURLY") === v ? RATE_ON : OPT_OFF}><b className="text-[14px]">{t}</b><small className="text-[12px] text-ink-2">{l}</small></button>)}
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <label className="text-[13px] font-bold">From ($)<input inputMode="numeric" value={f.budgetMin ?? ""} onChange={(e) => set({ budgetMin: e.target.value ? Number(e.target.value.replace(/[^0-9.]/g, "")) : null })} className={FIELD} /></label>
-              <label className="text-[13px] font-bold">To ($)<input inputMode="numeric" value={f.budgetMax ?? ""} onChange={(e) => set({ budgetMax: e.target.value ? Number(e.target.value.replace(/[^0-9.]/g, "")) : null })} className={FIELD} /></label>
+              <label className="text-[13px] font-bold">{f.budgetType === "FIXED" ? "From ($)" : "From ($/hour)"}<input inputMode="numeric" value={f.budgetMin ?? ""} onChange={(e) => set({ budgetMin: e.target.value ? Number(e.target.value.replace(/[^0-9.]/g, "")) : null })} className={FIELD} /></label>
+              <label className="text-[13px] font-bold">{f.budgetType === "FIXED" ? "To ($)" : "To ($/hour)"}<input inputMode="numeric" value={f.budgetMax ?? ""} onChange={(e) => set({ budgetMax: e.target.value ? Number(e.target.value.replace(/[^0-9.]/g, "")) : null })} className={FIELD} /></label>
             </div>
             <p className="mt-1 text-[12.5px] text-ink-3">{f.budgetType === "FIXED" ? "For the whole job." : "Per hour. Postings often leave this out — add yours."}</p>
           </>
