@@ -102,6 +102,7 @@ const ALIASES: Record<string, string> = {
   inventory: "Inventory Management",
   vbcs: "Visual Builder Studio", "vb studio": "Visual Builder Studio", bip: "BI Publisher", "product information management": "Product Lifecycle Management", pim: "Product Lifecycle Management",
   fccs: "Financial Consolidation and Close", epbcs: "Planning", pbcs: "Planning", "epbcs planning": "Planning", eprcs: "Narrative Reporting", "narrative reporting eprcs": "Narrative Reporting",
+  xbrl: "XBRL Tagging", ixbrl: "XBRL Tagging", doclets: "Doclets / Report Packages", "report packages": "Doclets / Report Packages", "oracle essbase": "Essbase",
   "hyperion financial reporting": "Financial Reporting Studio", "role based security": "RBAC Role Model", "approval workflows": "Approvals Management Extensions", fbdi: "FBDI", hdl: "HDL",
 };
 /** SM-E002: generic words on their own never match a skill. */
