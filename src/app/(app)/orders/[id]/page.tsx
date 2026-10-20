@@ -19,6 +19,7 @@ import { orderHistory } from "@/lib/transaction-history";
 import { BILLABLE } from "@/lib/orders";
 import { milestonesFor } from "@/lib/order-milestones";
 import { OrderSchedule } from "@/components/orders/OrderSchedule";
+import { OrderSettlements } from "@/components/orders/OrderSettlements";
 import { ChangeOrders } from "@/components/orders/ChangeOrders";
 import { changeBlocked, describeChanges, revisionsFor, type Diff, type LineField } from "@/lib/change-orders";
 import { BuyerCard } from "@/components/orders/BuyerCard";
@@ -187,7 +188,7 @@ export default async function Page({
             return (
               <>
                 {m && <TimeDollars m={m} currency={o.currency} />}
-                <WoPlanSection orderId={o.id} viewer={viewer} hoursAuthorized={m?.hoursAuthorized ?? null} currency={o.currency} />
+                <WoPlanSection orderId={o.id} viewer={viewer} hoursAuthorized={m?.hoursAuthorized ?? null} currency={o.currency} remainingCents={o.remainingCents} valueCents={o.valueCents} hourlyCents={o.lines.find((l) => (l.uom ?? "").toUpperCase() === "HOUR")?.unitPriceCents ?? null} />
               </>
             );
           })()}
@@ -197,6 +198,7 @@ export default async function Page({
       {tab === "settlements" && (
         <section data-tab="settlements" className="mt-6">
           {o.party === "PROVIDER" && BILLABLE.includes(o.status) && <Button href={`/orders/${o.id}/settle`}>Raise a payment request</Button>}
+          <OrderSettlements orderId={o.id} currency={o.currency} />
         </section>
       )}
 
