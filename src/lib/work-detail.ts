@@ -33,8 +33,12 @@ export async function getWorkDetailForProvider(input: {
   id: string;
   providerPersonId: string | null;
 }): Promise<WorkDetail | null> {
+  // A provider asked to propose (Sourcing Event) may open the job even while it is not posted publicly (still DRAFT).
+  const askedToPropose = input.providerPersonId
+    ? (await prisma.proposalRequest.count({ where: { job_id: input.id, provider_person_id: input.providerPersonId } })) > 0
+    : false;
   const w = await prisma.job.findFirst({
-    where: { id: input.id, status: PROVIDER_OPENABLE_STATUS },
+    where: { id: input.id, ...(askedToPropose ? { status: { in: [PROVIDER_OPENABLE_STATUS, "DRAFT"] } } : { status: PROVIDER_OPENABLE_STATUS }) },
     select: {
       id: true,
       title: true,
