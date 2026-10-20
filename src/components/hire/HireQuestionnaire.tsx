@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { HireMatch } from "@/lib/hire-questionnaire";
+import type { JobDefaults } from "@/lib/work-request";
 import type { SdContract, ServiceDescription } from "@/lib/service-description";
 
 // SD-E003: Hire follows the Service Description standard. Step 1 can start from an uploaded posting (read like a résumé);
@@ -31,13 +32,16 @@ type Props = {
   howLong: { value: string; label: string }[];
   roles: { name: string; roleId: string | null }[];
   initial: ServiceDescription;
+  defaults: JobDefaults;
   initialJobId: string | null;
   initialStep: number;
 };
 
-export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJobId, initialStep }: Props) {
+export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial, initialJobId, initialStep }: Props) {
   const categories = hierarchy.map((h) => h.name);
   const [step, setStep] = useState(initialStep);
+  // SM-E006: fields prefilled from the buyer's last job (cleared once the posting or the buyer sets them).
+  const [fromLast, setFromLast] = useState<string[]>(initialJobId ? [] : defaults.fromLast);
   const [jobId, setJobId] = useState<string | null>(initialJobId);
   const [f, setF] = useState<ServiceDescription>(initial);
   const [start, setStart] = useState<"choose" | "upload" | "form">(initialJobId || initial.title ? "form" : "choose");
@@ -60,8 +64,8 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
     await fetch("/api/hire", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: hidden ? "hide" : "unhide", jobId, personIds: [personId] }) }).catch(() => null);
   };
   const [sent, setSent] = useState<number | null>(null);
-  const set = (patch: Partial<ServiceDescription>) => setF((x) => ({ ...x, ...patch }));
-  const from = (k: string) => (f.fromPosting.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-posting>from your posting</span> : null);
+  const set = (patch: Partial<ServiceDescription>) => { setF((x) => ({ ...x, ...patch })); setFromLast((l) => l.filter((k) => !(k in patch))); };
+  const from = (k: string) => (f.fromPosting.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-posting>from your posting</span> : fromLast.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-last-job>from your last job</span> : null);
 
   const call = async (body: object) => {
     setBusy(true);
@@ -83,7 +87,14 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
     const j = (await r?.json().catch(() => ({}))) as { sd?: ServiceDescription; error?: string };
     setBusy(false);
     if (!r?.ok || !j.sd) { setError(j.error ?? "We couldn't read that posting."); return; }
-    setF({ ...j.sd, category: j.sd.category || f.category });
+    // SM-E006: posting values win; where the posting is silent, keep the last job's defaults.
+    const p = j.sd;
+    const keep = { worksite: !p.worksite, contractTypes: !p.contractTypes.length, duration: !p.duration, budgetType: !p.budgetType };
+    setF({ ...p, category: p.category || f.category,
+      worksite: p.worksite ?? defaults.worksite, contractTypes: p.contractTypes.length ? p.contractTypes : defaults.contractTypes,
+      duration: p.duration ?? defaults.duration, budgetType: p.budgetType ?? defaults.budgetType,
+      ...(p.city ? {} : { city: f.city, state: f.state }) });
+    setFromLast(defaults.fromLast.filter((k) => keep[k as keyof typeof keep]));
     setChanging(j.sd.classConfidence === "low" || !j.sd.businessTypeId);
     setStart("form");
   };
@@ -247,7 +258,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
             <div className="mt-4 grid grid-cols-3 gap-2">
               {WORKSITES.map(([v, t, l]) => <button key={v} type="button" aria-pressed={f.worksite === v} onClick={() => set({ worksite: v })} className={f.worksite === v ? OPT_ON : OPT_OFF}><b className="text-[14px]">{t}</b><small className="text-[12px] text-ink-2">{l}</small></button>)}
             </div>
-            {f.fromPosting.includes("worksite") && <p className="mt-1">{from("worksite")}</p>}
+            {from("worksite") && <p className="mt-1">{from("worksite")}</p>}
             <div className="grid gap-x-3 sm:grid-cols-3">
               <label className={LABEL}>City{from("city")}<input value={f.city} onChange={(e) => set({ city: e.target.value })} className={FIELD} /></label>
               <label className={LABEL}>State<input value={f.state} onChange={(e) => set({ state: e.target.value })} className={FIELD} /></label>
@@ -312,7 +323,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
                 <select value={f.duration ?? ""} onChange={(e) => set({ duration: (e.target.value || null) as ServiceDescription["duration"] })} className={FIELD}><option value="">Not sure yet</option>{howLong.map((h) => <option key={h.value} value={h.value}>{h.label}</option>)}</select>
               </label>
             </div>
-            <p className="mb-1.5 mt-5 text-[13px] font-bold">Rate{from("budget")}</p>
+            <p className="mb-1.5 mt-5 text-[13px] font-bold">Rate{from("budget") ?? from("budgetType")}</p>
             <div className="grid grid-cols-2 gap-2">
               {([["HOURLY", "Hourly rate", "Pay for time worked"], ["FIXED", "Fixed price", "One price for the job"]] as const).map(([v, t, l]) => <button key={v} type="button" aria-pressed={f.budgetType === v} onClick={() => set({ budgetType: v })} className={f.budgetType === v ? OPT_ON : OPT_OFF}><b className="text-[14px]">{t}</b><small className="text-[12px] text-ink-2">{l}</small></button>)}
             </div>

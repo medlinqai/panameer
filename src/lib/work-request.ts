@@ -1,3 +1,4 @@
+import { CONTRACT_FROM_DB } from "@/lib/service-description";
 import { nextNumber } from "@/lib/numbering";
 import { prisma } from "@/lib/prisma";
 import { pendingJoin, waitingLine } from "@/lib/pending-join";
@@ -125,6 +126,22 @@ export async function loadOwned(viewer: Viewer, id: string, pAccountId: string) 
   if (!wr) throw new WorkRequestError("Work request not found", "NOT_FOUND");
   return wr;
 }
+
+/** SM-E006: Where, Contract, How long and Rate type from the buyer's last job (first job ever → Offsite, C2C, Not sure yet, Hourly). */
+export async function lastJobDefaults(viewer: Viewer, notJobId?: string | null) {
+  const { pAccountId } = await resolveBuyer(viewer);
+  const j = await prisma.job.findFirst({
+    where: scopedToPAccount(scopedViewer(viewer, pAccountId), { worksite: { not: null }, ...(notJobId ? { id: { not: notJobId } } : {}) }),
+    orderBy: { created_at: "desc" },
+    select: { worksite: true, contract_types: true, duration: true, budget_type: true },
+  });
+  if (!j) return { worksite: "OFFSITE" as const, contractTypes: ["C2C" as const], duration: null, budgetType: "HOURLY" as const, fromLast: [] as string[] };
+  return {
+    worksite: j.worksite, contractTypes: j.contract_types.map((c) => CONTRACT_FROM_DB[c]), duration: j.duration, budgetType: j.budget_type ?? ("HOURLY" as const),
+    fromLast: ["worksite", ...(j.contract_types.length ? ["contractTypes"] : []), ...(j.duration ? ["duration"] : []), ...(j.budget_type ? ["budgetType"] : [])],
+  };
+}
+export type JobDefaults = Awaited<ReturnType<typeof lastJobDefaults>>;
 
 /** The buyer's most recent DRAFT (for resume), or null. */
 export async function getCurrentDraft(viewer: Viewer) {
