@@ -20,7 +20,7 @@ import { BILLABLE } from "@/lib/orders";
 import { milestonesFor } from "@/lib/order-milestones";
 import { Milestones } from "@/components/orders/Milestones";
 import { ChangeOrders } from "@/components/orders/ChangeOrders";
-import { changeBlocked, describeChanges, revisionsFor } from "@/lib/change-orders";
+import { changeBlocked, describeChanges, revisionsFor, type Diff, type LineField } from "@/lib/change-orders";
 import { BuyerCard } from "@/components/orders/BuyerCard";
 import { WORK_ORDER_LINE_LABEL } from "@/lib/oracle-status";
 import { termsLine } from "@/lib/billing-terms";
@@ -174,7 +174,7 @@ export default async function Page({
           )}
           <ul className="mt-5 grid gap-3">
             {o.lines.map((l) => (
-              <LineCard key={l.id} line={l} currency={o.currency} showFee={o.party === "PROVIDER"} milestones={milestones.get(l.id) ? <Milestones orderId={o.id} rows={milestones.get(l.id)!} canReport={o.party === "PROVIDER" && BILLABLE.includes(o.status)} /> : null} />
+              <LineCard key={l.id} line={l} currency={o.currency} showFee={o.party === "PROVIDER"} proposed={pending?.changes.lines.find((x) => x.lineId === l.id)?.fields ?? null} milestones={milestones.get(l.id) ? <Milestones orderId={o.id} rows={milestones.get(l.id)!} canReport={o.party === "PROVIDER" && BILLABLE.includes(o.status)} /> : null} />
             ))}
           </ul>
         </section>
@@ -212,8 +212,14 @@ export default async function Page({
 }
 
 /** THE TWO BASES DRAW DIFFERENTLY AND THE TWO BRANCHES ARE NOT COSMETIC. */
-function LineCard({ line, currency, showFee, milestones }: { line: OrderLineView; currency: string; showFee: boolean; milestones?: React.ReactNode }) {
+function LineCard({ line, currency, showFee, milestones, proposed }: { line: OrderLineView; currency: string; showFee: boolean; milestones?: React.ReactNode; proposed?: Partial<Record<LineField, Diff>> | null }) {
   const d = line.drawdown;
+  // WT-E002: the current (approved) order; a pending change order shows "proposed: …" beside the value it changes.
+  const prop = (k: LineField, fmt: (v: string | number) => string) => {
+    const after = proposed?.[k]?.after;
+    return after == null ? null : <span data-proposed={k} className="ml-1.5 rounded-full border border-magenta px-1.5 text-[11.5px] font-semibold text-magenta-dark">proposed: {fmt(after)}</span>;
+  };
+  const money = (v: string | number) => formatCents(Number(v), currency);
   return (
     <li className="rounded-brand border border-line bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -234,9 +240,12 @@ function LineCard({ line, currency, showFee, milestones }: { line: OrderLineView
               {line.overtimeAllowed ? `Overtime at ${line.overtimeMultiplier ?? 1.5}× the rate` : "No overtime"} · {line.expensesAllowed ? (line.expensesCapCents != null ? `Expenses up to $${(line.expensesCapCents / 100).toLocaleString("en-US")}` : "Expenses allowed") : "No expenses"}
             </p>
           )}
-          {(line.serviceStart || line.serviceEnd) && (
+          <p className="mt-1 text-[13.5px] text-ink-2" data-line-rate>
+            {line.unitPriceCents != null ? <>{formatCents(line.unitPriceCents, currency)} per {(line.uom ?? "unit").toLowerCase()}{prop("unit_price_cents", money)}{line.quantity != null && <> · {line.quantity} {(line.uom ?? "unit").toLowerCase()}s{prop("quantity", String)}</>}</> : line.amountCents != null ? <>{formatCents(line.amountCents, currency)}{prop("amount_cents", money)}</> : null}
+          </p>
+          {(line.serviceStart || line.serviceEnd || proposed?.service_start || proposed?.service_end) && (
             <p className="mt-1 text-[13.5px] text-ink-2">
-              {line.serviceStart ?? "…"} → {line.serviceEnd ?? "…"}
+              {line.serviceStart ?? "…"}{prop("service_start", String)} → {line.serviceEnd ?? "…"}{prop("service_end", String)}
             </p>
           )}
         </div>
