@@ -20,29 +20,29 @@ datasource db {
 /// Identity/profile data lives on the linked Person (1:1, optional) — this row
 /// stays focused on authentication.
 model User {
-  id                    String    @id @default(uuid()) @db.Uuid
+  id              String   @id @default(uuid()) @db.Uuid
   /// ALWAYS stored normalized (trim + lowercase) via `normalizeEmail`. Backed
   /// by an additional UNIQUE INDEX on `lower(email)` that Prisma cannot express
   /// (functional index) — it is created by `npm run db:email-guard`, and
   /// `prisma db push` DROPS it, so re-run that script after every push.
   /// See brief_O / decisions-01.md.
-  email                 String    @unique
+  email           String   @unique
   /// NULL for accounts created purely through OAuth (brief_Q) — they have no
   /// password and authenticate via the provider. `authorize` already refuses to
   /// compare against a null hash, so such an account cannot be password-guessed.
-  password_hash         String?
-  first_name            String?
-  last_name             String?
+  password_hash   String?
+  first_name      String?
+  last_name       String?
   /// Profile picture URL supplied by an OAuth provider (brief_Q). Held on the
   /// User because it arrives at sign-in, before the Person backbone exists;
   /// it is copied onto `Person.photo_url` when that Person is created.
-  image                 String?
+  image           String?
   /// Which OAuth providers this account has signed in with (e.g. ["google"]).
   /// Record-keeping so support can see how an account authenticates; linking is
   /// keyed on the normalized email, not on this list.
-  oauth_providers       String[]  @default([])
-  role                  UserRole      @default(MEMBER)
-  is_active             Boolean   @default(true)
+  oauth_providers String[] @default([])
+  role            UserRole @default(MEMBER)
+  is_active       Boolean  @default(true)
 
   /// ── ⚠⚠⚠ A TEST ACCOUNT (`P2-ALL-E793`, Scott 2026-10-03) ──────────────────
   ///
@@ -102,9 +102,9 @@ model User {
 
   /// Learn (brief_learn_v1 WS0). Keyed to the USER, not a profile: every role
   /// learns, and enrolment is the convert-to-account trigger (WS4).
-  learnEnrollments  Enrollment[]
-  pathInterests      PathInterest[]
-  lessonProgress    LessonProgress[]
+  learnEnrollments      Enrollment[]
+  pathInterests         PathInterest[]
+  lessonProgress        LessonProgress[]
   certificationAttempts CertificationAttempt[]
 
   /// J2.4 WS-H (E018) — two-step verification, keyed to the LOGIN rather than
@@ -116,7 +116,7 @@ model User {
    * a learner with no `ProviderProfile` has these too, which is the whole point
    * of the column.
    */
-  credentials      Credential[]
+  credentials         Credential[]
   /// `P1-ALL-E372` — both directions, because a colleague request has a sender
   /// and a recipient and both need to see it.
   connectionsSent     Connection[]      @relation("ConnectionsSent")
@@ -204,7 +204,7 @@ model PAccount {
 
   companies    Company[]
   workRequests WorkRequest[]
-  jobs Job[]
+  jobs         Job[]
 
   @@map("p_accounts")
 }
@@ -337,7 +337,7 @@ model Company {
   entity_status_detail         String?
   vertical                     String?
   /// JW-E007: buyers must give a Work Request a short description before Submit (default on).
-  require_wr_description Boolean @default(true)
+  require_wr_description       Boolean   @default(true)
   /// WN-E001: where the buyer's invoices go (asked at Place Order).
   invoice_email                String?
   website                      String?
@@ -361,7 +361,7 @@ model Company {
   /// column holds something this standard cannot express"*, and it is the flag the
   /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
   /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
-  country_code                 String? @db.VarChar(2)
+  country_code                 String?   @db.VarChar(2)
   logo_url                     String?
 
   /// TENANT THEME (E204) — a brand HUE and a recipe id, never a set of hexes.
@@ -384,14 +384,14 @@ model Company {
 
   /// My Company (2026-10-05): ≤600-char description, one Industry specialization, and whether
   /// members' public profiles show the company name.
-  description      String?
-  industry_id      String? @db.Uuid
+  description          String?
+  industry_id          String?        @db.Uuid
   /// Buyer Track Record: company size band and the ERP it runs (free text), both optional.
-  size_band        String?
-  erp_used         String?
-  show_on_profiles Boolean @default(true)
+  size_band            String?
+  erp_used             String?
+  show_on_profiles     Boolean        @default(true)
   /// Colors read from the logo (up to 6 hex strings, by area) — shown in Dynamic Branding.
-  logo_palette     Json?
+  logo_palette         Json?
   /// Dynamic Branding switch. null = saved before the switch existed: on when a look is saved.
   // Company v3: who gets paid — COMPANY (EIN) or SOLE_PROPRIETOR (SSN/ITIN, one-member companies only).
   // Company v3: set when its only member joined another company; never deleted.
@@ -399,37 +399,37 @@ model Company {
   tax_form_kind        String?
   tax_form_path        String?
   tax_form_uploaded_at DateTime?
-  archived_at    DateTime?
-  payee_type     PayeeType?
-  payoutMethods  PayoutMethod[]
-  theme_enabled    Boolean?
+  archived_at          DateTime?
+  payee_type           PayeeType?
+  payoutMethods        PayoutMethod[]
+  theme_enabled        Boolean?
   /// Same company = same website domain, tax ID digits or email domain (2026-10-05). Normalized copies, indexed.
-  website_domain   String?
-  tin_digits       String?
+  website_domain       String?
+  tin_digits           String?
   /// Set when an admin saved past a match ("This Isn't Us") — shown to Panameer admins.
-  duplicate_note   String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  duplicate_note       String?
+  created_at           DateTime       @default(now())
+  updated_at           DateTime       @updatedAt
 
-  pAccount    PAccount            @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
-  sites       Site[]
-  people      Person[]
-  memberships CompanyMembership[]
+  pAccount         PAccount              @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
+  sites            Site[]
+  people           Person[]
+  memberships      CompanyMembership[]
   /// Assessments ATTRIBUTED to this company (brief_assessment_instance_model).
   /// Nullable on the other side and it stays that way — an assessment filled in
   /// before any account exists has no company, and that is the top of the funnel.
-  assessments Assessment[]
+  assessments      Assessment[]
+  /// TX-E003 / TX-E006: the company's business types (a provider can have more than one) and What We Buy.
+  businessTypes    CompanyBusinessType[]
+  buySettings      BuySetting[]
+  /// BT-E001: a seller company's "Industries You Serve" (buyers keep the single industry_id).
+  industriesServed CompanyIndustry[]
 
   @@index([code])
   @@index([p_account_id])
   @@index([website_domain])
   @@index([tin_digits])
   @@index([email_domain])
-  /// TX-E003 / TX-E006: the company's business types (a provider can have more than one) and What We Buy.
-  businessTypes CompanyBusinessType[]
-  buySettings   BuySetting[]
-  /// BT-E001: a seller company's "Industries You Serve" (buyers keep the single industry_id).
-  industriesServed CompanyIndustry[]
   @@map("companies")
 }
 
@@ -493,14 +493,14 @@ model Site {
 
 /// A postal address belonging to a Site.
 model Address {
-  id          String   @id @default(uuid()) @db.Uuid
-  site_id     String   @db.Uuid
-  line1       String
-  line2       String?
-  city        String?
-  state       String?
-  postal_code String?
-  country     String?
+  id           String   @id @default(uuid()) @db.Uuid
+  site_id      String   @db.Uuid
+  line1        String
+  line2        String?
+  city         String?
+  state        String?
+  postal_code  String?
+  country      String?
   /// ── ⚠⚠⚠ THE ISO-2 CODE, BESIDE THE NAME (`P2-A1.1-E728` WS-B) ────────────────────────
   ///
   /// ⚠ **SCOTT'S RULING, 2026-09-30: *"Additive: a new ISO-2 code column beside each existing
@@ -513,14 +513,14 @@ model Address {
   /// column holds something this standard cannot express"*, and it is the flag the
   /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
   /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
-  country_code String? @db.VarChar(2)
+  country_code String?  @db.VarChar(2)
   /// LS-E001 (Oracle site uses): what the address is used for.
   is_corporate Boolean  @default(false)
   is_bill_to   Boolean  @default(false)
   is_ship_to   Boolean  @default(false)
   is_remit_to  Boolean  @default(false)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
 
   site Site @relation(fields: [site_id], references: [id], onDelete: Cascade)
 
@@ -563,72 +563,71 @@ model Person {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  company             Company             @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  site                Site?               @relation(fields: [site_id], references: [id], onDelete: SetNull)
-  user                User?               @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  company                   Company             @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  site                      Site?               @relation(fields: [site_id], references: [id], onDelete: SetNull)
+  user                      User?               @relation(fields: [user_id], references: [id], onDelete: SetNull)
   // The provider profile this Person OWNS (1:1).
-  providerProfile     ProviderProfile?    @relation("ProfileOwner")
-  buyerProfile        BuyerProfile?
-  requesterProfile    RequesterProfile?
-  companyMemberships  CompanyMembership[]
+  providerProfile           ProviderProfile?    @relation("ProfileOwner")
+  buyerProfile              BuyerProfile?
+  requesterProfile          RequesterProfile?
+  companyMemberships        CompanyMembership[]
   // As a COORDINATOR: the provider profiles this Person represents, and the
   // invites they've sent (brief_I).
-  repProviderProfiles ProviderProfile[]   @relation("CoordinatorProviders")
-  coordinatorInvites  CoordinatorInvite[] @relation("CoordinatorInvitesSent")
+  repProviderProfiles       ProviderProfile[]   @relation("CoordinatorProviders")
+  coordinatorInvites        CoordinatorInvite[] @relation("CoordinatorInvitesSent")
   /// ⚠ `E493` — colleague invitations this person sent. No roster, no relation.
-  invitationsToJoin    InvitationToJoin[]   @relation("ColleagueInvitesSent")
+  invitationsToJoin         InvitationToJoin[]  @relation("ColleagueInvitesSent")
   /// ⚠ The invitation that brought this person in, if one did (`E599` WS-C).
   /// ⚠⚠ A LIST because the relation is one-to-many at the schema level; in
   /// practice it holds at most one — `creditColleagueInvite` credits the
   /// FIRST invite and never a second ("one credit per joined person").
-  invitationsToJoinAccepted InvitationToJoin[] @relation("ColleagueInviteAccepted")
+  invitationsToJoinAccepted InvitationToJoin[]  @relation("ColleagueInviteAccepted")
   /// Profiles THIS person has viewed (`P0-E595` A2). ⚠ The attribution half
   /// of *"who is searching who"* — recorded now, displayed by a later ruling.
-  profileViewsMade    ProfileView[]       @relation("ProfileViewer")
+  profileViewsMade          ProfileView[]       @relation("ProfileViewer")
   // As a BUYER: the work requests this Person created (brief_L).
-  workRequests        WorkRequest[]
-  jobs Job[]
+  workRequests              WorkRequest[]
+  jobs                      Job[]
   // SMS verification challenges for this person's phone (brief_P).
-  phoneVerifications  PhoneVerification[]
+  phoneVerifications        PhoneVerification[]
 
   /// Learn (brief_learn_v1 WS0) — an expert fronts paths and lessons. A Person,
   /// not a ProviderProfile, so an instructor needn't be a marketplace provider.
-  learnPaths   LearningPath[] @relation("LearnExpertPaths")
-  learnLessons Lesson[]       @relation("LearnExpertLessons")
+  learnPaths         LearningPath[]    @relation("LearnExpertPaths")
+  learnLessons       Lesson[]          @relation("LearnExpertLessons")
   /// `P2-J3-E572` — the path groups this person OWNS. ⚠ Ownership, not
   /// authority: confirming an answer stays `teachesPathWhere`-wide.
-  hostedForumBoards ForumBoard[] @relation("ForumBoardHost")
+  hostedForumBoards  ForumBoard[]      @relation("ForumBoardHost")
   groupMemberships   GroupMembership[] @relation("GroupMember")
   groupDecisionsMade GroupMembership[] @relation("GroupMembershipDecider")
 
   // J2.4 WS-H — the payee-side records. On Person, not ProviderProfile: one
   // login can hold several memberships, and a bank account or a tax form
   // belongs to the human being paid, not to one of the hats they wear.
-  billingMethods           BillingMethod[]
-  payoutMethods            PayoutMethod[]
+  billingMethods             BillingMethod[]
+  payoutMethods              PayoutMethod[]
   // WS2-C — forum authorship. On Person, like every other social surface here.
-  forumThreads             ForumThread[]            @relation("ForumThreadAuthor")
-  forumPosts               ForumPost[]              @relation("ForumPostAuthor")
-  forumPostsMarkedHelpful  ForumPost[]              @relation("ForumPostHelpfulMarker")
+  forumThreads               ForumThread[]            @relation("ForumThreadAuthor")
+  forumPosts                 ForumPost[]              @relation("ForumPostAuthor")
+  forumPostsMarkedHelpful    ForumPost[]              @relation("ForumPostHelpfulMarker")
   /// `P2-J3-E558` WS-B — the instructor correctness signal. See ForumPost.
-  forumPostsConfirmed      ForumPost[]              @relation("ForumPostInstructorConfirmer")
+  forumPostsConfirmed        ForumPost[]              @relation("ForumPostInstructorConfirmer")
   /// Assessments this person REVIEWED and published — see LearnAssessment.status.
-  certificationTestsReviewed CertificationTest[]        @relation("CertificationTestReviewer")
-  taxProfile               TaxProfile?
-  identityVerification     IdentityVerification?
-  notificationPrefs        NotificationPreference[]
-  notifications            Notification[]
-  taxFormAccesses          TaxFormAccess[]
-
-  @@index([company_id])
-  @@index([site_id])
+  certificationTestsReviewed CertificationTest[]      @relation("CertificationTestReviewer")
+  taxProfile                 TaxProfile?
+  identityVerification       IdentityVerification?
+  notificationPrefs          NotificationPreference[]
+  notifications              Notification[]
+  taxFormAccesses            TaxFormAccess[]
   /// ⚠ `E621` ruling 37c — lines where this person is the RECRUITER who placed
   /// the provider. `SetNull`, so a closed recruiter account never deletes the
   /// record of what was bought.
-  recruitedLines           WorkRequestLine[] @relation("WorkRequestLineRecruiter")
+  recruitedLines             WorkRequestLine[]        @relation("WorkRequestLineRecruiter")
+  registrationFollowup       RegistrationFollowup?
 
+  @@index([company_id])
+  @@index([site_id])
   @@map("people")
-  registrationFollowup RegistrationFollowup?
 }
 
 enum PersonStatus {
@@ -666,22 +665,23 @@ model BusinessType {
   updated_at  DateTime @updatedAt
 
   /// TX-E001: the Service Taxonomy — Commodity Group › Business Type › Service Category › Service Type.
-  commodity_group_id String?  @db.Uuid
-  uses_skills        Boolean  @default(true)
-  sort_order         Int      @default(100)
-  hidden             Boolean  @default(false)
+  commodity_group_id String?               @db.Uuid
+  uses_skills        Boolean               @default(true)
+  sort_order         Int                   @default(100)
+  hidden             Boolean               @default(false)
   commodityGroup     CommodityGroup?       @relation(fields: [commodity_group_id], references: [id], onDelete: SetNull)
   serviceCategories  ServiceCategory[]
   companies          CompanyBusinessType[]
   buySettings        BuySetting[]
-  pillars         Pillar[]
-  skills          Skill[]
-  tags            SkillTag[]
-  specializations Specialization[]
+  pillars            Pillar[]
+  skills             Skill[]
+  tags               SkillTag[]
+  specializations    Specialization[]
 
-  processes         BusinessTypeProcess[]
+  processes BusinessTypeProcess[]
 
-  attributes        BusinessTypeAttribute[]
+  attributes BusinessTypeAttribute[]
+
   @@map("business_types")
 }
 
@@ -709,7 +709,7 @@ model Role {
   skills           Skill[]
   tags             SkillTag[]
   workRequests     WorkRequest[]
-  jobs Job[]
+  jobs             Job[]
   providerProfiles ProviderProfile[]
   /// WS2 — providers who work in this role, including as a secondary one.
   profileRoles     ProviderProfileRole[]
@@ -720,12 +720,12 @@ model Role {
 
 /// A top-level product pillar within a catalog (ERP, SCM, HCM, CX, EPM, NA).
 model Pillar {
-  id         String   @id @default(uuid()) @db.Uuid
+  id               String   @id @default(uuid()) @db.Uuid
   business_type_id String   @db.Uuid
-  code       String
-  name       String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  code             String
+  name             String
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 
   /// Which role's header this domain was added under (`P2-A1.5-E817`). Null for
   /// every seeded domain, which is why it is nullable: the catalog groups
@@ -738,26 +738,26 @@ model Pillar {
   /// a default of false would have hidden the whole catalog on deploy.
   /// TL-E006: an admin-only note (e.g. why a pillar is left as is).
   /// TL-E003: the pillar is no longer a taxonomy label (vendor → Specialization); its skills keep their place in the picker.
-  retired_at DateTime?
-  admin_note String?
-  visible_to_members Boolean @default(true)
+  retired_at         DateTime?
+  admin_note         String?
+  visible_to_members Boolean   @default(true)
 
   /// Display order for the category picker (brief_P / E013). Lower sorts first,
   /// so ERP is pinned above AI and everything else. Ties break on name.
   sort_order Int @default(100)
 
-  businessType          BusinessType    @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  businessType     BusinessType      @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
   offerings        Offering[]
   skills           Skill[]
   tags             SkillTag[]
   providerProfiles ProviderProfile[]
   workRequests     WorkRequest[]
-  jobs Job[]
+  jobs             Job[]
+  /// Decision 4: pillars fold into areas (mapping only; filled by the taxonomy seed).
+  area_id          String?           @db.Uuid
+  area             Area?             @relation(fields: [area_id], references: [id], onDelete: SetNull)
 
   @@unique([business_type_id, code])
-  /// Decision 4: pillars fold into areas (mapping only; filled by the taxonomy seed).
-  area_id String? @db.Uuid
-  area    Area?   @relation(fields: [area_id], references: [id], onDelete: SetNull)
   @@map("pillars")
 }
 
@@ -815,13 +815,13 @@ model Application {
 /// the freelancer mapping's normalized `panameerSkill` names. Deduped by
 /// (catalog, name); functional (APPLICATION) sources win the role type.
 model Skill {
-  id             String        @id @default(uuid()) @db.Uuid
-  business_type_id     String        @db.Uuid
-  role_id   String        @db.Uuid
-  pillar_id      String?       @db.Uuid
-  application_id String?       @db.Uuid
-  name           String
-  image_url      String?
+  id               String        @id @default(uuid()) @db.Uuid
+  business_type_id String        @db.Uuid
+  role_id          String        @db.Uuid
+  pillar_id        String?       @db.Uuid
+  application_id   String?       @db.Uuid
+  name             String
+  image_url        String?
   /// Added by a provider on the fly (brief_S / E031) rather than coming from
   /// the authoritative Service Catalog. The seed's retirement pass SKIPS these
   /// — otherwise re-seeding would silently delete skills providers had entered
@@ -830,18 +830,18 @@ model Skill {
   /// `true` ≡ `origin: PROVIDER`, `false` ≡ `origin: SEED`. ⚠ THE SEED'S
   /// RETIREMENT PASS NOW READS `origin`, not this. Not dropped in this pass —
   /// see the matching note on `Specialization.is_custom`.
-  is_custom      Boolean       @default(false)
+  is_custom        Boolean       @default(false)
   /// ⚠ WHO CREATED THIS ROW (`P1-A1.5-E480`). See `CatalogOrigin`.
-  origin         CatalogOrigin @default(SEED)
+  origin           CatalogOrigin @default(SEED)
   /// ⚠ WHAT STATE THIS ROW IS IN (`P1-A1.5-E480`). See `CatalogStatus`.
-  status         CatalogStatus @default(ACTIVE)
+  status           CatalogStatus @default(ACTIVE)
 
   /// A NEW ADMIN-ADDED SKILL IS HIDDEN UNTIL SCOTT SHOWS IT (`P2-A1.5-E820`).
   /// Default TRUE so every existing skill is unaffected by the column arriving.
   /// ⚠ NOT `status: SUGGESTED` — that already means "waiting in the provider
   /// suggestion queue", and reusing it would drop admin's own new rows into the
   /// promote/reject list.
-  visible_to_members Boolean @default(true)
+  visible_to_members Boolean   @default(true)
   /// THE PARSER'S CONTROLLED VOCABULARY for this skill (v5 catalog): legacy
   /// names, acronyms and product renames — "GL", "iProcurement (POR)", "Fixed
   /// Assets". A résumé says "AP", the catalog says "Payables"; this is the join.
@@ -851,31 +851,31 @@ model Skill {
   /// nobody writes on a CV — so they carry none, which is exactly what keeps
   /// role derivation deterministic in the six places where an App module and an
   /// Ops capability share a name ("Project Costing", "Grants Management").
-  aliases        String[]
+  aliases            String[]
   /// Tech Category for Technology-Specific tools ("Development & Extensibility",
   /// "Integration & APIs"). Null for application modules and agnostic roles.
-  category       String?
+  category           String?
   /// Business area (PRC, FIN, O2C, HCM, SCM, PPM, ANALYTICS, TECH); vendor-neutral, null = not set.
-  area           String?
+  area               String?
   // Catalog review (E909): merged into another skill, or rejected from the catalog.
-  merged_into_id String?       @db.Uuid
-  rejected_at    DateTime?
-  review_pending Boolean       @default(false)
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
+  merged_into_id     String?   @db.Uuid
+  rejected_at        DateTime?
+  review_pending     Boolean   @default(false)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
 
-  businessType           BusinessType           @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
-  role          Role                 @relation(fields: [role_id], references: [id])
-  pillar            Pillar?                  @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
-  application       Application?             @relation(fields: [application_id], references: [id], onDelete: SetNull)
-  providerSkills    ProviderSkill[]
-  jobPostingSkills JobPostingSkill[]
+  businessType         BusinessType          @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  role                 Role                  @relation(fields: [role_id], references: [id])
+  pillar               Pillar?               @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  application          Application?          @relation(fields: [application_id], references: [id], onDelete: SetNull)
+  providerSkills       ProviderSkill[]
+  jobPostingSkills     JobPostingSkill[]
   serviceProductSkills ServiceProductSkill[]
-  bridges           DomainModuleBridge[]
-  jobSkills         JobSkill[]
+  bridges              DomainModuleBridge[]
+  jobSkills            JobSkill[]
   /// ⚠ The Learn courses that DECLARE they teach this skill (`P2-A4-E668`,
   /// ruling 55). ⚠⚠ Declared by a human, never derived from a text match.
-  courseSkills      CourseSkill[]
+  courseSkills         CourseSkill[]
 
   /// A Skill belongs to a (Role, Domain) PAIR — brief_R, from the authoritative
   /// Service Catalog. The old `(catalog_id, name)` key was wrong for that shape:
@@ -883,17 +883,18 @@ model Skill {
   /// Execution and Operations-Specific/Project Portfolio Management, and a
   /// name-only key silently collapsed them into one row.
   /// TL-E003: the vendor pillar it sat under, as a Specialization (kind PRODUCT); pillar_id is kept.
-  specialization_id String?         @db.Uuid
-  specialization    Specialization? @relation("skillsAsVendor", fields: [specialization_id], references: [id], onDelete: SetNull)
-  @@unique([business_type_id, role_id, pillar_id, name])
-  @@index([role_id])
-  @@index([pillar_id])
+  specialization_id String?             @db.Uuid
+  specialization    Specialization?     @relation("skillsAsVendor", fields: [specialization_id], references: [id], onDelete: SetNull)
   /// ⚠ Which learning paths certify this skill (`P2-A4-E701`).
-  learningPaths LearningPathSkill[]
+  learningPaths     LearningPathSkill[]
 
   /// Decision 4: many Skills → one Area (filled from `area` by the taxonomy seed).
   area_id String? @db.Uuid
   areaRef Area?   @relation(fields: [area_id], references: [id], onDelete: SetNull)
+
+  @@unique([business_type_id, role_id, pillar_id, name])
+  @@index([role_id])
+  @@index([pillar_id])
   @@map("skills")
 }
 
@@ -970,12 +971,12 @@ model Domain {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  bridges  DomainModuleBridge[]
-  serviceProducts ServiceProductDomain[]
+  bridges              DomainModuleBridge[]
+  serviceProducts      ServiceProductDomain[]
   /// GT-E002: set on rows the Global Taxonomy added ("GT_2026_10_14"); null = existing rows (never touched).
-  origin             String?
-  knowledgeSkills    KnowledgeSkill[]
-  systemItems        SystemItem[]
+  origin               String?
+  knowledgeSkills      KnowledgeSkill[]
+  systemItems          SystemItem[]
   providerCapabilities ProviderCapability[]
 
   @@unique([process, name])
@@ -1001,17 +1002,17 @@ model Domain {
 /// `module_name` always holds what the sheet said, so an unresolved row is
 /// visible and fixable rather than silently absent.
 model DomainModuleBridge {
-  id            String   @id @default(uuid()) @db.Uuid
-  domain_id String   @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
+  domain_id   String   @db.Uuid
   /// Suite as named in the catalog — matches `Pillar.name` for a vendor role.
-  suite         String
-  module_name   String
-  skill_id      String?  @db.Uuid
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  suite       String
+  module_name String
+  skill_id    String?  @db.Uuid
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
   domain Domain @relation(fields: [domain_id], references: [id], onDelete: Cascade)
-  skill      Skill?           @relation(fields: [skill_id], references: [id], onDelete: SetNull)
+  skill  Skill? @relation(fields: [skill_id], references: [id], onDelete: SetNull)
 
   @@unique([domain_id, suite, module_name])
   @@index([skill_id])
@@ -1026,23 +1027,24 @@ model DomainModuleBridge {
 /// preserved as an annotation, deliberately NOT yet linked to a Person. The
 /// coordinator-coverage join is wired in the profiles brief.
 model SkillTag {
-  id             String   @id @default(uuid()) @db.Uuid
-  business_type_id     String   @db.Uuid
-  role_id   String   @db.Uuid
-  pillar_id      String?  @db.Uuid
-  name           String
-  panameer_skill String?
-  selling_agent  String?
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id               String   @id @default(uuid()) @db.Uuid
+  business_type_id String   @db.Uuid
+  role_id          String   @db.Uuid
+  pillar_id        String?  @db.Uuid
+  name             String
+  panameer_skill   String?
+  selling_agent    String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 
-  businessType  BusinessType @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
-  role Role       @relation(fields: [role_id], references: [id])
-  pillar   Pillar?        @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  businessType BusinessType @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  role         Role         @relation(fields: [role_id], references: [id])
+  pillar       Pillar?      @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
 
   /// TL-E003: the vendor pillar it sat under, as a Specialization (kind PRODUCT); pillar_id is kept.
   specialization_id String?         @db.Uuid
   specialization    Specialization? @relation("skillTagsAsVendor", fields: [specialization_id], references: [id], onDelete: SetNull)
+
   @@unique([business_type_id, role_id, name])
   @@index([role_id])
   @@map("skill_tags")
@@ -1058,7 +1060,7 @@ model Region {
 
   providerProfiles ProviderProfile[]
   workRequests     WorkRequest[]
-  jobs Job[]
+  jobs             Job[]
 
   @@map("regions")
 }
@@ -1106,13 +1108,13 @@ model NonOracleApplication {
 /// paused_at IS NULL (brief_K). Validation is a separate merit track that does
 /// NOT affect base visibility.
 model ProviderProfile {
-  id                      String             @id @default(uuid()) @db.Uuid
-  person_id               String             @unique @db.Uuid
+  id                        String           @id @default(uuid()) @db.Uuid
+  person_id                 String           @unique @db.Uuid
   /// SH-E003: "I accept orders manually" — off means Shop orders open on placement.
-  accepts_orders_manually Boolean            @default(false)
+  accepts_orders_manually   Boolean          @default(false)
   /// Lane 7 (Scott 10-15): "Open to offers on price and delivery" — replaces accepts_orders_manually (kept, unused).
-  open_to_offers          Boolean            @default(false)
-  region_id               String?            @db.Uuid
+  open_to_offers            Boolean          @default(false)
+  region_id                 String?          @db.Uuid
   /// ── ⚠⚠⚠ `headline` IS GONE (`P0-E595` WS-B) ───────────────────────────
   ///
   /// ⚠ SUPERSEDED, quoted not deleted (`E164`): `headline String` — the
@@ -1136,16 +1138,16 @@ model ProviderProfile {
   /// `Person.title` at all — their title existed ONLY here — so the reverse
   /// order would have erased the three most visible profiles' titles with
   /// nothing to restore them from.
-  overview                String?
+  overview                  String?
   // PJv2 WS7 — `experience_level` and `goal` are GONE.
   //   experience_level: self-graded, and now DERIVED from work-history spans
   //                     (E068 / lib/experience.ts).
   //   goal:             asked, stored, and never used for anything. E067 wanted
   //                     it to gate visibility; the decision was the opposite —
   //                     visibility is completeness + identity, not intent.
-  work_types              WorkType[]
-  onsite_rate_cents       Int?
-  remote_rate_cents       Int?
+  work_types                WorkType[]
+  onsite_rate_cents         Int?
+  remote_rate_cents         Int?
   /// The single hourly rate the client sees (brief_P / E018). Integer cents.
   /// `onsite_/remote_rate_cents` predate this (brief_E) and stay for Settings.
   ///
@@ -1153,7 +1155,7 @@ model ProviderProfile {
   /// written and in sync (= `rate_min_cents`), because the publish gate and the
   /// completeness score both read it. Removing it is a separate migration, not
   /// something to smuggle into a layout brief.
-  hourly_rate_cents       Int?
+  hourly_rate_cents         Int?
   /// The rate RANGE the provider advertises (PJv2 WS0 / E078c). A single number
   /// forced a consultant to pick one figure for work that genuinely varies by
   /// engagement; a range is what they actually quote. Integer cents, and the
@@ -1161,8 +1163,8 @@ model ProviderProfile {
   ///
   /// Migration set min = max = the old single rate, so nobody's published rate
   /// changed meaning on deploy.
-  rate_min_cents          Int?
-  rate_max_cents          Int?
+  rate_min_cents            Int?
+  rate_max_cents            Int?
   /// Platform service fee as BASIS POINTS (1490 = 14.9%). Integer so the fee and
   /// the "You'll get" figure are computed without ever touching a float.
   ///
@@ -1188,48 +1190,48 @@ model ProviderProfile {
   /// TWO COPIES OF ONE NUMBER — unavoidable, because a Prisma `@default` is not
   /// readable from TypeScript. `check:service-fee` reads this file as text and
   /// fails when they differ. That assertion is what stops a third copy.
-  service_fee_bps         Int                @default(1490)
-  currency                String             @default("USD")
+  service_fee_bps           Int              @default(1490)
+  currency                  String           @default("USD")
   /// The field chosen at the catalog step: a (Role, Domain) PAIR, since the
   /// authoritative catalog is Role → Domain → Skill and the same domain name
   /// appears under more than one role (brief_R). `pillar_id` is the DOMAIN;
   /// `role_type_id` is the ROLE. Skills at the next step filter on both.
-  pillar_id               String?            @db.Uuid
-  role_id            String?            @db.Uuid
+  pillar_id                 String?          @db.Uuid
+  role_id                   String?          @db.Uuid
   /// How the provider sells; RECRUITER forks them to the Coordinator role
   /// (brief_P / E009).
-  work_method             WorkMethod?
+  work_method               WorkMethod?
   /// Which profile-creation path was taken (brief_P / E012).
-  profile_method          ProfileMethod?
+  profile_method            ProfileMethod?
   /// Collected on the finish page (brief_P / E019).
-  date_of_birth           DateTime?
+  date_of_birth             DateTime?
   /// When the provider pressed "Publish Profile" and finished onboarding
   /// (brief_P / E019). This is a COMPLETION marker, NOT a visibility flag —
   /// brief_K's derived completeness gate remains the only visibility rule.
-  onboarding_completed_at DateTime?
+  onboarding_completed_at   DateTime?
   /// SO-E003: seller registration (Who Is Selling? · Company · Locations · Review) — the step reached and when Review was finished.
   registration_step         String?
   registration_completed_at DateTime?
-  rating                  Decimal?           @db.Decimal(3, 2)
-  id_badge                String?
+  rating                    Decimal?         @db.Decimal(3, 2)
+  id_badge                  String?
   // Account lifecycle (brief_K): PENDING on sign-up → ACTIVE on email verify.
   /// AN-E001: what buyers see instead of the name until a Work Order exists (P-1001…, join order, never reused —
   /// uniqueness comes from the atomic counter in lib/provider-number.ts).
-  provider_number         String?
-  status                  ProviderStatus     @default(PENDING)
+  provider_number           String?
+  status                    ProviderStatus   @default(PENDING)
   // Merit-based Validation track (brief_K) — separate from visibility. Provider
   // requests it; an admin grants on merit. Never purchasable.
-  validation_status       ValidationStatus   @default(NOT_REQUESTED)
-  validation_requested_at DateTime?
-  validated_at            DateTime?
+  validation_status         ValidationStatus @default(NOT_REQUESTED)
+  validation_requested_at   DateTime?
+  validated_at              DateTime?
   // Visibility is COMPLETENESS-gated, not approval-gated (brief_K, supersedes
   // brief_E/H). Marketplace-visible ⇔ status=ACTIVE AND completeness>=80 AND
   // paused_at IS NULL. No publish flag/button — visibility is derived.
-  completeness            Int                @default(0)
-  paused_at               DateTime?
+  completeness              Int              @default(0)
+  paused_at                 DateTime?
   // Minimal preferences store (brief_H). Notification opt-ins; expand later.
-  notify_email            Boolean            @default(true)
-  notify_product_updates  Boolean            @default(false)
+  notify_email              Boolean          @default(true)
+  notify_product_updates    Boolean          @default(false)
   /// J2.4 WS-B (E008) — the persona menu's "Online for messages" toggle.
   ///
   /// A REAL COLUMN, not local state, because it is a claim made to other
@@ -1239,7 +1241,7 @@ model ProviderProfile {
   /// completeness/visibility gate alone. Someone can be listed and not
   /// currently at their desk; conflating the two would hide a profile because
   /// its owner went to lunch.
-  available_for_messages  Boolean            @default(true)
+  available_for_messages    Boolean          @default(true)
 
   /// ---- P2-A1.1-E738 — WHAT A SIGNED-OUT VISITOR MAY SEE -------------------
   ///
@@ -1258,7 +1260,7 @@ model ProviderProfile {
   /// whatever this column says. ⚠ Absence of the column is the permissive
   /// state, which is why the default could not be a boolean `true` with a
   /// NOT NULL — a row written before this column existed has to mean "shown".
-  preview_hidden_at       DateTime?
+  preview_hidden_at  DateTime?
   /// ⚠⚠ `public_name_at` — "Public profile with my name", OFF BY DEFAULT, so
   /// NULL means off and the masked preview is what `/in/<slug>` serves. A
   /// timestamp means the member opted IN to being named publicly: name, photo
@@ -1269,21 +1271,21 @@ model ProviderProfile {
   /// Publishing a member's real name without them asking is not a setting, it
   /// is a disclosure. ⚠ `client_visibility` still governs client names on this
   /// page — opting in to your own name is not opting in on a client's behalf.
-  public_name_at          DateTime?
+  public_name_at     DateTime?
   /// ⚠⚠ THE PERSONAL PUBLIC URL IS **NOT A COLUMN HERE** — it lives in
   /// `ProviderProfileSlug`, one row per slug, the live one flagged
   /// `is_current`. See that model for why.
   /// ---- J2.4 WS-H Profile Settings (E015) ----------------------------------
   /// What KIND of work this provider wants. A preference shown to buyers and
   /// used for matching later; not a filter on what they may bid for.
-  project_preference      ProjectPreference?
+  project_preference ProjectPreference?
   /// Plus-gated: hide earned-amount history from buyers browsing the profile.
   /// Stored for everyone — a provider who lapses from Plus should not silently
   /// have their privacy choice discarded and their history re-exposed.
-  earnings_private        Boolean            @default(false)
+  earnings_private   Boolean            @default(false)
   /// Explicit OPT-IN (never a default) to Panameer using this profile's content
   /// to improve its models. Off unless the person turned it on.
-  ai_training_opt_in      Boolean            @default(false)
+  ai_training_opt_in Boolean            @default(false)
   /// ── ⚠⚠ OPEN FOR MENTORING — THE CHECKBOX IS THE CONSENT (`P2-J3-E558` WS-C1)
   ///
   /// ⚠⚠ SCOTT, 2026-09-18, settling the model: *"I can connect to somebody as a
@@ -1307,7 +1309,7 @@ model ProviderProfile {
   /// ⚠⚠ IT PROMISES NO SESSION AND NO PAYMENT. No processor is chosen and
   /// `MICRO_SESSION_PRICE` is commented out (`mentors.ts:141`). The honest end
   /// of the flow today is *follow as a mentor* → the mentor sees demand.
-  open_for_mentoring      Boolean            @default(false)
+  open_for_mentoring Boolean            @default(false)
 
   /// ── ⚠⚠⚠ "I HAVE NONE" — THE THIRD STATE (`P2-J3-E590` WS-A) ──────────────
   ///
@@ -1346,8 +1348,8 @@ model ProviderProfile {
   /// Linked developer accounts (E015). Usernames, not OAuth — these are shown
   /// on the profile as evidence, and asking for repo scopes to display a
   /// handle would be a wildly disproportionate permission grab.
-  linked_github           String?
-  linked_stackoverflow    String?
+  linked_github                  String?
+  linked_stackoverflow           String?
   /// brief_sp_dashboard WS-C — when this provider last opened their dashboard.
   ///
   /// Drives the "New Matches" freshness card: work posted after this timestamp
@@ -1357,51 +1359,53 @@ model ProviderProfile {
   ///
   /// Null means never visited, and everything posted counts as new — which is
   /// correct: it is all new to them.
-  dashboard_seen_at       DateTime?
+  dashboard_seen_at              DateTime?
   // The coordinator Person who represents this provider (brief_I). Nullable —
   // most providers are independent. Set only via the provider's own authenticated
   // acceptance of a coordinator invite.
   /// The member's résumé-review fixes, re-applied after any re-read: { removed: {kind: [names]}, switches: {company: choice} }.
-  resume_fixes            Json?
+  resume_fixes                   Json?
   /// BT-E004: fields filled from the résumé, marked "from your résumé" until confirmed — {fields: string[], location?: {city,state,country}}.
-  resume_prefill          Json?
+  resume_prefill                 Json?
   /// Terms the catalog doesn't know, kept exactly as the member typed them.
-  keywords                String[]           @default([])
+  keywords                       String[]  @default([])
   /// Lower-cased keywords joined, for the search text filter.
-  keywords_text           String?
-  coordinator_person_id   String?            @db.Uuid
-  created_at              DateTime           @default(now())
-  updated_at              DateTime           @updatedAt
+  keywords_text                  String?
+  coordinator_person_id          String?   @db.Uuid
+  created_at                     DateTime  @default(now())
+  updated_at                     DateTime  @updatedAt
 
-  person            Person                          @relation("ProfileOwner", fields: [person_id], references: [id], onDelete: Cascade)
-  coordinator       Person?                         @relation("CoordinatorProviders", fields: [coordinator_person_id], references: [id], onDelete: SetNull)
-  region            Region?                         @relation(fields: [region_id], references: [id], onDelete: SetNull)
-  pillar            Pillar?                         @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
-  role          Role?                       @relation(fields: [role_id], references: [id], onDelete: SetNull)
-  skills            ProviderSkill[]
+  person                 Person                          @relation("ProfileOwner", fields: [person_id], references: [id], onDelete: Cascade)
+  coordinator            Person?                         @relation("CoordinatorProviders", fields: [coordinator_person_id], references: [id], onDelete: SetNull)
+  region                 Region?                         @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  pillar                 Pillar?                         @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  role                   Role?                           @relation(fields: [role_id], references: [id], onDelete: SetNull)
+  skills                 ProviderSkill[]
   /// The derived per-suite centre of gravity (WS-1). Written only by the
   /// rollup recompute, same as `skills`.
-  suiteProfiles     ProviderSuiteProfile[]
+  suiteProfiles          ProviderSuiteProfile[]
   /// WS2 — the full role set. `role_type_id` above stays the primary.
-  roles             ProviderProfileRole[]
-  specializations   ProviderProfileSpecialization[]
-  employers         Employer[]
-  projects          Project[]
-  serviceProducts   ServiceProduct[]
-  education         Education[]
-  languages         Language[]
-  credentials    Credential[]
+  roles                  ProviderProfileRole[]
+  specializations        ProviderProfileSpecialization[]
+  employers              Employer[]
+  projects               Project[]
+  serviceProducts        ServiceProduct[]
+  education              Education[]
+  languages              Language[]
+  credentials            Credential[]
   /// Views of THIS profile (`P0-E595` A2). See `model ProfileView`.
-  profileViews      ProfileView[]     @relation("ProfileViewed")
-  imports           ProfileImport[]
-  resumeParseAudits ResumeParseAudit[]
-  profileGapFlag   ProfileGapFlag?
-  recommendations   RecommendationRequest[]
+  profileViews           ProfileView[]                   @relation("ProfileViewed")
+  imports                ProfileImport[]
+  resumeParseAudits      ResumeParseAudit[]
+  profileGapFlag         ProfileGapFlag?
+  recommendations        RecommendationRequest[]
   /// `P2-J2-E563` WS-B — the 3-year experience attestation, one row per
   /// category the provider claims. See `ProviderExperienceAttestation`.
   experienceAttestations ProviderExperienceAttestation[]
   /// `P2-A1.1-E738` — superseded personal public URLs. See the model below.
   oldSlugs               ProviderProfileSlug[]
+  capabilities           ProviderCapability[]
+  attributeValues        ProviderAttributeValue[]
 
   @@index([region_id])
   @@index([coordinator_person_id])
@@ -1409,8 +1413,6 @@ model ProviderProfile {
   @@index([role_id])
   @@index([provider_number])
   @@map("provider_profiles")
-  capabilities      ProviderCapability[]
-  attributeValues   ProviderAttributeValue[]
 }
 
 /// ── ⚠⚠ THE PERSONAL PUBLIC URL — `/in/<slug>` (`P2-A1.1-E738`) ────────────
@@ -1627,30 +1629,30 @@ enum ValidationStatus {
 /// The Domain Model shows BUYERS carrying specializations too; brief_R scopes
 /// this to providers, so only the provider join exists for now.
 model Specialization {
-  id         String             @id @default(uuid()) @db.Uuid
+  id               String             @id @default(uuid()) @db.Uuid
   business_type_id String             @db.Uuid
-  name       String
-  kind       SpecializationKind @default(PRODUCT)
+  name             String
+  kind             SpecializationKind @default(PRODUCT)
   /// Display order within a kind; ties break on name.
-  sort_order Int                @default(100)
+  sort_order       Int                @default(100)
   /// ⚠⚠ SUPERSEDED BY `origin` (`P1-A1.5-E480`), KEPT AND STILL WRITTEN (`E164`).
   /// It is `origin`'s crude two-value ancestor: `true` ≡ `origin: PROVIDER`,
   /// `false` ≡ `origin: SEED`. ⚠ IT IS NOT THE AUTHORITY ANY MORE — the seed's
   /// retirement pass reads `origin`. ⚠ NOT DROPPED IN THIS PASS: `db push` would
   /// destroy the column, several call sites still read it, and Part B/C land on
   /// top of this schema. Dropping it is its own change once nothing reads it.
-  is_custom  Boolean            @default(false)
+  is_custom        Boolean            @default(false)
   /// ⚠ WHO CREATED THIS ROW (`P1-A1.5-E480`). Backfilled losslessly from
   /// `is_custom`: true → PROVIDER, false → SEED. See `CatalogOrigin`.
-  origin     CatalogOrigin      @default(SEED)
+  origin           CatalogOrigin      @default(SEED)
   /// ⚠ WHAT STATE THIS ROW IS IN (`P1-A1.5-E480`). See `CatalogStatus`.
-  status     CatalogStatus      @default(ACTIVE)
-  aliases    String[]           @default([])
-  merged_into_id String?        @db.Uuid
-  created_at DateTime           @default(now())
-  updated_at DateTime           @updatedAt
+  status           CatalogStatus      @default(ACTIVE)
+  aliases          String[]           @default([])
+  merged_into_id   String?            @db.Uuid
+  created_at       DateTime           @default(now())
+  updated_at       DateTime           @updatedAt
 
-  businessType           BusinessType                  @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  businessType      BusinessType                    @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
   /// Assessments that named this industry (INDUSTRY-kind rows only, in practice).
   assessments       Assessment[]
   providerProfiles  ProviderProfileSpecialization[]
@@ -1665,6 +1667,7 @@ model Specialization {
   jobsAsVendor         Job[]         @relation("jobsAsVendor")
 
   companiesServed CompanyIndustry[]
+
   @@unique([business_type_id, name])
   @@map("specializations")
 }
@@ -1736,7 +1739,6 @@ model JobSpecialization {
   @@map("job_specializations")
 }
 
-
 model ProviderProfileSpecialization {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @db.Uuid
@@ -1806,7 +1808,7 @@ model Employer {
   /// column holds something this standard cannot express"*, and it is the flag the
   /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
   /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
-  country_code        String? @db.VarChar(2)
+  country_code        String?   @db.VarChar(2)
   start_date          DateTime?
   end_date            DateTime?
   /// True while this is the provider's current employer.
@@ -1839,11 +1841,11 @@ model Employer {
   /// This is the column that makes "General Ledger" mean something. A skill
   /// name is ambiguous across vendors; the same name inside a job that carries
   /// its suite is not.
-  software_suite   SoftwareSuite?
+  software_suite SoftwareSuite?
   /// The Role this job represents, derived from its skills (a Skill belongs to
   /// exactly one Role). Stored rather than recomputed on read because a
   /// provider may override it, and an override has to survive.
-  job_role_id String?        @db.Uuid
+  job_role_id    String?        @db.Uuid
 
   /// ── ⚠⚠ EMPLOYER VALIDATION (`P2-A1.1-E747`, WS-B) ────────────────────────
   ///
@@ -1871,8 +1873,8 @@ model Employer {
   /// rule and same guard as `Project.client_domain`.
   contact_domain    String?
 
-  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
-  jobRole     Role?       @relation("EmployerJobRole", fields: [job_role_id], references: [id], onDelete: SetNull)
+  providerProfile ProviderProfile      @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  jobRole         Role?                @relation("EmployerJobRole", fields: [job_role_id], references: [id], onDelete: SetNull)
   projects        Project[]
   artifacts       Artifact[]
   skills          JobSkill[]
@@ -1898,25 +1900,25 @@ model Employer {
 /// ⚠ `token_hash` is unique ACROSS this table only. The responder route resolves
 /// a token against both tables and refuses if it is in neither.
 model EmployerValidation {
-  id            String                         @id @default(uuid()) @db.Uuid
-  employer_id   String                         @db.Uuid
+  id                     String                         @id @default(uuid()) @db.Uuid
+  employer_id            String                         @db.Uuid
   /// ⚠ Captured at send time — `Employer.contact_email` can be edited after, and
   /// this must record who was actually asked.
-  contact_email String
-  token_hash    String                         @unique
-  status        ProjectValidationRequestStatus @default(SENT)
-  expires_at    DateTime
-  sent_at       DateTime                       @default(now())
-  responded_at  DateTime?
+  contact_email          String
+  token_hash             String                         @unique
+  status                 ProjectValidationRequestStatus @default(SENT)
+  expires_at             DateTime
+  sent_at                DateTime                       @default(now())
+  responded_at           DateTime?
   /// ⚠ Light provenance. Never shown to the provider — it exists so a disputed
   /// confirmation can be investigated.
-  responder_ip  String?
-  responder_ua  String?
+  responder_ip           String?
+  responder_ua           String?
   /// ⚠⚠ **THE ON-PLATFORM ROUTE (the brief's "second route").** Set when a
   /// Panameer colleague confirmed it from their worklist instead of a stranger
   /// answering an email. ⚠ The badge then reads *"by a Panameer colleague"* and
   /// still names nobody.
-  confirmed_by_person_id String? @db.Uuid
+  confirmed_by_person_id String?                        @db.Uuid
 
   employer Employer @relation(fields: [employer_id], references: [id], onDelete: Cascade)
 
@@ -2067,7 +2069,7 @@ model Project {
   /// silently poisoning the very charts this field exists to feed. A null is
   /// honest and queryable ("show me unclassified projects"), and the review
   /// page nudges the provider to fix it. Same reasoning as `employer_id`.
-  role_id               String?        @db.Uuid
+  role_id                    String?        @db.Uuid
   /// The sector this was delivered in. Reuses the INDUSTRY slice of the
   /// Specialization vocabulary rather than a free-text column, so a
   /// confidential project can still say "Oil & Gas" in a chartable way.
@@ -2154,7 +2156,7 @@ model Project {
 
   providerProfile ProviderProfile      @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   employer        Employer?            @relation(fields: [employer_id], references: [id], onDelete: SetNull)
-  role        Role?            @relation(fields: [role_id], references: [id], onDelete: SetNull)
+  role            Role?                @relation(fields: [role_id], references: [id], onDelete: SetNull)
   industry        Specialization?      @relation(fields: [industry_specialization_id], references: [id], onDelete: SetNull)
   applications    ProjectApplication[]
   outcomes        ProjectOutcome[]
@@ -2380,8 +2382,8 @@ model ProjectOutcome {
 ///     is a chunk of work, not a thing you sell. ⚠ The rename RESOLVES that
 ///     collision rather than leaving one.
 model ServiceProduct {
-  id                  String             @id @default(uuid()) @db.Uuid
-  provider_profile_id String             @db.Uuid
+  id                  String                    @id @default(uuid()) @db.Uuid
+  provider_profile_id String                    @db.Uuid
   title               String
   /// The scope — what the buyer is actually getting.
   summary             String?
@@ -2404,9 +2406,9 @@ model ServiceProduct {
   pricing_type        ServiceProductPricingType @default(FIXED)
   /// Integer cents, like every other money value in the app.
   price_cents         Int?
-  currency            String             @default("USD")
+  currency            String                    @default("USD")
   /// Optional categorization for the catalog and future Work Request matching.
-  role_id        String?            @db.Uuid
+  role_id             String?                   @db.Uuid
   cover_image_url     String?
   /**
    * ⚠ THE PERIOD `price_cents` CANNOT CARRY. Non-null EXACTLY WHEN
@@ -2436,47 +2438,47 @@ model ServiceProduct {
   /// Default cover look (A Dark · B Light · C Color · D Labeled) used until a picture is uploaded (2026-10-12).
   cover_style         String?
   /// WS-E008: the Shop's Service Type (Reports, AI Agents…), picked from ServiceProductType.
-  product_type_id     String?            @db.Uuid
+  product_type_id     String?                   @db.Uuid
   /// O-E004: when the product is paid, and what event triggers the payment request.
   payment_terms       PaymentTerms?
-  payment_event     PaymentEvent?
-  sort_order          Int                @default(100)
-  created_at          DateTime           @default(now())
-  updated_at          DateTime           @updatedAt
+  payment_event       PaymentEvent?
+  sort_order          Int                       @default(100)
+  created_at          DateTime                  @default(now())
+  updated_at          DateTime                  @updatedAt
 
-  providerProfile   ProviderProfile           @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
-  role          Role?                 @relation(fields: [role_id], references: [id], onDelete: SetNull)
-  deliverables      ServiceProductDeliverable[]
-  milestones        ServiceProductMilestone[]
-  skills            ServiceProductSkill[]
+  providerProfile ProviderProfile             @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  role            Role?                       @relation(fields: [role_id], references: [id], onDelete: SetNull)
+  deliverables    ServiceProductDeliverable[]
+  milestones      ServiceProductMilestone[]
+  skills          ServiceProductSkill[]
   /// Which capability domains this product operates on — MANY, see the join model.
-  domains ServiceProductDomain[]
+  domains         ServiceProductDomain[]
   /// How this product's value is estimated. MANY: a product can save contract value
   /// AND avoid a fixed risk, so these are rows, not columns.
-  valueFactors      ServiceProductValueFactor[]
-  images            ServiceProductImage[]
+  valueFactors    ServiceProductValueFactor[]
+  images          ServiceProductImage[]
 
   /// BT-E005: the company owns the catalog.
-  company_id String? @db.Uuid
+  company_id        String?          @db.Uuid
   /// MC-E006: where the work happens, and days before the provider can start.
-  delivery       ServiceDelivery?
-  lead_time_days Int?
+  delivery          ServiceDelivery?
+  lead_time_days    Int?
   /// MO-E001: buyers may Make an Offer; offers below the floor (private to the provider) are declined automatically.
-  open_to_offers    Boolean @default(false)
+  open_to_offers    Boolean          @default(false)
   /// CG-E003: an optional "Details" PDF (public bucket product-details, PDF only, 10 MB).
   details_pdf_url   String?
   /// CG-E003: the grid's Offer slider — off keeps the row (Draft) but Enable skips it.
-  offered           Boolean @default(true)
+  offered           Boolean          @default(true)
   /// Lane 7: per-product override of the seller's switch (null = follow it). open_to_offers stays for old rows.
   offers_override   Boolean?
   offer_floor_cents Int?
+  /// TX-E001: the Service Product Type (service_types, kind SERVICE_PRODUCT); product_type_id is folded into this by the taxonomy seed.
+  service_type_id   String?          @db.Uuid
+  serviceType       ServiceType?     @relation(fields: [service_type_id], references: [id], onDelete: SetNull)
 
   @@index([provider_profile_id])
   @@index([company_id])
   @@index([role_id])
-  /// TX-E001: the Service Product Type (service_types, kind SERVICE_PRODUCT); product_type_id is folded into this by the taxonomy seed.
-  service_type_id     String?            @db.Uuid
-  serviceType         ServiceType?       @relation(fields: [service_type_id], references: [id], onDelete: SetNull)
   @@map("service_products")
 }
 
@@ -2576,11 +2578,11 @@ enum ServiceProductStatus {
 /// where a package draws `Scope · Duration · Delivered` — IS AN OPEN QUESTION AND IS
 /// NOT ANSWERED HERE. See the report on brief_solution_types.
 model ServiceProductDeliverable {
-  id         String   @id @default(uuid()) @db.Uuid
+  id                 String   @id @default(uuid()) @db.Uuid
   service_product_id String   @db.Uuid
-  text       String
-  sequence   Int      @default(0)
-  created_at DateTime @default(now())
+  text               String
+  sequence           Int      @default(0)
+  created_at         DateTime @default(now())
 
   service_product ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
 
@@ -2598,14 +2600,14 @@ model ServiceProductDeliverable {
 /// leave the milestones summing to something other than the package price. The
 /// writer validates the percents sum to exactly 100.
 model ServiceProductMilestone {
-  id         String   @id @default(uuid()) @db.Uuid
-  service_product_id String   @db.Uuid
-  label      String
-  percent    Int
-  sequence   Int      @default(0)
+  id                 String        @id @default(uuid()) @db.Uuid
+  service_product_id String        @db.Uuid
+  label              String
+  percent            Int
+  sequence           Int           @default(0)
   /// CAT-E003: what releases this part of the price.
-  payment_event    PaymentEvent?
-  created_at DateTime @default(now())
+  payment_event      PaymentEvent?
+  created_at         DateTime      @default(now())
 
   service_product ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
 
@@ -2615,13 +2617,13 @@ model ServiceProductMilestone {
 
 /// Skill tags on a package — categorization for the catalog and future matching.
 model ServiceProductSkill {
-  id         String   @id @default(uuid()) @db.Uuid
+  id                 String   @id @default(uuid()) @db.Uuid
   service_product_id String   @db.Uuid
-  skill_id   String   @db.Uuid
-  created_at DateTime @default(now())
+  skill_id           String   @db.Uuid
+  created_at         DateTime @default(now())
 
-  service_product   ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
-  skill Skill   @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+  service_product ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
+  skill           Skill          @relation(fields: [skill_id], references: [id], onDelete: Cascade)
 
   @@unique([service_product_id, skill_id])
   @@index([skill_id])
@@ -2641,11 +2643,11 @@ model ServiceProductSkill {
 model ProviderProfileRole {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @db.Uuid
-  role_id        String   @db.Uuid
+  role_id             String   @db.Uuid
   created_at          DateTime @default(now())
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
-  role        Role        @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  role            Role            @relation(fields: [role_id], references: [id], onDelete: Cascade)
 
   @@unique([provider_profile_id, role_id])
   @@index([role_id])
@@ -2964,35 +2966,35 @@ model PhoneVerification {
 /// or had to strip. Keeping the attempt (and its extracted text) means a parse
 /// can be re-run or audited without asking the user to upload again.
 model ProfileImport {
-  id                  String              @id @default(uuid()) @db.Uuid
-  provider_profile_id String              @db.Uuid
-  source              ProfileImportSource
-  status              ProfileImportStatus @default(PENDING)
-  file_name           String?
-  mime_type           String?
-  size_bytes          Int?
+  id                   String              @id @default(uuid()) @db.Uuid
+  provider_profile_id  String              @db.Uuid
+  source               ProfileImportSource
+  status               ProfileImportStatus @default(PENDING)
+  file_name            String?
+  mime_type            String?
+  size_bytes           Int?
   /// Object path in the PRIVATE `resumes` bucket (brief_Q). Not a URL — the
   /// bucket is private because a résumé carries address/phone/employment data;
   /// reads go through a short-lived signed URL. Null when the upload failed,
   /// which never blocks an import whose parse succeeded.
-  storage_path        String?
+  storage_path         String?
   /// Plain text extracted from the document, for re-parsing / debugging.
-  raw_text            String?
+  raw_text             String?
   /// Structured result of the parse: what landed, and what didn't.
-  parsed              Json?
+  parsed               Json?
   /// Human-readable list of import gaps shown on the review page.
   /// "Companies we found" for the member to sort (Employer / Project client / Remove), 2026-10-05. Additive.
-  company_list Json?
+  company_list         Json?
   /// Where each found item sits in raw_text: { "kind:normalized name": [char offsets] } (résumé review).
-  source_offsets      Json?
-  gaps                Json?
+  source_offsets       Json?
+  gaps                 Json?
   /**
    * WS-G — WHAT PRODUCED THIS PARSE. Recorded at parse time because the audit is
    * written later, at review-save, and by then the call is long gone. Null for
    * heuristic parses, which cost nothing and have no model.
    */
-  ai_model            String?
-  ai_provider         String?
+  ai_model             String?
+  ai_provider          String?
   /**
    * ── ⚠⚠ WHICH PROMPT RAN (`P1-A1.5-E487`) ─────────────────────────────────
    * ⚠ IT LIVES HERE AND NOT ONLY ON THE AUDIT, FOR THE REASON THE COMMENT
@@ -3002,11 +3004,11 @@ model ProfileImport {
    * confusion this column exists to remove.
    * ⚠ Null for heuristic parses, which use no prompt.
    */
-  ai_prompt_version   String?
-  ai_input_tokens     Int?
-  ai_output_tokens    Int?
-  ai_cost_usd         Decimal?            @db.Decimal(10, 6)
-  ai_latency_ms       Int?
+  ai_prompt_version    String?
+  ai_input_tokens      Int?
+  ai_output_tokens     Int?
+  ai_cost_usd          Decimal?            @db.Decimal(10, 6)
+  ai_latency_ms        Int?
   /**
    * ── ⚠⚠ WHY THE MODEL STOPPED, AND HOW MUCH IT THOUGHT (`P1-A1.4-E399` WS-1) ──
    * `E399` diagnosed a parse that returned ONE employer of five, NINE projects of
@@ -3031,9 +3033,9 @@ model ProfileImport {
    * phone, address — and `raw_text` has no retention rule to inherit. See the
    * report; storing it is blocked on a decision nobody has made.
    */
-  ai_finish_reason    String?
-  ai_reasoning_tokens Int?
-  ai_input_chars      Int?
+  ai_finish_reason     String?
+  ai_reasoning_tokens  Int?
+  ai_input_chars       Int?
   /**
    * ── ⚠⚠ HOW LONG THE READ ACTUALLY TOOK (`P2-J1.4-E546`) ────────────────────
    * ⚠ Every ceiling in `budget.ts` was set from THREE FIXTURES AND A HAND-RUN.
@@ -3051,14 +3053,14 @@ model ProfileImport {
    * ⚠ `route_ms − read_ms` IS THE WRITE TAIL `ROUTE_TAIL_RESERVE_MS`
    * has to cover. Null where no route surrounds the import.
    */
-  read_ms             Int?
-  read_passes         Json?
-  route_ms            Int?
-  error               String?
+  read_ms              Int?
+  read_passes          Json?
+  route_ms             Int?
+  error                String?
   /// BT-E003: when this résumé was read for My Catalog suggestions (null = not yet).
   catalog_suggested_at DateTime?
-  created_at          DateTime            @default(now())
-  updated_at          DateTime            @updatedAt
+  created_at           DateTime            @default(now())
+  updated_at           DateTime            @updatedAt
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
 
@@ -3127,9 +3129,9 @@ model RequesterProfile {
   /// wizard uses, so a half-finished requester lands back where they stopped.
   /// ⚠ THE DEFAULT MOVED WITH THE STEP LIST (`E418`) — it was `company`, which
   /// is no longer a member of the enum. A new requester starts on step 1.
-  onboarding_step RequesterOnboardingStep @default(REQUESTER_INFO)
+  onboarding_step   RequesterOnboardingStep @default(REQUESTER_INFO)
   /// Set when the wizard finishes — the "Ready to Post Work Request" state.
-  completed_at    DateTime?
+  completed_at      DateTime?
   /// First page: null until the member first opens /dashboard (greeting "Welcome to Panameer").
   dashboard_seen_at DateTime?
 
@@ -3178,7 +3180,7 @@ model RequesterProfile {
   work_history Json?
   /// [{ institution, degree, year }]
   education    Json?
-  languages    String[] @default([])
+  languages    String[]  @default([])
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -3333,7 +3335,7 @@ model CoordinatorInvite {
 /// ⚠ NO `accepted_provider_id` AND NO ROSTER WRITE, DELIBERATELY. Accepting this
 /// means one thing: they signed up. `accepted_at` records that and nothing else.
 model InvitationToJoin {
-  id                 String                @id @default(uuid()) @db.Uuid
+  id                 String                 @id @default(uuid()) @db.Uuid
   /**
    * ⚠⚠ NULLABLE, AND THAT IS THE POINT (`E493`). Scott: store it, attribute
    * nothing, build no referral programme — *"it is there so the option
@@ -3345,7 +3347,7 @@ model InvitationToJoin {
    * recording it would cost every invitation sent before the decision.
    * ⚠ Nothing reads this field today. It is deliberately inert.
    */
-  inviter_person_id  String?               @db.Uuid
+  inviter_person_id  String?                @db.Uuid
   invitee_email      String
   invitee_first_name String?
   invitee_last_name  String?
@@ -3353,9 +3355,9 @@ model InvitationToJoin {
   message            String?
   /// SHA-256 of the raw token; the raw token lives only in the emailed link.
   /// ⚠ Same discipline as `CoordinatorInvite` — the DB never holds the secret.
-  token_hash         String                @unique
+  token_hash         String                 @unique
   /// Resend rotates the token; earlier links keep working.
-  prior_token_hashes String[]              @default([])
+  prior_token_hashes String[]               @default([])
   last_sent_at       DateTime?
   status             InvitationToJoinStatus @default(PENDING)
   expires_at         DateTime
@@ -3363,7 +3365,6 @@ model InvitationToJoin {
   accepted_at        DateTime?
   /**
    * ⚠⚠⚠ THE PERSON THE ACCEPTED INVITE CREATED (`P2-A3-E599` WS-C).
-   *
    * ⚠ MEASURED AT WS-A's PREMISE CHECK: `accepted_at` had **no writer anywhere
    * in `src/`**, and `invite-colleague/page.tsx` recorded why in terms —
    * *"ACCEPTED/`accepted_at` are there for the day an account-create hook
@@ -3379,14 +3380,14 @@ model InvitationToJoin {
    * ⚠ `SetNull` for the same reason `inviter` is: an invitation that was
    * genuinely accepted is a fact, and deleting the person must not rewrite it.
    */
-  accepted_person_id String?               @db.Uuid
-  created_at         DateTime              @default(now())
-  updated_at         DateTime              @updatedAt
+  accepted_person_id String?                @db.Uuid
+  created_at         DateTime               @default(now())
+  updated_at         DateTime               @updatedAt
 
   /// ⚠ `SetNull`, not Cascade: an invitation that was genuinely sent is a fact,
   /// and deleting the inviter must not rewrite history. It only loses its
   /// attribution, which nothing reads yet anyway.
-  inviter Person? @relation("ColleagueInvitesSent", fields: [inviter_person_id], references: [id], onDelete: SetNull)
+  inviter        Person? @relation("ColleagueInvitesSent", fields: [inviter_person_id], references: [id], onDelete: SetNull)
   /// ⚠ The colleague this invitation actually produced. See the column note.
   acceptedPerson Person? @relation("ColleagueInviteAccepted", fields: [accepted_person_id], references: [id], onDelete: SetNull)
 
@@ -3460,10 +3461,10 @@ model WorkRequest {
   /// repeatedly further along than the notes about it.*
   sole_sourced Boolean @default(false)
 
-  id                  String               @id @default(uuid()) @db.Uuid
-  buyer_person_id     String               @db.Uuid
-  p_account_id        String               @db.Uuid
-  role_id        String?              @db.Uuid
+  id                    String               @id @default(uuid()) @db.Uuid
+  buyer_person_id       String               @db.Uuid
+  p_account_id          String               @db.Uuid
+  role_id               String?              @db.Uuid
   /// THE DOMAIN of the Role → Domain → Skill cascade
   /// (brief_create_work_request_v1 WS-A).
   ///
@@ -3476,23 +3477,23 @@ model WorkRequest {
   /// skills are later edited would otherwise silently change domain, and the
   /// requester's actual answer to "what service domain are you requesting" is
   /// worth keeping.
-  pillar_id           String?              @db.Uuid
-  region_id           String?              @db.Uuid
-  title               String               @default("")
-  description         String?
-  experience_level    ExperienceLevel?
-  budget_type         BudgetType?
+  pillar_id             String?              @db.Uuid
+  region_id             String?              @db.Uuid
+  title                 String               @default("")
+  description           String?
+  experience_level      ExperienceLevel?
+  budget_type           BudgetType?
   /// The single figure the first wizard wrote. Kept for back-compat; the range
   /// below is what the current flow writes.
-  budget_amount_cents Int?
+  budget_amount_cents   Int?
   /// BUDGET AS A RANGE (deck's From / To). Nullable on purpose — the budget
   /// step has a "not ready to set one" escape, and a request with no budget is
   /// a real state rather than an incomplete one.
-  budget_min_cents    Int?
-  budget_max_cents    Int?
-  currency            String               @default("USD")
-  worksite            WorksiteType?
-  location_country    String?
+  budget_min_cents      Int?
+  budget_max_cents      Int?
+  currency              String               @default("USD")
+  worksite              WorksiteType?
+  location_country      String?
   /// ── ⚠⚠⚠ THE ISO-2 CODE, BESIDE THE NAME (`P2-A1.1-E728` WS-B) ────────────────────────
   ///
   /// ⚠ **SCOTT'S RULING, 2026-09-30: *"Additive: a new ISO-2 code column beside each existing
@@ -3505,12 +3506,12 @@ model WorkRequest {
   /// column holds something this standard cannot express"*, and it is the flag the
   /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
   /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
-  location_country_code String? @db.VarChar(2)
-  duration            WorkRequestDuration?
+  location_country_code String?              @db.VarChar(2)
+  duration              WorkRequestDuration?
   /// When the work runs. `duration` (the coarse enum) stays: a requester who
   /// knows "3-6 months" but not the dates can still answer.
-  start_date          DateTime?
-  end_date            DateTime?
+  start_date            DateTime?
+  end_date              DateTime?
   /// ── ⚠⚠ SUPERSEDED — UNSPSC MOVED TO THE LINE (`P1-J4-E388` WS-1) ─────────
   ///
   /// ⚠ COMMENTED OUT, NOT DELETED, and its own reasoning is quoted because it
@@ -3531,8 +3532,8 @@ model WorkRequest {
   ///
   /// ⚠ `p_account_id` ABOVE STAYS ON THE HEADER — it is Oracle's
   /// `RequisitioningBU`, true of every line by construction.
-  lines               WorkRequestLine[]
-  status              WorkRequestStatus    @default(INCOMPLETE)
+  lines                 WorkRequestLine[]
+  status                WorkRequestStatus    @default(INCOMPLETE)
 
   /// ⚠⚠⚠ RULING 14 — THE BUYER PICKS, PER REQUEST. ⚠ NO `@default`, AND THAT IS
   /// DELIBERATE: a default here would mean *"nobody decided"*, which is exactly
@@ -3541,8 +3542,8 @@ model WorkRequest {
   /// (`SendEmailArgs.template`): *"a forgetful caller being a compile error is
   /// worth more than any check we could write after the fact."*
   /// ⚠ Safe to require: `work_requests` holds ZERO rows, measured.
-  proposal_access   WorkProposalAccess
-  posted_at           DateTime?
+  proposal_access WorkProposalAccess
+  posted_at       DateTime?
 
   /// ── CONFIDENTIAL HIRING (`P1-J4-E025`) ────────────────────────────────────
   /// Some buyers cannot name the company while they are hiring. This is the
@@ -3558,24 +3559,21 @@ model WorkRequest {
   /// blank, so the row never reads as missing data.
   company_code_name  String?
   /// X-E003: set when the request was built in a punchout session (returned to the ERP as a cart).
-  erp_connection_id String? @db.Uuid
-  erp_returned_at   DateTime?
+  erp_connection_id  String?          @db.Uuid
+  erp_returned_at    DateTime?
   created_at         DateTime         @default(now())
   updated_at         DateTime         @updatedAt
 
-  buyer           Person                      @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
-  pAccount        PAccount                    @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
-  role        Role?                   @relation(fields: [role_id], references: [id], onDelete: SetNull)
-  pillar          Pillar?                     @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
-  region          Region?                     @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  buyer    Person   @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
+  pAccount PAccount @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
+  role     Role?    @relation(fields: [role_id], references: [id], onDelete: SetNull)
+  pillar   Pillar?  @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  region   Region?  @relation(fields: [region_id], references: [id], onDelete: SetNull)
   // JW-E001: the posting fields above are retired — a Job holds them now (left in place, unused; nothing dropped).
 
   /// TL-E003: the vendor pillar it sat under, as a Specialization (kind PRODUCT); pillar_id is kept.
-  specialization_id String?         @db.Uuid
-  specialization    Specialization? @relation("workRequestsAsVendor", fields: [specialization_id], references: [id], onDelete: SetNull)
-  @@index([p_account_id])
-  @@index([buyer_person_id])
-  @@index([status])
+  specialization_id      String?            @db.Uuid
+  specialization         Specialization?    @relation("workRequestsAsVendor", fields: [specialization_id], references: [id], onDelete: SetNull)
   /// ⚠⚠ `E621` WS-A — EVERY proposal against this request, invited or open.
   /// Ruling 14: the buyer picks per request, so both shapes land here.
   // JW-E003: the requisition header (Oracle POR_REQUISITION_HEADERS_ALL).
@@ -3592,6 +3590,9 @@ model WorkRequest {
   job                    Job?               @relation(fields: [job_id], references: [id], onDelete: SetNull)
   workOrders             WorkOrder[]
 
+  @@index([p_account_id])
+  @@index([buyer_person_id])
+  @@index([status])
   @@map("work_requests")
 }
 
@@ -3610,7 +3611,6 @@ model JobPostingSkill {
   @@index([skill_id])
   @@map("job_posting_skills")
 }
-
 
 enum BudgetType {
   FIXED
@@ -3828,12 +3828,12 @@ enum LearnPublishStatus {
 
 /// The CERTIFIABLE unit. A learner enrols in a path and is certified against it.
 model LearningPath {
-  id               String             @id @default(uuid()) @db.Uuid
-  title            String
-  slug             String             @unique
-  summary          String?
+  id                   String             @id @default(uuid()) @db.Uuid
+  title                String
+  slug                 String             @unique
+  summary              String?
   /// Facets — see the block comment above.
-  audience         LearnAudience
+  audience             LearnAudience
   /// ── ⚠ RESOLVED CROSS-BRANCH CARRY (`P1-ALL-E372`), KEPT AS A RECORD ───────
   ///
   /// ⚠ SUPERSEDED 2026-09-03, QUOTED NOT DELETED. `E372` reproduced the `pillar`
@@ -3867,28 +3867,28 @@ model LearningPath {
   /// values here and not tiles on the page; the row carries one honest sentence
   /// instead. Same rule `E282` set with Delaware — say what you cannot do rather
   /// than hide it, without giving an empty thing equal weight to a full one.
-  pillar           String?
+  pillar               String?
   /// Free-string domain tag (Procurement, Supply Chain Execution, Core HR, …).
   /// Deliberately NOT an enum: the catalog adds groups faster than a migration
   /// can, and WS1 imports whatever the spreadsheet says.
-  group            String?
+  group                String?
   /// The instructor. A Person, so an expert can front paths without needing a
   /// provider profile.
   instructor_person_id String?            @db.Uuid
-  cover_image      String?
+  cover_image          String?
   /// Optional intro video for the path itself (same loose Vimeo reference the
   /// Lesson uses — see `vimeoEmbedUrl`). A path can front its curriculum with a
   /// "what you'll learn" clip without that clip being a lesson in the outline.
-  intro_video_ref  String?
-  status           LearnPublishStatus @default(DRAFT)
-  sort_order       Int                @default(0)
-  created_at       DateTime           @default(now())
+  intro_video_ref      String?
+  status               LearnPublishStatus @default(DRAFT)
+  sort_order           Int                @default(0)
+  created_at           DateTime           @default(now())
   /// XLS-RE-RUN SHIELD (WS1). The catalog is seed-driven, but the admin console
   /// (brief_learn_admin_authoring) will edit the same rows. A re-import is
   /// authoritative only for rows it created: anything flagged `is_custom` was
   /// touched by a human and an XLS re-run leaves it alone. Same rule the service
   /// taxonomy uses.
-  is_custom        Boolean            @default(false)
+  is_custom            Boolean            @default(false)
   /// ── ⚠⚠⚠ THE STARTER PATH IS A FLAG, NEVER A SLUG (`P2-A4-E683` WS-A) ─────
   ///
   /// ⚠⚠ **SCOTT, 2026-09-26: *"I will ultimately want to get a better training
@@ -3907,12 +3907,12 @@ model LearningPath {
   /// `sort_order` is how two starter paths go unnoticed for a month.
   /// ⚠ **NO INDEX.** 23 rows, and a boolean index over a column that is true
   /// for one of them earns nothing; `@@index([status])` already serves the read.
-  is_starter       Boolean            @default(false)
+  is_starter           Boolean            @default(false)
   /// One-line outcome for the card (2026-10-08); drafts live in scripts/out until Scott edits them.
-  outcome          String?
-  level            PathLevel?
+  outcome              String?
+  level                PathLevel?
 
-  instructor      Person?           @relation("LearnExpertPaths", fields: [instructor_person_id], references: [id], onDelete: SetNull)
+  instructor  Person?             @relation("LearnExpertPaths", fields: [instructor_person_id], references: [id], onDelete: SetNull)
   courses     Course[]
   enrollments Enrollment[]
   credentials Credential[]
@@ -3922,12 +3922,11 @@ model LearningPath {
   /// mutation-tests the second, because two rooms for one conversation splits
   /// the people who found the first.
   forumBoards ForumBoard[]
+  /// ⚠⚠ WHICH SKILLS THIS PATH CERTIFIES (`P2-A4-E701` WS-A). See `LearningPathSkill`.
+  skills      LearningPathSkill[]
 
   @@index([audience, group])
   @@index([status])
-  /// ⚠⚠ WHICH SKILLS THIS PATH CERTIFIES (`P2-A4-E701` WS-A). See `LearningPathSkill`.
-  skills           LearningPathSkill[]
-
   @@map("learning_paths")
 }
 
@@ -4001,7 +4000,7 @@ model Course {
   /// they can never disagree about which object they describe.
   skill_scope CourseSkillScope?
 
-  learningPath LearningPath  @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+  learningPath LearningPath    @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
   sections     CourseSection[]
   /// ⚠ The skills this course declares it teaches — see `skill_scope` above.
   skills       CourseSkill[]
@@ -4118,28 +4117,28 @@ model Lesson {
   /// endpoint: `2:13:00` -> 133 s and Vimeo says 133 s, to the second.
   /// ⚠ CAPPED AT TWO HOURS on write. A longer "lesson" is far likelier to be a
   /// bad cell than a real video.
-  duration_seconds  Int?
+  duration_seconds     Int?
   /// Where the number came from — `"xls"` or `"vimeo"`. ⚠ NEVER GUESSED, and a
   /// duration without a source is a number nobody can defend; `check:duration`
   /// fails the build if one exists without the other.
-  duration_source   String?
+  duration_source      String?
   /// Poster art for the lesson. NOT the Vimeo thumbnail: a lesson can need a
   /// card image long before it has a video, which is most of the catalog today.
-  thumbnail_url     String?
+  thumbnail_url        String?
   /// Vimeo video id or embed URL. Null until the video is wired.
-  vimeo_ref         String?
-  production_status LessonProductionStatus @default(IN_CONCEPT)
+  vimeo_ref            String?
+  production_status    LessonProductionStatus @default(IN_CONCEPT)
   /// L-E043: retired lessons are hidden and uncounted everywhere members look; nothing is deleted.
-  retired_at        DateTime?
-  instructor_person_id  String?                @db.Uuid
-  sort_order        Int                    @default(0)
-  created_at        DateTime               @default(now())
+  retired_at           DateTime?
+  instructor_person_id String?                @db.Uuid
+  sort_order           Int                    @default(0)
+  created_at           DateTime               @default(now())
   /// XLS-RE-RUN SHIELD (WS1). The catalog is seed-driven, but the admin console
   /// (brief_learn_admin_authoring) will edit the same rows. A re-import is
   /// authoritative only for rows it created: anything flagged `is_custom` was
   /// touched by a human and an XLS re-run leaves it alone. Same rule the service
   /// taxonomy uses.
-  is_custom         Boolean                @default(false)
+  is_custom            Boolean                @default(false)
 
   /// ── ⚠⚠⚠ A CROSS-REFERENCE: THIS ROW IS A SIGNPOST, NOT A LESSON (`P2-A4-E667`)
   ///
@@ -4173,9 +4172,9 @@ model Lesson {
   /// today. ⚠ NOTHING IS DELETED; the three rows stay and become honest.
   cross_reference_lesson_id String? @db.Uuid
 
-  section  CourseSection          @relation(fields: [section_id], references: [id], onDelete: Cascade)
-  instructor   Person?          @relation("LearnExpertLessons", fields: [instructor_person_id], references: [id], onDelete: SetNull)
-  progress LessonProgress[]
+  section    CourseSection    @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  instructor Person?          @relation("LearnExpertLessons", fields: [instructor_person_id], references: [id], onDelete: SetNull)
+  progress   LessonProgress[]
 
   /// ⚠ The lesson this row points at — see `cross_reference_lesson_id` above.
   crossReferenceLesson Lesson?  @relation("LessonCrossReference", fields: [cross_reference_lesson_id], references: [id], onDelete: SetNull)
@@ -4247,7 +4246,7 @@ model CertificationTest {
    * it. That is the column doing its job rather than a side effect of it, and the
    * certificate already issued from it is untouched.
    */
-  status      LearnPublishStatus @default(DRAFT)
+  status                LearnPublishStatus @default(DRAFT)
   /**
    * ⚠ THE MISSING FIELD `P1-J2.4-E024` NEEDS. That walk error records the EXPERT
    * badge — "created assessment" — as unbuildable because this model recorded
@@ -4255,19 +4254,19 @@ model CertificationTest {
    * the column that makes the badge earnable. The badge itself is not built here.
    */
   reviewed_by_person_id String?            @db.Uuid
-  reviewed_at DateTime?
+  reviewed_at           DateTime?
   /**
    * Which documentation URLs, if any, informed this set. Provenance, not prose.
    */
-  source_note String?
+  source_note           String?
   /// L-E042: questions flagged during an admin preview — [{ index, note, by, at }].
-  review_flags Json?
+  review_flags          Json?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  learningPath LearningPath       @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
-  reviewer     Person?            @relation("CertificationTestReviewer", fields: [reviewed_by_person_id], references: [id], onDelete: SetNull)
+  learningPath LearningPath           @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+  reviewer     Person?                @relation("CertificationTestReviewer", fields: [reviewed_by_person_id], references: [id], onDelete: SetNull)
   attempts     CertificationAttempt[]
 
   @@index([status])
@@ -4280,7 +4279,7 @@ model CertificationTest {
 /// to be told WHICH questions they missed, and a question the whole cohort gets
 /// wrong is a signal about the lesson, not the learner.
 model CertificationAttempt {
-  id               String   @id @default(uuid()) @db.Uuid
+  id                    String   @id @default(uuid()) @db.Uuid
   /**
    * ⚠⚠⚠ WAS `assessment_id`, AND THAT NAME WAS THE WHOLE PROBLEM (`P2-A4-E702`).
    * It pointed at the CERTIFICATION TEST while reading as the MATURITY ASSESSMENT —
@@ -4288,20 +4287,20 @@ model CertificationAttempt {
    * fooled by it: a pattern looking for links between the two families matched this
    * column and reported a collision that does not exist.** ⚠ Renamed with the model.
    */
-  certification_test_id String @db.Uuid
-  user_id          String   @db.Uuid
-  learning_path_id String   @db.Uuid
+  certification_test_id String   @db.Uuid
+  user_id               String   @db.Uuid
+  learning_path_id      String   @db.Uuid
   /// 0-100.
-  score            Int
-  passed           Boolean
+  score                 Int
+  passed                Boolean
   /// [{ questionId, chosen, correct }] — enough to show a review screen.
-  answers          Json
+  answers               Json
   /// L-E042: an admin's review run of a draft test — shows the answers, issues no certificate.
-  is_preview       Boolean  @default(false)
-  created_at       DateTime @default(now())
+  is_preview            Boolean  @default(false)
+  created_at            DateTime @default(now())
 
   certificationTest CertificationTest @relation(fields: [certification_test_id], references: [id], onDelete: Cascade)
-  user       User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user              User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, learning_path_id])
   @@index([certification_test_id])
@@ -4433,14 +4432,14 @@ enum BillingMethodKind {
 }
 
 model PayoutMethod {
-  id         String           @id @default(uuid()) @db.Uuid
-  person_id  String           @db.Uuid
-  kind       PayoutMethodKind
-  label      String
+  id           String           @id @default(uuid()) @db.Uuid
+  person_id    String           @db.Uuid
+  kind         PayoutMethodKind
+  label        String
   /// Display only, as above.
-  last4      String?
+  last4        String?
   /// Where the money lands — drives which tax form is required.
-  country    String
+  country      String
   /// ── ⚠⚠⚠ THE ISO-2 CODE, BESIDE THE NAME (`P2-A1.1-E728` WS-B) ────────────────────────
   ///
   /// ⚠ **SCOTT'S RULING, 2026-09-30: *"Additive: a new ISO-2 code column beside each existing
@@ -4453,17 +4452,17 @@ model PayoutMethod {
   /// column holds something this standard cannot express"*, and it is the flag the
   /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
   /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
-  country_code String? @db.VarChar(2)
-  is_default Boolean          @default(false)
-  created_at DateTime         @default(now())
-  updated_at DateTime         @updatedAt
+  country_code String?          @db.VarChar(2)
+  is_default   Boolean          @default(false)
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
 
   // Company v3: the payout account belongs to the company; person link kept.
   /// Must match the company's legal name (lifecycle: we pay companies only).
   holder_name String?
-  company_id String?          @db.Uuid
-  company    Company?         @relation(fields: [company_id], references: [id], onDelete: SetNull)
-  person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
+  company_id  String?  @db.Uuid
+  company     Company? @relation(fields: [company_id], references: [id], onDelete: SetNull)
+  person      Person   @relation(fields: [person_id], references: [id], onDelete: Cascade)
 
   @@index([person_id])
   @@index([company_id])
@@ -4480,13 +4479,13 @@ enum PayoutMethodKind {
 /// exists, because paying someone without a tax form on file is the one thing in
 /// this area that creates a real obligation for Panameer.
 model TaxProfile {
-  id          String   @id @default(uuid()) @db.Uuid
-  person_id   String   @unique @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
+  person_id    String   @unique @db.Uuid
   /// W-9 for a US person, W-8BEN / W-8BEN-E for everyone else. Which one is
   /// determined by `country`, not chosen freely — see lib/tax.ts.
-  form        TaxForm
-  legal_name  String
-  country     String
+  form         TaxForm
+  legal_name   String
+  country      String
   /// ── ⚠⚠⚠ THE ISO-2 CODE, BESIDE THE NAME (`P2-A1.1-E728` WS-B) ────────────────────────
   ///
   /// ⚠ **SCOTT'S RULING, 2026-09-30: *"Additive: a new ISO-2 code column beside each existing
@@ -4499,13 +4498,13 @@ model TaxProfile {
   /// column holds something this standard cannot express"*, and it is the flag the
   /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
   /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
-  country_code String? @db.VarChar(2)
+  country_code String?  @db.VarChar(2)
   /// Display only. The TIN itself is not stored: we have no lawful need to hold
   /// it before there is a payment processor that requires it.
-  tin_last4   String?
+  tin_last4    String?
   /// The person's own attestation, with a timestamp. This is a signature.
-  signed_name String
-  signed_at   DateTime @default(now())
+  signed_name  String
+  signed_at    DateTime @default(now())
 
   /// ⚠ WHICH NUMBER THEY GAVE (`P1-ALL-E404` WS-2). A sole proprietor may
   /// legitimately supply an SSN, and the two have different impossible values —
@@ -4756,7 +4755,7 @@ model Notification {
   /// onto all 102 existing rows.
   dismissed_at DateTime?
 
-  created_at  DateTime  @default(now())
+  created_at DateTime @default(now())
 
   person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
 
@@ -5057,8 +5056,8 @@ model ForumBoard {
   /// express it.
   price_period String?
 
-  host_person_id   String?       @db.Uuid
-  hostPerson       Person?       @relation("ForumBoardHost", fields: [host_person_id], references: [id], onDelete: SetNull)
+  host_person_id String? @db.Uuid
+  hostPerson     Person? @relation("ForumBoardHost", fields: [host_person_id], references: [id], onDelete: SetNull)
 
   threads ForumThread[]
   members GroupMembership[]
@@ -5069,24 +5068,24 @@ model ForumBoard {
 }
 
 model ForumThread {
-  id           String   @id @default(uuid()) @db.Uuid
-  board_id     String   @db.Uuid
+  id               String    @id @default(uuid()) @db.Uuid
+  board_id         String    @db.Uuid
   /// Asked from a lesson (2026-10-08): the question carries the lesson; the path group lists it as usual.
-  lesson_id    String?   @db.Uuid
-  author_person_id    String   @db.Uuid
-  title        String
+  lesson_id        String?   @db.Uuid
+  author_person_id String    @db.Uuid
+  title            String
   /// The opening post's text. Kept on the thread rather than as a first Post
   /// row so "a thread with no replies" is one row, not two, and so deleting a
   /// reply can never orphan the question.
-  body         String
+  body             String
   /// Denormalised for the board list, which would otherwise N+1 across every
   /// thread to render a count and a date. Maintained by lib/forums.ts on reply.
-  reply_count  Int      @default(0)
-  last_post_at DateTime @default(now())
-  created_at   DateTime @default(now())
+  reply_count      Int       @default(0)
+  last_post_at     DateTime  @default(now())
+  created_at       DateTime  @default(now())
   /// L-E061: set when the author (or an admin) edits it — shown as "edited".
   edited_at        DateTime?
-  updated_at   DateTime @updatedAt
+  updated_at       DateTime  @updatedAt
 
   board  ForumBoard  @relation(fields: [board_id], references: [id], onDelete: Cascade)
   author Person      @relation("ForumThreadAuthor", fields: [author_person_id], references: [id], onDelete: Cascade)
@@ -5094,19 +5093,19 @@ model ForumThread {
 
   @@index([board_id, last_post_at])
   @@index([author_person_id])
-  @@map("forum_threads")
   @@index([lesson_id])
+  @@map("forum_threads")
 }
 
 model ForumPost {
-  id         String   @id @default(uuid()) @db.Uuid
-  thread_id  String   @db.Uuid
-  author_person_id  String   @db.Uuid
-  body       String
-  created_at DateTime @default(now())
+  id               String    @id @default(uuid()) @db.Uuid
+  thread_id        String    @db.Uuid
+  author_person_id String    @db.Uuid
+  body             String
+  created_at       DateTime  @default(now())
   /// L-E061: set when the author (or an admin) edits it — shown as "edited".
   edited_at        DateTime?
-  updated_at DateTime @updatedAt
+  updated_at       DateTime  @updatedAt
 
   /**
    * ⚠ DID THIS REPLY ACTUALLY HELP — the one field that turns a VOLUME signal
@@ -5130,7 +5129,7 @@ model ForumPost {
    * signal, owned by the person who asked. Everything else is a product decision
    * that has not been made.
    */
-  marked_helpful_at DateTime?
+  marked_helpful_at           DateTime?
   /**
    * The thread author who marked it. `SetNull` on delete, which leaves
    * `marked_helpful_at` set with no marker — correct: the judgement was made and
@@ -5168,7 +5167,7 @@ model ForumPost {
    * written anywhere but `lib/forums.ts` — a SEPARATE guard from GUARD 2, so a
    * failure names WHICH signal broke.
    */
-  instructor_confirmed_at DateTime?
+  instructor_confirmed_at           DateTime?
   /// The instructor who confirmed. `SetNull` on delete for the same reason as
   /// `marked_helpful_by`: the judgement stands even if the account is removed.
   instructor_confirmed_by_person_id String?   @db.Uuid
@@ -5327,9 +5326,9 @@ model AssessmentDomainResult {
   assessment_id String @db.Uuid
 
   /// The bank key as answered ("invoices", "sourcing") — the durable identifier.
-  domain_key           String
+  domain_key String
   /// Resolved from `CapabilityDomain.key` at write time. Null when unresolvable.
-  domain_id String? @db.Uuid
+  domain_id  String? @db.Uuid
 
   /// 10|23|37|50 (and the legacy 20|30|40), or NULL for "Not sure".
   /// ⚠ A NULL RUNG IS A ROW, NOT A MISSING ROW. The absence of an answer is
@@ -5488,7 +5487,7 @@ enum SourcingKind {
 model ApplicationCommission {
   id String @id @default(uuid()) @db.Uuid
 
-  sourcing_kind SourcingKind
+  sourcing_kind    SourcingKind
   /// ⚠⚠ NULL = applies to every transaction type for this sourcing kind.
   transaction_type TransactionType?
 
@@ -5540,13 +5539,13 @@ model TaxRate {
 /// ⚠ `Package.role_type_id` IS UNAFFECTED. It answers a different question — what kind of
 /// PRACTITIONER — and nothing here replaces it.
 model ServiceProductDomain {
-  id                   String   @id @default(uuid()) @db.Uuid
-  service_product_id           String   @db.Uuid
-  domain_id String   @db.Uuid
-  created_at           DateTime @default(now())
+  id                 String   @id @default(uuid()) @db.Uuid
+  service_product_id String   @db.Uuid
+  domain_id          String   @db.Uuid
+  created_at         DateTime @default(now())
 
-  service_product          ServiceProduct          @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
-  domain Domain @relation(fields: [domain_id], references: [id], onDelete: Cascade)
+  service_product ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
+  domain          Domain         @relation(fields: [domain_id], references: [id], onDelete: Cascade)
 
   /// One row per pair — selecting a domain twice is not a different fact.
   @@unique([service_product_id, domain_id])
@@ -5598,7 +5597,7 @@ enum ValueFactorBasis {
 /// of this model existing.
 model ServiceProductValueFactor {
   id                 String           @id @default(uuid()) @db.Uuid
-  service_product_id         String           @db.Uuid
+  service_product_id String           @db.Uuid
   basis              ValueFactorBasis
   /// ⚠ INTEGER, AND THE UNIT IS DECIDED BY `basis` — basis points for every proportional
   /// basis, CENTS when `basis = FLAT`. Same rule as every other money value in the app: a
@@ -5986,7 +5985,7 @@ model SupplierPart {
   /// DIRECTIONS — neither both nor neither. `@unique` on each so one provider and
   /// one package can never mint two part numbers.
   provider_profile_id String? @unique @db.Uuid
-  service_product_id          String? @unique @db.Uuid
+  service_product_id  String? @unique @db.Uuid
 
   /// ── the cXML line, resolved ONCE, here ────────────────────────────────────
   display_name        String
@@ -6056,7 +6055,7 @@ model WorkRequestLine {
   description String
   /// ⚠⚠ PER LINE. The header column is SUPERSEDED — see `WorkRequest`.
   unspsc_code String?
-  currency    String    @default("USD")
+  currency    String     @default("USD")
 
   /// ⚠ RATE lines only. AMOUNT lines leave these three null and set
   /// `amount_cents`; `check:transaction-spine` asserts both directions.
@@ -6065,10 +6064,9 @@ model WorkRequestLine {
   unit_price_cents Int?
   amount_cents     Int?
 
-  supplier_part_id String? @db.Uuid
+  supplier_part_id    String? @db.Uuid
   /**
    * ── ⚠⚠ WHICH SERVICE PRODUCT THIS LINE IS (`P2-A6-E700` WS-B) ──────────────
-   *
    * ⚠⚠⚠ **ADDED BECAUSE WITHOUT IT AN ACCEPTED OFFER'S LINE CANNOT SAY WHAT WAS
    * BOUGHT — AND THIS IS AN ADDITION BEYOND THE BRIEF, FLAGGED RATHER THAN SLIPPED IN.**
    * ⚠ `supplier_part_id` was the only existing route to a product, and **`supplier_parts`
@@ -6082,14 +6080,13 @@ model WorkRequestLine {
    * line has no product at all. ⚠⚠ **IT DOES NOT REPLACE `supplier_part_id`:** that stays
    * the cXML punchout surface, and a line may eventually carry both.
    * ⚠ No `@relation`, matching this model's other subject ids.
-   *
    * ⚠⚠⚠ **`WorkOrderLine` DOES NOT GET THIS COLUMN HERE, AND THAT IS NAMED NOT
    * FORGOTTEN:** checkout copies a request line into an order line, so the order line
    * will need it the day an accepted offer is checked out. **Checkout is not in this
    * brief**, and adding a column that nothing populates is how a half-migration looks
    * finished. Reported.
    */
-  service_product_id String? @db.Uuid
+  service_product_id  String? @db.Uuid
   /// O-E004: the provider service this line buys (its terms are snapshotted onto the order line).
   provider_service_id String? @db.Uuid
 
@@ -6100,8 +6097,8 @@ model WorkRequestLine {
   /// ⚠ UNIQUE — it is the join key on the return leg.
   punchout_line_ref String? @unique
 
-  role_id String? @db.Uuid
-  skill_id     String? @db.Uuid
+  role_id  String? @db.Uuid
+  skill_id String? @db.Uuid
 
   /// ⚠ NAMED AT THE LINE, because ONE REQUEST CAN SOURCE SEVERAL PEOPLE — which
   /// is also what makes the work-order fan-out (WS-2) group by provider.
@@ -6115,21 +6112,21 @@ model WorkRequestLine {
   /// ⚠⚠ ON THE LINE, NOT THE HEADER: a WORK with several positions makes one
   /// line per winner, and each winner gets their own order.
   /// ⚠⚠⚠ Nothing writes it yet, and that is not a reason to omit it (ruling 24).
-  work_order_id String? @db.Uuid
+  work_order_id       String? @db.Uuid
 
-  positions        Int       @default(1)
-  service_start    DateTime?
-  service_end      DateTime?
+  positions           Int           @default(1)
+  service_start       DateTime?
+  service_end         DateTime?
   /// HS-E005: the Hire Terms the buyer confirms — copied to the Work Order line.
   payment_event       PaymentEvent?
   billing_cycle       BillingCycle?
   overtime_allowed    Boolean?
-  overtime_multiplier Decimal?          @db.Decimal(4, 2)
+  overtime_multiplier Decimal?      @db.Decimal(4, 2)
   expenses_allowed    Boolean?
   expenses_cap_cents  Int?
-  note_to_supplier String?
+  note_to_supplier    String?
   /// JW-E004: set when the price is an accepted offer (the agreed price, not the list price).
-  offer_id         String?   @db.Uuid
+  offer_id            String?       @db.Uuid
 
   status WorkRequestLineStatus @default(DRAFT)
 
@@ -6139,8 +6136,8 @@ model WorkRequestLine {
   workRequest WorkRequest @relation(fields: [work_request_id], references: [id], onDelete: Cascade)
   /// ⚠⚠ BOTH `SetNull` — deleting a recruiter or an order must never delete the
   /// line that records what was bought. The purchase outlives the account.
-  recruiter Person?   @relation("WorkRequestLineRecruiter", fields: [recruiter_person_id], references: [id], onDelete: SetNull)
-  workOrder WorkOrder? @relation("WorkRequestLineOrder", fields: [work_order_id], references: [id], onDelete: SetNull)
+  recruiter   Person?     @relation("WorkRequestLineRecruiter", fields: [recruiter_person_id], references: [id], onDelete: SetNull)
+  workOrder   WorkOrder?  @relation("WorkRequestLineOrder", fields: [work_order_id], references: [id], onDelete: SetNull)
 
   @@unique([work_request_id, line_number])
   @@index([work_request_id])
@@ -6190,18 +6187,18 @@ enum WorkOrderLineStatus {
 }
 
 model WorkOrder {
-  id           String @id @default(uuid()) @db.Uuid
-  order_number String @unique
+  id            String  @id @default(uuid()) @db.Uuid
+  order_number  String  @unique
   /// MS-E002: every Work Order is a SOW under the Active MSA (Panameer Terms of Service).
-  agreement_id String?   @db.Uuid
+  agreement_id  String? @db.Uuid
   /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
-  legacy_number          String?
+  legacy_number String?
 
   origin WorkOrderOrigin
 
   /// ⚠ INDIRECT has one; DIRECT does not.
   /// JW-E006: every Work Order comes from a Work Request (one WO per seller).
-  work_request_id String  @db.Uuid
+  work_request_id String      @db.Uuid
   description     String?
   erp_po_number   String?
   erp_po_revision Int?
@@ -6255,7 +6252,7 @@ model WorkOrder {
   /// ⚠ SUPERSEDED, quoted not deleted (`E164`): this was the buyer's RELEASE
   /// timestamp, and release no longer has a human writer — `RELEASED` is what the
   /// SECOND ACCEPTANCE produces.
-  buyer_released_at    DateTime?
+  buyer_released_at DateTime?
 
   period_start        DateTime?
   period_end          DateTime?
@@ -6294,21 +6291,23 @@ model WorkOrder {
   /// two-provider PO and look exactly like duplicate detection working
   /// correctly. `check:transaction-spine` asserts this constraint's ABSENCE.
   /// Run 13: the buyer's statement of work, written when ordering; the provider reads it before accepting.
-  sow_text String?
+  sow_text     String?
   external_ref String?
 
   /// O-E002: Freeze is a flag beside the status (Oracle "Open · Frozen"); Hold remembers the status it returns to.
-  frozen_at        DateTime?
-  held_from_status WorkOrderStatus?
+  frozen_at         DateTime?
+  held_from_status  WorkOrderStatus?
   /// O-E003: bumped each time the provider accepts a change order.
-  revision_number  Int @default(0)
+  revision_number   Int              @default(0)
   /// X-E001: set when the order came from a customer's ERP (cXML OrderRequest). Controls then live in the ERP.
-  erp_connection_id String? @db.Uuid
+  erp_connection_id String?          @db.Uuid
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  lines WorkOrderLine[]
+  lines            WorkOrderLine[]
+  /// ⚠ `E621` ruling 37c — the requisition lines this order was built from.
+  requisitionLines WorkRequestLine[] @relation("WorkRequestLineOrder")
 
   /// ⚠ NO SCHEDULES AND NO DISTRIBUTIONS. Oracle's PO has LINE → SCHEDULE →
   /// DISTRIBUTION; those are DELIVERY and ACCOUNTING splits and they belong to
@@ -6317,9 +6316,6 @@ model WorkOrder {
   @@index([buyer_person_id])
   @@index([status])
   @@index([external_ref])
-  /// ⚠ `E621` ruling 37c — the requisition lines this order was built from.
-  requisitionLines WorkRequestLine[] @relation("WorkRequestLineOrder")
-
   @@map("work_orders")
 }
 
@@ -6409,18 +6405,18 @@ model WorkOrderLine {
   external_line_ref String?
 
   /// O-E004: billing terms snapshotted at order time from the provider service or service product — never looked up.
-  provider_service_id String?         @db.Uuid
+  provider_service_id String?       @db.Uuid
   /// CAT-E007: the service product this line sells (its milestones are snapshotted from it).
-  service_product_id  String?         @db.Uuid
+  service_product_id  String?       @db.Uuid
   billing_cycle       BillingCycle?
   payment_terms       PaymentTerms?
-  payment_event     PaymentEvent?
+  payment_event       PaymentEvent?
 
-  service_start DateTime?
-  service_end   DateTime?
+  service_start       DateTime?
+  service_end         DateTime?
   /// HS-E005: overtime and expenses agreed on the Hire Terms.
   overtime_allowed    Boolean?
-  overtime_multiplier Decimal?          @db.Decimal(4, 2)
+  overtime_multiplier Decimal?  @db.Decimal(4, 2)
   expenses_allowed    Boolean?
   expenses_cap_cents  Int?
 
@@ -6462,12 +6458,12 @@ enum PaymentRequestStatus {
 }
 
 model PaymentRequest {
-  id                String @id @default(uuid()) @db.Uuid
-  payment_request_number String @unique
+  id                     String  @id @default(uuid()) @db.Uuid
+  payment_request_number String  @unique
   /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
   legacy_number          String?
   /// RD-E003: raised before the provider's company finished tax & banking — held from the buyer until it does.
-  held_for_tax_banking Boolean @default(false)
+  held_for_tax_banking   Boolean @default(false)
 
   work_order_id      String @db.Uuid
   provider_person_id String @db.Uuid
@@ -6475,7 +6471,7 @@ model PaymentRequest {
   period_start DateTime
   period_end   DateTime
 
-  currency String           @default("USD")
+  currency String               @default("USD")
   status   PaymentRequestStatus @default(DRAFT)
 
   submitted_at         DateTime?
@@ -6506,9 +6502,9 @@ model PaymentRequest {
 }
 
 model PaymentRequestLine {
-  id                    String @id @default(uuid()) @db.Uuid
+  id                 String @id @default(uuid()) @db.Uuid
   payment_request_id String @db.Uuid
-  line_number           Int
+  line_number        Int
 
   /// ⚠⚠ NOT NULLABLE. Scott: *"the settlement request just goes against a
   /// line."* A settlement with no order line behind it cannot be priced, cannot
@@ -6573,10 +6569,10 @@ enum PayoutStatus {
 
 /// CASH RECEIVED — ⚠ RECORDED, NOT CREATED BY US.
 model Payment {
-  id             String @id @default(uuid()) @db.Uuid
-  payment_number String @unique
+  id             String  @id @default(uuid()) @db.Uuid
+  payment_number String  @unique
   /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
-  legacy_number          String?
+  legacy_number  String?
 
   p_account_id String  @db.Uuid
   /// The buyer's payment reference / remittance id.
@@ -6604,7 +6600,7 @@ model PaymentLine {
   line_number Int
 
   payment_request_id String @db.Uuid
-  amount_cents          Int
+  amount_cents       Int
 
   created_at DateTime @default(now())
 
@@ -6792,9 +6788,9 @@ model ProposalRequest {
 }
 
 model ProposalRequestLine {
-  id             String @id @default(uuid()) @db.Uuid
+  id                  String @id @default(uuid()) @db.Uuid
   proposal_request_id String @db.Uuid
-  line_number    Int
+  line_number         Int
 
   /// ⚠ WHICH work-request line this provider is asked to price. NOT every ITB
   /// covers every line — a request for a DBA and a developer goes out as two
@@ -6811,7 +6807,7 @@ model ProposalRequestLine {
 }
 
 model Proposal {
-  id         String @id @default(uuid()) @db.Uuid
+  id              String @id @default(uuid()) @db.Uuid
   proposal_number String @unique
 
   /// ⚠ `@unique`: one bid per ITB. A second bid is a REVISION of this one, not a
@@ -6851,9 +6847,9 @@ model Proposal {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  lines      ProposalLine[]
-  proposalRequest  ProposalRequest? @relation(fields: [proposal_request_id], references: [id], onDelete: Cascade)
-  job Job @relation(fields: [job_id], references: [id], onDelete: Cascade)
+  lines           ProposalLine[]
+  proposalRequest ProposalRequest? @relation(fields: [proposal_request_id], references: [id], onDelete: Cascade)
+  job             Job              @relation(fields: [job_id], references: [id], onDelete: Cascade)
 
   /// ── ⚠⚠⚠ ONE PROPOSAL PER PROVIDER PER REQUEST, BY CONSTRUCTION ─────────
   /// ⚠ WS-A item 3: *"One proposal per provider per request. Idempotent;
@@ -6870,9 +6866,9 @@ model Proposal {
 }
 
 model ProposalLine {
-  id              String @id @default(uuid()) @db.Uuid
+  id          String @id @default(uuid()) @db.Uuid
   proposal_id String @db.Uuid
-  line_number     Int
+  line_number Int
 
   /// ⚠⚠⚠ NULLABLE SINCE `E621` WS-C, FOR THE SAME REASON THAT MADE
   /// `Proposal.proposal_request_id` NULLABLE IN WS-A: **an invite-shaped NOT NULL
@@ -6960,7 +6956,7 @@ model TestRequest {
   id             String @id @default(uuid()) @db.Uuid
   request_number String @unique
 
-  job_id        String @db.Uuid
+  job_id                 String @db.Uuid
   provider_person_id     String @db.Uuid
   requested_by_person_id String @db.Uuid
 
@@ -6997,7 +6993,7 @@ model TestRequestLine {
   /// that does not exist — or one still in DRAFT, which nobody can sit — is a
   /// dead end the provider cannot clear. `assertTestRequestLine` refuses both.
   certification_test_id String  @db.Uuid
-  skill_id            String? @db.Uuid
+  skill_id              String? @db.Uuid
 
   created_at DateTime @default(now())
 
@@ -7099,7 +7095,7 @@ model InterviewRequest {
   id             String @id @default(uuid()) @db.Uuid
   request_number String @unique
 
-  job_id      String  @db.Uuid
+  job_id               String  @db.Uuid
   work_request_line_id String? @db.Uuid
 
   provider_person_id     String @db.Uuid
@@ -7169,9 +7165,9 @@ model ProviderEvaluation {
   evaluation_number String @unique
 
   /// ⚠ The request being sourced. Plain id + index (`E388`).
-  job_id String @db.Uuid
+  job_id               String @db.Uuid
   /// ⚠ Who is being judged.
-  provider_person_id String @db.Uuid
+  provider_person_id   String @db.Uuid
   /// ⚠ Who is judging. The requester — never the provider.
   created_by_person_id String @db.Uuid
 
@@ -7190,7 +7186,7 @@ model ProviderEvaluation {
   /// in `ProviderEvaluationLine.rating`'s comment and is 1–5.
   overall_rating Int?
   /// ⚠ The requester's words. Optional — a rating with no note is still a call.
-  summary String?
+  summary        String?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -7219,8 +7215,8 @@ model ProviderEvaluationLine {
   criterion String
   /// ⚠⚠ 1–5, AND THE SCALE LIVES HERE. Nullable: a criterion may be recorded as
   /// relevant and left unscored rather than guessed at.
-  rating Int?
-  note   String?
+  rating    Int?
+  note      String?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -7308,7 +7304,7 @@ model Shortlist {
   id               String @id @default(uuid()) @db.Uuid
   shortlist_number String @unique
 
-  job_id      String  @db.Uuid
+  job_id               String  @db.Uuid
   work_request_line_id String? @db.Uuid
 
   created_by_person_id String @db.Uuid
@@ -7347,20 +7343,17 @@ model ShortlistLine {
   line_number Int
 
   provider_person_id String  @db.Uuid
-  proposal_id    String? @db.Uuid
+  proposal_id        String? @db.Uuid
   note               String?
 
   /**
    * ── ⚠⚠⚠ WHICH END OF THE FLOW THIS ROW CAME FROM (`P2-A8-E703`) ────────────
-   *
    * ⚠⚠ **ONE TABLE, NOT TWO. Scott's diagram adds *Suggested Providers*, and it is the
    * SAME SHAPE** — a set of providers against a work request, each with a reason.
    * ⚠⚠⚠ **TWO TABLES FOR ONE SHAPE IS TWO QUERIES, TWO GRIDS AND TWO PLACES TO FIX
    * EVERY LATER BUG** (`E585`).
-   *
    * ⚠ `SUGGESTED` — what the RDS search proposed · `SHORTLISTED` — what the buyer kept ·
    * `ADDED` — what went straight onto the request.
-   *
    * ⚠⚠⚠ **AND THE COLUMN EXISTS FOR ONE RULE, WHICH IS THE WHOLE POINT OF IT: A
    * SUGGESTION IS DERIVED, NOT AUTHORED (ruling 94e), SO A `SUGGESTED` ROW IS A SNAPSHOT
    * AND MAY BE REPLACED WHOLESALE WHEN THE SEARCH RE-RUNS. A `SHORTLISTED` OR `ADDED`
@@ -7368,12 +7361,10 @@ model ShortlistLine {
    * ⚠⚠ Without the column a re-run cannot tell the two apart, and **the only safe
    * re-run would be one that deletes nothing — which means suggestions accumulate
    * forever.** `lib/shortlists.ts` enforces it and `check:shortlists` asserts it.
-   *
    * ⚠ **DEFAULTS TO `ADDED`, DELIBERATELY: THAT IS THE SAFE FAILURE.** A row whose
    * origin nobody recorded must not be eligible for wholesale deletion — and `ADDED` is
    * also the commonest path, the one Scott named: *"they will not shortlist…they will
    * add them to the WR."*
-   *
    * ⚠⚠ **`proposal_id` STAYS NULLABLE AND THAT IS THE DIFFERENCE BETWEEN THE ENDS:** a
    * suggestion has no proposal behind it; a shortlisted provider usually does.
    */
@@ -7389,7 +7380,6 @@ model ShortlistLine {
   @@index([provider_person_id])
   @@map("shortlist_lines")
 }
-
 
 /// ── ⚠⚠ WHO LOOKED AT A PROFILE (`P0-E595` A2) ──────────────────────────────
 ///
@@ -7495,9 +7485,9 @@ model ProfileView {
 /// ⚠ NOTHING IS PROMISED BY A ROW HERE. No email is sent when a path ships —
 /// there is no writer for that — so no copy may say one will be.
 model PathInterest {
-  id               String   @id @default(uuid()) @db.Uuid
-  user_id          String   @db.Uuid
-  learning_path_id String   @db.Uuid
+  id               String @id @default(uuid()) @db.Uuid
+  user_id          String @db.Uuid
+  learning_path_id String @db.Uuid
 
   /// ⚠⚠ `true` = they want it, `false` = they withdrew. ⚠ THE ROW SURVIVES
   /// EITHER WAY, which is what lets the count fall without losing the history.
@@ -7549,7 +7539,7 @@ model GroupMembership {
   decided_by_person_id String?   @db.Uuid
   /// ⚠⚠ True when no human was involved. It is how the backfill's rows are
   /// distinguishable from a real approval forever after.
-  auto_approved Boolean @default(false)
+  auto_approved        Boolean   @default(false)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -7623,7 +7613,7 @@ model ServiceProductOffer {
   /// `PE-` an evaluation.
   offer_number String @unique
 
-  buyer_person_id    String @db.Uuid
+  buyer_person_id     String  @db.Uuid
   /// Lane 7: one of service_product_id / provider_service_id (an offer on a Service rate).
   service_product_id  String? @db.Uuid
   provider_service_id String? @db.Uuid
@@ -7633,7 +7623,7 @@ model ServiceProductOffer {
    * SELLER WHO NEVER SAW IT.** The same reason `E696` stamps the commission on the
    * line: who it was agreed with is a fact about the moment, not a lookup.
    */
-  provider_person_id String @db.Uuid
+  provider_person_id  String  @db.Uuid
 
   /// ⚠ Integer cents, like every other money value in the app.
   amount_cents Int
@@ -7643,18 +7633,15 @@ model ServiceProductOffer {
 
   /**
    * ── ⚠⚠⚠ THE OPEN MARKER — THIS IS HOW "ONE OPEN OFFER" IS ENFORCED BY THE
-   *    DATABASE RATHER THAN BY A HANDLER, AND IT LOOKS ODD ON PURPOSE ──────────
-   *
+   * DATABASE RATHER THAN BY A HANDLER, AND IT LOOKS ODD ON PURPOSE ──────────
    * ⚠ **IT HOLDS `service_product_id` WHILE THE OFFER IS `OPEN`, AND `NULL` ONCE IT
    * IS DECIDED.** Paired with `@@unique([buyer_person_id, open_service_product_id])`
    * that is exactly *"one OPEN offer per buyer per product, unlimited history"*.
-   *
    * ⚠⚠ **IT WORKS BECAUSE POSTGRES TREATS NULLs AS DISTINCT IN A UNIQUE INDEX** — the
    * same fact that made `E696`'s upsert dangerous is the thing that makes this safe.
    * Two decided offers both hold `NULL`, do not collide, and accumulate forever; two
    * OPEN ones on the same pair hold the same uuid and the **database refuses the
    * second**.
-   *
    * ⚠⚠⚠ **WHY NOT A PARTIAL UNIQUE INDEX (`… WHERE status = 'OPEN'`), WHICH IS WHAT A
    * DBA WOULD REACH FOR: PRISMA CANNOT EXPRESS ONE.** It would have to be raw SQL
    * outside the schema, and `db push` is declarative — an index it does not know about
@@ -7669,15 +7656,15 @@ model ServiceProductOffer {
   open_service_product_id String? @db.Uuid
 
   /// When it was accepted or denied. Null while OPEN.
-  decided_at DateTime?
+  decided_at            DateTime?
   /**
    * ⚠⚠ THE DENY'S GUIDANCE. Both are null on an accept and both are OPTIONAL on a
    * deny — Scott's *"the provider might tell them"* is a MAY, not a MUST.
    * ⚠⚠⚠ **`deny_floor_cents` IS NOT A PRICE THE SELLER IS BOUND TO.** It is the floor
    * the buyer's NEXT offer must clear, and that next offer is still deniable.
    */
-  deny_message     String?
-  deny_floor_cents Int?
+  deny_message          String?
+  deny_floor_cents      Int?
   /**
    * ⚠ THE FLOOR THIS OFFER HAD TO CLEAR, copied from the deny that preceded it.
    * ⚠⚠ **RECORDED SO THE RULE IS AUDITABLE AFTER THE FACT** — without it, "was this
@@ -7685,11 +7672,11 @@ model ServiceProductOffer {
    * would prove it may itself have been withdrawn.
    * ⚠ Null on a first offer, which is the common case.
    */
-  cleared_floor_cents Int?
+  cleared_floor_cents   Int?
   /// MO-E003: the buyer's optional note, and the provider's one counter.
-  note                 String?
-  counter_amount_cents Int?
-  countered_at         DateTime?
+  note                  String?
+  counter_amount_cents  Int?
+  countered_at          DateTime?
   /// Lane 7: the buyer's proposed delivery date, and the seller's counter date.
   delivery_date         DateTime?
   counter_delivery_date DateTime?
@@ -7789,7 +7776,6 @@ model LearningPathSkill {
 enum OnboardingRequestStatus {
   /**
    * ⚠⚠⚠ ONE VALUE, AND THAT IS A DELIBERATE STATEMENT RATHER THAN AN OVERSIGHT.
-   *
    * ⚠ The delivery lifecycle — sent, confirmed, failed — belongs to **WS-B, the outbound
    * call**, and ⚠⚠ **WS-B IS NOT BUILT BECAUSE NOTHING NAMES "THE ONBOARDING
    * APPLICATION": no env var, no route, no service, no client. Measured 2026-09-29.**
@@ -7803,7 +7789,7 @@ enum OnboardingRequestStatus {
 }
 
 model OnboardingRequest {
-  id String @id @default(uuid()) @db.Uuid
+  id                        String @id @default(uuid()) @db.Uuid
   /// ⚠ Human-readable and unique. `ONB-` collides with nothing: `OFR-` is an offer,
   /// `PRO-` a proposal, `PE-` an evaluation, `SL-` a shortlist.
   onboarding_request_number String @unique
@@ -8267,20 +8253,20 @@ model AdminAudit {
   actor_email String?
 
   /// `test_set.create` · `test_accounts.remove` · `user.update` · `user.lock` …
-  action String
+  action       String
   /// What it acted on — `users`, `people`, `plan_rows`. Free text, because a
   /// script's target is not always a Prisma model.
   target_table String
   /// ⚠ The row's id when there is exactly one, null for a bulk action whose
   /// scope is in `detail` instead.
-  target_id String?
+  target_id    String?
   /// ⚠⚠ A human-readable summary AND the before/after when a field changed.
   /// Scott asked for "who, when, field, before → after"; `detail` carries the
   /// pair so the log reads without another query.
-  detail Json?
+  detail       Json?
   /// ⚠ How many rows the action touched. `1` for a field edit, `n` for a bulk
   /// remove — the number that makes a deletion legible at a glance.
-  row_count Int @default(1)
+  row_count    Int     @default(1)
 
   created_at DateTime @default(now())
 
@@ -8310,7 +8296,6 @@ model DataSnapshot {
   @@index([table_name, day])
   @@map("data_snapshots")
 }
-
 
 /// A week's "Follow the Build" email (`P2-ALL-E818`).
 ///
@@ -8388,23 +8373,23 @@ enum GlossaryVisibility {
 
 /// The Panameer glossary: terms, acronyms and what not to say. Admin-managed; hidden, never deleted.
 model GlossaryTerm {
-  id          String             @id @default(uuid()) @db.Uuid
-  term        String
+  id           String             @id @default(uuid()) @db.Uuid
+  term         String
   /// Lower-cased term, so a term is unique case-insensitively.
-  term_key    String             @unique
-  category    String?
-  type        String?
-  definition  String
-  also_called String?
-  dont_say    String?
-  visibility  GlossaryVisibility @default(PUBLIC)
-  hidden      Boolean            @default(false)
+  term_key     String             @unique
+  category     String?
+  type         String?
+  definition   String
+  also_called  String?
+  dont_say     String?
+  visibility   GlossaryVisibility @default(PUBLIC)
+  hidden       Boolean            @default(false)
   /// The draft's "Scott to confirm" note, kept for the admin until cleared.
   confirm_note String?
   /// NM-E013: where the term lives in the system (table, or table.column) — one name front to back.
-  system_name String?
-  created_at  DateTime           @default(now())
-  updated_at  DateTime           @updatedAt
+  system_name  String?
+  created_at   DateTime           @default(now())
+  updated_at   DateTime           @updatedAt
 
   @@map("glossary_terms")
 }
@@ -8511,7 +8496,7 @@ model ProviderService {
   rate_cents          Int?
   billing_cycle       BillingCycle    @default(MONTHLY)
   payment_terms       PaymentTerms    @default(NET30)
-  payment_event     PaymentEvent  @default(TIMESHEET)
+  payment_event       PaymentEvent    @default(TIMESHEET)
   unspsc_code         String?
   active              Boolean         @default(true)
   sort_order          Int             @default(100)
@@ -8585,24 +8570,24 @@ enum ErpMessageStatus {
 
 /// X-E001: one customer company's ERP link. No credentials here — `credential_env_name` names a Vercel env var.
 model ErpConnection {
-  id                  String   @id @default(uuid()) @db.Uuid
-  p_account_id        String   @db.Uuid
-  name                String
-  erp_kind            ErpKind  @default(ORACLE_CLOUD)
-  from_domain         String   @default("NetworkID")
-  from_identity       String
-  to_domain           String   @default("NetworkID")
-  to_identity         String   @default("PANAMEER")
-  sender_domain       String   @default("NetworkID")
-  sender_identity     String
+  id                   String   @id @default(uuid()) @db.Uuid
+  p_account_id         String   @db.Uuid
+  name                 String
+  erp_kind             ErpKind  @default(ORACLE_CLOUD)
+  from_domain          String   @default("NetworkID")
+  from_identity        String
+  to_domain            String   @default("NetworkID")
+  to_identity          String   @default("PANAMEER")
+  sender_domain        String   @default("NetworkID")
+  sender_identity      String
   /// scrypt hash of the inbound shared secret; the secret itself is never stored.
-  shared_secret_hash  String?
-  outbound_cxml_url   String?
+  shared_secret_hash   String?
+  outbound_cxml_url    String?
   oracle_rest_base_url String?
-  credential_env_name String?
-  active              Boolean  @default(true)
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
+  credential_env_name  String?
+  active               Boolean  @default(true)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
 
   @@index([p_account_id])
   @@index([sender_identity])
@@ -8611,23 +8596,23 @@ model ErpConnection {
 
 /// X-E001: inbox/outbox log. payload_id is unique per connection, which makes inbound handling idempotent.
 model ErpMessage {
-  id                    String           @id @default(uuid()) @db.Uuid
-  connection_id         String           @db.Uuid
-  direction             ErpDirection
-  type                  ErpMessageType
-  payload_id            String
-  work_request_id       String?          @db.Uuid
-  work_order_id         String?          @db.Uuid
+  id                 String           @id @default(uuid()) @db.Uuid
+  connection_id      String           @db.Uuid
+  direction          ErpDirection
+  type               ErpMessageType
+  payload_id         String
+  work_request_id    String?          @db.Uuid
+  work_order_id      String?          @db.Uuid
   payment_request_id String?          @db.Uuid
-  status                ErpMessageStatus
-  body                  String
-  response              String?
-  attempts              Int              @default(0)
-  last_error            String?
+  status             ErpMessageStatus
+  body               String
+  response           String?
+  attempts           Int              @default(0)
+  last_error         String?
   /// The ERP's id for what this created (e.g. Oracle WorkConfirmationId), for status polls.
-  external_id           String?
-  created_at            DateTime         @default(now())
-  updated_at            DateTime         @updatedAt
+  external_id        String?
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @updatedAt
 
   @@unique([connection_id, payload_id])
   @@index([status])
@@ -8712,25 +8697,25 @@ enum EstimateLineKind {
 
 /// CAT-E006: a provider's estimate for one customer — private to the two of them. Accept → work order.
 model Estimate {
-  id                  String             @id @default(uuid()) @db.Uuid
-  estimate_number     String             @unique
+  id                 String         @id @default(uuid()) @db.Uuid
+  estimate_number    String         @unique
   /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
-  legacy_number          String?
-  provider_person_id  String             @db.Uuid
+  legacy_number      String?
+  provider_person_id String         @db.Uuid
   /// The customer when they are a member (set on send, or when a non-member signs up with the emailed address).
-  customer_person_id  String?            @db.Uuid
-  customer_email      String?
-  work_request_id     String?            @db.Uuid
-  title               String
-  status              EstimateStatus @default(DRAFT)
-  valid_until         DateTime
-  current_revision    Int                @default(1)
-  currency            String             @default("USD")
-  work_order_id       String?            @db.Uuid
-  sent_at             DateTime?
-  decided_at          DateTime?
-  created_at          DateTime           @default(now())
-  updated_at          DateTime           @updatedAt
+  customer_person_id String?        @db.Uuid
+  customer_email     String?
+  work_request_id    String?        @db.Uuid
+  title              String
+  status             EstimateStatus @default(DRAFT)
+  valid_until        DateTime
+  current_revision   Int            @default(1)
+  currency           String         @default("USD")
+  work_order_id      String?        @db.Uuid
+  sent_at            DateTime?
+  decided_at         DateTime?
+  created_at         DateTime       @default(now())
+  updated_at         DateTime       @updatedAt
 
   revisions EstimateRevision[]
 
@@ -8742,22 +8727,22 @@ model Estimate {
 
 /// CAT-E006: each send is a revision; Ask for Changes → the provider revises and resubmits as revision n+1 (history kept).
 model EstimateRevision {
-  id               String         @id @default(uuid()) @db.Uuid
-  estimate_id      String         @db.Uuid
+  id               String       @id @default(uuid()) @db.Uuid
+  estimate_id      String       @db.Uuid
   revision_number  Int
   scope            String?
   assumptions      String?
   exclusions       String?
   message          String?
-  payment_terms    PaymentTerms   @default(NET30)
-  billing_cycle    BillingCycle   @default(MONTHLY)
-  total_cents      Int            @default(0)
+  payment_terms    PaymentTerms @default(NET30)
+  billing_cycle    BillingCycle @default(MONTHLY)
+  total_cents      Int          @default(0)
   sent_at          DateTime?
   /// CHANGES_REQUESTED · ACCEPTED · DECLINED — the customer's answer to this revision.
   decision         String?
   customer_comment String?
   decided_at       DateTime?
-  created_at       DateTime       @default(now())
+  created_at       DateTime     @default(now())
 
   estimate Estimate       @relation(fields: [estimate_id], references: [id], onDelete: Cascade)
   lines    EstimateLine[]
@@ -8767,14 +8752,14 @@ model EstimateRevision {
 }
 
 model EstimateLine {
-  id                  String               @id @default(uuid()) @db.Uuid
-  revision_id         String               @db.Uuid
+  id                  String           @id @default(uuid()) @db.Uuid
+  revision_id         String           @db.Uuid
   line_number         Int
   kind                EstimateLineKind
   description         String
-  provider_service_id String?              @db.Uuid
+  provider_service_id String?          @db.Uuid
   /// Copied from a service product: the order line keeps its payment schedule.
-  service_product_id  String?              @db.Uuid
+  service_product_id  String?          @db.Uuid
   uom                 String?
   quantity            Decimal?
   rate_cents          Int?
@@ -8788,15 +8773,15 @@ model EstimateLine {
 
 /// CAT-E007: a work-order line's payment schedule, copied from the service product (or one 100% milestone). Reporting it raises its payment request.
 model WorkOrderMilestone {
-  id                    String         @id @default(uuid()) @db.Uuid
-  work_order_line_id    String         @db.Uuid
-  sequence              Int
-  label                 String
-  percent               Int
-  payment_event               PaymentEvent
-  reported_at           DateTime?
-  payment_request_id String?        @db.Uuid
-  created_at            DateTime       @default(now())
+  id                 String       @id @default(uuid()) @db.Uuid
+  work_order_line_id String       @db.Uuid
+  sequence           Int
+  label              String
+  percent            Int
+  payment_event      PaymentEvent
+  reported_at        DateTime?
+  payment_request_id String?      @db.Uuid
+  created_at         DateTime     @default(now())
 
   @@unique([work_order_line_id, sequence])
   @@map("work_order_milestones")
@@ -8824,11 +8809,11 @@ enum EstimateRequestStatus {
 
 /// EST-E001: a buyer asks a provider for a cost estimate (private to the two). Sending the estimate answers it.
 model EstimateRequest {
-  id                  String                    @id @default(uuid()) @db.Uuid
-  requester_person_id String                    @db.Uuid
-  provider_person_id  String                    @db.Uuid
-  service_id          String?                   @db.Uuid
-  service_product_id  String?                   @db.Uuid
+  id                  String                @id @default(uuid()) @db.Uuid
+  requester_person_id String                @db.Uuid
+  provider_person_id  String                @db.Uuid
+  service_id          String?               @db.Uuid
+  service_product_id  String?               @db.Uuid
   description         String
   start_by            DateTime?
   budget_min_cents    Int?
@@ -8837,9 +8822,9 @@ model EstimateRequest {
   attachments         Json?
   status              EstimateRequestStatus @default(OPEN)
   decline_reason      String?
-  cost_estimate_id    String?                   @db.Uuid
-  created_at          DateTime                  @default(now())
-  updated_at          DateTime                  @updatedAt
+  cost_estimate_id    String?               @db.Uuid
+  created_at          DateTime              @default(now())
+  updated_at          DateTime              @updatedAt
 
   @@index([provider_person_id, status])
   @@index([requester_person_id])
@@ -8858,20 +8843,20 @@ model Cart {
 }
 
 model CartLine {
-  id                 String   @id @default(uuid()) @db.Uuid
-  cart_id            String   @db.Uuid
+  id                  String    @id @default(uuid()) @db.Uuid
+  cart_id             String    @db.Uuid
   /// Lane 7: a product line, or a Service (rate) line from an accepted offer.
   service_product_id  String?   @db.Uuid
   provider_service_id String?   @db.Uuid
   /// Lane 7: the agreed delivery date from an accepted offer.
   delivery_date       DateTime?
-  quantity           Int      @default(1)
-  unit_price_cents   Int
-  currency           String   @default("USD")
+  quantity            Int       @default(1)
+  unit_price_cents    Int
+  currency            String    @default("USD")
   /// MO-E003: set when the price is an accepted offer (the agreed price, not the list price).
-  offer_id           String?  @db.Uuid
-  created_at         DateTime @default(now())
-  cart               Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  offer_id            String?   @db.Uuid
+  created_at          DateTime  @default(now())
+  cart                Cart      @relation(fields: [cart_id], references: [id], onDelete: Cascade)
 
   @@unique([cart_id, service_product_id])
   @@map("cart_lines")
@@ -8895,22 +8880,22 @@ model ServiceProductType {
 
 /// TX-E001: Level 1 of the Service Taxonomy — UNSPSC-based, the same for every business type, shown to buyers.
 model CommodityGroup {
-  id              String         @id @default(uuid()) @db.Uuid
-  name            String         @unique
+  id                String            @id @default(uuid()) @db.Uuid
+  name              String            @unique
   /// UNSPSC segments, e.g. ["80","81","84"].
-  unspsc_segments String[]
-  sort_order      Int            @default(100)
+  unspsc_segments   String[]
+  sort_order        Int               @default(100)
   /// Parked groups stay hidden (not offered yet).
-  hidden          Boolean        @default(false)
+  hidden            Boolean           @default(false)
   /// TX2-E001: plain-words examples shown behind the ? in the Business Type picker.
-  description     String?
+  description       String?
   /// CH-E002: the Category's Shop tile — line icon key, one-sentence line, and whether it shows in Shop and Hire.
-  icon            String?
-  tile_line       String?
-  show_in_shop    Boolean        @default(true)
-  created_at      DateTime       @default(now())
-  businessTypes   BusinessType[]
-  buySettings     BuySetting[]
+  icon              String?
+  tile_line         String?
+  show_in_shop      Boolean           @default(true)
+  created_at        DateTime          @default(now())
+  businessTypes     BusinessType[]
+  buySettings       BuySetting[]
   serviceCategories ServiceCategory[]
 
   @@map("commodity_groups")
@@ -8918,19 +8903,19 @@ model CommodityGroup {
 
 /// TX-E001: Level 3 — about five per business type (Consulting · Project Support · … · Build · Run).
 model ServiceCategory {
-  id               String        @id @default(uuid()) @db.Uuid
+  id                 String          @id @default(uuid()) @db.Uuid
   /// TX2-E001: exactly one of business_type_id / commodity_group_id is set; commodity-level = that commodity's Rates.
-  business_type_id   String?        @db.Uuid
-  commodity_group_id String?        @db.Uuid
-  name             String
-  kind             ServiceKind
-  sort_order       Int           @default(100)
+  business_type_id   String?         @db.Uuid
+  commodity_group_id String?         @db.Uuid
+  name               String
+  kind               ServiceKind
+  sort_order         Int             @default(100)
   /// MC-E004/E007: hidden by an admin (e.g. emptied by the rate-types fold).
-  hidden           Boolean       @default(false)
-  created_at       DateTime      @default(now())
-  businessType     BusinessType?  @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
-  commodityGroup   CommodityGroup? @relation(fields: [commodity_group_id], references: [id], onDelete: Cascade)
-  serviceTypes     ServiceType[]
+  hidden             Boolean         @default(false)
+  created_at         DateTime        @default(now())
+  businessType       BusinessType?   @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  commodityGroup     CommodityGroup? @relation(fields: [commodity_group_id], references: [id], onDelete: Cascade)
+  serviceTypes       ServiceType[]
 
   @@unique([business_type_id, name])
   @@unique([commodity_group_id, name])
@@ -9123,15 +9108,15 @@ enum CapabilitySource {
 }
 
 model KnowledgeSkill {
-  id              String   @id @default(uuid()) @db.Uuid
-  domain_id       String   @db.Uuid
+  id              String               @id @default(uuid()) @db.Uuid
+  domain_id       String               @db.Uuid
   name            String
-  legacy_skill_id String?  @unique @db.Uuid
-  hidden          Boolean  @default(false)
-  sort_order      Int      @default(100)
-  origin          String   @default("GT_2026_10_14")
-  created_at      DateTime @default(now())
-  domain          Domain   @relation(fields: [domain_id], references: [id], onDelete: Cascade)
+  legacy_skill_id String?              @unique @db.Uuid
+  hidden          Boolean              @default(false)
+  sort_order      Int                  @default(100)
+  origin          String               @default("GT_2026_10_14")
+  created_at      DateTime             @default(now())
+  domain          Domain               @relation(fields: [domain_id], references: [id], onDelete: Cascade)
   capabilities    ProviderCapability[]
 
   @@unique([domain_id, name])
@@ -9151,15 +9136,15 @@ model SystemVendor {
 }
 
 model SystemProduct {
-  id         String       @id @default(uuid()) @db.Uuid
-  vendor_id  String       @db.Uuid
-  name       String
-  hidden     Boolean      @default(false)
-  sort_order Int          @default(100)
-  origin     String       @default("GT_2026_10_14")
-  created_at DateTime     @default(now())
-  vendor     SystemVendor @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
-  items      SystemItem[]
+  id           String               @id @default(uuid()) @db.Uuid
+  vendor_id    String               @db.Uuid
+  name         String
+  hidden       Boolean              @default(false)
+  sort_order   Int                  @default(100)
+  origin       String               @default("GT_2026_10_14")
+  created_at   DateTime             @default(now())
+  vendor       SystemVendor         @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+  items        SystemItem[]
   capabilities ProviderCapability[]
 
   @@unique([vendor_id, name])
@@ -9167,19 +9152,19 @@ model SystemProduct {
 }
 
 model SystemItem {
-  id              String         @id @default(uuid()) @db.Uuid
-  product_id      String         @db.Uuid
+  id              String               @id @default(uuid()) @db.Uuid
+  product_id      String               @db.Uuid
   name            String
   kind            SystemItemKind
   /// The Knowledge domain this module/tool belongs to (re-linkable in admin).
-  domain_id       String?        @db.Uuid
-  legacy_skill_id String?        @unique @db.Uuid
-  hidden          Boolean        @default(false)
-  sort_order      Int            @default(100)
-  origin          String         @default("GT_2026_10_14")
-  created_at      DateTime       @default(now())
-  product         SystemProduct  @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  domain          Domain?        @relation(fields: [domain_id], references: [id], onDelete: SetNull)
+  domain_id       String?              @db.Uuid
+  legacy_skill_id String?              @unique @db.Uuid
+  hidden          Boolean              @default(false)
+  sort_order      Int                  @default(100)
+  origin          String               @default("GT_2026_10_14")
+  created_at      DateTime             @default(now())
+  product         SystemProduct        @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  domain          Domain?              @relation(fields: [domain_id], references: [id], onDelete: SetNull)
   capabilities    ProviderCapability[]
 
   @@unique([product_id, name])
@@ -9188,15 +9173,16 @@ model SystemItem {
 }
 
 model WorkRole {
-  id              String   @id @default(uuid()) @db.Uuid
+  id              String               @id @default(uuid()) @db.Uuid
   mode            WorkMode
   name            String
-  legacy_skill_id String?  @unique @db.Uuid
-  hidden          Boolean  @default(false)
-  sort_order      Int      @default(100)
-  origin          String   @default("GT_2026_10_14")
-  created_at      DateTime @default(now())
+  legacy_skill_id String?              @unique @db.Uuid
+  hidden          Boolean              @default(false)
+  sort_order      Int                  @default(100)
+  origin          String               @default("GT_2026_10_14")
+  created_at      DateTime             @default(now())
   capabilities    ProviderCapability[]
+  jobs            Job[]
 
   @@unique([mode, name])
   @@map("work_roles")
@@ -9253,17 +9239,17 @@ model BusinessTypeProcess {
 /// (e.g. "Licensed in (states)"). `list` = a standard list (US_STATES · COUNTRIES · LANGUAGES) or FREE (type your own);
 /// otherwise `choices`. Behind taxonomy_v2; origin GT (the rollback removes them).
 model BusinessTypeAttribute {
-  id               String   @id @default(uuid()) @db.Uuid
-  business_type_id String   @db.Uuid
+  id               String                   @id @default(uuid()) @db.Uuid
+  business_type_id String                   @db.Uuid
   name             String
-  choices          String[] @default([])
+  choices          String[]                 @default([])
   list             String?
-  multi            Boolean  @default(true)
-  hidden           Boolean  @default(false)
-  sort_order       Int      @default(100)
-  origin           String   @default("GT_2026_10_14")
-  created_at       DateTime @default(now())
-  businessType     BusinessType @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
+  multi            Boolean                  @default(true)
+  hidden           Boolean                  @default(false)
+  sort_order       Int                      @default(100)
+  origin           String                   @default("GT_2026_10_14")
+  created_at       DateTime                 @default(now())
+  businessType     BusinessType             @relation(fields: [business_type_id], references: [id], onDelete: Cascade)
   values           ProviderAttributeValue[]
 
   @@unique([business_type_id, name])
@@ -9295,6 +9281,8 @@ model Job {
   buyer_person_id       String               @db.Uuid
   p_account_id          String               @db.Uuid
   role_id               String?              @db.Uuid
+  /// HF-E003: the specific RDS role picked on Who (e.g. Functional Consultant); role_id stays its top role.
+  specific_role_id      String?              @db.Uuid
   pillar_id             String?              @db.Uuid
   region_id             String?              @db.Uuid
   specialization_id     String?              @db.Uuid
@@ -9342,6 +9330,7 @@ model Job {
   buyer           Person              @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
   pAccount        PAccount            @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
   role            Role?               @relation(fields: [role_id], references: [id], onDelete: SetNull)
+  specificRole    WorkRole?           @relation(fields: [specific_role_id], references: [id], onDelete: SetNull)
   pillar          Pillar?             @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
   region          Region?             @relation(fields: [region_id], references: [id], onDelete: SetNull)
   specialization  Specialization?     @relation("jobsAsVendor", fields: [specialization_id], references: [id], onDelete: SetNull)
@@ -9378,18 +9367,18 @@ enum WorkRequestSource {
 
 /// SO-E006–E009: follow-up on people who stopped partway through registration (buyer or seller).
 model RegistrationFollowup {
-  id               String    @id @default(uuid()) @db.Uuid
-  person_id        String    @unique @db.Uuid
-  last_activity_at DateTime  @default(now())
-  reminder1_at     DateTime?
-  reminder2_at     DateTime?
+  id                String    @id @default(uuid()) @db.Uuid
+  person_id         String    @unique @db.Uuid
+  last_activity_at  DateTime  @default(now())
+  reminder1_at      DateTime?
+  reminder2_at      DateTime?
   admin_notified_at DateTime?
-  personal_emails  Int       @default(0)
-  followed_up_at   DateTime?
-  reason           String?
-  note             String?
-  created_at       DateTime  @default(now())
-  updated_at       DateTime  @updatedAt
+  personal_emails   Int       @default(0)
+  followed_up_at    DateTime?
+  reason            String?
+  note              String?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
 
   person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
 

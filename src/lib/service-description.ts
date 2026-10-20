@@ -17,7 +17,7 @@ export type ServiceDescription = {
   worksite: WorksiteType | null; city: string; state: string; country: string; onsiteDays: number | null;
   contractTypes: SdContract[];
   roleId: string | null;
-  /** SM-E005: the specific role (a work role name, e.g. Functional Consultant); roleId is its top role. Not stored — read back from the title. */
+  /** SM-E005/HF-E003: the specific role (a work role name, e.g. Functional Consultant), saved as jobs.specific_role_id; roleId is its top role. */
   specificRole: string;
   domains: string[]; product: string; skills: { id: string; name: string }[]; customSkills: string[];
   years: number | null; education: string; credentials: string[]; specialties: string[];
@@ -157,9 +157,10 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string, p
 
 // ── SD-E003: save the standard onto the draft Job, and read it back for editing ────────────────────────────────
 export async function writeServiceDescription(jobId: string, sd: ServiceDescription) {
-  const [group, pillar] = await Promise.all([
+  const [group, pillar, specific] = await Promise.all([
     sd.category ? prisma.commodityGroup.findFirst({ where: { name: sd.category }, select: { id: true } }) : null,
     productPillarName(sd.product) ? prisma.pillar.findFirst({ where: { name: productPillarName(sd.product)! }, select: { id: true } }) : null,
+    sd.specificRole ? prisma.workRole.findFirst({ where: { name: sd.specificRole, hidden: false }, orderBy: [{ mode: "asc" }, { sort_order: "asc" }], select: { id: true } }) : null,
   ]);
   const lines = (t: string) => t.trim().slice(0, 6000) || null;
   await prisma.job.update({
@@ -170,7 +171,7 @@ export async function writeServiceDescription(jobId: string, sd: ServiceDescript
       worksite: sd.worksite, city: sd.city.trim() || null, state: sd.state.trim() || null, location_country: sd.country.trim() || null,
       onsite_days_per_week: sd.worksite && sd.worksite !== "OFFSITE" ? sd.onsiteDays : null,
       contract_types: [...new Set(sd.contractTypes)].map((c) => CONTRACT_TO_DB[c]),
-      role_id: sd.roleId, pillar_id: pillar?.id ?? null, product: sd.product.trim() || null, domains: sd.domains.slice(0, 8),
+      role_id: sd.roleId, specific_role_id: specific?.id ?? null, pillar_id: pillar?.id ?? null, product: sd.product.trim() || null, domains: sd.domains.slice(0, 8),
       custom_skills: [...new Set(sd.customSkills.map((s) => s.trim()).filter(Boolean))].slice(0, 30),
       years_experience: sd.years, education: sd.education.trim() || null,
       responsibilities: lines(sd.responsibilities), required: lines(sd.required), nice_to_have: lines(sd.niceToHave),
@@ -195,7 +196,7 @@ export async function writeServiceDescription(jobId: string, sd: ServiceDescript
 export async function readServiceDescription(jobId: string): Promise<ServiceDescription | null> {
   const j = await prisma.job.findUnique({
     where: { id: jobId },
-    include: { skills: { include: { skill: { select: { id: true, name: true } } } }, credentials: true, specializations: { include: { specialization: { select: { name: true } } } } },
+    include: { specificRole: { select: { name: true } }, skills: { include: { skill: { select: { id: true, name: true } } } }, credentials: true, specializations: { include: { specialization: { select: { name: true } } } } },
   });
   if (!j) return null;
   const [group, bt] = await Promise.all([
@@ -207,7 +208,7 @@ export async function readServiceDescription(jobId: string): Promise<ServiceDesc
     category: group?.name ?? "", businessTypeId: j.business_type_id, businessType: bt?.name ?? "", usesSkills: bt?.uses_skills ?? true, title: j.title, summary: j.description ?? "",
     worksite: j.worksite, city: j.city ?? "", state: j.state ?? "", country: j.location_country ?? "", onsiteDays: j.onsite_days_per_week,
     contractTypes: j.contract_types.map((c) => CONTRACT_FROM_DB[c]),
-    roleId: j.role_id, specificRole: deepRolesIn(`${j.title} ${j.description ?? ""}`)[0] ?? "", domains: j.domains, product: j.product ?? "", skills: j.skills.map((s) => ({ id: s.skill.id, name: s.skill.name })), customSkills: j.custom_skills,
+    roleId: j.role_id, specificRole: j.specificRole?.name ?? deepRolesIn(`${j.title} ${j.description ?? ""}`)[0] ?? "", domains: j.domains, product: j.product ?? "", skills: j.skills.map((s) => ({ id: s.skill.id, name: s.skill.name })), customSkills: j.custom_skills,
     years: j.years_experience, education: j.education ?? "", credentials: j.credentials.map((c) => c.name), specialties: j.specializations.map((s) => s.specialization.name),
     responsibilities: j.responsibilities ?? "", required: j.required ?? "", niceToHave: j.nice_to_have ?? "",
     startText: j.start_text ?? "", startDate: j.start_date ? j.start_date.toISOString().slice(0, 10) : "", duration: j.duration,
