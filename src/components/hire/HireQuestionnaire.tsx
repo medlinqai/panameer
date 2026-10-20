@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { HireMatch } from "@/lib/hire-questionnaire";
+import { MatchList } from "@/components/hire/MatchList";
 import type { JobDefaults } from "@/lib/work-request";
 import type { SdContract, ServiceDescription } from "@/lib/service-description";
 
@@ -56,17 +57,6 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [matches, setMatches] = useState<HireMatch[] | null>(null);
-  const [picked, setPicked] = useState<Set<string>>(new Set());
-  // MQ-E001: providers outside the job's state stay folded away until asked for.
-  const [showOutside, setShowOutside] = useState(false);
-  // MQ-E005: hidden per job; the list closes up at once and "Show hidden" brings them back.
-  const [showHidden, setShowHidden] = useState(false);
-  const hide = async (personId: string, hidden: boolean) => {
-    setMatches((ms) => ms?.map((m) => (m.personId === personId ? { ...m, hidden } : m)) ?? null);
-    if (hidden) setPicked((s) => { const n = new Set(s); n.delete(personId); return n; });
-    await fetch("/api/hire", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: hidden ? "hide" : "unhide", jobId, personIds: [personId] }) }).catch(() => null);
-  };
-  const [sent, setSent] = useState<number | null>(null);
   const set = (patch: Partial<ServiceDescription>) => { setF((x) => ({ ...x, ...patch })); setFromLast((l) => l.filter((k) => !(k in patch))); };
   const from = (k: string) => (f.fromPosting.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-posting>from your posting</span> : fromLast.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-last-job>from your last job</span> : null);
 
@@ -126,8 +116,6 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
     setJobId(j.jobId as string);
     const m = (j.matches as HireMatch[]) ?? [];
     setMatches(m);
-    // MQ-E005: nothing pre-ticked.
-    setPicked(new Set());
     setStep(5);
   };
 
@@ -146,11 +134,6 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
     void loadMatches();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const request = async () => {
-    const j = await call({ action: "request", jobId, personIds: [...picked] });
-    if (j) setSent(((j.created as unknown[]) ?? []).length + ((j.alreadyInvited as unknown[]) ?? []).length);
-  };
 
   // PC-E002: a new Business Type re-reads WHO from the posting (pass 2 only); What, Where, Contract, When and Rate stay.
   const pickBusinessType = async (b: { id: string; name: string; usesSkills: boolean }) => {
@@ -345,55 +328,8 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         {step === 5 && matches && (
           <div data-hire-matches>
             <h2 className="text-[19px] font-extrabold">Your matches</h2>
-            <p className="text-[13.5px] text-ink-2">Ranked by role, skills, product and location, then rate inside your budget. Pick who should send a proposal.</p>
-            {matches.length === 0 ? (
-              <p className="mt-4 text-[14px] text-ink-3">No one in {f.category} matches yet. Your Service Description is saved as a draft — <Link href={`/work-requests/${jobId}`} className="font-semibold text-magenta-dark underline">open it</Link>.</p>
-            ) : (
-              <ul className="mt-3 divide-y divide-line border-y border-line">
-                {matches.filter((m) => !m.hidden && (showOutside || !m.outside)).map((m) => (
-                  <li key={m.personId} className="flex items-start gap-3 py-3" data-hire-match={m.name}>
-                    <input type="checkbox" checked={picked.has(m.personId)} onChange={() => setPicked((s) => { const n = new Set(s); if (n.has(m.personId)) n.delete(m.personId); else n.add(m.personId); return n; })} aria-label={`Select ${m.name}`} className="mt-1 h-4 w-4 accent-[var(--color-ink,#272334)]" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[15px] font-bold">{m.company ? `${m.company} · ` : ""}{m.name}</p>
-                      <p className="text-[13px] text-ink-2">{m.line}</p>
-                      <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]" data-why>
-                        {m.why.map((k) => <span key={k} className="rounded-full border border-magenta-dark bg-[#fbeafb] px-2 font-semibold text-magenta-dark">{k}</span>)}
-                        {m.matched.map((k) => <span key={k} className="rounded-full border border-line bg-bg-soft px-2">{k}</span>)}
-                        {m.inBudget && <span className="rounded-full border border-line px-2">In budget</span>}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 text-right text-[13px]">
-                      {m.rate && <b className="block">{m.rate}</b>}
-                      <Link href={`/hire/terms?job=${jobId}&provider=${m.personId}`} data-hire-provider className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Hire</Link>
-                      <Link href={`/providers/${m.profileId}?from=matches`} className="font-semibold text-magenta-dark underline underline-offset-4">View profile</Link>
-                      <button type="button" onClick={() => hide(m.personId, true)} className="text-[12.5px] text-ink-3 underline underline-offset-4 hover:text-ink" data-hide-match aria-label={`Hide ${m.name}`}>Hide ×</button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {matches.some((m) => m.hidden) && (
-              <div className="mt-3 text-[13.5px]" data-hidden-matches>
-                <button type="button" onClick={() => setShowHidden((v) => !v)} className="font-semibold text-ink-2 underline underline-offset-4">{`Show hidden (${matches.filter((m) => m.hidden).length})`}</button>
-                {showHidden && (
-                  <ul className="mt-1">
-                    {matches.filter((m) => m.hidden).map((m) => <li key={m.personId} className="flex items-center gap-3 py-1">{m.name} <button type="button" onClick={() => hide(m.personId, false)} className="font-semibold text-magenta-dark underline underline-offset-4">Restore</button></li>)}
-                  </ul>
-                )}
-              </div>
-            )}
-            {matches.some((m) => m.outside) && (
-              <button type="button" onClick={() => setShowOutside((v) => !v)} className="mt-3 text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4" data-show-outside>
-                {showOutside ? `Hide providers outside ${f.state.toUpperCase()}` : `Show providers outside ${f.state.toUpperCase()} (${matches.filter((m) => m.outside).length})`}
-              </button>
-            )}
-            {matches.length > 0 && (
-              <div className="sticky bottom-0 z-10 mt-4 flex flex-wrap items-center gap-3 border-t border-line bg-white py-3" data-proposals-bar>
-                <button type="button" className={BTN} disabled={busy || !picked.size || sent != null} onClick={request} data-request-proposals>{sent != null ? "Requests Sent" : `Request Proposals from ${picked.size}`}</button>
-                <span className="text-[13px] text-ink-2">Tick who should propose — or Hire one directly.</span>
-                {sent != null && <Link href={`/work-requests/${jobId}`} className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View the Service Description →</Link>}
-              </div>
-            )}
+            <p className="text-[13.5px] text-ink-2">Ranked by role, skills, product and location, then rate inside your budget. Star who should propose; click a row for a quick view.</p>
+            <MatchList key={jobId ?? "new"} jobId={jobId} matches={matches} state={f.state} empty={<p className="mt-4 text-[14px] text-ink-3">No one in {f.category} matches yet. Your Service Description is saved as a draft — <Link href={`/work-requests/${jobId}`} className="font-semibold text-magenta-dark underline">open it</Link>.</p>} />
           </div>
         )}
 
@@ -404,7 +340,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
             <button type="button" className={BTN} disabled={busy} onClick={next}>{busy ? "Saving…" : step === 4 ? "Show My Matches" : `Next: ${STEPS[step + 1]}`}</button>
           </div>
         )}
-        {step === 5 && <button type="button" className="mt-4 text-[13px] font-semibold text-ink-2 underline" onClick={() => { setStep(4); setSent(null); }}>Change my answers</button>}
+        {step === 5 && <button type="button" className="mt-4 text-[13px] font-semibold text-ink-2 underline" onClick={() => setStep(4)}>Change my answers</button>}
       </section>
     </div>
   );

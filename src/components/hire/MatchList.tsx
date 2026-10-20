@@ -1,0 +1,205 @@
+"use client";
+
+import Link from "next/link";
+import { useState, type ReactNode } from "react";
+import type { HireMatch } from "@/lib/hire-questionnaire";
+import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
+
+// SE-E002/E003: one match list for Hire and the Job page — star (Shortlist), quick view, Compare, Request Proposals by a deadline.
+const BTN = "inline-flex min-h-10 items-center justify-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover disabled:opacity-50";
+const GHOST = "inline-flex min-h-9 items-center justify-center border border-ink bg-white px-3.5 text-[13px] font-semibold text-ink hover:bg-bg-soft disabled:opacity-40";
+const CHIP = "rounded-full border border-line bg-bg-soft px-2";
+const WHY = "rounded-full border border-magenta-dark bg-[#fbeafb] px-2 font-semibold text-magenta-dark";
+
+async function post(body: object) {
+  const r = await fetch("/api/hire", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
+  const j = (await r?.json().catch(() => ({}))) as Record<string, unknown>;
+  return r?.ok ? j : { error: (j.error as string) ?? "That didn't work." };
+}
+
+function Star({ on, onClick, name }: { on: boolean; onClick: () => void; name: string }) {
+  return (
+    <button type="button" onClick={onClick} aria-pressed={on} aria-label={on ? `Remove ${name} from the Shortlist` : `Shortlist ${name}`} data-star={on ? "on" : "off"} className={on ? "text-[20px] leading-none text-magenta-dark" : "text-[20px] leading-none text-ink-3 hover:text-magenta-dark"}>
+      {on ? "★" : "☆"}
+    </button>
+  );
+}
+
+export function MatchList({ jobId, matches: initial, state, empty }: { jobId: string | null; matches: HireMatch[]; state?: string; empty?: ReactNode }) {
+  const [list, setList] = useState(initial);
+  const [showHidden, setShowHidden] = useState(false);
+  const [showOutside, setShowOutside] = useState(false);
+  const [starredOnly, setStarredOnly] = useState(false);
+  const [active, setActive] = useState<string | null>(null);
+  const [comparing, setComparing] = useState(false);
+  const [hours, setHours] = useState("48");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [opened, setOpened] = useState<{ eventId: string; eventNumber: string; count: number } | null>(null);
+
+  const patch = (personId: string, p: Partial<HireMatch>) => setList((ms) => ms.map((m) => (m.personId === personId ? { ...m, ...p } : m)));
+  const star = (m: HireMatch) => { patch(m.personId, { starred: !m.starred }); void post({ action: "star", jobId, personIds: [m.personId], on: !m.starred }); };
+  const hide = (m: HireMatch, hidden: boolean) => {
+    patch(m.personId, { hidden, ...(hidden ? { starred: false } : {}) });
+    if (hidden && active === m.personId) setActive(null);
+    void post({ action: hidden ? "hide" : "unhide", jobId, personIds: [m.personId] });
+    if (hidden && m.starred) void post({ action: "star", jobId, personIds: [m.personId], on: false });
+  };
+
+  const visible = list.filter((m) => !m.hidden && (showOutside || !m.outside) && (!starredOnly || m.starred));
+  const starred = list.filter((m) => m.starred && !m.hidden);
+  const at = visible.findIndex((m) => m.personId === active);
+  const cur = at >= 0 ? visible[at] : null;
+
+  const request = async () => {
+    setBusy(true);
+    setError(null);
+    const j = await post({ action: "request", jobId, personIds: starred.map((m) => m.personId), hours: Number(hours) });
+    setBusy(false);
+    if (j.error) { setError(j.error as string); return; }
+    setOpened({ eventId: j.eventId as string, eventNumber: j.eventNumber as string, count: ((j.created as unknown[]) ?? []).length });
+  };
+
+  if (!list.length) return <>{empty}</>;
+  return (
+    <div data-match-list>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
+        <button type="button" aria-pressed={!starredOnly} onClick={() => setStarredOnly(false)} className={!starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>All ({list.filter((m) => !m.hidden).length})</button>
+        <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({starred.length})</button>
+        <button type="button" disabled={starred.length < 2 || starred.length > 4} onClick={() => setComparing(true)} className={GHOST} data-compare title="Star 2 to 4 providers to compare them">Compare{starred.length >= 2 ? ` ${Math.min(starred.length, 4)}` : ""}</button>
+      </div>
+
+      <ul className="mt-3 divide-y divide-line border-y border-line">
+        {visible.map((m) => (
+          <li key={m.personId} className={`flex items-start gap-3 py-3 ${active === m.personId ? "bg-[#fbeafb]/40" : ""}`} data-hire-match={m.name}>
+            <Star on={m.starred} onClick={() => star(m)} name={m.name} />
+            {isMaskedName(m.name) && <NeutralAvatar size={36} />}
+            <button type="button" onClick={() => setActive(m.personId)} className="min-w-0 flex-1 text-left" data-quick-view-open>
+              <p className="text-[15px] font-bold hover:underline">{m.company ? `${m.company} · ` : ""}{m.name}</p>
+              <p className="text-[13px] text-ink-2">{m.line}</p>
+              <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]" data-why>
+                {m.why.map((k) => <span key={k} className={WHY}>{k}</span>)}
+                {m.matched.map((k) => <span key={k} className={CHIP}>{k}</span>)}
+                {m.inBudget && <span className="rounded-full border border-line px-2">In budget</span>}
+              </p>
+            </button>
+            <div className="flex flex-col items-end gap-1 text-right text-[13px]">
+              {m.rate && <b className="block">{m.rate}</b>}
+              <Link href={`/hire/terms?job=${jobId}&provider=${m.personId}`} data-hire-provider className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Hire</Link>
+              <button type="button" onClick={() => hide(m, true)} className="text-[12.5px] text-ink-3 underline underline-offset-4 hover:text-ink" data-hide-match aria-label={`Hide ${m.name}`}>Hide ×</button>
+            </div>
+          </li>
+        ))}
+        {!visible.length && <li className="py-4 text-[13.5px] text-ink-3">{starredOnly ? "Star providers to shortlist them." : "No one to show."}</li>}
+      </ul>
+
+      {list.some((m) => m.hidden) && (
+        <div className="mt-3 text-[13.5px]" data-hidden-matches>
+          <button type="button" onClick={() => setShowHidden((v) => !v)} className="font-semibold text-ink-2 underline underline-offset-4">{`Show hidden (${list.filter((m) => m.hidden).length})`}</button>
+          {showHidden && <ul className="mt-1">{list.filter((m) => m.hidden).map((m) => <li key={m.personId} className="flex items-center gap-3 py-1">{m.name} <button type="button" onClick={() => hide(m, false)} className="font-semibold text-magenta-dark underline underline-offset-4">Restore</button></li>)}</ul>}
+        </div>
+      )}
+      {list.some((m) => m.outside) && (
+        <button type="button" onClick={() => setShowOutside((v) => !v)} className="mt-3 text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4" data-show-outside>
+          {showOutside ? `Hide providers outside ${(state ?? "").toUpperCase()}` : `Show providers outside ${(state ?? "").toUpperCase()} (${list.filter((m) => m.outside).length})`}
+        </button>
+      )}
+
+      <div className="sticky bottom-0 z-10 mt-4 flex flex-wrap items-center gap-3 border-t border-line bg-white py-3" data-proposals-bar>
+        {opened ? (
+          <p className="text-[14px]"><b>{opened.eventNumber}</b> is open — {opened.count} request{opened.count === 1 ? "" : "s"} sent. <Link href={`/hire/sourcing/${opened.eventId}`} className="font-semibold text-magenta-dark underline underline-offset-4">View the Sourcing Event →</Link></p>
+        ) : (
+          <>
+            <button type="button" className={BTN} disabled={busy || !starred.length || !jobId} onClick={request} data-request-proposals>{`Request Proposals from ${starred.length}`}</button>
+            <label className="flex items-center gap-2 text-[13px] font-semibold">Deadline
+              <input inputMode="numeric" value={hours} onChange={(e) => setHours(e.target.value.replace(/\D/g, "").slice(0, 3))} aria-label="Deadline in hours" className="w-16 rounded-[8px] border border-line px-2 py-1.5 text-right" data-deadline-hours /> hours
+            </label>
+            <span className="text-[13px] text-ink-2">{starred.length ? "Providers see your rate range and the deadline." : "Star who should propose — or Hire one directly."}</span>
+          </>
+        )}
+        {error && <p role="alert" className="w-full text-[13.5px] font-semibold text-magenta-dark">{error}</p>}
+      </div>
+
+      {cur && <QuickView m={cur} jobId={jobId} onClose={() => setActive(null)} onStar={() => star(cur)} onHide={() => hide(cur, true)} prev={at > 0 ? () => setActive(visible[at - 1].personId) : null} next={at < visible.length - 1 ? () => setActive(visible[at + 1].personId) : null} />}
+      {comparing && <CompareTable rows={starred.slice(0, 4).map((m) => ({ m }))} onClose={() => setComparing(false)} />}
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="mt-4">
+      <h3 className="text-[11.5px] font-bold uppercase tracking-[0.08em] text-ink-3">{title}</h3>
+      <div className="mt-1 text-[13.5px]">{children}</div>
+    </div>
+  );
+}
+
+function QuickView({ m, jobId, onClose, onStar, onHide, prev, next }: { m: HireMatch; jobId: string | null; onClose: () => void; onStar: () => void; onHide: () => void; prev: (() => void) | null; next: (() => void) | null }) {
+  const d = m.detail;
+  return (
+    <aside role="dialog" aria-label={`Quick view: ${m.name}`} data-quick-view className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-white p-5 shadow-[-8px_0_24px_rgba(0,0,0,0.12)] md:inset-y-0 md:left-auto md:right-0 md:w-[420px] md:border-l md:border-line">
+      <div className="flex items-start gap-3">
+        {isMaskedName(m.name) && <NeutralAvatar size={48} />}
+        <div className="min-w-0 flex-1">
+          <p className="text-[17px] font-extrabold">{m.company ? `${m.company} · ` : ""}{m.name}</p>
+          <p className="text-[13px] text-ink-2">{m.line}</p>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Close" className="text-[22px] leading-none text-ink-3 hover:text-ink">×</button>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button type="button" onClick={onStar} className={GHOST} data-quick-star>{m.starred ? "★ Shortlisted" : "☆ Shortlist"}</button>
+        <button type="button" onClick={onHide} className={GHOST}>Hide</button>
+        <Link href={`/hire/terms?job=${jobId}&provider=${m.personId}`} className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Hire</Link>
+      </div>
+      {d.summary && <Section title="Summary"><p className="whitespace-pre-line text-ink-2">{d.summary}</p></Section>}
+      <Section title="Role">{d.role ?? "—"}</Section>
+      <Section title={`Skills matched (${d.skillsMatched})`}>
+        <p className="flex flex-wrap gap-1.5 text-[12px]">{m.why.map((k) => <span key={k} className={WHY}>{k}</span>)}{m.matched.map((k) => <span key={k} className={CHIP}>{k}</span>)}</p>
+      </Section>
+      <div className="grid grid-cols-2 gap-x-4">
+        <Section title="Years">{d.years != null ? `${d.years} yrs` : "—"}</Section>
+        <Section title="Location">{d.location ?? "—"}</Section>
+      </div>
+      <Section title="Certifications">{d.certifications.length ? d.certifications.join(" · ") : "—"}</Section>
+      <Section title="Rates">{d.rates.length ? <ul>{d.rates.map((r) => <li key={r.name} className="flex justify-between gap-3"><span>{r.name}</span><b>{r.rate}</b></li>)}</ul> : m.rate ?? "—"}</Section>
+      <Section title="Products">{d.products.length ? <ul>{d.products.map((p) => <li key={p.title} className="flex justify-between gap-3"><span>{p.title}</span>{p.price && <b>{p.price}</b>}</li>)}</ul> : "—"}</Section>
+      <Link href={`/providers/${m.profileId}?from=matches`} className="mt-4 text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View the full profile</Link>
+      <div className="mt-auto flex justify-between gap-3 border-t border-line pt-4">
+        <button type="button" onClick={prev ?? undefined} disabled={!prev} className={GHOST} data-quick-prev>‹ Previous</button>
+        <button type="button" onClick={next ?? undefined} disabled={!next} className={GHOST} data-quick-next>Next ›</button>
+      </div>
+    </aside>
+  );
+}
+
+/** SE-E003/E005: side by side — providers, or their proposals (proposed rate and start added). */
+export function CompareTable({ rows, onClose }: { rows: { m: HireMatch; proposed?: string | null; start?: string | null }[]; onClose: () => void }) {
+  const withProposal = rows.some((r) => r.proposed !== undefined);
+  const lines: [string, (r: (typeof rows)[number]) => ReactNode][] = [
+    ...(withProposal ? ([["Proposed rate", (r) => r.proposed ?? "—"], ["Earliest start", (r) => r.start ?? "—"]] as [string, (r: (typeof rows)[number]) => ReactNode][]) : []),
+    ["Rate", (r) => r.m.rate ?? "—"],
+    ["Years", (r) => (r.m.detail.years != null ? `${r.m.detail.years} yrs` : "—")],
+    ["Role", (r) => r.m.detail.role ?? "—"],
+    ["Skills matched", (r) => r.m.detail.skillsMatched],
+    ["Certifications", (r) => r.m.detail.certifications.join(" · ") || "—"],
+    ["Location", (r) => r.m.detail.location ?? "—"],
+    ["Products", (r) => r.m.detail.products.map((p) => p.title).join(" · ") || "—"],
+  ];
+  return (
+    <div role="dialog" aria-label="Compare" data-compare-table className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4" onClick={onClose}>
+      <div className="mt-10 w-full max-w-5xl rounded-[12px] bg-white p-5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-[18px] font-extrabold">Compare</h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="text-[22px] leading-none text-ink-3 hover:text-ink">×</button>
+        </div>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[560px] border-collapse text-[13.5px]">
+            <thead><tr><th className="w-36" />{rows.map((r) => <th key={r.m.personId} className="border-b border-line p-2 text-left align-bottom text-[14px] font-extrabold">{r.m.name}</th>)}</tr></thead>
+            <tbody>{lines.map(([label, cell]) => <tr key={label}><th className="border-b border-line p-2 text-left text-[12px] font-bold uppercase tracking-[0.06em] text-ink-3">{label}</th>{rows.map((r) => <td key={r.m.personId} className="border-b border-line p-2 align-top">{cell(r)}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

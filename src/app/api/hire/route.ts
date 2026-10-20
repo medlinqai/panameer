@@ -5,12 +5,13 @@ import { HireError, hireMatches, requestProposals, resolveSkill, saveHireJob, se
 import { WorkRequestError } from "@/lib/work-request";
 import { reparseWho } from "@/lib/service-description";
 import { jobPosted } from "@/lib/hire-direct";
+import { openSourcingEvent, setStar } from "@/lib/sourcing-events";
 
 // SH2-E004: the Hire questionnaire — suggest skills, save the draft Job, show matches, request proposals.
 export async function POST(request: Request) {
   const gate = await guardApi("canHireTalent");
   if (gate instanceof NextResponse) return gate;
-  const body = (await request.json().catch(() => ({}))) as { action?: string; jobId?: string | null; input?: HireInput; category?: string; title?: string; name?: string; personIds?: string[]; sourceText?: string; businessTypeId?: string };
+  const body = (await request.json().catch(() => ({}))) as { action?: string; jobId?: string | null; input?: HireInput; category?: string; title?: string; name?: string; personIds?: string[]; hours?: number; on?: boolean; sourceText?: string; businessTypeId?: string };
   try {
     switch (body.action) {
       case "suggest":
@@ -34,8 +35,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       case "resolveSkill":
         return NextResponse.json({ skill: await resolveSkill(String(body.name ?? "")) });
+      case "star":
+        if (!body.jobId || !body.personIds?.[0]) return NextResponse.json({ error: "Pick a provider." }, { status: 400 });
+        await setStar(gate, body.jobId, body.personIds[0], body.on !== false);
+        return NextResponse.json({ ok: true });
       case "request":
         if (!body.jobId || !body.personIds?.length) return NextResponse.json({ error: "Pick at least one." }, { status: 400 });
+        // SE-E003: from the shortlist with a deadline in hours → a Sourcing Event; without hours, the older 7-day request.
+        if (body.hours != null) return NextResponse.json(await openSourcingEvent(gate, body.jobId, body.personIds, Number(body.hours)));
         return NextResponse.json(await requestProposals(gate, body.jobId, body.personIds));
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });

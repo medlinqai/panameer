@@ -21,6 +21,8 @@ export type InviteInput = {
   /** REQUIRED TO ISSUE. See `assertIssuable`. */
   respondsBy: string | null;
   message?: string | null;
+  /** SE-E003: the Sourcing Event these requests belong to (its deadline goes in the notice). */
+  sourcingEvent?: { id: string; hours: number } | null;
 };
 
 export type InviteResult = {
@@ -86,13 +88,22 @@ export async function inviteProviders(
           responds_by: respondsBy,
           status: "ISSUED",
           message: input.message?.trim() || null,
+          sourcing_event_id: input.sourcingEvent?.id ?? null,
           lines: { create: [{ line_number: 1, work_request_line_id: line.id }] },
         },
       });
       created.push({ providerPersonId, requestNumber });
 
       // THE BELL ENTRY , ruling 86)
-      await notify({
+      if (input.sourcingEvent && respondsBy) await notify({
+        event: "work.sourcing_event_invited",
+        personId: providerPersonId,
+        entityType: "ProposalRequest",
+        entityId: wr.id,
+        dedupeKey: `work.invited_to_propose:${wr.id}:${providerPersonId}`,
+        vars: { workTitle: wr.title, requestId: wr.id, hours: String(input.sourcingEvent.hours), due: respondsBy.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }) },
+      });
+      else await notify({
         event: "work.invited_to_propose",
         personId: providerPersonId,
         entityType: "ProposalRequest",

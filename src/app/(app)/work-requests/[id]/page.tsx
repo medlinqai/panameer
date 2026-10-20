@@ -25,6 +25,11 @@ import {
 import { WorkRequestError } from "@/lib/work-request";
 import { BackLink } from "@/components/console/BackLink";
 import { ServiceDescriptionView } from "@/components/hire/ServiceDescriptionView";
+import { MatchList } from "@/components/hire/MatchList";
+import { hireMatches } from "@/lib/hire-questionnaire";
+import { readServiceDescription } from "@/lib/service-description";
+import { latestEventFor } from "@/lib/sourcing-events";
+import { seesTestAccounts } from "@/lib/admin/test-accounts";
 
 export const metadata = { title: "Job · Panameer" };
 
@@ -89,6 +94,10 @@ export default async function Page({
     })
     .filter((p) => p.personId);
 
+  // SE-E002: the Job's Matches use the Hire ranking on its Service Description.
+  const sdForMatches = await readServiceDescription(detail.id);
+  const jobMatches = sdForMatches ? await hireMatches(sdForMatches, await seesTestAccounts(viewer), detail.id, viewer) : [];
+  const sourcing = await latestEventFor(detail.id);
   const posted = detail.status === "OPEN";
   // Every line has a provider and a price, and the requisition isn't ordered yet → Create Order.
   const awarded = detail.completeness.complete && !["ORDERED", "CANCELLED"].includes(detail.workRequestStatus) && detail.status !== "FILLED";
@@ -281,21 +290,12 @@ export default async function Page({
       </div>
       )}
 
-      {/* HS-E002: the Job's matches — Hire (primary) next to Request Proposals. */}
-      {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && (
+      {/* SE-E002/E003: the Job's matches — the same list as Hire (star, quick view, Compare, Request Proposals). */}
+      {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && jobMatches.length > 0 && (
         <section className="mt-6 rounded-brand border border-line bg-white p-5" data-job-matches>
           <h2 className="text-[17px] font-bold">Matches</h2>
-          <ul className="mt-2 divide-y divide-line">
-            {options.slice(0, 10).map((p) => (
-              <li key={p.personId} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
-                <span className="min-w-0"><b className="block text-[14.5px]">{p.name}</b>{p.headline && <span className="block text-[13px] text-ink-2">{p.headline}</span>}</span>
-                <span className="flex gap-2">
-                  <Link href={`/hire/terms?job=${detail.id}&provider=${p.personId}`} data-hire-provider className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Hire</Link>
-                  <Link href={`/work-requests/${detail.id}/invite`} className="inline-flex min-h-9 items-center border border-ink px-4 text-[13px] font-bold hover:bg-surface-hover">Request Proposals</Link>
-                </span>
-              </li>
-            ))}
-          </ul>
+          {sourcing && <p className="mt-1 text-[13.5px]">Sourcing Event <Link href={`/hire/sourcing/${sourcing.id}`} className="font-semibold text-magenta-dark underline underline-offset-4">{sourcing.event_number}</Link> · {sourcing.status === "OPEN" ? "Open" : sourcing.status === "AWARDED" ? "Awarded" : "Closed"}</p>}
+          <MatchList jobId={detail.id} matches={jobMatches} state={sdForMatches?.state} />
         </section>
       )}
 

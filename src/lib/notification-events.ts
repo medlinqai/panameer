@@ -738,6 +738,41 @@ export const NOTIFICATION_EVENTS = {
     href: (v) =>
       str(v, "requestId") ? `/find-work/${str(v, "requestId")}` : "/find-work",
   },
+  // SE-E004: asked to propose in a Sourcing Event — with the deadline.
+  "work.sourcing_event_invited": {
+    event: "work.sourcing_event_invited",
+    recipient: "a provider asked to propose in a Sourcing Event",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `Request to propose on ${str(v, "workTitle", "a job")}`,
+    body: (v) => `Due ${str(v, "due", "soon")} (${str(v, "hours", "48")} hours)`,
+    href: (v) => (str(v, "requestId") ? `/find-work/${str(v, "requestId")}` : "/find-work"),
+  },
+  // SE-E006: sent only once the awarded Work Order is Released.
+  "work.not_awarded": {
+    event: "work.not_awarded",
+    recipient: "a provider who proposed but was not awarded",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `Not awarded: ${str(v, "workTitle", "a job you proposed on")}`,
+    body: (v) => (str(v, "message") ? str(v, "message") : null),
+    href: () => "/find-work?tab=proposals",
+  },
+  "buyer.sourcing.notify_others": {
+    event: "buyer.sourcing.notify_others",
+    recipient: "the buyer whose Sourcing Event Work Order was Released",
+    category: "buyer.proposals.received",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: () => "Let the other candidates know",
+    body: (v) => str(v, "workTitle") ? `${str(v, "workTitle")} — ${str(v, "count", "")} not awarded` : null,
+    href: (v) => `/hire/sourcing/${str(v, "eventId", "")}`,
+  },
   "work.interview_requested": {
     event: "work.interview_requested",
     recipient: "the provider asked to interview",

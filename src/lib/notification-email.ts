@@ -38,6 +38,8 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "group.question_asked",
   "work.proposal_received",
   "work.invited_to_propose",
+  "work.sourcing_event_invited",
+  "work.not_awarded",
   "work.interview_requested",
   "work.test_requested",
   "work.order_offered",

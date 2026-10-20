@@ -96,12 +96,20 @@ export type HireMatch = { personId: string; profileId: string; name: string; com
   /** MQ-E001: an Onsite/Hybrid job lists only providers in its state; the rest come after, behind "Show providers outside". */
   outside: boolean;
   /** MQ-E005: hidden by the buyer on this job (restorable). */
-  hidden: boolean };
+  hidden: boolean;
+  /** SE-E003: starred onto the job's Shortlist. */
+  starred: boolean;
+  /** SE-E002: the quick-view panel. */
+  detail: MatchDetail };
+export type MatchDetail = { summary: string; role: string | null; skillsMatched: string; years: number | null; certifications: string[]; location: string | null; rates: { name: string; rate: string }[]; products: { title: string; price: string | null }[] };
+const money = (c: number) => `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+const PER: Record<string, string> = { HOUR: "/hr", DAY: "/day", WEEK: "/wk", MONTH: "/mo" };
 
 /** SD-E004: named matches — ranked by Role, then skill overlap, then Product, then location (Onsite/Hybrid = same state),
  *  then rate inside the budget. Each says why it matched. */
 export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: string | null, viewer?: Viewer | null): Promise<HireMatch[]> {
   const hiddenSet = new Set(jobId ? (await prisma.jobHiddenProvider.findMany({ where: { job_id: jobId }, select: { provider_person_id: true } })).map((h) => h.provider_person_id) : []);
+  const starSet = new Set(jobId ? (await prisma.shortlistLine.findMany({ where: { shortlist: { job_id: jobId }, source: { in: ["SHORTLISTED", "ADDED"] } }, select: { provider_person_id: true } })).map((l) => l.provider_person_id) : []);
   const pillarName = productPillarName(input.product);
   const [rows, pillar] = await Promise.all([
     prisma.providerProfile.findMany({
@@ -114,6 +122,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
         capabilities: { select: { workRole: { select: { name: true } } } },
         skills: { select: { skill_id: true, skill: { select: { name: true, area: true, pillar: { select: { name: true } } } } } },
         employers: { select: { start_date: true } },
+        credentials: { where: { kind: "CERTIFICATION" }, select: { name: true }, take: 8 },
       },
       take: 400,
     }),
@@ -180,6 +189,14 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
       matched: matched.slice(0, 8), why, fit: total ? Math.round((matched.length / total) * 100) : 0, inBudget,
       outside: onsite && !placeHit,
       hidden: hiddenSet.has(r.person.id),
+      starred: starSet.has(r.person.id),
+      detail: {
+        summary: (r.overview ?? "").slice(0, 600), role: deepHit ?? [...theirDeep][0] ?? r.person.title ?? null,
+        skillsMatched: `${matched.length} of ${Math.min(total, 10) || 10}`, years, certifications: r.credentials.map((c) => c.name),
+        location: addr?.city ? [addr.city, addr.state].filter(Boolean).join(", ") : addr?.state ?? null,
+        rates: mine.filter((x) => x.rate_cents != null).slice(0, 6).map((x) => ({ name: x.name, rate: `${money(x.rate_cents!)}${PER[x.uom ?? ""] ?? ""}` })),
+        products: prods.slice(0, 6).map((x) => ({ title: x.title, price: x.price_cents != null ? money(x.price_cents) : null })),
+      },
     };
     // Role + Domain (strong) + skills + Product + years; with job domains, a provider sharing none ranks below all who share one.
     const score = (deepHit ? 45 : roleHit ? 15 : 0) + sharedDomains.length * 40 + matched.length * 5 + Number(productHit) * 10 + Math.min(years ?? 0, 20) / 2;
