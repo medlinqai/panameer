@@ -6192,6 +6192,8 @@ enum WorkOrderLineStatus {
 model WorkOrder {
   id           String @id @default(uuid()) @db.Uuid
   order_number String @unique
+  /// MS-E002: every Work Order is a SOW under the Active MSA (Panameer Terms of Service).
+  agreement_id String?   @db.Uuid
   /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
   legacy_number          String?
 
@@ -9465,4 +9467,30 @@ model NumberSequence {
 
   @@unique([prefix, p_account_id])
   @@map("number_sequences")
+}
+
+/// MS-E001: the agreements Work Orders sit under — the Panameer Terms of Service serve as one global MSA.
+model Agreement {
+  id               String          @id @default(uuid()) @db.Uuid
+  agreement_number String          @unique
+  kind             AgreementKind
+  title            String
+  version          String
+  effective_date   DateTime
+  document_url     String
+  status           AgreementStatus @default(ACTIVE)
+  created_at       DateTime        @default(now())
+  updated_at       DateTime        @updatedAt
+
+  @@index([kind, status])
+  @@map("agreements")
+}
+
+enum AgreementKind {
+  MSA
+}
+
+enum AgreementStatus {
+  ACTIVE
+  SUPERSEDED
 }

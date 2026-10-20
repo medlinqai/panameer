@@ -4,7 +4,7 @@ import { ensureCompanyCode } from "@/lib/company-code";
 
 // NB-E001: every transaction number = PREFIX-COMPANY-YY-######## (WR-STRAT-26-00000001) — the BUYER company's code,
 // the calendar year of creation (America/New_York), one sequence per prefix per buyer account that never resets.
-export const PREFIX = { JOB: "JB", WORK_REQUEST: "WR", WORK_ORDER: "WO", SETTLEMENT: "ST", PAYMENT: "PY", CHANGE_ORDER: "CO", ESTIMATE: "ES" } as const;
+export const PREFIX = { JOB: "JB", WORK_REQUEST: "WR", WORK_ORDER: "WO", SETTLEMENT: "ST", PAYMENT: "PY", CHANGE_ORDER: "CO", ESTIMATE: "ES", AGREEMENT: "MS" } as const;
 export type NumberPrefix = (typeof PREFIX)[keyof typeof PREFIX];
 
 type Tx = Prisma.TransactionClient | typeof prisma;
