@@ -1,3 +1,4 @@
+import { nextNumber } from "@/lib/numbering";
 // JW lane 2 walk (lib level, throwaway parties): Job → proposal → Hire → Submit → WO with description; Shop with 2 sellers →
 // Submit → 2 WOs; Estimate accepted → WR → WO; Externally Sourced WR → WO. Run: npx tsx --env-file=.env.local scripts/dev-walk-jw.ts
 import { prisma } from "@/lib/prisma";
@@ -6,7 +7,6 @@ import { selectProvider } from "@/lib/selection";
 import { hire, submitWorkRequest } from "@/lib/work-orders";
 import { addToCart, cartFor, placeOrder } from "@/lib/cart";
 import { saveEstimate, sendEstimate, decideEstimate } from "@/lib/estimates";
-import { wrNumber } from "@/lib/requisition";
 
 async function linked(p: Party, buyer: boolean) {
   const co = await prisma.company.findFirstOrThrow({ where: { p_account_id: p.pAccountId }, select: { id: true } });
@@ -31,7 +31,7 @@ async function main() {
   await prisma.proposal.create({ data: { proposal_number: `PRO-WALK-${Date.now().toString(36)}`, job_id: job.id, provider_person_id: pat.personId, status: "SUBMITTED", submitted_at: new Date(), lines: { create: { line_number: 1, basis: "RATE", uom: "HOUR", unit_price_cents: 12000 } } } });
   const sel = await selectProvider(buyer.viewer, { workRequestId: job.id, providerPersonId: pat.personId });
   const req = await prisma.workRequest.findUniqueOrThrow({ where: { id: (await prisma.workRequestLine.findUniqueOrThrow({ where: { id: sel.workRequestLineId } })).work_request_id } });
-  check("Hire line sits on the Job's Work Request (JOB_HIRE, INCOMPLETE, WR number)", req.job_id === job.id && req.source === "JOB_HIRE" && req.status === "INCOMPLETE" && req.wr_number === wrNumber(req.id), `${req.source} ${req.status}`);
+  check("Hire line sits on the Job's Work Request (JOB_HIRE, INCOMPLETE, WR number)", req.job_id === job.id && req.source === "JOB_HIRE" && req.status === "INCOMPLETE" && /^WR-[A-Z0-9]{3,6}-\d{2}-\d{8}$/.test(req.wr_number ?? ""), `${req.source} ${req.status}`);
   check("description pre-filled from the Job title", req.description === "Walk: Oracle AP cleanup");
   await refuses("company requires a description → empty one refused", () => hire(buyer.viewer, { jobId: job.id, description: "" }), "description");
   const wo = await hire(buyer.viewer, { jobId: job.id, description: "AP cleanup, Nov" });
@@ -65,7 +65,7 @@ async function main() {
 
   // 4 · Externally sourced Work Request (no Job) → Submit → WO
   const xid = crypto.randomUUID();
-  await prisma.workRequest.create({ data: { id: xid, wr_number: wrNumber(xid), source: "EXTERNALLY_SOURCED", status: "INCOMPLETE", buyer_person_id: buyer.personId, p_account_id: buyer.pAccountId, proposal_access: "INVITE_ONLY", sole_sourced: true, description: "Walk: outside consultant",
+  await prisma.workRequest.create({ data: { id: xid, wr_number: await nextNumber("WR", { pAccountId: buyer.pAccountId }), source: "EXTERNALLY_SOURCED", status: "INCOMPLETE", buyer_person_id: buyer.personId, p_account_id: buyer.pAccountId, proposal_access: "INVITE_ONLY", sole_sourced: true, description: "Walk: outside consultant",
     lines: { create: { line_number: 1, transaction_type: "SERVICE_BY_AMT", description: "Fixed fee", currency: "USD", amount_cents: 500000, provider_person_id: pat.personId } } } });
   const [xo] = await submitWorkRequest(buyer.viewer, { workRequestId: xid });
   const x = await prisma.workOrder.findUniqueOrThrow({ where: { id: xo!.id } });
