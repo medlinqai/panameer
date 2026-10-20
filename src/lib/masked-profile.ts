@@ -6,7 +6,6 @@ import { experienceLabel, experienceYears, type Span } from "@/lib/experience";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { buildCompletenessInput, buildCompletenessInputs } from "@/lib/onboarding";
 import { computeProviderCompleteness } from "@/lib/completeness";
-import { blurredPhotoDataUri } from "@/lib/masked-photo";
 
 export const RATE_LOCKED_COPY = "Register free to see rates";
 
@@ -90,8 +89,6 @@ export type MaskedCard = {
   certificationCount: number;
   /** Industry names from PROJECTS that have one. Never invented. */
   industries: string[];
-  /** THE ONE DELIBERATE EXCEPTION TO "THE MASK IS THE SELECT" */
-  photoBlur: string | null;
 };
 
 export type MaskedEmployerRow = {
@@ -239,7 +236,6 @@ export async function browseTalent(
       person: {
         select: {
           title: true,
-          photo_url: true,
           site: {
             select: {
               addresses: {
@@ -271,14 +267,6 @@ export async function browseTalent(
   // ONE QUERY FOR EVERY SCORE ON THE PAGE — `buildCompletenessInputs`
   const inputs = await buildCompletenessInputs(page.map((r) => r.id));
 
-  // THE BLURS ARE MADE ONCE, IN PARALLEL, BEFORE THE MAP . The mapper
-  const blurs = new Map<string, string | null>(
-    await Promise.all(
-      page.map(
-        async (r) => [r.id, await blurredPhotoDataUri(r.person.photo_url)] as [string, string | null],
-      ),
-    ),
-  );
 
   const cards: MaskedCard[] = page.map((p) => {
     const addr = p.person.site?.addresses[0];
@@ -314,7 +302,6 @@ export async function browseTalent(
             .filter((n): n is string => Boolean(n))
         ),
       ],
-      photoBlur: blurs.get(p.id) ?? null,
     };
   });
 
@@ -343,8 +330,6 @@ export async function getMaskedProfile(
         select: {
           first_name: true,
           last_name: true,
-          // SPENT, NOT RETURNED — see `MaskedCard.photoBlur`. The
-          photo_url: true,
           title: true,
           created_at: true,
           site: {
@@ -432,12 +417,8 @@ export async function getMaskedProfile(
   const attached = new Set(p.employers.flatMap((e) => e.projects.map((pr) => pr.id)));
   const solo = p.projects.filter((pr) => !attached.has(pr.id));
 
-  /* One photo, one blur. Awaited here because this mapper already is. */
-  const photoBlur = await blurredPhotoDataUri(p.person.photo_url);
-
   return {
     id: p.id,
-    photoBlur,
     title: capTitle(p.person.title ?? ""),
     location: formatPlace(addr?.state, country),
     country,

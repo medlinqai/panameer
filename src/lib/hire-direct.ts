@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { notify } from "@/lib/notifications";
 import { buyerCanSeeIdentity, ensureProviderNumber, providerLabel } from "@/lib/provider-number";
-import { blurredPhotoDataUri } from "@/lib/masked-photo";
 
 // HS: the Hire (sole-source) journey — job posted (step 4), Hire on a match (8–9b), Terms (10–11), Work Order (12–13).
 
@@ -49,7 +48,7 @@ export async function hireDefaults(viewer: Viewer, jobId: string, providerPerson
     jobId, jobTitle: job.title, description: req?.description ?? job.title,
     location: [job.worksite ? job.worksite[0] + job.worksite.slice(1).toLowerCase() : null, [job.city, job.state, job.location_country].filter(Boolean).join(", ")].filter(Boolean).join(" · "),
     providerPersonId, providerName: label ?? `${provider.first_name} ${provider.last_name}`.trim(), providerCompany: shown ? company : null,
-    providerPhotoUrl: shown ? provider.photo_url : await blurredPhotoDataUri(provider.photo_url), identityShown: shown,
+    providerPhotoUrl: shown ? provider.photo_url : null, identityShown: shown,
     unitPriceCents: prior?.unit_price_cents ?? listed?.rate_cents ?? job.budget_max_cents ?? null,
     uom: prior?.uom ?? listed?.uom ?? "HOUR",
     billingCycle: prior?.billing_cycle ?? listed?.billing_cycle ?? "MONTHLY",

@@ -1,5 +1,4 @@
 import { buyerCanSeeIdentity, ensureProviderNumber, providerLabel } from "@/lib/provider-number";
-import { blurredPhotoDataUri } from "@/lib/masked-photo";
 import { formatSkillName } from "@/lib/skill-match";
 import { isVisible } from "@/lib/visibility";
 import { roleLong } from "@/lib/role-labels";
@@ -239,11 +238,11 @@ export async function getProviderProfileView(
     sellingCompany,
     identityMasked: !showSurname,
     person: {
-      // AN-E003: not revealed → "Provider P-1038", blurred photo (title, city, rate, skills and products stay).
+      // AN-E003/NA-E002: not revealed → "Provider P-1038" and no photo URL at all (title, city, rate, skills and products stay).
       firstName: showSurname ? profile.person.first_name : providerLabel(await ensureProviderNumber(profile.id)),
       lastName: showSurname ? profile.person.last_name : "",
       title: profile.person.title,
-      photoUrl: showSurname ? profile.person.photo_url : await blurredPhotoDataUri(profile.person.photo_url),
+      photoUrl: showSurname ? profile.person.photo_url : null,
       memberSince: profile.person.created_at.toISOString(),
       userId: profile.person.user_id,
       personId: profile.person.id,
