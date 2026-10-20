@@ -169,11 +169,11 @@ export async function decideChange(viewer: Viewer, orderId: string, revisionId: 
   return { revisionNumber: rev.revision_number, external: !!rev.external_payload_id };
 }
 
-export type RevisionView = { id: string; number: number; status: string; changes: Changes; createdAt: string; decidedAt: string | null; note: string | null; fromErp: boolean };
+export type RevisionView = { changeOrderNumber: string | null; id: string; number: number; status: string; changes: Changes; createdAt: string; decidedAt: string | null; note: string | null; fromErp: boolean };
 
 export async function revisionsFor(orderId: string): Promise<RevisionView[]> {
   const rows = await prisma.workOrderRevision.findMany({ where: { work_order_id: orderId }, orderBy: { revision_number: "desc" } });
-  return rows.map((r) => ({ id: r.id, number: r.revision_number, status: r.status, changes: r.changes as unknown as Changes, createdAt: r.created_at.toISOString().slice(0, 10), decidedAt: r.decided_at ? r.decided_at.toISOString().slice(0, 10) : null, note: r.decided_note, fromErp: !!r.external_payload_id }));
+  return rows.map((r) => ({ id: r.id, number: r.revision_number, changeOrderNumber: r.change_order_number, status: r.status, changes: r.changes as unknown as Changes, createdAt: r.created_at.toISOString().slice(0, 10), decidedAt: r.decided_at ? r.decided_at.toISOString().slice(0, 10) : null, note: r.decided_note, fromErp: !!r.external_payload_id }));
 }
 
 const FIELD_LABEL: Record<HeaderField | LineField, string> = { not_to_exceed_cents: "Not to exceed", period_start: "Starts", period_end: "Ends", sow_text: "Statement of work", quantity: "Quantity", unit_price_cents: "Rate", amount_cents: "Amount", service_start: "Starts", service_end: "Ends" };

@@ -9,13 +9,13 @@ import { OriginBadge, StatusPill } from "@/components/orders/OrderChrome";
 import { OrderActivation } from "@/components/orders/OrderActivation";
 import { getOrderDetail, OrderError, type OrderLineView } from "@/lib/orders";
 import { BackLink } from "@/components/console/BackLink";
-import { OrderTabs } from "@/components/orders/OrderTabs";
+import { OrderTabs, type OrderTab } from "@/components/orders/OrderTabs";
+import { OrderActionsMenu } from "@/components/orders/OrderActionsMenu";
 import { TimeDollars } from "@/components/orders/TimeDollars";
 import { loadWoMoney } from "@/lib/wo-money";
 import { WoPlanSection } from "@/components/orders/WoPlanSection";
 import { History } from "@/components/orders/History";
 import { orderHistory } from "@/lib/transaction-history";
-import { OrderControls } from "@/components/orders/OrderControls";
 import { BILLABLE } from "@/lib/orders";
 import { milestonesFor } from "@/lib/order-milestones";
 import { Milestones } from "@/components/orders/Milestones";
@@ -34,7 +34,7 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; view?: string }>;
 }) {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
@@ -49,64 +49,73 @@ export default async function Page({
     throw e;
   }
 
-  const { tab } = await searchParams;
+  const { tab: rawTab, view } = await searchParams;
+  const tab: OrderTab | null = view ? null : rawTab === "schedule" || rawTab === "plan" || rawTab === "settlements" ? rawTab : "lines";
   const revisions = await revisionsFor(o.id);
   const milestones = await milestonesFor(o.lines.map((l) => l.id));
-  const pendingChange = revisions.some((r) => r.status === "PENDING");
+  const pending = revisions.find((r) => r.status === "PENDING") ?? null;
+  const pendingChange = !!pending;
   const blockedReason = changeBlocked({ status: o.status, frozen_at: o.frozen ? new Date() : null }, pendingChange);
-  if (tab === "plan") {
-    const money = await loadWoMoney(o.id);
-    return (
-      <div className="pm-white-page mx-auto w-full max-w-5xl">
-        <BackLink href="/orders" label="Work Orders" />
-        <p className="mt-2 text-[11px] font-semibold tracking-[0.12em] text-magenta">WORK ORDER {o.orderNumber}</p>
-        <h1 className="mt-1 text-[28px] font-bold">{o.description ?? o.lines[0]?.description ?? o.orderNumber}</h1>
-        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[14px] text-ink-2">{o.buyerName} · {o.providerName}</p>
-          {o.party === "PROVIDER" && BILLABLE.includes(o.status) && (
-            <a href={`/orders/${o.id}/settle`} className="inline-flex min-h-11 w-full items-center justify-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover sm:w-auto">
-              Submit Time
-            </a>
-          )}
-        </div>
-        <OrderTabs id={o.id} current="plan" />
-        {money && <TimeDollars m={money} currency={o.currency} />}
-        <WoPlanSection orderId={o.id} viewer={viewer} hoursAuthorized={money?.hoursAuthorized ?? null} currency={o.currency} />
-      </div>
-    );
-  }
+  const money = (c: number) => formatCents(c, o.currency);
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="pm-white-page mx-auto w-full max-w-5xl">
       <BackLink href="/orders" label="Work Orders" />
 
-      <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
-              {o.orderNumber}
-            </h1>
-            <OriginBadge origin={o.origin} erpRef={o.erp ? o.externalRef ?? "" : null} />
+      {/* ══ WT-E001 · THE HEADER — always on top ══ */}
+      <header data-order-header className="mt-2">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">{o.orderNumber}</h1>
+              <OriginBadge origin={o.origin} erpRef={o.erp ? o.externalRef ?? "" : null} />
+            </div>
+            <p className="mt-1.5 text-[14.5px] text-ink-2">
+              {o.buyerName} <span className="text-ink-2/60">→</span> {o.providerName}
+            </p>
+            {/* WA-E005: the chain — Job → Work Request → this Work Order. */}
+            {await chainLine(o.id)}
           </div>
-          <p className="mt-1.5 text-[14.5px] text-ink-2">
-            {o.buyerName} <span className="text-ink-2/60">→</span> {o.providerName}
-          </p>
-          {/* WA-E005: the chain — Job → Work Request → this Work Order. */}
-          {await chainLine(o.id)}
+          <div className="flex flex-col items-end gap-2">
+            <StatusPill status={o.status} waiting={o.waiting} frozen={o.frozen} pendingChange={pendingChange} pendingOn={o.pendingOn} />
+            <OrderActionsMenu orderId={o.id} controls={o.controls} unusedLabel={money(o.remainingCents)} pending={o.pendingRequests} />
+          </div>
         </div>
-        <StatusPill status={o.status} waiting={o.waiting} frozen={o.frozen} pendingChange={pendingChange} pendingOn={o.pendingOn} />
-      </div>
 
-      <OrderTabs id={o.id} current="overview" />
+        <dl data-testid="order-money" className="mt-4 grid grid-cols-2 gap-x-8 gap-y-3 rounded-brand border border-line bg-white p-5 sm:grid-cols-4">
+          <Fact label="Period">{o.periodStart || o.periodEnd ? `${o.periodStart ?? "…"} → ${o.periodEnd ?? "…"}` : "Not set"}</Fact>
+          <Fact label="Value">{money(o.valueCents)}</Fact>
+          <Fact label="Drawn">{money(o.drawnCents)}</Fact>
+          <Fact label="Remaining">{money(o.remainingCents)}</Fact>
+          <Fact label="Not to exceed">{o.notToExceedCents == null ? "No cap" : money(o.notToExceedCents)}</Fact>
+          <Fact label="Buyer accepted">{(o.buyerAcceptedAt ?? o.buyerReleasedAt)?.slice(0, 10) ?? "Not yet"}</Fact>
+          <Fact label="Provider accepted">{o.providerAcceptedAt ? o.providerAcceptedAt.slice(0, 10) : "Not yet"}</Fact>
+          {o.party === "PROVIDER" ? (
+            <Fact label="You'll get">{money(o.netCents)} <span className="text-ink-2">· fee {o.lineFeeBps != null ? bpsToPercentLabel(o.lineFeeBps) : "varies"}</span></Fact>
+          ) : (
+            <Fact label="Hours">{o.hoursOrdered > 0 ? `${o.hoursClaimed} of ${o.hoursOrdered}` : "—"}</Fact>
+          )}
+        </dl>
+
+        {pending && (
+          <div data-pending-change className="mt-4 flex flex-wrap items-center justify-between gap-3 border-l-2 border-magenta bg-[#fbeafb] px-4 py-3 text-[14px]">
+            <p className="min-w-0">
+              <b>Change order {pending.changeOrderNumber ?? `#${pending.number}`} pending approval</b>
+              <span className="text-ink-2"> — {describeChanges(pending.changes, money).slice(0, 3).join("; ")}</span>
+            </p>
+            <Link href={`/orders/${o.id}?view=changes`} className="font-semibold text-magenta-dark underline underline-offset-4">Review</Link>
+          </div>
+        )}
+      </header>
+
       {o.party === "PROVIDER" && <BuyerCard personId={o.buyerPersonId} />}
-
       {/* WA-E003/E004: the terms each party is accepting. */}
       {o.pendingOn && <OrderTermsBlock orderId={o.id} />}
-      <div className="mt-6">
-        <OrderActivation orderId={o.id} actions={o.actions} message={o.activationMessage} payNote={o.party === "PROVIDER" && !(await providerPayReady((await prisma.workOrder.findUniqueOrThrow({ where: { id: o.id }, select: { provider_person_id: true } })).provider_person_id))} />
-      </div>
-
-      {}
+      {(o.actions.length > 0 || o.pendingOn) && (
+        <div className="mt-6">
+          <OrderActivation orderId={o.id} actions={o.actions} message={o.activationMessage} payNote={o.party === "PROVIDER" && !(await providerPayReady((await prisma.workOrder.findUniqueOrThrow({ where: { id: o.id }, select: { provider_person_id: true } })).provider_person_id))} />
+        </div>
+      )}
       {o.erp && (
         <div data-erp-order className="mt-4 border-l-2 border-ink py-1 pl-3.5 text-[14px] text-ink-2">
           {o.party === "BUYER"
@@ -115,135 +124,89 @@ export default async function Page({
         </div>
       )}
       {o.origin === "DIRECT" && !o.erp && (
-        <div className="mt-4 rounded-brand border border-line bg-ink/[0.02] p-5">
-          {}
-          <p className="text-[15px] font-bold">An externally sourced work order</p>
-          <p className="mt-1 text-[14px] leading-relaxed text-ink-2">
-            This deal was agreed outside Panameer and brought in to use settlement
-            and payments. Panameer records this order rather than issuing it, and
-            the master agreement between the parties is their own.
-            {o.externalRef && (
-              <>
-                {" "}
-                The buyer&apos;s reference is{" "}
-                <span className="font-mono font-semibold text-ink">{o.externalRef}</span>.
-              </>
-            )}
-          </p>
-        </div>
+        <p className="mt-4 border-l-2 border-ink py-1 pl-3.5 text-[14px] text-ink-2">
+          An externally sourced work order — agreed outside Panameer and brought in to use settlement and payments.
+          {o.externalRef && <> The buyer&apos;s reference is <span className="font-mono font-semibold text-ink">{o.externalRef}</span>.</>}
+        </p>
       )}
 
-      {o.sowText && (
-        <section data-testid="order-sow" className="mt-6 border-t border-line pt-4">
-          <h2 className="text-[18px] font-bold">Statement of Work</h2>
-          <p className="mt-2 whitespace-pre-wrap text-[14.5px] leading-relaxed">{o.sowText}</p>
+      <OrderTabs id={o.id} current={tab} />
+
+      {view === "history" && <section data-view="history" className="mt-2"><History events={await orderHistory(o.id)} /></section>}
+      {view === "changes" && (
+        <section data-view="changes" className="mt-2">
+          <ChangeOrders
+            orderId={o.id}
+            party={o.party}
+            canChange={o.party === "BUYER" && !blockedReason && !o.erp}
+            blockedReason={o.erp ? "Change this order in your ERP." : blockedReason}
+            header={{ nteCents: o.notToExceedCents, start: o.periodStart, end: o.periodEnd, sow: o.sowText }}
+            lines={o.lines.map((l) => ({ id: l.id, lineNumber: l.lineNumber, description: l.description, byQuantity: l.drawdown.pricedBy === "QUANTITY", quantity: l.quantity, rateCents: l.unitPriceCents, amountCents: l.amountCents, start: l.serviceStart, end: l.serviceEnd }))}
+            history={revisions.map((r) => ({ id: r.id, number: r.number, status: r.status, createdAt: r.createdAt, decidedAt: r.decidedAt, note: r.note, fromErp: r.fromErp, lines: describeChanges(r.changes, money) }))}
+          />
         </section>
       )}
 
-      <dl data-testid="order-money" className="mt-6 grid grid-cols-2 gap-x-8 gap-y-3 border-y border-line py-5 sm:grid-cols-4">
-        <Fact label="Hours">
-          {o.hoursOrdered > 0 ? `${o.hoursClaimed} of ${o.hoursOrdered}` : "—"}
-        </Fact>
-        <Fact label="Approved">{formatCents(o.approvedCents, o.currency)}</Fact>
-        <Fact label="Paid">{formatCents(o.paidCents, o.currency)}</Fact>
-        <Fact label="Remaining">{formatCents(o.remainingCents, o.currency)}</Fact>
-      </dl>
-
-      <dl className="mt-6 grid gap-x-8 gap-y-3.5 rounded-brand border border-line bg-white p-5 sm:grid-cols-3">
-        <Fact label="Period">
-          {o.periodStart || o.periodEnd
-            ? `${o.periodStart ?? "…"} → ${o.periodEnd ?? "…"}`
-            : "Not set"}
-        </Fact>
-        <Fact label="Value">{formatCents(o.valueCents, o.currency)}</Fact>
-        <Fact label="Drawn to date">{formatCents(o.drawnCents, o.currency)}</Fact>
-        <Fact label="Not to exceed">
-          {o.notToExceedCents == null ? "No cap" : formatCents(o.notToExceedCents, o.currency)}
-        </Fact>
-        <Fact label="Provider accepted">
-          {o.providerAcceptedAt ? o.providerAcceptedAt.slice(0, 10) : "Not yet"}
-        </Fact>
-        <Fact label="Buyer accepted">
-          {(o.buyerAcceptedAt ?? o.buyerReleasedAt)?.slice(0, 10) ?? "Not yet"}
-        </Fact>
-        {o.party === "PROVIDER" && (
-          <>
-            <Fact label="Service fee">
-              {o.lineFeeBps != null ? bpsToPercentLabel(o.lineFeeBps) : "Varies by line"} ·{" "}
-              {formatCents(o.feeCents, o.currency)}
-            </Fact>
-            <Fact label="You'll get">{formatCents(o.netCents, o.currency)}</Fact>
-          </>
-        )}
-      </dl>
-
-      {/* WHAT CHANGED — SHOWN TO THE PROVIDER BEFORE THEY ACCEPT. */}
-      {o.hasChanges && (
-        <div className="mt-6 rounded-brand border-2 border-amber-400/60 bg-amber-50/50 p-5">
-          <p className="text-[16px] font-bold">These terms differ from the request</p>
-          <p className="mt-1 text-[14px] leading-relaxed text-ink-2">
-            Compared with the work-request line this order came from — what the
-            provider was asked to price. Approvers routinely change quantities and
-            dates.
-          </p>
-          <ul className="mt-3.5 grid gap-2.5">
-            {o.lines
-              .filter((l) => l.changes.length > 0)
-              .map((l) => (
-                <li key={l.id}>
-                  <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
-                    Line {l.lineNumber}
-                  </p>
-                  <ul className="mt-1 grid gap-1">
-                    {l.changes.map((c) => (
-                      <li key={c.field} className="text-[14px]">
-                        <span className="font-semibold">{c.field}:</span>{" "}
-                        <span className="text-ink-2 line-through">{c.was}</span>{" "}
-                        <span aria-hidden>→</span>{" "}
-                        <span className="font-semibold">{c.now}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
+      {tab === "lines" && (
+        <section data-tab="lines">
+          {o.sowText && (
+            <div data-testid="order-sow" className="mt-6">
+              <h2 className="text-[17px] font-bold">Statement of Work</h2>
+              <p className="mt-2 whitespace-pre-wrap text-[14.5px] leading-relaxed">{o.sowText}</p>
+            </div>
+          )}
+          {o.hasChanges && (
+            <div className="mt-6 rounded-brand border-2 border-amber-400/60 bg-amber-50/50 p-5">
+              <p className="text-[16px] font-bold">These terms differ from the request</p>
+              <ul className="mt-3 grid gap-2.5">
+                {o.lines.filter((l) => l.changes.length > 0).map((l) => (
+                  <li key={l.id}>
+                    <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">Line {l.lineNumber}</p>
+                    <ul className="mt-1 grid gap-1">
+                      {l.changes.map((c) => (
+                        <li key={c.field} className="text-[14px]"><span className="font-semibold">{c.field}:</span> <span className="text-ink-2 line-through">{c.was}</span> <span aria-hidden>→</span> <span className="font-semibold">{c.now}</span></li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <ul className="mt-5 grid gap-3">
+            {o.lines.map((l) => (
+              <LineCard key={l.id} line={l} currency={o.currency} showFee={o.party === "PROVIDER"} milestones={milestones.get(l.id) ? <Milestones orderId={o.id} rows={milestones.get(l.id)!} canReport={o.party === "PROVIDER" && BILLABLE.includes(o.status)} /> : null} />
+            ))}
           </ul>
-        </div>
+        </section>
       )}
 
-      {/* ══ WS-3 · THE DRAWDOWN ═══════════════════════════════════════════ */}
-      <h2 className="mt-8 font-display text-[20px] font-bold tracking-[-0.3px]">
-        Lines <span className="font-normal text-ink-2">({o.lines.length})</span>
-      </h2>
-      <ul className="mt-4 grid gap-3">
-        {o.lines.map((l) => (
-          <LineCard key={l.id} line={l} currency={o.currency} showFee={o.party === "PROVIDER"} milestones={milestones.get(l.id) ? <Milestones orderId={o.id} rows={milestones.get(l.id)!} canReport={o.party === "PROVIDER" && BILLABLE.includes(o.status)} /> : null} />
-        ))}
-      </ul>
+      {tab === "plan" && (
+        <section data-tab="plan">
+          {await (async () => {
+            const m = await loadWoMoney(o.id);
+            return (
+              <>
+                {m && <TimeDollars m={m} currency={o.currency} />}
+                <WoPlanSection orderId={o.id} viewer={viewer} hoursAuthorized={m?.hoursAuthorized ?? null} currency={o.currency} />
+              </>
+            );
+          })()}
+        </section>
+      )}
 
-      <ChangeOrders
-        orderId={o.id}
-        party={o.party}
-        canChange={o.party === "BUYER" && !blockedReason && !o.erp}
-        blockedReason={o.erp ? "Change this order in your ERP." : blockedReason}
-        header={{ nteCents: o.notToExceedCents, start: o.periodStart, end: o.periodEnd, sow: o.sowText }}
-        lines={o.lines.map((l) => ({ id: l.id, lineNumber: l.lineNumber, description: l.description, byQuantity: l.drawdown.pricedBy === "QUANTITY", quantity: l.quantity, rateCents: l.unitPriceCents, amountCents: l.amountCents, start: l.serviceStart, end: l.serviceEnd }))}
-        history={revisions.map((r) => ({ id: r.id, number: r.number, status: r.status, createdAt: r.createdAt, decidedAt: r.decidedAt, note: r.note, fromErp: r.fromErp, lines: describeChanges(r.changes, (c) => formatCents(c, o.currency)) }))}
-      />
+      {tab === "settlements" && (
+        <section data-tab="settlements" className="mt-6">
+          {o.party === "PROVIDER" && BILLABLE.includes(o.status) && <Button href={`/orders/${o.id}/settle`}>Raise a payment request</Button>}
+        </section>
+      )}
 
-      <History events={await orderHistory(o.id)} />
+      {tab === "schedule" && <section data-tab="schedule" className="mt-6" />}
 
-      <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-line pt-6">
-        {/* RAISING A PAYMENT REQUEST LIVES INSIDE THE ORDER . */}
-        {o.party === "PROVIDER" && BILLABLE.includes(o.status) && (
-          <Button href={`/orders/${o.id}/settle`}>Raise a payment request</Button>
-        )}
-        <OrderControls orderId={o.id} controls={o.controls} unusedLabel={formatCents(o.remainingCents, o.currency)} pending={o.pendingRequests} />
-        {o.party === "BUYER" && (
-          <Button href={o.jobId ? `/work-requests/${o.jobId}` : "/orders/work-requests"} variant="ghost">
-            {o.jobId ? "Open the job" : "Open the work request"}
-          </Button>
-        )}
-      </div>
+      {o.party === "BUYER" && (
+        <p className="mt-8 border-t border-line pt-5 text-[14px]">
+          <Link href={o.jobId ? `/work-requests/${o.jobId}` : "/orders/work-requests"} className="font-semibold text-magenta-dark underline underline-offset-4">{o.jobId ? "Open the job" : "Open the work request"}</Link>
+        </p>
+      )}
     </div>
   );
 }
