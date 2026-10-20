@@ -180,7 +180,7 @@ export function MaskedProfileView({
   return (
     <div className="grid gap-8 md:grid-cols-[260px_1fr] md:gap-12">
       <aside>
-        <MaskedAvatarLarge blur={p.photoBlur} />
+        <MaskedAvatarLarge />
 
         {/* SCOTT'S ANSWER 5: the Search Score SHOWS on the masked page. */}
         <div className="mt-6 border-t border-line pt-4 dark:border-white/15">

@@ -1,5 +1,6 @@
 "use client";
 
+import { NeutralAvatar } from "@/components/Avatar";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { HireDefaults } from "@/lib/hire-direct";
@@ -46,7 +47,7 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
       <p className={LABEL}>Provider
         <span className="mt-1 flex items-center gap-2.5 text-[14.5px] font-normal">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {d.providerPhotoUrl && <img src={d.providerPhotoUrl} alt="" className="h-9 w-9 rounded-full object-cover" />}
+          {d.identityShown ? d.providerPhotoUrl && <img src={d.providerPhotoUrl} alt="" className="h-9 w-9 rounded-full object-cover" /> : <NeutralAvatar size={36} />}
           <span>{d.providerCompany ? `${d.providerCompany} · ` : ""}{d.providerName}</span>
         </span>
         {!d.identityShown && <span className="mt-1 block text-[12.5px] font-normal text-ink-2">Name and company show once the Work Order exists.</span>}

@@ -141,8 +141,7 @@ function TalentCard({ c }: { c: MaskedCard }) {
   return (
     <article className="flex flex-col gap-2.5 rounded-[10px] border border-line p-[18px] transition-colors hover:border-magenta dark:border-white/15">
       <div className="flex items-center gap-3">
-        {/* THE BLURRED PHOTO (`E767`) — bytes, not a URL. See `MaskedCard.photoBlur`. */}
-        <MaskedAvatar blur={c.photoBlur} />
+        <MaskedAvatar />
         <div className="min-w-0">
           {/* The NAME, blurred and constant — the card had no name line at all */}
           <BlurredField label="Name hidden — join free to see it" className="text-[13px] font-semibold">

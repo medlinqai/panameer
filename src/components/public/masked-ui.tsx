@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { NeutralAvatar } from "@/components/Avatar";
 
 /** THE PUBLIC PREVIEW'S OWN SMALL UI KIT */
 
@@ -69,72 +70,22 @@ export function LockLine({ children }: { children: ReactNode }) {
   );
 }
 
-/** THE PLACEHOLDER AVATAR — AND IT IS A DRAWING, NOT AN IMAGE. */
-export function MaskedAvatar({ size = 48, blur }: { size?: number; blur?: string | null }) {
-  if (blur) {
-    return (
-      // THE BLUR IS NOT WHAT HIDES THE FACE — THE DOWNSCALE IS .
-      <span
-        className="block shrink-0 overflow-hidden rounded-full border border-line dark:border-white/15"
-        style={{ width: size, height: size }}
-        aria-hidden
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={blur}
-          alt=""
-          width={size}
-          height={size}
-          className="h-full w-full scale-110 object-cover blur-[3px]"
-        />
-      </span>
-    );
-  }
-  return (
-    <span
-      className="flex shrink-0 items-center justify-center rounded-full border border-line bg-bg-soft dark:border-white/15 dark:bg-white/5"
-      style={{ width: size, height: size }}
-      // Decorative: it carries no information about who this is, so naming it
-      aria-hidden
-    >
-      <svg
-        viewBox="0 0 24 24"
-        className="fill-none stroke-ink-3 stroke-[1.6]"
-        style={{ width: size * 0.46, height: size * 0.46 }}
-      >
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
-      </svg>
-    </span>
-  );
+/** NA-E001: the neutral avatar — never the photo, not even blurred. */
+export function MaskedAvatar({ size = 48 }: { size?: number }) {
+  return <NeutralAvatar size={size} />;
 }
 
-/** The square hero placeholder on the profile preview. */
-export function MaskedAvatarLarge({ blur }: { blur?: string | null } = {}) {
-  if (blur) {
-    return (
-      <div
-        className="aspect-square w-full max-w-[160px] overflow-hidden rounded-[4px] border border-line sm:max-w-none dark:border-white/15"
-        aria-hidden
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={blur} alt="" className="h-full w-full scale-110 object-cover blur-[10px]" />
-      </div>
-    );
-  }
+/** The square hero avatar on the profile preview. */
+export function MaskedAvatarLarge() {
   return (
-    <div
-      className="flex aspect-square w-full max-w-[160px] items-center justify-center rounded-[4px] border border-line bg-bg-soft sm:max-w-none dark:border-white/15 dark:bg-white/5"
-      aria-hidden
-    >
-      <svg viewBox="0 0 24 24" className="h-[72px] w-[72px] fill-none stroke-ink-3 stroke-[1.2]">
+    <div data-neutral-avatar className="flex aspect-square w-full max-w-[160px] items-center justify-center rounded-[4px] bg-ink sm:max-w-none" aria-hidden>
+      <svg viewBox="0 0 24 24" className="h-[72px] w-[72px] fill-none stroke-white stroke-[1.2]">
         <circle cx="12" cy="8" r="4" />
         <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
       </svg>
     </div>
   );
 }
-
 
 /** A FIELD THAT IS THERE, AND BLURRED */
 export function BlurredField({

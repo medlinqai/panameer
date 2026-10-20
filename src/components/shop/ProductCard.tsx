@@ -5,7 +5,7 @@ import { DefaultCover } from "@/components/catalog/DefaultCover";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Avatar } from "@/components/Avatar";
+import { Avatar, isMaskedName } from "@/components/Avatar";
 import { BuyButtons } from "@/components/shop/BuyButtons";
 import { useMe } from "@/components/MeProvider";
 import { formatCents } from "@/lib/display";
@@ -44,7 +44,7 @@ function ProductTile({ p, signedIn, own, inCartLineId }: { p: CardProduct; signe
       <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-magenta-dark">{p.category ?? ""}</span>
       <h3 className="text-[15px] font-extrabold leading-snug"><Link href={`/shop/${p.id}`} className="hover:underline">{p.title}</Link></h3>
       <Link href={`/providers/${p.providerProfileId}`} data-card-seller className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-ink-2 hover:underline">
-        <Avatar firstName={p.providerFirst} lastName={p.providerLast} photoUrl={p.providerPhotoUrl} size={20} />
+        <Avatar firstName={p.providerFirst} lastName={p.providerLast} photoUrl={p.providerPhotoUrl} size={20} masked={isMaskedName(p.providerName)} />
         <span className="truncate">{seller}</span>
       </Link>
       <p className="mt-auto pt-1.5 text-[17px] font-extrabold tabular-nums">
@@ -101,7 +101,7 @@ function ProductRow({ p, signedIn, own = false, inCartLineId = null }: { p: Card
         {p.summary && <p data-card-summary className="mt-0.5 line-clamp-2 text-[12.5px] leading-snug text-ink-2">{p.summary}</p>}
         <p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-ink-2">
           <Link href={`/providers/${p.providerProfileId}`} data-provider-link className="flex min-w-0 items-center gap-1.5 hover:underline">
-            <Avatar firstName={p.providerFirst} lastName={p.providerLast} photoUrl={p.providerPhotoUrl} size={22} />
+            <Avatar firstName={p.providerFirst} lastName={p.providerLast} photoUrl={p.providerPhotoUrl} size={22} masked={isMaskedName(p.providerName)} />
             <span className="truncate">{p.providerName}</span>
           </Link>
           {meta && <span className="min-w-0 truncate">· {meta}</span>}

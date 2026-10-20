@@ -362,7 +362,11 @@ export function ConnectProfile({
             {/* EACH EDIT CONTROL MOVES BESIDE WHAT IT EDITS (WS-B) */}
             {/* ROW 1 — THE PHOTO IS THE COLUMN */}
             <div className="pm-photo" data-e715-photo>
-              {p.person.photoUrl ? (
+              {p.identityMasked ? (
+                <span data-neutral-avatar className="absolute inset-0 flex items-center justify-center bg-ink">
+                  <svg viewBox="0 0 24 24" aria-hidden className="h-1/2 w-1/2 fill-none stroke-white stroke-[1.2]"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></svg>
+                </span>
+              ) : p.person.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={p.person.photoUrl} alt="" />
               ) : (
@@ -381,6 +385,7 @@ export function ConnectProfile({
                 </Link>
               )}
             </div>
+            {p.identityMasked && <p data-identity-masked className="mt-2 text-[12.5px] leading-snug text-ink-2">Photo, name and company show once you have a Work Order with this provider.</p>}
             {/* THE COMPANY, UNDER THE PHOTO (Scott 2026-10-07, LinkedIn-style): logo + name, one link. */}
             {p.sellingCompany ? (
               <Link href={`/companies/${p.sellingCompany.id}`} data-profile-company aria-label={p.sellingCompany.name} title={p.sellingCompany.name} className="group mt-5 flex justify-center">
@@ -688,7 +693,6 @@ export function ConnectProfile({
             ) : (
               <h1 className="text-[30px] font-bold leading-[1.2] tracking-[-0.01em]">
                 {fullName}
-                {p.identityMasked && <span className="mt-1 block text-[13px] font-normal text-ink-2" data-identity-masked>Name, company and contact details show once you have a Work Order with this provider.</span>}
               </h1>
             )}
             {p.validated && (
