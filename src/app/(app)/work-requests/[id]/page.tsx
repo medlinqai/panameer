@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { OrderLifecycle } from "@/components/orders/OrderLifecycle";
+import { WorkRequestPath } from "@/components/work/WorkRequestPath";
 import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
 import { PENDING_ON_LABEL, WORK_ORDER_LABEL, waitingOn } from "@/lib/oracle-status";
 import { VerifiedTag } from "@/components/company/VerifiedTag";
@@ -128,11 +128,8 @@ export default async function Page({
         </span>
       </div>
 
-      {/* WT-E006: the Work Request's life cycle (Requested · Ordered · Settled · Paid), directly under the header. */}
-      {await (async () => {
-        const req = await prisma.workRequest.findFirst({ where: { job_id: detail.id }, orderBy: { created_at: "desc" }, select: { id: true } });
-        return req ? <OrderLifecycle workRequestId={req.id} /> : null;
-      })()}
+      {/* WP-E001: the Work Request's own path (the money track stays on the Work Order page). */}
+      <WorkRequestPath jobId={detail.id} />
 
       {/* SD-E005: the Service Description, in the standard order. */}
       <ServiceDescriptionView jobId={id} editable={detail.status === "DRAFT"} />
@@ -292,7 +289,7 @@ export default async function Page({
 
       {/* SE-E002/E003: the Job's matches — the same list as Hire (star, quick view, Compare, Request Proposals). */}
       {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && jobMatches.length > 0 && (
-        <section className="mt-6 rounded-brand border border-line bg-white p-5" data-job-matches>
+        <section id="matches" className="mt-6 rounded-brand border border-line bg-white p-5" data-job-matches>
           <h2 className="text-[17px] font-bold">Matches</h2>
           {sourcing && <p className="mt-1 text-[13.5px]">Sourcing Event <Link href={`/hire/sourcing/${sourcing.id}`} className="font-semibold text-magenta-dark underline underline-offset-4">{sourcing.event_number}</Link> · {sourcing.status === "OPEN" ? "Open" : sourcing.status === "AWARDED" ? "Awarded" : "Closed"}</p>}
           <MatchList jobId={detail.id} matches={jobMatches} state={sdForMatches?.state} />
