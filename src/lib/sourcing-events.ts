@@ -54,3 +54,80 @@ export async function openSourcingEvent(viewer: Viewer, jobId: string, providerP
 export async function latestEventFor(jobId: string) {
   return prisma.sourcingEvent.findFirst({ where: { job_id: jobId, status: { not: "DRAFT" } }, orderBy: { created_at: "desc" }, select: { id: true, event_number: true, status: true } });
 }
+
+// ── SE-E004: the provider's side ─────────────────────────────────────────────────────────────────────────────
+async function myPerson(viewer: Viewer) {
+  const p = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+  if (!p) throw new WorkRequestError("No person for this account.", "NOT_FOUND");
+  return p.id;
+}
+
+/** The provider's request in a Sourcing Event on this Job (null when they were not asked in one). */
+export async function providerEventView(providerPersonId: string, jobId: string) {
+  const req = await prisma.proposalRequest.findFirst({
+    where: { job_id: jobId, provider_person_id: providerPersonId, sourcing_event_id: { not: null } },
+    select: { id: true, status: true, decline_reason: true, sourcingEvent: { select: { id: true, event_number: true, status: true, deadline_at: true, deadline_hours: true } }, bid: { select: { status: true, submitted_at: true, cover_note: true, lines: { take: 1, orderBy: { line_number: "asc" }, select: { unit_price_cents: true, available_from: true } } } } },
+  });
+  if (!req?.sourcingEvent) return null;
+  const [job, profile] = await Promise.all([
+    prisma.job.findUnique({ where: { id: jobId }, select: { budget_type: true, budget_min_cents: true, budget_max_cents: true, worksite: true } }),
+    prisma.providerProfile.findUnique({ where: { person_id: providerPersonId }, select: { onsite_rate_cents: true, remote_rate_cents: true } }),
+  ]);
+  const ev = req.sourcingEvent;
+  const line = req.bid?.lines[0];
+  return {
+    eventNumber: ev.event_number, deadlineAt: ev.deadline_at.toISOString(), hours: ev.deadline_hours,
+    open: ev.status === "OPEN" && ev.deadline_at.getTime() > Date.now(),
+    declined: req.status === "DECLINED", declineReason: req.decline_reason,
+    proposed: req.bid?.status === "SUBMITTED" || req.bid?.status === "SHORTLISTED" || req.bid?.status === "AWARDED" ? { rateCents: line?.unit_price_cents ?? null, start: line?.available_from?.toISOString().slice(0, 10) ?? null, note: req.bid?.cover_note ?? null } : null,
+    range: { type: job?.budget_type ?? "HOURLY", minCents: job?.budget_min_cents ?? null, maxCents: job?.budget_max_cents ?? null },
+    rateCardCents: (job?.worksite === "OFFSITE" ? profile?.remote_rate_cents ?? profile?.onsite_rate_cents : profile?.onsite_rate_cents ?? profile?.remote_rate_cents) ?? null,
+  };
+}
+
+async function openRequestFor(viewer: Viewer, jobId: string) {
+  const me = await myPerson(viewer);
+  const req = await prisma.proposalRequest.findFirst({ where: { job_id: jobId, provider_person_id: me, sourcing_event_id: { not: null } }, select: { id: true, status: true, sourcingEvent: { select: { status: true, deadline_at: true } } } });
+  if (!req?.sourcingEvent) throw new WorkRequestError("You weren't asked to propose on this job.", "NOT_FOUND");
+  if (req.sourcingEvent.status !== "OPEN" || req.sourcingEvent.deadline_at.getTime() <= Date.now()) throw new WorkRequestError("This Sourcing Event is closed.", "INVALID");
+  return req;
+}
+
+/** Submit Proposal: rate, earliest start, note — before the deadline. */
+export async function proposeInEvent(viewer: Viewer, jobId: string, input: { rateCents: number; start?: string | null; note?: string | null }) {
+  const req = await openRequestFor(viewer, jobId);
+  if (!Number.isFinite(input.rateCents) || input.rateCents <= 0) throw new WorkRequestError("Enter your rate.", "INVALID");
+  const { submitProposal } = await import("@/lib/proposals");
+  const out = await submitProposal(viewer, { workRequestId: jobId, coverNote: input.note ?? null, rate: { unitPriceCents: Math.round(input.rateCents), basis: "RATE" } });
+  const start = input.start && /^\d{4}-\d{2}-\d{2}$/.test(input.start) ? new Date(input.start) : null;
+  await prisma.proposalLine.updateMany({ where: { proposal_id: out.id }, data: { available_from: start } });
+  await prisma.proposalRequest.update({ where: { id: req.id }, data: { status: "RESPONDED", declined_at: null, decline_reason: null } });
+  return out;
+}
+
+/** Decline (with a reason) — before the deadline. */
+export async function declineInEvent(viewer: Viewer, jobId: string, reason: string) {
+  const req = await openRequestFor(viewer, jobId);
+  await prisma.proposalRequest.update({ where: { id: req.id }, data: { status: "DECLINED", declined_at: new Date(), decline_reason: reason.trim().slice(0, 500) || "No reason given" } });
+}
+
+/** The buyer extends the deadline (hours from now); every open request in the event moves with it. */
+export async function extendDeadline(viewer: Viewer, eventId: string, hours: number) {
+  const ev = await ownEvent(viewer, eventId);
+  const h = Math.round(hours);
+  if (!Number.isFinite(h) || h < 1 || h > 720) throw new WorkRequestError("Extend by 1 to 720 hours.", "INVALID");
+  if (ev.status !== "OPEN" && ev.status !== "CLOSED") throw new WorkRequestError("This Sourcing Event can't be extended.", "INVALID");
+  const at = new Date(Math.max(Date.now(), ev.deadline_at.getTime()) + h * 3_600_000);
+  await prisma.$transaction([
+    prisma.sourcingEvent.update({ where: { id: ev.id }, data: { deadline_at: at, deadline_hours: ev.deadline_hours + h, status: "OPEN" } }),
+    prisma.proposalRequest.updateMany({ where: { sourcing_event_id: ev.id, status: { in: ["ISSUED", "VIEWED", "EXPIRED"] } }, data: { responds_by: at, status: "ISSUED" } }),
+  ]);
+  return at;
+}
+
+async function ownEvent(viewer: Viewer, eventId: string) {
+  const ev = await prisma.sourcingEvent.findUnique({ where: { id: eventId }, select: { id: true, job_id: true, status: true, deadline_at: true, deadline_hours: true, event_number: true, awarded_proposal_id: true, work_order_id: true, others_notified_at: true } });
+  if (!ev) throw new WorkRequestError("Sourcing Event not found", "NOT_FOUND");
+  await ownJob(viewer, ev.job_id);
+  return ev;
+}

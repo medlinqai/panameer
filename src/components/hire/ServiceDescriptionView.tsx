@@ -46,7 +46,7 @@ export async function ServiceDescriptionView({ jobId, editable }: { jobId: strin
         {sd.contractTypes.length ? <p className="flex flex-wrap items-center gap-1.5">Contract: {sd.contractTypes.map((c) => <span key={c} className="rounded-full border border-magenta-dark bg-[#fbeafb] px-2 text-[12.5px] font-semibold text-magenta-dark">{c}</span>)}</p> : <p className="text-ink-3">Not set</p>}
       </Section>
       <Section n={4} title="Who" step={3} jobId={jobId} editable={editable}>
-        <Row label="Role" value={role ? role.display || role.name : null} />
+        <Row label="Role" value={sd.specificRole || (role ? role.display || role.name : null)} />
         <Row label="Domain" value={sd.domains.join(", ")} />
         <Row label="Product" value={sd.product} />
         {(sd.skills.length > 0 || sd.customSkills.length > 0) && (

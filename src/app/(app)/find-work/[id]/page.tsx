@@ -6,6 +6,9 @@ import { WhoIsAsking } from "@/components/work/WhoIsAsking";
 import { ProposeRate } from "@/components/work/ProposeRate";
 import { getWorkDetailForProvider } from "@/lib/work-detail";
 import { proposeEligibility } from "@/lib/proposals";
+import { providerEventView } from "@/lib/sourcing-events";
+import { SourcingProposal } from "@/components/hire/SourcingProposal";
+import { ServiceDescriptionView } from "@/components/hire/ServiceDescriptionView";
 
 export const metadata = { title: "Work Request · Panameer" };
 
@@ -32,6 +35,8 @@ export default async function Page({
   const eligibility = person
     ? await proposeEligibility(person.id, detail.id)
     : null;
+  // SE-E004: asked in a Sourcing Event → the Job in the standard order, the buyer's range, a countdown, Submit or Decline.
+  const sourcing = person ? await providerEventView(person.id, detail.id) : null;
 
   const meta = [
     detail.budgetLabel,
@@ -88,8 +93,13 @@ export default async function Page({
             )}
           </div>
 
-          {}
-          {eligibility?.can && (
+          {sourcing && (
+            <div className="mt-5">
+              <SourcingProposal jobId={detail.id} v={sourcing} />
+              <ServiceDescriptionView jobId={detail.id} editable={false} />
+            </div>
+          )}
+          {!sourcing && eligibility?.can && (
             <div className="mt-5">
               <ProposeRate
                 workRequestId={detail.id}
@@ -111,7 +121,7 @@ export default async function Page({
           )}
 
           {}
-          {eligibility && !eligibility.can && eligibility.code !== "REQUEST_NOT_OPEN" && (
+          {!sourcing && eligibility && !eligibility.can && eligibility.code !== "REQUEST_NOT_OPEN" && (
             <div className="mt-5 rounded-brand border border-line bg-white p-5">
               <p className="text-[15px] text-ink-2">{eligibility.message}</p>
               {}
