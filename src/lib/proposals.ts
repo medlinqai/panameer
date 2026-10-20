@@ -247,6 +247,7 @@ export async function submitProposal(
   const providerNumber = profile ? await (await import("@/lib/provider-number")).ensureProviderNumber(profile.id) : "";
   const job = await prisma.job.findUnique({ where: { id: request.id }, select: { budget_type: true } });
   const cents = draft.rate?.unitPriceCents ?? null;
+  const eventId = verdict.inviteId ? (await prisma.proposalRequest.findUnique({ where: { id: verdict.inviteId }, select: { sourcing_event_id: true } }))?.sourcing_event_id ?? "" : "";
   const rateText = cents ? `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}${job?.budget_type === "HOURLY" ? "/hr" : ""}` : "";
   await notify({
     event: "work.proposal_received",
@@ -254,7 +255,7 @@ export async function submitProposal(
     entityType: "proposal",
     entityId: created.id,
     dedupeKey: `work.proposal_received:${created.id}`,
-    vars: { requestTitle: request.title, requestId: request.id, providerNumber, rateText },
+    vars: { requestTitle: request.title, requestId: request.id, providerNumber, rateText, eventId },
   });
 
   return { id: created.id, replaced: false };

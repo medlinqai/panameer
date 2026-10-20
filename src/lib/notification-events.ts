@@ -723,8 +723,9 @@ export const NOTIFICATION_EVENTS = {
       const rate = str(v, "rateText", "");
       return `Proposal from ${who || "a provider"}${rate ? ` at ${rate}` : ""} on ${str(v, "requestTitle", "your work request")}`;
     },
-    body: () => "Open the work request to compare, shortlist or award.",
-    href: (v) => `/work-requests/${str(v, "requestId", "")}`,
+    body: () => "Open it to compare, shortlist or award.",
+    // A proposal in a Sourcing Event opens the event (where the buyer compares and awards); otherwise the work request.
+    href: (v) => (str(v, "eventId", "") ? `/hire/sourcing/${str(v, "eventId", "")}` : `/work-requests/${str(v, "requestId", "")}`),
   },
   // THE ONE WORK-CHAIN EVENT WITH A LIVE WRITER
   "work.invited_to_propose": {
