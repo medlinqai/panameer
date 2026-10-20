@@ -352,13 +352,15 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 }
 
 async function chainLine(orderId: string) {
-  const w = await prisma.workOrder.findUnique({ where: { id: orderId }, select: { workRequest: { select: { wr_number: true, job: { select: { id: true, title: true } } } } } });
+  const w = await prisma.workOrder.findUnique({ where: { id: orderId }, select: { legacy_number: true, workRequest: { select: { wr_number: true, job: { select: { id: true, title: true } } } } } });
   const wr = w?.workRequest;
   if (!wr) return null;
+  const was = w.legacy_number ? <> · was {w.legacy_number}</> : null;
   return (
     <p className="mt-0.5 text-[13px] text-ink-2" data-order-chain>
       From Work Request {wr.job ? <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.wr_number ?? "—"}</Link> : <b>{wr.wr_number ?? "—"}</b>}
       {wr.job && <> · Job: <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.job.title || "Untitled"}</Link></>}
+      {was}
     </p>
   );
 }

@@ -20,7 +20,7 @@ export default async function Page() {
           r.nteCents == null ? "No cap" : formatCents(r.nteCents - r.approvedCents, r.currency), r.createdAt,
         ])}
         rowMeta={rows.map((r) => ({
-          text: `${r.orderNumber} ${r.buyerName} ${r.providerName} ${r.accountName} ${WORK_ORDER_LABEL[r.status as keyof typeof WORK_ORDER_LABEL] ?? r.status}`.toLowerCase(),
+          text: `${r.orderNumber} ${r.legacyNumber ?? ""} ${r.buyerName} ${r.providerName} ${r.accountName} ${WORK_ORDER_LABEL[r.status as keyof typeof WORK_ORDER_LABEL] ?? r.status}`.toLowerCase(),
           sort: [r.orderNumber, r.status, r.buyerName, r.providerName, r.accountName, r.valueCents, r.approvedCents, r.paidCents, r.nteCents == null ? null : r.nteCents - r.approvedCents, r.createdAt],
         }))}
         searchPlaceholder="Search work orders"

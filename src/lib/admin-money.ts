@@ -304,7 +304,7 @@ const orderLineValue = (l: { quantity: unknown; unit_price_cents: number | null;
   l.amount_cents ?? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0));
 
 export type AdminOrderRow = {
-  id: string; orderNumber: string; status: string; buyerName: string; providerName: string; accountName: string;
+  id: string; orderNumber: string; legacyNumber: string | null; status: string; buyerName: string; providerName: string; accountName: string;
   currency: string; valueCents: number; nteCents: number | null; approvedCents: number; paidCents: number; createdAt: string;
 };
 
@@ -327,6 +327,8 @@ export async function adminWorkOrders(): Promise<AdminOrderRow[]> {
     return {
       id: o.id,
       orderNumber: o.order_number,
+      /** NB-E003: the number before renumbering — still found by search. */
+      legacyNumber: o.legacy_number,
       status: o.status,
       buyerName: who.get(o.buyer_person_id) ?? "—",
       providerName: who.get(o.provider_person_id) ?? "—",

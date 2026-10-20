@@ -3580,6 +3580,8 @@ model WorkRequest {
   /// Ruling 14: the buyer picks per request, so both shapes land here.
   // JW-E003: the requisition header (Oracle POR_REQUISITION_HEADERS_ALL).
   wr_number              String?            @unique
+  /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
+  legacy_number          String?
   job_id                 String?            @db.Uuid
   source                 WorkRequestSource?
   submitted_at           DateTime?
@@ -6190,6 +6192,8 @@ enum WorkOrderLineStatus {
 model WorkOrder {
   id           String @id @default(uuid()) @db.Uuid
   order_number String @unique
+  /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
+  legacy_number          String?
 
   origin WorkOrderOrigin
 
@@ -6458,6 +6462,8 @@ enum PaymentRequestStatus {
 model PaymentRequest {
   id                String @id @default(uuid()) @db.Uuid
   payment_request_number String @unique
+  /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
+  legacy_number          String?
   /// RD-E003: raised before the provider's company finished tax & banking — held from the buyer until it does.
   held_for_tax_banking Boolean @default(false)
 
@@ -6567,6 +6573,8 @@ enum PayoutStatus {
 model Payment {
   id             String @id @default(uuid()) @db.Uuid
   payment_number String @unique
+  /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
+  legacy_number          String?
 
   p_account_id String  @db.Uuid
   /// The buyer's payment reference / remittance id.
@@ -8704,6 +8712,8 @@ enum EstimateLineKind {
 model Estimate {
   id                  String             @id @default(uuid()) @db.Uuid
   estimate_number     String             @unique
+  /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
+  legacy_number          String?
   provider_person_id  String             @db.Uuid
   /// The customer when they are a member (set on send, or when a non-member signs up with the emailed address).
   customer_person_id  String?            @db.Uuid
