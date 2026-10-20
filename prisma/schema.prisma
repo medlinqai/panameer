@@ -6780,10 +6780,15 @@ model ProposalRequest {
   lines ProposalRequestLine[]
   bid   Proposal?
 
+  /// SE-E001: the Sourcing Event this request belongs to (null = an older or one-off request).
+  sourcing_event_id String?        @db.Uuid
+  sourcingEvent     SourcingEvent? @relation(fields: [sourcing_event_id], references: [id], onDelete: SetNull)
+
   @@unique([job_id, provider_person_id])
   @@index([job_id])
   @@index([provider_person_id])
   @@index([status])
+  @@index([sourcing_event_id])
   @@map("proposal_requests")
 }
 
@@ -9337,6 +9342,7 @@ model Job {
   skills          JobPostingSkill[]
   specializations JobSpecialization[]
   proposals       Proposal[]
+  sourcingEvents  SourcingEvent[]
   credentials     JobCredential[]
   hiddenProviders JobHiddenProvider[]
   workRequests    WorkRequest[]
@@ -9482,4 +9488,37 @@ enum AgreementKind {
 enum AgreementStatus {
   ACTIVE
   SUPERSEDED
+}
+
+enum SourcingEventStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  AWARDED
+}
+
+/// SE-E001: a Sourcing Event (Oracle term) — the buyer asks several providers to propose on a Job by a deadline.
+/// The other journey is Sole-Sourced (SS): straight to one provider.
+model SourcingEvent {
+  id                   String              @id @default(uuid()) @db.Uuid
+  /// SE-{code}-YY-######## via nextNumber("SE", buyer)
+  event_number         String              @unique
+  job_id               String              @db.Uuid
+  created_by_person_id String              @db.Uuid
+  deadline_hours       Int                 @default(48)
+  deadline_at          DateTime
+  status               SourcingEventStatus @default(DRAFT)
+  awarded_proposal_id  String?             @db.Uuid
+  work_order_id        String?             @db.Uuid
+  /// SE-E006: when the buyer told the other candidates (only after the Work Order is Released).
+  others_notified_at   DateTime?
+  created_at           DateTime            @default(now())
+  updated_at           DateTime            @updatedAt
+
+  job              Job               @relation(fields: [job_id], references: [id], onDelete: Cascade)
+  proposalRequests ProposalRequest[]
+
+  @@index([job_id])
+  @@index([work_order_id])
+  @@map("sourcing_events")
 }
