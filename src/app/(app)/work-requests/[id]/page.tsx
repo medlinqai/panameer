@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OrderLifecycle } from "@/components/orders/OrderLifecycle";
 import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
 import { PENDING_ON_LABEL, WORK_ORDER_LABEL, waitingOn } from "@/lib/oracle-status";
 import { VerifiedTag } from "@/components/company/VerifiedTag";
@@ -117,6 +118,12 @@ export default async function Page({
           {awarded && erpReturned && <span className="mt-1 text-[12px] text-ink-2">Returned to ERP — waiting for the PO</span>}
         </span>
       </div>
+
+      {/* WT-E006: the Work Request's life cycle (Requested · Ordered · Settled · Paid), directly under the header. */}
+      {await (async () => {
+        const req = await prisma.workRequest.findFirst({ where: { job_id: detail.id }, orderBy: { created_at: "desc" }, select: { id: true } });
+        return req ? <OrderLifecycle workRequestId={req.id} /> : null;
+      })()}
 
       {/* SD-E005: the Service Description, in the standard order. */}
       <ServiceDescriptionView jobId={id} editable={detail.status === "DRAFT"} />
