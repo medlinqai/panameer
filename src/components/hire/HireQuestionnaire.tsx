@@ -29,7 +29,7 @@ type Hierarchy = { name: string; businessTypes: { id: string; name: string; uses
 type Props = {
   hierarchy: Hierarchy;
   howLong: { value: string; label: string }[];
-  roles: { id: string; label: string }[];
+  roles: { name: string; roleId: string | null }[];
   initial: ServiceDescription;
   initialJobId: string | null;
   initialStep: number;
@@ -145,7 +145,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
     if (!f.sourceText || b.id === f.businessTypeId) return;
     const j = await call({ action: "reparseWho", sourceText: f.sourceText, businessTypeId: b.id });
     const who = j?.who as Partial<ServiceDescription> | undefined;
-    if (who) setF((x) => ({ ...x, ...who, fromPosting: [...x.fromPosting.filter((k) => !["roleId", "domains", "product", "skills", "customSkills", "years", "education", "credentials", "specialties", "responsibilities", "required", "niceToHave"].includes(k)), ...(who.fromPosting ?? [])] }));
+    if (who) setF((x) => ({ ...x, ...who, fromPosting: [...x.fromPosting.filter((k) => !["roleId", "specificRole", "domains", "product", "skills", "customSkills", "years", "education", "credentials", "specialties", "responsibilities", "required", "niceToHave"].includes(k)), ...(who.fromPosting ?? [])] }));
   };
 
   const addSkill = async (name: string) => {
@@ -277,7 +277,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, initial, initialJ
             <h2 className="text-[19px] font-extrabold">Who do you need?</h2>
             {f.usesSkills && <div className="grid gap-x-3 sm:grid-cols-2">
               <label className={LABEL}>Role{from("roleId")}
-                <select value={f.roleId ?? ""} onChange={(e) => set({ roleId: e.target.value || null })} className={FIELD}><option value="">Any role</option>{roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}</select>
+                <select value={f.specificRole} onChange={(e) => set({ specificRole: e.target.value, roleId: roles.find((r) => r.name === e.target.value)?.roleId ?? null })} className={FIELD}><option value="">Any role</option>{f.specificRole && !roles.some((r) => r.name === f.specificRole) && <option value={f.specificRole}>{f.specificRole}</option>}{roles.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}</select>
               </label>
               <label className={LABEL}>Product{from("product")}<input value={f.product} onChange={(e) => set({ product: e.target.value })} className={FIELD} placeholder="Fusion Cloud, EBS, PeopleSoft…" /></label>
             </div>}

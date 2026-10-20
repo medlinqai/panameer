@@ -16,7 +16,10 @@ export type ServiceDescription = {
   title: string; summary: string;
   worksite: WorksiteType | null; city: string; state: string; country: string; onsiteDays: number | null;
   contractTypes: SdContract[];
-  roleId: string | null; domains: string[]; product: string; skills: { id: string; name: string }[]; customSkills: string[];
+  roleId: string | null;
+  /** SM-E005: the specific role (a work role name, e.g. Functional Consultant); roleId is its top role. Not stored — read back from the title. */
+  specificRole: string;
+  domains: string[]; product: string; skills: { id: string; name: string }[]; customSkills: string[];
   years: number | null; education: string; credentials: string[]; specialties: string[];
   responsibilities: string; required: string; niceToHave: string;
   startText: string; startDate: string; duration: WorkRequestDuration | null;
@@ -28,7 +31,7 @@ export type ServiceDescription = {
 
 export const emptySd = (): ServiceDescription => ({
   category: "", businessTypeId: null, businessType: "", classConfidence: null, usesSkills: true, title: "", summary: "", worksite: null, city: "", state: "", country: "", onsiteDays: null, contractTypes: [],
-  roleId: null, domains: [], product: "", skills: [], customSkills: [], years: null, education: "", credentials: [], specialties: [],
+  roleId: null, specificRole: "", domains: [], product: "", skills: [], customSkills: [], years: null, education: "", credentials: [], specialties: [],
   responsibilities: "", required: "", niceToHave: "", startText: "", startDate: "", duration: null, budgetType: null, budgetMin: null, budgetMax: null,
   sourceText: "", fromPosting: [],
 });
@@ -41,6 +44,45 @@ const ROLE_CODE: Record<string, string> = {
   "Project Manager": "PROJECT_DELIVERY_LEAD", "Solution Architect": "SOLUTION_ARCHITECT", Tester: "TESTER_SUPPORT",
   "Change & Training": "CHANGE_ENABLEMENT_LEAD", "AI Specialist": "AI_SPECIALIST",
 };
+// MQ-E003: the deepest role level (the work roles under each top role), read from a title.
+const DEEP_ROLES: [RegExp, string[]][] = [
+  [/techno.?functional/i, ["Functional Consultant", "Technical Consultant / Developer"]],
+  [/program (manager|director)|programme/i, ["Program Management"]],
+  [/project manager|\bpmp\b|delivery lead/i, ["Project Manager"]],
+  [/architect/i, ["Solution Architect", "Technical Architect"]],
+  [/test (lead|manager)|\bqa\b|testing|tester/i, ["Test Lead", "Testing Specialist"]],
+  [/training|change (management|lead)|\bocm\b|enablement/i, ["Training Lead", "Organizational Change Mgt"]],
+  [/functional/i, ["Functional Consultant"]],
+  [/technical|developer|integration|\boic\b/i, ["Technical Consultant / Developer"]],
+  [/support analyst|application support|\bams\b/i, ["Application Support Analyst"]],
+];
+export function deepRolesIn(text: string): string[] {
+  for (const [re, names] of DEEP_ROLES) if (re.test(text)) return names;
+  return [];
+}
+
+/** SM-E005: the parser's role kind → the specific role. */
+const KIND_TO_SPECIFIC: Record<string, string> = {
+  Functional: "Functional Consultant", "Techno-Functional": "Functional Consultant", Technical: "Technical Consultant / Developer",
+  "Project Manager": "Project Manager", "Solution Architect": "Solution Architect", Tester: "Test Lead", "Change & Training": "Training Lead",
+};
+/** SM-E005: a specific role's top role code (Functional Consultant → Application-Specific …). */
+export function topRoleCodeFor(specific: string): string | null {
+  const n = specific.toLowerCase();
+  if (/functional|business (process|architect)/.test(n)) return "APPLICATION_SPECIFIC";
+  if (/architect/.test(n)) return "SOLUTION_ARCHITECT";
+  if (/technical|developer|integration/.test(n)) return "TECHNOLOGY_SPECIFIC";
+  if (/project|program|pmo|cutover|delivery/.test(n)) return "PROJECT_DELIVERY_LEAD";
+  if (/test/.test(n)) return "TESTER_SUPPORT";
+  if (/training|change|enablement|adoption/.test(n)) return "CHANGE_ENABLEMENT_LEAD";
+  if (/\bai\b/.test(n)) return "AI_SPECIALIST";
+  return null;
+}
+/** SM-E005: the specific roles a job can ask for (the RDS work roles, one per name). */
+export async function workRoleNames(): Promise<string[]> {
+  const rows = await prisma.workRole.findMany({ where: { hidden: false }, orderBy: [{ mode: "asc" }, { sort_order: "asc" }, { name: "asc" }], select: { name: true } });
+  return [...new Set(rows.map((r) => r.name))];
+}
 /** The product line → its pillar in the skill catalog. */
 export function productPillarName(product: string | null | undefined): string | null {
   const p = (product ?? "").toLowerCase();
@@ -68,7 +110,9 @@ const aliasOf = (term: string) => ALIASES[norm(term)] ?? term;
 const ERPISH = /oracle|fusion|\bebs\b|peoplesoft|workday|\bsap\b|netsuite|\berp\b|\bepm\b|hyperion/i;
 
 export async function fromParsed(ai: AiServiceDescription, sourceText: string, pick?: { category: string; businessTypeId: string; businessType: string; usesSkills: boolean; confidence: PostingClass["confidence"] } | null): Promise<ServiceDescription> {
-  const role = ai.roleKind && ROLE_CODE[ai.roleKind] ? await prisma.role.findUnique({ where: { code: ROLE_CODE[ai.roleKind] }, select: { id: true } }) : null;
+  const specificRole = ai.workRole?.trim() || (ai.roleKind ? KIND_TO_SPECIFIC[ai.roleKind] ?? "" : "");
+  const code = (specificRole && topRoleCodeFor(specificRole)) || (ai.roleKind ? ROLE_CODE[ai.roleKind] : null);
+  const role = code ? await prisma.role.findUnique({ where: { code }, select: { id: true } }) : null;
   const pillarName = productPillarName(ai.product ?? ai.title);
   const pillar = pillarName ? await prisma.pillar.findFirst({ where: { name: pillarName }, select: { id: true } }) : null;
   const catalog = await prisma.skill.findMany({
@@ -92,7 +136,7 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string, p
     title: ai.title ?? "", summary: ai.summary ?? "",
     worksite: ai.worksite, city: ai.city ?? "", state: ai.state ?? "", country: ai.country ?? "", onsiteDays: ai.onsiteDaysPerWeek,
     contractTypes: ai.contractTypes,
-    roleId: role?.id ?? null, domains: ai.domains, product: ai.product ?? "", skills, customSkills: [...new Set(unmatched)].slice(0, 12),
+    roleId: role?.id ?? null, specificRole, domains: ai.domains, product: ai.product ?? "", skills, customSkills: [...new Set(unmatched)].slice(0, 12),
     years: ai.yearsExperience, education: ai.education ?? "", credentials: ai.credentials, specialties: ai.specialties,
     responsibilities: ai.responsibilities.join("\n"), required: ai.mustHave.join("\n"), niceToHave: ai.niceToHave.join("\n"),
     startText: ai.startText ?? "", startDate: ai.startDate ?? "", duration: ai.duration,
@@ -103,7 +147,7 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string, p
     ...filled("category", sd.category), ...filled("businessType", sd.businessTypeId), ...filled("title", sd.title), ...filled("summary", sd.summary),
     ...filled("worksite", sd.worksite), ...filled("city", sd.city), ...filled("onsiteDays", sd.onsiteDays),
     ...filled("contractTypes", sd.contractTypes),
-    ...filled("roleId", sd.roleId), ...filled("domains", sd.domains), ...filled("product", sd.product), ...filled("skills", sd.skills),
+    ...filled("roleId", sd.roleId || sd.specificRole), ...filled("domains", sd.domains), ...filled("product", sd.product), ...filled("skills", sd.skills),
     ...filled("years", sd.years), ...filled("education", sd.education), ...filled("credentials", sd.credentials),
     ...filled("responsibilities", sd.responsibilities), ...filled("required", sd.required), ...filled("niceToHave", sd.niceToHave),
     ...filled("startText", sd.startText), ...filled("duration", sd.duration), ...filled("budget", sd.budgetMin ?? sd.budgetMax),
@@ -163,7 +207,7 @@ export async function readServiceDescription(jobId: string): Promise<ServiceDesc
     category: group?.name ?? "", businessTypeId: j.business_type_id, businessType: bt?.name ?? "", usesSkills: bt?.uses_skills ?? true, title: j.title, summary: j.description ?? "",
     worksite: j.worksite, city: j.city ?? "", state: j.state ?? "", country: j.location_country ?? "", onsiteDays: j.onsite_days_per_week,
     contractTypes: j.contract_types.map((c) => CONTRACT_FROM_DB[c]),
-    roleId: j.role_id, domains: j.domains, product: j.product ?? "", skills: j.skills.map((s) => ({ id: s.skill.id, name: s.skill.name })), customSkills: j.custom_skills,
+    roleId: j.role_id, specificRole: deepRolesIn(`${j.title} ${j.description ?? ""}`)[0] ?? "", domains: j.domains, product: j.product ?? "", skills: j.skills.map((s) => ({ id: s.skill.id, name: s.skill.name })), customSkills: j.custom_skills,
     years: j.years_experience, education: j.education ?? "", credentials: j.credentials.map((c) => c.name), specialties: j.specializations.map((s) => s.specialization.name),
     responsibilities: j.responsibilities ?? "", required: j.required ?? "", niceToHave: j.nice_to_have ?? "",
     startText: j.start_text ?? "", startDate: j.start_date ? j.start_date.toISOString().slice(0, 10) : "", duration: j.duration,
@@ -198,7 +242,7 @@ export async function parsePosting(text: string): Promise<ParseResult> {
   const cls = await aiClassifyPosting(text, options);
   const hit = cls && cls.confidence !== "low" && cls.businessType ? groups.find((g) => g.name === cls.category)?.businessTypes.find((b) => b.name === cls.businessType) : undefined;
   const ctx = hit ? await btContext(hit.id) : null;
-  const catalog = ctx ? { skills: await skillCatalogFor(ctx.id, text) } : null;
+  const catalog = ctx ? { skills: await skillCatalogFor(ctx.id, text), workRoles: ctx.usesSkills ? await workRoleNames() : [] } : null;
   // One retry: the model occasionally returns a shape we can't read.
   let out = await aiExtractServiceDescription(text, ctx, catalog);
   if (!out.ok && out.reason === "error") out = await aiExtractServiceDescription(text, ctx, catalog);
@@ -207,17 +251,17 @@ export async function parsePosting(text: string): Promise<ParseResult> {
   return { ok: true, sd: await fromParsed(out.data, stripContacts(text), pick) };
 }
 
-const WHO_KEYS = ["roleId", "domains", "product", "skills", "customSkills", "years", "education", "credentials", "specialties", "responsibilities", "required", "niceToHave"] as const;
+const WHO_KEYS = ["roleId", "specificRole", "domains", "product", "skills", "customSkills", "years", "education", "credentials", "specialties", "responsibilities", "required", "niceToHave"] as const;
 /** PC-E002: the buyer changed the Business Type — pass 2 again for WHO only; What/Where/Contract/When/Rate stay as they are. */
 export async function reparseWho(sourceText: string, businessTypeId: string): Promise<Partial<ServiceDescription> | null> {
   const ctx = await btContext(businessTypeId);
   if (!ctx || sourceText.trim().length < 60) return null;
-  const out = await aiExtractServiceDescription(sourceText, ctx, { skills: await skillCatalogFor(ctx.id, sourceText) });
+  const out = await aiExtractServiceDescription(sourceText, ctx, { skills: await skillCatalogFor(ctx.id, sourceText), workRoles: ctx.usesSkills ? await workRoleNames() : [] });
   if (!out.ok) return null;
   const sd = await fromParsed(out.data, sourceText, { category: ctx.category, businessTypeId: ctx.id, businessType: ctx.name, usesSkills: ctx.usesSkills, confidence: "high" });
   const who: Partial<ServiceDescription> = { category: ctx.category, businessTypeId: ctx.id, businessType: ctx.name, usesSkills: ctx.usesSkills, classConfidence: null };
   for (const k of WHO_KEYS) (who as Record<string, unknown>)[k] = sd[k];
-  if (!ctx.usesSkills) Object.assign(who, { roleId: null, domains: [], product: "" });
+  if (!ctx.usesSkills) Object.assign(who, { roleId: null, specificRole: "", domains: [], product: "" });
   return { ...who, fromPosting: sd.fromPosting.filter((k) => (WHO_KEYS as readonly string[]).includes(k)) };
 }
 

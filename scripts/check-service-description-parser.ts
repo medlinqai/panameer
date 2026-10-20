@@ -46,9 +46,10 @@ const SIGN_OFF = "\n\nThanks,\nJane Doe\nSenior Technical Recruiter | Acme Staff
       const want = [["Purchasing", "Purchase Orders", "Purchase Order Management", "Requisitioning & Demand Management"], ["Payables"], ["Payments", "Payments & Cash Management"], ["Supplier Portal", "Supplier Registration", "Supplier Management", "Supplier Qualification Management"], ["Procurement Contracts"]];
       const missing = want.filter((alts) => !has(...alts)).map((a) => a[0]);
       const wrong = ["Order Management", "Lease Accounting", "Onboarding"].filter((w) => names.includes(w));
-      const ok = sd.domains.includes("P2P") && !missing.length && !wrong.length && sd.customSkills.length <= 8;
+      const roleOk = ["Functional Consultant", "Functional Lead", "Business Process Lead"].includes(sd.specificRole);
+      const ok = roleOk && sd.domains.includes("P2P") && !missing.length && !wrong.length && sd.customSkills.length <= 8;
       if (!ok) fails++;
-      console.log(`${ok ? "PASS" : "FAIL"} SD-004 · domains ${sd.domains.join("/")} · skills ${names.join(", ")} · missing [${missing.join(", ")}] · wrong [${wrong.join(", ")}] · custom ${sd.customSkills.length} (${sd.customSkills.join(", ")}) · ${Date.now() - t0}ms`);
+      console.log(`${ok ? "PASS" : "FAIL"} SD-004 · role ${sd.specificRole || "—"} · domains ${sd.domains.join("/")} · skills ${names.join(", ")} · missing [${missing.join(", ")}] · wrong [${wrong.join(", ")}] · custom ${sd.customSkills.length} (${sd.customSkills.join(", ")}) · ${Date.now() - t0}ms`);
     }
   }
   await prisma.$disconnect();

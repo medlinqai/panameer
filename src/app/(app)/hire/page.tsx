@@ -3,7 +3,7 @@ import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { HireQuestionnaire } from "@/components/hire/HireQuestionnaire";
 import { HOW_LONG, shipTos } from "@/lib/hire-questionnaire";
-import { emptySd, postingHierarchy, readServiceDescription } from "@/lib/service-description";
+import { emptySd, postingHierarchy, readServiceDescription, topRoleCodeFor, workRoleNames } from "@/lib/service-description";
 import { loadOwned, resolveBuyer } from "@/lib/work-request";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
     const ship = (await shipTos(viewer))[0];
     if (ship) sd = { ...sd, city: ship.city ?? "", state: ship.state ?? "" };
   }
-  const roles = (await prisma.role.findMany({ orderBy: { sort_order: "asc" }, select: { id: true, name: true, display: true } })).map((r) => ({ id: r.id, label: r.display || r.name }));
+  // SM-E005: the Role dropdown lists the specific roles; each carries its top role for matching and saving.
+  const top = new Map((await prisma.role.findMany({ select: { id: true, code: true } })).map((r) => [r.code, r.id]));
+  const roles = (await workRoleNames()).map((name) => ({ name, roleId: top.get(topRoleCodeFor(name) ?? "") ?? null }));
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl">
       <div className="mt-2 flex flex-wrap items-end justify-between gap-3">

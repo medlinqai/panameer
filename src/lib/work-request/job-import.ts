@@ -187,6 +187,8 @@ export const AI_SD_SCHEMA = z.object({
   onsiteDaysPerWeek: z.number().nullable(),
   contractTypes: z.preprocess((v) => v ?? [], z.array(z.enum(["C2C", "W2", "C2H", "1099"]))),
   roleKind: z.enum(ROLE_KINDS).nullable(),
+  /** SM-E005: the specific RDS role (a work role name), when the catalog list is given. */
+  workRole: z.string().nullable().optional(),
   domains: strList,
   product: z.string().nullable(),
   skills: strList,
@@ -225,6 +227,7 @@ const SD_TOOL = {
     onsiteDaysPerWeek: num("Days per week on site for hybrid/onsite work, if stated (e.g. 3)."),
     contractTypes: { type: "array", items: { type: "string", enum: ["C2C", "W2", "C2H", "1099"] }, description: "Engagement types the posting allows: C2C (corp-to-corp), W2, C2H (contract-to-hire), 1099. Empty if not stated." },
     roleKind: { type: ["string", "null"], enum: [...ROLE_KINDS, null], description: "The kind of role." },
+    workRole: { type: ["string", "null"], description: "The specific role, e.g. Functional Consultant." },
     domains: list("Business process areas named or clearly implied by the modules: P2P, O2C, R2R, SCM, HCM, EPM, PPM, CX. Short codes."),
     product: str("The software product line: Fusion Cloud, EBS, PeopleSoft, EPM Cloud, Workday, Salesforce, … as written."),
     skills: list("Named modules, tools and skills, as written (e.g. Purchasing, Supplier Portal, OIC, BI Publisher). Terms only."),
@@ -322,7 +325,7 @@ A generic word on its own
 
 /** PC-E001: pass 2 — the six parts, using the picked Business Type's WHO fields (RDS only where it uses skills).
  *  SM-E001/E003: with a catalog, `skills` and `domains` may only be names from it (enums). */
-export async function aiExtractServiceDescription(text: string, bt?: { category: string; name: string; usesSkills: boolean; types: string[] } | null, catalog?: { skills: string[] } | null): Promise<SdImportOutcome> {
+export async function aiExtractServiceDescription(text: string, bt?: { category: string; name: string; usesSkills: boolean; types: string[] } | null, catalog?: { skills: string[]; workRoles?: string[] } | null): Promise<SdImportOutcome> {
   const who = !bt
     ? ""
     : bt.usesSkills
@@ -330,6 +333,7 @@ export async function aiExtractServiceDescription(text: string, bt?: { category:
       : `\nThis posting is ${bt.category} › ${bt.name}: there is no software role or product — leave roleKind, domains and product null/empty. Put what they must provide or work with (services, equipment, materials, coverage area) in skills, preferring these names when they fit: ${bt.types.slice(0, 40).join(", ")}.`;
   const props = { ...(SD_TOOL.properties as Record<string, unknown>) };
   props.domains = { type: "array", items: { type: "string", enum: [...RDS_DOMAINS] }, description: "Business process domains (RDS) the work covers. Themes such as Finance Transformation go to specialties, not here." };
+  if (catalog?.workRoles?.length) props.workRole = { type: ["string", "null"], enum: [...catalog.workRoles, null], description: "The specific role the posting is for (a business process lead or SME doing functional design is a Functional Consultant / Functional Lead)." };
   if (catalog?.skills.length) props.skills = { type: "array", items: { type: "string", enum: catalog.skills }, description: "Catalog skills the posting asks for — only names from this list." };
   const schema = { ...SD_TOOL, properties: props };
   const call = await callExtractionModel({

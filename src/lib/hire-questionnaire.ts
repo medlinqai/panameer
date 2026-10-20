@@ -4,7 +4,7 @@ import type { Viewer } from "@/lib/access";
 import { marketplaceWhere } from "@/lib/visibility";
 import { createDraft, resolveBuyer, loadOwned } from "@/lib/work-request";
 import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
-import { productPillarName, writeServiceDescription, type ServiceDescription } from "@/lib/service-description";
+import { productPillarName, writeServiceDescription, type ServiceDescription, deepRolesIn } from "@/lib/service-description";
 import { requisitionForJob } from "@/lib/requisition";
 import { ensureFirstLine } from "@/lib/work-request-lines";
 import { inviteProviders } from "@/lib/work-request-invite";
@@ -92,23 +92,6 @@ export function domainsIn(text: string): Set<string> {
   return new Set(Object.entries(DOMAIN_WORDS).filter(([, re]) => re.test(text)).map(([k]) => k));
 }
 
-// MQ-E003: the deepest role level (the work roles under each top role), read from a title.
-const DEEP_ROLES: [RegExp, string[]][] = [
-  [/techno.?functional/i, ["Functional Consultant", "Technical Consultant / Developer"]],
-  [/program (manager|director)|programme/i, ["Program Management"]],
-  [/project manager|\bpmp\b|delivery lead/i, ["Project Manager"]],
-  [/architect/i, ["Solution Architect", "Technical Architect"]],
-  [/test (lead|manager)|\bqa\b|testing|tester/i, ["Test Lead", "Testing Specialist"]],
-  [/training|change (management|lead)|\bocm\b|enablement/i, ["Training Lead", "Organizational Change Mgt"]],
-  [/functional/i, ["Functional Consultant"]],
-  [/technical|developer|integration|\boic\b/i, ["Technical Consultant / Developer"]],
-  [/support analyst|application support|\bams\b/i, ["Application Support Analyst"]],
-];
-export function deepRolesIn(text: string): string[] {
-  for (const [re, names] of DEEP_ROLES) if (re.test(text)) return names;
-  return [];
-}
-
 export type HireMatch = { personId: string; profileId: string; name: string; company: string | null; line: string; rate: string | null; matched: string[]; why: string[]; fit: number; inBudget: boolean;
   /** MQ-E001: an Onsite/Hybrid job lists only providers in its state; the rest come after, behind "Show providers outside". */
   outside: boolean;
@@ -155,7 +138,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
   const max = input.budgetMax != null ? input.budgetMax * 100 : null;
   const onsite = !!input.worksite && input.worksite !== "OFFSITE" && !!input.state.trim();
   // The job's domains: as written (P2P, SCM…) or read from its title when the posting named none.
-  const jobDeep = deepRolesIn(`${input.title} ${input.summary}`);
+  const jobDeep = input.specificRole ? [input.specificRole] : deepRolesIn(`${input.title} ${input.summary}`);
   const jobDomains = new Set([...input.domains.flatMap((d) => [...domainsIn(d), ...(DOMAIN_WORDS[d.toUpperCase()] ? [d.toUpperCase()] : [])]), ...(input.domains.length ? [] : domainsIn(input.title))]);
   const scored = rows.map((r) => {
     const addr = r.person.site?.addresses[0];
