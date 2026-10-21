@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import type { ShopProduct } from "@/lib/shop";
 import { BuyButtons } from "@/components/shop/BuyButtons";
 import { NeutralAvatar } from "@/components/Avatar";
-import { priceLabel } from "@/components/shop/ProductCard";
+import { priceLabel } from "@/lib/price-label";
 
 // SA-E004/E005: results as rows (like Hire matches) with a detail pane; ☐ Compare keeps up to 3 of one Product Type in a cookie.
 export type ResultProduct = Pick<ShopProduct, "id" | "title" | "summary" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerProfileId" | "typeName" | "productTypeId" | "leadDays" | "deliverables" | "rating" | "certified" | "openToOffers" | "coverUrl" | "terms" | "category">;

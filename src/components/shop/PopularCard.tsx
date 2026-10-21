@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ShopProduct } from "@/lib/shop";
 import { TypeArt } from "@/components/shop/TypeArt";
 import { NeutralAvatar, Avatar, isMaskedName } from "@/components/Avatar";
-import { priceLabel } from "@/components/shop/ProductCard";
+import { priceLabel } from "@/lib/price-label";
 
 // PA-E002/E005: a Popular card — the Product Type art band, then name, type, price and the seller
 // (provider number + neutral avatar until a Work Order with this buyer is Released).

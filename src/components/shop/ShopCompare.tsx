@@ -4,7 +4,7 @@ import { TypeArt } from "@/components/shop/TypeArt";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { BuyButtons } from "@/components/shop/BuyButtons";
-import { priceLabel } from "@/components/shop/ProductCard";
+import { priceLabel } from "@/lib/price-label";
 import { deliveryLabel, useCompare, type ResultProduct } from "@/components/shop/ShopResults";
 
 // SA-E005: side by side, one Product Type, up to 3 — cheapest and fastest highlighted; Buy / Make an Offer / Remove per column.

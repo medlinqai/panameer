@@ -24,11 +24,8 @@ export type CardProduct = Pick<ShopProduct, "id" | "title" | "kind" | "pricingTy
 
 const code = (p: CardProduct) => (p.coverCode || p.title.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("")).toUpperCase().slice(0, 3);
 
-export function priceLabel(p: Pick<CardProduct, "priceCents" | "currency" | "pricingType" | "billingPeriod">) {
-  if (p.priceCents == null) return "Price on request";
-  const per = p.pricingType === "HOURLY" ? " / hr" : p.pricingType === "RECURRING" ? (p.billingPeriod === "ANNUAL" ? " / year" : " / month") : "";
-  return `${formatCents(p.priceCents, p.currency)}${per}`;
-}
+export { priceLabel } from "@/lib/price-label";
+import { priceLabel } from "@/lib/price-label";
 
 export function ProductCard({ p, signedIn, own = false, inCartLineId = null, tile = false }: { p: CardProduct; signedIn: boolean; own?: boolean; inCartLineId?: string | null; tile?: boolean }) {
   if (tile) return <ProductTile p={p} signedIn={signedIn} own={own} inCartLineId={inCartLineId} />;
