@@ -61,6 +61,16 @@ export function ShopOffers({ rows, side }: { rows: ShopOfferRow[]; side: ShopSid
   );
 }
 
+const STEPS = ["Browse", "Offer", "WR", "WO", "Delivered", "Paid"];
+/** PA-E006: six dots, done = ink, current = magenta, still to come = grey. */
+function StepDots({ at }: { at: number }) {
+  return (
+    <span className="inline-flex items-center gap-1" aria-label={`Step ${at + 1} of 6: ${STEPS[at]}`} data-step-dots={at}>
+      {STEPS.map((l, i) => <span key={l} title={l} className={i < at ? "h-2 w-2 rounded-full bg-ink" : i === at ? "h-2.5 w-2.5 rounded-full bg-magenta ring-2 ring-magenta/25" : "h-2 w-2 rounded-full bg-[#C9CDDC]"} />)}
+    </span>
+  );
+}
+
 export function ShopOrders({ rows, empty, side = "buyer" }: { rows: ShopOrderRow[]; empty: string; side?: ShopSide }) {
   if (!rows.length) return <p className="py-6 text-[14px] text-ink-3">{empty}</p>;
   return (
@@ -68,9 +78,11 @@ export function ShopOrders({ rows, empty, side = "buyer" }: { rows: ShopOrderRow
       {rows.map((o) => (
         <li key={o.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3">
           {o.needsAction ? <RedDot /> : <span className="w-2.5" />}
+          <TypeArt typeName={o.typeName} category={o.category} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[14.5px] font-bold">{o.product}</p>
-            <p className="text-[12.5px] text-ink-2"><span className="font-mono">{o.number}</span> · {o.who} · {usd(o.amountCents)} · {o.date} · <b className="text-ink">{o.completed ? "Completed" : o.step}</b></p>
+            <p className="text-[12.5px] text-ink-2"><span className="font-mono">{o.number}</span> · {o.who} · {usd(o.amountCents)} · {o.date}</p>
+            <p className="mt-1 flex flex-wrap items-center gap-2 text-[12.5px]"><StepDots at={o.stepIndex} /><b className="text-ink">{o.completed ? "Completed" : o.stepDetail}</b></p>
             {o.recurring && <RecurringLine r={o.recurring} />}
           </div>
           {o.completed ? (side === "buyer" && o.productId ? <Link href={`/cart?add=${o.productId}`} className={GHOST} data-reorder>Reorder</Link> : <Link href={`/orders/${o.id}`} className={GHOST}>Open</Link>) : o.action && <Link href={o.action.href} className={o.needsAction ? BTN : GHOST}>{o.action.label}</Link>}

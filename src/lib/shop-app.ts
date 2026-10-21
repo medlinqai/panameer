@@ -104,7 +104,7 @@ export async function shopOffers(viewer: Viewer, personId: string, side: ShopSid
   });
 }
 
-export type ShopOrderRow = { typeName: string | null; category: string | null; completed: boolean; recurring: Recurring | null; productId: string | null; id: string; number: string; product: string; who: string; step: string; status: string; amountCents: number; needsAction: boolean; action: { label: string; href: string } | null; date: string };
+export type ShopOrderRow = { stepIndex: number; stepDetail: string; typeName: string | null; category: string | null; completed: boolean; recurring: Recurring | null; productId: string | null; id: string; number: string; product: string; who: string; step: string; status: string; amountCents: number; needsAction: boolean; action: { label: string; href: string } | null; date: string };
 const STEP_OF = (status: string, billed: boolean, paid: boolean) => (paid ? "Paid" : billed ? "Delivered" : (RELEASED as readonly string[]).includes(status) || status === "CLOSED" ? "Work Order" : "Work Order");
 
 export async function shopOrders(viewer: Viewer, personId: string, side: ShopSide): Promise<ShopOrderRow[]> {
@@ -136,14 +136,26 @@ export async function shopOrders(viewer: Viewer, personId: string, side: ShopSid
     let needs = false;
     if (side === "buyer") {
       if (o.status === "ISSUED" && !o.buyer_accepted_at) { action = { label: "Accept", href: `/orders/${o.id}` }; needs = true; }
-      else if (mine.some((p) => p.status === "SUBMITTED")) { action = { label: "Approve delivery", href: `/orders/${o.id}?tab=settlements` }; needs = true; }
+      else if (mine.some((p) => p.status === "SUBMITTED")) { action = { label: "Approve Delivery", href: `/orders/${o.id}?tab=settlements` }; needs = true; }
+      else if (mine.some((p) => p.status === "APPROVED")) { action = { label: "Pay", href: "/pay" }; needs = true; }
     } else {
       if (o.status === "ISSUED" && !o.provider_accepted_at) { action = { label: "Accept", href: `/orders/${o.id}` }; needs = true; }
       else if ((RELEASED as readonly string[]).includes(o.status) && !billed) { action = { label: "Deliver & request payment", href: `/orders/${o.id}?tab=settlements` }; needs = true; }
     }
+    // PA-E006: where it is and what is next — Browse · Offer · WR · WO · Delivered · Paid (0-5).
+    const approved = mine.some((p) => p.status === "APPROVED");
+    const stepIndex = paid ? 5 : billed ? 4 : 3;
+    const you = (b: boolean) => (b ? "waiting for you" : side === "buyer" ? "waiting for the provider" : "waiting for the buyer");
+    const stepDetail = paid ? "Paid"
+      : approved ? `Delivered · payment ${side === "buyer" ? "due from you" : "on the way"}`
+      : billed ? `Delivered · ${you(side === "buyer")} to approve`
+      : o.status === "ISSUED" && !o.buyer_accepted_at ? `Work Order · ${you(side === "buyer")} to accept`
+      : o.status === "ISSUED" ? `Work Order · ${you(side === "seller")} to accept`
+      : (RELEASED as readonly string[]).includes(o.status) ? `Work Order · Released · ${side === "seller" ? "deliver and request payment" : "in delivery"}`
+      : o.status === "CLOSED" || o.status === "FINALLY_CLOSED" ? "Work Order · Closed" : `Work Order · ${o.status.toLowerCase().replace(/_/g, " ")}`;
     const sl = slices.get(o.id);
     const firstProd = products.find((p) => p.id === o.lines.find((l) => l.service_product_id)?.service_product_id);
-    return { typeName: firstProd?.serviceType?.name ?? null, category: firstProd?.serviceType?.serviceCategory?.businessType?.commodityGroup?.name ?? firstProd?.serviceType?.serviceCategory?.commodityGroup?.name ?? null, completed: !!sl?.completed || (paid && !sl?.recurring), recurring: sl?.recurring ?? null, productId: o.lines.find((l) => l.service_product_id)?.service_product_id ?? null, id: o.id, number: o.order_number, product, who, step: STEP_OF(o.status, billed, paid), status: o.status, amountCents: amount, needsAction: needs, action: action ?? { label: "Open", href: `/orders/${o.id}` }, date: short(o.created_at) };
+    return { stepIndex, stepDetail, typeName: firstProd?.serviceType?.name ?? null, category: firstProd?.serviceType?.serviceCategory?.businessType?.commodityGroup?.name ?? firstProd?.serviceType?.serviceCategory?.commodityGroup?.name ?? null, completed: !!sl?.completed || (paid && !sl?.recurring), recurring: sl?.recurring ?? null, productId: o.lines.find((l) => l.service_product_id)?.service_product_id ?? null, id: o.id, number: o.order_number, product, who, step: STEP_OF(o.status, billed, paid), status: o.status, amountCents: amount, needsAction: needs, action: action ?? { label: "Open", href: `/orders/${o.id}` }, date: short(o.created_at) };
   });
 }
 

@@ -328,6 +328,18 @@ export async function listOrders(viewer: Viewer): Promise<OrderRow[]> {
   const names = await namesFor(
     orders.flatMap((o) => [o.buyer_person_id, o.provider_person_id])
   );
+  // PA-E006: in the list too, a buyer sees the provider number until that Work Order is Released.
+  {
+    const { identityVisibleTo, providerLabel, providerNumbers } = await import("@/lib/provider-number");
+    const providers = [...new Set(orders.filter((o) => o.buyer_person_id === personId && o.provider_person_id !== personId).map((o) => o.provider_person_id))];
+    const seen = await identityVisibleTo(viewer, providers);
+    const hidden = providers.filter((id) => !seen.has(id));
+    if (hidden.length) {
+      const profiles = await prisma.providerProfile.findMany({ where: { person_id: { in: hidden } }, select: { id: true, person_id: true } });
+      const nums = await providerNumbers(profiles.map((p) => p.id));
+      for (const id of hidden) names.set(id, providerLabel(nums.get(profiles.find((p) => p.person_id === id)?.id ?? "")));
+    }
+  }
 
   const byOrder = new Map<string, typeof lines>();
   for (const l of lines) {
