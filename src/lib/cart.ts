@@ -1,4 +1,6 @@
 import { activeMsa } from "@/lib/agreements";
+import { styleForLine } from "@/lib/work-order-styles";
+import type { WorkOrderStyle } from "@prisma/client";
 import { nextNumber } from "@/lib/numbering";
 import type { PaymentEvent, PaymentTerms, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -193,16 +195,19 @@ export async function placeOrder(viewer: Viewer, input: { description?: string |
   await prisma.workRequest.update({ where: { id: wrId }, data: { description, status: "APPROVED", submitted_at: now0, approved_at: now0 } });
   const items = await resolveItems(lines);
   if (lines.some((l) => !items.get(l.id)?.available)) throw new CartError("Something in your cart is no longer available. Remove it to continue.");
+  // WS-E002: one Work Order per seller per style (Product · Time & Materials · Fixed Price).
   const byProvider = new Map<string, typeof lines>();
+  const styleOfLine = (l: (typeof lines)[number]) => { const it = items.get(l.id)!; return styleForLine({ transaction_type: it.type, uom: it.byQty ? it.uom : null }); };
   for (const l of lines) {
-    const k = items.get(l.id)!.providerPersonId;
+    const k = `${items.get(l.id)!.providerPersonId}|${styleOfLine(l)}`;
     byProvider.set(k, [...(byProvider.get(k) ?? []), l]);
   }
   // Placing signs the order for the buyer, so both companies are checked first, as for any work order.
-  for (const providerPersonId of byProvider.keys()) await assertCanSign(p.id, p.id, providerPersonId);
+  for (const key of byProvider.keys()) await assertCanSign(p.id, p.id, key.split("|")[0]);
   const buyerName = `${p.first_name} ${p.last_name}`.trim();
   const placed: { orderId: string; providerName: string; open: boolean }[] = [];
-  for (const [providerPersonId, group] of byProvider) {
+  for (const [key, group] of byProvider) {
+    const [providerPersonId, style] = key.split("|") as [string, WorkOrderStyle];
     const first = items.get(group[0].id)!;
     const providerName = first.providerName;
     const rows = await Promise.all(group.map(async (l, i) => {
@@ -226,7 +231,7 @@ export async function placeOrder(viewer: Viewer, input: { description?: string |
           order_number: await nextNumber("WO", { pAccountId }, { tx }),
           agreement_id: msaId,
           origin: "DIRECT", work_request_id: wrId, description, buyer_person_id: p.id, p_account_id: pAccountId, provider_person_id: providerPersonId, currency: group[0].currency,
-          status: "RELEASED", buyer_accepted_at: now, provider_accepted_at: now,
+          status: "RELEASED", buyer_accepted_at: now, provider_accepted_at: now, style,
           fee_bps: fees.length === 1 ? fees[0] : null, not_to_exceed_cents: total,
           lines: { create: rows },
         },

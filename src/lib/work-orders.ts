@@ -1,4 +1,6 @@
 import { activeMsa } from "@/lib/agreements";
+import { assertLineAllowed, defaultPaymentEvent, styleForLine, styleForLines, StyleError } from "@/lib/work-order-styles";
+import type { WorkOrderStyle } from "@prisma/client";
 import { nextNumber } from "@/lib/numbering";
 import { assertCanSign } from "@/lib/your-path";
 import { TransactionType, WorkOrderOrigin } from "@prisma/client";
@@ -144,19 +146,27 @@ async function buildWorkOrders(
   if (providerIds.length === 0) {
     throw new SourcingError("No provider is on this work request.", "NO_PROVIDER");
   }
-  // One Work Order per seller.
+  // WS-E002: one Work Order per seller per style (T&M · Fixed Price · Product · Retainer).
+  const subs = new Set((await prisma.serviceProduct.findMany({ where: { id: { in: wr.lines.map((l) => l.service_product_id).filter((x): x is string => !!x) }, pricing_type: "RECURRING" }, select: { id: true } })).map((p) => p.id));
+  const styleOf = (l: (typeof wr.lines)[number]) => styleForLine({ ...l, recurringProduct: !!l.service_product_id && subs.has(l.service_product_id) });
   const out: BuiltOrder[] = [];
   for (const providerPersonId of providerIds) {
-    out.push(await buildOne({ ...wr, sole_sourced: input.soleSourced }, wr.lines.filter((l) => l.provider_person_id === providerPersonId), providerPersonId, input, origin));
+    const mine = wr.lines.filter((l) => l.provider_person_id === providerPersonId);
+    for (const style of [...new Set(mine.map(styleOf))]) {
+      out.push(await buildOne({ ...wr, sole_sourced: input.soleSourced }, mine.filter((l) => styleOf(l) === style), providerPersonId, input, origin, style));
+    }
   }
-  await prisma.workRequest.update({ where: { id: wr.id }, data: { status: "ORDERED" } });
+  await prisma.workRequest.update({ where: { id: wr.id }, data: { status: "ORDERED", style: styleForLines(wr.lines.map((l) => ({ ...l, recurringProduct: !!l.service_product_id && subs.has(l.service_product_id) }))) } });
   return out;
 }
 
 type ReqForOrder = { id: string; buyer_person_id: string; p_account_id: string; currency: string; description: string | null; sole_sourced?: boolean };
 type ReqLine = Awaited<ReturnType<typeof prisma.workRequestLine.findMany<{ select: { id: true; line_number: true; transaction_type: true; description: true; unspsc_code: true; uom: true; quantity: true; unit_price_cents: true; amount_cents: true; supplier_part_id: true; service_product_id: true; provider_service_id: true; provider_person_id: true; service_start: true; service_end: true; work_order_id: true; payment_event: true; billing_cycle: true; overtime_allowed: true; overtime_multiplier: true; expenses_allowed: true; expenses_cap_cents: true } }>>>[number];
 
-async function buildOne(wr: ReqForOrder, lines: ReqLine[], providerPersonId: string, input: OrderFromRequisition, origin: WorkOrderOrigin): Promise<BuiltOrder> {
+async function buildOne(wr: ReqForOrder, lines: ReqLine[], providerPersonId: string, input: OrderFromRequisition, origin: WorkOrderOrigin, style: WorkOrderStyle): Promise<BuiltOrder> {
+  for (const l of lines) {
+    try { assertLineAllowed(style, l); } catch (e) { if (e instanceof StyleError) throw new SourcingError(e.message, "STYLE_LINE"); throw e; }
+  }
 
   const lineFees = new Map<string, number>();
   for (const l of lines) {
@@ -199,6 +209,7 @@ async function buildOne(wr: ReqForOrder, lines: ReqLine[], providerPersonId: str
     const order = await tx.workOrder.create({
       data: {
         order_number: orderNumber,
+        style,
         // MS-E002: every Work Order is a SOW under the Active MSA.
         agreement_id: msaId,
         /* THE ONE FIELD THAT DIFFERS BETWEEN THE DOORS. */
@@ -243,6 +254,8 @@ async function buildOne(wr: ReqForOrder, lines: ReqLine[], providerPersonId: str
             // HS-E005: the Terms the buyer confirmed win over the listing's.
             ...(l.payment_event ? { payment_event: l.payment_event } : {}),
             ...(l.billing_cycle ? { billing_cycle: l.billing_cycle } : {}),
+            // WS-E003: a line type always settles on its Payment Event (Service – Rate → Timesheet, Fixed Price → Payment Request, Product → Acceptance).
+            ...(!l.payment_event && !lineTerms.get(l.id)?.payment_event ? { payment_event: defaultPaymentEvent(l.transaction_type) } : {}),
             overtime_allowed: l.overtime_allowed,
             overtime_multiplier: l.overtime_multiplier,
             expenses_allowed: l.expenses_allowed,
