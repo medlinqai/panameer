@@ -44,6 +44,8 @@ export type WorkCard = {
   identity: BuyerIdentity;
   /** How many of the viewer's skills the request asks for. */
   matched: number;
+  /** PA-E004: the job's Category (drives its art). */
+  category?: string | null;
   /** WP-E004: the provider's own proposal on My Proposals / Invitations ("Submitted · $110/hr · start Oct 26 · due Oct 22 1:53 PM"). */
   myProposal?: string | null;
 };
@@ -164,6 +166,7 @@ export async function getWorkFeed(input: {
     take: 40,
     select: {
       id: true,
+      commodity_group_id: true,
       title: true,
       description: true,
       budget_type: true,
@@ -246,7 +249,10 @@ export async function getWorkFeed(input: {
     return id;
   };
 
+  // PA-E004: the job's Category, for its art.
+  const groupNames = new Map((await prisma.commodityGroup.findMany({ where: { id: { in: rows.map((w) => w.commodity_group_id).filter((x): x is string => !!x) } }, select: { id: true, name: true } })).map((g) => [g.id, g.name]));
   const cards = rows.map((w) => ({
+    category: w.commodity_group_id ? groupNames.get(w.commodity_group_id) ?? null : null,
     id: w.id,
     title: w.title || "Untitled work request",
     description: w.description,

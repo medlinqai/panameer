@@ -1,10 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { FilterBar, type FilterDef } from "@/components/casing/FilterBar";
 import { relativeDay } from "@/lib/relative-day";
 import { WhoIsAsking } from "@/components/work/WhoIsAsking";
-import { WORK_CARD_IMAGE_ALT, workCardImage } from "@/lib/work-images";
+import { TypeArt } from "@/components/shop/TypeArt";
 import {
   UNBACKED_TABS,
   WORK_FEED_TABS,
@@ -99,13 +98,8 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
       {/* THE PHOTO IS DECORATIVE AND DETERMINISTIC (brief_work_card_images). */}
       <div className="flex flex-col sm:flex-row">
         <div className="relative h-40 w-full shrink-0 bg-bg-soft sm:h-auto sm:w-44 sm:self-stretch">
-          <Image
-            src={workCardImage(card.id)}
-            alt={WORK_CARD_IMAGE_ALT}
-            fill
-            sizes="(max-width: 640px) 100vw, 176px"
-            className="object-cover"
-          />
+          {/* PA-E004: the job's Category art (same family as Shop), not a stock photo. */}
+          <TypeArt category={card.category} size="band" className="h-full rounded-none sm:aspect-auto" />
         </div>
 
         <div className="min-w-0 flex-1 p-5">
