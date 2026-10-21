@@ -43,16 +43,16 @@ export function ShopResults({ products, compare, signedIn }: { products: ResultP
         {products.map((p) => {
           const on = list.some((x) => x.id === p.id);
           return (
-            <li key={p.id} className={`flex items-center gap-3 py-3 ${active === p.id ? "bg-[#fbeafb]/40" : ""}`} data-shop-row>
+            <li key={p.id} className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3 sm:flex-nowrap ${active === p.id ? "bg-[#fbeafb]/40" : ""}`} data-shop-row>
               {p.coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={p.coverUrl} alt="" className="h-14 w-14 shrink-0 rounded-[8px] object-cover" />
               ) : <span aria-hidden className="grid h-14 w-14 shrink-0 place-items-center rounded-[8px] bg-bg-soft text-[18px] text-ink-3">◆</span>}
-              <button type="button" onClick={() => setActive(p.id)} className="min-w-0 flex-1 text-left" data-shop-row-open>
+              <button type="button" onClick={() => setActive(p.id)} className="min-w-0 flex-1 basis-[calc(100%-68px)] text-left sm:basis-auto" data-shop-row-open>
                 <b className="block truncate text-[14.5px] hover:underline">{p.title}</b>
                 <span className="block truncate text-[12.5px] text-ink-2">{[p.typeName, deliveryLabel(p) !== "—" ? `delivery ${deliveryLabel(p)}` : null, p.providerName].filter(Boolean).join(" · ")}</span>
               </button>
-              <b className="shrink-0 text-[14px] tabular-nums">{priceLabel(p)}</b>
+              <b className="ml-[68px] shrink-0 text-[14px] tabular-nums sm:ml-0">{priceLabel(p)}</b>
               <label className="flex shrink-0 items-center gap-1 text-[12px] font-semibold"><input type="checkbox" checked={on} onChange={() => toggle(p)} className="h-4 w-4" data-compare-box />Compare</label>
             </li>
           );
