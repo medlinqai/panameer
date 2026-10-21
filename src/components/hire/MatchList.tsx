@@ -36,6 +36,8 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [opened, setOpened] = useState<{ eventId: string; eventNumber: string; count: number } | null>(null);
+  const [compared, setCompared] = useState(false);
+  const [showWeak, setShowWeak] = useState(false);
 
   const patch = (personId: string, p: Partial<HireMatch>) => setList((ms) => ms.map((m) => (m.personId === personId ? { ...m, ...p } : m)));
   const star = (m: HireMatch) => { patch(m.personId, { starred: !m.starred }); void post({ action: "star", jobId, personIds: [m.personId], on: !m.starred }); };
@@ -46,8 +48,13 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
     if (hidden && m.starred) void post({ action: "star", jobId, personIds: [m.personId], on: false });
   };
 
-  const visible = list.filter((m) => !m.hidden && (showOutside || !m.outside) && (!starredOnly || m.starred));
-  const starred = list.filter((m) => m.starred && !m.hidden);
+  const shown = list.filter((m) => !m.hidden && (showOutside || !m.outside) && (!starredOnly || m.starred));
+  // HP-E004: product-only matches (no domain, no skill) go under "Weaker matches", folded.
+  const strong = shown.filter((m) => !m.weak || m.starred);
+  const weak = shown.filter((m) => m.weak && !m.starred);
+  const visible = showWeak ? [...strong, ...weak] : strong;
+  const starred = list.filter((m) => m.starred && !m.hidden && !m.requested);
+  const shortlistStep = !starred.length ? 1 : compared || starred.length === 1 ? 3 : 2;
   const at = visible.findIndex((m) => m.personId === active);
   const cur = at >= 0 ? visible[at] : null;
 
@@ -58,15 +65,27 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
     setBusy(false);
     if (j.error) { setError(j.error as string); return; }
     setOpened({ eventId: j.eventId as string, eventNumber: j.eventNumber as string, count: ((j.created as unknown[]) ?? []).length });
+    // HP-E003: the starred rows now read "Requested · due …".
+    const due = new Date(Date.now() + Number(hours) * 3_600_000).toISOString();
+    setList((ms) => ms.map((m) => (m.starred && !m.requested ? { ...m, requested: { eventId: j.eventId as string, due } } : m)));
   };
 
   if (!list.length) return <>{empty}</>;
   return (
     <div data-match-list>
+      {/* HP-E003: how the shortlist works. */}
+      <ol className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]" data-shortlist-steps>
+        {["Star the ones you like", "Compare", "Request proposals from your shortlist"].map((t, i) => (
+          <li key={t} className="flex items-center gap-2">
+            {i > 0 && <span aria-hidden className="text-ink-3">→</span>}
+            <span className={shortlistStep === i + 1 ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-2.5 py-0.5 font-bold text-magenta-dark" : shortlistStep > i + 1 ? "rounded-full border border-ink px-2.5 py-0.5 font-semibold" : "rounded-full border border-line px-2.5 py-0.5 font-semibold text-ink-3"} aria-current={shortlistStep === i + 1 ? "step" : undefined}>{i + 1} {t}</span>
+          </li>
+        ))}
+      </ol>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
         <button type="button" aria-pressed={!starredOnly} onClick={() => setStarredOnly(false)} className={!starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>All ({list.filter((m) => !m.hidden).length})</button>
         <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({starred.length})</button>
-        <button type="button" disabled={starred.length < 2 || starred.length > 4} onClick={() => setComparing(true)} className={GHOST} data-compare title="Star 2 to 4 providers to compare them">Compare{starred.length >= 2 ? ` ${Math.min(starred.length, 4)}` : ""}</button>
+        <button type="button" disabled={starred.length < 2 || starred.length > 4} onClick={() => { setComparing(true); setCompared(true); }} className={GHOST} data-compare title="Star 2 to 4 providers to compare them">Compare{starred.length >= 2 ? ` ${Math.min(starred.length, 4)}` : ""}</button>
       </div>
 
       <ul className="mt-3 divide-y divide-line border-y border-line">
@@ -82,9 +101,11 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
                 {m.matched.map((k) => <span key={k} className={CHIP}>{k}</span>)}
                 {m.inBudget && <span className="rounded-full border border-line px-2">In budget</span>}
               </p>
+              {m.requested && <span className="mt-1 block text-[12.5px] font-semibold text-magenta-dark" data-requested>Requested · due {new Date(m.requested.due).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>}
             </button>
             <div className="flex flex-col items-end gap-1 text-right text-[13px]">
               {m.rate && <b className="block">{m.rate}</b>}
+              {m.requested && <Link href={`/hire/sourcing/${m.requested.eventId}`} className="text-[12.5px] font-semibold text-magenta-dark underline underline-offset-4">Sourcing Event</Link>}
               <Link href={`/hire/terms?job=${jobId}&provider=${m.personId}`} data-hire-provider className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Hire</Link>
               <button type="button" onClick={() => hide(m, true)} className="text-[12.5px] text-ink-3 underline underline-offset-4 hover:text-ink" data-hide-match aria-label={`Hide ${m.name}`}>Hide ×</button>
             </div>
@@ -92,6 +113,11 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
         ))}
         {!visible.length && <li className="py-4 text-[13.5px] text-ink-3">{starredOnly ? "Star providers to shortlist them." : "No one to show."}</li>}
       </ul>
+      {weak.length > 0 && (
+        <button type="button" onClick={() => setShowWeak((v) => !v)} className="mt-3 flex w-full items-center gap-3 text-[13px] font-semibold text-ink-2" data-weaker-matches>
+          <span className="h-px flex-1 bg-line" />{showWeak ? "Hide weaker matches" : `Weaker matches (${weak.length})`}<span className="h-px flex-1 bg-line" />
+        </button>
+      )}
 
       {list.some((m) => m.hidden) && (
         <div className="mt-3 text-[13.5px]" data-hidden-matches>
@@ -110,11 +136,11 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
           <p className="text-[14px]"><b>{opened.eventNumber}</b> is open — {opened.count} request{opened.count === 1 ? "" : "s"} sent. <Link href={`/hire/sourcing/${opened.eventId}`} className="font-semibold text-magenta-dark underline underline-offset-4">View the Sourcing Event →</Link></p>
         ) : (
           <>
-            <button type="button" className={BTN} disabled={busy || !starred.length || !jobId} onClick={request} data-request-proposals>{`Request Proposals from ${starred.length}`}</button>
+            <button type="button" className={BTN} disabled={busy || !starred.length || !jobId} onClick={request} data-request-proposals>{`Request Proposals from Your Shortlist (${starred.length})`}</button>
             <label className="flex items-center gap-2 text-[13px] font-semibold">Deadline
               <input inputMode="numeric" value={hours} onChange={(e) => setHours(e.target.value.replace(/\D/g, "").slice(0, 3))} aria-label="Deadline in hours" className="w-16 rounded-[8px] border border-line px-2 py-1.5 text-right" data-deadline-hours /> hours
             </label>
-            <span className="text-[13px] text-ink-2">{starred.length ? "Providers see your rate range and the deadline." : "Star who should propose — or Hire one directly."}</span>
+            <span className="w-full text-[12.5px] text-ink-2" data-request-help>{starred.length ? `Each gets the job, your rate range and a ${Number(hours) || 48}-hour deadline. You'll see their proposals on the Sourcing Event.` : "Star who should propose — or Hire one directly."}</span>
           </>
         )}
         {error && <p role="alert" className="w-full text-[13.5px] font-semibold text-magenta-dark">{error}</p>}

@@ -100,6 +100,10 @@ export type HireMatch = { personId: string; profileId: string; name: string; com
   hidden: boolean;
   /** SE-E003: starred onto the job's Shortlist. */
   starred: boolean;
+  /** HP-E003: already asked to propose in a Sourcing Event (due = its deadline). */
+  requested: { eventId: string; due: string } | null;
+  /** HP-E004: no domain and no skill in common (product only) — listed under "Weaker matches". */
+  weak: boolean;
   /** SE-E002: the quick-view panel. */
   detail: MatchDetail };
 export type MatchDetail = { summary: string; role: string | null; skillsMatched: string; years: number | null; certifications: string[]; location: string | null; rates: { name: string; rate: string }[]; products: { title: string; price: string | null }[] };
@@ -112,6 +116,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
   // HP-E001: opening the matches answers "job posted".
   if (jobId && viewer) await resolveJobPosted(jobId);
   const hiddenSet = new Set(jobId ? (await prisma.jobHiddenProvider.findMany({ where: { job_id: jobId }, select: { provider_person_id: true } })).map((h) => h.provider_person_id) : []);
+  const asked = new Map(jobId ? (await prisma.proposalRequest.findMany({ where: { job_id: jobId, sourcing_event_id: { not: null } }, select: { provider_person_id: true, sourcingEvent: { select: { id: true, deadline_at: true } } } })).filter((r) => r.sourcingEvent).map((r) => [r.provider_person_id, { eventId: r.sourcingEvent!.id, due: r.sourcingEvent!.deadline_at.toISOString() }]) : []);
   const starSet = new Set(jobId ? (await prisma.shortlistLine.findMany({ where: { shortlist: { job_id: jobId }, source: { in: ["SHORTLISTED", "ADDED"] } }, select: { provider_person_id: true } })).map((l) => l.provider_person_id) : []);
   const pillarName = productPillarName(input.product);
   const [rows, pillar] = await Promise.all([
@@ -193,6 +198,8 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
       outside: onsite && !placeHit,
       hidden: hiddenSet.has(r.person.id),
       starred: starSet.has(r.person.id),
+      requested: asked.get(r.person.id) ?? null,
+      weak: sharedDomains.length === 0 && matched.length === 0,
       detail: {
         summary: (r.overview ?? "").slice(0, 600), role: deepHit ?? [...theirDeep][0] ?? r.person.title ?? null,
         skillsMatched: `${matched.length} of ${Math.min(total, 10) || 10}`, years, certifications: r.credentials.map((c) => c.name),
