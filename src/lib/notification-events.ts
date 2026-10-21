@@ -963,7 +963,8 @@ export const NOTIFICATION_EVENTS = {
     visibility: "FEED",
     requiresAction: true,
     title: (v) => `${str(v, "buyerName", "A buyer")} asked for an estimate: ${str(v, "firstLine", "")}`,
-    body: () => "Build an estimate, or decline with a reason.",
+    // ES-E002: a request for estimate inside an Estimate Event carries its deadline.
+    body: (v) => (str(v, "due") ? `Request for estimate · due ${str(v, "due")}. Price it, or decline with a reason.` : "Build an estimate, or decline with a reason."),
     href: (v) => `/estimates/requests/${str(v, "requestId", "")}`,
   },
   "estimate.request_declined": {

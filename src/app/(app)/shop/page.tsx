@@ -156,7 +156,7 @@ async function Browse({ viewer, f, browsing, compareIds }: { viewer: Viewer; f: 
   return (
     <section className="py-2" data-shop-browse>
       <ShopBar q={f.q ?? ""} category={f.category ?? ""} type={f.type ?? ""} categories={names} types={types} />
-      <p className="mt-2 text-[13.5px] text-ink-2">Looking to hire someone for a job? <Link href="/hire" className="font-bold text-magenta-dark">Hire →</Link></p>
+      <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-ink-2"><span>Looking to hire someone for a job? <Link href="/hire" className="font-bold text-magenta-dark">Hire →</Link></span><span>Need something custom? <Link href="/shop/estimates/new" className="font-bold text-magenta-dark" data-shop-estimates-button>Request an Estimate →</Link></span></p>
       {!browsing ? (
         <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3" data-category-tiles>
           {[...tiles, HELP_TILE].map((c) => (

@@ -23,7 +23,7 @@ async function me(viewer: Viewer) {
   return p;
 }
 
-export type RequestInput = { providerPersonId: string; serviceId?: string | null; serviceProductId?: string | null; description: string; startBy?: string | null; budgetMinCents?: number | null; budgetMaxCents?: number | null };
+export type RequestInput = { providerPersonId: string; serviceId?: string | null; serviceProductId?: string | null; description: string; startBy?: string | null; budgetMinCents?: number | null; budgetMaxCents?: number | null; /** ES-E002: the Estimate Event it belongs to, and its deadline. */ sourcingEventId?: string | null; due?: string | null };
 
 export async function createRequest(viewer: Viewer, input: RequestInput, files: File[] = []) {
   const p = await me(viewer);
@@ -41,7 +41,7 @@ export async function createRequest(viewer: Viewer, input: RequestInput, files: 
   const usable = files.filter((f) => f.size > 0).slice(0, MAX_FILES);
   if (usable.some((f) => f.size > MAX_BYTES)) throw new EstimateRequestError("Each file can be up to 10 MB", "INVALID");
   const r = await prisma.estimateRequest.create({
-    data: { requester_person_id: p.id, provider_person_id: provider.id, service_id: svc?.id ?? null, service_product_id: prod?.id ?? null, description, start_by: input.startBy ? new Date(input.startBy) : null, budget_min_cents: min, budget_max_cents: max },
+    data: { sourcing_event_id: input.sourcingEventId ?? null, requester_person_id: p.id, provider_person_id: provider.id, service_id: svc?.id ?? null, service_product_id: prod?.id ?? null, description, start_by: input.startBy ? new Date(input.startBy) : null, budget_min_cents: min, budget_max_cents: max },
     select: { id: true },
   });
   if (usable.length) {
@@ -49,7 +49,7 @@ export async function createRequest(viewer: Viewer, input: RequestInput, files: 
     for (const f of usable) stored.push({ path: await uploadEstimateRequestFile(r.id, { name: f.name, type: f.type, bytes: await f.arrayBuffer() }), name: f.name, size: f.size, type: f.type });
     await prisma.estimateRequest.update({ where: { id: r.id }, data: { attachments: stored } });
   }
-  await notify({ event: "estimate.requested", personId: provider.id, entityType: "cost_estimate_request", entityId: r.id, dedupeKey: `estimate.requested:${r.id}`, vars: { requestId: r.id, buyerName: nameOf(p), firstLine: firstLine(description) } });
+  await notify({ event: "estimate.requested", personId: provider.id, entityType: "cost_estimate_request", entityId: r.id, dedupeKey: `estimate.requested:${r.id}`, vars: { requestId: r.id, buyerName: nameOf(p), firstLine: firstLine(description), due: input.due ?? "" } });
   return r.id;
 }
 

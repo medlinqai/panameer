@@ -79,6 +79,7 @@ export function ShopResults({ products, compare, signedIn }: { products: ResultP
             <button type="button" onClick={() => toggle(cur)} className="inline-flex min-h-10 items-center border border-ink px-4 text-[13.5px] font-semibold hover:bg-bg-soft">{list.some((x) => x.id === cur.id) ? "In Compare ✓" : "Add to Compare"}</button>
           </div>
           <Link href={`/shop/${cur.id}`} className="mt-4 text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">Open the product page</Link>
+          <p className="mt-2 text-[13.5px]">Need it different? <Link href={`/shop/estimates/new?product=${cur.id}`} className="font-semibold text-magenta-dark underline underline-offset-4" data-request-estimate-link>Request an Estimate</Link></p>
           <div className="mt-auto flex justify-between gap-3 border-t border-line pt-4">
             <button type="button" disabled={at <= 0} onClick={() => setActive(products[at - 1].id)} className="inline-flex min-h-9 items-center border border-ink px-3.5 text-[13px] font-semibold disabled:opacity-40">‹ Previous</button>
             <button type="button" disabled={at >= products.length - 1} onClick={() => setActive(products[at + 1].id)} className="inline-flex min-h-9 items-center border border-ink px-3.5 text-[13px] font-semibold disabled:opacity-40">Next ›</button>
