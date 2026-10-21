@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeArt } from "@/components/shop/TypeArt";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { BuyButtons } from "@/components/shop/BuyButtons";
@@ -29,7 +30,7 @@ export function ShopCompare({ products, signedIn }: { products: ResultProduct[];
       <h2 className="text-[22px] font-bold">Compare <small className="text-[13px] font-semibold text-ink-3">{shown[0].typeName ?? "Products"}</small></h2>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[560px] border-collapse text-[13.5px]">
-          <thead><tr><th className="w-32" />{shown.map((p) => <th key={p.id} className="border-b border-line p-2 text-left align-bottom"><Link href={`/shop/${p.id}`} className="text-[14.5px] font-extrabold hover:underline">{p.title}</Link></th>)}</tr></thead>
+          <thead><tr><th className="w-32" />{shown.map((p) => <th key={p.id} className="border-b border-line p-2 text-left align-bottom"><TypeArt typeName={p.typeName} category={p.category} className="mb-2" /><Link href={`/shop/${p.id}`} className="text-[14.5px] font-extrabold hover:underline">{p.title}</Link></th>)}</tr></thead>
           <tbody>
             {rows.map(([label, cell]) => <tr key={label}><th className="border-b border-line p-2 text-left align-top text-[11.5px] font-bold uppercase tracking-[0.06em] text-ink-3">{label}</th>{shown.map((p) => <td key={p.id} className="border-b border-line p-2 align-top">{cell(p)}</td>)}</tr>)}
             <tr><th />{shown.map((p) => <td key={p.id} className="p-2 align-top"><div className="flex flex-col items-start gap-2"><BuyButtons productId={p.id} signedIn={signedIn} openToOffers={p.openToOffers} size="sm" pair /><button type="button" onClick={() => toggle(p)} className="text-[12.5px] font-semibold text-ink-2 underline underline-offset-4">Remove</button></div></td>)}</tr>

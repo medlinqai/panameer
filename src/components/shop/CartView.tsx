@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeArt } from "@/components/shop/TypeArt";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -73,7 +74,8 @@ export function CartView({ groups, totalCents, currency, hasCompany, workRequest
           <ul className="mt-2">
             {g.lines.map((l) => (
               <li key={l.id} data-cart-line className="flex flex-wrap items-start justify-between gap-3 border-b border-line py-3">
-                <div className="min-w-0">
+                <TypeArt typeName={l.typeName} category={l.category} />
+                <div className="min-w-0 flex-1">
                   <Link href={`/shop/${l.productId}`} className="text-[15px] font-semibold hover:underline">{l.title}</Link>
                   <p className="text-[13px] text-ink-2">{formatCents(l.unitCents, l.currency)} / {l.unit} · {l.schedule}</p>
                   {!l.available && <p className="text-[13px] font-semibold text-magenta-dark">No longer available. Remove it to place your order.</p>}

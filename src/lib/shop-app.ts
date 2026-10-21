@@ -73,11 +73,11 @@ async function shopCountsCore(personId: string, side: ShopSide) {
 export const parseCompare = (raw: string | undefined) => (raw ?? "").split(",").filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 3);
 
 // ── SA-E006: Offers / Purchases / Sales ───────────────────────────────────────────────────────────────────────
-export type ShopOfferRow = { completed: boolean; recurring: null; id: string; number: string; productId: string | null; product: string; listCents: number | null; amountCents: number; counterCents: number | null; status: string; respondBy: string | null; who: string; needsAction: boolean; createdAt: string };
+export type ShopOfferRow = { typeName: string | null; category: string | null; completed: boolean; recurring: null; id: string; number: string; productId: string | null; product: string; listCents: number | null; amountCents: number; counterCents: number | null; status: string; respondBy: string | null; who: string; needsAction: boolean; createdAt: string };
 
 export async function shopOffers(viewer: Viewer, personId: string, side: ShopSide): Promise<ShopOfferRow[]> {
   const rows = await prisma.serviceProductOffer.findMany({ where: { ...(side === "buyer" ? { buyer_person_id: personId } : { provider_person_id: personId }), service_product_id: { not: null } }, orderBy: { created_at: "desc" }, take: 100 });
-  const products = await prisma.serviceProduct.findMany({ where: { id: { in: rows.map((r) => r.service_product_id!) } }, select: { id: true, title: true, price_cents: true } });
+  const products = await prisma.serviceProduct.findMany({ where: { id: { in: rows.map((r) => r.service_product_id!) } }, select: { id: true, title: true, price_cents: true, serviceType: { select: { name: true, serviceCategory: { select: { commodityGroup: { select: { name: true } }, businessType: { select: { commodityGroup: { select: { name: true } } } } } } } } } });
   const others = [...new Set(rows.map((r) => (side === "buyer" ? r.provider_person_id : r.buyer_person_id)))];
   const [people, profiles, seen] = await Promise.all([
     prisma.person.findMany({ where: { id: { in: others } }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } } } }),
@@ -99,11 +99,12 @@ export async function shopOffers(viewer: Viewer, personId: string, side: ShopSid
       status: r.status, respondBy: respondBy ? short(respondBy) : null, who: who(side === "buyer" ? r.provider_person_id : r.buyer_person_id),
       needsAction: side === "buyer" ? r.status === "COUNTERED" : r.status === "OPEN", createdAt: short(r.created_at),
       completed: r.status !== "OPEN" && r.status !== "COUNTERED", recurring: null,
+      typeName: prod?.serviceType?.name ?? null, category: prod?.serviceType?.serviceCategory?.businessType?.commodityGroup?.name ?? prod?.serviceType?.serviceCategory?.commodityGroup?.name ?? null,
     };
   });
 }
 
-export type ShopOrderRow = { completed: boolean; recurring: Recurring | null; productId: string | null; id: string; number: string; product: string; who: string; step: string; status: string; amountCents: number; needsAction: boolean; action: { label: string; href: string } | null; date: string };
+export type ShopOrderRow = { typeName: string | null; category: string | null; completed: boolean; recurring: Recurring | null; productId: string | null; id: string; number: string; product: string; who: string; step: string; status: string; amountCents: number; needsAction: boolean; action: { label: string; href: string } | null; date: string };
 const STEP_OF = (status: string, billed: boolean, paid: boolean) => (paid ? "Paid" : billed ? "Delivered" : (RELEASED as readonly string[]).includes(status) || status === "CLOSED" ? "Work Order" : "Work Order");
 
 export async function shopOrders(viewer: Viewer, personId: string, side: ShopSide): Promise<ShopOrderRow[]> {
@@ -113,7 +114,7 @@ export async function shopOrders(viewer: Viewer, personId: string, side: ShopSid
   });
   const ids = orders.map((o) => o.id);
   const prs = ids.length ? await prisma.paymentRequest.findMany({ where: { work_order_id: { in: ids } }, select: { work_order_id: true, status: true } }) : [];
-  const products = await prisma.serviceProduct.findMany({ where: { id: { in: orders.flatMap((o) => o.lines.map((l) => l.service_product_id!).filter(Boolean)) } }, select: { id: true, title: true } });
+  const products = await prisma.serviceProduct.findMany({ where: { id: { in: orders.flatMap((o) => o.lines.map((l) => l.service_product_id!).filter(Boolean)) } }, select: { id: true, title: true, serviceType: { select: { name: true, serviceCategory: { select: { commodityGroup: { select: { name: true } }, businessType: { select: { commodityGroup: { select: { name: true } } } } } } } } } });
   const others = [...new Set(orders.map((o) => (side === "buyer" ? o.provider_person_id : o.buyer_person_id)))];
   const [people, profiles, seen] = await Promise.all([
     prisma.person.findMany({ where: { id: { in: others } }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } } } }),
@@ -141,7 +142,8 @@ export async function shopOrders(viewer: Viewer, personId: string, side: ShopSid
       else if ((RELEASED as readonly string[]).includes(o.status) && !billed) { action = { label: "Deliver & request payment", href: `/orders/${o.id}?tab=settlements` }; needs = true; }
     }
     const sl = slices.get(o.id);
-    return { completed: !!sl?.completed || (paid && !sl?.recurring), recurring: sl?.recurring ?? null, productId: o.lines.find((l) => l.service_product_id)?.service_product_id ?? null, id: o.id, number: o.order_number, product, who, step: STEP_OF(o.status, billed, paid), status: o.status, amountCents: amount, needsAction: needs, action: action ?? { label: "Open", href: `/orders/${o.id}` }, date: short(o.created_at) };
+    const firstProd = products.find((p) => p.id === o.lines.find((l) => l.service_product_id)?.service_product_id);
+    return { typeName: firstProd?.serviceType?.name ?? null, category: firstProd?.serviceType?.serviceCategory?.businessType?.commodityGroup?.name ?? firstProd?.serviceType?.serviceCategory?.commodityGroup?.name ?? null, completed: !!sl?.completed || (paid && !sl?.recurring), recurring: sl?.recurring ?? null, productId: o.lines.find((l) => l.service_product_id)?.service_product_id ?? null, id: o.id, number: o.order_number, product, who, step: STEP_OF(o.status, billed, paid), status: o.status, amountCents: amount, needsAction: needs, action: action ?? { label: "Open", href: `/orders/${o.id}` }, date: short(o.created_at) };
   });
 }
 

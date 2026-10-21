@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeArt } from "@/components/shop/TypeArt";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -9,7 +10,7 @@ import { NeutralAvatar } from "@/components/Avatar";
 import { priceLabel } from "@/components/shop/ProductCard";
 
 // SA-E004/E005: results as rows (like Hire matches) with a detail pane; ☐ Compare keeps up to 3 of one Product Type in a cookie.
-export type ResultProduct = Pick<ShopProduct, "id" | "title" | "summary" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerProfileId" | "typeName" | "productTypeId" | "leadDays" | "deliverables" | "rating" | "certified" | "openToOffers" | "coverUrl" | "terms">;
+export type ResultProduct = Pick<ShopProduct, "id" | "title" | "summary" | "kind" | "pricingType" | "billingPeriod" | "priceCents" | "currency" | "durationWeeks" | "providerName" | "providerProfileId" | "typeName" | "productTypeId" | "leadDays" | "deliverables" | "rating" | "certified" | "openToOffers" | "coverUrl" | "terms" | "category">;
 const COOKIE = "pm_compare";
 
 export function setCompare(ids: string[]) {
@@ -44,10 +45,8 @@ export function ShopResults({ products, compare, signedIn }: { products: ResultP
           const on = list.some((x) => x.id === p.id);
           return (
             <li key={p.id} className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3 sm:flex-nowrap ${active === p.id ? "bg-[#fbeafb]/40" : ""}`} data-shop-row>
-              {p.coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.coverUrl} alt="" className="h-14 w-14 shrink-0 rounded-[8px] object-cover" />
-              ) : <span aria-hidden className="grid h-14 w-14 shrink-0 place-items-center rounded-[8px] bg-bg-soft text-[18px] text-ink-3">◆</span>}
+              {/* PA-E002: rows always use the Product Type art; the seller's own image shows only in the pane. */}
+              <TypeArt typeName={p.typeName} category={p.category} />
               <button type="button" onClick={() => setActive(p.id)} className="min-w-0 flex-1 basis-[calc(100%-68px)] text-left sm:basis-auto" data-shop-row-open>
                 <b className="block truncate text-[14.5px] hover:underline">{p.title}</b>
                 <span className="block truncate text-[12.5px] text-ink-2">{[p.typeName, deliveryLabel(p) !== "—" ? `delivery ${deliveryLabel(p)}` : null, p.providerName].filter(Boolean).join(" · ")}</span>
@@ -67,6 +66,10 @@ export function ShopResults({ products, compare, signedIn }: { products: ResultP
             </div>
             <button type="button" onClick={() => setActive(null)} aria-label="Close" className="text-[22px] leading-none text-ink-3 hover:text-ink">×</button>
           </div>
+          {cur.coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={cur.coverUrl} alt="" className="mt-3 aspect-square w-full rounded-[10px] border border-line bg-white object-contain" data-seller-image />
+          ) : <TypeArt typeName={cur.typeName} category={cur.category} size="band" className="mt-3" />}
           <p className="mt-2 text-[22px] font-extrabold tabular-nums">{priceLabel(cur)}</p>
           <p className="text-[13px] text-ink-2">{cur.pricingType === "HOURLY" ? "Service – Rate · Services" : "Product · Goods"} · Delivery {deliveryLabel(cur)}{cur.terms ? ` · ${cur.terms}` : ""}</p>
           {cur.summary && <p className="mt-3 text-[14px] text-ink-2">{cur.summary}</p>}

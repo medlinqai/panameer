@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeArt } from "@/components/shop/TypeArt";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -39,6 +40,7 @@ export function ShopOffers({ rows, side }: { rows: ShopOfferRow[]; side: ShopSid
         return (
           <li key={o.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3">
             {o.needsAction ? <RedDot /> : <span className="w-2.5" />}
+            <TypeArt typeName={o.typeName} category={o.category} />
             <div className="min-w-0 flex-1">
               <p className="text-[14.5px] font-bold">{o.productId ? <Link href={`/shop/${o.productId}`} className="hover:underline">{o.product}</Link> : o.product}</p>
               <p className="text-[12.5px] text-ink-2">{o.number} · {o.who} · list {usd(o.listCents)} · offered <b className="text-ink">{usd(o.amountCents)}</b>{o.counterCents != null ? <> · counter <b className="text-ink">{usd(o.counterCents)}</b></> : null} · {STATUS[o.status] ?? o.status}{o.respondBy ? ` · respond by ${o.respondBy}` : ""}</p>
