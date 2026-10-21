@@ -21,6 +21,8 @@ import { ShopOffers, ShopOrders } from "@/components/shop/ShopLists";
 import { CartView } from "@/components/shop/CartView";
 import { cartFor } from "@/lib/cart";
 import { SliceChips } from "@/components/casing/SliceChips";
+import { RedDot } from "@/components/home/AppHome";
+import { buyerEstimateEvents, sellerEstimateRequests } from "@/lib/estimate-events";
 import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
 import { COMPARE_COOKIE, parseCompare, productTypesByCategory, shopCounts, shopOffers, shopOrders, shopPerson, shopSideOf, shopStrip } from "@/lib/shop-app";
 
@@ -28,8 +30,8 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Shop · Panameer" };
 
 type Q = StoreQuery & { step?: string; slice?: string };
-const BUYER_TABS = ["overview", "browse", "compare", "cart", "offers", "purchases"] as const;
-const SELLER_TABS = ["overview", "browse", "offers", "sales"] as const;
+const BUYER_TABS = ["overview", "browse", "compare", "cart", "offers", "estimates", "purchases"] as const;
+const SELLER_TABS = ["overview", "browse", "offers", "estimates", "sales"] as const;
 
 // SA-E001–E006: Shop as an app like Hire — SHOP | Overview · Browse · Compare · Cart · Offers · Purchases (seller: Overview · Browse ·
 // My Products · Offers · Sales). Products only; sellers show as a provider number until a Work Order is Released.
@@ -51,6 +53,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
         { label: `Compare (${compareIds.length})`, href: "/shop?tab=compare" },
         { label: `Cart (${counts?.cart ?? 0})`, href: "/shop?tab=cart" },
         { label: "Offers", href: "/shop?tab=offers", badge: counts?.offers },
+        { label: "Estimates", href: "/shop?tab=estimates", badge: counts?.estimates },
         { label: "Purchases", href: "/shop?tab=purchases", badge: counts?.purchases },
       ]
     : [
@@ -58,6 +61,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
         { label: "Browse", href: "/shop?tab=browse" },
         { label: "My Products", href: "/catalog/products" },
         { label: "Offers", href: "/shop?tab=offers", badge: counts?.offers },
+        { label: "Estimates", href: "/shop?tab=estimates", badge: counts?.estimates },
         { label: "Sales", href: "/shop?tab=sales", badge: counts?.sales },
       ];
   const current = tab === "overview" ? "/shop" : `/shop?tab=${tab}`;
@@ -72,6 +76,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
         {tab === "browse" && <Browse viewer={viewer} f={f} browsing={browsing} compareIds={compareIds} />}
         {tab === "compare" && <CompareTab viewer={viewer} ids={compareIds} />}
         {tab === "cart" && <CartTab viewer={viewer} />}
+        {tab === "estimates" && person && (side === "buyer" ? <BuyerEstimatesTab personId={person.id} slice={f.slice} /> : <SellerEstimatesTab personId={person.id} slice={f.slice} />)}
         {tab === "offers" && person && <OffersTab viewer={viewer} personId={person.id} side={side} slice={f.slice} />}
         {(tab === "purchases" || tab === "sales") && person && <OrdersTab viewer={viewer} personId={person.id} side={side} step={f.step ?? null} slice={f.slice} />}
       </div>
@@ -212,6 +217,62 @@ async function CompareTab({ viewer, ids }: { viewer: Viewer; ids: string[] }) {
 async function CartTab({ viewer }: { viewer: Viewer }) {
   const c = await cartFor(viewer);
   return <section className="py-4"><CartView groups={c.groups} totalCents={c.totalCents} currency={c.currency} hasCompany={c.hasCompany} workRequest={c.workRequest} /></section>;
+}
+
+// ES-E004: one row per Estimate Event — what, ES number, asked · in, lowest–highest, due, step.
+async function BuyerEstimatesTab({ personId, slice }: { personId: string; slice?: string }) {
+  const all = await buyerEstimateEvents(personId);
+  const rows = all.filter((r) => inSlice(r, sliceOf(slice)));
+  return (
+    <section className="py-4" data-buyer-estimates>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-[22px] font-bold">Estimates</h2>
+        <Link href="/shop/estimates/new" className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Request an Estimate</Link>
+      </div>
+      <div className="mt-2"><SliceChips tabKey="shop-estimates" counts={sliceCounts(all)} base="/shop?tab=estimates" /></div>
+      {rows.length ? (
+        <ul className="divide-y divide-line border-y border-line">
+          {rows.map((r) => (
+            <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3">
+              {r.needsAction ? <RedDot /> : <span className="w-2.5" />}
+              <div className="min-w-0 flex-1">
+                <Link href={`/shop/estimates/${r.id}`} className="block truncate text-[14.5px] font-bold hover:underline">{r.what}</Link>
+                <p className="text-[12.5px] text-ink-2"><span className="font-mono">{r.number}</span> · {r.in} of {r.asked} in{r.range ? ` · ${r.range}` : ""} · due {r.due} · <b className="text-ink">{r.step}</b></p>
+              </div>
+              <Link href={`/shop/estimates/${r.id}`} className={r.needsAction ? "inline-flex min-h-9 items-center bg-ink px-3.5 text-[13px] font-bold text-surface hover:bg-ink-hover" : "inline-flex min-h-9 items-center border border-ink px-3 text-[13px] font-semibold hover:bg-bg-soft"}>{r.needsAction ? "Review estimates" : "Open"}</Link>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="py-6 text-[14px] text-ink-3">No estimate requests here.</p>}
+    </section>
+  );
+}
+
+// ES-E003: seller — Estimates to Price.
+async function SellerEstimatesTab({ personId, slice }: { personId: string; slice?: string }) {
+  const all = await sellerEstimateRequests(personId);
+  const rows = all.filter((r) => inSlice(r, sliceOf(slice)));
+  return (
+    <section className="py-4" data-seller-estimates>
+      <h2 className="text-[22px] font-bold">Estimates to Price</h2>
+      <div className="mt-2"><SliceChips tabKey="shop-seller-estimates" counts={sliceCounts(all)} base="/shop?tab=estimates" /></div>
+      {rows.length ? (
+        <ul className="divide-y divide-line border-y border-line">
+          {rows.map((r) => (
+            <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3">
+              {r.needsAction ? <RedDot /> : <span className="w-2.5" />}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[14.5px] font-bold">{r.what}</p>
+                <p className="text-[12.5px] text-ink-2">{r.buyer}{r.jobTitle ? ` · ${r.jobTitle}` : ""}{r.due ? ` · due ${r.due}` : ""} · <b className="text-ink">{r.status}</b></p>
+              </div>
+              {r.needsAction && <Link href={`/catalog/estimates/new?request=${r.id}${r.estimateId ? `&id=${r.estimateId}` : ""}`} className="inline-flex min-h-9 items-center bg-ink px-3.5 text-[13px] font-bold text-surface hover:bg-ink-hover" data-price-estimate>{r.estimateId ? "Revise" : "Price it"}</Link>}
+              <Link href={`/estimates/requests/${r.id}`} className="inline-flex min-h-9 items-center border border-ink px-3 text-[13px] font-semibold hover:bg-bg-soft">{r.needsAction ? "Decline" : "Open"}</Link>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="py-6 text-[14px] text-ink-3">No requests for estimates here.</p>}
+    </section>
+  );
 }
 
 async function OffersTab({ viewer, personId, side, slice }: { viewer: Viewer; personId: string; side: "buyer" | "seller"; slice?: string }) {

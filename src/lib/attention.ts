@@ -291,6 +291,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     const tests = add("request", testsIn, "Test results in", "/hire/overview?tab=tests", "See results");
     add("shop", sc.offers, "Counter-offers waiting on you", "/shop?tab=offers", "Answer");
     add("shop", sc.purchases, "Purchases needing you", "/shop?tab=purchases", "Open");
+    add("shop", sc.estimates, "Estimates in to review", "/shop?tab=estimates", "Review");
     add("settlement", settle, "Settlements to approve", APP_HOME.buyer.settlement, "Approve");
     add("payment", pay, "Payments due", APP_HOME.buyer.payment, "Pay");
     add("connect", connect, "Unread messages", "/messages", "Read");
@@ -312,6 +313,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   const order = add("order", woAccept.length, "Work Orders to accept", woAccept[0] ? `/orders/${woAccept[0].id}` : "/orders", "Accept");
   add("shop", sc.offers, "Offers to answer", "/shop?tab=offers", "Answer");
   add("shop", sc.sales, "Product sales needing you", "/shop?tab=sales", "Open");
+  add("shop", sc.estimates, "Estimates to price", "/shop?tab=estimates", "Price");
   add("settlement", drafts, "Payment requests to submit", APP_HOME.provider.settlement, "Submit");
   add("payment", paidIn, "Payments on the way", APP_HOME.provider.payment, "See");
   add("connect", connect, "Unread messages", "/messages", "Read");

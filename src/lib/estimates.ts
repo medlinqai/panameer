@@ -90,6 +90,9 @@ export async function saveEstimate(viewer: Viewer, id: string | null, input: Est
   const email = clean(input.customerEmail, 200)?.toLowerCase() ?? null;
   if (!input.customerPersonId && !email) throw new EstimateError("Pick a customer or enter their email", "INVALID");
   if (input.customerPersonId === p.id) throw new EstimateError("You can't send an estimate to yourself", "INVALID");
+  // ES-E003: inside an Estimate Event, revisions are allowed only until the deadline.
+  if (input.requestId) await eventStillOpen({ requestId: input.requestId });
+  else if (id) await eventStillOpen({ estimateId: id });
   const { rows, total } = linesData(input.lines ?? []);
   const validUntil = input.validUntil ? new Date(input.validUntil) : new Date(Date.now() + 30 * 86_400_000);
   const rev = {
@@ -127,6 +130,7 @@ export async function sendEstimate(viewer: Viewer, id: string) {
   const e = await prisma.estimate.findFirst({ where: { id, provider_person_id: p.id } });
   if (!e) throw new EstimateError("Estimate not found", "NOT_FOUND");
   if (!["DRAFT", "CHANGES_REQUESTED"].includes(e.status)) throw new EstimateError("This estimate has already been sent", "INVALID");
+  await eventStillOpen({ estimateId: e.id });
   const rev = await prisma.estimateRevision.findUnique({ where: { estimate_id_revision_number: { estimate_id: e.id, revision_number: e.current_revision } }, include: { lines: true } });
   if (!rev || rev.sent_at) throw new EstimateError("Revise the estimate before sending it again", "INVALID");
   if (!rev.lines.length) throw new EstimateError("Add at least one line", "INVALID");
@@ -270,4 +274,12 @@ export async function myEstimates(viewer: Viewer): Promise<EstimateRow[]> {
   const rows = await prisma.estimate.findMany({ where: { provider_person_id: p.id }, orderBy: { updated_at: "desc" }, take: 100, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, select: { total_cents: true } } } });
   const custs = new Map((await prisma.person.findMany({ where: { id: { in: rows.map((r) => r.customer_person_id).filter((x): x is string => !!x) } }, select: { id: true, first_name: true, last_name: true } })).map((c) => [c.id, nameOf(c)]));
   return rows.map((r) => ({ id: r.id, number: r.estimate_number, title: r.title, status: r.status, totalCents: r.revisions[0]?.total_cents ?? 0, currency: r.currency, counterpart: (r.customer_person_id && custs.get(r.customer_person_id)) || r.customer_email || "—", validUntil: r.valid_until.toISOString().slice(0, 10), revision: r.current_revision }));
+}
+
+/** ES-E003: an estimate in an Estimate Event can be saved / sent only while the event is open. */
+async function eventStillOpen(ref: { requestId?: string; estimateId?: string }) {
+  const r = await prisma.estimateRequest.findFirst({ where: ref.requestId ? { id: ref.requestId } : { cost_estimate_id: ref.estimateId }, select: { sourcing_event_id: true } });
+  if (!r?.sourcing_event_id) return;
+  const ev = await prisma.sourcingEvent.findUnique({ where: { id: r.sourcing_event_id }, select: { status: true, deadline_at: true } });
+  if (ev && (ev.status !== "OPEN" || ev.deadline_at.getTime() <= Date.now())) throw new EstimateError("This Estimate Event is closed — the deadline has passed.", "INVALID");
 }

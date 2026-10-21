@@ -40,6 +40,13 @@ function shopOrdersWhere(personId: string, side: ShopSide) {
 
 // ── SA-E001: counts (also fed into appCounts for the dashboard) ─────────────────────────────────────────────────
 export async function shopCounts(personId: string, side: ShopSide) {
+  const { estimateCounts } = await import("@/lib/estimate-events");
+  const est = await estimateCounts(personId, side);
+  const base = await shopCountsCore(personId, side);
+  return { ...base, estimates: est.total, estimatesDueSoon: est.dueSoon, total: base.total + est.total };
+}
+
+async function shopCountsCore(personId: string, side: ShopSide) {
   if (side === "buyer") {
     const [offers, toAccept, orders, cart] = await Promise.all([
       prisma.serviceProductOffer.count({ where: { buyer_person_id: personId, status: "COUNTERED" } }),

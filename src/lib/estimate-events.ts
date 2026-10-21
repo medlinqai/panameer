@@ -79,14 +79,6 @@ export async function openEstimateEvent(viewer: Viewer, input: OpenEstimateInput
   return { eventId: event.id, eventNumber: event.event_number };
 }
 
-/** Estimates still accepted on this event? (Revisions allowed until the deadline.) */
-export async function assertEstimateOpen(estimateId: string) {
-  const r = await prisma.estimateRequest.findFirst({ where: { cost_estimate_id: estimateId, sourcing_event_id: { not: null } }, select: { sourcing_event_id: true } });
-  if (!r?.sourcing_event_id) return;
-  const ev = await prisma.sourcingEvent.findUnique({ where: { id: r.sourcing_event_id }, select: { status: true, deadline_at: true } });
-  if (ev && (ev.status !== "OPEN" || ev.deadline_at.getTime() <= Date.now())) throw new WorkRequestError("This Estimate Event is closed — the deadline has passed.", "INVALID");
-}
-
 // ── ES-E003: seller — Estimates to Price ────────────────────────────────────────────────────────────────────
 export type SellerEstimateRow = { id: string; what: string; buyer: string; jobTitle: string; due: string | null; status: string; estimateId: string | null; needsAction: boolean; completed: boolean; recurring: null };
 export async function sellerEstimateRequests(personId: string): Promise<SellerEstimateRow[]> {
