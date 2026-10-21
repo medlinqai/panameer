@@ -28,7 +28,7 @@ export function Section({ id, title, extra, right, children, open = true }: { id
   return (
     <details id={id} open={open} className="group border-t border-ink pt-3.5 [&_summary::-webkit-details-marker]:hidden" data-section={title}>
       <summary className="flex cursor-pointer list-none items-baseline justify-between gap-3 md:pointer-events-none md:cursor-default">
-        <h2 className="text-[18px] font-extrabold">{title}{extra && <span className="ml-1.5 text-[14px] font-medium text-[#5d5768]">{extra}</span>}</h2>
+        <h2 className="text-[18px] font-extrabold">{title}{extra && <span className="ml-1.5 text-[14px] font-medium text-[#5d5768] md:pointer-events-auto">{extra}</span>}</h2>
         <span className="flex items-baseline gap-3 text-[13px] font-semibold">
           {right && <span className="md:pointer-events-auto">{right}</span>}
           <span aria-hidden className="text-ink-3 transition-transform group-open:rotate-180 md:hidden">▾</span>

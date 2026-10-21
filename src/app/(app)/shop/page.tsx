@@ -12,8 +12,6 @@ import { byPopular, filterStore, storeHref, STORE_DELIVERY, STORE_LEAD, STORE_PR
 import { HELP_TYPES, searchHelpLinks } from "@/lib/help-links";
 import { HelpTypeIcon } from "@/components/help/HelpTypeIcon";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
-import { StripColumn } from "@/components/home/AppHome";
 import { ShopBar } from "@/components/shop/ShopBar";
 import { ShopResults } from "@/components/shop/ShopResults";
 import { ShopCompare } from "@/components/shop/ShopCompare";
@@ -22,6 +20,7 @@ import { CartView } from "@/components/shop/CartView";
 import { cartFor } from "@/lib/cart";
 import { SliceChips } from "@/components/casing/SliceChips";
 import { RedDot } from "@/components/home/AppHome";
+import { BTN as HL_BTN, BTN_OUT as HL_BTN_OUT, HeadRow, PathBand, RedDot as HLRedDot, type BandStep } from "@/components/hire/HireUI";
 import { buyerEstimateEvents, sellerEstimateRequests } from "@/lib/estimate-events";
 import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
 import { COMPARE_COOKIE, parseCompare, productTypesByCategory, shopCounts, shopOffers, shopOrders, shopPerson, shopSideOf, shopStrip } from "@/lib/shop-app";
@@ -86,20 +85,53 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
 
 type Viewer = Awaited<ReturnType<typeof memberOrPublicTwin>>;
 
+// HL-E005: Shop Overview in the Hire Overview layout — headline + attention rows, one thin band, two columns.
 async function Overview({ viewer, personId, side, counts }: { viewer: Viewer; personId: string; side: "buyer" | "seller"; counts: Awaited<ReturnType<typeof shopCounts>> }) {
-  const strip = await shopStrip(viewer, personId, side);
-  const hrefOf = (k: string) => strip.find((s) => s.key === k)?.href ?? "/shop";
-  const kpis = side === "buyer"
-    ? [{ value: counts.offers, label: "OFFERS TO ANSWER" }, { value: counts.cart, label: "IN CART" }, { value: counts.deliveries, label: "DELIVERIES TO APPROVE" }]
-    : [{ value: counts.offers, label: "OFFERS TO ANSWER" }, { value: counts.toAccept, label: "ORDERS TO ACCEPT" }, { value: counts.toDeliver, label: "TO DELIVER" }];
-  const actions = side === "buyer"
-    ? <><Link href="/shop?tab=browse" className={HERO_BTN}>Browse Products</Link><Link href="/shop?tab=purchases" className={HERO_BTN_W}>My Purchases</Link></>
-    : <><Link href="/catalog/products" className={HERO_BTN}>Add a Product</Link><Link href="/shop?tab=sales" className={HERO_BTN_W}>My Sales</Link></>;
+  const [strip, offers, orders, est] = await Promise.all([
+    shopStrip(viewer, personId, side), shopOffers(viewer, personId, side), shopOrders(viewer, personId, side),
+    side === "buyer" ? buyerEstimateEvents(personId) : sellerEstimateRequests(personId),
+  ]);
+  const usd0 = (c: number | null) => (c == null ? "—" : `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}`);
+  type Item = { id: string; step: string; what: string; detail: string; href: string; action: string };
+  const items: Item[] = [
+    ...offers.filter((o) => o.needsAction).map((o) => ({ id: `o-${o.id}`, step: "offer", what: side === "buyer" ? `Answer the counter-offer on ${o.product}` : `Answer an offer on ${o.product}`, detail: [`offered ${usd0(o.amountCents)}`, o.counterCents != null ? `counter ${usd0(o.counterCents)}` : null, o.respondBy ? `respond by ${o.respondBy}` : null].filter(Boolean).join(" · "), href: "/shop?tab=offers", action: "Answer" })),
+    ...(side === "buyer"
+      ? (est as Awaited<ReturnType<typeof buyerEstimateEvents>>).filter((e) => e.needsAction).map((e) => ({ id: `e-${e.id}`, step: "estimate", what: `Review estimates for ${e.what}`, detail: [`${e.in} of ${e.asked} in`, e.range, `due ${e.due}`].filter(Boolean).join(" · "), href: `/shop/estimates/${e.id}`, action: "Review" }))
+      : (est as Awaited<ReturnType<typeof sellerEstimateRequests>>).filter((e) => e.needsAction).map((e) => ({ id: `e-${e.id}`, step: "estimate", what: `Price an estimate: ${e.what}`, detail: [e.buyer, e.due ? `due ${e.due}` : null].filter(Boolean).join(" · "), href: `/catalog/estimates/new?request=${e.id}`, action: "Price it" }))),
+    ...orders.filter((o) => o.needsAction && o.action).map((o) => ({ id: `w-${o.id}`, step: o.stepIndex >= 5 ? "paid" : o.stepIndex === 4 ? "delivered" : "wo", what: `${o.action!.label} · ${o.number}`, detail: `${o.product} · ${o.stepDetail}`, href: o.action!.href, action: o.action!.label })),
+  ];
+  const n = items.length;
+  const needs = new Set(items.map((i) => i.step));
+  const firstNeed = strip.findIndex((x) => needs.has(x.key));
+  const lastBusy = Math.max(-1, ...strip.map((x, k) => (x.count > 0 ? k : -1)));
+  const active = firstNeed >= 0 ? firstNeed : lastBusy;
+  const band: BandStep[] = strip.map((x, k) => ({ key: x.key, label: x.label, href: x.href, current: k === active, needs: needs.has(x.key), muted: !x.count && k !== active, bar: k <= active ? "done" : "todo", top: <span className={`text-[22px] font-extrabold ${x.count ? (k === active ? "text-magenta" : "text-ink") : "text-[#c9c4d6]"}`}>{x.count}</span> }));
+  const dateLabel = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }).toUpperCase();
+  const sentence = n ? `${n === 1 ? "One thing" : `${n} things`} in Shop ${n === 1 ? "is" : "are"} waiting on you.` : side === "buyer" ? `Nothing is waiting on you.${counts.cart ? ` You have ${counts.cart} item${counts.cart === 1 ? "" : "s"} in your cart.` : ""}` : "Nothing is waiting on you. New offers, estimate requests and orders show here.";
   return (
-    <>
-      <AccountHero testId="shop-overview-hero" stackKpis picture={<StripColumn steps={strip} href={hrefOf} />} eyebrow="Shop" title="What Needs You Today" kpis={kpis} actions={actions} />
+    <div className="flex flex-col gap-10 pt-6">
+      <section className="flex flex-wrap items-start gap-10" data-shop-today>
+        <div className="min-w-0 flex-[1_1_320px]">
+          <span className="text-[12px] font-bold tracking-[0.12em] text-magenta">{dateLabel}</span>
+          <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{n ? `${n} thing${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} you today` : "Nothing needs you today"}</h1>
+          <p className="text-[15px] leading-relaxed text-[#5d5768]">{sentence}</p>
+          <div className="mt-4 flex flex-wrap gap-2.5">{side === "buyer" ? <><Link href="/shop?tab=browse" className={HL_BTN}>Browse Products</Link><Link href="/shop?tab=purchases" className={HL_BTN_OUT}>My Purchases</Link></> : <><Link href="/catalog/products" className={HL_BTN}>Add a Product</Link><Link href="/shop?tab=sales" className={HL_BTN_OUT}>My Sales</Link></>}</div>
+        </div>
+        {n > 0 && (
+          <div className="flex min-w-0 flex-[1_1_480px] flex-col border-b border-[#e7e5ec]">
+            {items.map((it) => (
+              <div key={it.id} className="flex flex-wrap items-center gap-3.5 border-t border-[#e7e5ec] py-4 sm:flex-nowrap" data-today-item={it.step}>
+                <HLRedDot />
+                <div className="min-w-0 flex-1"><div className="text-[15px] font-bold">{it.what}</div><div className="text-[13px] text-[#5d5768]">{it.detail}</div></div>
+                <Link href={it.href} className={`${HL_BTN_OUT} w-full sm:w-auto`}>{it.action}</Link>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+      <PathBand steps={band} label="Shop path" />
       {side === "buyer" ? <BuyerLower viewer={viewer} personId={personId} /> : <SellerLower viewer={viewer} personId={personId} />}
-    </>
+    </div>
   );
 }
 
@@ -113,12 +145,12 @@ async function BuyerLower({ viewer, personId }: { viewer: Viewer; personId: stri
   const popular = (cats.size ? all.filter((p) => cats.has(p.category)) : all).sort(byPopular).slice(0, 6);
   return (
     <div className="grid md:grid-cols-2">
-      <section className="min-w-0 py-6 md:border-r md:border-line md:pr-7">
-        <h2 className="text-[22px] font-bold">Recent Purchases</h2>
+      <section className="min-w-0 py-2 md:pr-7">
+        <HeadRow title="Recent Purchases" />
         <ShopOrders rows={bought.slice(0, 5)} empty="No purchases yet." />
       </section>
-      <section className="min-w-0 py-6 md:pl-7">
-        <h2 className="text-[22px] font-bold">Popular{cats.size ? " in your categories" : ""}</h2>
+      <section className="min-w-0 py-2 md:pl-7">
+        <HeadRow title={`Popular${cats.size ? " in your categories" : ""}`} />
         <div className="mt-3 grid grid-cols-2 gap-3">{popular.map((p) => <PopularCard key={p.id} p={p} />)}</div>
       </section>
     </div>
@@ -129,12 +161,12 @@ async function SellerLower({ viewer, personId }: { viewer: Viewer; personId: str
   const [offers, sales] = await Promise.all([shopOffers(viewer, personId, "seller"), shopOrders(viewer, personId, "seller")]);
   return (
     <div className="grid md:grid-cols-2">
-      <section className="min-w-0 py-6 md:border-r md:border-line md:pr-7">
-        <h2 className="text-[22px] font-bold">Offers Waiting</h2>
+      <section className="min-w-0 py-2 md:pr-7">
+        <HeadRow title="Offers Waiting" />
         <ShopOffers rows={offers.filter((o) => o.needsAction).slice(0, 5)} side="seller" />
       </section>
-      <section className="min-w-0 py-6 md:pl-7">
-        <h2 className="text-[22px] font-bold">Recent Sales</h2>
+      <section className="min-w-0 py-2 md:pl-7">
+        <HeadRow title="Recent Sales" />
         <ShopOrders rows={sales.slice(0, 5)} empty="No sales yet." />
       </section>
     </div>
