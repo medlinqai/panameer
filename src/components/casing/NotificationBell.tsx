@@ -194,7 +194,7 @@ export function NotificationBell({
                     </span>
                   </button>
                   {/* NT-E002: decide in place; the row leaves once it's done. */}
-                  {n.action && (n.action.kind === "join" || n.action.kind === "connect" || n.action.kind === "mentor") && n.action.pending && (
+                  {n.action && (((n.action.kind === "join" || n.action.kind === "connect" || n.action.kind === "mentor") && n.action.pending) || n.action.kind === "work") && (
                     <div className="pb-2.5 pl-8 pr-2" data-bell-actions>
                       <RowActions id={n.id} action={n.action} href={null} onDone={() => setRows((v) => (v ?? []).filter((x) => x.id !== n.id))} />
                     </div>

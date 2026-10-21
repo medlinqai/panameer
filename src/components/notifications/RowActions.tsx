@@ -39,6 +39,12 @@ export function RowActions({ id, action, href, onDone }: { id: string; action: R
           <button type="button" data-decline disabled={busy} onClick={() => post({ action: "decide", decision: "REJECTED" }, "Declined")} className="pm-triage-btn pm-triage-btn-s">Decline</button>
         </>
       )}
+      {action?.kind === "work" && (
+        <>
+          <Link href={action.primary.href} data-work-action className="pm-triage-btn pm-triage-btn-p">{action.primary.label}</Link>
+          {action.secondary && <Link href={action.secondary.href} data-work-secondary className="pm-triage-btn pm-triage-btn-s">{action.secondary.label}</Link>}
+        </>
+      )}
       {action?.kind === "reply" && <Link href={action.href} data-reply className="pm-triage-btn pm-triage-btn-p">Reply</Link>}
       {action?.kind === "message" && (
         <>
@@ -47,7 +53,7 @@ export function RowActions({ id, action, href, onDone }: { id: string; action: R
         </>
       )}
       {action?.kind === "dismiss" && <button type="button" data-dismiss disabled={busy} onClick={() => post({ action: "dismiss" }, "Dismissed")} className="pm-triage-btn pm-triage-btn-s">Dismiss</button>}
-      {action?.kind !== "reply" && action?.kind !== "message" && open}
+      {action?.kind !== "reply" && action?.kind !== "message" && action?.kind !== "work" && open}
       {!href && !action && <span className="text-[12.5px] text-ink-3">No link</span>}
       {err && <span role="alert" className="text-[12px] font-semibold text-magenta-dark">{err}</span>}
     </span>

@@ -17,8 +17,10 @@ export const metadata = { title: "Work Request · Panameer" };
 
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ decline?: string }>;
 }) {
   const viewer = await guardPage("canProvideServices");
   const { id } = await params;
@@ -106,7 +108,7 @@ export default async function Page({
           )}
           {sourcing && (
             <div className="mt-5">
-              <SourcingProposal jobId={detail.id} v={sourcing} />
+              <SourcingProposal jobId={detail.id} v={sourcing} startDeclining={(await searchParams)?.decline === "1"} />
               <ServiceDescriptionView jobId={detail.id} editable={false} />
             </div>
           )}

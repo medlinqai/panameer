@@ -14,12 +14,12 @@ const FIELD = "mt-1 block w-full rounded-[8px] border border-line bg-white px-3 
 const LABEL = "mt-3 block text-[13px] font-bold";
 const usd = (c: number | null) => (c == null ? null : `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}`);
 
-export function SourcingProposal({ jobId, v }: { jobId: string; v: View }) {
+export function SourcingProposal({ jobId, v, startDeclining = false }: { jobId: string; v: View; startDeclining?: boolean }) {
   const router = useRouter();
   const [rate, setRate] = useState(((v.proposed?.rateCents ?? v.rateCardCents ?? 0) / 100 || "").toString());
   const [start, setStart] = useState(v.proposed?.start ?? "");
   const [note, setNote] = useState(v.proposed?.note ?? "");
-  const [declining, setDeclining] = useState(false);
+  const [declining, setDeclining] = useState(startDeclining);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

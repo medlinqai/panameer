@@ -11,6 +11,8 @@ export type RowAction =
   | { kind: "reply"; href: string }
   | { kind: "message"; href: string; label: string }
   | { kind: "dismiss" }
+  // HP-E002: work rows act from the row — View & Propose · Decline, Review & Accept, Review & Send.
+  | { kind: "work"; primary: { label: string; href: string }; secondary?: { label: string; href: string } }
   | null;
 type Row = { id: string; eventKey: string; entityId: string | null; dedupeKey: string | null; needsAction: boolean; resolved: boolean; href: string | null };
 
@@ -37,6 +39,8 @@ export async function actionsFor(rows: Row[]): Promise<Record<string, RowAction>
   const connIds = rows.filter((r) => r.eventKey === "colleague.invite_received" || r.eventKey === "mentor.request_received").map((r) => connParts(r.dedupeKey)).filter((x): x is string => !!x);
   const openConns = connIds.length ? new Set((await prisma.connection.findMany({ where: { id: { in: connIds }, status: "PENDING" }, select: { id: true } })).map((c) => c.id)) : new Set<string>();
   for (const r of rows) {
+    const work = workAction(r);
+    if (work !== undefined) { out[r.id] = work; continue; }
     if (r.eventKey === "colleague.invite_received" || r.eventKey === "mentor.request_received") {
       const id = connParts(r.dedupeKey);
       out[r.id] = id ? { kind: r.eventKey === "mentor.request_received" ? "mentor" : "connect", pending: !r.resolved && openConns.has(id) } : null;
@@ -56,6 +60,20 @@ export async function actionsFor(rows: Row[]): Promise<Record<string, RowAction>
     } else out[r.id] = r.resolved ? null : { kind: "dismiss" };
   }
   return out;
+}
+
+/** HP-E002: the buttons on a work row (undefined = not a work row). */
+function workAction(r: Row): RowAction | undefined {
+  if (r.resolved) return ["work.invited_to_propose", "work.sourcing_event_invited", "work.order_offered", "work.order_created", "buyer.sourcing.notify_others"].includes(r.eventKey) ? null : undefined;
+  if (r.eventKey === "work.invited_to_propose" || r.eventKey === "work.sourcing_event_invited") {
+    const jobId = r.dedupeKey?.split(":")[1];
+    if (!jobId) return undefined;
+    // Decline (with a reason) lives on the Sourcing Event proposal form.
+    return { kind: "work", primary: { label: "View & Propose", href: `/find-work/${jobId}` }, ...(r.eventKey === "work.sourcing_event_invited" ? { secondary: { label: "Decline", href: `/find-work/${jobId}?decline=1` } } : {}) };
+  }
+  if ((r.eventKey === "work.order_offered" || r.eventKey === "work.order_created") && r.entityId) return { kind: "work", primary: { label: "Review & Accept", href: `/orders/${r.entityId}` } };
+  if (r.eventKey === "buyer.sourcing.notify_others" && r.entityId) return { kind: "work", primary: { label: "Review & Send", href: `/hire/sourcing/${r.entityId}` } };
+  return undefined;
 }
 
 export class WorklistActionError extends Error {}
