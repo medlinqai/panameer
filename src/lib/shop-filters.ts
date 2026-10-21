@@ -5,7 +5,12 @@ import type { ShopProduct } from "@/lib/shop";
 export const byPopular = (a: ShopProduct, b: ShopProduct) => b.orders - a.orders || b.createdAt.localeCompare(a.createdAt);
 
 // SH2-E003: Shop's left filters — Category (with counts) · Price · Billing · Delivery · Open to offers. Values live in the URL.
-export type StoreQuery = { q?: string; category?: string; price?: string; billing?: string; delivery?: string; offers?: string };
+export type StoreQuery = { q?: string; category?: string; price?: string; billing?: string; delivery?: string; offers?: string; type?: string; lead?: string; rating?: string; certified?: string; tab?: string };
+// SA-E004: the chip row — delivery time, rating, certified seller.
+export const STORE_LEAD = [
+  { value: "w1", label: "Within a week", max: 7 },
+  { value: "m1", label: "Within a month", max: 31 },
+];
 export const STORE_PRICE = [
   { value: "u100", label: "Under $100", test: (c: number) => c < 10_000 },
   { value: "100to500", label: "$100–$500", test: (c: number) => c >= 10_000 && c <= 50_000 },
@@ -32,7 +37,11 @@ export function filterStoreExceptCategory(list: ShopProduct[], f: StoreQuery): S
       (!price || (price.value === "quote" ? p.priceCents == null : p.priceCents != null && price.test(p.priceCents))) &&
       (!f.billing || (f.billing === "monthly" ? p.pricingType === "RECURRING" : p.pricingType !== "RECURRING")) &&
       (!f.delivery || (f.delivery === "site" ? p.delivery !== "OFFSITE" : p.delivery !== "ONSITE")) &&
-      (!f.offers || p.openToOffers)
+      (!f.offers || p.openToOffers) &&
+      (!f.type || p.productTypeId === f.type) &&
+      (!f.lead || (p.leadDays != null && p.leadDays <= (STORE_LEAD.find((x) => x.value === f.lead)?.max ?? 9999))) &&
+      (!f.rating || (p.rating ?? 0) >= 4) &&
+      (!f.certified || p.certified)
   );
 }
 
