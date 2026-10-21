@@ -209,8 +209,9 @@ const notAwarded = (eventId: string) => ({ proposalRequest: { sourcing_event_id:
 
 /** Called when a Work Order is Released: its Sourcing Event's buyer gets the worklist item. */
 export async function sourcingOnReleased(orderId: string) {
-  const ev = await prisma.sourcingEvent.findFirst({ where: { work_order_id: orderId, others_notified_at: null }, select: { id: true, created_by_person_id: true, job: { select: { title: true } } } });
+  const ev = await prisma.sourcingEvent.findFirst({ where: { work_order_id: orderId, others_notified_at: null }, select: { id: true, type: true, created_by_person_id: true, job: { select: { title: true } } } });
   if (!ev) return;
+  if (ev.type === "ESTIMATES") return estimatesNotSelected(ev.id, ev.job.title);
   const count = await prisma.proposal.count({ where: notAwarded(ev.id) });
   if (!count) { await prisma.sourcingEvent.update({ where: { id: ev.id }, data: { status: "CLOSED", others_notified_at: new Date() } }); return; }
   const { notify } = await import("@/lib/notifications");
@@ -244,4 +245,18 @@ export async function notifyOthers(viewer: Viewer, eventId: string, message: str
     prisma.notification.updateMany({ where: { dedupe_key: `sourcing.notify_others:${ev.id}`, resolved_at: null }, data: { resolved_at: new Date() } }),
   ]);
   return { sent: others.length };
+}
+
+/** ES-E005: on Release, every other estimate in the event is told "not selected" and closed; the event closes. */
+async function estimatesNotSelected(eventId: string, title: string) {
+  const reqs = await prisma.estimateRequest.findMany({ where: { sourcing_event_id: eventId, cost_estimate_id: { not: null } }, select: { provider_person_id: true, cost_estimate_id: true } });
+  const others = await prisma.estimate.findMany({ where: { id: { in: reqs.map((r) => r.cost_estimate_id!) }, status: { in: ["SENT", "CHANGES_REQUESTED"] } }, select: { id: true, provider_person_id: true } });
+  const { notify } = await import("@/lib/notifications");
+  for (const e of others) {
+    await notify({ event: "work.not_awarded", personId: e.provider_person_id, entityType: "cost_estimate", entityId: e.id, dedupeKey: `work.not_awarded:${eventId}:${e.provider_person_id}`, vars: { workTitle: title, message: `Thank you for your estimate on “${title}”. The buyer went with another provider this time.` } });
+  }
+  await prisma.$transaction([
+    prisma.estimate.updateMany({ where: { id: { in: others.map((o) => o.id) } }, data: { status: "DECLINED", decided_at: new Date() } }),
+    prisma.sourcingEvent.update({ where: { id: eventId }, data: { status: "CLOSED", others_notified_at: new Date() } }),
+  ]);
 }

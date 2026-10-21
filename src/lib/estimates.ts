@@ -1,4 +1,6 @@
 import { activeMsa } from "@/lib/agreements";
+import { defaultPaymentEvent, styleForLine, styleForLines } from "@/lib/work-order-styles";
+import type { TransactionType } from "@prisma/client";
 import { nextNumber } from "@/lib/numbering";
 import { providerNameForBuyer } from "@/lib/provider-number";
 import { assertCanSign } from "@/lib/your-path";
@@ -216,54 +218,76 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
   const rev = e.revisions[0];
   const buyer = await prisma.person.findUniqueOrThrow({ where: { id: e.customer_person_id! }, select: { id: true, company: { select: { p_account_id: true } } } });
   if (!buyer.company?.p_account_id) throw new EstimateError("Add your company before accepting", "INVALID");
+  const pAccountId = buyer.company.p_account_id;
+  // ES-E005: lines map by kind — SERVICE → Service – Rate; FIXED → Product (with a service product) else Service – Fixed Price;
+  // NOT_TO_EXCEED → Service – Rate capped by the WO not-to-exceed.
+  const mapped = rev.lines.map((l) => {
+    const qty = l.quantity == null ? null : Number(l.quantity);
+    if (l.kind === "FIXED" && l.service_product_id) {
+      const q = qty && qty > 0 ? qty : 1;
+      return { l, type: "PRODUCT_BY_QTY" as TransactionType, uom: l.uom ?? "EA", quantity: q, unit: Math.round((l.amount_cents ?? 0) / q), amount: null as number | null };
+    }
+    if (l.kind === "FIXED") return { l, type: "SERVICE_BY_AMT" as TransactionType, uom: null, quantity: null, unit: null, amount: l.amount_cents ?? 0 };
+    const rate = l.rate_cents ?? 0;
+    const q = l.kind === "NOT_TO_EXCEED" && rate > 0 ? Math.max(1, Math.floor((l.amount_cents ?? 0) / rate)) : qty ?? 1;
+    return { l, type: "SERVICE_BY_QTY" as TransactionType, uom: l.uom ?? "HOUR", quantity: q, unit: rate, amount: null as number | null };
+  });
+  const recurring = rev.lines.some((l) => l.kind === "SERVICE") ? rev.billing_cycle : null;
+  const styleOf = (m: (typeof mapped)[number]) => styleForLine({ transaction_type: m.type, uom: m.uom, billing_cycle: m.type === "SERVICE_BY_QTY" ? recurring : null });
   const fees = new Map<string, number>();
-  for (const l of rev.lines) fees.set(l.id, (await resolveCommissionBps("SOLE_SOURCED", l.kind === "SERVICE" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT")).bps);
-  const distinct = [...new Set(fees.values())];
+  for (const m of mapped) fees.set(m.l.id, (await resolveCommissionBps("SOLE_SOURCED", m.type)).bps);
+  const req = await prisma.estimateRequest.findFirst({ where: { cost_estimate_id: e.id }, select: { sourcing_event_id: true } });
+  const jobId = req?.sourcing_event_id ? (await prisma.sourcingEvent.findUnique({ where: { id: req.sourcing_event_id }, select: { job_id: true } }))?.job_id ?? null
+    : e.work_request_id ? (await prisma.job.findUnique({ where: { id: e.work_request_id }, select: { id: true } }))?.id ?? null : null;
   const now = new Date();
   const msaId = (await activeMsa()).id;
-  const order = await prisma.$transaction(async (tx) => {
-    // JW-E004: an accepted estimate creates a complete Work Request (source ESTIMATE); its Work Order comes from it.
+  const description = e.title || `Estimate ${e.estimate_number}`;
+  const sow = [rev.scope, rev.assumptions && `Assumptions: ${rev.assumptions}`, rev.exclusions && `Not included: ${rev.exclusions}`].filter(Boolean).join("\n\n") || null;
+  const orders = await prisma.$transaction(async (tx) => {
+    // JW-E004: an accepted estimate creates a complete Work Request (Origin = Estimate); approval is automatic in R1.
     const wrId = crypto.randomUUID();
-    const description = e.title || `Estimate ${e.estimate_number}`;
     await tx.workRequest.create({
       data: {
-        id: wrId, wr_number: await nextNumber("WR", { pAccountId: buyer.company!.p_account_id }, { tx }), source: "ESTIMATE", status: "ORDERED", submitted_at: now, approved_at: now, description, sole_sourced: true,
-        job_id: e.work_request_id ? (await tx.job.findUnique({ where: { id: e.work_request_id }, select: { id: true } }))?.id ?? null : null,
-        buyer_person_id: buyer.id, p_account_id: buyer.company!.p_account_id, currency: e.currency, proposal_access: "INVITE_ONLY",
-        lines: {
-          create: rev.lines.map((l) => ({
-            line_number: l.line_number, transaction_type: l.kind === "SERVICE" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", description: l.description, currency: e.currency, status: "ORDERED",
-            uom: l.uom, quantity: l.quantity, unit_price_cents: l.rate_cents, amount_cents: l.amount_cents, provider_service_id: l.provider_service_id, service_product_id: l.service_product_id, provider_person_id: e.provider_person_id,
-          })),
-        },
+        id: wrId, wr_number: await nextNumber("WR", { pAccountId }, { tx }), source: "ESTIMATE", status: "ORDERED", submitted_at: now, approved_at: now, description, sole_sourced: true, job_id: jobId,
+        buyer_person_id: buyer.id, p_account_id: pAccountId, currency: e.currency, proposal_access: "INVITE_ONLY", style: styleForLines(mapped.map((m) => ({ transaction_type: m.type, uom: m.uom, billing_cycle: m.type === "SERVICE_BY_QTY" ? recurring : null }))),
+        lines: { create: mapped.map((m) => ({ line_number: m.l.line_number, transaction_type: m.type, description: m.l.description, currency: e.currency, status: "ORDERED" as const, uom: m.uom, quantity: m.quantity, unit_price_cents: m.unit, amount_cents: m.amount, provider_service_id: m.l.provider_service_id, service_product_id: m.l.service_product_id, provider_person_id: e.provider_person_id })) },
       },
     });
     const wrLines = new Map((await tx.workRequestLine.findMany({ where: { work_request_id: wrId }, select: { id: true, line_number: true } })).map((l) => [l.line_number, l.id]));
-    const o = await tx.workOrder.create({
-      data: {
-        order_number: await nextNumber("WO", { pAccountId: buyer.company!.p_account_id }, { tx }),
-        agreement_id: msaId,
-        origin: "INDIRECT", work_request_id: wrId, description, buyer_person_id: buyer.id, p_account_id: buyer.company!.p_account_id, provider_person_id: e.provider_person_id,
-        currency: e.currency, status: "ISSUED", buyer_accepted_at: now, fee_bps: distinct.length === 1 ? distinct[0] : null, not_to_exceed_cents: rev.total_cents,
-        external_ref: e.estimate_number, sow_text: [rev.scope, rev.assumptions && `Assumptions: ${rev.assumptions}`, rev.exclusions && `Not included: ${rev.exclusions}`].filter(Boolean).join("\n\n") || null,
-        lines: {
-          create: rev.lines.map((l) => ({
-            line_number: l.line_number, work_request_line_id: wrLines.get(l.line_number), transaction_type: l.kind === "SERVICE" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", fee_bps: fees.get(l.id)!, description: l.description,
-            uom: l.uom, quantity: l.quantity, unit_price_cents: l.rate_cents, amount_cents: l.amount_cents, provider_service_id: l.provider_service_id, service_product_id: l.service_product_id,
-            billing_cycle: l.kind === "SERVICE" ? rev.billing_cycle : null, payment_terms: rev.payment_terms,
-            payment_event: l.kind === "SERVICE" ? "TIMESHEET" : l.kind === "FIXED" ? "ACCEPTANCE" : "PAYMENT_REQUEST",
-          })),
+    // WS-E002: one Work Order per style.
+    const out: string[] = [];
+    for (const style of [...new Set(mapped.map(styleOf))]) {
+      const group = mapped.filter((m) => styleOf(m) === style);
+      const distinct = [...new Set(group.map((m) => fees.get(m.l.id)!))];
+      const cap = group.reduce((n, m) => n + (m.l.kind === "NOT_TO_EXCEED" ? m.l.amount_cents ?? 0 : m.amount ?? Math.round((m.quantity ?? 0) * (m.unit ?? 0))), 0);
+      const o = await tx.workOrder.create({
+        data: {
+          order_number: await nextNumber("WO", { pAccountId }, { tx }), style, agreement_id: msaId,
+          origin: "INDIRECT", work_request_id: wrId, description, buyer_person_id: buyer.id, p_account_id: pAccountId, provider_person_id: e.provider_person_id,
+          currency: e.currency, status: "ISSUED", buyer_accepted_at: now, fee_bps: distinct.length === 1 ? distinct[0] : null, not_to_exceed_cents: cap,
+          external_ref: e.estimate_number, sow_text: sow,
+          lines: {
+            create: group.map((m) => ({
+              line_number: m.l.line_number, work_request_line_id: wrLines.get(m.l.line_number), transaction_type: m.type, fee_bps: fees.get(m.l.id)!, description: m.l.description,
+              uom: m.uom, quantity: m.quantity, unit_price_cents: m.unit, amount_cents: m.amount, provider_service_id: m.l.provider_service_id, service_product_id: m.l.service_product_id,
+              billing_cycle: m.type === "SERVICE_BY_QTY" ? rev.billing_cycle : null, payment_terms: rev.payment_terms,
+              payment_event: m.l.kind === "NOT_TO_EXCEED" ? ("PAYMENT_REQUEST" as const) : defaultPaymentEvent(m.type),
+            })),
+          },
         },
-      },
-      select: { id: true },
-    });
-    await tx.estimate.update({ where: { id: e.id }, data: { work_order_id: o.id } });
-    await tx.workRequestLine.updateMany({ where: { work_request_id: wrId }, data: { work_order_id: o.id } });
-    return o;
+        select: { id: true },
+      });
+      await tx.workRequestLine.updateMany({ where: { id: { in: group.map((m) => wrLines.get(m.l.line_number)!).filter(Boolean) } }, data: { work_order_id: o.id } });
+      out.push(o.id);
+    }
+    await tx.estimate.update({ where: { id: e.id }, data: { work_order_id: out[0] } });
+    return out;
   });
-  await snapshotMilestones(order.id);
-  await notify({ event: "work.order_offered", personId: e.provider_person_id, entityType: "work_order", entityId: order.id, dedupeKey: `work.order_offered:${order.id}`, vars: { orderId: order.id, requestTitle: `From estimate ${e.estimate_number}` } });
-  return order.id;
+  for (const id of orders) {
+    await snapshotMilestones(id);
+    await notify({ event: "work.order_offered", personId: e.provider_person_id, entityType: "work_order", entityId: id, dedupeKey: `work.order_offered:${id}`, vars: { orderId: id, requestTitle: `From estimate ${e.estimate_number}` } });
+  }
+  return orders[0];
 }
 
 export type EstimateRow = { id: string; number: string; title: string; status: string; totalCents: number; currency: string; counterpart: string; validUntil: string; revision: number };

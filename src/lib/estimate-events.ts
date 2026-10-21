@@ -177,3 +177,18 @@ export async function estimateCounts(personId: string, side: "buyer" | "seller")
   const dueSoon = reqs.filter((r) => events.find((e) => e.id === r.sourcing_event_id && e.deadline_at <= soon)).length;
   return { total: toPrice, toReview: 0, dueSoon, toPrice };
 }
+
+/** ES-E005: Award one estimate → it is accepted, the Work Request (Origin Estimate) and its Work Order(s) are created;
+ *  the others stay open until the Work Order is Released. */
+export async function awardEstimate(viewer: Viewer, eventId: string, estimateId: string) {
+  const me = await buyer(viewer);
+  const ev = await prisma.sourcingEvent.findFirst({ where: { id: eventId, type: "ESTIMATES", created_by_person_id: me.id }, select: { id: true, status: true } });
+  if (!ev) throw new WorkRequestError("Estimate Event not found", "NOT_FOUND");
+  if (ev.status === "AWARDED" || ev.status === "CLOSED") throw new WorkRequestError("This Estimate Event is already awarded.", "INVALID");
+  const inEvent = await prisma.estimateRequest.findFirst({ where: { sourcing_event_id: ev.id, cost_estimate_id: estimateId }, select: { id: true } });
+  if (!inEvent) throw new WorkRequestError("That estimate isn't in this event.", "NOT_FOUND");
+  const { decideEstimate } = await import("@/lib/estimates");
+  const out = await decideEstimate(viewer, estimateId, "ACCEPT");
+  await prisma.sourcingEvent.update({ where: { id: ev.id }, data: { status: "AWARDED", work_order_id: out.orderId ?? null } });
+  return out;
+}
