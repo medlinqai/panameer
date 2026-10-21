@@ -161,7 +161,7 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
         </section>
 
         <section className={SEC}>
-          <p className={N}>2 · PICTURES <span className="font-semibold tracking-normal text-ink-3">up to 5 · first is the cover · drag to reorder</span></p>
+          <p className={N}>2 · PICTURES <span className="font-semibold tracking-normal text-ink-3">optional · up to 4 · shown on the product page · without one, buyers see the Product Type picture</span></p>
           <div className="flex flex-wrap gap-2.5">
             {f.images.map((url, i) => (
               <div key={url} draggable onDragStart={() => setDrag(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (drag !== null && drag !== i) move(drag, i); setDrag(null); }}

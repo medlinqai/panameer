@@ -17,7 +17,19 @@ export async function photoLooksLikePerson(bytes: ArrayBuffer, mime: string): Pr
 export async function photoIsSurelyPerson(bytes: ArrayBuffer, mime: string): Promise<boolean> {
   return (await checkPerson(bytes, mime)) === true;
 }
+/** PA-E003: a product picture must show the product — no people or faces, no screenshots with personal data,
+ *  no watermarks, nothing unrelated. A broken or missing check lets it through (sellers aren't blocked by an outage). */
+export const PRODUCT_IMAGE_REJECTED = "Use a picture of the product itself — no people or faces, screenshots with personal details, watermarks or unrelated images.";
+const PRODUCT_QUESTION =
+  "Is this image suitable as a product picture in a business marketplace? Answer false if it shows a person or a face, a screenshot containing personal details " +
+  "(names, emails, phone numbers), a visible watermark (e.g. stock-photo text), or something unrelated to a product or service deliverable.";
+export async function productImageAcceptable(bytes: ArrayBuffer, mime: string, productHint?: string | null): Promise<boolean> {
+  return (await ask(bytes, mime, productHint ? `${PRODUCT_QUESTION} The product is: ${productHint}.` : PRODUCT_QUESTION)) ?? true;
+}
 async function checkPerson(bytes: ArrayBuffer, mime: string): Promise<boolean | null> {
+  return ask(bytes, mime, QUESTION);
+}
+async function ask(bytes: ArrayBuffer, mime: string, QUESTION: string): Promise<boolean | null> {
   const cfg = resolveProvider();
   if (!cfg) return null;
   const b64 = Buffer.from(bytes).toString("base64");

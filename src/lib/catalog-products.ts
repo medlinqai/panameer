@@ -19,7 +19,8 @@ export type ProductForm = {
   /** MO-E001: buyers may Make an Offer; offers below the floor (private) are declined automatically. */
   openToOffers?: boolean; offerFloorCents?: number | null;
 };
-export const MAX_IMAGES = 5;
+// PA-E003: up to 4 optional pictures; without any, the Product Type art is the picture.
+export const MAX_IMAGES = 4;
 const PRICING_ROW = { FIXED: { pricing_type: "FIXED", kind: "DELIVERABLE", billing_period: null }, MONTHLY: { pricing_type: "RECURRING", kind: "DEPLOYABLE", billing_period: "MONTHLY" }, HOURLY: { pricing_type: "HOURLY", kind: "HOURS", billing_period: null } } as const;
 const PLAN: Record<PayPlan, { label: string; percent: number; event: PaymentEvent }[]> = {
   ON_DELIVERY: [{ label: "On delivery", percent: 100, event: "ACCEPTANCE" }],
@@ -96,11 +97,11 @@ function toForm(r: Row, sellerOpen = false) {
   };
 }
 
-/** What still blocks publishing: name, type, description, a cover (picture or Panameer cover), price, delivery. */
+/** What still blocks publishing: name, type, description, price, delivery (pictures are optional — PA-E003). */
 export function publishMissing(f: ProductForm): string[] {
   return [
     !f.title.trim() && "a name", !f.serviceTypeId && "a type", !f.summary.trim() && "a description",
-    !f.images.length && !f.coverStyle && "a cover (a picture or a Panameer cover)", f.priceCents == null && "a price", !f.delivery && "delivery",
+f.priceCents == null && "a price", !f.delivery && "delivery",
   ].filter((x): x is string => !!x);
 }
 
