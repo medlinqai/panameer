@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { hideProviderIdentity, listShopProducts } from "@/lib/shop";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
-import { ProductCard } from "@/components/shop/ProductCard";
+import { PopularCard } from "@/components/shop/PopularCard";
 import { SellOnPanameer } from "@/components/shop/SellMenu";
 import { CategoryIcon } from "@/components/shop/CategoryIcon";
 import { HELP_TILE } from "@/lib/shop-categories";
@@ -119,7 +119,7 @@ async function BuyerLower({ viewer, personId }: { viewer: Viewer; personId: stri
       </section>
       <section className="min-w-0 py-6 md:pl-7">
         <h2 className="text-[22px] font-bold">Popular{cats.size ? " in your categories" : ""}</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">{popular.map((p) => <ProductCard key={p.id} p={p} tile signedIn own={p.providerPersonId === personId} />)}</div>
+        <div className="mt-3 grid grid-cols-2 gap-3">{popular.map((p) => <PopularCard key={p.id} p={p} />)}</div>
       </section>
     </div>
   );

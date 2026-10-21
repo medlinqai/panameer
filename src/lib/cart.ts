@@ -33,6 +33,7 @@ const productSelect = {
   id: true, title: true, status: true, price_cents: true, currency: true, pricing_type: true, kind: true, billing_period: true, payment_terms: true, payment_event: true,
   milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, payment_event: true } },
   providerProfile: { select: { id: true, person_id: true, accepts_orders_manually: true, person: { select: { first_name: true, last_name: true } } } },
+  serviceType: { select: { name: true, serviceCategory: { select: { commodityGroup: { select: { name: true } }, businessType: { select: { commodityGroup: { select: { name: true } } } } } } } },
 };
 
 const settlesByQty = (pricing: string) => pricing === "HOURLY" || pricing === "TM";
@@ -108,7 +109,7 @@ export async function removeLine(viewer: Viewer, lineId: string) {
   await prisma.workRequestLine.deleteMany({ where: { id: lineId, ...shopLines(p.id) } });
 }
 
-export type CartLineView = { id: string; productId: string | null; serviceId: string | null; title: string; quantity: number; unitCents: number; lineCents: number; currency: string; unit: string; schedule: string; available: boolean; agreed: boolean; deliveryDate: string | null };
+export type CartLineView = { typeName: string | null; category: string | null; id: string; productId: string | null; serviceId: string | null; title: string; quantity: number; unitCents: number; lineCents: number; currency: string; unit: string; schedule: string; available: boolean; agreed: boolean; deliveryDate: string | null };
 export type CartGroup = { providerPersonId: string; providerProfileId: string; providerName: string; manual: boolean; lines: CartLineView[]; totalCents: number };
 
 type Line = { id: string; service_product_id: string | null; provider_service_id: string | null };
@@ -118,6 +119,7 @@ const qtyOf = (l: ShopLine) => Number(l.quantity ?? 1);
 type Item = {
   title: string; providerPersonId: string; providerProfileId: string; providerName: string; byQty: boolean; unit: string; schedule: string; available: boolean;
   productId: string | null; serviceId: string | null; paymentTerms: PaymentTerms | null; paymentEvent: PaymentEvent | null; uom: string; type: TransactionType;
+  typeName?: string | null; category?: string | null;
 };
 
 /** Lane 7: a cart line is a Service Product, or a Service (rate) from an accepted offer — one shape for both. */
@@ -134,7 +136,7 @@ async function resolveItems(lines: Line[]): Promise<Map<string, Item>> {
     const prod = l.service_product_id ? products.find((x) => x.id === l.service_product_id) : null;
     if (prod) {
       const byQty = settlesByQty(prod.pricing_type);
-      out.set(l.id, { title: prod.title, providerPersonId: prod.providerProfile.person_id, providerProfileId: prod.providerProfile.id, providerName: `${prod.providerProfile.person.first_name} ${prod.providerProfile.person.last_name}`.trim(), byQty, unit: byQty ? "hour" : prod.pricing_type === "RECURRING" ? (prod.billing_period ?? "month").toLowerCase() : "each", schedule: scheduleLine(prod), available: prod.status === "PUBLISHED", productId: prod.id, serviceId: null, paymentTerms: prod.payment_terms, paymentEvent: prod.payment_event ?? "ACCEPTANCE", uom: "HOUR", type: byQty ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT" });
+      out.set(l.id, { typeName: prod.serviceType?.name ?? null, category: prod.serviceType?.serviceCategory?.businessType?.commodityGroup?.name ?? prod.serviceType?.serviceCategory?.commodityGroup?.name ?? null, title: prod.title, providerPersonId: prod.providerProfile.person_id, providerProfileId: prod.providerProfile.id, providerName: `${prod.providerProfile.person.first_name} ${prod.providerProfile.person.last_name}`.trim(), byQty, unit: byQty ? "hour" : prod.pricing_type === "RECURRING" ? (prod.billing_period ?? "month").toLowerCase() : "each", schedule: scheduleLine(prod), available: prod.status === "PUBLISHED", productId: prod.id, serviceId: null, paymentTerms: prod.payment_terms, paymentEvent: prod.payment_event ?? "ACCEPTANCE", uom: "HOUR", type: byQty ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT" });
       continue;
     }
     const svc = l.provider_service_id ? services.find((x) => x.id === l.provider_service_id) : null;
@@ -156,11 +158,16 @@ export async function cartFor(viewer: Viewer): Promise<{ groups: CartGroup[]; to
     if (!it) continue;
     const g = groups.get(it.providerPersonId) ?? { providerPersonId: it.providerPersonId, providerProfileId: it.providerProfileId, providerName: it.providerName, manual: false, lines: [], totalCents: 0 };
     const lineCents = (l.unit_price_cents ?? 0) * qtyOf(l);
-    g.lines.push({ id: l.id, productId: it.productId, serviceId: it.serviceId, title: it.title, quantity: qtyOf(l), unitCents: l.unit_price_cents ?? 0, lineCents, currency: l.currency, unit: it.unit, schedule: it.schedule, available: it.available, agreed: !!l.offer_id, deliveryDate: l.service_end ? l.service_end.toISOString().slice(0, 10) : null });
+    g.lines.push({ typeName: it.typeName ?? null, category: it.category ?? null, id: l.id, productId: it.productId, serviceId: it.serviceId, title: it.title, quantity: qtyOf(l), unitCents: l.unit_price_cents ?? 0, lineCents, currency: l.currency, unit: it.unit, schedule: it.schedule, available: it.available, agreed: !!l.offer_id, deliveryDate: l.service_end ? l.service_end.toISOString().slice(0, 10) : null });
     g.totalCents += lineCents;
     groups.set(it.providerPersonId, g);
   }
   const all = [...groups.values()];
+  // PA-E005: the buyer sees the provider number until a Work Order with them is Released.
+  const { identityVisibleTo, providerLabel, providerNumbers } = await import("@/lib/provider-number");
+  const seen = await identityVisibleTo(viewer, all.map((g) => g.providerPersonId));
+  const nums = await providerNumbers(all.map((g) => g.providerProfileId));
+  for (const g of all) if (!seen.has(g.providerPersonId)) g.providerName = providerLabel(nums.get(g.providerProfileId));
   const wr = lines[0] ? await prisma.workRequest.findUnique({ where: { id: lines[0].work_request_id }, select: { id: true, wr_number: true, description: true, p_account_id: true } }) : null;
   // JW-E007: pre-filled from the first item when empty.
   const workRequest = wr ? { id: wr.id, wrNumber: wr.wr_number, description: wr.description ?? (all[0]?.lines[0]?.title ?? ""), descriptionRequired: await descriptionRequired(wr.p_account_id) } : null;
