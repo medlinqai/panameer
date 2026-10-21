@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LINE_TYPE_LABEL, STYLE_LABEL, TAX_FLAG, originLabel } from "@/lib/work-order-styles";
 import { OrderTermsBlock } from "@/components/orders/OrderTermsBlock";
 import { notFound, redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
@@ -77,6 +78,7 @@ export default async function Page({
             </p>
             {/* WA-E005: the chain — Job → Work Request → this Work Order. */}
             {await chainLine(o.id)}
+            {await styleLine(o.id)}
           </div>
           <div className="flex flex-col items-end gap-2">
             <StatusPill status={o.status} waiting={o.waiting} frozen={o.frozen} pendingChange={pendingChange} pendingOn={o.pendingOn} />
@@ -115,7 +117,7 @@ export default async function Page({
 
       {o.party === "PROVIDER" && <BuyerCard personId={o.buyerPersonId} />}
       {/* WA-E003/E004: the terms each party is accepting. */}
-      {o.pendingOn && <OrderTermsBlock orderId={o.id} />}
+      {o.pendingOn && <OrderTermsBlock orderId={o.id} party={o.party} />}
       {(o.actions.length > 0 || o.pendingOn) && (
         <div className="mt-6">
           <OrderActivation orderId={o.id} actions={o.actions} message={o.activationMessage} payNote={o.party === "PROVIDER" && !(await providerPayReady((await prisma.workOrder.findUniqueOrThrow({ where: { id: o.id }, select: { provider_person_id: true } })).provider_person_id))} />
@@ -243,7 +245,7 @@ function LineCard({ line, currency, showFee, milestones, proposed }: { line: Ord
         <div className="min-w-0">
           <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
             Line {line.lineNumber} ·{" "}
-            {line.transactionType === "SERVICE_BY_AMT" ? "Amount · not to exceed" : "Rate"}
+            {LINE_TYPE_LABEL[line.transactionType]} · {TAX_FLAG[line.transactionType]}
             {line.externalLineRef && <> · PO line {line.externalLineRef}</>}
             {line.status !== "OPEN" && <> · {WORK_ORDER_LINE_LABEL[line.status as keyof typeof WORK_ORDER_LINE_LABEL] ?? line.status}</>}
             {showFee && <> · fee {bpsToPercentLabel(line.feeBps)}</>}
@@ -337,6 +339,18 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
       <dt className="text-[12.5px] font-bold uppercase tracking-[0.08em] text-ink-2">{label}</dt>
       <dd className="mt-0.5 truncate text-[14.5px]">{children}</dd>
     </div>
+  );
+}
+
+/** WS-E004: Style (Oracle document style) and Origin under the WO header. */
+async function styleLine(orderId: string) {
+  const w = await prisma.workOrder.findUnique({ where: { id: orderId }, select: { style: true, workRequest: { select: { source: true, job_id: true } } } });
+  if (!w) return null;
+  const hadSe = w.workRequest.job_id ? (await prisma.sourcingEvent.count({ where: { job_id: w.workRequest.job_id, status: { not: "DRAFT" } } })) > 0 : false;
+  return (
+    <p className="mt-0.5 text-[13px] text-ink-2" data-order-style>
+      Style <b className="text-ink">{w.style ? STYLE_LABEL[w.style] : "—"}</b> · Origin <b className="text-ink">{originLabel(w.workRequest.source, hadSe)}</b>
+    </p>
   );
 }
 

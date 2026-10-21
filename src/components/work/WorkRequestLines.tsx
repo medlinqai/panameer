@@ -1,5 +1,6 @@
 "use client";
 
+import { LINE_TYPE_LABEL, TAX_FLAG } from "@/lib/work-order-styles";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,11 +10,8 @@ import type { SerializedLine, WorkRequestDetail } from "@/lib/work-request-lines
 import type { TransactionType } from "@prisma/client";
 import { pricedByQuantity } from "@/lib/transaction-spine";
 
-const TYPE_LABEL: Record<TransactionType, string> = {
-  PRODUCT_BY_QTY: "Product by quantity",
-  SERVICE_BY_QTY: "Rate",
-  SERVICE_BY_AMT: "Fixed amount",
-};
+// WS-E004: Oracle line types — Service – Rate · Service – Fixed Price · Product.
+const TYPE_LABEL: Record<TransactionType, string> = { ...LINE_TYPE_LABEL };
 
 const EMPTY_DRAFT = {
   transaction_type: "SERVICE_BY_QTY" as TransactionType,
@@ -142,7 +140,7 @@ export function WorkRequestLines({ initial }: { initial: WorkRequestDetail }) {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
-                    Line {l.lineNumber} · {TYPE_LABEL[l.transaction_type as TransactionType]}
+                    Line {l.lineNumber} · {TYPE_LABEL[l.transaction_type as TransactionType]} · {TAX_FLAG[l.transaction_type as TransactionType]}
                   </p>
                   <p className="mt-1 text-[16px] font-bold">{l.description}</p>
                 </div>

@@ -68,7 +68,7 @@ export function ShopResults({ products, compare, signedIn }: { products: ResultP
             <button type="button" onClick={() => setActive(null)} aria-label="Close" className="text-[22px] leading-none text-ink-3 hover:text-ink">×</button>
           </div>
           <p className="mt-2 text-[22px] font-extrabold tabular-nums">{priceLabel(cur)}</p>
-          <p className="text-[13px] text-ink-2">Delivery {deliveryLabel(cur)}{cur.terms ? ` · ${cur.terms}` : ""}</p>
+          <p className="text-[13px] text-ink-2">{cur.pricingType === "HOURLY" ? "Service – Rate · Services" : "Product · Goods"} · Delivery {deliveryLabel(cur)}{cur.terms ? ` · ${cur.terms}` : ""}</p>
           {cur.summary && <p className="mt-3 text-[14px] text-ink-2">{cur.summary}</p>}
           <h3 className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.08em] text-ink-3">What&apos;s included</h3>
           {cur.deliverables.length ? <ul className="mt-1 list-disc pl-5 text-[13.5px]">{cur.deliverables.map((d, i) => <li key={i}>{d}</li>)}</ul> : <p className="text-[13.5px] text-ink-3">See the product page.</p>}

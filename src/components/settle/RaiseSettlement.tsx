@@ -232,7 +232,7 @@ function TimesheetLine({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
-            Line {line.lineNumber} · Timesheet
+            Line {line.lineNumber} · {line.transactionType === "PRODUCT_BY_QTY" ? "Product · Delivery" : "Service – Rate · Timesheet"}
           </p>
           <p className="mt-1 text-[16px] font-bold">{line.description}</p>
         </div>
@@ -337,7 +337,7 @@ function MilestoneLine({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
-            Line {line.lineNumber} · Fixed amount
+            Line {line.lineNumber} · Service – Fixed Price
           </p>
           <p className="mt-1 text-[16px] font-bold">{line.description}</p>
         </div>
