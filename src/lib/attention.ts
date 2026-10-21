@@ -226,3 +226,84 @@ async function countCoursesToWatch(userId: string): Promise<number> {
   }
   return pending;
 }
+
+// ── RA-E001: one counts source — per app and per tab, each item something waiting on THIS person ─────────────
+export type AppKey = "request" | "order" | "settlement" | "payment" | "connect" | "learn";
+export type AttentionItem = { id: string; what: string; app: AppKey; appLabel: string; due: string | null; href: string; action: string };
+export type AppCounts = {
+  side: "buyer" | "provider";
+  request: { total: number; jobs: number; requests: number; interviews: number; tests: number };
+  order: { total: number };
+  settlement: { total: number };
+  payment: { total: number };
+  connect: { total: number };
+  learn: { total: number };
+  items: AttentionItem[];
+};
+export const APP_HOME: Record<"buyer" | "provider", Record<AppKey, string>> = {
+  buyer: { request: "/hire/overview", order: "/orders", settlement: "/payments/payment-requests", payment: "/pay", connect: "/connect", learn: "/learn?tab=mine" },
+  provider: { request: "/find-work", order: "/orders", settlement: "/payments/payment-requests", payment: "/payments", connect: "/connect", learn: "/learn?tab=mine" },
+};
+const APP_LABEL: Record<AppKey, string> = { request: "Hire", order: "Orders", settlement: "Settlements", payment: "Payments", connect: "Connect", learn: "Learn" };
+const DAY_MS = 86_400_000;
+const dueText = (d: Date | null | undefined) => (d ? d.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null);
+
+export async function appCounts(viewer: { userId: string }, side: "buyer" | "provider"): Promise<AppCounts> {
+  const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+  const zero = { total: 0 };
+  const empty: AppCounts = { side, request: { total: 0, jobs: 0, requests: 0, interviews: 0, tests: 0 }, order: zero, settlement: zero, payment: zero, connect: zero, learn: zero, items: [] };
+  if (!me) return empty;
+  const id = me.id;
+  const now = new Date();
+  const soon = new Date(now.getTime() + DAY_MS);
+  const { nyDayStart } = await import("@/lib/live-work");
+  const today = { gte: nyDayStart(now), lt: nyDayStart(now, 1) };
+  const { unreadCount } = await import("@/lib/messages");
+  const [connect, learn] = await Promise.all([unreadCount(viewer as Parameters<typeof unreadCount>[0]).catch(() => 0), countCoursesToWatch(viewer.userId).catch(() => 0)]);
+  const items: AttentionItem[] = [];
+  const add = (app: AppKey, n: number, what: string, href: string, action: string, due?: Date | null) => { if (n > 0) items.push({ id: `${app}:${what}`, what: n > 1 ? `${what} (${n})` : what, app, appLabel: APP_LABEL[app], due: dueText(due), href, action }); return n; };
+
+  if (side === "buyer") {
+    const [toReview, closing, expired, confirm, todays, testsIn, approvals, woAccept, settle, pay] = await Promise.all([
+      prisma.proposal.findMany({ where: { status: "SUBMITTED", job: { buyer_person_id: id }, proposalRequest: { sourcingEvent: { status: { in: ["OPEN", "CLOSED"] } } } }, select: { proposalRequest: { select: { sourcingEvent: { select: { id: true, deadline_at: true } } } } } }),
+      prisma.sourcingEvent.findMany({ where: { created_by_person_id: id, status: "OPEN", deadline_at: { gt: now, lte: soon } }, select: { id: true, deadline_at: true } }),
+      prisma.sourcingEvent.count({ where: { created_by_person_id: id, status: "OPEN", deadline_at: { lte: now } } }),
+      prisma.interviewRequest.count({ where: { requested_by_person_id: id, status: "SLOTS_OFFERED" } }),
+      prisma.interviewRequest.count({ where: { requested_by_person_id: id, status: "SCHEDULED", response: { lines: { some: { starts_at: today } } } } }),
+      prisma.testRequest.count({ where: { requested_by_person_id: id, status: "COMPLETED", updated_at: { gte: new Date(now.getTime() - 7 * DAY_MS) } } }),
+      prisma.workRequest.count({ where: { job: { buyer_person_id: id }, status: "PENDING_APPROVAL" } }),
+      prisma.workOrder.count({ where: { buyer_person_id: id, status: "ISSUED", buyer_accepted_at: null } }),
+      prisma.workOrder.findMany({ where: { buyer_person_id: id }, select: { id: true } }).then((os) => prisma.paymentRequest.count({ where: { status: "SUBMITTED", work_order_id: { in: os.map((o) => o.id) } } })),
+      prisma.workOrder.findMany({ where: { buyer_person_id: id }, select: { id: true } }).then((os) => prisma.paymentRequest.count({ where: { status: "APPROVED", work_order_id: { in: os.map((o) => o.id) } } })),
+    ]);
+    const ev = toReview[0]?.proposalRequest?.sourcingEvent;
+    const jobs = add("request", toReview.length, "Proposals to review", ev ? `/hire/sourcing/${ev.id}` : "/hire/overview?tab=jobs", "Review", ev?.deadline_at)
+      + add("request", closing.length, "Sourcing Event closing in 24 h", `/hire/sourcing/${closing[0]?.id ?? ""}`, "Open", closing[0]?.deadline_at)
+      + add("request", expired, "Sourcing Event expired, no award", "/hire/overview?tab=jobs", "Decide");
+    const requests = add("request", approvals, "Work Request approvals", "/hire/overview?tab=requests", "Approve") + add("request", woAccept, "Work Orders to accept", "/orders", "Accept");
+    const interviews = add("request", confirm, "Interview times to confirm", "/hire/overview?tab=interviews", "Confirm") + add("request", todays, "Interviews today", "/hire/overview?tab=interviews", "Join");
+    const tests = add("request", testsIn, "Test results in", "/hire/overview?tab=tests", "See results");
+    add("settlement", settle, "Settlements to approve", APP_HOME.buyer.settlement, "Approve");
+    add("payment", pay, "Payments due", APP_HOME.buyer.payment, "Pay");
+    add("connect", connect, "Unread messages", "/messages", "Read");
+    return { side, request: { total: jobs + requests + interviews + tests, jobs, requests, interviews, tests }, order: { total: woAccept }, settlement: { total: settle }, payment: { total: pay }, connect: { total: connect }, learn: { total: learn }, items };
+  }
+
+  const [dueSoon, toOffer, todays, testsToTake, woAccept, drafts, paidIn] = await Promise.all([
+    prisma.proposalRequest.findMany({ where: { provider_person_id: id, status: { in: ["ISSUED", "VIEWED"] }, responds_by: { gt: now, lte: soon }, bid: null }, orderBy: { responds_by: "asc" }, select: { job_id: true, responds_by: true } }),
+    prisma.interviewRequest.findMany({ where: { provider_person_id: id, status: "REQUESTED" }, select: { job_id: true } }),
+    prisma.interviewRequest.count({ where: { provider_person_id: id, status: "SCHEDULED", response: { lines: { some: { starts_at: today } } } } }),
+    prisma.testRequest.count({ where: { provider_person_id: id, status: { in: ["ISSUED", "IN_PROGRESS"] } } }),
+    prisma.workOrder.findMany({ where: { provider_person_id: id, status: "ISSUED", provider_accepted_at: null }, select: { id: true } }),
+    prisma.paymentRequest.count({ where: { provider_person_id: id, status: { in: ["DRAFT", "REJECTED"] } } }),
+    prisma.paymentRequest.count({ where: { provider_person_id: id, status: "APPROVED" } }),
+  ]);
+  const requests = add("request", dueSoon.length, "Requests to propose due in 24 h", dueSoon[0] ? `/find-work/${dueSoon[0].job_id}` : "/find-work?tab=invitations", "Propose", dueSoon[0]?.responds_by);
+  const interviews = add("request", toOffer.length, "Interview times to offer", toOffer[0] ? `/find-work/${toOffer[0].job_id}#interview` : "/find-work?tab=interviews", "Offer times") + add("request", todays, "Interviews today", "/find-work?tab=interviews", "Join");
+  const tests = add("request", testsToTake, "Tests to take", "/find-work?tab=tests", "Take");
+  const order = add("order", woAccept.length, "Work Orders to accept", woAccept[0] ? `/orders/${woAccept[0].id}` : "/orders", "Accept");
+  add("settlement", drafts, "Payment requests to submit", APP_HOME.provider.settlement, "Submit");
+  add("payment", paidIn, "Payments on the way", APP_HOME.provider.payment, "See");
+  add("connect", connect, "Unread messages", "/messages", "Read");
+  return { side, request: { total: requests + interviews + tests, jobs: 0, requests, interviews, tests }, order: { total: order }, settlement: { total: drafts }, payment: { total: paidIn }, connect: { total: connect }, learn: { total: learn }, items };
+}
