@@ -147,7 +147,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
       </div>
 
       {cur && <QuickView m={cur} jobId={jobId} onClose={() => setActive(null)} onStar={() => star(cur)} onHide={() => hide(cur, true)} prev={at > 0 ? () => setActive(visible[at - 1].personId) : null} next={at < visible.length - 1 ? () => setActive(visible[at + 1].personId) : null} />}
-      {comparing && <CompareTable rows={starred.slice(0, 4).map((m) => ({ m }))} onClose={() => setComparing(false)} />}
+      {comparing && <CompareTable rows={starred.slice(0, 4).map((m) => ({ m }))} onClose={() => setComparing(false)} jobId={jobId} onRemove={(id) => { const m = list.find((x) => x.personId === id); if (m) star(m); if (starred.length <= 2) setComparing(false); }} />}
     </div>
   );
 }
@@ -199,16 +199,24 @@ function QuickView({ m, jobId, onClose, onStar, onHide, prev, next }: { m: HireM
   );
 }
 
-/** SE-E003/E005: side by side — providers, or their proposals (proposed rate and start added). */
-export function CompareTable({ rows, onClose }: { rows: { m: HireMatch; proposed?: string | null; start?: string | null }[]; onClose: () => void }) {
+/** SE-E003/E005 + HP-E005: side by side — providers, or their proposals (proposed rate and start added). Best value per row
+ *  is highlighted (lowest rate, most years, most skills); equal columns, a fixed label column; Hire / Remove per column. */
+const num = (t: string | null | undefined) => { const m = /\$([\d,]+(?:\.\d+)?)/.exec(t ?? ""); return m ? Number(m[1].replace(/,/g, "")) : null; };
+const skillsN = (m: HireMatch) => Number(/^(\d+)/.exec(m.detail.skillsMatched)?.[1] ?? 0);
+export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: HireMatch; proposed?: string | null; start?: string | null }[]; onClose: () => void; jobId?: string | null; onRemove?: (personId: string) => void }) {
   const withProposal = rows.some((r) => r.proposed !== undefined);
+  const best = (vals: (number | null)[], pick: "min" | "max") => { const v = vals.filter((x): x is number => x != null); return v.length > 1 ? (pick === "min" ? Math.min(...v) : Math.max(...v)) : null; };
+  const bestRate = best(rows.map((r) => num(r.proposed ?? r.m.rate)), "min");
+  const bestYears = best(rows.map((r) => r.m.detail.years), "max");
+  const bestSkills = best(rows.map((r) => skillsN(r.m)), "max");
+  const HL = "rounded-full bg-[#fbeafb] px-2 py-0.5 font-bold text-magenta-dark";
   const lines: [string, (r: (typeof rows)[number]) => ReactNode][] = [
-    ...(withProposal ? ([["Proposed rate", (r) => r.proposed ?? "—"], ["Earliest start", (r) => r.start ?? "—"]] as [string, (r: (typeof rows)[number]) => ReactNode][]) : []),
-    ["Rate", (r) => r.m.rate ?? "—"],
-    ["Years", (r) => (r.m.detail.years != null ? `${r.m.detail.years} yrs` : "—")],
+    ...(withProposal ? ([["Proposed rate", (r) => <span className={num(r.proposed) != null && num(r.proposed) === bestRate ? HL : ""}>{r.proposed ?? "—"}</span>], ["Earliest start", (r) => r.start ?? "—"]] as [string, (r: (typeof rows)[number]) => ReactNode][]) : []),
+    ["Rate", (r) => <span><span className={!withProposal && num(r.m.rate) != null && num(r.m.rate) === bestRate ? HL : ""}>{r.m.rate ?? "—"}</span>{r.m.rate && <span className="ml-1.5 text-[12px] text-ink-2">{r.m.inBudget ? "in budget" : "over budget"}</span>}</span>],
+    ["Years", (r) => <span className={r.m.detail.years != null && r.m.detail.years === bestYears ? HL : ""}>{r.m.detail.years != null ? `${r.m.detail.years} yrs` : "—"}</span>],
     ["Role", (r) => r.m.detail.role ?? "—"],
-    ["Skills matched", (r) => r.m.detail.skillsMatched],
-    ["Certifications", (r) => r.m.detail.certifications.join(" · ") || "—"],
+    ["Skills matched", (r) => <span><span className={skillsN(r.m) === bestSkills ? HL : "font-semibold"}>{r.m.detail.skillsMatched}</span>{r.m.matched.length > 0 && <span className="mt-1 block text-[12px] text-ink-2">{r.m.matched.join(", ")}</span>}</span>],
+    ["Certifications", (r) => (r.m.detail.certifications.length ? <span title={r.m.detail.certifications.join(" · ")}>{r.m.detail.certifications.length} · {r.m.detail.certifications.slice(0, 3).join(" · ")}{r.m.detail.certifications.length > 3 ? " …" : ""}</span> : "—")],
     ["Location", (r) => r.m.detail.location ?? "—"],
     ["Products", (r) => r.m.detail.products.map((p) => p.title).join(" · ") || "—"],
   ];
@@ -220,9 +228,23 @@ export function CompareTable({ rows, onClose }: { rows: { m: HireMatch; proposed
           <button type="button" onClick={onClose} aria-label="Close" className="text-[22px] leading-none text-ink-3 hover:text-ink">×</button>
         </div>
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[560px] border-collapse text-[13.5px]">
-            <thead><tr><th className="w-36" />{rows.map((r) => <th key={r.m.personId} className="border-b border-line p-2 text-left align-bottom text-[14px] font-extrabold">{r.m.name}</th>)}</tr></thead>
-            <tbody>{lines.map(([label, cell]) => <tr key={label}><th className="border-b border-line p-2 text-left text-[12px] font-bold uppercase tracking-[0.06em] text-ink-3">{label}</th>{rows.map((r) => <td key={r.m.personId} className="border-b border-line p-2 align-top">{cell(r)}</td>)}</tr>)}</tbody>
+          <table className="w-full min-w-[620px] table-fixed border-collapse text-[13.5px]">
+            <colgroup><col className="w-36" />{rows.map((r) => <col key={r.m.personId} />)}</colgroup>
+            <thead>
+              <tr>
+                <th />
+                {rows.map((r) => (
+                  <th key={r.m.personId} className="border-b border-line p-2 text-left align-bottom">
+                    <span className="flex items-center gap-2">{isMaskedName(r.m.name) ? <NeutralAvatar size={32} /> : null}<span className="min-w-0 truncate text-[14px] font-extrabold">{r.m.name}</span></span>
+                    <span className="mt-2 flex flex-wrap gap-1.5">
+                      {jobId && <Link href={`/hire/terms?job=${jobId}&provider=${r.m.personId}`} className="inline-flex min-h-8 items-center bg-ink px-3 text-[12.5px] font-bold text-surface hover:bg-ink-hover">Hire</Link>}
+                      {onRemove && <button type="button" onClick={() => onRemove(r.m.personId)} className="inline-flex min-h-8 items-center border border-ink px-2.5 text-[12.5px] font-semibold">Remove</button>}
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>{lines.map(([label, cell]) => <tr key={label}><th className="border-b border-line p-2 text-left align-top text-[12px] font-bold uppercase tracking-[0.06em] text-ink-3">{label}</th>{rows.map((r) => <td key={r.m.personId} className="break-words border-b border-line p-2 align-top">{cell(r)}</td>)}</tr>)}</tbody>
           </table>
         </div>
       </div>
