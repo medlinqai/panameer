@@ -49,6 +49,9 @@ export type ShopProduct = {
   city: string | null;
   leadDays: number | null;
   delivery: string | null;
+  /** SA-E004: the seller's rating (provider profile) and whether Panameer validated them. */
+  rating: number | null;
+  certified: boolean;
 };
 
 const SELECT = {
@@ -57,7 +60,7 @@ const SELECT = {
   serviceType: { select: { name: true, serviceCategory: { select: { business_type_id: true, businessType: { select: { commodityGroup: { select: { name: true } } } }, commodityGroup: { select: { name: true } } } } } },
   milestones: { orderBy: { sequence: "asc" as const }, select: { label: true, percent: true, payment_event: true } },
   deliverables: { orderBy: { sequence: "asc" as const }, select: { text: true } },
-  providerProfile: { select: { id: true, person_id: true, open_to_offers: true, provider_number: true, person: { select: { first_name: true, last_name: true, photo_url: true, title: true, site: { select: { addresses: { take: 1, select: { city: true, state: true } } } }, company: { select: { name: true, country: true, businessTypes: { take: 1, select: { businessType: { select: { commodityGroup: { select: { name: true } } } } } } } } } } } },
+  providerProfile: { select: { id: true, person_id: true, open_to_offers: true, provider_number: true, rating: true, validation_status: true, person: { select: { first_name: true, last_name: true, photo_url: true, title: true, site: { select: { addresses: { take: 1, select: { city: true, state: true } } } }, company: { select: { name: true, country: true, businessTypes: { take: 1, select: { businessType: { select: { commodityGroup: { select: { name: true } } } } } } } } } } } },
 };
 
 const TERMS: Record<string, string> = { IMMEDIATE: "due on receipt", NET15: "net 15", NET30: "net 30", NET45: "net 45", NET60: "net 60" };
@@ -119,6 +122,8 @@ function shape(p: Row, orders: number): ShopProduct {
     city: addr?.city ? [addr.city, addr.state].filter(Boolean).join(", ") : null,
     leadDays: p.lead_time_days,
     delivery: p.delivery,
+    rating: p.providerProfile.rating != null ? Number(p.providerProfile.rating) : null,
+    certified: p.providerProfile.validation_status === "VALIDATED",
   };
 }
 
