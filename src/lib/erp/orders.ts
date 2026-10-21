@@ -122,6 +122,8 @@ async function createOrders(connectionId: string, pAccountId: string, poNumber: 
     orderIds.push(order.id);
     await snapshotMilestones(order.id);
     await notify({ event: "work.order_offered", personId: providerId, entityType: "work_order", entityId: order.id, dedupeKey: `work.order_offered:${order.id}`, vars: { orderId: order.id, requestTitle: `PO ${poNumber} from the customer's ERP` } });
+    // HP-E007: an ERP-origin award completes when the PO comes back — the Sourcing Event is Awarded with this Work Order.
+    if (wr.job_id) await (await import("@/lib/sourcing-events")).markAwarded(wr.job_id, providerId, order.id);
   }
   await prisma.workRequest.updateMany({ where: { id: { in: wrIds } }, data: { status: "ORDERED", approved_at: now } });
   return { workRequestId: wrIds[0] ?? null, orderIds };
