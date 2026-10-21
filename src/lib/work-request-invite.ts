@@ -169,6 +169,7 @@ export async function invitedOn(
   const nameOf = new Map(
     people.map((p) => [p.id, [p.first_name, p.last_name].filter(Boolean).join(" ").trim()])
   );
+  await maskNames(viewer, nameOf);
   const numberOf = new Map(lines.map((l) => [l.id, l.line_number]));
 
   return rows.map((r) => ({
@@ -178,4 +179,16 @@ export async function invitedOn(
     lineNumber: numberOf.get(r.lines[0]?.work_request_line_id ?? "") ?? 1,
     respondsBy: r.responds_by ? r.responds_by.toISOString().slice(0, 10) : null,
   }));
+}
+
+/** DB-E010 / AN: a buyer sees "Provider P-…" until a Work Order with that provider is Released. */
+async function maskNames(viewer: Viewer, nameOf: Map<string, string>) {
+  const { identityVisibleTo, providerLabel, providerNumbers } = await import("@/lib/provider-number");
+  const ids = [...nameOf.keys()];
+  const seen = await identityVisibleTo(viewer, ids);
+  const hidden = ids.filter((id) => !seen.has(id));
+  if (!hidden.length) return;
+  const profiles = await prisma.providerProfile.findMany({ where: { person_id: { in: hidden } }, select: { id: true, person_id: true } });
+  const nums = await providerNumbers(profiles.map((p) => p.id));
+  for (const id of hidden) nameOf.set(id, providerLabel(nums.get(profiles.find((p) => p.person_id === id)?.id ?? "")));
 }

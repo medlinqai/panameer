@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { WorkRequestPath } from "@/components/work/WorkRequestPath";
+import { workRequestSections } from "@/lib/work-request-sections";
+import { listInterviews } from "@/lib/interviews";
+import { dailyConfigured } from "@/lib/daily";
+import { InterviewCards } from "@/components/work/InterviewCards";
+import { ActionsMenu } from "@/components/casing/ActionsMenu";
+import { Card } from "@/components/home/LiveWork";
+import { NeutralAvatar } from "@/components/Avatar";
 import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
 import { PENDING_ON_LABEL, WORK_ORDER_LABEL, waitingOn } from "@/lib/oracle-status";
 import { VerifiedTag } from "@/components/company/VerifiedTag";
@@ -12,7 +19,6 @@ import { Button } from "@/components/casing/Button";
 import { formatCents } from "@/lib/display";
 import { WorkRequestLines } from "@/components/work/WorkRequestLines";
 import { getWorkRequestDetail } from "@/lib/work-request-lines";
-import { invitedOn } from "@/lib/work-request-invite";
 import { proposalsOn } from "@/lib/proposals";
 import { ProposalSteps } from "@/components/work/ProposalSteps";
 import { SelectProposal, AssignDirectly, CreateOrder } from "@/components/work/HireControls";
@@ -61,9 +67,8 @@ export default async function Page({
     throw e;
   }
 
-  const [{ providers }, invited, proposals] = await Promise.all([
+  const [{ providers }, proposals] = await Promise.all([
     matchProvidersFor(viewer, id),
-    invitedOn(viewer, id),
     proposalsOn(viewer, id),
   ]);
   const memberships = await prisma.companyMembership.findMany({
@@ -102,274 +107,164 @@ export default async function Page({
   // Every line has a provider and a price, and the requisition isn't ordered yet → Create Order.
   const awarded = detail.completeness.complete && !["ORDERED", "CANCELLED"].includes(detail.workRequestStatus) && detail.status !== "FILLED";
 
+  const sec = await workRequestSections(viewer, detail.id);
+  const buyerInterviews = await listInterviews({ jobId: detail.id, buyerPersonId: (await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }))?.id });
+  const muted = (t: string) => <p className="text-[13.5px] text-ink-3">{t}</p>;
+  const actions = [
+    ...(detail.status === "DRAFT" ? [{ label: "Edit the Job", href: `/hire?job=${detail.id}&step=0` }] : []),
+    ...(sourcing ? [{ label: `Open Sourcing Event ${sourcing.event_number}`, href: `/hire/sourcing/${sourcing.id}` }] : []),
+    ...(!detail.soleSourced ? [{ label: "Invite providers", href: `/work-requests/${id}/invite` }] : []),
+    ...(posted ? [{ label: "Share with providers", href: `/work-requests/${id}/share` }] : []),
+    ...sec.orders.map((o) => ({ label: `Open Work Order ${o.order_number}`, href: `/orders/${o.id}` })),
+    { label: "My Jobs", href: "/hire/jobs" },
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="mx-auto w-full max-w-4xl" data-work-request-page>
       <BackLink href="/hire/jobs" label="My Jobs" />
 
-      <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
-            {detail.title.trim() || "Untitled job"}
-          </h1>
-          <p className="mt-1.5 text-[14px] text-ink-2">
-            {detail.roleName && <>{detail.roleName} · </>}
-            {}
-            {posted && detail.postedAt
-              ? `Posted ${detail.postedAt.slice(0, 10)}`
-              : JOB_STATUS_LABEL[detail.status]}
-          </p>
-        </div>
-        {/* ONE PLACE — this pill read `posted ? … : "Draft"` */}
-        <span className="inline-flex flex-col items-end">
-          <span className={jobStatusPillClass(detail.status)}>
-            {JOB_STATUS_LABEL[detail.status]}
-          </span>
-          {awarded && erpReturned && <span className="mt-1 text-[12px] text-ink-2">Returned to ERP — waiting for the PO</span>}
-        </span>
-      </div>
-
-      {/* WP-E001: the Work Request's own path (the money track stays on the Work Order page). */}
-      <WorkRequestPath jobId={detail.id} />
-
-      {/* SD-E005: the Service Description, in the standard order. */}
-      <ServiceDescriptionView jobId={id} editable={detail.status === "DRAFT"} />
-
-      {/* ══ HEADER FACTS ═══════════════════════════════════════════════════ */}
-      <dl className="mt-6 grid gap-x-8 gap-y-3.5 rounded-brand border border-line bg-white p-5 sm:grid-cols-3">
-        <Fact label="Dates">
-          {detail.startDate || detail.endDate
-            ? `${detail.startDate ?? "…"} → ${detail.endDate ?? "…"}`
-            : "Not set"}
-        </Fact>
-        <Fact label="Budget">
-          {detail.budgetAmountCents != null
-            ? `${formatCents(detail.budgetAmountCents, detail.currency)}${
-                detail.budgetType === "HOURLY" ? " / hr" : ""
-              }`
-            : detail.budgetMinCents != null && detail.budgetMaxCents != null
-              ? `${formatCents(detail.budgetMinCents, detail.currency)}–${formatCents(
-                  detail.budgetMaxCents,
-                  detail.currency
-                )}${detail.budgetType === "HOURLY" ? " / hr" : ""}`
-              : "Not set"}
-        </Fact>
-        <Fact label="Worksite">{detail.worksite ?? "Not set"}</Fact>
-        <Fact label="Experience">{detail.experienceLevel ?? "Not set"}</Fact>
-        <Fact label="Duration">{detail.duration ?? "Not set"}</Fact>
-        <Fact label="Skills">
-          {detail.skillNames.length ? detail.skillNames.slice(0, 6).join(", ") : "None"}
-        </Fact>
-      </dl>
-
-      {detail.description && (
-        <p className="mt-5 whitespace-pre-wrap text-[15px] leading-relaxed text-ink-2">
-          {detail.description}
-        </p>
-      )}
-
-      {/* POST LIVES HERE TOO, not only at the end of the wizard. A requester who */}
-      {/* DRAFT-ONLY, NOT "NOT POSTED" */}
-      {detail.status === "DRAFT" && (
-        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-5">
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-bold">This request is still a draft</p>
-            <p className="mt-0.5 text-[14px] text-ink-2">
-              Posting makes it visible to providers looking for work.
+      {/* DB-E006 · 1 Header */}
+      <header className="mt-2 rounded-brand border border-line bg-white p-4 sm:p-5" data-wr-header>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-mono text-[12.5px] font-semibold text-ink-2">{[sec.jobNumber, sec.latestWr].filter(Boolean).join(" · ") || "Job"}</p>
+            <h1 className="font-display text-[24px] font-bold tracking-[-0.4px] sm:text-[28px]">{detail.title.trim() || "Untitled job"}</h1>
+            <p className="mt-1 text-[13.5px] text-ink-2">
+              {[detail.roleName, posted && detail.postedAt ? `Posted ${detail.postedAt.slice(0, 10)}` : null, sec.provider ? `Provider ${sec.provider.replace(/^Provider /, "")}` : null].filter(Boolean).join(" · ")}
             </p>
           </div>
-          <Button href={`/create-work`} variant="ghost">
-            Open in the wizard
-          </Button>
+          <span className="flex items-center gap-2">
+            <span className="inline-flex flex-col items-end">
+              <span className={jobStatusPillClass(detail.status)}>{JOB_STATUS_LABEL[detail.status]}</span>
+              {awarded && erpReturned && <span className="mt-1 text-[12px] text-ink-2">Returned to ERP — waiting for the PO</span>}
+            </span>
+            <ActionsMenu items={actions} />
+          </span>
+        </div>
+      </header>
+
+      {/* 2 Progress strip */}
+      <WorkRequestPath jobId={detail.id} />
+
+      {/* 3 Job details */}
+      <SectionCard title="Job details">
+        <ServiceDescriptionView jobId={id} editable={detail.status === "DRAFT"} bare />
+      </SectionCard>
+
+      {detail.status === "DRAFT" && (
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4">
+          <p className="min-w-0 flex-1 text-[14px]"><b>This Job is still a draft.</b> <span className="text-ink-2">Posting makes it visible to providers.</span></p>
+          <Button href={`/create-work`} variant="ghost">Open in the wizard</Button>
         </div>
       )}
 
-      <div className="mt-8">
-        {/* state across a `router.refresh()` — so after selecting, the section */}
-        <WorkRequestLines key={detail.status} initial={detail} />
-      </div>
-
-      {/* THE PROPOSALS THAT CAME BACK */}
-      {/* THE BRANCH WS-B) — NOT RENDERED, NOT HIDDEN */}
-      {!detail.soleSourced && (
-      <div className="mt-8">
-        <h2 className="font-display text-[20px] font-bold tracking-[-0.3px]">
-          Proposals <span className="font-normal text-ink-2">({proposals.length})</span>
-        </h2>
-        {proposals.length === 0 ? (
-          // AN HONEST ZERO WITH THE FIRST MOVE NAMED (§4), not a report of
-          <p className="mt-3 text-[14.5px] text-ink-2">
-            {posted
-              ? "No proposals yet. Providers can find this request, and inviting someone puts it in front of them directly."
-              : "No proposals yet. A request takes proposals once it is posted."}
-          </p>
-        ) : (
-          <>
-            {/* THE ORDER IS STATED BECAUSE IT IS NOT A RANKING. Sorting by */}
-            <p className="mt-1 text-[13px] text-ink-2">In the order they arrived.</p>
-            <ul className="mt-3 grid gap-3">
-              {proposals.map((p) => (
-                <li
-                  key={p.id}
-                  className="rounded-[12px] border border-line bg-white px-4 py-3"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-                    <span className="font-semibold">
-                      {p.providerName}
-                      {providerCompany.get(p.providerPersonId) && (
-                        <span className="font-normal text-ink-2">
-                          {" · "}
-                          <CompanyLink id={providerCompany.get(p.providerPersonId)!.id} name={providerCompany.get(p.providerPersonId)!.name} />
-                          <VerifiedTag companyId={providerCompany.get(p.providerPersonId)!.id} />
-                        </span>
-                      )}
-                    </span>
-                    <span className="rounded-full bg-ink/[0.05] px-3 py-0.5 text-[12.5px] font-bold text-ink">
-                      {p.statusLabel}
-                    </span>
-                  </div>
-
-                  <p className="mt-1.5 text-[15px]">
-                    {/* RULING 18. A dash means *we cannot count this*; a proposal */}
-                    {p.rate ? (
-                      <>
-                        <span className="font-bold">
-                          {formatCents(p.rate.unitPriceCents)}
-                        </span>
-                        <span className="text-ink-2">
-                          {p.rate.basis === "RATE" ? " per hour" : " fixed fee"}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-ink-2">No rate given</span>
-                    )}
-                  </p>
-
-                  <p className="mt-1 text-[13.5px] text-ink-2">
-                    {p.proposalNumber}
-                    {p.invited ? " · Invited" : " · Found this request"}
-                    {p.submittedAt && (
-                      <> · sent {p.submittedAt.toISOString().slice(0, 10)}</>
-                    )}
-                    {p.validUntil && (
-                      <> · good until {p.validUntil.toISOString().slice(0, 10)}</>
-                    )}
-                  </p>
-
-                  {p.coverNote && (
-                    <p className="mt-2 whitespace-pre-wrap text-[14.5px] leading-relaxed text-ink-2">
-                      {p.coverNote}
-                    </p>
-                  )}
-
-                  {/* THE TWO OPTIONAL STEPS ( WS-E) */}
-                  <ProposalSteps
-                    workRequestId={detail.id}
-                    providerPersonId={p.providerPersonId}
-                    providerName={p.providerName}
-                    interviewStatus={p.interviewStatus}
-                    testStatus={p.testStatus}
-                    tests={sendableTests}
-                  />
-
-                  {/* TRANSITION ONE ( WS-F) */}
-                  <SelectProposal
-                    workRequestId={detail.id}
-                    providerPersonId={p.providerPersonId}
-                    providerName={p.providerName}
-                    hasRate={p.rate !== null}
-                    selected={p.status === "AWARDED"}
-                  />
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
-      )}
-
-      {/* SE-E002/E003: the Job's matches — the same list as Hire (star, quick view, Compare, Request Proposals). */}
+      {/* Shortlist — the Job's matches (star, quick view, Compare, Request Proposals). */}
       {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && jobMatches.length > 0 && (
-        <section id="matches" className="mt-6 rounded-brand border border-line bg-white p-5" data-job-matches>
-          <h2 className="text-[17px] font-bold">Matches</h2>
-          {sourcing && <p className="mt-1 text-[13.5px]">Sourcing Event <Link href={`/hire/sourcing/${sourcing.id}`} className="font-semibold text-magenta-dark underline underline-offset-4">{sourcing.event_number}</Link> · {sourcing.status === "OPEN" ? "Open" : sourcing.status === "AWARDED" ? "Awarded" : "Closed"}</p>}
+        <SectionCard id="matches" title="Matches">
+          {sourcing && <p className="mb-1 text-[13.5px]">Sourcing Event <Link href={`/hire/sourcing/${sourcing.id}`} className="font-semibold text-magenta-dark underline underline-offset-4">{sourcing.event_number}</Link> · {sourcing.status === "OPEN" ? "Open" : sourcing.status === "AWARDED" ? "Awarded" : "Closed"}</p>}
           <MatchList jobId={detail.id} matches={jobMatches} state={sdForMatches?.state} />
-        </section>
+        </SectionCard>
       )}
 
-      {/* THE OTHER ROUTE, AND THE SECOND TRANSITION ( WS-F) */}
-      {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && (
-        <AssignDirectly workRequestId={detail.id} providers={options} />
-      )}
-      {(await jobOrders(detail.id)).map((wo) => (
-        <p key={wo.id} data-job-work-order className="mt-4 text-[13.5px] text-ink-2">
-          Work Order: <Link href={`/orders/${wo.id}`} className="font-semibold text-ink underline underline-offset-2">{wo.order_number}</Link> · {wo.label}
-        </p>
-      ))}
-      <p data-job-requisition className="mt-4 text-[13.5px] text-ink-2">
-        Work Request: <Link href="/orders/work-requests" className="font-semibold text-ink underline underline-offset-2">{WORK_REQUEST_STATUS_LABEL[detail.workRequestStatus]}</Link>
-        {awarded && " · every line has a provider and a price — Submit creates the work order"}
-      </p>
-      {awarded && <CreateOrder workRequestId={detail.id} description={detail.workRequestDescription} />}
+      {/* 4 Requests to Propose */}
+      <SectionCard title={`Requests to Propose (${sec.requestRows.length})`}>
+        {sec.requestRows.length ? (
+          <ul className="divide-y divide-line text-[13.5px]">
+            {sec.requestRows.map((r) => (
+              <li key={r.number} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span className="flex items-center gap-2"><NeutralAvatar size={24} /><b>{r.who}</b></span>
+                <span className="text-ink-2">asked {r.asked}{r.due ? ` · due ${r.due}` : ""} · <b className="text-ink">{r.status}</b></span>
+              </li>
+            ))}
+          </ul>
+        ) : muted("No requests to propose yet.")}
+      </SectionCard>
 
-      {/* WHO HAS BEEN INVITED */}
-      {/* THE SECOND HALF OF THE SAME BRANCH WS-B). Guarded on the same */}
-      {!detail.soleSourced && (
-      <div className="mt-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-[20px] font-bold tracking-[-0.3px]">
-            Invited to bid <span className="font-normal text-ink-2">({invited.length})</span>
-          </h2>
-          <Button href={`/work-requests/${id}/invite`} variant="ghost">
-            Invite providers
-          </Button>
-        </div>
-        {invited.length === 0 ? (
-          <p className="mt-3 text-[14.5px] text-ink-2">
-            Nobody has been invited yet. Inviting a provider puts your request in
-            front of them directly — anyone else can still find it and bid.
-          </p>
-        ) : (
-          <ul className="mt-3 grid gap-2">
-            {invited.map((i) => (
-              <li
-                key={i.requestNumber}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-line bg-white px-4 py-3"
-              >
-                <span className="font-semibold">{i.name}</span>
-                <span className="text-[13.5px] text-ink-2">
-                  Line {i.lineNumber} · {i.requestNumber}
-                  {i.respondsBy && <> · responds by {i.respondsBy}</>}
-                </span>
+      {/* 5 Proposals */}
+      <SectionCard title={`Proposals (${proposals.length})`} right={sourcing ? <Link href={`/hire/sourcing/${sourcing.id}`} className="font-semibold text-magenta-dark underline underline-offset-4">Compare</Link> : null}>
+        {proposals.length === 0 ? muted(posted ? "No proposals yet." : "No proposals yet — a Job takes proposals once it is posted.") : (
+          <ul className="grid gap-3">
+            {proposals.map((p) => (
+              <li key={p.id} className="rounded-[10px] border border-line px-3.5 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-semibold">{p.providerName}{providerCompany.get(p.providerPersonId) && !p.providerName.startsWith("Provider ") && (
+                    <span className="font-normal text-ink-2">{" · "}<CompanyLink id={providerCompany.get(p.providerPersonId)!.id} name={providerCompany.get(p.providerPersonId)!.name} /><VerifiedTag companyId={providerCompany.get(p.providerPersonId)!.id} /></span>
+                  )}</span>
+                  <span className="rounded-full bg-ink/[0.05] px-3 py-0.5 text-[12.5px] font-bold text-ink">{p.statusLabel}</span>
+                </div>
+                <p className="mt-1 text-[15px]">{p.rate ? <><b>{formatCents(p.rate.unitPriceCents)}</b><span className="text-ink-2">{p.rate.basis === "RATE" ? " per hour" : " fixed fee"}</span></> : <span className="text-ink-2">No rate given</span>}</p>
+                <p className="mt-0.5 text-[12.5px] text-ink-2">{p.proposalNumber}{p.submittedAt && <> · sent {p.submittedAt.toISOString().slice(0, 10)}</>}{p.validUntil && <> · good until {p.validUntil.toISOString().slice(0, 10)}</>}</p>
+                {p.coverNote && <p className="mt-1.5 whitespace-pre-wrap text-[14px] text-ink-2">{p.coverNote}</p>}
+                <ProposalSteps workRequestId={detail.id} providerPersonId={p.providerPersonId} providerName={p.providerName} interviewStatus={p.interviewStatus} testStatus={p.testStatus} tests={sendableTests} />
+                <SelectProposal workRequestId={detail.id} providerPersonId={p.providerPersonId} providerName={p.providerName} hasRate={p.rate !== null} selected={p.status === "AWARDED"} />
               </li>
             ))}
           </ul>
         )}
-      </div>
-      )}
+      </SectionCard>
 
-      <div className="mt-9 flex flex-wrap items-center gap-4 border-t border-line pt-6">
-        <Button href="/hire/jobs" variant="ghost">
-          My Jobs
-        </Button>
-        {posted && (
-          <Button href={`/work-requests/${id}/share`} variant="quiet">
-            Share it with providers
-          </Button>
+      {/* 6 Interviews */}
+      <SectionCard id="interviews" title={`Interviews (${buyerInterviews.length})`}>
+        {buyerInterviews.length ? <InterviewCards rows={buyerInterviews} side="buyer" videoReady={dailyConfigured()} /> : muted("No interviews yet.")}
+        {sec.evalRows.length > 0 && (
+          <ul className="mt-3 divide-y divide-line border-t border-line text-[13.5px]">
+            {sec.evalRows.map((e, i) => <li key={i} className="py-2"><b>{e.who}</b>{e.rating != null && <span className="ml-2 text-magenta-dark">{"★".repeat(e.rating)}{"☆".repeat(5 - e.rating)}</span>}{e.summary && <p className="text-ink-2">{e.summary}</p>}</li>)}
+          </ul>
         )}
-      </div>
+      </SectionCard>
+
+      {/* 7 Test requests */}
+      <SectionCard title={`Test requests (${sec.testRows.length})`}>
+        {sec.testRows.length ? (
+          <ul className="divide-y divide-line text-[13.5px]">
+            {sec.testRows.map((t) => <li key={t.number} className="flex flex-wrap justify-between gap-2 py-2"><span><b>{t.who}</b> · {t.skill}</span><span className="text-ink-2">{t.score != null ? `${t.score}% · ` : ""}<b className="text-ink">{t.result}</b></span></li>)}
+          </ul>
+        ) : muted("No test requests.")}
+      </SectionCard>
+
+      {/* 8 Award */}
+      <SectionCard title="Award">
+        {sec.awardRows.length ? (
+          <ul className="divide-y divide-line text-[13.5px]">
+            {sec.awardRows.map((a, i) => <li key={i} className="flex flex-wrap justify-between gap-2 py-2"><span><b>{a.who}</b>{a.wr ? <span className="font-mono text-ink-2"> · {a.wr}</span> : null}</span><span className="text-ink-2">{a.rate != null ? `${formatCents(a.rate)}${a.uom === "HOUR" ? "/hr" : ""} · ` : ""}{a.when}</span></li>)}
+          </ul>
+        ) : muted("Not awarded yet.")}
+        {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && <AssignDirectly workRequestId={detail.id} providers={options} />}
+        {awarded && <CreateOrder workRequestId={detail.id} description={detail.workRequestDescription} />}
+      </SectionCard>
+
+      {/* 9 Lines */}
+      <SectionCard title="Lines">
+        <WorkRequestLines key={detail.status} initial={detail} />
+      </SectionCard>
+
+      {/* 10 Approval */}
+      <SectionCard title="Approval">
+        {sec.approval ? (
+          <p className="text-[13.5px]">{sec.approval.wr && <span className="font-mono text-ink-2">{sec.approval.wr} · </span>}{sec.approval.at ? <><b>Auto-approved</b> · {sec.approval.at}</> : <>{WORK_REQUEST_STATUS_LABEL[detail.workRequestStatus]}</>}{sec.approval.note ? ` · ${sec.approval.note}` : ""}</p>
+        ) : muted("Approval follows the Award (automatic in R1).")}
+        {(await jobOrders(detail.id)).map((wo) => (
+          <p key={wo.id} data-job-work-order className="mt-1.5 text-[13.5px] text-ink-2">Work Order: <Link href={`/orders/${wo.id}`} className="font-semibold text-ink underline underline-offset-2">{wo.order_number}</Link> · {wo.label}</p>
+        ))}
+      </SectionCard>
+
+      {/* 11 Attachments & Notes */}
+      <SectionCard title="Attachments & Notes">
+        {detail.description || sec.notes.length ? (
+          <div className="grid gap-2 text-[14px] text-ink-2">{[detail.description, ...sec.notes].filter((x, k, a): x is string => !!x && a.indexOf(x) === k).map((n, k) => <p key={k} className="whitespace-pre-wrap">{n}</p>)}</div>
+        ) : muted("No attachments or notes.")}
+      </SectionCard>
+
+      {/* 12 Activity log */}
+      <SectionCard title="Activity log" open={false}>
+        <ol className="grid gap-1.5 text-[13px]">{sec.log.map((e, k) => <li key={k} className="flex gap-3"><span className="w-[120px] shrink-0 tabular-nums text-ink-3">{e.at}</span><span>{e.text}</span></li>)}</ol>
+      </SectionCard>
     </div>
   );
 }
 
-function Fact({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-[12.5px] font-bold uppercase tracking-[0.08em] text-ink-2">
-        {label}
-      </dt>
-      <dd className="mt-0.5 truncate text-[14.5px]">{children}</dd>
-    </div>
-  );
+function SectionCard({ id, title, right, open = true, children }: { id?: string; title: string; right?: React.ReactNode; open?: boolean; children: React.ReactNode }) {
+  return <Card id={id} title={title} right={right} open={open}>{children}</Card>;
 }
 
 /** WA-E005: the Work Orders this Job's Work Requests produced, with their acceptance status. */

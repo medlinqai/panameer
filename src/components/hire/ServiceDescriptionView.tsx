@@ -26,14 +26,14 @@ function List({ label, text }: { label: string; text: string }) {
   return lines(text).length ? <div className="mt-1.5"><p className="text-ink-2">{label}</p><ul className="ml-5 list-disc">{lines(text).map((l, i) => <li key={i}>{l}</li>)}</ul></div> : null;
 }
 
-export async function ServiceDescriptionView({ jobId, editable }: { jobId: string; editable: boolean }) {
+export async function ServiceDescriptionView({ jobId, editable, bare = false }: { jobId: string; editable: boolean; bare?: boolean }) {
   const sd = await readServiceDescription(jobId);
   if (!sd) return null;
   const role = sd.roleId ? await prisma.role.findUnique({ where: { id: sd.roleId }, select: { display: true, name: true } }) : null;
   const dollars = (n: number | null) => (n == null ? null : `$${n.toLocaleString("en-US")}`);
   const rate = sd.budgetMin != null || sd.budgetMax != null ? `${[dollars(sd.budgetMin), dollars(sd.budgetMax)].filter(Boolean).join(" – ")}${sd.budgetType === "FIXED" ? " fixed" : " / hr"}` : null;
   return (
-    <div className="mt-6 rounded-brand border border-line bg-white px-5 py-1" data-service-description>
+    <div className={bare ? "py-0" : "mt-6 rounded-brand border border-line bg-white px-5 py-1"} data-service-description>
       <Section n={1} title="What" step={0} jobId={jobId} editable={editable}>
         <p className="font-bold">{sd.title}</p>
         {sd.summary && <p className="mt-1 text-ink-2">{sd.summary}</p>}

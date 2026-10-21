@@ -373,6 +373,7 @@ export async function proposalsOn(
     people.map((p) => [p.id, [p.first_name, p.last_name].filter(Boolean).join(" ").trim()])
   );
 
+  await maskNames(viewer, nameOf);
   return rows.map((r) => {
     const line = r.lines[0];
     return {
@@ -399,4 +400,16 @@ export async function proposalsOn(
       testStatus: testOf.get(r.provider_person_id) ?? null,
     };
   });
+}
+
+/** DB-E010 / AN: a buyer sees "Provider P-…" until a Work Order with that provider is Released. */
+async function maskNames(viewer: Viewer, nameOf: Map<string, string>) {
+  const { identityVisibleTo, providerLabel, providerNumbers } = await import("@/lib/provider-number");
+  const ids = [...nameOf.keys()];
+  const seen = await identityVisibleTo(viewer, ids);
+  const hidden = ids.filter((id) => !seen.has(id));
+  if (!hidden.length) return;
+  const profiles = await prisma.providerProfile.findMany({ where: { person_id: { in: hidden } }, select: { id: true, person_id: true } });
+  const nums = await providerNumbers(profiles.map((p) => p.id));
+  for (const id of hidden) nameOf.set(id, providerLabel(nums.get(profiles.find((p) => p.person_id === id)?.id ?? "")));
 }
