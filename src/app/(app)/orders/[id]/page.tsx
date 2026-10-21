@@ -19,7 +19,7 @@ import { orderHistory } from "@/lib/transaction-history";
 import { BILLABLE } from "@/lib/orders";
 import { milestonesFor } from "@/lib/order-milestones";
 import { OrderSchedule } from "@/components/orders/OrderSchedule";
-import { OrderLifecycle } from "@/components/orders/OrderLifecycle";
+import { WorkOrderStrip } from "@/components/orders/WorkOrderStrip";
 import { OrderSettlements } from "@/components/orders/OrderSettlements";
 import { ChangeOrders } from "@/components/orders/ChangeOrders";
 import { changeBlocked, describeChanges, revisionsFor, type Diff, type LineField } from "@/lib/change-orders";
@@ -110,8 +110,8 @@ export default async function Page({
         )}
       </header>
 
-      {/* WT-E006: the life cycle, directly under the header. */}
-      <OrderLifecycle workRequestId={(await prisma.workOrder.findUniqueOrThrow({ where: { id: o.id }, select: { work_request_id: true } })).work_request_id} focusOrderId={o.id} />
+      {/* DB-E007: the Work Order's progress strip, directly under the header. */}
+      <WorkOrderStrip orderId={o.id} />
 
       {o.party === "PROVIDER" && <BuyerCard personId={o.buyerPersonId} />}
       {/* WA-E003/E004: the terms each party is accepting. */}
