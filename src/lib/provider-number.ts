@@ -35,9 +35,12 @@ export async function providerNumbers(profileIds: string[]): Promise<Map<string,
   return out;
 }
 
+// DB-E010: names, photos and companies show once a Work Order is Released (not merely issued).
+const REVEALED = ["RELEASED" as const, "ACTIVE" as const, "ON_HOLD" as const, "CLOSED" as const, "FINALLY_CLOSED" as const];
+
 // ── AN-E002: one rule — a buyer sees a provider's identity (PII) only once a Work Order exists between them ────────
 /** For each provider: may this viewer see who they are? The provider themself, an admin, a colleague in the
- *  provider's own company, or a viewer whose company has a Work Order (past Draft) with the provider. */
+ *  provider's own company, or a viewer whose company has a Released Work Order with the provider. */
 export async function identityVisibleTo(viewer: Viewer | null, providerPersonIds: string[]): Promise<Set<string>> {
   const ids = [...new Set(providerPersonIds)].filter(Boolean);
   if (!viewer || !ids.length) return new Set();
@@ -46,7 +49,7 @@ export async function identityVisibleTo(viewer: Viewer | null, providerPersonIds
   if (!me) return new Set();
   const [colleagues, orders] = await Promise.all([
     prisma.person.findMany({ where: { id: { in: ids }, company_id: me.company_id }, select: { id: true } }),
-    prisma.workOrder.findMany({ where: { provider_person_id: { in: ids }, status: { not: "DRAFT" }, OR: [{ buyer_person_id: me.id }, { p_account_id: me.company.p_account_id }] }, distinct: ["provider_person_id"], select: { provider_person_id: true } }),
+    prisma.workOrder.findMany({ where: { provider_person_id: { in: ids }, status: { in: REVEALED }, OR: [{ buyer_person_id: me.id }, { p_account_id: me.company.p_account_id }] }, distinct: ["provider_person_id"], select: { provider_person_id: true } }),
   ]);
   return new Set([...ids.filter((id) => id === me.id), ...colleagues.map((c) => c.id), ...orders.map((o) => o.provider_person_id)]);
 }
@@ -66,6 +69,6 @@ export async function providerNameForBuyer(buyerPersonId: string, providerPerson
   ]);
   if (!provider?.providerProfile) return realName;
   if (buyer && buyer.company_id === provider.company_id) return realName;
-  const order = buyer ? await prisma.workOrder.findFirst({ where: { provider_person_id: providerPersonId, status: { not: "DRAFT" }, OR: [{ buyer_person_id: buyerPersonId }, { p_account_id: buyer.company.p_account_id }] }, select: { id: true } }) : null;
+  const order = buyer ? await prisma.workOrder.findFirst({ where: { provider_person_id: providerPersonId, status: { in: REVEALED }, OR: [{ buyer_person_id: buyerPersonId }, { p_account_id: buyer.company.p_account_id }] }, select: { id: true } }) : null;
   return order ? realName : providerLabel(await ensureProviderNumber(provider.providerProfile.id));
 }

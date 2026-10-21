@@ -500,6 +500,13 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     : [];
   const originById = new Map(originLines.map((l) => [l.id, l]));
   const names = await namesFor([o.buyer_person_id, o.provider_person_id]);
+  // DB-E010: the buyer sees the provider number until this Work Order is Released.
+  if (o.buyer_person_id !== o.provider_person_id) {
+    const { identityVisibleTo, providerNameForBuyer } = await import("@/lib/provider-number");
+    if (!(await identityVisibleTo(viewer, [o.provider_person_id])).has(o.provider_person_id)) {
+      names.set(o.provider_person_id, await providerNameForBuyer(o.buyer_person_id, o.provider_person_id, names.get(o.provider_person_id) ?? "A provider"));
+    }
+  }
 
   const views: OrderLineView[] = lines.map((l) => {
     const origin = l.work_request_line_id ? originById.get(l.work_request_line_id) ?? null : null;
