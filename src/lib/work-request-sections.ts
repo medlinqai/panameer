@@ -8,11 +8,11 @@ const when = (d: Date) => d.toLocaleString("en-US", { timeZone: TZ, month: "shor
 
 export async function workRequestSections(viewer: Viewer, jobId: string) {
   const [job, requests, evaluations, tests, wrs, interviews, event] = await Promise.all([
-    prisma.job.findUniqueOrThrow({ where: { id: jobId }, select: { created_at: true, posted_at: true, title: true, job_number: true } }),
+    prisma.job.findUniqueOrThrow({ where: { id: jobId }, select: { created_at: true, posted_at: true, title: true, job_number: true, source_text: true, buyer_person_id: true, skills: { select: { skill_id: true } }, domains: true } }),
     prisma.proposalRequest.findMany({ where: { job_id: jobId }, orderBy: { created_at: "asc" }, select: { provider_person_id: true, request_number: true, issued_at: true, created_at: true, responds_by: true, status: true, decline_reason: true, declined_at: true, bid: { select: { submitted_at: true } } } }),
     prisma.providerEvaluation.findMany({ where: { job_id: jobId, status: "SUBMITTED" }, select: { provider_person_id: true, overall_rating: true, summary: true, interview_request_id: true } }),
     prisma.testRequest.findMany({ where: { job_id: jobId }, orderBy: { created_at: "asc" }, select: { id: true, request_number: true, provider_person_id: true, status: true, created_at: true, lines: { select: { skill_id: true, certification_test_id: true } }, response: { select: { lines: { select: { score: true, passed: true, completed_at: true } } } } } }),
-    prisma.workRequest.findMany({ where: { job_id: jobId }, orderBy: { created_at: "asc" }, select: { id: true, wr_number: true, status: true, submitted_at: true, approved_at: true, approval_note: true, created_at: true, description: true, lines: { where: { provider_person_id: { not: null } }, select: { provider_person_id: true, unit_price_cents: true, uom: true, updated_at: true, status: true } } } }),
+    prisma.workRequest.findMany({ where: { job_id: jobId }, orderBy: { created_at: "asc" }, select: { id: true, wr_number: true, status: true, style: true, source: true, submitted_at: true, approved_at: true, approval_note: true, created_at: true, description: true, lines: { where: { provider_person_id: { not: null } }, select: { provider_person_id: true, unit_price_cents: true, uom: true, updated_at: true, status: true } } } }),
     prisma.interviewRequest.findMany({ where: { job_id: jobId }, select: { provider_person_id: true, request_number: true, created_at: true, status: true, completed_at: true } }),
     prisma.sourcingEvent.findMany({ where: { job_id: jobId }, select: { event_number: true, created_at: true, deadline_at: true, status: true, others_notified_at: true } }),
   ]);
@@ -73,7 +73,40 @@ export async function workRequestSections(viewer: Viewer, jobId: string) {
     ...event.filter((e) => e.others_notified_at).map((e) => ({ at: e.others_notified_at!, text: "Other candidates told (not awarded)" })),
   ].sort((a, b) => b.at.getTime() - a.at.getTime());
 
+  // HL-E003: header facts, the lines table, attachments and the proposal extras.
+  const { STYLE_LABEL, LINE_TYPE_LABEL, originLabel } = await import("@/lib/work-order-styles");
+  const { PAYMENT_EVENT_LABEL } = await import("@/lib/billing-terms");
+  const buyer = await prisma.person.findUnique({ where: { id: job.buyer_person_id }, select: { first_name: true, last_name: true, company: { select: { name: true } } } });
+  const lastWr = wrs.at(-1);
+  const allLines = lastWr ? await prisma.workRequestLine.findMany({ where: { work_request_id: lastWr.id }, orderBy: { line_number: "asc" }, select: { line_number: true, description: true, transaction_type: true, uom: true, quantity: true, unit_price_cents: true, amount_cents: true, payment_event: true } }) : [];
+  const lineRows = allLines.map((l) => ({
+    n: l.line_number, description: l.description ?? "", type: LINE_TYPE_LABEL[l.transaction_type], qty: l.quantity == null ? null : Number(l.quantity), uom: l.uom,
+    rate: l.unit_price_cents, amount: l.amount_cents ?? (l.unit_price_cents != null && l.quantity != null ? Math.round(Number(l.quantity) * l.unit_price_cents) : null),
+    event: l.payment_event ? PAYMENT_EVENT_LABEL[l.payment_event] : null,
+  }));
+  const propPeople = requests.map((r) => r.provider_person_id);
+  const [propLines, propProfiles] = await Promise.all([
+    prisma.proposal.findMany({ where: { job_id: jobId }, select: { provider_person_id: true, lines: { take: 1, select: { available_from: true } } } }),
+    prisma.providerProfile.findMany({ where: { person_id: { in: [...propPeople, ...people] } }, select: { person_id: true, person: { select: { title: true } }, skills: { select: { skill_id: true } } } }),
+  ]);
+  const jobSkills = new Set(job.skills.map((s) => s.skill_id));
+  const proposalExtra = (personId: string) => {
+    const pf = propProfiles.find((x) => x.person_id === personId);
+    const start = propLines.find((x) => x.provider_person_id === personId)?.lines[0]?.available_from ?? null;
+    return { start: start ? start.toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric" }) : null, summary: [pf?.person.title, job.domains[0], jobSkills.size && pf ? `${pf.skills.filter((s) => jobSkills.has(s.skill_id)).length} of ${jobSkills.size} skills` : null].filter(Boolean).join(" · ") };
+  };
+  const hadSe = event.some((e) => e.status !== "DRAFT");
   return {
+    header: {
+      created: job.created_at.toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric", year: "numeric" }),
+      buyer: buyer ? [`${buyer.first_name} ${buyer.last_name}`.trim(), buyer.company?.name].filter(Boolean).join(" · ") : "—",
+      style: lastWr?.style ? STYLE_LABEL[lastWr.style] : null,
+      origin: lastWr?.source ? originLabel(lastWr.source, hadSe) : hadSe ? "Sourcing Event" : null,
+      workRequest: lastWr?.wr_number ?? null,
+    },
+    lineRows, proposalExtra,
+    attachments: job.source_text ? [{ name: "Uploaded posting", at: job.created_at.toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric" }) }] : [],
+    responded: requests.filter((r) => r.bid?.submitted_at).length,
     requestRows, evalRows, testRows, awardRows,
     approval: approval ? { wr: approval.wr_number, at: approval.approved_at ? when(approval.approved_at) : null, note: approval.approval_note, status: approval.status } : null,
     notes: wrs.map((w) => w.description).filter((d): d is string => !!d?.trim()),

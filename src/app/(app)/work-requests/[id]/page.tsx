@@ -1,36 +1,31 @@
 import Link from "next/link";
 import { WorkRequestPath } from "@/components/work/WorkRequestPath";
+import { Fact, GREEN, MUTED, ROW_RULE, Section, BTN_OUT } from "@/components/hire/HireUI";
+import { ProposalActions } from "@/components/work/ProposalActions";
+import { jobPath } from "@/lib/work-request-path";
+import { certificationTestForSkill } from "@/lib/certification-tests";
+import { HOW_LONG } from "@/lib/hire-questionnaire";
 import { workRequestSections } from "@/lib/work-request-sections";
 import { listInterviews } from "@/lib/interviews";
 import { dailyConfigured } from "@/lib/daily";
 import { InterviewCards } from "@/components/work/InterviewCards";
 import { ActionsMenu } from "@/components/casing/ActionsMenu";
-import { Card } from "@/components/home/LiveWork";
 import { NeutralAvatar } from "@/components/Avatar";
 import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
 import { PENDING_ON_LABEL, WORK_ORDER_LABEL, waitingOn } from "@/lib/oracle-status";
-import { VerifiedTag } from "@/components/company/VerifiedTag";
-import { CompanyLink } from "@/components/company/CompanyLink";
 import { notFound, redirect } from "next/navigation";
 import { checkTransact, guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { Button } from "@/components/casing/Button";
 import { formatCents } from "@/lib/display";
-import { WorkRequestLines } from "@/components/work/WorkRequestLines";
 import { getWorkRequestDetail } from "@/lib/work-request-lines";
 import { proposalsOn } from "@/lib/proposals";
-import { ProposalSteps } from "@/components/work/ProposalSteps";
-import { SelectProposal, AssignDirectly, CreateOrder } from "@/components/work/HireControls";
+import { AssignDirectly, CreateOrder } from "@/components/work/HireControls";
 import { matchProvidersFor } from "@/lib/work-request-match";
 import {
   JOB_STATUS_LABEL,
-  WORK_REQUEST_STATUS_LABEL,
-  jobStatusPillClass,
 } from "@/lib/work-request-status";
 import { WorkRequestError } from "@/lib/work-request";
-import { BackLink } from "@/components/console/BackLink";
-import { ServiceDescriptionView } from "@/components/hire/ServiceDescriptionView";
 import { MatchList } from "@/components/hire/MatchList";
 import { hireMatches } from "@/lib/hire-questionnaire";
 import { readServiceDescription } from "@/lib/service-description";
@@ -71,19 +66,7 @@ export default async function Page({
     matchProvidersFor(viewer, id),
     proposalsOn(viewer, id),
   ]);
-  const memberships = await prisma.companyMembership.findMany({
-    where: { person_id: { in: proposals.map((p) => p.providerPersonId) }, status: "APPROVED" },
-    select: { person_id: true, company: { select: { id: true, name: true } } },
-  });
-  const providerCompany = new Map(memberships.map((m) => [m.person_id, m.company]));
 
-  const sendableTests = (
-    await prisma.certificationTest.findMany({
-      where: { status: "PUBLISHED" },
-      select: { id: true, learningPath: { select: { title: true } } },
-      orderBy: { created_at: "asc" },
-    })
-  ).map((t) => ({ id: t.id, title: t.learningPath?.title ?? "Path test" }));
 
   const profiles = await prisma.providerProfile.findMany({
     where: { id: { in: providers.map((p) => p.profileId) } },
@@ -109,7 +92,6 @@ export default async function Page({
 
   const sec = await workRequestSections(viewer, detail.id);
   const buyerInterviews = await listInterviews({ jobId: detail.id, buyerPersonId: (await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }))?.id });
-  const muted = (t: string) => <p className="text-[13.5px] text-ink-3">{t}</p>;
   const actions = [
     ...(detail.status === "DRAFT" ? [{ label: "Edit the Job", href: `/hire?job=${detail.id}&step=0` }] : []),
     ...(sourcing ? [{ label: `Open Sourcing Event ${sourcing.event_number}`, href: `/hire/sourcing/${sourcing.id}` }] : []),
@@ -119,153 +101,160 @@ export default async function Page({
     { label: "My Jobs", href: "/hire/jobs" },
   ];
 
+  // HL-E003: the page as Scott's approved mockup — header, one fact row, the progress band, then sections over an ink rule.
+  const path = await jobPath(detail.id);
+  const currentLabel = path?.shown.find((x) => x.key === path.current)?.label ?? JOB_STATUS_LABEL[detail.status];
+  let testId: string | null = null;
+  for (const sk of sdForMatches?.skills ?? []) { const t = await certificationTestForSkill(sk.id); if (t) { testId = t.assessmentId; break; } }
+  const sd = sdForMatches;
+  const usd = (c: number | null | undefined) => (c == null ? null : `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}`);
+  const per = sd?.budgetType === "FIXED" ? "" : "/hr";
+  const rangeText = sd && (sd.budgetMin != null || sd.budgetMax != null) ? `${sd.budgetMin != null ? `$${sd.budgetMin}` : "…"}–${sd.budgetMax != null ? `$${sd.budgetMax}` : "…"}${per}` : null;
+  const empty = (t: string) => <p className={MUTED}>{t}</p>;
+  const eyebrow = [sec.jobNumber, sec.header.workRequest, sec.header.origin?.toUpperCase()].filter(Boolean).join(" · ");
+
   return (
-    <div className="pm-white-page mx-auto w-full min-w-0 max-w-4xl" data-work-request-page>
-      <BackLink href="/hire/jobs" label="My Jobs" />
+    <div className="pm-white-page mx-auto flex w-full min-w-0 max-w-[1120px] flex-col gap-[22px] pb-16" data-work-request-page>
+      <Link href="/hire/overview?tab=jobs" className="text-[13px] font-semibold">‹ Back to Jobs</Link>
 
-      {/* DB-E006 · 1 Header */}
-      <header className="mt-2 rounded-brand border border-line bg-white p-4 sm:p-5" data-wr-header>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="break-all font-mono text-[12.5px] font-semibold text-ink-2">{[sec.jobNumber, sec.latestWr].filter(Boolean).join(" · ") || "Job"}</p>
-            <h1 className="font-display text-[24px] font-bold tracking-[-0.4px] sm:text-[28px]">{detail.title.trim() || "Untitled job"}</h1>
-            <p className="mt-1 text-[13.5px] text-ink-2">
-              {[detail.roleName, posted && detail.postedAt ? `Posted ${detail.postedAt.slice(0, 10)}` : null, sec.provider ? `Provider ${sec.provider.replace(/^Provider /, "")}` : null].filter(Boolean).join(" · ")}
-            </p>
+      <section aria-label="Header" className="flex flex-col gap-[18px]" data-wr-header>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-[1_1_520px]">
+            <div className="break-words text-[12px] font-bold tracking-[0.12em] text-magenta">{eyebrow || "JOB"}</div>
+            <h1 className="mt-1.5 text-[24px] font-extrabold leading-tight sm:text-[30px]">{detail.title.trim() || "Untitled job"}</h1>
+            {awarded && erpReturned && <p className="mt-1 text-[12.5px] text-[#5d5768]">Returned to ERP — waiting for the PO</p>}
           </div>
-          <span className="flex items-center gap-2">
-            <span className="inline-flex flex-col items-end">
-              <span className={jobStatusPillClass(detail.status)}>{JOB_STATUS_LABEL[detail.status]}</span>
-              {awarded && erpReturned && <span className="mt-1 text-[12px] text-ink-2">Returned to ERP — waiting for the PO</span>}
-            </span>
+          <div className="flex items-center gap-2.5">
+            <span className="rounded-[14px] bg-[#fbeafb] px-3 py-1.5 text-[12px] font-bold text-magenta-dark" data-status-pill>{currentLabel}</span>
             <ActionsMenu items={actions} />
-          </span>
+          </div>
         </div>
-      </header>
+        <div className="grid grid-cols-2 gap-4 border-y border-[#e7e5ec] py-3.5 sm:grid-cols-5" data-wr-facts>
+          <Fact label="Created">{sec.header.created}</Fact>
+          <Fact label="Buyer">{sec.header.buyer}</Fact>
+          <Fact label="Provider">{sec.provider ?? <span className="text-[#8a8494]">Not awarded yet</span>}</Fact>
+          <Fact label="Style">{sec.header.style ?? <span className="text-[#8a8494]">Set on Award</span>}</Fact>
+          <Fact label="Work Request">{sec.header.workRequest ?? <span className="text-[#8a8494]">Created on Award</span>}</Fact>
+        </div>
+      </section>
 
-      {/* 2 Progress strip */}
       <WorkRequestPath jobId={detail.id} />
 
-      {/* 3 Job details */}
-      <SectionCard title="Job details">
-        <ServiceDescriptionView jobId={id} editable={detail.status === "DRAFT"} bare />
-      </SectionCard>
+      <Section title="Job details" right={detail.status === "DRAFT" ? <Link href={`/hire?job=${detail.id}&step=0`}>Edit</Link> : null}>
+        {sd ? (
+          <div className="grid grid-cols-1 gap-x-6 gap-y-[18px] sm:grid-cols-3" data-job-facts>
+            <Fact label="What"><span className="font-normal">{[sd.summary || sd.title, sd.category].filter(Boolean).join(" · ")}</span></Fact>
+            <Fact label="Where"><span className="font-normal">{[sd.worksite ? sd.worksite[0] + sd.worksite.slice(1).toLowerCase() : null, [sd.city, sd.state].filter(Boolean).join(", ") || null].filter(Boolean).join(" · ") || "—"}</span></Fact>
+            <Fact label="Type"><span className="font-normal">{sd.contractTypes.length ? `Contract · ${sd.contractTypes.join("/")}` : "—"}</span></Fact>
+            <Fact label="Who"><span className="font-normal">{[sd.specificRole || null, sd.domains[0], sd.product || null, sd.years ? `${sd.years}+ years` : null, sd.skills.length ? `${sd.skills.length} skills` : null].filter(Boolean).join(" · ") || "—"}</span></Fact>
+            <Fact label="When"><span className="font-normal">{[sd.duration ? HOW_LONG.find((h) => h.value === sd.duration)?.label : null, sd.startText || (sd.startDate ? `start ${sd.startDate}` : null)].filter(Boolean).join(" · ") || "—"}</span></Fact>
+            <Fact label="Rate"><span className="font-normal">{rangeText ?? "—"}</span></Fact>
+          </div>
+        ) : empty("The Service Description shows here once the job has one.")}
+      </Section>
 
       {detail.status === "DRAFT" && (
-        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4">
-          <p className="min-w-0 flex-1 text-[14px]"><b>This Job is still a draft.</b> <span className="text-ink-2">Posting makes it visible to providers.</span></p>
-          <Button href={`/create-work`} variant="ghost">Open in the wizard</Button>
+        <div className="flex flex-wrap items-center gap-3 border border-[#e7e5ec] p-4">
+          <p className="min-w-0 flex-1 text-[14px]"><b>This Job is still a draft.</b> <span className="text-[#5d5768]">Posting makes it visible to providers.</span></p>
+          <Link href="/hire" className={BTN_OUT}>Open in Hire</Link>
         </div>
       )}
 
-      {/* Shortlist — the Job's matches (star, quick view, Compare, Request Proposals). */}
       {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && jobMatches.length > 0 && (
-        <SectionCard id="matches" title="Matches">
-          {sourcing && <p className="mb-1 text-[13.5px]">Sourcing Event <Link href={`/hire/sourcing/${sourcing.id}`} className="font-semibold text-magenta-dark underline underline-offset-4">{sourcing.event_number}</Link> · {sourcing.status === "OPEN" ? "Open" : sourcing.status === "AWARDED" ? "Awarded" : "Closed"}</p>}
+        <Section id="matches" title="Matches" extra={sourcing ? <>· <Link href={`/hire/sourcing/${sourcing.id}`}>{sourcing.event_number}</Link></> : null}>
           <MatchList jobId={detail.id} matches={jobMatches} state={sdForMatches?.state} />
-        </SectionCard>
+        </Section>
       )}
 
-      {/* 4 Requests to Propose */}
-      <SectionCard title={`Requests to Propose (${sec.requestRows.length})`}>
-        {sec.requestRows.length ? (
-          <ul className="divide-y divide-line text-[13.5px]">
-            {sec.requestRows.map((r) => (
-              <li key={r.number} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                <span className="flex items-center gap-2"><NeutralAvatar size={24} /><b>{r.who}</b></span>
-                <span className="text-ink-2">asked {r.asked}{r.due ? ` · due ${r.due}` : ""} · <b className="text-ink">{r.status}</b></span>
-              </li>
-            ))}
-          </ul>
-        ) : muted("No requests to propose yet.")}
-      </SectionCard>
+      <Section title="Requests to Propose" extra={sec.requestRows.length ? `· ${sec.requestRows.length} asked · ${sec.responded} responded` : null} right={!awarded && (detail.status === "OPEN" || detail.status === "DRAFT") ? <Link href={`/work-requests/${detail.id}#matches`}>Request more</Link> : null}>
+        {sec.requestRows.length ? sec.requestRows.map((r) => (
+          <div key={r.number} className={`flex flex-wrap items-center gap-3.5 py-3 text-[14px] ${ROW_RULE}`}>
+            <span className="w-[70px] font-bold">{r.who.replace(/^Provider /, "")}</span>
+            <span className="min-w-0 flex-[1_1_200px] text-[#5d5768]">Asked {r.asked}{r.due ? ` · due ${r.due}` : ""}</span>
+            <span className={`font-bold ${r.status === "Responded" ? GREEN : r.status.startsWith("Declined") ? "text-[#d92d20]" : "text-[#5d5768]"}`}>{r.status}</span>
+          </div>
+        )) : empty("No requests yet. Star providers in Matches and request proposals from your shortlist.")}
+      </Section>
 
-      {/* 5 Proposals */}
-      <SectionCard title={`Proposals (${proposals.length})`} right={sourcing ? <Link href={`/hire/sourcing/${sourcing.id}`} className="font-semibold text-magenta-dark underline underline-offset-4">Compare</Link> : null}>
-        {proposals.length === 0 ? muted(posted ? "No proposals yet." : "No proposals yet — a Job takes proposals once it is posted.") : (
-          <ul className="grid gap-3">
-            {proposals.map((p) => (
-              <li key={p.id} className="rounded-[10px] border border-line px-3.5 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-semibold">{p.providerName}{providerCompany.get(p.providerPersonId) && !p.providerName.startsWith("Provider ") && (
-                    <span className="font-normal text-ink-2">{" · "}<CompanyLink id={providerCompany.get(p.providerPersonId)!.id} name={providerCompany.get(p.providerPersonId)!.name} /><VerifiedTag companyId={providerCompany.get(p.providerPersonId)!.id} /></span>
-                  )}</span>
-                  <span className="rounded-full bg-ink/[0.05] px-3 py-0.5 text-[12.5px] font-bold text-ink">{p.statusLabel}</span>
-                </div>
-                <p className="mt-1 text-[15px]">{p.rate ? <><b>{formatCents(p.rate.unitPriceCents)}</b><span className="text-ink-2">{p.rate.basis === "RATE" ? " per hour" : " fixed fee"}</span></> : <span className="text-ink-2">No rate given</span>}</p>
-                <p className="mt-0.5 text-[12.5px] text-ink-2">{p.proposalNumber}{p.submittedAt && <> · sent {p.submittedAt.toISOString().slice(0, 10)}</>}{p.validUntil && <> · good until {p.validUntil.toISOString().slice(0, 10)}</>}</p>
-                {p.coverNote && <p className="mt-1.5 whitespace-pre-wrap text-[14px] text-ink-2">{p.coverNote}</p>}
-                <ProposalSteps workRequestId={detail.id} providerPersonId={p.providerPersonId} providerName={p.providerName} interviewStatus={p.interviewStatus} testStatus={p.testStatus} tests={sendableTests} />
-                <SelectProposal workRequestId={detail.id} providerPersonId={p.providerPersonId} providerName={p.providerName} hasRate={p.rate !== null} selected={p.status === "AWARDED"} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </SectionCard>
+      <Section title="Proposals" right={sourcing ? <Link href={`/hire/sourcing/${sourcing.id}`}>Compare</Link> : null}>
+        {proposals.length ? proposals.map((p) => {
+          const x = sec.proposalExtra(p.providerPersonId);
+          return (
+            <div key={p.id} className={`flex flex-wrap items-center gap-3.5 py-3.5 ${ROW_RULE}`} data-proposal-row>
+              <NeutralAvatar size={36} />
+              <div className="min-w-0 flex-[1_1_260px]">
+                <div className="text-[15px] font-bold">{[p.providerName.replace(/^Provider /, ""), p.rate ? `${formatCents(p.rate.unitPriceCents)}${p.rate.basis === "RATE" ? "/hr" : " fixed"}` : "no rate", x.start ? `start ${x.start}` : null].filter(Boolean).join(" · ")}</div>
+                <div className="mt-0.5 text-[13px] text-[#5d5768]">{[x.summary || null, p.coverNote ? `“${p.coverNote.slice(0, 120)}”` : "no note"].filter(Boolean).join(" · ")}</div>
+              </div>
+              <ProposalActions jobId={detail.id} providerPersonId={p.providerPersonId} testId={testId} awarded={p.status === "AWARDED"} interviewStatus={p.interviewStatus} testStatus={p.testStatus} />
+            </div>
+          );
+        }) : empty(posted ? "No proposals yet. They show here as providers respond." : "No proposals yet — a Job takes proposals once it is posted.")}
+      </Section>
 
-      {/* 6 Interviews */}
-      <SectionCard id="interviews" title={`Interviews (${buyerInterviews.length})`}>
-        {buyerInterviews.length ? <InterviewCards rows={buyerInterviews} side="buyer" videoReady={dailyConfigured()} /> : muted("No interviews yet.")}
+      <Section id="interviews" title="Interviews">
+        {buyerInterviews.length ? <InterviewCards rows={buyerInterviews} side="buyer" videoReady={dailyConfigured()} /> : empty("None scheduled. Use Interview on a proposal; ranking and comments land here.")}
         {sec.evalRows.length > 0 && (
-          <ul className="mt-3 divide-y divide-line border-t border-line text-[13.5px]">
-            {sec.evalRows.map((e, i) => <li key={i} className="py-2"><b>{e.who}</b>{e.rating != null && <span className="ml-2 text-magenta-dark">{"★".repeat(e.rating)}{"☆".repeat(5 - e.rating)}</span>}{e.summary && <p className="text-ink-2">{e.summary}</p>}</li>)}
-          </ul>
+          <div className="mt-3">
+            {sec.evalRows.map((e, k) => <div key={k} className={`py-2 text-[14px] ${ROW_RULE}`}><b>{e.who}</b>{e.rating != null && <span className="ml-2 text-magenta-dark">{"★".repeat(e.rating)}{"☆".repeat(5 - e.rating)}</span>}{e.summary && <p className="text-[#5d5768]">{e.summary}</p>}</div>)}
+          </div>
         )}
-      </SectionCard>
+      </Section>
 
-      {/* 7 Test requests */}
-      <SectionCard title={`Test requests (${sec.testRows.length})`}>
-        {sec.testRows.length ? (
-          <ul className="divide-y divide-line text-[13.5px]">
-            {sec.testRows.map((t) => <li key={t.number} className="flex flex-wrap justify-between gap-2 py-2"><span><b>{t.who}</b> · {t.skill}</span><span className="text-ink-2">{t.score != null ? `${t.score}% · ` : ""}<b className="text-ink">{t.result}</b></span></li>)}
-          </ul>
-        ) : muted("No test requests.")}
-      </SectionCard>
+      <Section title="Test requests">
+        {sec.testRows.length ? sec.testRows.map((t) => (
+          <div key={t.number} className={`flex flex-wrap justify-between gap-2 py-2.5 text-[14px] ${ROW_RULE}`}><span><b>{t.who.replace(/^Provider /, "")}</b> · {t.skill}</span><span className="text-[#5d5768]">{t.score != null ? `${t.score}% · ` : ""}<b className={t.result === "Pass" ? GREEN : t.result === "Fail" ? "text-[#d92d20]" : "text-ink"}>{t.result}</b></span></div>
+        )) : empty("None requested. Scores and pass/fail show here.")}
+      </Section>
 
-      {/* 8 Award */}
-      <SectionCard title="Award">
-        {sec.awardRows.length ? (
-          <ul className="divide-y divide-line text-[13.5px]">
-            {sec.awardRows.map((a, i) => <li key={i} className="flex flex-wrap justify-between gap-2 py-2"><span><b>{a.who}</b>{a.wr ? <span className="font-mono text-ink-2"> · {a.wr}</span> : null}</span><span className="text-ink-2">{a.rate != null ? `${formatCents(a.rate)}${a.uom === "HOUR" ? "/hr" : ""} · ` : ""}{a.when}</span></li>)}
-          </ul>
-        ) : muted("Not awarded yet.")}
+      <Section title="Award">
+        {sec.awardRows.length ? sec.awardRows.map((a, k) => (
+          <div key={k} className={`flex flex-wrap justify-between gap-2 py-2.5 text-[14px] ${ROW_RULE}`}><span><b>{a.who.replace(/^Provider /, "")}</b>{a.wr ? <span className="text-[#5d5768]"> · {a.wr}</span> : null}</span><span className="text-[#5d5768]">{a.rate != null ? `${formatCents(a.rate)}${a.uom === "HOUR" ? "/hr" : ""} · ` : ""}{a.when}</span></div>
+        )) : empty("Not awarded yet. Awarding a proposal creates the Work Request.")}
         {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && <AssignDirectly workRequestId={detail.id} providers={options} />}
         {awarded && <CreateOrder workRequestId={detail.id} description={detail.workRequestDescription} />}
-      </SectionCard>
+      </Section>
 
-      {/* 9 Lines */}
-      <SectionCard title="Lines">
-        <WorkRequestLines key={detail.status} initial={detail} />
-      </SectionCard>
+      <Section title="Lines">
+        {sec.lineRows.length ? (
+          <div className="overflow-x-auto">
+            <div className="grid min-w-[760px] grid-cols-[40px_2fr_1.2fr_0.8fr_0.8fr_1fr_1.2fr] gap-3 border-b border-[#e7e5ec] py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#5d5768]">
+              <span>#</span><span>Description</span><span>Line type</span><span>Qty</span><span>Rate</span><span>Amount</span><span>Payment Event</span>
+            </div>
+            {sec.lineRows.map((l) => (
+              <div key={l.n} className={`grid min-w-[760px] grid-cols-[40px_2fr_1.2fr_0.8fr_0.8fr_1fr_1.2fr] gap-3 py-3 text-[14px] ${ROW_RULE}`}>
+                <span>{l.n}</span><span className="min-w-0 break-words">{l.description || "—"}</span><span>{l.type}</span><span>{l.qty != null ? `${l.qty}${l.uom ? ` ${l.uom.toLowerCase()}` : ""}` : "—"}</span><span>{usd(l.rate) ?? "—"}</span><span>{usd(l.amount) ?? "—"}</span><span>{l.event ?? "—"}</span>
+              </div>
+            ))}
+          </div>
+        ) : empty("Lines are filled on Award: the role, quantity, rate and Payment Event that carry to the Work Order.")}
+      </Section>
 
-      {/* 10 Approval */}
-      <SectionCard title="Approval">
-        {sec.approval ? (
-          <p className="text-[13.5px]">{sec.approval.wr && <span className="font-mono text-ink-2">{sec.approval.wr} · </span>}{sec.approval.at ? <><b>Auto-approved</b> · {sec.approval.at}</> : <>{WORK_REQUEST_STATUS_LABEL[detail.workRequestStatus]}</>}{sec.approval.note ? ` · ${sec.approval.note}` : ""}</p>
-        ) : muted("Approval follows the Award (automatic in R1).")}
+      <Section title="Approval">
+        {sec.approval?.at ? <p className="text-[14px]"><b>Auto-approved</b> · {sec.approval.at}{sec.approval.wr ? ` · ${sec.approval.wr}` : ""}</p> : empty("Auto-approved after Award (R1).")}
         {(await jobOrders(detail.id)).map((wo) => (
-          <p key={wo.id} data-job-work-order className="mt-1.5 text-[13.5px] text-ink-2">Work Order: <Link href={`/orders/${wo.id}`} className="font-semibold text-ink underline underline-offset-2">{wo.order_number}</Link> · {wo.label}</p>
+          <p key={wo.id} data-job-work-order className="mt-1.5 text-[14px] text-[#5d5768]">Work Order: <Link href={`/orders/${wo.id}`} className="font-semibold">{wo.order_number}</Link> · {wo.label}</p>
         ))}
-      </SectionCard>
+      </Section>
 
-      {/* 11 Attachments & Notes */}
-      <SectionCard title="Attachments & Notes">
-        {detail.description || sec.notes.length ? (
-          <div className="grid gap-2 text-[14px] text-ink-2">{[detail.description, ...sec.notes].filter((x, k, a): x is string => !!x && a.indexOf(x) === k).map((n, k) => <p key={k} className="whitespace-pre-wrap">{n}</p>)}</div>
-        ) : muted("No attachments or notes.")}
-      </SectionCard>
+      <Section title="Attachments & Notes">
+        {sec.attachments.length || detail.description || sec.notes.length ? (
+          <div className="grid gap-2 text-[14px] text-[#5d5768]">
+            {sec.attachments.map((a) => <p key={a.name}>{a.name} · uploaded {a.at}</p>)}
+            {[detail.description, ...sec.notes].filter((x, k, arr): x is string => !!x && arr.indexOf(x) === k).map((n, k) => <p key={k} className="whitespace-pre-wrap">{n}</p>)}
+          </div>
+        ) : empty("No attachments or notes. Files you upload with the posting show here.")}
+      </Section>
 
-      {/* 12 Activity log */}
-      <SectionCard title="Activity log" open={false}>
-        <ol className="grid gap-1.5 text-[13px]">{sec.log.map((e, k) => <li key={k} className="flex gap-3"><span className="w-[120px] shrink-0 tabular-nums text-ink-3">{e.at}</span><span>{e.text}</span></li>)}</ol>
-      </SectionCard>
+      <Section title="Activity">
+        <div className="flex flex-col text-[13px]">
+          {sec.log.map((e, k) => <div key={k} className={`flex gap-4 py-2 ${ROW_RULE}`}><span className="w-[130px] shrink-0 text-[#5d5768]">{e.at}</span><span className="min-w-0">{e.text}</span></div>)}
+        </div>
+      </Section>
     </div>
   );
 }
 
-function SectionCard({ id, title, right, open = true, children }: { id?: string; title: string; right?: React.ReactNode; open?: boolean; children: React.ReactNode }) {
-  return <Card id={id} title={title} right={right} open={open}>{children}</Card>;
-}
 
 /** WA-E005: the Work Orders this Job's Work Requests produced, with their acceptance status. */
 async function jobOrders(jobId: string) {
