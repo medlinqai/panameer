@@ -228,11 +228,13 @@ async function countCoursesToWatch(userId: string): Promise<number> {
 }
 
 // ── RA-E001: one counts source — per app and per tab, each item something waiting on THIS person ─────────────
-export type AppKey = "request" | "order" | "settlement" | "payment" | "connect" | "learn";
+export type AppKey = "request" | "shop" | "order" | "settlement" | "payment" | "connect" | "learn";
 export type AttentionItem = { id: string; what: string; app: AppKey; appLabel: string; due: string | null; href: string; action: string };
 export type AppCounts = {
   side: "buyer" | "provider";
   request: { total: number; jobs: number; requests: number; interviews: number; tests: number };
+  /** SA-E001: Shop — offers waiting on you, purchases (WOs to accept / deliveries to approve) or sales (to accept / to deliver). */
+  shop: { total: number; offers: number; purchases: number; sales: number };
   order: { total: number };
   settlement: { total: number };
   payment: { total: number };
@@ -241,17 +243,17 @@ export type AppCounts = {
   items: AttentionItem[];
 };
 export const APP_HOME: Record<"buyer" | "provider", Record<AppKey, string>> = {
-  buyer: { request: "/hire/overview", order: "/orders", settlement: "/payments/payment-requests", payment: "/pay", connect: "/connect", learn: "/learn?tab=mine" },
-  provider: { request: "/find-work", order: "/orders", settlement: "/payments/payment-requests", payment: "/payments", connect: "/connect", learn: "/learn?tab=mine" },
+  buyer: { request: "/hire/overview", shop: "/shop", order: "/orders", settlement: "/payments/payment-requests", payment: "/pay", connect: "/connect", learn: "/learn?tab=mine" },
+  provider: { request: "/find-work", shop: "/shop", order: "/orders", settlement: "/payments/payment-requests", payment: "/payments", connect: "/connect", learn: "/learn?tab=mine" },
 };
-const APP_LABEL: Record<AppKey, string> = { request: "Hire", order: "Orders", settlement: "Settlements", payment: "Payments", connect: "Connect", learn: "Learn" };
+const APP_LABEL: Record<AppKey, string> = { request: "Hire", shop: "Shop", order: "Orders", settlement: "Settlements", payment: "Payments", connect: "Connect", learn: "Learn" };
 const DAY_MS = 86_400_000;
 const dueText = (d: Date | null | undefined) => (d ? d.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null);
 
 export async function appCounts(viewer: { userId: string }, side: "buyer" | "provider"): Promise<AppCounts> {
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   const zero = { total: 0 };
-  const empty: AppCounts = { side, request: { total: 0, jobs: 0, requests: 0, interviews: 0, tests: 0 }, order: zero, settlement: zero, payment: zero, connect: zero, learn: zero, items: [] };
+  const empty: AppCounts = { side, request: { total: 0, jobs: 0, requests: 0, interviews: 0, tests: 0 }, shop: { total: 0, offers: 0, purchases: 0, sales: 0 }, order: zero, settlement: zero, payment: zero, connect: zero, learn: zero, items: [] };
   if (!me) return empty;
   const id = me.id;
   const now = new Date();
@@ -261,6 +263,9 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   const { unreadCount } = await import("@/lib/messages");
   const [connect, learn] = await Promise.all([unreadCount(viewer as Parameters<typeof unreadCount>[0]).catch(() => 0), countCoursesToWatch(viewer.userId).catch(() => 0)]);
   const items: AttentionItem[] = [];
+  const { shopCounts } = await import("@/lib/shop-app");
+  const sc = await shopCounts(id, side === "buyer" ? "buyer" : "seller");
+  const shop = { total: sc.total, offers: sc.offers, purchases: sc.purchases, sales: sc.sales };
   const add = (app: AppKey, n: number, what: string, href: string, action: string, due?: Date | null) => { if (n > 0) items.push({ id: `${app}:${what}`, what: n > 1 ? `${what} (${n})` : what, app, appLabel: APP_LABEL[app], due: dueText(due), href, action }); return n; };
 
   if (side === "buyer") {
@@ -283,10 +288,12 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     const requests = add("request", approvals, "Work Request approvals", "/hire/overview?tab=requests", "Approve") + add("request", woAccept, "Work Orders to accept", "/orders", "Accept");
     const interviews = add("request", confirm, "Interview times to confirm", "/hire/overview?tab=interviews", "Confirm") + add("request", todays, "Interviews today", "/hire/overview?tab=interviews", "Join");
     const tests = add("request", testsIn, "Test results in", "/hire/overview?tab=tests", "See results");
+    add("shop", sc.offers, "Counter-offers waiting on you", "/shop?tab=offers", "Answer");
+    add("shop", sc.purchases, "Purchases needing you", "/shop?tab=purchases", "Open");
     add("settlement", settle, "Settlements to approve", APP_HOME.buyer.settlement, "Approve");
     add("payment", pay, "Payments due", APP_HOME.buyer.payment, "Pay");
     add("connect", connect, "Unread messages", "/messages", "Read");
-    return { side, request: { total: jobs + requests + interviews + tests, jobs, requests, interviews, tests }, order: { total: woAccept }, settlement: { total: settle }, payment: { total: pay }, connect: { total: connect }, learn: { total: learn }, items };
+    return { side, request: { total: jobs + requests + interviews + tests, jobs, requests, interviews, tests }, shop, order: { total: woAccept }, settlement: { total: settle }, payment: { total: pay }, connect: { total: connect }, learn: { total: learn }, items };
   }
 
   const [dueSoon, toOffer, todays, testsToTake, woAccept, drafts, paidIn] = await Promise.all([
@@ -302,8 +309,10 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   const interviews = add("request", toOffer.length, "Interview times to offer", toOffer[0] ? `/find-work/${toOffer[0].job_id}#interview` : "/find-work?tab=interviews", "Offer times") + add("request", todays, "Interviews today", "/find-work?tab=interviews", "Join");
   const tests = add("request", testsToTake, "Tests to take", "/find-work?tab=tests", "Take");
   const order = add("order", woAccept.length, "Work Orders to accept", woAccept[0] ? `/orders/${woAccept[0].id}` : "/orders", "Accept");
+  add("shop", sc.offers, "Offers to answer", "/shop?tab=offers", "Answer");
+  add("shop", sc.sales, "Product sales needing you", "/shop?tab=sales", "Open");
   add("settlement", drafts, "Payment requests to submit", APP_HOME.provider.settlement, "Submit");
   add("payment", paidIn, "Payments on the way", APP_HOME.provider.payment, "See");
   add("connect", connect, "Unread messages", "/messages", "Read");
-  return { side, request: { total: requests + interviews + tests, jobs: 0, requests, interviews, tests }, order: { total: order }, settlement: { total: drafts }, payment: { total: paidIn }, connect: { total: connect }, learn: { total: learn }, items };
+  return { side, request: { total: requests + interviews + tests, jobs: 0, requests, interviews, tests }, shop, order: { total: order }, settlement: { total: drafts }, payment: { total: paidIn }, connect: { total: connect }, learn: { total: learn }, items };
 }

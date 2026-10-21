@@ -153,11 +153,11 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
 // ── RA-E002: red counts on the road, the Connect/Learn line, Needs Your Attention ─────────────────────────────
 function buyerBadges(c: AppCounts): Record<string, RoadBadge> {
   const h = APP_HOME.buyer;
-  return { order: { n: c.request.total, href: h.request, label: "Hire" }, approve: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, pay: { n: c.payment.total, href: h.payment, label: "Payments" } };
+  return { find: { n: c.shop.total, href: h.shop, label: "Shop" }, order: { n: c.request.total, href: h.request, label: "Hire" }, approve: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, pay: { n: c.payment.total, href: h.payment, label: "Payments" } };
 }
 function providerBadges(c: AppCounts): Record<string, RoadBadge> {
   const h = APP_HOME.provider;
-  return { sell: { n: c.request.total, href: h.request, label: "Jobs" }, deliver: { n: c.order.total, href: h.order, label: "Orders" }, request: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, paid: { n: c.payment.total, href: h.payment, label: "Payments" } };
+  return { sell: { n: c.request.total + c.shop.total, href: c.request.total || !c.shop.total ? h.request : h.shop, label: "Jobs and Shop" }, deliver: { n: c.order.total, href: h.order, label: "Orders" }, request: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, paid: { n: c.payment.total, href: h.payment, label: "Payments" } };
 }
 const Red = ({ n }: { n: number }) => (n > 0 ? <span className="ml-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[#D92D20] px-1 text-[11px] font-extrabold text-white">{n}</span> : null);
 
