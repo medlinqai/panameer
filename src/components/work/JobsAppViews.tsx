@@ -6,6 +6,8 @@ import { dailyConfigured } from "@/lib/daily";
 import { TodaysInterviews, WeekSchedule } from "@/components/home/LiveWork";
 import { InterviewCards } from "@/components/work/InterviewCards";
 import { RedDot, StripColumn } from "@/components/home/AppHome";
+import { SliceChips } from "@/components/casing/SliceChips";
+import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
 
 // RA-E006: the provider's JOBS app home — Overview, Interviews, Tests (Find Jobs / Proposal Requests / My Proposals stay the feed).
 const STEP_HREF: Record<string, string> = { requested: "/find-work?tab=invitations", submitted: "/find-work?tab=proposals", shortlisted: "/find-work?tab=proposals", interview: "/find-work?tab=interviews", awarded: "/find-work?tab=proposals", accept: "/orders" };
@@ -53,28 +55,31 @@ export async function JobsOverview({ personId, view }: { personId: string; view:
   );
 }
 
-export async function JobsInterviews({ personId, view }: { personId: string; view: string | null }) {
+export async function JobsInterviews({ personId, view, slice }: { personId: string; view: string | null; slice?: string }) {
   if (view === "week") {
     const week = await weekInterviews("provider", personId);
     return <div className="mx-auto w-full max-w-6xl"><WeekSchedule start={week.start} rows={week.rows} side="provider" backHref="/find-work?tab=interviews" /></div>;
   }
-  const rows = (await listInterviews({ providerPersonId: personId })).filter((r) => ["REQUESTED", "SLOTS_OFFERED", "SCHEDULED"].includes(r.status));
+  const all = (await listInterviews({ providerPersonId: personId })).map((r) => ({ ...r, completed: !["REQUESTED", "SLOTS_OFFERED", "SCHEDULED"].includes(r.status), recurring: null }));
+  const rows = all.filter((r) => inSlice(r, sliceOf(slice)));
   return (
     <section className="mx-auto w-full max-w-6xl py-2" data-jobs-interviews>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="font-display text-[22px] font-bold">Interviews</h1>
         <Link href="/find-work?tab=interviews&view=week" className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View week</Link>
       </div>
-      <div className="mt-3">{rows.length ? <InterviewCards rows={rows} side="provider" videoReady={dailyConfigured()} /> : <p className="text-[13.5px] text-ink-3">No interviews right now.</p>}</div>
+      <div className="mt-3"><SliceChips tabKey="jobs-interviews" counts={sliceCounts(all)} base="/find-work?tab=interviews" />{rows.length ? <InterviewCards rows={rows} side="provider" videoReady={dailyConfigured()} /> : <p className="text-[13.5px] text-ink-3">No interviews right now.</p>}</div>
     </section>
   );
 }
 
-export async function JobsTests({ personId }: { personId: string }) {
-  const rows = await providerTests(personId);
+export async function JobsTests({ personId, slice }: { personId: string; slice?: string }) {
+  const all = (await providerTests(personId)).map((t) => ({ ...t, completed: !t.open, recurring: null }));
+  const rows = all.filter((r) => inSlice(r, sliceOf(slice)));
   return (
     <section className="mx-auto w-full max-w-6xl py-2" data-jobs-tests>
       <h1 className="font-display text-[22px] font-bold">Tests</h1>
+      <SliceChips tabKey="jobs-tests" counts={sliceCounts(all)} base="/find-work?tab=tests" />
       {rows.length ? (
         <ul className="mt-2 divide-y divide-line border-y border-line text-[13.5px]">
           {rows.map((t) => (

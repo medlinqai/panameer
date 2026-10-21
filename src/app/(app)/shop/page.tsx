@@ -20,6 +20,8 @@ import { ShopCompare } from "@/components/shop/ShopCompare";
 import { ShopOffers, ShopOrders } from "@/components/shop/ShopLists";
 import { CartView } from "@/components/shop/CartView";
 import { cartFor } from "@/lib/cart";
+import { SliceChips } from "@/components/casing/SliceChips";
+import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
 import { COMPARE_COOKIE, parseCompare, productTypesByCategory, shopCounts, shopOffers, shopOrders, shopPerson, shopSideOf, shopStrip } from "@/lib/shop-app";
 
 export const dynamic = "force-dynamic";
@@ -70,8 +72,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
         {tab === "browse" && <Browse viewer={viewer} f={f} browsing={browsing} compareIds={compareIds} />}
         {tab === "compare" && <CompareTab viewer={viewer} ids={compareIds} />}
         {tab === "cart" && <CartTab viewer={viewer} />}
-        {tab === "offers" && person && <section className="py-4"><h2 className="mb-2 text-[22px] font-bold">Offers</h2><ShopOffers rows={await shopOffers(viewer, person.id, side)} side={side} /></section>}
-        {(tab === "purchases" || tab === "sales") && person && <OrdersTab viewer={viewer} personId={person.id} side={side} step={f.step ?? null} />}
+        {tab === "offers" && person && <OffersTab viewer={viewer} personId={person.id} side={side} slice={f.slice} />}
+        {(tab === "purchases" || tab === "sales") && person && <OrdersTab viewer={viewer} personId={person.id} side={side} step={f.step ?? null} slice={f.slice} />}
       </div>
     </div>
   );
@@ -212,13 +214,28 @@ async function CartTab({ viewer }: { viewer: Viewer }) {
   return <section className="py-4"><CartView groups={c.groups} totalCents={c.totalCents} currency={c.currency} hasCompany={c.hasCompany} workRequest={c.workRequest} /></section>;
 }
 
-async function OrdersTab({ viewer, personId, side, step }: { viewer: Viewer; personId: string; side: "buyer" | "seller"; step: string | null }) {
+async function OffersTab({ viewer, personId, side, slice }: { viewer: Viewer; personId: string; side: "buyer" | "seller"; slice?: string }) {
+  const rows = await shopOffers(viewer, personId, side);
+  const s = sliceOf(slice);
+  return (
+    <section className="py-4">
+      <h2 className="mb-2 text-[22px] font-bold">Offers</h2>
+      <SliceChips tabKey="shop-offers" counts={sliceCounts(rows)} base="/shop?tab=offers" />
+      <ShopOffers rows={rows.filter((r) => inSlice(r, s))} side={side} />
+    </section>
+  );
+}
+
+async function OrdersTab({ viewer, personId, side, step, slice }: { viewer: Viewer; personId: string; side: "buyer" | "seller"; step: string | null; slice?: string }) {
   const rows = await shopOrders(viewer, personId, side);
-  const list = step ? rows.filter((r) => r.step === step) : rows;
+  const s = step ? "all" : sliceOf(slice);
+  const list = (step ? rows.filter((r) => r.step === step) : rows).filter((r) => inSlice(r, s));
+  const tabName = side === "buyer" ? "purchases" : "sales";
   return (
     <section className="py-4">
       <h2 className="mb-2 text-[22px] font-bold">{side === "buyer" ? "Purchases" : "Sales"}{step ? <small className="ml-2 text-[13px] font-semibold text-ink-3">{step} · <Link href={`/shop?tab=${side === "buyer" ? "purchases" : "sales"}`} className="text-magenta-dark underline">all</Link></small> : null}</h2>
-      <ShopOrders rows={list} empty={side === "buyer" ? "No purchases yet." : "No product sales yet."} />
+      <SliceChips tabKey={`shop-${tabName}`} counts={sliceCounts(rows)} base={`/shop?tab=${tabName}`} />
+      <ShopOrders rows={list} side={side} empty={side === "buyer" ? "No purchases yet." : "No product sales yet."} />
     </section>
   );
 }

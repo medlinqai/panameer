@@ -11,6 +11,8 @@ import { TodaysInterviews, WeekSchedule, LiveWorkList } from "@/components/home/
 import { InterviewCards } from "@/components/work/InterviewCards";
 import { NeutralAvatar } from "@/components/Avatar";
 import { RedDot, StripColumn } from "@/components/home/AppHome";
+import { RecurringLine, SliceChips } from "@/components/casing/SliceChips";
+import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Hire · Panameer" };
@@ -19,7 +21,7 @@ const TABS = ["overview", "jobs", "requests", "interviews", "tests"] as const;
 type Tab = (typeof TABS)[number];
 
 // RA-E004/E005: the buyer's Request app home — HIRE | Overview · Jobs · Requests · Interviews · Tests, red counts on each.
-export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string; step?: string; view?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string; step?: string; view?: string; slice?: string }> }) {
   const viewer = await guardPage("canHireTalent");
   const sp = await searchParams;
   const tab: Tab = (TABS as readonly string[]).includes(sp.tab ?? "") ? (sp.tab as Tab) : "overview";
@@ -44,10 +46,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
       </PageTabs>
       <div className="mx-auto w-full max-w-[1010px]">
         {tab === "overview" && <Overview personId={me.id} step={step} view={sp.view ?? null} />}
-        {tab === "jobs" && <JobsTab personId={me.id} step={step} />}
-        {tab === "requests" && <RequestsTab personId={me.id} />}
-        {tab === "interviews" && <InterviewsTab personId={me.id} view={sp.view ?? null} />}
-        {tab === "tests" && <TestsTab personId={me.id} />}
+        {tab === "jobs" && <JobsTab personId={me.id} step={step} slice={sp.slice} />}
+        {tab === "requests" && <RequestsTab personId={me.id} slice={sp.slice} />}
+        {tab === "interviews" && <InterviewsTab personId={me.id} view={sp.view ?? null} slice={sp.slice} />}
+        {tab === "tests" && <TestsTab personId={me.id} slice={sp.slice} />}
       </div>
     </div>
   );
@@ -93,9 +95,10 @@ async function Overview({ personId, step, view }: { personId: string; step: stri
   );
 }
 
-async function JobsTab({ personId, step }: { personId: string; step: string | null }) {
+async function JobsTab({ personId, step, slice }: { personId: string; step: string | null; slice?: string }) {
   const { jobRows } = await buyerHireTabs(personId);
-  const list = step ? jobRows.filter((j) => j.step === step) : jobRows;
+  const s = sliceOf(slice);
+  const list = (step ? jobRows.filter((j) => j.step === step) : jobRows).filter((j) => inSlice(j, s));
   const recent = list.filter((j) => !j.old);
   const older = list.filter((j) => j.old);
   const Row = ({ j }: { j: (typeof jobRows)[number] }) => (
@@ -105,8 +108,9 @@ async function JobsTab({ personId, step }: { personId: string; step: string | nu
         <Link href={`/work-requests/${j.id}`} className="block truncate text-[14.5px] font-bold hover:underline">{j.title}</Link>
         <p className="text-[12.5px] text-ink-2">{[j.ref, j.posted ? `posted ${new Date(j.posted).toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" })}` : null, j.proposals ? `${j.proposals}${j.due ? ` · due ${j.due}` : ""}` : null].filter(Boolean).join(" · ")}</p>
         {(j.rates || j.booked) && <p className="text-[12.5px] text-ink-2">{[j.rates ? `Proposed ${j.rates}${j.range ? ` vs ${j.range}` : ""}` : null, j.booked].filter(Boolean).join(" · ")}</p>}
+        {j.recurring && <RecurringLine r={j.recurring} />}
       </div>
-      {j.action && <Link href={j.action.href} className="inline-flex min-h-9 shrink-0 items-center bg-ink px-3.5 text-[13px] font-bold text-surface hover:bg-ink-hover">{j.action.label}</Link>}
+      {j.completed ? <Link href="/hire" className="inline-flex min-h-9 shrink-0 items-center border border-ink px-3.5 text-[13px] font-semibold hover:bg-bg-soft" data-hire-again>Hire Again</Link> : j.action && <Link href={j.action.href} className="inline-flex min-h-9 shrink-0 items-center bg-ink px-3.5 text-[13px] font-bold text-surface hover:bg-ink-hover">{j.action.label}</Link>}
     </li>
   );
   return (
@@ -115,6 +119,7 @@ async function JobsTab({ personId, step }: { personId: string; step: string | nu
         <h2 className="text-[22px] font-bold">Jobs{step ? <small className="ml-2 text-[13px] font-semibold text-ink-3">at this step · <Link href="/hire/overview?tab=jobs" className="text-magenta-dark underline">all</Link></small> : null}</h2>
         <Link href="/hire" className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Post a Job</Link>
       </div>
+      <SliceChips tabKey="hire-jobs" counts={sliceCounts(jobRows)} base={step ? `/hire/overview?tab=jobs&step=${step}` : "/hire/overview?tab=jobs"} />
       {recent.length ? <ul className="mt-2 divide-y divide-line border-y border-line">{recent.map((j) => <Row key={j.id} j={j} />)}</ul> : <p className="mt-3 text-[13.5px] text-ink-3">No jobs{step ? " at this step" : " yet"}.</p>}
       {older.length > 0 && (
         <details className="mt-3">
@@ -126,17 +131,20 @@ async function JobsTab({ personId, step }: { personId: string; step: string | nu
   );
 }
 
-async function RequestsTab({ personId }: { personId: string }) {
-  const { requestRows } = await buyerHireTabs(personId);
+async function RequestsTab({ personId, slice }: { personId: string; slice?: string }) {
+  const { requestRows: all } = await buyerHireTabs(personId);
+  const s = sliceOf(slice);
+  const requestRows = all.filter((r) => inSlice(r, s));
   return (
     <section className="py-4" data-requests-tab>
       <h2 className="text-[22px] font-bold">Work Requests</h2>
+      <SliceChips tabKey="hire-requests" counts={sliceCounts(all)} base="/hire/overview?tab=requests" />
       {requestRows.length ? (
         <ul className="mt-2 divide-y divide-line border-y border-line text-[13.5px]">
           {requestRows.map((w) => (
             <li key={w.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-              <span className="min-w-0"><b className="font-mono">{w.wr ?? "Work Request"}</b> · {w.who} · <Link href={`/work-requests/${w.jobId}`} className="hover:underline">{w.title}</Link></span>
-              <span className="text-ink-2">{w.step} · {w.approval}{w.wo && <> · <Link href={`/orders/${w.wo.id}`} className="font-semibold text-magenta-dark underline underline-offset-4">{w.wo.number}</Link></>}</span>
+              <span className="min-w-0"><b className="font-mono">{w.wr ?? "Work Request"}</b> · {w.who} · <Link href={`/work-requests/${w.jobId}`} className="hover:underline">{w.title}</Link>{w.recurring && <RecurringLine r={w.recurring} />}</span>
+              <span className="text-ink-2">{w.completed ? "Completed" : w.step} · {w.approval}{w.wo && <> · <Link href={`/orders/${w.wo.id}`} className="font-semibold text-magenta-dark underline underline-offset-4">{w.wo.number}</Link></>}{w.completed && <> · <Link href={`/hire/terms?job=${w.jobId}&provider=${w.providerPersonId}`} className="font-semibold text-magenta-dark underline underline-offset-4" data-hire-again>Hire Again</Link></>}</span>
             </li>
           ))}
         </ul>
@@ -145,28 +153,32 @@ async function RequestsTab({ personId }: { personId: string }) {
   );
 }
 
-async function InterviewsTab({ personId, view }: { personId: string; view: string | null }) {
+async function InterviewsTab({ personId, view, slice }: { personId: string; view: string | null; slice?: string }) {
   if (view === "week") {
     const week = await weekInterviews("buyer", personId);
     return <WeekSchedule start={week.start} rows={week.rows} side="buyer" backHref="/hire/overview?tab=interviews" />;
   }
-  const rows = (await listInterviews({ buyerPersonId: personId })).filter((r) => ["REQUESTED", "SLOTS_OFFERED", "SCHEDULED"].includes(r.status));
+  const all = (await listInterviews({ buyerPersonId: personId })).map((r) => ({ ...r, completed: !["REQUESTED", "SLOTS_OFFERED", "SCHEDULED"].includes(r.status), recurring: null }));
+  const s = sliceOf(slice);
+  const rows = all.filter((r) => inSlice(r, s)).sort((a, b) => (s === "completed" ? (b.startsAt ?? "").localeCompare(a.startsAt ?? "") : 0));
   return (
     <section className="py-4" data-interviews-tab>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-[22px] font-bold">Interviews</h2>
         <Link href="/hire/overview?tab=interviews&view=week" className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View week</Link>
       </div>
-      <div className="mt-3">{rows.length ? <InterviewCards rows={rows} side="buyer" videoReady={dailyConfigured()} /> : <p className="text-[13.5px] text-ink-3">No open interviews.</p>}</div>
+      <div className="mt-3"><SliceChips tabKey="hire-interviews" counts={sliceCounts(all)} base="/hire/overview?tab=interviews" />{rows.length ? <InterviewCards rows={rows} side="buyer" videoReady={dailyConfigured()} /> : <p className="text-[13.5px] text-ink-3">No interviews here.</p>}</div>
     </section>
   );
 }
 
-async function TestsTab({ personId }: { personId: string }) {
-  const rows = await buyerTests(personId);
+async function TestsTab({ personId, slice }: { personId: string; slice?: string }) {
+  const all = await buyerTests(personId);
+  const rows = all.filter((r) => inSlice(r, sliceOf(slice)));
   return (
     <section className="py-4" data-tests-tab>
       <h2 className="text-[22px] font-bold">Tests</h2>
+      <SliceChips tabKey="hire-tests" counts={sliceCounts(all)} base="/hire/overview?tab=tests" />
       {rows.length ? (
         <ul className="mt-2 divide-y divide-line border-y border-line text-[13.5px]">
           {rows.map((t) => (

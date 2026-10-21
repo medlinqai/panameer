@@ -139,12 +139,12 @@ export async function weekInterviews(side: "buyer" | "provider", personId: strin
 }
 
 // ── RA-E005: the HIRE app's Jobs / Requests / Tests tabs ──────────────────────────────────────────────────────
-export type JobTabRow = WorkRow & { proposals: string | null; rates: string | null; range: string | null; booked: string | null; needsAction: boolean };
+export type JobTabRow = WorkRow & { completed: boolean; recurring: import("@/lib/slices").Recurring | null; proposals: string | null; rates: string | null; range: string | null; booked: string | null; needsAction: boolean };
 const usd = (c: number) => `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
 export async function buyerHireTabs(personId: string) {
   const now = new Date();
-  const jobs = await prisma.job.findMany({ where: { buyer_person_id: personId, status: { in: ["DRAFT", "OPEN", "FILLED"] }, updated_at: { gte: new Date(now.getTime() - 90 * DAY) } }, orderBy: { created_at: "desc" }, take: 60, select: { id: true, budget_min_cents: true, budget_max_cents: true, budget_type: true } });
+  const jobs = await prisma.job.findMany({ where: { buyer_person_id: personId, status: { in: ["DRAFT", "OPEN", "FILLED", "CLOSED", "CANCELED"] }, updated_at: { gte: new Date(now.getTime() - 180 * DAY) } }, orderBy: { created_at: "desc" }, take: 80, select: { id: true, budget_min_cents: true, budget_max_cents: true, budget_type: true } });
   const paths = (await Promise.all(jobs.map((j) => jobPath(j.id)))).filter((p): p is NonNullable<typeof p> => !!p);
   const ids = paths.map((p) => p.job.id);
   const [props, ivs, tests] = await Promise.all([
@@ -152,8 +152,10 @@ export async function buyerHireTabs(personId: string) {
     prisma.interviewRequest.groupBy({ by: ["job_id"], where: { job_id: { in: ids }, status: { in: ["REQUESTED", "SLOTS_OFFERED", "SCHEDULED", "COMPLETED"] } }, _count: { _all: true } }),
     prisma.testRequest.groupBy({ by: ["job_id"], where: { job_id: { in: ids } }, _count: { _all: true } }),
   ]);
+  const { orderSlices } = await import("@/lib/slices");
+  const slices = await orderSlices(paths.flatMap((p) => p.orders.map((o) => o.id)));
   const jobRows: JobTabRow[] = [];
-  const requestRows: { id: string; jobId: string; title: string; wr: string | null; who: string; step: string; approval: string; wo: { id: string; number: string } | null }[] = [];
+  const requestRows: { completed: boolean; recurring: import("@/lib/slices").Recurring | null; providerPersonId: string; id: string; jobId: string; title: string; wr: string | null; who: string; step: string; approval: string; wo: { id: string; number: string } | null }[] = [];
   for (const p of paths) {
     const j = jobs.find((x) => x.id === p.job.id)!;
     const mine = props.filter((x) => x.job_id === p.job.id);
@@ -171,7 +173,10 @@ export async function buyerHireTabs(personId: string) {
       : p.orders[0] ? { label: "Open Work Order", href: `/orders/${p.orders[0].id}` } : { label: "Open", href: `/work-requests/${p.job.id}` };
     const iv = ivs.find((x) => x.job_id === p.job.id)?._count._all ?? 0;
     const ts = tests.find((x) => x.job_id === p.job.id)?._count._all ?? 0;
+    const woSl = p.orders.map((o) => slices.get(o.id)).filter((x): x is NonNullable<typeof x> => !!x);
+    const jobDone = ["CLOSED", "CANCELED"].includes(p.job.status) || (woSl.length > 0 && woSl.every((x) => x.completed));
     jobRows.push({
+      completed: jobDone, recurring: woSl.find((x) => x.recurring)?.recurring ?? null,
       id: p.job.id, step, title: p.job.title || "Untitled job", ref: p.job.job_number, who: null, posted: postedAt.toISOString(), days: daysSince(lastDone),
       due: p.event ? short(p.event.deadline_at) : null, action, old: daysSince(postedAt) > 5 && !submitted,
       proposals: p.event ? `${p.event.proposalRequests.filter((r) => r.bid && !["DRAFT", "WITHDRAWN"].includes(r.bid.status)).length} of ${asked} in` : mine.length ? `${mine.length} in` : null,
@@ -182,7 +187,8 @@ export async function buyerHireTabs(personId: string) {
     });
     for (const w of p.wrs) for (const l of w.lines) {
       const wo = p.orders.find((o) => o.id === l.work_order_id);
-      requestRows.push({ id: `${w.id}:${l.provider_person_id}`, jobId: p.job.id, title: p.job.title, wr: w.wr_number, who: p.numberOf(l.provider_person_id!), step: wo ? "Work Order Created" : w.approved_at ? "Approval" : "Award", approval: w.approved_at ? "Auto-approved" : w.status === "PENDING_APPROVAL" ? "Waiting" : "—", wo: wo ? { id: wo.id, number: wo.order_number } : null });
+      const sl = wo ? slices.get(wo.id) : null;
+      requestRows.push({ completed: !!sl?.completed, recurring: sl?.recurring ?? null, providerPersonId: l.provider_person_id!, id: `${w.id}:${l.provider_person_id}`, jobId: p.job.id, title: p.job.title, wr: w.wr_number, who: p.numberOf(l.provider_person_id!), step: wo ? "Work Order Created" : w.approved_at ? "Approval" : "Award", approval: w.approved_at ? "Auto-approved" : w.status === "PENDING_APPROVAL" ? "Waiting" : "—", wo: wo ? { id: wo.id, number: wo.order_number } : null });
     }
   }
   return { jobRows, requestRows };
@@ -197,7 +203,8 @@ export async function buyerTests(personId: string) {
   const skills = await prisma.skill.findMany({ where: { id: { in: rows.map((r) => r.lines[0]?.skill_id).filter((x): x is string => !!x) } }, select: { id: true, name: true } });
   return rows.map((r) => {
     const res = r.response?.lines[0];
-    return { id: r.id, jobId: r.job_id, who: providerLabel(nums.get(profiles.find((p) => p.person_id === r.provider_person_id)?.id ?? "")), skill: skills.find((s) => s.id === r.lines[0]?.skill_id)?.name ?? "Certification test", sent: short(r.created_at), score: res?.score ?? null, result: res?.passed == null ? (r.status === "COMPLETED" ? "Completed" : r.status === "DECLINED" ? "Declined" : "Pending") : res.passed ? "Pass" : "Fail" };
+    const completed = res?.passed != null || ["COMPLETED", "DECLINED", "EXPIRED"].includes(r.status);
+    return { completed, recurring: null, providerPersonId: r.provider_person_id, id: r.id, jobId: r.job_id, who: providerLabel(nums.get(profiles.find((p) => p.person_id === r.provider_person_id)?.id ?? "")), skill: skills.find((s) => s.id === r.lines[0]?.skill_id)?.name ?? "Certification test", sent: short(r.created_at), score: res?.score ?? null, result: res?.passed == null ? (r.status === "COMPLETED" ? "Completed" : r.status === "DECLINED" ? "Declined" : "Pending") : res.passed ? "Pass" : "Fail" };
   });
 }
 

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ShopOfferRow, ShopOrderRow, ShopSide } from "@/lib/shop-app";
 import { RedDot } from "@/components/home/AppHome";
+import { RecurringLine } from "@/components/casing/SliceChips";
 
 // SA-E006: Offers (thread per product: amount, counter, status, respond-by, Accept / Counter / Decline) and Purchases / Sales.
 const usd = (c: number | null) => (c == null ? "—" : `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}`);
@@ -58,7 +59,7 @@ export function ShopOffers({ rows, side }: { rows: ShopOfferRow[]; side: ShopSid
   );
 }
 
-export function ShopOrders({ rows, empty }: { rows: ShopOrderRow[]; empty: string }) {
+export function ShopOrders({ rows, empty, side = "buyer" }: { rows: ShopOrderRow[]; empty: string; side?: ShopSide }) {
   if (!rows.length) return <p className="py-6 text-[14px] text-ink-3">{empty}</p>;
   return (
     <ul className="divide-y divide-line border-y border-line" data-shop-orders>
@@ -67,9 +68,10 @@ export function ShopOrders({ rows, empty }: { rows: ShopOrderRow[]; empty: strin
           {o.needsAction ? <RedDot /> : <span className="w-2.5" />}
           <div className="min-w-0 flex-1">
             <p className="truncate text-[14.5px] font-bold">{o.product}</p>
-            <p className="text-[12.5px] text-ink-2"><span className="font-mono">{o.number}</span> · {o.who} · {usd(o.amountCents)} · {o.date} · <b className="text-ink">{o.step}</b></p>
+            <p className="text-[12.5px] text-ink-2"><span className="font-mono">{o.number}</span> · {o.who} · {usd(o.amountCents)} · {o.date} · <b className="text-ink">{o.completed ? "Completed" : o.step}</b></p>
+            {o.recurring && <RecurringLine r={o.recurring} />}
           </div>
-          {o.action && <Link href={o.action.href} className={o.needsAction ? BTN : GHOST}>{o.action.label}</Link>}
+          {o.completed ? (side === "buyer" && o.productId ? <Link href={`/cart?add=${o.productId}`} className={GHOST} data-reorder>Reorder</Link> : <Link href={`/orders/${o.id}`} className={GHOST}>Open</Link>) : o.action && <Link href={o.action.href} className={o.needsAction ? BTN : GHOST}>{o.action.label}</Link>}
         </li>
       ))}
     </ul>

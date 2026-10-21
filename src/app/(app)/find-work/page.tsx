@@ -12,7 +12,7 @@ export const metadata = { title: "Find Work · Panameer" };
 export default async function FindWorkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string; view?: string } & WorkFilters>;
+  searchParams: Promise<{ tab?: string; q?: string; view?: string; slice?: string } & WorkFilters>;
 }) {
   await guardPage("canProvideServices");
   const viewer = await getSessionViewer();
@@ -39,8 +39,8 @@ export default async function FindWorkPage({
 
   // RA-E006: no tab = the JOBS Overview; Interviews and Tests are their own views.
   if (profile && !sp.tab && !query && (!Object.keys(sp).length || sp.view)) return <>{notLive}<JobsOverview personId={profile.person_id} view={sp.view ?? null} /></>;
-  if (profile && sp.tab === "interviews") return <JobsInterviews personId={profile.person_id} view={sp.view ?? null} />;
-  if (profile && sp.tab === "tests") return <JobsTests personId={profile.person_id} />;
+  if (profile && sp.tab === "interviews") return <JobsInterviews personId={profile.person_id} view={sp.view ?? null} slice={sp.slice} />;
+  if (profile && sp.tab === "tests") return <JobsTests personId={profile.person_id} slice={sp.slice} />;
 
   const cards = await getWorkFeed({
     tab,

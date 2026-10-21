@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { providerLabel, providerNumbers, identityVisibleTo } from "@/lib/provider-number";
 import type { Viewer } from "@/lib/access";
+import { orderSlices, type Recurring } from "@/lib/slices";
 
 // SA: Shop as an app — buyer SHOP | Overview · Browse · Compare · Cart · Offers · Purchases; seller Overview · Browse · My Products · Offers · Sales.
 export type ShopSide = "buyer" | "seller";
@@ -65,7 +66,7 @@ export async function shopCounts(personId: string, side: ShopSide) {
 export const parseCompare = (raw: string | undefined) => (raw ?? "").split(",").filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 3);
 
 // ── SA-E006: Offers / Purchases / Sales ───────────────────────────────────────────────────────────────────────
-export type ShopOfferRow = { id: string; number: string; productId: string | null; product: string; listCents: number | null; amountCents: number; counterCents: number | null; status: string; respondBy: string | null; who: string; needsAction: boolean; createdAt: string };
+export type ShopOfferRow = { completed: boolean; recurring: null; id: string; number: string; productId: string | null; product: string; listCents: number | null; amountCents: number; counterCents: number | null; status: string; respondBy: string | null; who: string; needsAction: boolean; createdAt: string };
 
 export async function shopOffers(viewer: Viewer, personId: string, side: ShopSide): Promise<ShopOfferRow[]> {
   const rows = await prisma.serviceProductOffer.findMany({ where: { ...(side === "buyer" ? { buyer_person_id: personId } : { provider_person_id: personId }), service_product_id: { not: null } }, orderBy: { created_at: "desc" }, take: 100 });
@@ -90,11 +91,12 @@ export async function shopOffers(viewer: Viewer, personId: string, side: ShopSid
       id: r.id, number: r.offer_number, productId: r.service_product_id, product: prod?.title ?? "(removed)", listCents: prod?.price_cents ?? null, amountCents: r.amount_cents, counterCents: r.counter_amount_cents,
       status: r.status, respondBy: respondBy ? short(respondBy) : null, who: who(side === "buyer" ? r.provider_person_id : r.buyer_person_id),
       needsAction: side === "buyer" ? r.status === "COUNTERED" : r.status === "OPEN", createdAt: short(r.created_at),
+      completed: r.status !== "OPEN" && r.status !== "COUNTERED", recurring: null,
     };
   });
 }
 
-export type ShopOrderRow = { id: string; number: string; product: string; who: string; step: string; status: string; amountCents: number; needsAction: boolean; action: { label: string; href: string } | null; date: string };
+export type ShopOrderRow = { completed: boolean; recurring: Recurring | null; productId: string | null; id: string; number: string; product: string; who: string; step: string; status: string; amountCents: number; needsAction: boolean; action: { label: string; href: string } | null; date: string };
 const STEP_OF = (status: string, billed: boolean, paid: boolean) => (paid ? "Paid" : billed ? "Delivered" : (RELEASED as readonly string[]).includes(status) || status === "CLOSED" ? "Work Order" : "Work Order");
 
 export async function shopOrders(viewer: Viewer, personId: string, side: ShopSide): Promise<ShopOrderRow[]> {
@@ -112,6 +114,7 @@ export async function shopOrders(viewer: Viewer, personId: string, side: ShopSid
     side === "buyer" ? identityVisibleTo(viewer, others) : Promise.resolve(new Set<string>()),
   ]);
   const nums = await providerNumbers(profiles.map((p) => p.id));
+  const slices = await orderSlices(ids);
   return orders.map((o) => {
     const mine = prs.filter((p) => p.work_order_id === o.id);
     const billed = mine.some((p) => ["SUBMITTED", "APPROVED", "PAID"].includes(p.status));
@@ -130,7 +133,8 @@ export async function shopOrders(viewer: Viewer, personId: string, side: ShopSid
       if (o.status === "ISSUED" && !o.provider_accepted_at) { action = { label: "Accept", href: `/orders/${o.id}` }; needs = true; }
       else if ((RELEASED as readonly string[]).includes(o.status) && !billed) { action = { label: "Deliver & request payment", href: `/orders/${o.id}?tab=settlements` }; needs = true; }
     }
-    return { id: o.id, number: o.order_number, product, who, step: STEP_OF(o.status, billed, paid), status: o.status, amountCents: amount, needsAction: needs, action: action ?? { label: "Open", href: `/orders/${o.id}` }, date: short(o.created_at) };
+    const sl = slices.get(o.id);
+    return { completed: !!sl?.completed || (paid && !sl?.recurring), recurring: sl?.recurring ?? null, productId: o.lines.find((l) => l.service_product_id)?.service_product_id ?? null, id: o.id, number: o.order_number, product, who, step: STEP_OF(o.status, billed, paid), status: o.status, amountCents: amount, needsAction: needs, action: action ?? { label: "Open", href: `/orders/${o.id}` }, date: short(o.created_at) };
   });
 }
 
