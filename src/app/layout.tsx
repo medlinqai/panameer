@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono, Comfortaa, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -52,7 +53,7 @@ export default function RootLayout({
     >
       <head>
         {/* J2.4 WS-B (E021) — resolve the theme BEFORE first paint. */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        <Script id="theme-boot" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
       {/* `min-h-dvh` so a `flex-1` frame fills what is left under DevBanner (E020). */}
       <body className="min-h-dvh flex flex-col">
