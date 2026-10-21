@@ -120,14 +120,14 @@ export default async function Page({
   ];
 
   return (
-    <div className="mx-auto w-full max-w-4xl" data-work-request-page>
+    <div className="pm-white-page mx-auto w-full min-w-0 max-w-4xl" data-work-request-page>
       <BackLink href="/hire/jobs" label="My Jobs" />
 
       {/* DB-E006 · 1 Header */}
       <header className="mt-2 rounded-brand border border-line bg-white p-4 sm:p-5" data-wr-header>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-mono text-[12.5px] font-semibold text-ink-2">{[sec.jobNumber, sec.latestWr].filter(Boolean).join(" · ") || "Job"}</p>
+            <p className="break-all font-mono text-[12.5px] font-semibold text-ink-2">{[sec.jobNumber, sec.latestWr].filter(Boolean).join(" · ") || "Job"}</p>
             <h1 className="font-display text-[24px] font-bold tracking-[-0.4px] sm:text-[28px]">{detail.title.trim() || "Untitled job"}</h1>
             <p className="mt-1 text-[13.5px] text-ink-2">
               {[detail.roleName, posted && detail.postedAt ? `Posted ${detail.postedAt.slice(0, 10)}` : null, sec.provider ? `Provider ${sec.provider.replace(/^Provider /, "")}` : null].filter(Boolean).join(" · ")}

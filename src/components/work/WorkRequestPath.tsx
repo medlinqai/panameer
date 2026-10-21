@@ -15,7 +15,7 @@ export async function WorkRequestPath({ jobId }: { jobId: string }) {
       <h2 className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">
         Work Request Path · {job.job_number ?? "Job"}{awarded && wrs[0].wr_number ? ` · ${wrs.map((w) => w.wr_number).filter(Boolean).join(", ")}` : ""}
       </h2>
-      <ol className="mt-3 flex flex-wrap gap-x-1 gap-y-4">
+      <div className="-mx-1 overflow-x-auto pb-1" data-path-scroll><ol className="mt-3 flex min-w-max gap-x-1 px-1">
         {shown.map((s) => {
           const skipped = s.optional && !s.done && awarded;
           const isCurrent = s.key === current;
@@ -42,7 +42,7 @@ export async function WorkRequestPath({ jobId }: { jobId: string }) {
             </li>
           );
         })}
-      </ol>
+      </ol></div>
       {awarded && (
         <ul className="mt-4 border-t border-line pt-2 text-[13px]" data-path-work-requests>
           {wrs.flatMap((w) => w.lines.map((l) => {
