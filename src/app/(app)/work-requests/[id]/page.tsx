@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { WorkRequestPath } from "@/components/work/WorkRequestPath";
-import { Fact, GREEN, MUTED, ROW_RULE, Section, BTN_OUT } from "@/components/hire/HireUI";
+import { Fact, GREEN, MUTED, ROW_RULE, Section, BTN_OUT, StatePill, stepState } from "@/components/hire/HireUI";
 import { ProposalActions } from "@/components/work/ProposalActions";
 import { jobPath } from "@/lib/work-request-path";
 import { certificationTestForSkill } from "@/lib/certification-tests";
@@ -111,6 +111,9 @@ export default async function Page({
   const per = sd?.budgetType === "FIXED" ? "" : "/hr";
   const rangeText = sd && (sd.budgetMin != null || sd.budgetMax != null) ? `${sd.budgetMin != null ? `$${sd.budgetMin}` : "…"}–${sd.budgetMax != null ? `$${sd.budgetMax}` : "…"}${per}` : null;
   const empty = (t: string) => <p className={MUTED}>{t}</p>;
+  // HB-E002: one magenta button per screen — Award on the top-ranked open proposal (lowest rate), the others ink outline.
+  const ranked = proposals.filter((p) => p.status !== "AWARDED" && p.status !== "DECLINED" && p.rate).sort((a, b) => a.rate!.unitPriceCents - b.rate!.unitPriceCents);
+  const topProposalId = ranked[0]?.id ?? null;
   const eyebrow = [sec.jobNumber, sec.header.workRequest, sec.header.origin?.toUpperCase()].filter(Boolean).join(" · ");
 
   return (
@@ -125,7 +128,7 @@ export default async function Page({
             {awarded && erpReturned && <p className="mt-1 text-[12.5px] text-state-inactive">Returned to ERP — waiting for the PO</p>}
           </div>
           <div className="flex items-center gap-2.5">
-            <span className="rounded-[14px] bg-[#fbeafb] px-3 py-1.5 text-[12px] font-bold text-magenta-dark" data-status-pill>{currentLabel}</span>
+            <StatePill state={stepState(path?.current, { draft: detail.status === "DRAFT", closed: ["CLOSED", "CANCELED"].includes(detail.status), completed: detail.status === "FILLED" })}>{currentLabel}</StatePill>
             <ActionsMenu items={actions} />
           </div>
         </div>
@@ -178,6 +181,7 @@ export default async function Page({
 
       <Section title="Proposals" right={sourcing ? <Link href={`/hire/sourcing/${sourcing.id}`}>Compare</Link> : null}>
         {proposals.length ? proposals.map((p) => {
+          const primary = p.id === topProposalId;
           const x = sec.proposalExtra(p.providerPersonId);
           return (
             <div key={p.id} className={`flex flex-wrap items-center gap-3.5 py-3.5 ${ROW_RULE}`} data-proposal-row>
@@ -186,7 +190,7 @@ export default async function Page({
                 <div className="text-[15px] font-bold">{[p.providerName.replace(/^Provider /, ""), p.rate ? `${formatCents(p.rate.unitPriceCents)}${p.rate.basis === "RATE" ? "/hr" : " fixed"}` : "no rate", x.start ? `start ${x.start}` : null].filter(Boolean).join(" · ")}</div>
                 <div className="mt-0.5 text-[13px] text-state-inactive">{[x.summary || null, p.coverNote ? `“${p.coverNote.slice(0, 120)}”` : "no note"].filter(Boolean).join(" · ")}</div>
               </div>
-              <ProposalActions jobId={detail.id} providerPersonId={p.providerPersonId} testId={testId} awarded={p.status === "AWARDED"} interviewStatus={p.interviewStatus} testStatus={p.testStatus} />
+              <ProposalActions jobId={detail.id} providerPersonId={p.providerPersonId} testId={testId} awarded={p.status === "AWARDED"} interviewStatus={p.interviewStatus} testStatus={p.testStatus} primary={primary} />
             </div>
           );
         }) : empty(posted ? "No proposals yet. They show here as providers respond." : "No proposals yet — a Job takes proposals once it is posted.")}

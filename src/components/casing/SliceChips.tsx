@@ -50,7 +50,7 @@ export function RecurringLine({ r }: { r: { orderId: string; next: string; event
   };
   return (
     <span className="mt-1 flex flex-wrap items-center gap-2 text-[12.5px]" data-recurring>
-      <span className="rounded-full bg-[#fbeafb] px-2 font-semibold text-magenta-dark">{r.paused ? "Paused" : `Next ${r.next}`}</span>
+      <span className={r.paused ? "rounded-full bg-state-inactive-bg px-2 font-semibold text-state-inactive" : "rounded-full bg-state-pending-bg px-2 font-semibold text-state-pending"}>{r.paused ? "Paused" : `Next ${r.next}`}</span>
       <span className="text-ink-2">{r.event} · ${(r.amountCents / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}</span>
       <button type="button" disabled={busy} onClick={() => act(r.paused ? "RELEASE_HOLD" : "HOLD")} className="font-semibold underline underline-offset-4 disabled:opacity-40">{r.paused ? "Resume" : "Pause"}</button>
       <button type="button" disabled={busy} onClick={() => act("CLOSE")} className="font-semibold underline underline-offset-4 disabled:opacity-40">End</button>

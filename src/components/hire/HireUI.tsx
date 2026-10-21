@@ -11,6 +11,20 @@ export const MUTED = "text-[14px] text-state-disabled";
 export const GREEN = "text-state-accepted";
 export const ROW_RULE = "border-b border-state-sunken";
 
+/** HB-E002: a state is always a word + a colour; pills are never magenta. */
+export type UiState = "accepted" | "pending" | "declined" | "inactive";
+export const STATE_PILL: Record<UiState, string> = {
+  accepted: "rounded-[14px] bg-state-accepted-bg px-3 py-1.5 text-[12px] font-bold text-state-accepted",
+  pending: "rounded-[14px] bg-state-pending-bg px-3 py-1.5 text-[12px] font-bold text-state-pending",
+  declined: "rounded-[14px] bg-state-declined-bg px-3 py-1.5 text-[12px] font-bold text-state-declined",
+  inactive: "rounded-[14px] bg-state-inactive-bg px-3 py-1.5 text-[12px] font-bold text-state-inactive",
+};
+export const STATE_TEXT: Record<UiState, string> = { accepted: "text-state-accepted", pending: "text-state-pending", declined: "text-state-declined", inactive: "text-state-inactive" };
+/** A path step's state: done = accepted, the Work Order handoff = accepted, a draft = inactive, anything in flight = pending. */
+export const stepState = (step: string | null | undefined, opts: { draft?: boolean; completed?: boolean; closed?: boolean } = {}): UiState =>
+  opts.closed ? "inactive" : opts.draft ? "inactive" : opts.completed || step === "wo" ? "accepted" : "pending";
+export const StatePill = ({ state, children }: { state: UiState; children: ReactNode }) => <span className={STATE_PILL[state]} data-state-pill={state}>{children}</span>;
+
 export const RedDot = ({ size = 10 }: { size?: number }) => <span aria-label="needs you" className="inline-block shrink-0 rounded-full bg-state-declined" style={{ width: size, height: size }} />;
 export const RedPill = ({ n }: { n: number }) => (n > 0 ? <span className="rounded-[10px] bg-state-declined px-[7px] py-px text-[11px] font-bold text-white" data-red-count>{n}</span> : null);
 

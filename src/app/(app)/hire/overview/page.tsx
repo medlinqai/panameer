@@ -12,7 +12,7 @@ import { TypeArt } from "@/components/shop/TypeArt";
 import { RecurringLine, SliceChips } from "@/components/casing/SliceChips";
 import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
 import { PATH_STEPS } from "@/lib/work-request-path";
-import { BTN, BTN_OUT, Fact, GREEN, HeadRow, HireTabBar, LABEL, PathBand, RedDot, shortDate, shortWhen, type BandStep } from "@/components/hire/HireUI";
+import { BTN, BTN_OUT, Fact, GREEN, HeadRow, STATE_TEXT, stepState, HireTabBar, LABEL, PathBand, RedDot, shortDate, shortWhen, type BandStep } from "@/components/hire/HireUI";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Hire · Panameer" };
@@ -144,7 +144,7 @@ function CompactJob({ j }: { j: JobTabRow }) {
         <Link href={`/work-requests/${j.id}`} className="block text-[15px] font-bold text-ink hover:underline">{j.title}</Link>
         <div className="mt-0.5 text-[13px] text-state-inactive">{[j.posted ? `Posted ${shortDate(j.posted)}` : null, j.facts.split(" · ").find((x) => x.startsWith("$")), j.origin].filter(Boolean).join(" · ")}</div>
         <div className="mt-1.5 flex flex-wrap items-center gap-2.5 text-[13px]">
-          <span className={`font-bold ${j.needsAction ? "text-magenta" : "text-ink"}`}>{j.completed ? "Completed" : stepLabel(j)}</span>
+          <span className={`font-bold ${STATE_TEXT[stepState(j.step, { completed: j.completed })]}`}>{j.completed ? "Completed" : stepLabel(j)}</span>
           {(j.rates || j.due) && j.step === "proposals" && <span className="text-state-inactive">{[j.rates, j.due ? `due ${j.due}` : null].filter(Boolean).join(" · ")}</span>}
         </div>
         {j.recurring && <RecurringLine r={j.recurring} />}
@@ -216,7 +216,7 @@ function JobArticle({ j }: { j: JobTabRow }) {
           </>
         ) : (
           <>
-            <Fact label="Step"><span className={j.completed ? "" : "text-magenta"}>{j.completed ? "Completed" : PATH_STEPS.find((p) => p.key === j.step)?.label ?? j.step}</span></Fact>
+            <Fact label="Step"><span className={STATE_TEXT[stepState(j.step, { completed: j.completed })]}>{j.completed ? "Completed" : PATH_STEPS.find((p) => p.key === j.step)?.label ?? j.step}</span></Fact>
             <Fact label="Proposals">{j.proposals ?? "—"}</Fact>
             <Fact label="Rates proposed">{j.rates ?? "—"}{j.rates && j.inRange != null && <span className={`font-medium ${j.inRange ? GREEN : "text-state-declined"}`}> · {j.inRange ? "in range" : "over range"}</span>}</Fact>
             <Fact label="Deadline">{j.deadlineAt ? shortWhen(j.deadlineAt) : "—"}</Fact>

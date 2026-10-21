@@ -362,7 +362,7 @@ async function retainerLine(orderId: string) {
   if (!r) return null;
   return (
     <p className="mt-1 inline-flex flex-wrap items-center gap-2 text-[13px]" data-retainer-next>
-      <span className="rounded-full bg-[#fbeafb] px-2 font-semibold text-magenta-dark">{r.paused ? "Paused" : `Next occurrence ${r.next}`}</span>
+      <span className={r.paused ? "rounded-full bg-state-inactive-bg px-2 font-semibold text-state-inactive" : "rounded-full bg-state-pending-bg px-2 font-semibold text-state-pending"}>{r.paused ? "Paused" : `Next occurrence ${r.next}`}</span>
       <span className="text-ink-2">Next {r.event}: <b className="text-ink">${(r.amountCents / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}</b></span>
     </p>
   );

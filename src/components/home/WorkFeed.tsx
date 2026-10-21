@@ -116,7 +116,7 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
                 <p className="mt-1 text-[13px] text-ink-2">{meta.join(" · ")}</p>
               )}
               {card.myProposal && (
-                <Link href={`/find-work/${card.id}`} data-my-proposal className="mt-2 inline-flex rounded-full border border-magenta-dark bg-[#fbeafb] px-2.5 py-0.5 text-[12.5px] font-semibold text-magenta-dark hover:underline">
+                <Link href={`/find-work/${card.id}`} data-my-proposal className="mt-2 inline-flex rounded-full bg-state-pending-bg px-2.5 py-0.5 text-[12.5px] font-semibold text-state-pending hover:underline">
                   {card.myProposal}
                 </Link>
               )}

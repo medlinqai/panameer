@@ -74,11 +74,12 @@ export function waitingOn(o: { status: WorkOrderStatus; provider_accepted_at?: D
 export const PENDING_ON_LABEL = { BUYER: "Pending Buyer Acceptance", PROVIDER: "Pending Provider Acceptance" } as const;
 
 // Pill tones: magenta = waiting on someone, ink = open/live, grey = finished or not started. No green.
-const QUIET = "bg-ink/[0.05] text-ink-2";
-const WAIT = "border border-magenta text-magenta-dark";
-const LIVE = "bg-ink text-surface";
+// HB-E002: status pills are never magenta — brand state colours (inactive · pending · accepted).
+const QUIET = "bg-state-inactive-bg text-state-inactive";
+const WAIT = "bg-state-pending-bg text-state-pending";
+const LIVE = "bg-state-accepted-bg text-state-accepted";
 
 export const WORK_REQUEST_TONE: Record<WorkRequestStatus, string> = { INCOMPLETE: QUIET, SUBMITTED: WAIT, PENDING_APPROVAL: WAIT, APPROVED: LIVE, ORDERED: LIVE, RETURNED: WAIT, REJECTED: QUIET, WITHDRAWN: QUIET, CANCELLED: QUIET, DRAFT: QUIET, POSTED: QUIET, ASSIGNED: QUIET };
 export const JOB_TONE: Record<JobStatus, string> = { DRAFT: QUIET, OPEN: LIVE, CLOSED: QUIET, FILLED: LIVE, CANCELED: QUIET };
 export const WORK_ORDER_TONE: Record<WorkOrderStatus, string> = { DRAFT: QUIET, ISSUED: WAIT, ACCEPTED: WAIT, RELEASED: LIVE, ACTIVE: LIVE, CLOSED: QUIET, CANCELLED: QUIET, ON_HOLD: WAIT, FINALLY_CLOSED: QUIET };
-export const SETTLEMENT_TONE: Record<PaymentRequestStatus, string> = { DRAFT: QUIET, SUBMITTED: WAIT, APPROVED: LIVE, REJECTED: "bg-rose-50 text-rose-700", PAID: LIVE };
+export const SETTLEMENT_TONE: Record<PaymentRequestStatus, string> = { DRAFT: QUIET, SUBMITTED: WAIT, APPROVED: LIVE, REJECTED: "bg-state-declined-bg text-state-declined", PAID: LIVE };
