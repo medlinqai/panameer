@@ -1655,16 +1655,25 @@ export async function applyProviderSection(
         );
       }
       const certUserId = certOwner.user_id;
+      // HP-E008: one row per name (case-insensitive), and never a self-reported copy of a Panameer-issued certificate.
+      const issued = new Set((await prisma.credential.findMany({ where: { user_id: certUserId, issued_from: "PANAMEER" }, select: { name: true } })).map((c) => c.name.trim().toLowerCase()));
+      const seenNames = new Set<string>();
+      const unique = clean.filter((c) => {
+        const k = `${c.kind}|${c.name.trim().toLowerCase().replace(/\s+/g, " ")}`;
+        if (seenNames.has(k) || issued.has(c.name.trim().toLowerCase())) return false;
+        seenNames.add(k);
+        return true;
+      });
 
       await prisma.$transaction([
         // SCOPED TO THIS PROFILE, NOT TO THE USER. The editor is replacing the
         prisma.credential.deleteMany({
           where: { provider_profile_id: profileId, issued_from: "SELF_REPORTED" },
         }),
-        ...(clean.length
+        ...(unique.length
           ? [
               prisma.credential.createMany({
-                data: clean.map((c) => ({
+                data: unique.map((c) => ({
                   user_id: certUserId,
                   provider_profile_id: profileId,
                   ...c,
