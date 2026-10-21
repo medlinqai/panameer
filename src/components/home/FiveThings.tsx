@@ -1,4 +1,5 @@
 import { BUYER_ROAD, BUYER_ROAD_TITLE, ROAD_TITLE } from "@/lib/user-levels";
+import { BuyerLiveWork, ProviderLiveWork } from "@/components/home/LiveWork";
 import { BuyerThings } from "@/components/home/BuyerThings";
 import { prisma } from "@/lib/prisma";
 import { sellerRegistration } from "@/lib/seller-registration";
@@ -45,13 +46,16 @@ function Card({ t, i }: { t: Thing; i: number }) {
   );
 }
 
-export async function FiveThings({ viewer, firstName, firstVisit = false }: { viewer: Viewer; firstName: string; firstVisit?: boolean }) {
+export async function FiveThings({ viewer, firstName, firstVisit = false, step = null, view = null }: { viewer: Viewer; firstName: string; firstVisit?: boolean; step?: string | null; view?: string | null }) {
+  const me0 = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   const path = await lifecycleForUser(viewer.userId);
   // BD-E002/E005: a buyer's dashboard = greeting · their road · the five cards. Nothing else.
   if (path?.road === "buyer") {
     return (
       <section data-five-things data-buyer-dashboard className="mb-8 font-body text-ink">
         <h1 className="text-[28px] font-extrabold leading-tight sm:text-[32px]">Welcome{firstName ? `, ${firstName}` : ""}.</h1>
+        {/* DB-E002–E004: live work first. */}
+        {me0 && <BuyerLiveWork personId={me0.id} step={step} view={view} />}
         <div data-path-road className="mt-5 rounded-[14px] border border-line bg-surface px-4 py-5 sm:px-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="flex items-center gap-1.5 text-[17px] font-bold">{BUYER_ROAD_TITLE} <LifecycleHelp /></h2>
@@ -83,7 +87,9 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   const reg = me ? await sellerRegistration(me.id) : null;
   // While on the provider road (before Request Payment), the cards become one question with four directions.
-  const onRoad = !!path && path.road === "provider" && path.current < 6;
+  // DB-E005: once live, the provider's live work replaces the onboarding strip.
+  const live = !!reg?.live;
+  const onRoad = !live && !!path && path.road === "provider" && path.current < 6;
   return (
     <section data-five-things className="mb-8 font-body text-ink">
       <h1 className="text-[26px] font-extrabold leading-tight sm:text-[30px]">Welcome{firstName ? `, ${firstName}` : ""}.</h1>
@@ -98,7 +104,8 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
           <p className="mt-2 text-[13.5px] text-ink-2">Learn, Connect and Create What You Sell are open now.</p>
         </div>
       )}
-      {path && !onRoad && (
+      {live && me && <ProviderLiveWork personId={me.id} step={step} view={view} />}
+      {path && !onRoad && !live && (
         <div data-path-bar className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border border-line px-4 py-3">
           <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.1em] text-ink-2">
             YOUR PATH{path.current < path.steps.length ? ` · STEP ${path.current + 1} OF ${path.steps.length}` : " · DONE"}

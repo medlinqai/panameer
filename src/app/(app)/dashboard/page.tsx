@@ -19,7 +19,7 @@ import { CompanyLink } from "@/components/company/CompanyLink";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string; step?: string; view?: string }>;
 }) {
   const viewer = await getSessionViewer();
   if (!viewer) {
@@ -48,7 +48,8 @@ export default async function DashboardPage({
   const firstVisit = providerProfile
     ? !providerProfile.dashboard_seen_at || (!!providerProfile.onboarding_completed_at && providerProfile.dashboard_seen_at < providerProfile.onboarding_completed_at)
     : !!requesterSeen && (!requesterSeen.dashboard_seen_at || (!!requesterSeen.completed_at && requesterSeen.dashboard_seen_at < requesterSeen.completed_at));
-  const first = facts.seller || facts.buyer ? <FiveThings viewer={viewer} firstName={facts.firstName} firstVisit={firstVisit} /> : null;
+  const sp0 = await searchParams;
+  const first = facts.seller || facts.buyer ? <FiveThings viewer={viewer} firstName={facts.firstName} firstVisit={firstVisit} step={sp0.step ?? null} view={sp0.view ?? null} /> : null;
 
   if (providerProfile) {
     const sp = await searchParams;
