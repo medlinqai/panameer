@@ -27,7 +27,7 @@ export async function buyerLiveWork(personId: string) {
   const now = new Date();
   const soon = new Date(now.getTime() + DAY);
   const jobs = await prisma.job.findMany({
-    where: { buyer_person_id: personId, status: { in: ["DRAFT", "OPEN", "FILLED"] }, updated_at: { gte: new Date(now.getTime() - 60 * DAY) } },
+    where: { buyer_person_id: personId, kind: "JOB", status: { in: ["DRAFT", "OPEN", "FILLED"] }, updated_at: { gte: new Date(now.getTime() - 60 * DAY) } },
     orderBy: { created_at: "desc" }, take: 40, select: { id: true },
   });
   const paths = (await Promise.all(jobs.map((j) => jobPath(j.id)))).filter((p): p is NonNullable<typeof p> => !!p);
@@ -144,7 +144,7 @@ const usd = (c: number) => `$${(c / 100).toLocaleString("en-US", { maximumFracti
 
 export async function buyerHireTabs(personId: string) {
   const now = new Date();
-  const jobs = await prisma.job.findMany({ where: { buyer_person_id: personId, status: { in: ["DRAFT", "OPEN", "FILLED", "CLOSED", "CANCELED"] }, updated_at: { gte: new Date(now.getTime() - 180 * DAY) } }, orderBy: { created_at: "desc" }, take: 80, select: { id: true, budget_min_cents: true, budget_max_cents: true, budget_type: true } });
+  const jobs = await prisma.job.findMany({ where: { buyer_person_id: personId, kind: "JOB", status: { in: ["DRAFT", "OPEN", "FILLED", "CLOSED", "CANCELED"] }, updated_at: { gte: new Date(now.getTime() - 180 * DAY) } }, orderBy: { created_at: "desc" }, take: 80, select: { id: true, budget_min_cents: true, budget_max_cents: true, budget_type: true } });
   const paths = (await Promise.all(jobs.map((j) => jobPath(j.id)))).filter((p): p is NonNullable<typeof p> => !!p);
   const ids = paths.map((p) => p.job.id);
   const [props, ivs, tests] = await Promise.all([

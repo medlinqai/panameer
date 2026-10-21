@@ -8835,6 +8835,8 @@ model EstimateRequest {
   status              EstimateRequestStatus @default(OPEN)
   decline_reason      String?
   cost_estimate_id    String?               @db.Uuid
+  /// ES-E001: the Estimate Event this request belongs to (null = an older one-off request).
+  sourcing_event_id   String?               @db.Uuid
   created_at          DateTime              @default(now())
   updated_at          DateTime              @updatedAt
 
@@ -9290,6 +9292,8 @@ model Job {
   id                    String               @id @default(uuid()) @db.Uuid
   /// NB-E002: JB-CODE-YY-######## (the buyer company's sequence).
   job_number            String?
+  /// ES-E001: an ESTIMATE-kind job is the need behind an Estimate Event — never listed in Find Jobs.
+  kind                  JobKind              @default(JOB)
   buyer_person_id       String               @db.Uuid
   p_account_id          String               @db.Uuid
   role_id               String?              @db.Uuid
@@ -9510,6 +9514,8 @@ model SourcingEvent {
   id                   String              @id @default(uuid()) @db.Uuid
   /// SE-{code}-YY-######## via nextNumber("SE", buyer)
   event_number         String              @unique
+  /// ES-E001: one engine, two negotiation types (Oracle Sourcing).
+  type                 SourcingEventType   @default(PROPOSALS)
   job_id               String              @db.Uuid
   created_by_person_id String              @db.Uuid
   deadline_hours       Int                 @default(48)
@@ -9559,4 +9565,16 @@ enum WorkOrderStyle {
   FIXED_PRICE
   PRODUCT
   RETAINER
+}
+
+/// ES-E001: Sourcing Event negotiation types.
+enum SourcingEventType {
+  PROPOSALS
+  ESTIMATES
+}
+
+/// ES-E001: what a Job row holds — a posting (JOB) or the need behind an Estimate Event (ESTIMATE).
+enum JobKind {
+  JOB
+  ESTIMATE
 }

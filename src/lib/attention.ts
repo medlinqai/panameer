@@ -186,6 +186,7 @@ async function countNewMatches(profileId: string): Promise<number> {
   return prisma.job.count({
     where: {
       status: "OPEN",
+      kind: "JOB",
       skills: { some: { skill_id: { in: skillIds } } },
       ...(profile.dashboard_seen_at
         ? { posted_at: { gt: profile.dashboard_seen_at } }

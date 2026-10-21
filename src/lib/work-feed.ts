@@ -141,6 +141,8 @@ export async function getWorkFeed(input: {
   const rows = await prisma.job.findMany({
     where: {
       ...(ids ? { id: { in: ids } } : { status: "OPEN" }),
+      // ES-E001: estimate needs never appear in Find Jobs.
+      kind: "JOB",
       AND: workFilterWhere(input.filters ?? {}),
       ...(input.tab === "us" ? { location_country: { in: ["United States", "USA", "US"] } } : {}),
       ...(input.query

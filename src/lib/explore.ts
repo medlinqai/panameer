@@ -187,6 +187,7 @@ export async function searchWorkTeaser(
   const like = { contains: term, mode: "insensitive" as const };
   const where = {
     status: "OPEN" as const,
+    kind: "JOB" as const,
     ...(term
       ? {
           OR: [

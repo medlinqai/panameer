@@ -27,7 +27,7 @@ export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]
   const scoped = withPAccount(viewer, pAccountId);
 
   const requests = await prisma.job.findMany({
-    where: scopedToPAccount(scoped, {}),
+    where: scopedToPAccount(scoped, { kind: "JOB" as const }),
     orderBy: [{ updated_at: "desc" }],
     select: {
       id: true,

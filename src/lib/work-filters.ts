@@ -37,11 +37,11 @@ export function workFilterWhere(f: WorkFilters): Prisma.JobWhereInput[] {
 
 /** The filter menus, built from posted requests. Skills shows only when the chosen role's requests use skills. */
 export async function workFilterDefs(f: WorkFilters) {
-  const posted: Prisma.JobWhereInput = { status: "OPEN", ...(f.type ? { role_id: f.type } : {}) };
+  const posted: Prisma.JobWhereInput = { status: "OPEN", kind: "JOB", ...(f.type ? { role_id: f.type } : {}) };
   const [skills, countries, types, businessTypes] = await Promise.all([
     prisma.jobPostingSkill.findMany({ where: { job: posted }, distinct: ["skill_id"], select: { skill: { select: { id: true, name: true } } }, take: 200 }),
-    prisma.job.findMany({ where: { status: "OPEN", location_country: { not: null } }, distinct: ["location_country"], select: { location_country: true } }),
-    prisma.job.findMany({ where: { status: "OPEN", role_id: { not: null } }, distinct: ["role_id"], select: { role: { select: { id: true, display: true, name: true } } } }),
+    prisma.job.findMany({ where: { status: "OPEN", kind: "JOB", location_country: { not: null } }, distinct: ["location_country"], select: { location_country: true } }),
+    prisma.job.findMany({ where: { status: "OPEN", kind: "JOB", role_id: { not: null } }, distinct: ["role_id"], select: { role: { select: { id: true, display: true, name: true } } } }),
     prisma.businessType.findMany({ where: { hidden: false, uses_skills: true, commodity_group_id: { not: null } }, orderBy: { sort_order: "asc" }, select: { id: true, name: true } }),
   ]);
   const opts = (r: Record<string, string>) => Object.entries(r).map(([value, label]) => ({ value, label }));

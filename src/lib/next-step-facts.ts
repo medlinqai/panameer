@@ -65,7 +65,7 @@ async function sellerFacts(viewer: Viewer, pp: Pp): Promise<SellerFacts> {
     prisma.providerSkill.findMany({ where: { provider_profile_id: pp.id }, select: { skill_id: true } }),
   ]);
   const matchingRequests = skillIds.length
-    ? await prisma.job.count({ where: { status: "OPEN", skills: { some: { skill_id: { in: skillIds.map((s) => s.skill_id) } } } } })
+    ? await prisma.job.count({ where: { status: "OPEN", kind: "JOB", skills: { some: { skill_id: { in: skillIds.map((s) => s.skill_id) } } } } })
     : null;
 
   let resumeHref = "/join/provider";
