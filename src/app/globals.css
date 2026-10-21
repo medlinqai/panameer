@@ -25,6 +25,19 @@
   --color-line: #e5e7eb;
   --color-bg-soft: #f9fafb;
 
+  /* HB-E001: state colours from the 2027 brand guidelines (slides 5, 6, 8). A state is always a word + a colour. */
+  --color-state-accepted: #1F7A4D;   /* accepted, won, ✓ done, Pass, in range, Responded */
+  --color-state-pending: #C98A00;    /* awaiting response, in review, To confirm, Proposals In */
+  --color-state-declined: #B3261E;   /* declined, expired, failed — and the "needs you" dot / count */
+  --color-state-inactive: #5C6485;   /* draft, closed, n/a, optional / not-yet steps, secondary text */
+  --color-state-accepted-bg: #DEF0E6;
+  --color-state-pending-bg: #FAF0DA;
+  --color-state-declined-bg: #F7E1DF;
+  --color-state-inactive-bg: #E8EAF1;
+  --color-state-border: #C9CDDC;
+  --color-state-sunken: #E8EAF1;
+  --color-state-disabled: #8A90A8;
+
   /* LEARN / HOME PALETTE — measured out of the design PNG, not eyeballed. */
   --color-learn-deep: #1b0d36;
   --color-learn-card: #3d1a5b;
@@ -92,6 +105,18 @@
   --color-bg-soft: #0b0817;
   --color-ink-hover: #ddd9e8;
   --color-surface-hover: #221a3a;
+  /* HB-E001: the same states, lifted for the dark ground. */
+  --color-state-accepted: #5FC08F;
+  --color-state-pending: #E7B44A;
+  --color-state-declined: #F0857C;
+  --color-state-inactive: #A3AACB;
+  --color-state-accepted-bg: #173327;
+  --color-state-pending-bg: #3A2E12;
+  --color-state-declined-bg: #3D1C1A;
+  --color-state-inactive-bg: #262B40;
+  --color-state-border: #3A3F58;
+  --color-state-sunken: #20243A;
+  --color-state-disabled: #7C83A0;
 }
 
 :root[data-theme="dark"] .bg-white {

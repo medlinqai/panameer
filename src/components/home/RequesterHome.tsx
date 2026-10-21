@@ -183,7 +183,7 @@ function ExpertCard({ expert }: { expert: MentorCard }) {
           <span
             className={
               "text-[12.5px] font-semibold " +
-              (expert.validated ? "text-emerald-700" : "text-ink-2/60")
+              (expert.validated ? "text-state-accepted" : "text-ink-2/60")
             }
           >
             {expert.validated ? "✓ Validated" : "Not validated"}

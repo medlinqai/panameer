@@ -111,7 +111,7 @@ export default async function Page() {
                 {/* THE COMPLETE GATE, SAID OUT LOUD ON THE LIST TOO. It reads */}
                 <p className="mt-2.5 text-[13.5px]">
                   {r.completeness.complete ? (
-                    <span className="font-semibold text-emerald-700">
+                    <span className="font-semibold text-state-accepted">
                       ✓ Every line has a provider and a price
                     </span>
                   ) : r.completeness.reason === "NO_LINES" ? (

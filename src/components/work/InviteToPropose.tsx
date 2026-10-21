@@ -184,7 +184,7 @@ export function InviteToPropose({
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold">{p.name}</p>
                       {p.validated && (
-                        <span className="text-[12.5px] font-semibold text-emerald-700">
+                        <span className="text-[12.5px] font-semibold text-state-accepted">
                           ✓ Validated
                         </span>
                       )}

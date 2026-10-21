@@ -77,11 +77,11 @@ export function WhoIsAsking({ identity }: { identity: BuyerIdentity }) {
           return (
             <li key={v.key} className="flex gap-2">
               <Icon
-                className={`mt-[1px] h-4 w-4 shrink-0 ${ok ? "text-emerald-700" : "text-ink-2/70"}`}
+                className={`mt-[1px] h-4 w-4 shrink-0 ${ok ? "text-state-accepted" : "text-ink-2/70"}`}
                 aria-hidden
               />
               <span className="min-w-0 text-[12.5px] leading-relaxed">
-                <b className={ok ? "text-emerald-800" : "text-ink"}>{v.label}</b>
+                <b className={ok ? "text-state-accepted" : "text-ink"}>{v.label}</b>
                 <span className="text-ink-2"> — {v.detail}</span>
               </span>
             </li>

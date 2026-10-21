@@ -57,7 +57,7 @@ export function SelectProposal({
   const { post, busy, error, gateModal } = useHirePost(workRequestId);
   if (selected) {
     return (
-      <p className="mt-3 border-t border-line pt-3 text-[13.5px] font-bold text-emerald-700">
+      <p className="mt-3 border-t border-line pt-3 text-[13.5px] font-bold text-state-accepted">
         Selected for this work.
       </p>
     );

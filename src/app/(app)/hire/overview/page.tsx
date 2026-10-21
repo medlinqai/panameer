@@ -63,7 +63,7 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
   const active = firstNeed >= 0 ? firstNeed : lastBusy;
   const band: BandStep[] = PATH_STEPS.map((s, i) => {
     const c = counts.get(s.key) ?? 0;
-    return { key: s.key, label: s.key === "wo" ? "Work Order" : s.label, top: <span className={`text-[22px] font-extrabold ${c ? (i === active ? "text-magenta" : "text-ink") : "text-[#c9c4d6]"}`}>{c}</span>, bar: i <= active ? "done" : "todo", current: i === active, needs: needs.has(s.key), href: `/hire/overview?tab=jobs&step=${s.key}`, muted: !c && i !== active };
+    return { key: s.key, label: s.key === "wo" ? "Work Order" : s.label, top: <span className={`text-[22px] font-extrabold ${c ? (i === active ? "text-magenta" : "text-ink") : "text-state-border"}`}>{c}</span>, bar: i <= active ? "done" : "todo", current: i === active, needs: needs.has(s.key), href: `/hire/overview?tab=jobs&step=${s.key}`, muted: !c && i !== active };
   });
   const s = sliceOf(slice);
   const rows = tabs.jobRows.filter((j) => inSlice(j, s));
@@ -77,16 +77,16 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
         <div className="min-w-0 flex-[1_1_320px]">
           <span className="text-[12px] font-bold tracking-[0.12em] text-magenta">{dateLabel}</span>
           <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{n ? `${n} thing${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} you today` : "Nothing needs you today"}</h1>
-          <p className="text-[15px] leading-relaxed text-[#5d5768]">{today.sentence}</p>
+          <p className="text-[15px] leading-relaxed text-state-inactive">{today.sentence}</p>
         </div>
         {n > 0 && (
-          <div className="flex min-w-0 flex-[1_1_480px] flex-col border-b border-[#e7e5ec]">
+          <div className="flex min-w-0 flex-[1_1_480px] flex-col border-b border-state-border">
             {today.items.map((it) => (
-              <div key={it.id} className="flex flex-wrap items-center gap-3.5 border-t border-[#e7e5ec] py-4 sm:flex-nowrap" data-today-item={it.kind}>
+              <div key={it.id} className="flex flex-wrap items-center gap-3.5 border-t border-state-border py-4 sm:flex-nowrap" data-today-item={it.kind}>
                 <RedDot />
                 <div className="min-w-0 flex-1">
                   <div className="text-[15px] font-bold">{it.what}</div>
-                  <div className="text-[13px] text-[#5d5768]">{it.detail}</div>
+                  <div className="text-[13px] text-state-inactive">{it.detail}</div>
                 </div>
                 <Link href={it.href} className={`${BTN_OUT} w-full sm:w-auto`}>{it.action}</Link>
               </div>
@@ -100,8 +100,8 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
       <section className="flex flex-wrap items-start gap-12">
         <div className="min-w-0 flex-[999_1_560px]" data-my-jobs>
           <HeadRow title="My Jobs"><SliceChips tabKey="hire-overview-jobs" counts={sliceCounts(tabs.jobRows)} base="/hire/overview" /></HeadRow>
-          {recent.length ? recent.map((j) => <CompactJob key={j.id} j={j} />) : <p className="py-5 text-[14px] text-[#5d5768]">No jobs here. <Link href="/hire">Post a Job</Link> and it shows here with its next step.</p>}
-          <p className="mt-3.5 text-[13px] text-[#5d5768]">Older than 5 days ({older}) · <Link href="/hire/overview?tab=jobs" className="font-semibold">See all jobs</Link></p>
+          {recent.length ? recent.map((j) => <CompactJob key={j.id} j={j} />) : <p className="py-5 text-[14px] text-state-inactive">No jobs here. <Link href="/hire">Post a Job</Link> and it shows here with its next step.</p>}
+          <p className="mt-3.5 text-[13px] text-state-inactive">Older than 5 days ({older}) · <Link href="/hire/overview?tab=jobs" className="font-semibold">See all jobs</Link></p>
         </div>
         <aside className="min-w-0 flex-[1_1_300px]">
           {week ? <WeekSchedule start={week.start} rows={week.rows} side="buyer" backHref="/hire/overview" /> : (
@@ -109,14 +109,14 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
               <HeadRow title="Today's Interviews"><Link href="/hire/overview?view=week" className="text-[13px] font-semibold">View week</Link></HeadRow>
               {w.todays.length ? (
                 <ul>{w.todays.map((iv) => (
-                  <li key={iv.id} className="flex items-center gap-3 border-b border-[#e7e5ec] py-3.5">
+                  <li key={iv.id} className="flex items-center gap-3 border-b border-state-border py-3.5">
                     <b className="w-[64px] shrink-0 text-[14px] tabular-nums">{iv.startsAt ? new Date(iv.startsAt).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) : "—"}</b>
                     <NeutralAvatar size={32} />
-                    <span className="min-w-0 flex-1"><b className="block text-[14px]">{iv.providerLabel}</b><span className="block truncate text-[12.5px] text-[#5d5768]">{iv.jobTitle}</span></span>
+                    <span className="min-w-0 flex-1"><b className="block text-[14px]">{iv.providerLabel}</b><span className="block truncate text-[12.5px] text-state-inactive">{iv.jobTitle}</span></span>
                     {iv.hasRoom ? <a href={`/api/interviews/${iv.id}/join`} target="_blank" rel="noreferrer" className={BTN}>Join</a> : <Link href={`/work-requests/${iv.jobId}#interviews`} className={BTN_OUT}>Open</Link>}
                   </li>
                 ))}</ul>
-              ) : <p className="border-b border-[#e7e5ec] py-5 text-[14px] leading-relaxed text-[#5d5768]">No interviews today. Interviews you schedule from a job&apos;s proposals show here, with a Join link.</p>}
+              ) : <p className="border-b border-state-border py-5 text-[14px] leading-relaxed text-state-inactive">No interviews today. Interviews you schedule from a job&apos;s proposals show here, with a Join link.</p>}
             </>
           )}
           <div className="mt-7 grid grid-cols-2 gap-4">
@@ -138,14 +138,14 @@ const stepLabel = (j: JobTabRow) => {
 
 function CompactJob({ j }: { j: JobTabRow }) {
   return (
-    <div className="flex flex-wrap items-center gap-4 border-b border-[#e7e5ec] py-[18px] sm:flex-nowrap" data-compact-job>
+    <div className="flex flex-wrap items-center gap-4 border-b border-state-border py-[18px] sm:flex-nowrap" data-compact-job>
       <TypeArt category={j.category} size={52} />
       <div className="min-w-0 flex-1">
         <Link href={`/work-requests/${j.id}`} className="block text-[15px] font-bold text-ink hover:underline">{j.title}</Link>
-        <div className="mt-0.5 text-[13px] text-[#5d5768]">{[j.posted ? `Posted ${shortDate(j.posted)}` : null, j.facts.split(" · ").find((x) => x.startsWith("$")), j.origin].filter(Boolean).join(" · ")}</div>
+        <div className="mt-0.5 text-[13px] text-state-inactive">{[j.posted ? `Posted ${shortDate(j.posted)}` : null, j.facts.split(" · ").find((x) => x.startsWith("$")), j.origin].filter(Boolean).join(" · ")}</div>
         <div className="mt-1.5 flex flex-wrap items-center gap-2.5 text-[13px]">
           <span className={`font-bold ${j.needsAction ? "text-magenta" : "text-ink"}`}>{j.completed ? "Completed" : stepLabel(j)}</span>
-          {(j.rates || j.due) && j.step === "proposals" && <span className="text-[#5d5768]">{[j.rates, j.due ? `due ${j.due}` : null].filter(Boolean).join(" · ")}</span>}
+          {(j.rates || j.due) && j.step === "proposals" && <span className="text-state-inactive">{[j.rates, j.due ? `due ${j.due}` : null].filter(Boolean).join(" · ")}</span>}
         </div>
         {j.recurring && <RecurringLine r={j.recurring} />}
       </div>
@@ -167,25 +167,25 @@ async function JobsTab({ personId, step, slice, q }: { personId: string; step: s
   return (
     <div className="flex flex-col gap-5" data-jobs-tab>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="text-[30px] font-extrabold">Jobs{step ? <small className="ml-2 text-[13px] font-semibold text-[#5d5768]">at {PATH_STEPS.find((p) => p.key === step)?.label} · <Link href="/hire/overview?tab=jobs">all</Link></small> : null}</h1>
-        <form action="/hire/overview" className="flex w-full flex-col gap-1 text-[12px] font-semibold text-[#5d5768] sm:w-[360px]">
+        <h1 className="text-[30px] font-extrabold">Jobs{step ? <small className="ml-2 text-[13px] font-semibold text-state-inactive">at {PATH_STEPS.find((p) => p.key === step)?.label} · <Link href="/hire/overview?tab=jobs">all</Link></small> : null}</h1>
+        <form action="/hire/overview" className="flex w-full flex-col gap-1 text-[12px] font-semibold text-state-inactive sm:w-[360px]">
           <input type="hidden" name="tab" value="jobs" />
           <label htmlFor="job-search">Search jobs</label>
-          <input id="job-search" type="search" name="q" defaultValue={q} placeholder="Title, skill or JB number" className="border border-[#c9c4d6] px-3 py-2.5 text-[14px] text-ink" />
+          <input id="job-search" type="search" name="q" defaultValue={q} placeholder="Title, skill or JB number" className="border border-state-border px-3 py-2.5 text-[14px] text-ink" />
         </form>
       </div>
       <div className="flex flex-wrap items-center gap-2 border-b border-ink pb-3">
         <SliceChips tabKey="hire-jobs" counts={sliceCounts(jobRows)} base={step ? `/hire/overview?tab=jobs&step=${step}` : "/hire/overview?tab=jobs"} />
         <span className="flex-1" />
-        <span className="text-[12px] text-[#5d5768]">Sorted by what needs you first</span>
+        <span className="text-[12px] text-state-inactive">Sorted by what needs you first</span>
       </div>
-      {recent.length ? recent.map((j) => <JobArticle key={j.id} j={j} />) : <p className="text-[14px] text-[#5d5768]">No jobs here.</p>}
+      {recent.length ? recent.map((j) => <JobArticle key={j.id} j={j} />) : <p className="text-[14px] text-state-inactive">No jobs here.</p>}
       {older.length > 0 ? (
         <details>
-          <summary className="cursor-pointer text-[13px] text-[#5d5768]">Older than 5 days ({older.length})</summary>
+          <summary className="cursor-pointer text-[13px] text-state-inactive">Older than 5 days ({older.length})</summary>
           <div className="mt-3 flex flex-col gap-5">{older.map((j) => <JobArticle key={j.id} j={j} />)}</div>
         </details>
-      ) : <p className="text-[13px] text-[#5d5768]">Older than 5 days (0)</p>}
+      ) : <p className="text-[13px] text-state-inactive">Older than 5 days (0)</p>}
     </div>
   );
 }
@@ -193,7 +193,7 @@ async function JobsTab({ personId, step, slice, q }: { personId: string; step: s
 function JobArticle({ j }: { j: JobTabRow }) {
   const woStep = j.step === "wo" || j.step === "award" || j.step === "approval";
   return (
-    <article className="flex flex-col gap-3.5 border-b border-[#e7e5ec] pb-[22px] pt-1" data-job-article>
+    <article className="flex flex-col gap-3.5 border-b border-state-border pb-[22px] pt-1" data-job-article>
       <div className="flex flex-wrap items-start gap-4 sm:flex-nowrap">
         <TypeArt category={j.category} size={52} />
         <div className="min-w-0 flex-1">
@@ -201,12 +201,12 @@ function JobArticle({ j }: { j: JobTabRow }) {
             {j.needsAction && <RedDot size={9} />}
             <Link href={`/work-requests/${j.id}`} className="text-[17px] font-bold text-ink hover:underline">{j.title}</Link>
           </div>
-          <div className="mt-1 text-[13px] text-[#5d5768]">{j.facts}{j.origin && !j.facts.includes(j.origin) ? ` · ${j.origin}` : ""}</div>
+          <div className="mt-1 text-[13px] text-state-inactive">{j.facts}{j.origin && !j.facts.includes(j.origin) ? ` · ${j.origin}` : ""}</div>
           {j.recurring && <RecurringLine r={j.recurring} />}
         </div>
         {j.completed ? <Link href="/hire" className={`${BTN_OUT} w-full sm:w-auto`}>Hire Again</Link> : j.action && <Link href={j.action.href} className={`${j.needsAction ? BTN : BTN_OUT} w-full sm:w-auto`}>{j.action.label}</Link>}
       </div>
-      <div className="grid grid-cols-2 gap-4 border border-[#e7e5ec] bg-[#faf9fb] px-4 py-3.5 sm:ml-[68px] sm:grid-cols-4" data-facts-strip>
+      <div className="grid grid-cols-2 gap-4 border border-state-border bg-state-sunken/40 px-4 py-3.5 sm:ml-[68px] sm:grid-cols-4" data-facts-strip>
         {woStep && j.wo ? (
           <>
             <Fact label="Step"><span className="text-ink">{PATH_STEPS.find((p) => p.key === j.step)?.label}</span></Fact>
@@ -218,7 +218,7 @@ function JobArticle({ j }: { j: JobTabRow }) {
           <>
             <Fact label="Step"><span className={j.completed ? "" : "text-magenta"}>{j.completed ? "Completed" : PATH_STEPS.find((p) => p.key === j.step)?.label ?? j.step}</span></Fact>
             <Fact label="Proposals">{j.proposals ?? "—"}</Fact>
-            <Fact label="Rates proposed">{j.rates ?? "—"}{j.rates && j.inRange != null && <span className={`font-medium ${j.inRange ? GREEN : "text-[#d92d20]"}`}> · {j.inRange ? "in range" : "over range"}</span>}</Fact>
+            <Fact label="Rates proposed">{j.rates ?? "—"}{j.rates && j.inRange != null && <span className={`font-medium ${j.inRange ? GREEN : "text-state-declined"}`}> · {j.inRange ? "in range" : "over range"}</span>}</Fact>
             <Fact label="Deadline">{j.deadlineAt ? shortWhen(j.deadlineAt) : "—"}</Fact>
           </>
         )}
@@ -226,17 +226,17 @@ function JobArticle({ j }: { j: JobTabRow }) {
       {!woStep && (j.proposalLines.length > 0 || j.asked > 0) && (
         <div className="flex flex-col sm:ml-[68px]">
           {j.proposalLines.map((p) => (
-            <div key={p.personId} className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t border-[#f0eef3] py-2.5" data-proposal-line>
+            <div key={p.personId} className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t border-state-sunken py-2.5" data-proposal-line>
               <NeutralAvatar size={32} />
               <span className="w-[70px] text-[14px] font-bold">{p.who}</span>
-              <span className="min-w-0 flex-1 text-[13px] text-[#5d5768]">{p.summary}</span>
+              <span className="min-w-0 flex-1 text-[13px] text-state-inactive">{p.summary}</span>
               <span className="text-[14px] font-bold">{p.rate ?? "—"}</span>
-              <span className="w-[110px] text-[13px] text-[#5d5768]">{p.start ?? ""}</span>
+              <span className="w-[110px] text-[13px] text-state-inactive">{p.start ?? ""}</span>
               {j.eventId && <Link href={`/hire/sourcing/${j.eventId}`} className="text-[13px] font-semibold">Compare</Link>}
             </div>
           ))}
           {j.asked === 1 && (
-            <div className="flex items-center gap-3.5 border-t border-[#f0eef3] py-2.5 text-[13px] text-[#8a8494]">
+            <div className="flex items-center gap-3.5 border-t border-state-sunken py-2.5 text-[13px] text-state-disabled">
               <span className="w-8 shrink-0" />No other providers were asked. <Link href={`/work-requests/${j.id}#matches`}>Request more proposals</Link>
             </div>
           )}
@@ -255,24 +255,24 @@ async function RequestsTab({ personId, slice }: { personId: string; slice?: stri
       <h1 className="text-[30px] font-extrabold">Work Requests</h1>
       <div className="border-b border-ink pb-3"><SliceChips tabKey="hire-requests" counts={sliceCounts(all)} base="/hire/overview?tab=requests" /></div>
       {rows.length ? rows.map((w) => (
-        <article key={w.id} className="flex flex-col gap-3.5 border-b border-[#e7e5ec] pb-5">
+        <article key={w.id} className="flex flex-col gap-3.5 border-b border-state-border pb-5">
           <div className="flex flex-wrap items-start gap-4 sm:flex-nowrap">
             <TypeArt typeName={w.title} size={52} />
             <div className="min-w-0 flex-1">
               <Link href={`/work-requests/${w.jobId}`} className="text-[17px] font-bold text-ink hover:underline">{w.title}</Link>
-              <div className="mt-1 text-[13px] text-[#5d5768]">{w.wr ?? "Work Request"} · {w.who}</div>
+              <div className="mt-1 text-[13px] text-state-inactive">{w.wr ?? "Work Request"} · {w.who}</div>
               {w.recurring && <RecurringLine r={w.recurring} />}
             </div>
             {w.completed ? <Link href={`/hire/terms?job=${w.jobId}&provider=${w.providerPersonId}`} className={`${BTN_OUT} w-full sm:w-auto`}>Hire Again</Link> : <Link href={w.wo ? `/orders/${w.wo.id}` : `/work-requests/${w.jobId}`} className={`${BTN_OUT} w-full sm:w-auto`}>Open</Link>}
           </div>
-          <div className="grid grid-cols-2 gap-4 border border-[#e7e5ec] bg-[#faf9fb] px-4 py-3.5 sm:ml-[68px] sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 border border-state-border bg-state-sunken/40 px-4 py-3.5 sm:ml-[68px] sm:grid-cols-4">
             <Fact label="Step">{w.completed ? "Completed" : w.step}</Fact>
             <Fact label="Provider">{w.who}</Fact>
             <Fact label="Approval">{w.approval}</Fact>
             <Fact label="Work Order">{w.wo ? <Link href={`/orders/${w.wo.id}`} className="text-ink">{w.wo.number}</Link> : "—"}</Fact>
           </div>
         </article>
-      )) : <p className="text-[14px] text-[#5d5768]">No Work Requests yet — Award a proposal or Hire directly and it shows here.</p>}
+      )) : <p className="text-[14px] text-state-inactive">No Work Requests yet — Award a proposal or Hire directly and it shows here.</p>}
     </div>
   );
 }
@@ -289,7 +289,7 @@ async function InterviewsTab({ personId, view, slice }: { personId: string; view
     <div className="flex flex-col gap-5" data-interviews-tab>
       <div className="flex flex-wrap items-end justify-between gap-3"><h1 className="text-[30px] font-extrabold">Interviews</h1><Link href="/hire/overview?tab=interviews&view=week" className="text-[13px] font-semibold">View week</Link></div>
       <div className="border-b border-ink pb-3"><SliceChips tabKey="hire-interviews" counts={sliceCounts(all)} base="/hire/overview?tab=interviews" /></div>
-      {rows.length ? <InterviewCards rows={rows} side="buyer" videoReady={dailyConfigured()} /> : <p className="text-[14px] text-[#5d5768]">No interviews here. Use Interview on a proposal; times, Join links and notes show here.</p>}
+      {rows.length ? <InterviewCards rows={rows} side="buyer" videoReady={dailyConfigured()} /> : <p className="text-[14px] text-state-inactive">No interviews here. Use Interview on a proposal; times, Join links and notes show here.</p>}
     </div>
   );
 }
@@ -302,20 +302,20 @@ async function TestsTab({ personId, slice }: { personId: string; slice?: string 
       <h1 className="text-[30px] font-extrabold">Tests</h1>
       <div className="border-b border-ink pb-3"><SliceChips tabKey="hire-tests" counts={sliceCounts(all)} base="/hire/overview?tab=tests" /></div>
       {rows.length ? rows.map((t) => (
-        <article key={t.id} className="flex flex-col gap-3.5 border-b border-[#e7e5ec] pb-5">
+        <article key={t.id} className="flex flex-col gap-3.5 border-b border-state-border pb-5">
           <div className="flex flex-wrap items-center gap-4 sm:flex-nowrap">
             <NeutralAvatar size={44} />
-            <div className="min-w-0 flex-1"><b className="text-[17px]">{t.who}</b><div className="mt-1 text-[13px] text-[#5d5768]">{t.skill}</div></div>
+            <div className="min-w-0 flex-1"><b className="text-[17px]">{t.who}</b><div className="mt-1 text-[13px] text-state-inactive">{t.skill}</div></div>
             <Link href={`/work-requests/${t.jobId}`} className={`${BTN_OUT} w-full sm:w-auto`}>Open</Link>
           </div>
-          <div className="grid grid-cols-2 gap-4 border border-[#e7e5ec] bg-[#faf9fb] px-4 py-3.5 sm:ml-[60px] sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 border border-state-border bg-state-sunken/40 px-4 py-3.5 sm:ml-[60px] sm:grid-cols-4">
             <Fact label="Skill">{t.skill}</Fact>
             <Fact label="Sent">{t.sent}</Fact>
             <Fact label="Score">{t.score != null ? `${t.score}%` : "—"}</Fact>
-            <Fact label="Result"><span className={t.result === "Pass" ? GREEN : t.result === "Fail" ? "text-[#d92d20]" : ""}>{t.result}</span></Fact>
+            <Fact label="Result"><span className={t.result === "Pass" ? GREEN : t.result === "Fail" ? "text-state-declined" : ""}>{t.result}</span></Fact>
           </div>
         </article>
-      )) : <p className="text-[14px] text-[#5d5768]">No test requests yet. Use Request Test on a proposal; scores and pass / fail show here.</p>}
+      )) : <p className="text-[14px] text-state-inactive">No test requests yet. Use Request Test on a proposal; scores and pass / fail show here.</p>}
     </div>
   );
 }

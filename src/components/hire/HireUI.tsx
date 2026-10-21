@@ -6,13 +6,13 @@ import type { ReactNode } from "react";
 export const BTN = "inline-flex min-h-10 items-center justify-center whitespace-nowrap bg-ink px-3.5 text-[13px] font-semibold text-surface hover:bg-ink-hover";
 export const BTN_OUT = "inline-flex min-h-10 items-center justify-center whitespace-nowrap border border-ink bg-white px-3.5 text-[13px] font-semibold text-ink hover:bg-bg-soft";
 export const BTN_MAGENTA = "inline-flex min-h-10 items-center justify-center whitespace-nowrap bg-magenta px-3.5 text-[13px] font-bold text-white hover:bg-magenta-dark";
-export const LABEL = "text-[11px] font-bold uppercase tracking-[0.1em] text-[#5d5768]";
-export const MUTED = "text-[14px] text-[#8a8494]";
-export const GREEN = "text-[#1f6f5c]";
-export const ROW_RULE = "border-b border-[#f0eef3]";
+export const LABEL = "text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive";
+export const MUTED = "text-[14px] text-state-disabled";
+export const GREEN = "text-state-accepted";
+export const ROW_RULE = "border-b border-state-sunken";
 
-export const RedDot = ({ size = 10 }: { size?: number }) => <span aria-label="needs you" className="inline-block shrink-0 rounded-full bg-[#d92d20]" style={{ width: size, height: size }} />;
-export const RedPill = ({ n }: { n: number }) => (n > 0 ? <span className="rounded-[10px] bg-[#d92d20] px-[7px] py-px text-[11px] font-bold text-white" data-red-count>{n}</span> : null);
+export const RedDot = ({ size = 10 }: { size?: number }) => <span aria-label="needs you" className="inline-block shrink-0 rounded-full bg-state-declined" style={{ width: size, height: size }} />;
+export const RedPill = ({ n }: { n: number }) => (n > 0 ? <span className="rounded-[10px] bg-state-declined px-[7px] py-px text-[11px] font-bold text-white" data-red-count>{n}</span> : null);
 
 export function Fact({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
   return (
@@ -28,7 +28,7 @@ export function Section({ id, title, extra, right, children, open = true }: { id
   return (
     <details id={id} open={open} className="group border-t border-ink pt-3.5 [&_summary::-webkit-details-marker]:hidden" data-section={title}>
       <summary className="flex cursor-pointer list-none items-baseline justify-between gap-3 md:pointer-events-none md:cursor-default">
-        <h2 className="text-[18px] font-extrabold">{title}{extra && <span className="ml-1.5 text-[14px] font-medium text-[#5d5768] md:pointer-events-auto">{extra}</span>}</h2>
+        <h2 className="text-[18px] font-extrabold">{title}{extra && <span className="ml-1.5 text-[14px] font-medium text-state-inactive md:pointer-events-auto">{extra}</span>}</h2>
         <span className="flex items-baseline gap-3 text-[13px] font-semibold">
           {right && <span className="md:pointer-events-auto">{right}</span>}
           <span aria-hidden className="text-ink-3 transition-transform group-open:rotate-180 md:hidden">▾</span>
@@ -53,14 +53,14 @@ export type BandStep = { key: string; label: string; top: ReactNode; bar: "done"
 /** The thin path band: something above each step, a 4 px bar, the label under; scrolls inside its box on phones. */
 export function PathBand({ steps, label = "Path" }: { steps: BandStep[]; label?: string }) {
   return (
-    <section aria-label={label} className="overflow-x-auto rounded-[12px] border border-[#e7e5ec] px-5 py-5 sm:px-6" data-path-band>
+    <section aria-label={label} className="overflow-x-auto rounded-[12px] border border-state-border px-5 py-5 sm:px-6" data-path-band>
       <div className="grid items-start text-center" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(92px, 1fr))`, minWidth: steps.length * 94 }}>
         {steps.map((s) => {
           const body = (
             <>
               <span className="flex min-h-[26px] items-center justify-center gap-1.5">{s.top}{s.needs && <RedDot size={8} />}</span>
-              <span className="h-1 w-full" style={{ background: s.bar === "done" ? "#b324b2" : s.bar === "dashed" ? "repeating-linear-gradient(90deg, #c9c4d6 0 6px, transparent 6px 10px)" : "#e7e5ec" }} />
-              <span className={`text-[12px] ${s.current ? "font-extrabold" : "font-semibold"} ${s.muted ? "text-[#8a8494]" : ""}`}>{s.label}</span>
+              <span className="h-1 w-full" style={{ background: s.bar === "done" ? "#b324b2" : s.bar === "dashed" ? "repeating-linear-gradient(90deg, var(--color-state-border) 0 6px, transparent 6px 10px)" : "var(--color-state-sunken)" }} />
+              <span className={`text-[12px] ${s.current ? "font-extrabold" : "font-semibold"} ${s.muted ? "text-state-disabled" : ""}`}>{s.label}</span>
             </>
           );
           return s.href ? (
@@ -77,11 +77,11 @@ export function PathBand({ steps, label = "Path" }: { steps: BandStep[]; label?:
 /** HL-E004: the Hire tab bar — "HIRE" eyebrow + divider, 3 px magenta underline on the active tab, red pills, Post a Job. */
 export function HireTabBar({ tabs, current, right }: { tabs: { key: string; label: string; href: string; n?: number }[]; current: string; right?: ReactNode }) {
   return (
-    <div className="relative isolate border-b border-[#e7e5ec]" data-hire-tabs>
+    <div className="relative isolate border-b border-state-border" data-hire-tabs>
       <div aria-hidden className="pointer-events-none absolute -top-6 bottom-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-white" />
       <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-0 sm:px-2">
         <nav aria-label="Hire" className="flex min-w-0 items-center gap-6 overflow-x-auto">
-          <span className="shrink-0 border-r border-[#e7e5ec] pr-5 text-[12px] font-extrabold tracking-[0.12em]">HIRE</span>
+          <span className="shrink-0 border-r border-state-border pr-5 text-[12px] font-extrabold tracking-[0.12em]">HIRE</span>
           {tabs.map((t) => {
             const on = t.key === current;
             return (

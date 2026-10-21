@@ -105,7 +105,7 @@ async function Overview({ viewer, personId, side, counts }: { viewer: Viewer; pe
   const firstNeed = strip.findIndex((x) => needs.has(x.key));
   const lastBusy = Math.max(-1, ...strip.map((x, k) => (x.count > 0 ? k : -1)));
   const active = firstNeed >= 0 ? firstNeed : lastBusy;
-  const band: BandStep[] = strip.map((x, k) => ({ key: x.key, label: x.label, href: x.href, current: k === active, needs: needs.has(x.key), muted: !x.count && k !== active, bar: k <= active ? "done" : "todo", top: <span className={`text-[22px] font-extrabold ${x.count ? (k === active ? "text-magenta" : "text-ink") : "text-[#c9c4d6]"}`}>{x.count}</span> }));
+  const band: BandStep[] = strip.map((x, k) => ({ key: x.key, label: x.label, href: x.href, current: k === active, needs: needs.has(x.key), muted: !x.count && k !== active, bar: k <= active ? "done" : "todo", top: <span className={`text-[22px] font-extrabold ${x.count ? (k === active ? "text-magenta" : "text-ink") : "text-state-border"}`}>{x.count}</span> }));
   const dateLabel = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }).toUpperCase();
   const sentence = n ? `${n === 1 ? "One thing" : `${n} things`} in Shop ${n === 1 ? "is" : "are"} waiting on you.` : side === "buyer" ? `Nothing is waiting on you.${counts.cart ? ` You have ${counts.cart} item${counts.cart === 1 ? "" : "s"} in your cart.` : ""}` : "Nothing is waiting on you. New offers, estimate requests and orders show here.";
   return (
@@ -114,15 +114,15 @@ async function Overview({ viewer, personId, side, counts }: { viewer: Viewer; pe
         <div className="min-w-0 flex-[1_1_320px]">
           <span className="text-[12px] font-bold tracking-[0.12em] text-magenta">{dateLabel}</span>
           <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{n ? `${n} thing${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} you today` : "Nothing needs you today"}</h1>
-          <p className="text-[15px] leading-relaxed text-[#5d5768]">{sentence}</p>
+          <p className="text-[15px] leading-relaxed text-state-inactive">{sentence}</p>
           <div className="mt-4 flex flex-wrap gap-2.5">{side === "buyer" ? <><Link href="/shop?tab=browse" className={HL_BTN}>Browse Products</Link><Link href="/shop?tab=purchases" className={HL_BTN_OUT}>My Purchases</Link></> : <><Link href="/catalog/products" className={HL_BTN}>Add a Product</Link><Link href="/shop?tab=sales" className={HL_BTN_OUT}>My Sales</Link></>}</div>
         </div>
         {n > 0 && (
-          <div className="flex min-w-0 flex-[1_1_480px] flex-col border-b border-[#e7e5ec]">
+          <div className="flex min-w-0 flex-[1_1_480px] flex-col border-b border-state-border">
             {items.map((it) => (
-              <div key={it.id} className="flex flex-wrap items-center gap-3.5 border-t border-[#e7e5ec] py-4 sm:flex-nowrap" data-today-item={it.step}>
+              <div key={it.id} className="flex flex-wrap items-center gap-3.5 border-t border-state-border py-4 sm:flex-nowrap" data-today-item={it.step}>
                 <HLRedDot />
-                <div className="min-w-0 flex-1"><div className="text-[15px] font-bold">{it.what}</div><div className="text-[13px] text-[#5d5768]">{it.detail}</div></div>
+                <div className="min-w-0 flex-1"><div className="text-[15px] font-bold">{it.what}</div><div className="text-[13px] text-state-inactive">{it.detail}</div></div>
                 <Link href={it.href} className={`${HL_BTN_OUT} w-full sm:w-auto`}>{it.action}</Link>
               </div>
             ))}

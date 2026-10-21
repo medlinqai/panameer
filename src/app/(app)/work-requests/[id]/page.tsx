@@ -122,19 +122,19 @@ export default async function Page({
           <div className="min-w-0 flex-[1_1_520px]">
             <div className="break-words text-[12px] font-bold tracking-[0.12em] text-magenta">{eyebrow || "JOB"}</div>
             <h1 className="mt-1.5 text-[24px] font-extrabold leading-tight sm:text-[30px]">{detail.title.trim() || "Untitled job"}</h1>
-            {awarded && erpReturned && <p className="mt-1 text-[12.5px] text-[#5d5768]">Returned to ERP — waiting for the PO</p>}
+            {awarded && erpReturned && <p className="mt-1 text-[12.5px] text-state-inactive">Returned to ERP — waiting for the PO</p>}
           </div>
           <div className="flex items-center gap-2.5">
             <span className="rounded-[14px] bg-[#fbeafb] px-3 py-1.5 text-[12px] font-bold text-magenta-dark" data-status-pill>{currentLabel}</span>
             <ActionsMenu items={actions} />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 border-y border-[#e7e5ec] py-3.5 sm:grid-cols-5" data-wr-facts>
+        <div className="grid grid-cols-2 gap-4 border-y border-state-border py-3.5 sm:grid-cols-5" data-wr-facts>
           <Fact label="Created">{sec.header.created}</Fact>
           <Fact label="Buyer">{sec.header.buyer}</Fact>
-          <Fact label="Provider">{sec.provider ?? <span className="text-[#8a8494]">Not awarded yet</span>}</Fact>
-          <Fact label="Style">{sec.header.style ?? <span className="text-[#8a8494]">Set on Award</span>}</Fact>
-          <Fact label="Work Request">{sec.header.workRequest ?? <span className="text-[#8a8494]">Created on Award</span>}</Fact>
+          <Fact label="Provider">{sec.provider ?? <span className="text-state-disabled">Not awarded yet</span>}</Fact>
+          <Fact label="Style">{sec.header.style ?? <span className="text-state-disabled">Set on Award</span>}</Fact>
+          <Fact label="Work Request">{sec.header.workRequest ?? <span className="text-state-disabled">Created on Award</span>}</Fact>
         </div>
       </section>
 
@@ -154,8 +154,8 @@ export default async function Page({
       </Section>
 
       {detail.status === "DRAFT" && (
-        <div className="flex flex-wrap items-center gap-3 border border-[#e7e5ec] p-4">
-          <p className="min-w-0 flex-1 text-[14px]"><b>This Job is still a draft.</b> <span className="text-[#5d5768]">Posting makes it visible to providers.</span></p>
+        <div className="flex flex-wrap items-center gap-3 border border-state-border p-4">
+          <p className="min-w-0 flex-1 text-[14px]"><b>This Job is still a draft.</b> <span className="text-state-inactive">Posting makes it visible to providers.</span></p>
           <Link href="/hire" className={BTN_OUT}>Open in Hire</Link>
         </div>
       )}
@@ -170,8 +170,8 @@ export default async function Page({
         {sec.requestRows.length ? sec.requestRows.map((r) => (
           <div key={r.number} className={`flex flex-wrap items-center gap-3.5 py-3 text-[14px] ${ROW_RULE}`}>
             <span className="w-[70px] font-bold">{r.who.replace(/^Provider /, "")}</span>
-            <span className="min-w-0 flex-[1_1_200px] text-[#5d5768]">Asked {r.asked}{r.due ? ` · due ${r.due}` : ""}</span>
-            <span className={`font-bold ${r.status === "Responded" ? GREEN : r.status.startsWith("Declined") ? "text-[#d92d20]" : "text-[#5d5768]"}`}>{r.status}</span>
+            <span className="min-w-0 flex-[1_1_200px] text-state-inactive">Asked {r.asked}{r.due ? ` · due ${r.due}` : ""}</span>
+            <span className={`font-bold ${r.status === "Responded" ? GREEN : r.status.startsWith("Declined") ? "text-state-declined" : "text-state-inactive"}`}>{r.status}</span>
           </div>
         )) : empty("No requests yet. Star providers in Matches and request proposals from your shortlist.")}
       </Section>
@@ -184,7 +184,7 @@ export default async function Page({
               <NeutralAvatar size={36} />
               <div className="min-w-0 flex-[1_1_260px]">
                 <div className="text-[15px] font-bold">{[p.providerName.replace(/^Provider /, ""), p.rate ? `${formatCents(p.rate.unitPriceCents)}${p.rate.basis === "RATE" ? "/hr" : " fixed"}` : "no rate", x.start ? `start ${x.start}` : null].filter(Boolean).join(" · ")}</div>
-                <div className="mt-0.5 text-[13px] text-[#5d5768]">{[x.summary || null, p.coverNote ? `“${p.coverNote.slice(0, 120)}”` : "no note"].filter(Boolean).join(" · ")}</div>
+                <div className="mt-0.5 text-[13px] text-state-inactive">{[x.summary || null, p.coverNote ? `“${p.coverNote.slice(0, 120)}”` : "no note"].filter(Boolean).join(" · ")}</div>
               </div>
               <ProposalActions jobId={detail.id} providerPersonId={p.providerPersonId} testId={testId} awarded={p.status === "AWARDED"} interviewStatus={p.interviewStatus} testStatus={p.testStatus} />
             </div>
@@ -196,20 +196,20 @@ export default async function Page({
         {buyerInterviews.length ? <InterviewCards rows={buyerInterviews} side="buyer" videoReady={dailyConfigured()} /> : empty("None scheduled. Use Interview on a proposal; ranking and comments land here.")}
         {sec.evalRows.length > 0 && (
           <div className="mt-3">
-            {sec.evalRows.map((e, k) => <div key={k} className={`py-2 text-[14px] ${ROW_RULE}`}><b>{e.who}</b>{e.rating != null && <span className="ml-2 text-magenta-dark">{"★".repeat(e.rating)}{"☆".repeat(5 - e.rating)}</span>}{e.summary && <p className="text-[#5d5768]">{e.summary}</p>}</div>)}
+            {sec.evalRows.map((e, k) => <div key={k} className={`py-2 text-[14px] ${ROW_RULE}`}><b>{e.who}</b>{e.rating != null && <span className="ml-2 text-magenta-dark">{"★".repeat(e.rating)}{"☆".repeat(5 - e.rating)}</span>}{e.summary && <p className="text-state-inactive">{e.summary}</p>}</div>)}
           </div>
         )}
       </Section>
 
       <Section title="Test requests">
         {sec.testRows.length ? sec.testRows.map((t) => (
-          <div key={t.number} className={`flex flex-wrap justify-between gap-2 py-2.5 text-[14px] ${ROW_RULE}`}><span><b>{t.who.replace(/^Provider /, "")}</b> · {t.skill}</span><span className="text-[#5d5768]">{t.score != null ? `${t.score}% · ` : ""}<b className={t.result === "Pass" ? GREEN : t.result === "Fail" ? "text-[#d92d20]" : "text-ink"}>{t.result}</b></span></div>
+          <div key={t.number} className={`flex flex-wrap justify-between gap-2 py-2.5 text-[14px] ${ROW_RULE}`}><span><b>{t.who.replace(/^Provider /, "")}</b> · {t.skill}</span><span className="text-state-inactive">{t.score != null ? `${t.score}% · ` : ""}<b className={t.result === "Pass" ? GREEN : t.result === "Fail" ? "text-state-declined" : "text-ink"}>{t.result}</b></span></div>
         )) : empty("None requested. Scores and pass/fail show here.")}
       </Section>
 
       <Section title="Award">
         {sec.awardRows.length ? sec.awardRows.map((a, k) => (
-          <div key={k} className={`flex flex-wrap justify-between gap-2 py-2.5 text-[14px] ${ROW_RULE}`}><span><b>{a.who.replace(/^Provider /, "")}</b>{a.wr ? <span className="text-[#5d5768]"> · {a.wr}</span> : null}</span><span className="text-[#5d5768]">{a.rate != null ? `${formatCents(a.rate)}${a.uom === "HOUR" ? "/hr" : ""} · ` : ""}{a.when}</span></div>
+          <div key={k} className={`flex flex-wrap justify-between gap-2 py-2.5 text-[14px] ${ROW_RULE}`}><span><b>{a.who.replace(/^Provider /, "")}</b>{a.wr ? <span className="text-state-inactive"> · {a.wr}</span> : null}</span><span className="text-state-inactive">{a.rate != null ? `${formatCents(a.rate)}${a.uom === "HOUR" ? "/hr" : ""} · ` : ""}{a.when}</span></div>
         )) : empty("Not awarded yet. Awarding a proposal creates the Work Request.")}
         {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && <AssignDirectly workRequestId={detail.id} providers={options} />}
         {awarded && <CreateOrder workRequestId={detail.id} description={detail.workRequestDescription} />}
@@ -218,7 +218,7 @@ export default async function Page({
       <Section title="Lines">
         {sec.lineRows.length ? (
           <div className="overflow-x-auto">
-            <div className="grid min-w-[760px] grid-cols-[40px_2fr_1.2fr_0.8fr_0.8fr_1fr_1.2fr] gap-3 border-b border-[#e7e5ec] py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#5d5768]">
+            <div className="grid min-w-[760px] grid-cols-[40px_2fr_1.2fr_0.8fr_0.8fr_1fr_1.2fr] gap-3 border-b border-state-border py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-state-inactive">
               <span>#</span><span>Description</span><span>Line type</span><span>Qty</span><span>Rate</span><span>Amount</span><span>Payment Event</span>
             </div>
             {sec.lineRows.map((l) => (
@@ -233,13 +233,13 @@ export default async function Page({
       <Section title="Approval">
         {sec.approval?.at ? <p className="text-[14px]"><b>Auto-approved</b> · {sec.approval.at}{sec.approval.wr ? ` · ${sec.approval.wr}` : ""}</p> : empty("Auto-approved after Award (R1).")}
         {(await jobOrders(detail.id)).map((wo) => (
-          <p key={wo.id} data-job-work-order className="mt-1.5 text-[14px] text-[#5d5768]">Work Order: <Link href={`/orders/${wo.id}`} className="font-semibold">{wo.order_number}</Link> · {wo.label}</p>
+          <p key={wo.id} data-job-work-order className="mt-1.5 text-[14px] text-state-inactive">Work Order: <Link href={`/orders/${wo.id}`} className="font-semibold">{wo.order_number}</Link> · {wo.label}</p>
         ))}
       </Section>
 
       <Section title="Attachments & Notes">
         {sec.attachments.length || detail.description || sec.notes.length ? (
-          <div className="grid gap-2 text-[14px] text-[#5d5768]">
+          <div className="grid gap-2 text-[14px] text-state-inactive">
             {sec.attachments.map((a) => <p key={a.name}>{a.name} · uploaded {a.at}</p>)}
             {[detail.description, ...sec.notes].filter((x, k, arr): x is string => !!x && arr.indexOf(x) === k).map((n, k) => <p key={k} className="whitespace-pre-wrap">{n}</p>)}
           </div>
@@ -248,7 +248,7 @@ export default async function Page({
 
       <Section title="Activity">
         <div className="flex flex-col text-[13px]">
-          {sec.log.map((e, k) => <div key={k} className={`flex gap-4 py-2 ${ROW_RULE}`}><span className="w-[130px] shrink-0 text-[#5d5768]">{e.at}</span><span className="min-w-0">{e.text}</span></div>)}
+          {sec.log.map((e, k) => <div key={k} className={`flex gap-4 py-2 ${ROW_RULE}`}><span className="w-[130px] shrink-0 text-state-inactive">{e.at}</span><span className="min-w-0">{e.text}</span></div>)}
         </div>
       </Section>
     </div>

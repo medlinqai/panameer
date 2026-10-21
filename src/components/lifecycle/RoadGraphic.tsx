@@ -49,7 +49,7 @@ export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider r
               >
                 {wait ? "…" : done ? "✓" : i + 1}
                 {badges?.[s.key] && badges[s.key]!.n > 0 && (
-                  <a href={badges[s.key]!.href} data-road-badge={s.key} aria-label={`${badges[s.key]!.n} waiting in ${badges[s.key]!.label}`} className="absolute -right-3 -top-2.5 grid h-[22px] min-w-[22px] place-items-center rounded-full border-2 border-white bg-[#D92D20] px-1 text-[11.5px] font-extrabold text-white hover:bg-[#B42318]">
+                  <a href={badges[s.key]!.href} data-road-badge={s.key} aria-label={`${badges[s.key]!.n} waiting in ${badges[s.key]!.label}`} className="absolute -right-3 -top-2.5 grid h-[22px] min-w-[22px] place-items-center rounded-full border-2 border-white bg-state-declined px-1 text-[11.5px] font-extrabold text-white hover:bg-state-declined/90">
                     {badges[s.key]!.n}
                   </a>
                 )}

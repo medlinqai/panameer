@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { StripStep } from "@/lib/live-work";
 
 // RA-E004/E006: shared bits of an app home (Leaders layout) — the strip as the hero picture, red counts.
-export const Red = ({ n }: { n: number }) => (n > 0 ? <span className="ml-1.5 inline-grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[#D92D20] px-1 text-[11px] font-extrabold text-white" data-red-count>{n}</span> : null);
-export const RedDot = () => <span aria-label="Needs action" className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[#D92D20]" data-red-dot />;
+export const Red = ({ n }: { n: number }) => (n > 0 ? <span className="ml-1.5 inline-grid h-[18px] min-w-[18px] place-items-center rounded-full bg-state-declined px-1 text-[11px] font-extrabold text-white" data-red-count>{n}</span> : null);
+export const RedDot = () => <span aria-label="Needs action" className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-state-declined" data-red-dot />;
 
 /** The process strip stacked as the hero picture; each step links to the filtered list. */
 export function StripColumn({ steps, href }: { steps: StripStep[]; href: (key: string) => string }) {

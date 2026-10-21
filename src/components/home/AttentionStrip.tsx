@@ -82,14 +82,14 @@ function ActionCard({
       className={
         "relative flex w-[210px] shrink-0 items-start gap-3 rounded-brand border p-4 " +
         (celebrate
-          ? "border-emerald-500/40 bg-emerald-50/70"
+          ? "border-state-accepted/40 bg-state-accepted-bg"
           : "border-line bg-white")
       }
     >
       <span
         className={
           "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full " +
-          (celebrate ? "bg-emerald-500/15 text-emerald-700" : "bg-magenta/10 text-magenta")
+          (celebrate ? "bg-state-accepted-bg text-state-accepted" : "bg-magenta/10 text-magenta")
         }
       >
         <RailIcon name={card.icon} />
@@ -100,7 +100,7 @@ function ActionCard({
           <span
             className={
               "font-display text-[20px] font-bold leading-none " +
-              (celebrate ? "text-emerald-700" : "text-magenta")
+              (celebrate ? "text-state-accepted" : "text-magenta")
             }
           >
             {card.count}
@@ -124,7 +124,7 @@ function ActionCard({
           type="button"
           onClick={onDismiss}
           aria-label={`Dismiss ${card.label}`}
-          className="relative z-10 -mr-1 -mt-1 shrink-0 px-1.5 text-[15px] leading-none text-emerald-700/60 hover:text-emerald-800"
+          className="relative z-10 -mr-1 -mt-1 shrink-0 px-1.5 text-[15px] leading-none text-state-accepted/60 hover:text-state-accepted"
         >
           ×
         </button>
@@ -144,7 +144,7 @@ function CalmStrip({
 }) {
   return (
     <section aria-label="Needs your attention" className="mb-5">
-      <p className="mb-2 flex items-center gap-2 text-[13.5px] font-semibold text-emerald-700">
+      <p className="mb-2 flex items-center gap-2 text-[13.5px] font-semibold text-state-accepted">
         <span aria-hidden>✓</span> You&apos;re all caught up
       </p>
 

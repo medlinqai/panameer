@@ -18,8 +18,8 @@ export async function WorkRequestPath({ jobId }: { jobId: string }) {
         : isCurrent
           ? <span className="text-[12px] font-extrabold text-magenta">{s.note ?? "Now"}</span>
           : s.optional
-            ? <span className="text-[12px] text-[#8a8494]">{skipped ? "skipped" : "optional"}</span>
-            : <span className="text-[12px] text-[#c9c4d6]">&nbsp;</span>,
+            ? <span className="text-[12px] text-state-disabled">{skipped ? "skipped" : "optional"}</span>
+            : <span className="text-[12px] text-state-border">&nbsp;</span>,
     };
   });
   return <div data-work-request-path><PathBand steps={steps} label="Progress" /></div>;
