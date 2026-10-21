@@ -200,3 +200,16 @@ export async function buyerTests(personId: string) {
     return { id: r.id, jobId: r.job_id, who: providerLabel(nums.get(profiles.find((p) => p.person_id === r.provider_person_id)?.id ?? "")), skill: skills.find((s) => s.id === r.lines[0]?.skill_id)?.name ?? "Certification test", sent: short(r.created_at), score: res?.score ?? null, result: res?.passed == null ? (r.status === "COMPLETED" ? "Completed" : r.status === "DECLINED" ? "Declined" : "Pending") : res.passed ? "Pass" : "Fail" };
   });
 }
+
+/** RA-E006: tests sent to this provider (job, skill, sent, status / result). */
+export async function providerTests(personId: string) {
+  const rows = await prisma.testRequest.findMany({ where: { provider_person_id: personId }, orderBy: { created_at: "desc" }, take: 100, select: { id: true, job_id: true, created_at: true, status: true, responds_by: true, lines: { take: 1, select: { skill_id: true } }, response: { select: { lines: { take: 1, select: { score: true, passed: true } } } } } });
+  const [jobs, skills] = await Promise.all([
+    prisma.job.findMany({ where: { id: { in: rows.map((r) => r.job_id) } }, select: { id: true, title: true } }),
+    prisma.skill.findMany({ where: { id: { in: rows.map((r) => r.lines[0]?.skill_id).filter((x): x is string => !!x) } }, select: { id: true, name: true } }),
+  ]);
+  return rows.map((r) => {
+    const res = r.response?.lines[0];
+    return { id: r.id, jobId: r.job_id, job: jobs.find((j) => j.id === r.job_id)?.title ?? "Job", skill: skills.find((s) => s.id === r.lines[0]?.skill_id)?.name ?? "Certification test", sent: short(r.created_at), due: r.responds_by ? short(r.responds_by) : null, open: r.status === "ISSUED" || r.status === "IN_PROGRESS", score: res?.score ?? null, result: res?.passed == null ? (r.status === "COMPLETED" ? "Completed" : r.status === "DECLINED" ? "Declined" : r.status === "EXPIRED" ? "Expired" : "To take") : res.passed ? "Pass" : "Fail" };
+  });
+}

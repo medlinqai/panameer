@@ -4,16 +4,15 @@ import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile } from "@/lib/access";
 import { WorkFeed } from "@/components/home/WorkFeed";
 import { getWorkFeed, WORK_FEED_TABS, type WorkFeedTab } from "@/lib/work-feed";
-import { workHome } from "@/lib/work-home";
 import { workFilterDefs, type WorkFilters } from "@/lib/work-filters";
-import { WorkHome } from "@/components/work/WorkHome";
+import { FindJobsFilters, JobsInterviews, JobsOverview, JobsTests } from "@/components/work/JobsAppViews";
 
 export const metadata = { title: "Find Work · Panameer" };
 
 export default async function FindWorkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string } & WorkFilters>;
+  searchParams: Promise<{ tab?: string; q?: string; view?: string } & WorkFilters>;
 }) {
   await guardPage("canProvideServices");
   const viewer = await getSessionViewer();
@@ -38,16 +37,10 @@ export default async function FindWorkPage({
     </p>
   ) : null;
 
-  // WS-E003: no tab = Work Home.
-  if (!sp.tab && !query && !Object.keys(sp).length && profile) {
-    const [home, best] = await Promise.all([workHome(profile.person_id), getWorkFeed({ tab: "best", profileId: profile.id, personId: profile.person_id })]);
-    return (
-      <div className="mx-auto w-full max-w-6xl">
-        {notLive}
-        <WorkHome home={home} best={best} />
-      </div>
-    );
-  }
+  // RA-E006: no tab = the JOBS Overview; Interviews and Tests are their own views.
+  if (profile && !sp.tab && !query && (!Object.keys(sp).length || sp.view)) return <>{notLive}<JobsOverview personId={profile.person_id} view={sp.view ?? null} /></>;
+  if (profile && sp.tab === "interviews") return <JobsInterviews personId={profile.person_id} view={sp.view ?? null} />;
+  if (profile && sp.tab === "tests") return <JobsTests personId={profile.person_id} />;
 
   const cards = await getWorkFeed({
     tab,
@@ -60,6 +53,7 @@ export default async function FindWorkPage({
   return (
     <div className="mx-auto w-full max-w-6xl">
       {notLive}
+      {["best", "recent", "us", "saved"].includes(tab) && <FindJobsFilters tab={tab} />}
       <WorkFeed tab={tab} query={query} cards={cards} basePath="/find-work" filters={await workFilterDefs(sp)} />
     </div>
   );

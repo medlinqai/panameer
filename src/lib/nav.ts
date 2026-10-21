@@ -143,14 +143,14 @@ export type PageTabItem = NavItem & {
 export const PAGE_TABS: Record<string, PageTabItem[]> = {
   // WS-E002: the Work area (providers); tabs are views of /find-work.
   // JW-E008: Jobs — Find Jobs · My Jobs · My Proposals.
+  // RA-E006: JOBS | Overview · Find Jobs (Best Matches / All Jobs / Saved as filters) · Proposal Requests · My Proposals · Interviews · Tests.
   "/find-work": [
-    { label: "Find Jobs", href: "/find-work" },
-    { label: "Best Matches", href: "/find-work?tab=best" },
-    { label: "All Jobs", href: "/find-work?tab=recent" },
-    { label: "My Jobs", href: "/hire/jobs", requires: "canHireTalent" },
+    { label: "Overview", href: "/find-work" },
+    { label: "Find Jobs", href: "/find-work?tab=best" },
     { label: "Proposal Requests", href: "/find-work?tab=invitations" },
     { label: "My Proposals", href: "/find-work?tab=proposals" },
-    { label: "Saved", href: "/find-work?tab=saved" },
+    { label: "Interviews", href: "/find-work?tab=interviews" },
+    { label: "Tests", href: "/find-work?tab=tests" },
   ],
   "/learn": [
     { label: "Home", href: "/learn" },
