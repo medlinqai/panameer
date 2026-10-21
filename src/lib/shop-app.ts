@@ -157,6 +157,8 @@ export async function shopStrip(viewer: Viewer, personId: string, side: ShopSide
   return [
     { key: "browse", label: "Browse", count: 0, href: "/shop?tab=browse" },
     { key: "offer", label: "Offer", count: offers, href: "/shop?tab=offers" },
+    // ES-E006: estimates to review (buyer) / to price (seller).
+    { key: "estimate", label: "Estimate", count: (await (await import("@/lib/estimate-events")).estimateCounts(personId, side)).total, href: "/shop?tab=estimates" },
     { key: "wr", label: "Work Request", count: cart, href: side === "buyer" ? "/shop?tab=cart" : base },
     { key: "wo", label: "Work Order", count: by("Work Order"), href: `${base}&step=Work+Order` },
     { key: "delivered", label: "Delivered", count: by("Delivered"), href: `${base}&step=Delivered` },
