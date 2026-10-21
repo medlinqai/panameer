@@ -1,4 +1,5 @@
 import type { WorkRequestDuration } from "@prisma/client";
+import { resolveJobPosted } from "@/lib/work-resolve";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { marketplaceWhere } from "@/lib/visibility";
@@ -108,6 +109,8 @@ const PER: Record<string, string> = { HOUR: "/hr", DAY: "/day", WEEK: "/wk", MON
 /** SD-E004: named matches — ranked by Role, then skill overlap, then Product, then location (Onsite/Hybrid = same state),
  *  then rate inside the budget. Each says why it matched. */
 export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: string | null, viewer?: Viewer | null): Promise<HireMatch[]> {
+  // HP-E001: opening the matches answers "job posted".
+  if (jobId && viewer) await resolveJobPosted(jobId);
   const hiddenSet = new Set(jobId ? (await prisma.jobHiddenProvider.findMany({ where: { job_id: jobId }, select: { provider_person_id: true } })).map((h) => h.provider_person_id) : []);
   const starSet = new Set(jobId ? (await prisma.shortlistLine.findMany({ where: { shortlist: { job_id: jobId }, source: { in: ["SHORTLISTED", "ADDED"] } }, select: { provider_person_id: true } })).map((l) => l.provider_person_id) : []);
   const pillarName = productPillarName(input.product);

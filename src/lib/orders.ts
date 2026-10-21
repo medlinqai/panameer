@@ -1,4 +1,5 @@
 import { assertCanSign, nudgeTaxBanking } from "@/lib/your-path";
+import { resolveOrderItems } from "@/lib/work-resolve";
 import { BillingCycle, PaymentTerms, PaymentEvent, Prisma, TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
 import { notify } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
@@ -723,6 +724,7 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
   if (party === "PROVIDER" && order.buyer_accepted_at) {
     // WA-E004: the second acceptance releases the order — settlement is allowed from here; both are told.
     if (await acknowledgeErpOrder(order)) await notifyReleased(order.id);
+    await resolveOrderItems(order.id, order.provider_person_id);
     await nudgeTaxBanking(order.provider_person_id);
     return getOrderDetail(viewer, id);
   }
@@ -731,6 +733,7 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
       where: { id: order.id, status: "ISSUED" },
       data: { status: "ACCEPTED", provider_accepted_at: new Date() },
     });
+    await resolveOrderItems(order.id, order.provider_person_id);
     await nudgeTaxBanking(order.provider_person_id);
     return getOrderDetail(viewer, id);
   }
@@ -883,6 +886,8 @@ export async function notifyReleased(orderId: string) {
   for (const personId of [o.buyer_person_id, o.provider_person_id]) {
     await notify({ event: "work.order_released", personId, entityType: "work_order", entityId: orderId, dedupeKey: `work.order_released:${orderId}:${personId}`, vars: { orderId, orderNumber: o.order_number } });
   }
+  // HP-E001: "Review and accept" / "please accept it" are done for both once Released.
+  await resolveOrderItems(orderId);
   await (await import("@/lib/sourcing-events")).sourcingOnReleased(orderId);
   await (await import("@/lib/integration-events")).recordWorkOrderReleased(orderId);
 }

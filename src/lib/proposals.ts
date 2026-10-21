@@ -1,4 +1,5 @@
 import { PROPOSAL_LABEL } from "@/lib/oracle-status";
+import { resolveRequestToPropose } from "@/lib/work-resolve";
 import type { ProposalStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { SourcingError, inviteIsOpen } from "@/lib/sourcing";
@@ -222,6 +223,7 @@ export async function submitProposal(
       },
     });
     await writeRate(existing.id, draft.rate ?? null);
+    await resolveRequestToPropose(request.id, provider.id);
     return { id: existing.id, replaced: true };
   }
 
@@ -241,6 +243,8 @@ export async function submitProposal(
   });
 
   await writeRate(created.id, draft.rate ?? null);
+  // HP-E001: "Request to propose" is answered.
+  await resolveRequestToPropose(request.id, provider.id);
 
   // THE BUYER IS TOLD, THROUGH THE ONE WRITER — who (Provider Number: no PII before a Work Order) and at what rate.
   const profile = await prisma.providerProfile.findUnique({ where: { person_id: provider.id }, select: { id: true } });

@@ -1,4 +1,5 @@
 import { activeMsa } from "@/lib/agreements";
+import { resolveOrderItems } from "@/lib/work-resolve";
 import { assertLineAllowed, defaultPaymentEvent, styleForLine, styleForLines, StyleError } from "@/lib/work-order-styles";
 import type { WorkOrderStyle } from "@prisma/client";
 import { nextNumber } from "@/lib/numbering";
@@ -418,4 +419,5 @@ export async function declineWorkOrder(
       data: { resolved_at: new Date() },
     })
     .catch(() => {});
+  await resolveOrderItems(orderId);
 }

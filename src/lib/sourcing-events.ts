@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { resolveProposalsReceived, resolveRequestToPropose } from "@/lib/work-resolve";
 import type { Viewer } from "@/lib/access";
 import { loadOwned, resolveBuyer, WorkRequestError } from "@/lib/work-request";
 import { requisitionForJob } from "@/lib/requisition";
@@ -109,6 +110,7 @@ export async function proposeInEvent(viewer: Viewer, jobId: string, input: { rat
 export async function declineInEvent(viewer: Viewer, jobId: string, reason: string) {
   const req = await openRequestFor(viewer, jobId);
   await prisma.proposalRequest.update({ where: { id: req.id }, data: { status: "DECLINED", declined_at: new Date(), decline_reason: reason.trim().slice(0, 500) || "No reason given" } });
+  await resolveRequestToPropose(jobId, await myPerson(viewer));
 }
 
 /** The buyer extends the deadline (hours from now); every open request in the event moves with it. */
@@ -184,6 +186,9 @@ export async function setProposalStatus(viewer: Viewer, eventId: string, proposa
   if (!p) throw new WorkRequestError("Proposal not found", "NOT_FOUND");
   if (p.status === "AWARDED") throw new WorkRequestError("That proposal is awarded.", "INVALID");
   await prisma.proposal.update({ where: { id: p.id }, data: status === "DECLINED" ? { status, declined_at: new Date() } : { status, declined_at: null } });
+  // HP-E001: the buyer acted on this proposal.
+  const { resolveNotifications } = await import("@/lib/notifications");
+  await resolveNotifications({ event_key: "work.proposal_received", entity_id: p.id });
 }
 
 /** Award: Hire at the proposed rate — the proposal's rate for the terms page (null when not in a Sourcing Event). */
@@ -201,6 +206,7 @@ export async function markAwarded(jobId: string, providerPersonId: string, workO
     prisma.proposal.update({ where: { id: p.id }, data: { status: "AWARDED" } }),
     prisma.sourcingEvent.update({ where: { id: eventId }, data: { status: "AWARDED", awarded_proposal_id: p.id, work_order_id: workOrderId } }),
   ]);
+  await resolveProposalsReceived(jobId);
 }
 
 // ── SE-E006: the other candidates hear only once the Work Order is Released ──────────────────────────────────
@@ -244,6 +250,7 @@ export async function notifyOthers(viewer: Viewer, eventId: string, message: str
     prisma.sourcingEvent.update({ where: { id: ev.id }, data: { status: "CLOSED", others_notified_at: new Date() } }),
     prisma.notification.updateMany({ where: { dedupe_key: `sourcing.notify_others:${ev.id}`, resolved_at: null }, data: { resolved_at: new Date() } }),
   ]);
+  await resolveProposalsReceived(ev.job_id);
   return { sent: others.length };
 }
 

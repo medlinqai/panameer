@@ -211,6 +211,8 @@ export type ActRow = TriageRow;
 /** Closes action items whose ask is already done: messages that have been read,
  *  and "profile hidden" once the profile is visible again. Idempotent. */
 export async function settleStale(personId: string): Promise<void> {
+  // HP-E001: work items whose action is already done (or whose deadline passed) clear here too.
+  await (await import("@/lib/work-resolve")).settleWork(personId);
   const now = new Date();
   const open = await prisma.notification.findMany({
     where: { person_id: personId, resolved_at: null, event_key: { in: ["message.received", "profile.visibility_off"] } },
