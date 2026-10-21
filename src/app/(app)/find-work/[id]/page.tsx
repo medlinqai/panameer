@@ -7,6 +7,9 @@ import { ProposeRate } from "@/components/work/ProposeRate";
 import { getWorkDetailForProvider } from "@/lib/work-detail";
 import { proposeEligibility } from "@/lib/proposals";
 import { providerEventView } from "@/lib/sourcing-events";
+import { listInterviews } from "@/lib/interviews";
+import { dailyConfigured } from "@/lib/daily";
+import { InterviewCards } from "@/components/work/InterviewCards";
 import { SourcingProposal } from "@/components/hire/SourcingProposal";
 import { ServiceDescriptionView } from "@/components/hire/ServiceDescriptionView";
 
@@ -37,6 +40,8 @@ export default async function Page({
     : null;
   // SE-E004: asked in a Sourcing Event → the Job in the standard order, the buyer's range, a countdown, Submit or Decline.
   const sourcing = person ? await providerEventView(person.id, detail.id) : null;
+  // DB-E008: the provider's interview page — offer times, guidelines, Join.
+  const interviews = person ? await listInterviews({ providerPersonId: person.id, jobId: detail.id }) : [];
 
   const meta = [
     detail.budgetLabel,
@@ -93,6 +98,12 @@ export default async function Page({
             )}
           </div>
 
+          {interviews.length > 0 && (
+            <section id="interview" className="mt-5">
+              <h2 className="mb-2 text-[17px] font-extrabold">Interview</h2>
+              <InterviewCards rows={interviews} side="provider" videoReady={dailyConfigured()} />
+            </section>
+          )}
           {sourcing && (
             <div className="mt-5">
               <SourcingProposal jobId={detail.id} v={sourcing} />

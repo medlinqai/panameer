@@ -1,3 +1,4 @@
+import { INTERVIEW_GUIDELINES } from "@/lib/interview-guidelines";
 import type { NotificationAiMode, NotificationVisibility } from "@prisma/client";
 
 export type NotificationEventKey = keyof typeof NOTIFICATION_EVENTS;
@@ -743,6 +744,29 @@ export const NOTIFICATION_EVENTS = {
     href: (v) =>
       str(v, "requestId") ? `/find-work/${str(v, "requestId")}` : "/find-work",
   },
+  // DB-E008/E010: interview times offered / confirmed — provider number only, guidelines included.
+  "work.interview_slots_offered": {
+    event: "work.interview_slots_offered",
+    recipient: "the buyer who asked for the interview",
+    category: "buyer.proposals.received",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `${str(v, "providerLabel", "The provider")} offered interview times`,
+    body: (v) => `Pick one for ${str(v, "workTitle", "your job")}.`,
+    href: (v) => `/work-requests/${str(v, "requestId", "")}#interviews`,
+  },
+  "work.interview_confirmed": {
+    event: "work.interview_confirmed",
+    recipient: "both sides of a confirmed interview",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `Interview confirmed · ${str(v, "when", "")}`,
+    body: (v) => `${str(v, "workTitle", "")} — with ${str(v, "counterpart", "")}. Interview guidelines: ${INTERVIEW_GUIDELINES}`,
+    href: (v) => str(v, "href", "/dashboard"),
+  },
   // SE-E004: asked to propose in a Sourcing Event — with the deadline.
   "work.sourcing_event_invited": {
     event: "work.sourcing_event_invited",
@@ -784,9 +808,10 @@ export const NOTIFICATION_EVENTS = {
     category: "work_request.matched",
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
-    requiresAction: false, // R2 builds scheduling/test-taking; until then nothing in-app clears this
+    requiresAction: true,
     title: (v) => `${str(v, "buyerName", "A buyer")} asked to interview you`,
-    body: () => "Reply in Messages to agree a time.",
+    // DB-E008: offer times on the job page; the guidelines travel with the notice.
+    body: () => `Offer a few times on the job page. Interview guidelines: ${INTERVIEW_GUIDELINES}`,
     // THE RECIPIENT IS THE PROVIDER — `recipient` says so one line up, and
     href: (v) => `/find-work/${str(v, "requestId", "")}`,
   },

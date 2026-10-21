@@ -7112,6 +7112,9 @@ model InterviewRequest {
 
   /// The slot the requester picked — an `InterviewResponseLine.id`.
   confirmed_line_id String?   @db.Uuid
+  /// DB-E009: the Panameer-generated video room (Daily.co), made when the time is confirmed; expires 2 h after the slot.
+  room_name         String?
+  room_url          String?
   completed_at      DateTime?
 
   created_at DateTime @default(now())

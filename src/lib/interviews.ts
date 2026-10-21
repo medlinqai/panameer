@@ -140,6 +140,10 @@ export async function offerSlots(
       data: { status: "SLOTS_OFFERED" },
     });
   });
+  // DB-E008: the buyer picks one (provider number only).
+  const ivJob = await prisma.interviewRequest.findUnique({ where: { id: iv.id }, select: { job_id: true } });
+  const job = ivJob ? await prisma.job.findUnique({ where: { id: ivJob.job_id }, select: { id: true, title: true } }) : null;
+  await notify({ event: "work.interview_slots_offered", personId: iv.requested_by_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_slots_offered:${iv.id}`, vars: { requestId: job?.id ?? "", workTitle: job?.title ?? "", providerLabel: await providerLabelFor(me.id) } });
 }
 
 /** The buyer confirms one of the offered times. `SLOTS_OFFERED` → `SCHEDULED`. */
@@ -171,6 +175,7 @@ export async function confirmSlot(
     where: { id: iv.id },
     data: { status: "SCHEDULED", confirmed_line_id: line.id },
   });
+  await afterConfirm(iv.id, line.starts_at);
 
   /* The provider's worklist item is answered — they offered, it is picked. */
   await prisma.notification
@@ -242,4 +247,79 @@ export async function closeInterview(
       data: { resolved_at: new Date() },
     })
     .catch(() => {});
+}
+
+
+// ── DB-E008–E010: rooms, notices and lists — the buyer sees the provider number only until a Work Order is Released ──
+async function providerLabelFor(personId: string) {
+  const { providerLabel, providerNumbers } = await import("@/lib/provider-number");
+  const p = await prisma.providerProfile.findUnique({ where: { person_id: personId }, select: { id: true } });
+  return providerLabel(p ? (await providerNumbers([p.id])).get(p.id) : null);
+}
+
+async function buyerCompanyName(personId: string) {
+  const m = await prisma.companyMembership.findFirst({ where: { person_id: personId, status: "APPROVED" }, select: { company: { select: { name: true } } } });
+  return m?.company.name ?? "Buyer";
+}
+
+export const interviewWhen = (d: Date, tz = "America/New_York") => d.toLocaleString("en-US", { timeZone: tz, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+
+/** On confirm: a private Daily room (expires 2 h after the slot) and a notice to both sides. */
+async function afterConfirm(interviewId: string, startsAt: Date) {
+  const iv0 = await prisma.interviewRequest.findUniqueOrThrow({ where: { id: interviewId }, select: { id: true, request_number: true, duration_minutes: true, provider_person_id: true, requested_by_person_id: true, job_id: true } });
+  const iv = { ...iv0, job: await prisma.job.findUniqueOrThrow({ where: { id: iv0.job_id }, select: { id: true, title: true } }) };
+  const { createRoom } = await import("@/lib/daily");
+  const exp = new Date(startsAt.getTime() + (iv.duration_minutes + 120) * 60_000);
+  const room = await createRoom(`pm-${iv.request_number.toLowerCase().replace(/[^a-z0-9-]/g, "")}`, exp);
+  if (room) await prisma.interviewRequest.update({ where: { id: iv.id }, data: { room_name: room.name, room_url: room.url } });
+  const [label, company] = await Promise.all([providerLabelFor(iv.provider_person_id), buyerCompanyName(iv.requested_by_person_id)]);
+  const when = interviewWhen(startsAt);
+  await notify({ event: "work.interview_confirmed", personId: iv.requested_by_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_confirmed:${iv.id}:buyer`, vars: { when, workTitle: iv.job.title, counterpart: label, href: `/work-requests/${iv.job.id}#interviews` } });
+  await notify({ event: "work.interview_confirmed", personId: iv.provider_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_confirmed:${iv.id}:provider`, vars: { when, workTitle: iv.job.title, counterpart: company, href: `/find-work/${iv.job.id}#interview` } });
+  await prisma.notification.updateMany({ where: { dedupe_key: `work.interview_slots_offered:${iv.id}`, resolved_at: null }, data: { resolved_at: new Date() } }).catch(() => {});
+}
+
+export type InterviewRow = {
+  id: string; number: string; status: string; mode: string | null; minutes: number; jobId: string; jobTitle: string;
+  startsAt: string | null; slots: { id: string; startsAt: string; timeZone: string }[];
+  providerPersonId: string; providerLabel: string; providerUserId: string | null; buyerCompany: string; buyerUserId: string | null;
+  skills: { id: string; name: string }[]; hasRoom: boolean;
+  rating: string | null; comment: string | null;
+};
+
+/** Interviews for a buyer (requested_by) or a provider, optionally one job / a time window. Buyer side shows the provider number. */
+export async function listInterviews(input: { buyerPersonId?: string; providerPersonId?: string; jobId?: string; from?: Date; to?: Date }): Promise<InterviewRow[]> {
+  const rows = await prisma.interviewRequest.findMany({
+    where: { ...(input.buyerPersonId ? { requested_by_person_id: input.buyerPersonId } : {}), ...(input.providerPersonId ? { provider_person_id: input.providerPersonId } : {}), ...(input.jobId ? { job_id: input.jobId } : {}) },
+    orderBy: { created_at: "asc" },
+    select: {
+      id: true, request_number: true, status: true, mode: true, duration_minutes: true, confirmed_line_id: true, room_url: true, provider_person_id: true, requested_by_person_id: true,
+      job_id: true,
+      response: { select: { lines: { orderBy: { line_number: "asc" }, select: { id: true, starts_at: true, time_zone: true } } } },
+      notes: { orderBy: { created_at: "desc" }, take: 1, select: { body: true, rating: true } },
+    },
+  });
+  const jobs = new Map((await prisma.job.findMany({ where: { id: { in: [...new Set(rows.map((r) => r.job_id))] } }, select: { id: true, title: true, skills: { take: 6, select: { skill: { select: { id: true, name: true } } } } } })).map((j) => [j.id, j]));
+  const persons = await prisma.person.findMany({ where: { id: { in: [...new Set(rows.flatMap((r) => [r.provider_person_id, r.requested_by_person_id]))] } }, select: { id: true, user_id: true } });
+  const userOf = new Map(persons.map((p) => [p.id, p.user_id]));
+  const labels = new Map<string, string>();
+  const companies = new Map<string, string>();
+  for (const r of rows) {
+    if (!labels.has(r.provider_person_id)) labels.set(r.provider_person_id, await providerLabelFor(r.provider_person_id));
+    if (!companies.has(r.requested_by_person_id)) companies.set(r.requested_by_person_id, await buyerCompanyName(r.requested_by_person_id));
+  }
+  const out: InterviewRow[] = rows.map((r) => {
+    const job = jobs.get(r.job_id) ?? { id: r.job_id, title: "", skills: [] };
+    const confirmed = r.response?.lines.find((l) => l.id === r.confirmed_line_id) ?? null;
+    return {
+      id: r.id, number: r.request_number, status: r.status, mode: r.mode, minutes: r.duration_minutes, jobId: job.id, jobTitle: job.title,
+      startsAt: confirmed?.starts_at.toISOString() ?? null,
+      slots: r.status === "SLOTS_OFFERED" ? (r.response?.lines ?? []).map((l) => ({ id: l.id, startsAt: l.starts_at.toISOString(), timeZone: l.time_zone })) : [],
+      providerPersonId: r.provider_person_id, providerLabel: labels.get(r.provider_person_id)!, providerUserId: userOf.get(r.provider_person_id) ?? null,
+      buyerCompany: companies.get(r.requested_by_person_id)!, buyerUserId: userOf.get(r.requested_by_person_id) ?? null,
+      skills: job.skills.map((s) => s.skill), hasRoom: !!r.room_url,
+      rating: input.buyerPersonId ? r.notes[0]?.rating ?? null : null, comment: input.buyerPersonId ? r.notes[0]?.body ?? null : null,
+    };
+  });
+  return out.filter((r) => (!input.from || (r.startsAt && r.startsAt >= input.from.toISOString())) && (!input.to || (r.startsAt && r.startsAt < input.to.toISOString())));
 }
