@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
   ];
   return (
     <div className="pm-white-page">
-      <HireTabBar tabs={tabs} current={tab} right={<Link href="/hire" className={`${BTN} hidden shrink-0 px-5 text-[14px] sm:inline-flex`} data-post-job>Post a Job</Link>} />
+      <HireTabBar tabs={tabs} current={tab} right={<Link href="/hire" className={`${BTN} shrink-0 px-3 text-[13px] sm:px-5 sm:text-[14px]`} data-post-job>Post a Job</Link>} />
       <div className="mx-auto w-full max-w-[1120px] pb-14 pt-8">
         {tab === "overview" && <Overview personId={me.id} slice={sp.slice} view={sp.view ?? null} />}
         {tab === "jobs" && <JobsTab personId={me.id} step={sp.step ?? null} slice={sp.slice} q={sp.q ?? ""} />}
