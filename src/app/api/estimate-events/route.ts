@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-errors";
 import { guardApi } from "@/lib/guard";
 import { WorkRequestError } from "@/lib/work-request";
 import { EstimateRequestError } from "@/lib/estimate-requests";
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     } catch (e) {
       if (e instanceof WorkRequestError || e instanceof EstimateError) return NextResponse.json({ error: e.message }, { status: 400 });
+      if (!(e instanceof SignGateError)) return apiError(e, "estimate-events", [WorkRequestError, EstimateError]);
       if (e instanceof SignGateError) return NextResponse.json({ error: `Before accepting, finish: ${e.gate.items.filter((i) => !i.done).map((i) => `${i.company}: ${i.item}`).join(" · ")}`, code: "SIGN_GATE" }, { status: 409 });
       throw e;
     }
@@ -41,8 +43,6 @@ export async function POST(request: Request) {
     }, form.getAll("files").filter((f): f is File => f instanceof File).slice(0, 3));
     return NextResponse.json(out);
   } catch (e) {
-    if (e instanceof WorkRequestError || e instanceof EstimateRequestError) return NextResponse.json({ error: e.message }, { status: 400 });
-    console.error("[estimate-events] failed:", e);
-    return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
+    return apiError(e, "estimate-events", [WorkRequestError, EstimateRequestError]);
   }
 }

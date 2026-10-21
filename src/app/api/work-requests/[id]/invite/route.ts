@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-errors";
 import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { checkTransact, guardApi } from "@/lib/guard";
 import { WorkRequestError } from "@/lib/work-request";
@@ -37,6 +38,6 @@ export async function POST(
     if (e instanceof Error && e.name === "SourcingError")
       return NextResponse.json({ error: e.message, code: "INVALID" }, { status: 400 });
     console.error("[work-request] invite failed:", e);
-    return NextResponse.json({ error: "Could not send those invitations" }, { status: 500 });
+    return apiError(e, "work-requests/[id]/invite");
   }
 }

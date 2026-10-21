@@ -1,5 +1,6 @@
 import { OFFERABLE } from "@/lib/catalog";
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-errors";
 import { prisma } from "@/lib/prisma";
 import { checkTransact, guardApi } from "@/lib/guard";
 import { TRANSACT_MESSAGE } from "@/lib/transact-message";
@@ -109,6 +110,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: e.message, code: e.code }, { status: 400 });
     }
     console.error("[work-request] import failed:", e);
-    return NextResponse.json({ error: "Could not import that posting." }, { status: 500 });
+    return apiError(e, "work-requests/import");
   }
 }

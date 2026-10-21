@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-errors";
 import { guardApi } from "@/lib/guard";
 import { getCurrentDraft, WorkRequestError } from "@/lib/work-request";
 
@@ -13,6 +14,6 @@ export async function GET() {
       return NextResponse.json({ error: e.message, code: e.code }, { status });
     }
     console.error("[work-request] current failed:", e);
-    return NextResponse.json({ error: "Could not load draft" }, { status: 500 });
+    return apiError(e, "work-requests/current");
   }
 }

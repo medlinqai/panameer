@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-errors";
 import { guardApi } from "@/lib/guard";
 import { postWorkRequest, WorkRequestError } from "@/lib/work-request";
 
@@ -21,6 +22,6 @@ export async function POST(
       );
     }
     console.error("[work-request] post failed:", e);
-    return NextResponse.json({ error: "Could not post request" }, { status: 500 });
+    return apiError(e, "work-requests/[id]/post");
   }
 }

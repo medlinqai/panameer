@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-errors";
 import { z } from "zod";
 import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { checkTransact, guardApi } from "@/lib/guard";
@@ -53,6 +54,6 @@ export async function POST(
       return NextResponse.json({ error: e.message, code }, { status });
     }
     console.error("[work-tests] send failed:", e);
-    return NextResponse.json({ error: "Could not send that test." }, { status: 500 });
+    return apiError(e, "work-requests/[id]/test");
   }
 }

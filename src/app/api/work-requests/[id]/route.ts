@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-errors";
 import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { checkTransact, guardApi } from "@/lib/guard";
 import {
@@ -37,7 +38,7 @@ export async function GET(
       return NextResponse.json({ error: e.message, code: e.code }, { status: errStatus(e.code) });
     }
     console.error("[work-request] get failed:", e);
-    return NextResponse.json({ error: "Could not load request" }, { status: 500 });
+    return apiError(e, "work-requests/[id]");
   }
 }
 
@@ -67,6 +68,6 @@ export async function PATCH(
       return NextResponse.json({ error: e.message, code: e.code }, { status: errStatus(e.code) });
     }
     console.error("[work-request] save failed:", e);
-    return NextResponse.json({ error: "Could not save request" }, { status: 500 });
+    return apiError(e, "work-requests/[id]");
   }
 }

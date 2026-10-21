@@ -1,5 +1,6 @@
 import { SignGateError } from "@/lib/your-path";
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-errors";
 import { z } from "zod";
 import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { checkTransact, guardApi } from "@/lib/guard";
@@ -37,6 +38,6 @@ export async function POST(
       return NextResponse.json({ error: e.message, code }, { status });
     }
     console.error("[selection] select failed:", e);
-    return NextResponse.json({ error: "Could not select that provider." }, { status: 500 });
+    return apiError(e, "work-requests/[id]/select");
   }
 }

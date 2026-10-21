@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-errors";
 import { guardApi } from "@/lib/guard";
 import { WorkRequestError } from "@/lib/work-request";
 import { SourcingError } from "@/lib/sourcing";
@@ -32,8 +33,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     }
   } catch (e) {
-    if (e instanceof WorkRequestError || e instanceof SourcingError) return NextResponse.json({ error: e.message }, { status: 400 });
-    console.error("[sourcing] failed:", e);
-    return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
+    return apiError(e, "sourcing", [WorkRequestError, SourcingError]);
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-errors";
 import { guardApi } from "@/lib/guard";
 import { hireSoleSourced, HireError } from "@/lib/sole-source";
 
@@ -27,6 +28,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Not a buyer", code }, { status: 403 });
     }
     console.error("[sole-source] failed:", e);
-    return NextResponse.json({ error: "Could not start the request" }, { status: 500 });
+    return apiError(e, "work-requests/sole-source");
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-errors";
 import { guardApi } from "@/lib/guard";
 import { SignGateError } from "@/lib/your-path";
 import { confirmTerms, HireTermsError, type HireTerms } from "@/lib/hire-direct";
@@ -15,6 +16,6 @@ export async function POST(request: Request) {
     if (e instanceof SignGateError) return NextResponse.json({ error: e.message, gate: e.gate }, { status: 409 });
     if (e instanceof HireTermsError || (e instanceof Error && (e.name === "SourcingError" || e.name === "WorkRequestError"))) return NextResponse.json({ error: e.message }, { status: 400 });
     console.error("[hire] terms failed:", e);
-    return NextResponse.json({ error: "Could not create that work order." }, { status: 500 });
+    return apiError(e, "hire/terms");
   }
 }
