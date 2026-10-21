@@ -41,6 +41,7 @@ export const BAND_CONTROL_HREFS = [
 const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   "/connect": ["/connect/community", "/providers", "/companies", "/connect/invite", "/coordinator"],
   "/shop": ["/my-services", "/services"],
+  "/estimate": ["/estimates", "/catalog/estimates"],
   "/hire": ["/create-work", "/work-requests", "/search", "/consultations"],
   "/hire/overview": ["/hire", "/create-work", "/work-requests", "/search", "/consultations"],
   "/orders": ["/payments", "/pay", "/finances", "/manage-money", "/deliver-work"],
@@ -126,6 +127,8 @@ export const REQUESTER_NAV: NavItem[] = [
     href: "/shop",
     icon: "Package",
   },
+  // HB-E008: Estimate is its own app — an outcome to be priced (Hire = a person at a rate, Shop = a product at a price).
+  { label: "Estimate", heading: "Estimate", href: "/estimate", icon: "ReceiptText" },
   {
     label: "Orders",
     heading: "Work Orders",
@@ -217,6 +220,7 @@ export const PROVIDER_NAV: NavItem[] = [
     href: "/shop",
     icon: "Tag",
   },
+  { label: "Estimate", heading: "Estimate", href: "/estimate", icon: "ReceiptText" },
   { label: "Orders", heading: "Work Orders", href: "/orders", icon: "ClipboardCheck" },
 ];
 

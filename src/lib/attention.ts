@@ -229,13 +229,15 @@ async function countCoursesToWatch(userId: string): Promise<number> {
 }
 
 // ── RA-E001: one counts source — per app and per tab, each item something waiting on THIS person ─────────────
-export type AppKey = "request" | "shop" | "order" | "settlement" | "payment" | "connect" | "learn";
+export type AppKey = "request" | "shop" | "estimate" | "order" | "settlement" | "payment" | "connect" | "learn";
 export type AttentionItem = { id: string; what: string; app: AppKey; appLabel: string; due: string | null; href: string; action: string };
 export type AppCounts = {
   side: "buyer" | "provider";
   request: { total: number; jobs: number; requests: number; interviews: number; tests: number };
   /** SA-E001: Shop — offers waiting on you, purchases (WOs to accept / deliveries to approve) or sales (to accept / to deliver). */
   shop: { total: number; offers: number; purchases: number; sales: number };
+  /** HB-E008: Estimate — buyer: estimates in to review, requests expiring; provider: to price, changes requested, due soon. */
+  estimate: { total: number };
   order: { total: number };
   settlement: { total: number };
   payment: { total: number };
@@ -244,17 +246,17 @@ export type AppCounts = {
   items: AttentionItem[];
 };
 export const APP_HOME: Record<"buyer" | "provider", Record<AppKey, string>> = {
-  buyer: { request: "/hire/overview", shop: "/shop", order: "/orders/overview", settlement: "/payments/payment-requests", payment: "/pay", connect: "/connect", learn: "/learn?tab=mine" },
-  provider: { request: "/find-work", shop: "/shop", order: "/orders/overview", settlement: "/payments/payment-requests", payment: "/payments", connect: "/connect", learn: "/learn?tab=mine" },
+  buyer: { request: "/hire/overview", shop: "/shop", estimate: "/estimate", order: "/orders/overview", settlement: "/payments/payment-requests", payment: "/pay", connect: "/connect", learn: "/learn?tab=mine" },
+  provider: { request: "/find-work", shop: "/shop", estimate: "/estimate", order: "/orders/overview", settlement: "/payments/payment-requests", payment: "/payments", connect: "/connect", learn: "/learn?tab=mine" },
 };
-const APP_LABEL: Record<AppKey, string> = { request: "Hire", shop: "Shop", order: "Orders", settlement: "Settlements", payment: "Payments", connect: "Connect", learn: "Learn" };
+const APP_LABEL: Record<AppKey, string> = { request: "Hire", shop: "Shop", estimate: "Estimate", order: "Orders", settlement: "Settlements", payment: "Payments", connect: "Connect", learn: "Learn" };
 const DAY_MS = 86_400_000;
 const dueText = (d: Date | null | undefined) => (d ? d.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null);
 
 export async function appCounts(viewer: { userId: string }, side: "buyer" | "provider"): Promise<AppCounts> {
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   const zero = { total: 0 };
-  const empty: AppCounts = { side, request: { total: 0, jobs: 0, requests: 0, interviews: 0, tests: 0 }, shop: { total: 0, offers: 0, purchases: 0, sales: 0 }, order: zero, settlement: zero, payment: zero, connect: zero, learn: zero, items: [] };
+  const empty: AppCounts = { side, request: { total: 0, jobs: 0, requests: 0, interviews: 0, tests: 0 }, shop: { total: 0, offers: 0, purchases: 0, sales: 0 }, estimate: zero, order: zero, settlement: zero, payment: zero, connect: zero, learn: zero, items: [] };
   if (!me) return empty;
   const id = me.id;
   const now = new Date();
@@ -267,6 +269,9 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   const { shopCounts } = await import("@/lib/shop-app");
   const sc = await shopCounts(id, side === "buyer" ? "buyer" : "seller");
   const shop = { total: sc.total, offers: sc.offers, purchases: sc.purchases, sales: sc.sales };
+  const { estimateCounts } = await import("@/lib/estimate-events");
+  const ec = await estimateCounts(id, side === "buyer" ? "buyer" : "seller");
+  const estimate = { total: ec.total };
   const add = (app: AppKey, n: number, what: string, href: string, action: string, due?: Date | null) => { if (n > 0) items.push({ id: `${app}:${what}`, what: n > 1 ? `${what} (${n})` : what, app, appLabel: APP_LABEL[app], due: dueText(due), href, action }); return n; };
 
   if (side === "buyer") {
@@ -293,11 +298,11 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     const tests = add("request", testsIn, "Test results in", "/hire/overview?tab=tests", "See results");
     add("shop", sc.offers, "Counter-offers waiting on you", "/shop?tab=offers", "Answer");
     add("shop", sc.purchases, "Purchases needing you", "/shop?tab=purchases", "Open");
-    add("shop", sc.estimates, "Estimates in to review", "/shop?tab=estimates", "Review");
+    add("estimate", ec.toReview, "Estimates in to review", "/estimate", "Review");
     add("settlement", settle, "Settlements to approve", APP_HOME.buyer.settlement, "Approve");
     add("payment", pay, "Payments due", APP_HOME.buyer.payment, "Pay");
     add("connect", connect, "Unread messages", "/messages", "Read");
-    return { side, request: { total: jobs + requests + interviews + tests, jobs, requests, interviews, tests }, shop, order: { total: woAccept }, settlement: { total: settle }, payment: { total: pay }, connect: { total: connect }, learn: { total: learn }, items };
+    return { side, request: { total: jobs + requests + interviews + tests, jobs, requests, interviews, tests }, shop, estimate, order: { total: woAccept }, settlement: { total: settle }, payment: { total: pay }, connect: { total: connect }, learn: { total: learn }, items };
   }
 
   const [dueSoon, toOffer, todays, testsToTake, woAccept, drafts, paidIn] = await Promise.all([
@@ -317,9 +322,9 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   const order = add("order", woAccept.length, "Work Orders to accept", "/orders/overview", "Accept") + add("order", changes, "Change orders to answer", "/orders/overview", "Answer");
   add("shop", sc.offers, "Offers to answer", "/shop?tab=offers", "Answer");
   add("shop", sc.sales, "Product sales needing you", "/shop?tab=sales", "Open");
-  add("shop", sc.estimates, "Estimates to price", "/shop?tab=estimates", "Price");
+  add("estimate", ec.toPrice, "Estimates to price", "/estimate", "Price");
   add("settlement", drafts, "Payment requests to submit", APP_HOME.provider.settlement, "Submit");
   add("payment", paidIn, "Payments on the way", APP_HOME.provider.payment, "See");
   add("connect", connect, "Unread messages", "/messages", "Read");
-  return { side, request: { total: requests + interviews + tests, jobs: 0, requests, interviews, tests }, shop, order: { total: order }, settlement: { total: drafts }, payment: { total: paidIn }, connect: { total: connect }, learn: { total: learn }, items };
+  return { side, request: { total: requests + interviews + tests, jobs: 0, requests, interviews, tests }, shop, estimate, order: { total: order }, settlement: { total: drafts }, payment: { total: paidIn }, connect: { total: connect }, learn: { total: learn }, items };
 }

@@ -151,14 +151,14 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
 }
 
 // ── RA-E002: red counts on the road, the Connect/Learn line, Needs Your Attention ─────────────────────────────
-function buyerBadges(c: AppCounts): Record<string, RoadBadge> {
+function buyerBadges(c: AppCounts): Record<string, RoadBadge | RoadBadge[]> {
   const h = APP_HOME.buyer;
   // HB-E006: Hire + Shop on "Post a Job or Shop"; the Order step is Orders (Work Orders to accept).
-  return { find: { n: c.request.total + c.shop.total, href: c.request.total || !c.shop.total ? h.request : h.shop, label: "Hire and Shop" }, order: { n: c.order.total, href: h.order, label: "Orders" }, approve: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, pay: { n: c.payment.total, href: h.payment, label: "Payments" } };
+  return { find: [{ n: c.request.total + c.shop.total, href: c.request.total || !c.shop.total ? h.request : h.shop, label: "Hire and Shop" }, { n: c.estimate.total, href: h.estimate, label: "Estimate" }], order: { n: c.order.total, href: h.order, label: "Orders" }, approve: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, pay: { n: c.payment.total, href: h.payment, label: "Payments" } };
 }
-function providerBadges(c: AppCounts): Record<string, RoadBadge> {
+function providerBadges(c: AppCounts): Record<string, RoadBadge | RoadBadge[]> {
   const h = APP_HOME.provider;
-  return { sell: { n: c.request.total + c.shop.total, href: c.request.total || !c.shop.total ? h.request : h.shop, label: "Jobs and Shop" }, deliver: { n: c.order.total, href: h.order, label: "Orders" }, request: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, paid: { n: c.payment.total, href: h.payment, label: "Payments" } };
+  return { sell: [{ n: c.request.total + c.shop.total, href: c.request.total || !c.shop.total ? h.request : h.shop, label: "Jobs and Shop" }, { n: c.estimate.total, href: h.estimate, label: "Estimate" }], deliver: { n: c.order.total, href: h.order, label: "Orders" }, request: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, paid: { n: c.payment.total, href: h.payment, label: "Payments" } };
 }
 const Red = ({ n }: { n: number }) => (n > 0 ? <span className="ml-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-state-declined px-1 text-[11px] font-extrabold text-white">{n}</span> : null);
 

@@ -20,7 +20,7 @@ export type RoadCount = { n: number; label: string; sub?: ReactNode; href?: stri
 /** `counts` (admin): every stop drawn in its colour, no "you are here", with a count block under each stop. */
 /** RA-E002: a red count on a stop (that app's waiting items) — clicking opens the app's Overview. */
 export type RoadBadge = { n: number; href: string; label: string };
-export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider road", waiting, counts, badges }: { current: number; hereLabel?: string; road?: LifecycleStep[]; label?: string; waiting?: { key: string; label: string } | null; counts?: RoadCount[]; badges?: Partial<Record<string, RoadBadge>> }) {
+export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider road", waiting, counts, badges }: { current: number; hereLabel?: string; road?: LifecycleStep[]; label?: string; waiting?: { key: string; label: string } | null; counts?: RoadCount[]; badges?: Partial<Record<string, RoadBadge | RoadBadge[]>> }) {
   const here = counts ? -1 : Math.min(Math.max(current, 0), road.length);
   const n = road.length;
   const phases = (["join", "win", "paid"] as RoadPhase[]).map((ph) => ({ ph, span: road.filter((s) => s.phase === ph).length })).filter((x) => x.span > 0);
@@ -48,11 +48,12 @@ export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider r
                 style={{ borderColor: C, background: done && !wait ? C : "#fff", color: done && !wait ? "#fff" : C }}
               >
                 {wait ? "…" : done ? "✓" : i + 1}
-                {badges?.[s.key] && badges[s.key]!.n > 0 && (
-                  <a href={badges[s.key]!.href} data-road-badge={s.key} aria-label={`${badges[s.key]!.n} waiting in ${badges[s.key]!.label}`} className="absolute -right-3 -top-2.5 grid h-[22px] min-w-[22px] place-items-center rounded-full border-2 border-white bg-state-declined px-1 text-[11.5px] font-extrabold text-white hover:bg-state-declined/90">
-                    {badges[s.key]!.n}
+                {/* HB-E008: one red count per app on its step (e.g. Hire + Shop, and Estimate beside it). */}
+                {([] as RoadBadge[]).concat(badges?.[s.key] ?? []).filter((b) => b.n > 0).map((b, k) => (
+                  <a key={b.label} href={b.href} data-road-badge={s.key} title={b.label} aria-label={`${b.n} waiting in ${b.label}`} className="absolute -top-2.5 grid h-[22px] min-w-[22px] place-items-center rounded-full border-2 border-white bg-state-declined px-1 text-[11.5px] font-extrabold text-white hover:bg-state-declined/90" style={{ right: -12 - k * 24 }}>
+                    {b.n}
                   </a>
-                )}
+                ))}
               </span>
               <span className={"mt-2 whitespace-nowrap px-1 text-[12.5px] leading-[1.25] text-ink " + (now ? "font-extrabold" : "font-semibold")}>
                 {a}<br />{b}<br />{c}

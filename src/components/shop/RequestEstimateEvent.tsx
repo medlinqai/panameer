@@ -34,7 +34,7 @@ export function RequestEstimateEvent({ categories, types, initial }: { categorie
     const j = (await r?.json().catch(() => ({}))) as { eventId?: string; error?: string };
     setBusy(false);
     if (!r?.ok || !j.eventId) { setError(j.error ?? "That didn't work."); return; }
-    router.push(`/shop/estimates/${j.eventId}`);
+    router.push(`/estimate/${j.eventId}`);
   };
   const opts = cat ? types[cat] ?? [] : [];
   return (

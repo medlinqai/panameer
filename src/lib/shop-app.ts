@@ -40,10 +40,8 @@ function shopOrdersWhere(personId: string, side: ShopSide) {
 
 // ── SA-E001: counts (also fed into appCounts for the dashboard) ─────────────────────────────────────────────────
 export async function shopCounts(personId: string, side: ShopSide) {
-  const { estimateCounts } = await import("@/lib/estimate-events");
-  const est = await estimateCounts(personId, side);
-  const base = await shopCountsCore(personId, side);
-  return { ...base, estimates: est.total, estimatesDueSoon: est.dueSoon, total: base.total + est.total };
+  // HB-E008: estimates are their own app — not counted in Shop.
+  return shopCountsCore(personId, side);
 }
 
 async function shopCountsCore(personId: string, side: ShopSide) {
@@ -171,8 +169,6 @@ export async function shopStrip(viewer: Viewer, personId: string, side: ShopSide
   return [
     { key: "browse", label: "Browse", count: 0, href: "/shop?tab=browse" },
     { key: "offer", label: "Offer", count: offers, href: "/shop?tab=offers" },
-    // ES-E006: estimates to review (buyer) / to price (seller).
-    { key: "estimate", label: "Estimate", count: (await (await import("@/lib/estimate-events")).estimateCounts(personId, side)).total, href: "/shop?tab=estimates" },
     { key: "wr", label: "Work Request", count: cart, href: side === "buyer" ? "/shop?tab=cart" : base },
     { key: "wo", label: "Work Order", count: by("Work Order"), href: `${base}&step=Work+Order` },
     { key: "delivered", label: "Delivered", count: by("Delivered"), href: `${base}&step=Delivered` },

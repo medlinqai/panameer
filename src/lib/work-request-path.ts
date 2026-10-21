@@ -43,7 +43,7 @@ export async function jobPath(jobId: string) {
     { key: "job", label: est ? "Describe" : "Job", done: true, date: job.created_at },
     { key: "shortlist", hidden: est, label: "Shortlist", done: stars.length > 0 || sourced, date: first(stars.map((s) => s.created_at)) ?? event?.created_at ?? null, href: "#matches" },
     { key: "request", label: est ? "Ask Providers" : "Request Proposals", done: sourced, date: event?.created_at ?? null, note: event ? `${asked} asked · due ${when(event.deadline_at)}` : null, href: "#matches", hidden: !sourced && awarded },
-    { key: "proposals", label: est ? "Estimates In" : "Proposals In", done: bids.length > 0, date: first(bids.map((b) => b.bid?.submitted_at)), note: event ? `${bids.length} of ${asked} in` : null, href: event ? (est ? `/shop/estimates/${event.id}` : `/hire/sourcing/${event.id}`) : undefined, hidden: !sourced && awarded },
+    { key: "proposals", label: est ? "Estimates In" : "Proposals In", done: bids.length > 0, date: first(bids.map((b) => b.bid?.submitted_at)), note: event ? `${bids.length} of ${asked} in` : null, href: event ? (est ? `/estimate/${event.id}` : `/hire/sourcing/${event.id}`) : undefined, hidden: !sourced && awarded },
     { key: "interview", hidden: est, label: "Interview", done: !!interview, date: interview?.created_at ?? null, optional: true },
     { key: "test", hidden: est, label: "Test", done: !!test, date: test?.created_at ?? null, optional: true },
     { key: "award", label: "Award", done: awarded, date: awardedAt },

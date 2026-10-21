@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { appCounts } from "@/lib/attention";
 import { buyerHireTabs, buyerLiveWork, buyerTests, hireOverviewData, weekInterviews, type JobTabRow } from "@/lib/live-work";
 import { AttentionGroups } from "@/components/hire/AttentionGroups";
-import { buyerEstimateEvents } from "@/lib/estimate-events";
 import { DiscardDraft } from "@/components/hire/DiscardDraft";
 import { listInterviews } from "@/lib/interviews";
 import { dailyConfigured } from "@/lib/daily";
@@ -43,8 +42,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
     <div className="pm-white-page">
       <HireTabBar tabs={tabs} current={tab} right={
         <span className="flex shrink-0 gap-2">
-          {/* HB-E008: Request an Estimate (secondary) beside Post a Job (primary). */}
-          <Link href="/shop/estimates/new" className={`${BTN_OUT} hidden px-4 text-[14px] md:inline-flex`} data-request-estimate>Request an Estimate</Link>
           <Link href="/hire" className={`${BTN} shrink-0 px-3 text-[13px] sm:px-5 sm:text-[14px]`} data-post-job>Post a Job</Link>
         </span>
       } />
@@ -158,7 +155,7 @@ function CompactJob({ j }: { j: JobTabRow }) {
 
 // ── HL-E002 ──────────────────────────────────────────────────────────────────────────────────────────────────
 async function JobsTab({ personId, step, slice, q }: { personId: string; step: string | null; slice?: string; q: string }) {
-  const [{ jobRows }, estimates] = await Promise.all([buyerHireTabs(personId), buyerEstimateEvents(personId)]);
+  const { jobRows } = await buyerHireTabs(personId);
   const needle = q.trim().toLowerCase();
   const list = jobSlice(jobRows, slice)
     .filter((j) => (!step || j.step === step) && (!needle || `${j.title} ${j.ref ?? ""} ${j.facts}`.toLowerCase().includes(needle)))
@@ -181,17 +178,6 @@ async function JobsTab({ personId, step, slice, q }: { personId: string; step: s
         <span className="text-[12px] text-state-inactive">Sorted by what needs you first</span>
       </div>
       {recent.length ? recent.map((j) => <JobArticle key={j.id} j={j} />) : <p className="text-[14px] text-state-inactive">No jobs here.</p>}
-      {/* HB-E008: Estimate requests list here too (and stay in Shop › Estimates). */}
-      {!step && slice !== "drafts" && estimates.filter((e) => !needle || e.what.toLowerCase().includes(needle)).filter((e) => (sliceOf(slice) === "completed" ? e.completed : sliceOf(slice) === "all" ? true : !e.completed)).map((e) => (
-        <article key={e.id} className="flex flex-wrap items-start gap-4 border-b border-state-border pb-5 sm:flex-nowrap" data-estimate-job>
-          <TypeArt typeName="report" size={52} />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">{e.needsAction && <RedDot size={9} />}<Link href={`/shop/estimates/${e.id}`} className="text-[17px] font-bold text-ink hover:underline">{e.what}</Link><span className="rounded-[14px] bg-state-inactive-bg px-2.5 py-0.5 text-[11px] font-bold text-state-inactive">Estimate</span></div>
-            <div className="mt-1 text-[13px] text-state-inactive">{e.number} · {e.in} of {e.asked} in{e.range ? ` · ${e.range}` : ""} · due {e.due} · {e.step}</div>
-          </div>
-          <Link href={`/shop/estimates/${e.id}`} className={`${e.needsAction ? BTN : BTN_OUT} w-full sm:w-auto`}>{e.needsAction ? "Review estimates" : "Open"}</Link>
-        </article>
-      ))}
       {older.length > 0 ? (
         <details>
           <summary className="cursor-pointer text-[13px] text-state-inactive">Older than 5 days ({older.length})</summary>

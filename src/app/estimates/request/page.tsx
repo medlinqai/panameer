@@ -7,6 +7,6 @@ export const dynamic = "force-dynamic";
 export default async function Page({ searchParams }: { searchParams: Promise<{ provider?: string; service?: string; product?: string }> }) {
   const sp = await searchParams;
   const qs = new URLSearchParams(Object.entries(sp).filter(([, v]) => v) as [string, string][]).toString();
-  if (!(await getSessionViewer())) redirect(`/login?callbackUrl=${encodeURIComponent(`/shop/estimates/new${qs ? `?${qs}` : ""}`)}`);
-  redirect(`/shop/estimates/new${qs ? `?${qs}` : ""}`);
+  if (!(await getSessionViewer())) redirect(`/login?callbackUrl=${encodeURIComponent(`/estimate/new${qs ? `?${qs}` : ""}`)}`);
+  redirect(`/estimate/new${qs ? `?${qs}` : ""}`);
 }

@@ -7639,7 +7639,9 @@ model ServiceProductOffer {
 
   /// ⚠ Integer cents, like every other money value in the app.
   amount_cents Int
-  currency     String @default("USD")
+  /// SE-E001/E002: when the offer stops waiting (null = 3 days after it was made / countered); Extend moves it.
+  expires_at   DateTime?
+  currency     String    @default("USD")
 
   status ServiceProductOfferStatus @default(OPEN)
 
@@ -8726,6 +8728,8 @@ model Estimate {
   work_order_id      String?        @db.Uuid
   sent_at            DateTime?
   decided_at         DateTime?
+  /// SE-E003: the buyer shortlisted this estimate in its Estimate Event.
+  shortlisted_at     DateTime?
   created_at         DateTime       @default(now())
   updated_at         DateTime       @updatedAt
 
