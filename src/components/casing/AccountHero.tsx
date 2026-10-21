@@ -20,6 +20,7 @@ export function AccountHero({
   actions,
   testId,
   wide = false,
+  stackKpis = false,
 }: {
   picture: ReactNode;
   eyebrow: string;
@@ -31,6 +32,8 @@ export function AccountHero({
   testId?: string;
   /** 400px picture column (labelled pictures like the bubble field need the room). */
   wide?: boolean;
+  /** RA-E007: stats one per line on phones. */
+  stackKpis?: boolean;
 }) {
   return (
     <section data-account-hero data-testid={testId} className={"grid items-center gap-x-14 gap-y-6 border-b border-line pb-9 " + (wide ? "md:grid-cols-[400px_1fr]" : "md:grid-cols-[340px_1fr]")}>
@@ -38,7 +41,7 @@ export function AccountHero({
       <div className="min-w-0">
         <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">{eyebrow.toUpperCase()}</p>
         <h1 className="mb-5 mt-1.5 text-[30px] font-bold leading-tight">{title}</h1>
-        <KpiRow kpis={kpis} testId={kpiTestId} className="pb-[18px]" />
+        <KpiRow kpis={kpis} testId={kpiTestId} className="pb-[18px]" stack={stackKpis} />
         {paragraph && <div className="my-[18px] text-[14px] leading-[1.65] text-ink-2">{paragraph}</div>}
         {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
       </div>

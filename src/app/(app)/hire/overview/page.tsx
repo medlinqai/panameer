@@ -62,6 +62,7 @@ async function Overview({ personId, step, view }: { personId: string; step: stri
     <>
       <AccountHero
         testId="hire-overview-hero"
+        stackKpis
         picture={<StripColumn steps={w.strip} href={(k) => `/hire/overview?tab=jobs&step=${k}`} />}
         eyebrow="Requests"
         title="What Needs You Today"

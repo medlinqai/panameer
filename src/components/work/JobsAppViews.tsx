@@ -19,6 +19,7 @@ export async function JobsOverview({ personId, view }: { personId: string; view:
     <div className="mx-auto w-full max-w-[1010px]" data-jobs-overview>
       <AccountHero
         testId="jobs-overview-hero"
+        stackKpis
         picture={<StripColumn steps={w.strip} href={(k) => STEP_HREF[k] ?? "/find-work"} />}
         eyebrow="Jobs"
         title="What Needs You Today"

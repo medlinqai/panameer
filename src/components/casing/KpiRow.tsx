@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
 
 // M-E002: KPIs stay on one row on phones (equal columns, smaller numbers under 480px); spaced row from 640px up.
-export function KpiRow({ kpis, testId, className = "" }: { kpis: { value: ReactNode; label: string; delta?: string | null }[]; testId?: string; className?: string }) {
+/** `stack` (RA-E007): one stat per line on phones (app homes). */
+export function KpiRow({ kpis, testId, className = "", stack = false }: { kpis: { value: ReactNode; label: string; delta?: string | null }[]; testId?: string; className?: string; stack?: boolean }) {
   return (
     <div
       data-testid={testId}
       data-kpi-row
-      className={"grid gap-x-3 gap-y-3 border-b border-line sm:flex sm:flex-wrap sm:gap-x-11 " + className}
-      style={{ gridTemplateColumns: `repeat(${kpis.length}, minmax(0, 1fr))` }}
+      className={(stack ? "grid grid-cols-1 gap-y-2 border-b border-line sm:flex sm:flex-wrap sm:gap-x-11 " : "grid gap-x-3 gap-y-3 border-b border-line sm:flex sm:flex-wrap sm:gap-x-11 ") + className}
+      style={stack ? undefined : { gridTemplateColumns: `repeat(${kpis.length}, minmax(0, 1fr))` }}
     >
       {kpis.map((k) => (
         <div key={k.label} className="min-w-0">
