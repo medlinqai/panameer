@@ -1,115 +1,224 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { hideProviderIdentity, listShopProducts } from "@/lib/shop";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
-import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/shop/ProductCard";
-import { ShowMore } from "@/components/shop/ShowMore";
-import { StoreFilters } from "@/components/shop/StoreFilters";
 import { SellOnPanameer } from "@/components/shop/SellMenu";
 import { CategoryIcon } from "@/components/shop/CategoryIcon";
 import { HELP_TILE } from "@/lib/shop-categories";
 import { shopCategories } from "@/lib/shop-category-list";
-import { byPopular, filterStore, filterStoreExceptCategory, type StoreQuery } from "@/lib/shop-filters";
+import { byPopular, filterStore, storeHref, STORE_DELIVERY, STORE_LEAD, STORE_PRICE, type StoreQuery } from "@/lib/shop-filters";
 import { HELP_TYPES, searchHelpLinks } from "@/lib/help-links";
 import { HelpTypeIcon } from "@/components/help/HelpTypeIcon";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
+import { StripColumn } from "@/components/home/AppHome";
+import { ShopBar } from "@/components/shop/ShopBar";
+import { ShopResults } from "@/components/shop/ShopResults";
+import { ShopCompare } from "@/components/shop/ShopCompare";
+import { ShopOffers, ShopOrders } from "@/components/shop/ShopLists";
+import { CartView } from "@/components/shop/CartView";
+import { cartFor } from "@/lib/cart";
+import { COMPARE_COOKIE, parseCompare, productTypesByCategory, shopCounts, shopOffers, shopOrders, shopPerson, shopSideOf, shopStrip } from "@/lib/shop-app";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Shop · Panameer" };
 
-// SH2-E003: Shop is one page — search with the Category picker, 12 white Category tiles; a search or a tile shows
-// results here with filters on the left. Products only; services are hired under Hire.
-export default async function Page({ searchParams }: { searchParams: Promise<StoreQuery> }) {
+type Q = StoreQuery & { step?: string; slice?: string };
+const BUYER_TABS = ["overview", "browse", "compare", "cart", "offers", "purchases"] as const;
+const SELLER_TABS = ["overview", "browse", "offers", "sales"] as const;
+
+// SA-E001–E006: Shop as an app like Hire — SHOP | Overview · Browse · Compare · Cart · Offers · Purchases (seller: Overview · Browse ·
+// My Products · Offers · Sales). Products only; sellers show as a provider number until a Work Order is Released.
+export default async function Page({ searchParams }: { searchParams: Promise<Q> }) {
   const viewer = await memberOrPublicTwin("/shop");
   const f = await searchParams;
-  const browsing = !!(f.q?.trim() || f.category || f.price || f.billing || f.delivery || f.offers);
-  const [all, me] = await Promise.all([
-    listShopProducts(undefined, await seesTestAccounts(viewer)).then((l) => hideProviderIdentity(l, viewer)),
-    prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }),
-  ]);
-  const cartLines = me && browsing ? await prisma.workRequestLine.findMany({ where: { workRequest: { buyer_person_id: me.id, source: "SHOP", status: "INCOMPLETE" } }, select: { id: true, service_product_id: true } }) : [];
-  const inCart = new Map(cartLines.map((l) => [l.service_product_id, l.id]));
-  const products = browsing ? filterStore(all, f).sort(byPopular) : [];
-  const forCounts = filterStoreExceptCategory(all, f);
-  // II-E002: Informational Items a search finds — after the products, never in Category counts, hidden under a Category filter.
-  const info = browsing && f.q?.trim() && !f.category ? await searchHelpLinks(f.q) : [];
-  const tiles = await shopCategories();
-  const names = tiles.map((t) => t.name);
-  const categories = names.map((c) => ({ value: c, label: c, count: forCounts.filter((p) => p.category === c).length }));
+  const person = await shopPerson(viewer);
+  const side = shopSideOf(person);
+  const browsing = !!(f.q?.trim() || f.category || f.price || f.billing || f.delivery || f.offers || f.type || f.lead || f.rating || f.certified);
+  const allowed: readonly string[] = side === "buyer" ? BUYER_TABS : SELLER_TABS;
+  const tab = f.tab && allowed.includes(f.tab) ? f.tab : browsing ? "browse" : person ? "overview" : "browse";
+  const counts = person ? await shopCounts(person.id, side) : null;
+  const compareIds = parseCompare((await cookies()).get(COMPARE_COOKIE)?.value);
+
+  const tabs = side === "buyer"
+    ? [
+        { label: "Overview", href: "/shop", badge: counts?.total },
+        { label: "Browse", href: "/shop?tab=browse" },
+        { label: `Compare (${compareIds.length})`, href: "/shop?tab=compare" },
+        { label: `Cart (${counts?.cart ?? 0})`, href: "/shop?tab=cart" },
+        { label: "Offers", href: "/shop?tab=offers", badge: counts?.offers },
+        { label: "Purchases", href: "/shop?tab=purchases", badge: counts?.purchases },
+      ]
+    : [
+        { label: "Overview", href: "/shop", badge: counts?.total },
+        { label: "Browse", href: "/shop?tab=browse" },
+        { label: "My Products", href: "/catalog/products" },
+        { label: "Offers", href: "/shop?tab=offers", badge: counts?.offers },
+        { label: "Sales", href: "/shop?tab=sales", badge: counts?.sales },
+      ];
+  const current = tab === "overview" ? "/shop" : `/shop?tab=${tab}`;
 
   return (
-    <div className="pm-white-page mx-auto w-full max-w-6xl">
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[26px] font-extrabold">Shop</h1>
-        <SellOnPanameer />
+    <div className="pm-white-page">
+      <PageTabs wrap eyebrow="SHOP" sequence="none" tabs={tabs} current={current}>
+        <span className="ml-2 hidden shrink-0 sm:block"><SellOnPanameer /></span>
+      </PageTabs>
+      <div className="mx-auto w-full max-w-[1010px]">
+        {tab === "overview" && person && <Overview viewer={viewer} personId={person.id} side={side} counts={counts!} />}
+        {tab === "browse" && <Browse viewer={viewer} f={f} browsing={browsing} compareIds={compareIds} />}
+        {tab === "compare" && <CompareTab viewer={viewer} ids={compareIds} />}
+        {tab === "cart" && <CartTab viewer={viewer} />}
+        {tab === "offers" && person && <section className="py-4"><h2 className="mb-2 text-[22px] font-bold">Offers</h2><ShopOffers rows={await shopOffers(viewer, person.id, side)} side={side} /></section>}
+        {(tab === "purchases" || tab === "sales") && person && <OrdersTab viewer={viewer} personId={person.id} side={side} step={f.step ?? null} />}
       </div>
-      <form action="/shop" className="mt-3 flex flex-wrap sm:flex-nowrap" role="search" data-shop-search>
-        <input name="q" defaultValue={f.q ?? ""} placeholder="Search products — business cards, AC tune-up, Google Ads…" aria-label="Search products" className="min-w-0 flex-1 border-2 border-ink bg-white px-3.5 py-3 text-[15px] sm:border-r-0" />
-        <select name="category" defaultValue={f.category ?? ""} aria-label="Category" className="border-2 border-ink bg-white px-2.5 py-3 text-[14px] sm:border-r-0">
-          <option value="">All categories</option>
-          {names.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <button type="submit" className="bg-ink px-6 py-3 text-[14px] font-bold text-surface hover:bg-ink-hover">Search</button>
-      </form>
-      <p className="mt-2 text-[13.5px] text-ink-2">
-        Looking to hire someone for a job? <Link href="/hire" className="font-bold text-magenta-dark">Hire →</Link>
-      </p>
+    </div>
+  );
+}
 
+type Viewer = Awaited<ReturnType<typeof memberOrPublicTwin>>;
+
+async function Overview({ viewer, personId, side, counts }: { viewer: Viewer; personId: string; side: "buyer" | "seller"; counts: Awaited<ReturnType<typeof shopCounts>> }) {
+  const strip = await shopStrip(viewer, personId, side);
+  const hrefOf = (k: string) => strip.find((s) => s.key === k)?.href ?? "/shop";
+  const kpis = side === "buyer"
+    ? [{ value: counts.offers, label: "OFFERS TO ANSWER" }, { value: counts.cart, label: "IN CART" }, { value: counts.deliveries, label: "DELIVERIES TO APPROVE" }]
+    : [{ value: counts.offers, label: "OFFERS TO ANSWER" }, { value: counts.toAccept, label: "ORDERS TO ACCEPT" }, { value: counts.toDeliver, label: "TO DELIVER" }];
+  const actions = side === "buyer"
+    ? <><Link href="/shop?tab=browse" className={HERO_BTN}>Browse Products</Link><Link href="/shop?tab=purchases" className={HERO_BTN_W}>My Purchases</Link></>
+    : <><Link href="/catalog/products" className={HERO_BTN}>Add a Product</Link><Link href="/shop?tab=sales" className={HERO_BTN_W}>My Sales</Link></>;
+  return (
+    <>
+      <AccountHero testId="shop-overview-hero" stackKpis picture={<StripColumn steps={strip} href={hrefOf} />} eyebrow="Shop" title="What Needs You Today" kpis={kpis} actions={actions} />
+      {side === "buyer" ? <BuyerLower viewer={viewer} personId={personId} /> : <SellerLower viewer={viewer} personId={personId} />}
+    </>
+  );
+}
+
+async function BuyerLower({ viewer, personId }: { viewer: Viewer; personId: string }) {
+  const [all, bought] = await Promise.all([
+    listShopProducts(undefined, await seesTestAccounts(viewer)).then((l) => hideProviderIdentity(l, viewer)),
+    shopOrders(viewer, personId, "buyer"),
+  ]);
+  const mine = new Set(bought.map((o) => o.product));
+  const cats = new Set(all.filter((p) => mine.has(p.title)).map((p) => p.category));
+  const popular = (cats.size ? all.filter((p) => cats.has(p.category)) : all).sort(byPopular).slice(0, 6);
+  return (
+    <div className="grid md:grid-cols-2">
+      <section className="min-w-0 py-6 md:border-r md:border-line md:pr-7">
+        <h2 className="text-[22px] font-bold">Recent Purchases</h2>
+        <ShopOrders rows={bought.slice(0, 5)} empty="No purchases yet." />
+      </section>
+      <section className="min-w-0 py-6 md:pl-7">
+        <h2 className="text-[22px] font-bold">Popular{cats.size ? " in your categories" : ""}</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">{popular.map((p) => <ProductCard key={p.id} p={p} tile signedIn own={p.providerPersonId === personId} />)}</div>
+      </section>
+    </div>
+  );
+}
+
+async function SellerLower({ viewer, personId }: { viewer: Viewer; personId: string }) {
+  const [offers, sales] = await Promise.all([shopOffers(viewer, personId, "seller"), shopOrders(viewer, personId, "seller")]);
+  return (
+    <div className="grid md:grid-cols-2">
+      <section className="min-w-0 py-6 md:border-r md:border-line md:pr-7">
+        <h2 className="text-[22px] font-bold">Offers Waiting</h2>
+        <ShopOffers rows={offers.filter((o) => o.needsAction).slice(0, 5)} side="seller" />
+      </section>
+      <section className="min-w-0 py-6 md:pl-7">
+        <h2 className="text-[22px] font-bold">Recent Sales</h2>
+        <ShopOrders rows={sales.slice(0, 5)} empty="No sales yet." />
+      </section>
+    </div>
+  );
+}
+
+async function Browse({ viewer, f, browsing, compareIds }: { viewer: Viewer; f: Q; browsing: boolean; compareIds: string[] }) {
+  const [all, tiles, types] = await Promise.all([
+    listShopProducts(undefined, await seesTestAccounts(viewer)).then((l) => hideProviderIdentity(l, viewer)),
+    shopCategories(),
+    productTypesByCategory(),
+  ]);
+  const names = tiles.map((t) => t.name);
+  const products = browsing ? filterStore(all, f).sort(byPopular) : [];
+  const info = browsing && f.q?.trim() && !f.category ? await searchHelpLinks(f.q) : [];
+  const inCategory = f.category ? all.filter((p) => p.category === f.category) : all;
+  const hasPlace = inCategory.some((p) => p.delivery === "ONSITE") && inCategory.some((p) => p.delivery !== "ONSITE");
+  const base: StoreQuery = { ...f, tab: "browse" };
+  const chip = (key: keyof StoreQuery, value: string, label: string) => (
+    <Link key={`${key}${value}`} href={storeHref("/shop", base, key, value)} aria-current={f[key] === value ? "true" : undefined}
+      className={f[key] === value ? "shrink-0 rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "shrink-0 rounded-full border border-line px-3 py-1 font-semibold hover:border-magenta"}>{label}</Link>
+  );
+  const compare = all.filter((p) => compareIds.includes(p.id)).map((p) => ({ id: p.id, productTypeId: p.productTypeId }));
+  return (
+    <section className="py-2" data-shop-browse>
+      <ShopBar q={f.q ?? ""} category={f.category ?? ""} type={f.type ?? ""} categories={names} types={types} />
+      <p className="mt-2 text-[13.5px] text-ink-2">Looking to hire someone for a job? <Link href="/hire" className="font-bold text-magenta-dark">Hire →</Link></p>
       {!browsing ? (
         <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3" data-category-tiles>
           {[...tiles, HELP_TILE].map((c) => (
-            <Link key={c.name} href={c.href ?? `/shop?category=${encodeURIComponent(c.name)}`} data-category-tile={c.name} className="flex items-start gap-3 rounded-[10px] border border-line bg-white p-4 hover:border-magenta focus-visible:outline focus-visible:outline-2 focus-visible:outline-magenta">
+            <Link key={c.name} href={c.href ?? `/shop?tab=browse&category=${encodeURIComponent(c.name)}`} data-category-tile={c.name} className="flex items-start gap-3 rounded-[10px] border border-line bg-white p-4 hover:border-magenta focus-visible:outline focus-visible:outline-2 focus-visible:outline-magenta">
               <CategoryIcon icon={c.icon} className="h-7 w-7 shrink-0 text-magenta" />
-              <span className="min-w-0">
-                <b className="block text-[15px]">{c.name}</b>
-                <small className="block text-[12.5px] text-ink-2">{c.examples}</small>
-              </span>
+              <span className="min-w-0"><b className="block text-[15px]">{c.name}</b><small className="block text-[12.5px] text-ink-2">{c.examples}</small></span>
             </Link>
           ))}
         </div>
       ) : (
         <>
-          <p className="mt-4 flex flex-wrap items-center gap-3 text-[14px] text-ink-2" data-results-count>
-            <span>
-              {products.length} product{products.length === 1 ? "" : "s"}
-              {f.category ? ` in ${f.category}` : ""}
-              {f.q?.trim() ? ` for “${f.q.trim()}”` : ""}
-            </span>
-            <Link href="/shop" className="font-semibold text-magenta-dark underline underline-offset-4">Clear</Link>
-          </p>
-          <div className="mt-3 grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
-            <StoreFilters base="/shop" f={f} categories={categories} />
-            <div className="min-w-0">
-            {products.length === 0 ? (
-              info.length ? null : <p className="text-[14px] text-ink-3">Nothing matches yet. Try another Category, or <Link href="/hire" className="font-semibold text-magenta-dark underline">post the job under Hire</Link>.</p>
-            ) : (
-              <ShowMore step={12} className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3">
-                {products.map((p) => <ProductCard key={p.id} p={p} tile signedIn own={p.providerPersonId === me?.id} inCartLineId={inCart.get(p.id) ?? null} />)}
-              </ShowMore>
-            )}
-            {info.length > 0 && (
-              <section className="mt-6" data-informational-items>
-                <h2 className="mb-2 text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Informational items</h2>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3">
-                  {info.map((l) => (
-                    <article key={l.id} className="flex flex-col gap-1 rounded-[10px] border border-line bg-white p-3.5" data-info-card>
-                      <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-magenta-dark">
-                        <HelpTypeIcon type={l.type} className="h-4 w-4" />
-                        <span className="border border-magenta px-1">Info</span>
-                        {HELP_TYPES.find((t) => t.value === l.type)?.label}
-                      </span>
-                      <h3 className="text-[15px] font-extrabold leading-snug">{l.title}</h3>
-                      {l.description && <p className="line-clamp-2 text-[12.5px] text-ink-2">{l.description}</p>}
-                      <Link href={`/help/view/${l.id}`} className="mt-auto inline-flex min-h-9 items-center justify-center bg-ink px-4 text-[13px] font-semibold text-surface hover:bg-ink-hover">Open</Link>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            )}
-            </div>
+          {/* SA-E004: filters as one chip row under the bar. */}
+          <div className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1 text-[12.5px]" data-shop-chips>
+            {STORE_PRICE.map((p) => chip("price", p.value, p.label))}
+            {STORE_LEAD.map((p) => chip("lead", p.value, p.label))}
+            {hasPlace && STORE_DELIVERY.map((p) => chip("delivery", p.value, p.label))}
+            {chip("rating", "4", "★ 4+")}
+            {chip("certified", "1", "Certified seller")}
           </div>
+          <p className="mt-3 flex flex-wrap items-center gap-3 text-[14px] text-ink-2" data-results-count>
+            <span>{products.length} product{products.length === 1 ? "" : "s"}{f.category ? ` in ${f.category}` : ""}{f.q?.trim() ? ` for “${f.q.trim()}”` : ""}</span>
+            <Link href="/shop?tab=browse" className="font-semibold text-magenta-dark underline underline-offset-4">Clear</Link>
+          </p>
+          <div className="mt-2">
+            {products.length ? <ShopResults products={products} compare={compare} signedIn /> : !info.length && <p className="text-[14px] text-ink-3">Nothing matches yet. Try another Category, or <Link href="/hire" className="font-semibold text-magenta-dark underline">post the job under Hire</Link>.</p>}
+          </div>
+          {info.length > 0 && (
+            <section className="mt-6" data-informational-items>
+              <h2 className="mb-2 text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Informational items</h2>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3">
+                {info.map((l) => (
+                  <article key={l.id} className="flex flex-col gap-1 rounded-[10px] border border-line bg-white p-3.5" data-info-card>
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-magenta-dark"><HelpTypeIcon type={l.type} className="h-4 w-4" /><span className="border border-magenta px-1">Info</span>{HELP_TYPES.find((t) => t.value === l.type)?.label}</span>
+                    <h3 className="text-[15px] font-extrabold leading-snug">{l.title}</h3>
+                    {l.description && <p className="line-clamp-2 text-[12.5px] text-ink-2">{l.description}</p>}
+                    <Link href={`/help/view/${l.id}`} className="mt-auto inline-flex min-h-9 items-center justify-center bg-ink px-4 text-[13px] font-semibold text-surface hover:bg-ink-hover">Open</Link>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
         </>
       )}
-    </div>
+    </section>
+  );
+}
+
+async function CompareTab({ viewer, ids }: { viewer: Viewer; ids: string[] }) {
+  const all = ids.length ? await listShopProducts(undefined, await seesTestAccounts(viewer)).then((l) => hideProviderIdentity(l, viewer)) : [];
+  return <ShopCompare products={ids.map((id) => all.find((p) => p.id === id)).filter((p): p is (typeof all)[number] => !!p)} signedIn />;
+}
+
+async function CartTab({ viewer }: { viewer: Viewer }) {
+  const c = await cartFor(viewer);
+  return <section className="py-4"><CartView groups={c.groups} totalCents={c.totalCents} currency={c.currency} hasCompany={c.hasCompany} workRequest={c.workRequest} /></section>;
+}
+
+async function OrdersTab({ viewer, personId, side, step }: { viewer: Viewer; personId: string; side: "buyer" | "seller"; step: string | null }) {
+  const rows = await shopOrders(viewer, personId, side);
+  const list = step ? rows.filter((r) => r.step === step) : rows;
+  return (
+    <section className="py-4">
+      <h2 className="mb-2 text-[22px] font-bold">{side === "buyer" ? "Purchases" : "Sales"}{step ? <small className="ml-2 text-[13px] font-semibold text-ink-3">{step} · <Link href={`/shop?tab=${side === "buyer" ? "purchases" : "sales"}`} className="text-magenta-dark underline">all</Link></small> : null}</h2>
+      <ShopOrders rows={list} empty={side === "buyer" ? "No purchases yet." : "No product sales yet."} />
+    </section>
   );
 }
