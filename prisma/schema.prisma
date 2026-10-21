@@ -3578,6 +3578,8 @@ model WorkRequest {
   /// Ruling 14: the buyer picks per request, so both shapes land here.
   // JW-E003: the requisition header (Oracle POR_REQUISITION_HEADERS_ALL).
   wr_number              String?            @unique
+  /// WS-E001: the Oracle-style document style (T&M · Fixed Price · Product · Retainer); null = not yet set.
+  style                  WorkOrderStyle?
   /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
   legacy_number          String?
   job_id                 String?            @db.Uuid
@@ -6187,10 +6189,12 @@ enum WorkOrderLineStatus {
 }
 
 model WorkOrder {
-  id            String  @id @default(uuid()) @db.Uuid
-  order_number  String  @unique
+  id            String          @id @default(uuid()) @db.Uuid
+  order_number  String          @unique
+  /// WS-E001: the Oracle-style document style; one Work Order per seller per style.
+  style         WorkOrderStyle?
   /// MS-E002: every Work Order is a SOW under the Active MSA (Panameer Terms of Service).
-  agreement_id  String? @db.Uuid
+  agreement_id  String?         @db.Uuid
   /// NB-E003: the number this row had before PREFIX-CODE-YY-######## (still searchable).
   legacy_number String?
 
@@ -9547,4 +9551,12 @@ model IntegrationEvent {
   @@index([type, status])
   @@index([work_order_id])
   @@map("integration_events")
+}
+
+/// WS-E001: Oracle Cloud document styles for Work Requests / Work Orders (Complex Services after R1).
+enum WorkOrderStyle {
+  TIME_AND_MATERIALS
+  FIXED_PRICE
+  PRODUCT
+  RETAINER
 }
