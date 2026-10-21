@@ -42,6 +42,7 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   "/connect": ["/connect/community", "/providers", "/companies", "/connect/invite", "/coordinator"],
   "/shop": ["/my-services", "/services"],
   "/hire": ["/create-work", "/work-requests", "/search", "/consultations"],
+  "/hire/overview": ["/hire", "/create-work", "/work-requests", "/search", "/consultations"],
   "/orders": ["/payments", "/pay", "/finances", "/manage-money", "/deliver-work"],
   [ACCOUNT_BAND_HREF]: [
     "/profile",
@@ -114,7 +115,8 @@ export const REQUESTER_NAV: NavItem[] = [
     // DC-E003: buyers see this section as Hire (sellers see Jobs).
     label: "Hire",
     heading: "Hire",
-    href: "/hire",
+    // RA-E004: the Hire menu lands on the app home (Overview); Post a Job opens the questionnaire at /hire.
+    href: "/hire/overview",
     icon: "ClipboardList",
     requires: "canHireTalent",
   },
