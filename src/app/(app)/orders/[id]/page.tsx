@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { orderSlices } from "@/lib/slices";
 import { LINE_TYPE_LABEL, STYLE_LABEL, TAX_FLAG, originLabel } from "@/lib/work-order-styles";
 import { OrderTermsBlock } from "@/components/orders/OrderTermsBlock";
 import { notFound, redirect } from "next/navigation";
@@ -79,6 +80,7 @@ export default async function Page({
             {/* WA-E005: the chain — Job → Work Request → this Work Order. */}
             {await chainLine(o.id)}
             {await styleLine(o.id)}
+            {await retainerLine(o.id)}
           </div>
           <div className="flex flex-col items-end gap-2">
             <StatusPill status={o.status} waiting={o.waiting} frozen={o.frozen} pendingChange={pendingChange} pendingOn={o.pendingOn} />
@@ -350,6 +352,18 @@ async function styleLine(orderId: string) {
   return (
     <p className="mt-0.5 text-[13px] text-ink-2" data-order-style>
       Style <b className="text-ink">{w.style ? STYLE_LABEL[w.style] : "—"}</b> · Origin <b className="text-ink">{originLabel(w.workRequest.source, hadSe)}</b>
+    </p>
+  );
+}
+
+/** WS-E006: a Retainer shows its next occurrence and the next Payment Event amount. */
+async function retainerLine(orderId: string) {
+  const r = (await orderSlices([orderId])).get(orderId)?.recurring;
+  if (!r) return null;
+  return (
+    <p className="mt-1 inline-flex flex-wrap items-center gap-2 text-[13px]" data-retainer-next>
+      <span className="rounded-full bg-[#fbeafb] px-2 font-semibold text-magenta-dark">{r.paused ? "Paused" : `Next occurrence ${r.next}`}</span>
+      <span className="text-ink-2">Next {r.event}: <b className="text-ink">${(r.amountCents / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}</b></span>
     </p>
   );
 }

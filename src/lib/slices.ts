@@ -24,12 +24,13 @@ const STEP: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, EVERY_90_DAYS: 9
 /** Per Work Order: closed? and, for a retainer / weekly service / subscription product, the next occurrence. */
 export async function orderSlices(orderIds: string[]): Promise<Map<string, Sliced>> {
   if (!orderIds.length) return new Map();
-  const orders = await prisma.workOrder.findMany({ where: { id: { in: orderIds } }, select: { id: true, status: true, period_start: true, created_at: true, lines: { select: { uom: true, billing_cycle: true, payment_event: true, unit_price_cents: true, amount_cents: true, quantity: true, service_product_id: true } } } });
+  const orders = await prisma.workOrder.findMany({ where: { id: { in: orderIds } }, select: { id: true, style: true, status: true, period_start: true, created_at: true, lines: { select: { uom: true, billing_cycle: true, payment_event: true, unit_price_cents: true, amount_cents: true, quantity: true, service_product_id: true } } } });
   const subs = new Set((await prisma.serviceProduct.findMany({ where: { id: { in: orders.flatMap((o) => o.lines.map((l) => l.service_product_id).filter((x): x is string => !!x)) }, pricing_type: "RECURRING" }, select: { id: true } })).map((p) => p.id));
   const now = Date.now();
   const out = new Map<string, Sliced>();
   for (const o of orders) {
-    const line = o.lines.find((l) => l.billing_cycle && (l.uom === "MONTH" || l.uom === "WEEK" || (l.service_product_id && subs.has(l.service_product_id))));
+    // WS-E006: a Retainer-style Work Order is recurring by definition.
+    const line = o.lines.find((l) => l.billing_cycle && (o.style === "RETAINER" || l.uom === "MONTH" || l.uom === "WEEK" || (l.service_product_id && subs.has(l.service_product_id))));
     let recurring: Recurring | null = null;
     if (line && LIVE.includes(o.status)) {
       const d = new Date((o.period_start ?? o.created_at).getTime());

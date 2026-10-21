@@ -207,6 +207,14 @@ export async function createSettlement(
   const today = new Date(new Date().toISOString().slice(0, 10) + "T23:59:59Z");
   const cycled = rows.some((r) => o.lines.find((l) => l.id === r.workOrderLineId)?.billingCycle);
   if (cycled && periodEnd > today) throw new SettlementError("A service payment request covers a billing period that has ended. Pick an end date of today or earlier.", "INVALID");
+  // WS-E006: a Retainer settles one billing cycle per payment request.
+  const style = (await prisma.workOrder.findUnique({ where: { id: o.id }, select: { style: true } }))?.style;
+  if (style === "RETAINER") {
+    const cycle = rows.map((r) => o.lines.find((l) => l.id === r.workOrderLineId)?.billingCycle).find(Boolean);
+    const maxDays = cycle === "WEEKLY" ? 7 : cycle === "BIWEEKLY" ? 14 : cycle === "EVERY_90_DAYS" ? 92 : 31;
+    if ((periodEnd.getTime() - periodStart.getTime()) / 86_400_000 > maxDays)
+      throw new SettlementError(`A Retainer payment request covers one billing cycle (up to ${maxDays} days). Split it into one request per cycle.`, "INVALID");
+  }
   if (rows.length === 0)
     throw new SettlementError("Add at least one line to this payment request", "INVALID");
 
