@@ -51,6 +51,8 @@ export async function jobPath(jobId: string) {
     { key: "wo", label: "Work Order Created", done: orders.length > 0, date: orders[0]?.created_at ?? null, href: orders[0] ? `/orders/${orders[0].id}` : undefined },
   ];
   const shown = steps.filter((s) => !s.hidden);
-  const current = (shown.find((s) => !s.done && !s.optional)?.key ?? null) as PathKey | null;
+  // HB-E003: proposals in and no award yet = the job sits at Proposals In (Award only once the buyer awards).
+  const firstOpen = (shown.find((s) => !s.done && !s.optional)?.key ?? null) as PathKey | null;
+  const current: PathKey | null = firstOpen === "award" && sourced && bids.length > 0 ? "proposals" : firstOpen;
   return { job, steps, shown, current, event, wrs, orders, awarded, numberOf };
 }

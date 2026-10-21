@@ -267,3 +267,24 @@ async function estimatesNotSelected(eventId: string, title: string) {
     prisma.sourcingEvent.update({ where: { id: eventId }, data: { status: "CLOSED", others_notified_at: new Date() } }),
   ]);
 }
+
+// ── HB-E009: act from the Overview — Shortlist / Decline any proposal (invited or applied), Close an event ─────
+export async function decideProposals(viewer: Viewer, proposalIds: string[], decision: "SHORTLISTED" | "DECLINED", reason?: string | null) {
+  const me = await myPerson(viewer);
+  const props = await prisma.proposal.findMany({ where: { id: { in: proposalIds }, job: { buyer_person_id: me }, status: { in: ["SUBMITTED", "SHORTLISTED"] } }, select: { id: true } });
+  if (!props.length) throw new WorkRequestError("Those proposals aren't waiting on you any more.", "NOT_FOUND");
+  // Declined providers are told only when the Work Order is Released (the Sourcing Event rule) — nothing is sent now.
+  await prisma.proposal.updateMany({ where: { id: { in: props.map((p) => p.id) } }, data: decision === "DECLINED" ? { status: "DECLINED", declined_at: new Date(), decline_reason: reason?.trim().slice(0, 500) || null } : { status: "SHORTLISTED" } });
+  const { resolveNotifications } = await import("@/lib/notifications");
+  await resolveNotifications({ event_key: "work.proposal_received", entity_id: { in: props.map((p) => p.id) } });
+  return { updated: props.length };
+}
+
+/** Close a Sourcing Event without an award (no one is told until a Work Order is Released). */
+export async function closeEvent(viewer: Viewer, eventId: string) {
+  const ev = await ownEvent(viewer, eventId);
+  if (ev.status !== "OPEN") throw new WorkRequestError("This Sourcing Event is already closed.", "INVALID");
+  await prisma.sourcingEvent.update({ where: { id: ev.id }, data: { status: "CLOSED", deadline_at: new Date(Math.min(Date.now(), ev.deadline_at.getTime())) } });
+  await prisma.proposalRequest.updateMany({ where: { sourcing_event_id: ev.id, status: { in: ["ISSUED", "VIEWED"] } }, data: { status: "EXPIRED" } });
+  await resolveProposalsReceived(ev.job_id);
+}

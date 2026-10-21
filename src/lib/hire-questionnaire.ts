@@ -222,6 +222,14 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
   return top.map((m) => (seen.has(m.personId) ? m : { ...m, name: providerLabel(numbers.get(m.profileId)), company: null }));
 }
 
+/** HB-E004: discard a draft job (closed, never deleted — it stays readable). */
+export async function discardDraft(viewer: Viewer, jobId: string) {
+  const { pAccountId } = await resolveBuyer(viewer);
+  const job = await loadOwned(viewer, jobId, pAccountId);
+  if (job.status !== "DRAFT") throw new HireError("Only a draft can be discarded.");
+  await prisma.job.update({ where: { id: jobId }, data: { status: "CANCELED" } });
+}
+
 /** MQ-E005: hide a provider from this job's matches, or bring them back (owner only). */
 export async function setHidden(viewer: Viewer, jobId: string, providerPersonId: string, hidden: boolean) {
   const { pAccountId } = await resolveBuyer(viewer);

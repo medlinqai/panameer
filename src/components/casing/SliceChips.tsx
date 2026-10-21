@@ -9,7 +9,7 @@ import { useState } from "react";
 // The last chip per tab is remembered per viewer (localStorage, guarded).
 const SL = [["process", "In Process"], ["recurring", "Recurring"], ["completed", "Completed"], ["all", "All"]] as const;
 
-export function SliceChips({ tabKey, counts, base }: { tabKey: string; counts: Record<string, number>; base: string }) {
+export function SliceChips({ tabKey, counts, base, extra = [] }: { tabKey: string; counts: Record<string, number>; base: string; extra?: [string, string][] }) {
   const router = useRouter();
   const sp = useSearchParams();
   const current = sp?.get("slice") ?? "process";
@@ -22,12 +22,12 @@ export function SliceChips({ tabKey, counts, base }: { tabKey: string; counts: R
     if (sp?.get("slice")) { try { localStorage.setItem(key, sp.get("slice")!); } catch {} return; }
     let saved: string | null = null;
     try { saved = localStorage.getItem(key); } catch {}
-    if (saved && saved !== "process" && SL.some(([k]) => k === saved)) router.replace(href(saved), { scroll: false });
+    if (saved && saved !== "process" && [...SL, ...extra].some(([k]) => k === saved)) router.replace(href(saved), { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
     <nav aria-label="Show" className="-mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 text-[12.5px]" data-slice-chips>
-      {SL.map(([k, l]) => (
+      {[...SL, ...extra].map(([k, l]) => (
         <Link key={k} href={href(k)} scroll={false} onClick={() => { try { localStorage.setItem(key, k); } catch {} }} aria-current={current === k ? "true" : undefined}
           className={current === k ? "shrink-0 rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "shrink-0 rounded-full border border-line px-3 py-1 font-semibold hover:border-magenta"}>
           {l} <span className="tabular-nums text-ink-3">{counts[k] ?? 0}</span>

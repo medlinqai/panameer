@@ -244,8 +244,8 @@ export type AppCounts = {
   items: AttentionItem[];
 };
 export const APP_HOME: Record<"buyer" | "provider", Record<AppKey, string>> = {
-  buyer: { request: "/hire/overview", shop: "/shop", order: "/orders", settlement: "/payments/payment-requests", payment: "/pay", connect: "/connect", learn: "/learn?tab=mine" },
-  provider: { request: "/find-work", shop: "/shop", order: "/orders", settlement: "/payments/payment-requests", payment: "/payments", connect: "/connect", learn: "/learn?tab=mine" },
+  buyer: { request: "/hire/overview", shop: "/shop", order: "/orders/overview", settlement: "/payments/payment-requests", payment: "/pay", connect: "/connect", learn: "/learn?tab=mine" },
+  provider: { request: "/find-work", shop: "/shop", order: "/orders/overview", settlement: "/payments/payment-requests", payment: "/payments", connect: "/connect", learn: "/learn?tab=mine" },
 };
 const APP_LABEL: Record<AppKey, string> = { request: "Hire", shop: "Shop", order: "Orders", settlement: "Settlements", payment: "Payments", connect: "Connect", learn: "Learn" };
 const DAY_MS = 86_400_000;
@@ -286,7 +286,9 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     const jobs = add("request", toReview.length, "Proposals to review", ev ? `/hire/sourcing/${ev.id}` : "/hire/overview?tab=jobs", "Review", ev?.deadline_at)
       + add("request", closing.length, "Sourcing Event closing in 24 h", `/hire/sourcing/${closing[0]?.id ?? ""}`, "Open", closing[0]?.deadline_at)
       + add("request", expired, "Sourcing Event expired, no award", "/hire/overview?tab=jobs", "Decide");
-    const requests = add("request", approvals, "Work Request approvals", "/hire/overview?tab=requests", "Approve") + add("request", woAccept, "Work Orders to accept", "/orders", "Accept");
+    // HB-E006: each app lists only its own tasks — Work Orders (accept, release, changes) belong to Orders.
+    const requests = add("request", approvals, "Work Request approvals", "/hire/overview?tab=requests", "Approve");
+    add("order", woAccept, "Work Orders to accept", "/orders/overview", "Accept");
     const interviews = add("request", confirm, "Interview times to confirm", "/hire/overview?tab=interviews", "Confirm") + add("request", todays, "Interviews today", "/hire/overview?tab=interviews", "Join");
     const tests = add("request", testsIn, "Test results in", "/hire/overview?tab=tests", "See results");
     add("shop", sc.offers, "Counter-offers waiting on you", "/shop?tab=offers", "Answer");
@@ -310,7 +312,9 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   const requests = add("request", dueSoon.length, "Requests to propose due in 24 h", dueSoon[0] ? `/find-work/${dueSoon[0].job_id}` : "/find-work?tab=invitations", "Propose", dueSoon[0]?.responds_by);
   const interviews = add("request", toOffer.length, "Interview times to offer", toOffer[0] ? `/find-work/${toOffer[0].job_id}#interview` : "/find-work?tab=interviews", "Offer times") + add("request", todays, "Interviews today", "/find-work?tab=interviews", "Join");
   const tests = add("request", testsToTake, "Tests to take", "/find-work?tab=tests", "Take");
-  const order = add("order", woAccept.length, "Work Orders to accept", woAccept[0] ? `/orders/${woAccept[0].id}` : "/orders", "Accept");
+  const myOrders = (await prisma.workOrder.findMany({ where: { provider_person_id: id }, select: { id: true } })).map((o) => o.id);
+  const changes = myOrders.length ? await prisma.workOrderRevision.count({ where: { status: "PENDING", work_order_id: { in: myOrders } } }) : 0;
+  const order = add("order", woAccept.length, "Work Orders to accept", "/orders/overview", "Accept") + add("order", changes, "Change orders to answer", "/orders/overview", "Answer");
   add("shop", sc.offers, "Offers to answer", "/shop?tab=offers", "Answer");
   add("shop", sc.sales, "Product sales needing you", "/shop?tab=sales", "Open");
   add("shop", sc.estimates, "Estimates to price", "/shop?tab=estimates", "Price");

@@ -140,12 +140,12 @@ export async function weekInterviews(side: "buyer" | "provider", personId: strin
 
 // ── RA-E005: the HIRE app's Jobs / Requests / Tests tabs ──────────────────────────────────────────────────────
 export type ProposalLine = { personId: string; who: string; summary: string; rate: string | null; start: string | null; inRange: boolean | null };
-export type JobTabRow = WorkRow & { category: string | null; origin: string | null; facts: string; inRange: boolean | null; wo: { id: string; number: string; provider: string; waiting: string } | null; proposalLines: ProposalLine[]; asked: number; eventId: string | null; deadlineAt: string | null; completed: boolean; recurring: import("@/lib/slices").Recurring | null; proposals: string | null; rates: string | null; range: string | null; booked: string | null; needsAction: boolean };
+export type JobTabRow = WorkRow & { draft: boolean; draftLine: string | null; category: string | null; origin: string | null; facts: string; inRange: boolean | null; wo: { id: string; number: string; provider: string; waiting: string } | null; proposalLines: ProposalLine[]; asked: number; eventId: string | null; deadlineAt: string | null; completed: boolean; recurring: import("@/lib/slices").Recurring | null; proposals: string | null; rates: string | null; range: string | null; booked: string | null; needsAction: boolean };
 const usd = (c: number) => `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
 export async function buyerHireTabs(personId: string) {
   const now = new Date();
-  const jobs = await prisma.job.findMany({ where: { buyer_person_id: personId, kind: "JOB", status: { in: ["DRAFT", "OPEN", "FILLED", "CLOSED", "CANCELED"] }, updated_at: { gte: new Date(now.getTime() - 180 * DAY) } }, orderBy: { created_at: "desc" }, take: 80, select: { id: true, budget_min_cents: true, budget_max_cents: true, budget_type: true, worksite: true, city: true, state: true, contract_types: true, domains: true, commodity_group_id: true, skills: { select: { skill_id: true } } } });
+  const jobs = await prisma.job.findMany({ where: { buyer_person_id: personId, kind: "JOB", status: { in: ["DRAFT", "OPEN", "FILLED", "CLOSED", "CANCELED"] }, updated_at: { gte: new Date(now.getTime() - 180 * DAY) } }, orderBy: { created_at: "desc" }, take: 80, select: { id: true, description: true, budget_min_cents: true, budget_max_cents: true, budget_type: true, worksite: true, city: true, state: true, contract_types: true, domains: true, commodity_group_id: true, skills: { select: { skill_id: true } } } });
   const groupNames = new Map((await prisma.commodityGroup.findMany({ where: { id: { in: jobs.map((j) => j.commodity_group_id).filter((x): x is string => !!x) } }, select: { id: true, name: true } })).map((g) => [g.id, g.name]));
   const paths = (await Promise.all(jobs.map((j) => jobPath(j.id)))).filter((p): p is NonNullable<typeof p> => !!p);
   // HL-E002: proposal lines (provider number · role · domain · years · skills matched · rate · start) and WO waiting-on.
@@ -203,7 +203,11 @@ export async function buyerHireTabs(personId: string) {
     const woLine = p.wrs.flatMap((w) => w.lines).find((l) => l.work_order_id === p.orders[0]?.id);
     const waiting = !firstWo ? "" : firstWo.status === "ISSUED" ? (!firstWo.buyer_accepted_at ? "You, then the provider" : "The provider") : firstWo.status === "ACCEPTED" ? "Release" : ["RELEASED", "ACTIVE"].includes(firstWo.status) ? "Delivery" : "Nobody";
     const contract = (j.contract_types as string[]).map((c) => (c === "ONE_099" ? "1099" : c)).join("/");
+    // HB-E004: drafts sit apart — "Draft · first words", Finish posting / Discard.
+    const draft = p.job.status === "DRAFT" && !p.event && !p.awarded;
+    const words = (j.description ?? "").trim().split(/\s+/).slice(0, 8).join(" ");
     jobRows.push({
+      draft, draftLine: draft ? `Draft · ${words ? `${words}${(j.description ?? "").trim().split(/\s+/).length > 8 ? "…" : ""}` : "no description"}` : null,
       category: j.commodity_group_id ? groupNames.get(j.commodity_group_id) ?? null : null,
       origin: p.event ? "Sourcing Event" : p.wrs.length ? "Sole-Sourced" : null,
       facts: [p.job.job_number, `Posted ${short(postedAt).replace(/, \d.*$/, "")}`, j.worksite ? j.worksite[0] + j.worksite.slice(1).toLowerCase() : null, [j.city, j.state].filter(Boolean).join(", ") || null, contract || null, j.budget_min_cents != null || j.budget_max_cents != null ? `${j.budget_min_cents != null ? usd(j.budget_min_cents) : "…"}–${j.budget_max_cents != null ? usd(j.budget_max_cents) : "…"}${per}` : null].filter(Boolean).join(" · "),
@@ -220,7 +224,9 @@ export async function buyerHireTabs(personId: string) {
       needsAction: submitted > 0 || expired || (!!firstWo && firstWo.status === "ISSUED" && !firstWo.buyer_accepted_at),
     });
     const last = jobRows[jobRows.length - 1];
-    if (firstWo && firstWo.status === "ISSUED" && !firstWo.buyer_accepted_at) last.action = { label: "Review & Accept", href: `/orders/${firstWo.id}` };
+    // HB-E006: a Work Order is the handoff to Orders — no accept on Hire.
+    if (firstWo) { last.action = { label: "Open in Orders", href: `/orders/${firstWo.id}` }; last.needsAction = submitted > 0 || expired; }
+    if (draft) { last.action = { label: "Finish posting", href: `/hire?job=${p.job.id}&step=0` }; last.needsAction = false; }
     for (const w of p.wrs) for (const l of w.lines) {
       const wo = p.orders.find((o) => o.id === l.work_order_id);
       const sl = wo ? slices.get(wo.id) : null;
@@ -297,4 +303,92 @@ export async function hireToday(personId: string): Promise<{ items: TodayItem[];
   if (count("approval")) parts.push(`${count("approval")} Work Request${count("approval") === 1 ? " needs" : "s need"} approval`);
   const s = parts.length ? parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")}, and ${parts.at(-1)}` : "Your jobs are moving on their own. Post a job or check on the ones below.";
   return { items, sentence: parts.length ? `${s[0].toUpperCase()}${s.slice(1)}.` : s };
+}
+
+// ── HB-E006: Orders › Overview — Work Order tasks only (accept, change orders, deliveries) ────────────────────
+export async function ordersToday(personId: string) {
+  const now = new Date();
+  const mine = await prisma.workOrder.findMany({
+    where: { OR: [{ buyer_person_id: personId }, { provider_person_id: personId }], status: { notIn: ["CANCELLED", "DRAFT"] }, created_at: { gte: new Date(now.getTime() - 365 * DAY) } },
+    select: { id: true, order_number: true, status: true, buyer_person_id: true, provider_person_id: true, buyer_accepted_at: true, provider_accepted_at: true, description: true, workRequest: { select: { job: { select: { title: true } } } } },
+  });
+  const ids = mine.map((o) => o.id);
+  const [prs, revs] = await Promise.all([
+    ids.length ? prisma.paymentRequest.findMany({ where: { work_order_id: { in: ids } }, select: { id: true, work_order_id: true, status: true, payment_request_number: true } }) : [],
+    ids.length ? prisma.workOrderRevision.findMany({ where: { work_order_id: { in: ids }, status: "PENDING" }, select: { work_order_id: true, revision_number: true } }) : [],
+  ]);
+  const title = (o: (typeof mine)[number]) => o.workRequest?.job?.title || o.description || "Work Order";
+  const items: { id: string; what: string; detail: string; href: string; action: string }[] = [];
+  for (const o of mine) {
+    const buyer = o.buyer_person_id === personId;
+    if (o.status === "ISSUED" && buyer && !o.buyer_accepted_at) items.push({ id: `ba-${o.id}`, what: `Accept Work Order ${o.order_number}`, detail: `${title(o)} · the provider accepts once you have`, href: `/orders/${o.id}`, action: "Review & Accept" });
+    if (o.status === "ISSUED" && !buyer && o.buyer_accepted_at && !o.provider_accepted_at) items.push({ id: `pa-${o.id}`, what: `Accept Work Order ${o.order_number}`, detail: `${title(o)} · the buyer has accepted`, href: `/orders/${o.id}`, action: "Review & Accept" });
+    for (const r of revs.filter((x) => x.work_order_id === o.id && !buyer)) items.push({ id: `co-${o.id}-${r.revision_number}`, what: `Answer change order ${r.revision_number} on ${o.order_number}`, detail: title(o), href: `/orders/${o.id}?view=changes`, action: "Review" });
+    for (const p of prs.filter((x) => x.work_order_id === o.id && x.status === "SUBMITTED" && buyer)) items.push({ id: `pr-${p.id}`, what: `Approve delivery ${p.payment_request_number}`, detail: `${title(o)} · ${o.order_number}`, href: `/orders/${o.id}?tab=settlements`, action: "Review" });
+  }
+  const stage = (o: (typeof mine)[number]) => {
+    const p = prs.filter((x) => x.work_order_id === o.id);
+    if (p.some((x) => x.status === "PAID")) return "paid";
+    if (p.some((x) => x.status === "APPROVED")) return "settled";
+    if (["RELEASED", "ACTIVE", "ON_HOLD"].includes(o.status)) return "released";
+    if (o.status === "ISSUED" && o.buyer_accepted_at) return "provider";
+    if (o.status === "ISSUED") return "buyer";
+    return "done";
+  };
+  const band = [
+    { key: "buyer", label: "Buyer Accepts" }, { key: "provider", label: "Provider Accepts" }, { key: "released", label: "Released" }, { key: "settled", label: "Settled" }, { key: "paid", label: "Paid" },
+  ].map((b) => ({ ...b, count: mine.filter((o) => stage(o) === b.key).length }));
+  return { items, band, open: mine.filter((o) => !["CLOSED", "FINALLY_CLOSED"].includes(o.status)).length };
+}
+
+// ── HB-E003/E007: the Hire Overview from ONE source — band, groups, chips and footer all agree ─────────────────
+export type HireGroups = {
+  expiring: { eventId: string; jobId: string; title: string; when: string; inText: string; expired: boolean }[];
+  applications: { jobId: string; title: string; proposalIds: string[]; providers: string; range: string | null }[];
+  rateProposals: { proposalId: string; jobId: string; title: string; who: string; rate: string | null; inRange: boolean | null; start: string | null }[];
+  interviews: { id: string; jobId: string; time: string; who: string; minutes: number; title: string; hasRoom: boolean }[];
+  tests: { id: string; jobId: string; who: string; skill: string; score: number | null; result: string; proposalId: string | null }[];
+};
+
+export async function hireOverviewData(personId: string) {
+  const now = new Date();
+  const { jobRows } = await buyerHireTabs(personId);
+  const active = jobRows.filter((j) => !j.completed && !j.draft);
+  const stepCounts = new Map<string, number>();
+  for (const j of active) stepCounts.set(j.step, (stepCounts.get(j.step) ?? 0) + 1);
+  const openJobs = active.filter((j) => !["award", "approval", "wo"].includes(j.step)).length;
+  const jobIds = jobRows.map((j) => j.id);
+  const titleOf = (id: string) => jobRows.find((j) => j.id === id)?.title ?? "Job";
+  const { providerLabel, providerNumbers } = await import("@/lib/provider-number");
+  const [events, proposals, todays, tests, weekProposals] = await Promise.all([
+    prisma.sourcingEvent.findMany({ where: { job_id: { in: jobIds }, type: "PROPOSALS", status: "OPEN", deadline_at: { lte: new Date(now.getTime() + DAY) } }, select: { id: true, job_id: true, deadline_at: true, proposalRequests: { select: { bid: { select: { status: true } } } } } }),
+    prisma.proposal.findMany({ where: { job_id: { in: jobIds }, status: "SUBMITTED", job: { status: "OPEN" } }, orderBy: { submitted_at: "asc" }, select: { id: true, job_id: true, provider_person_id: true, proposal_request_id: true, lines: { take: 1, select: { unit_price_cents: true, available_from: true } }, job: { select: { budget_min_cents: true, budget_max_cents: true, budget_type: true } } } }),
+    listInterviews({ buyerPersonId: personId, from: nyDayStart(now), to: nyDayStart(now, 1) }),
+    prisma.testRequest.findMany({ where: { requested_by_person_id: personId, status: "COMPLETED", updated_at: { gte: new Date(now.getTime() - 7 * DAY) } }, select: { id: true, job_id: true, provider_person_id: true, lines: { take: 1, select: { skill_id: true } }, response: { select: { lines: { take: 1, select: { score: true, passed: true } } } } } }),
+    prisma.proposal.count({ where: { job_id: { in: jobIds }, submitted_at: { gte: new Date(now.getTime() - 7 * DAY) } } }),
+  ]);
+  const people = [...new Set([...proposals.map((p) => p.provider_person_id), ...tests.map((t) => t.provider_person_id)])];
+  const profs = people.length ? await prisma.providerProfile.findMany({ where: { person_id: { in: people } }, select: { id: true, person_id: true } }) : [];
+  const nums = await providerNumbers(profs.map((p) => p.id));
+  const who = (id: string) => providerLabel(nums.get(profs.find((p) => p.person_id === id)?.id ?? "")).replace(/^Provider /, "");
+  const usd0 = (c: number) => `$${Math.round(c / 100).toLocaleString("en-US")}`;
+  const rateOf = (p: (typeof proposals)[number]) => { const c = p.lines[0]?.unit_price_cents; return c == null ? null : `${usd0(c)}${p.job.budget_type === "FIXED" ? "" : "/hr"}`; };
+  const inRangeOf = (p: (typeof proposals)[number]) => { const c = p.lines[0]?.unit_price_cents; const lo = p.job.budget_min_cents, hi = p.job.budget_max_cents; return c == null || (lo == null && hi == null) ? null : (lo == null || c >= lo) && (hi == null || c <= hi); };
+  const rangeOf = (p: (typeof proposals)[number]) => (p.job.budget_min_cents != null || p.job.budget_max_cents != null ? `range ${p.job.budget_min_cents != null ? usd0(p.job.budget_min_cents) : "…"}–${p.job.budget_max_cents != null ? usd0(p.job.budget_max_cents) : "…"}${p.job.budget_type === "FIXED" ? "" : "/hr"}` : null);
+  const relDay = (d: Date) => { const a = nyDayStart(d).getTime(), b = nyDayStart(now).getTime(); return a === b ? "today" : a - b === DAY ? "tomorrow" : d.toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric" }); };
+  const time = (d: Date) => d.toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
+  const skills = await prisma.skill.findMany({ where: { id: { in: tests.map((t) => t.lines[0]?.skill_id).filter((x): x is string => !!x) } }, select: { id: true, name: true } });
+  const apps = new Map<string, (typeof proposals)>();
+  for (const p of proposals.filter((x) => !x.proposal_request_id)) apps.set(p.job_id, [...(apps.get(p.job_id) ?? []), p]);
+  const groups: HireGroups = {
+    expiring: events.map((e) => { const n = e.proposalRequests.length, inN = e.proposalRequests.filter((r) => r.bid && !["DRAFT", "WITHDRAWN"].includes(r.bid.status)).length; const expired = e.deadline_at <= now; return { eventId: e.id, jobId: e.job_id, title: titleOf(e.job_id), when: expired ? `Sourcing Event closed ${relDay(e.deadline_at)} ${time(e.deadline_at)} with no award` : `Sourcing Event closes ${relDay(e.deadline_at)} ${time(e.deadline_at)}`, inText: `${inN} of ${n} proposals in`, expired }; }),
+    applications: [...apps.entries()].map(([jobId, list]) => ({ jobId, title: titleOf(jobId), proposalIds: list.map((p) => p.id), providers: list.slice(0, 3).map((p) => `${who(p.provider_person_id)}${rateOf(p) ? ` at ${rateOf(p)}` : ""}`).join(" · ") + (list.length > 3 ? ` · +${list.length - 3}` : ""), range: rangeOf(list[0]) })),
+    rateProposals: proposals.filter((x) => x.proposal_request_id).map((p) => ({ proposalId: p.id, jobId: p.job_id, title: titleOf(p.job_id), who: who(p.provider_person_id), rate: rateOf(p), inRange: inRangeOf(p), start: p.lines[0]?.available_from ? `start ${p.lines[0].available_from.toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric" })}` : null })),
+    interviews: todays.map((iv) => ({ id: iv.id, jobId: iv.jobId, time: iv.startsAt ? time(new Date(iv.startsAt)) : "today", who: iv.providerLabel.replace(/^Provider /, ""), minutes: iv.minutes, title: iv.jobTitle, hasRoom: iv.hasRoom })),
+    tests: tests.map((t) => { const r = t.response?.lines[0]; return { id: t.id, jobId: t.job_id, who: who(t.provider_person_id), skill: skills.find((s) => s.id === t.lines[0]?.skill_id)?.name ?? "Certification test", score: r?.score ?? null, result: r?.passed == null ? "Completed" : r.passed ? "Pass" : "Fail", proposalId: proposals.find((p) => p.job_id === t.job_id && p.provider_person_id === t.provider_person_id)?.id ?? null }; }),
+  };
+  const nextIv = todays.filter((i) => i.startsAt && new Date(i.startsAt) > now).sort((a, b) => a.startsAt!.localeCompare(b.startsAt!))[0];
+  const summary = [`${openJobs} job${openJobs === 1 ? "" : "s"} open`, `${weekProposals} proposal${weekProposals === 1 ? "" : "s"} this week`, nextIv?.startsAt ? `next interview today ${time(new Date(nextIv.startsAt))}` : null].filter(Boolean).join(" · ");
+  const count = groups.expiring.length + groups.applications.length + groups.rateProposals.length + groups.interviews.length + groups.tests.length;
+  return { jobRows, stepCounts, openJobs, groups, count, summary, needs: { proposals: groups.rateProposals.length + groups.applications.length + groups.expiring.length > 0, interview: groups.interviews.length > 0, test: groups.tests.length > 0 } };
 }

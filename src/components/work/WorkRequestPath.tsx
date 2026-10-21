@@ -13,10 +13,10 @@ export async function WorkRequestPath({ jobId }: { jobId: string }) {
     return {
       key: s.key, label: s.key === "wo" ? "Work Order" : s.label, href: s.href, current: isCurrent, muted: !s.done && !isCurrent,
       bar: s.done || isCurrent ? "done" : s.optional ? "dashed" : "todo",
-      top: s.done
-        ? <span className={`text-[12px] font-bold ${GREEN}`}>✓ {s.date ? shortDate(s.date) : ""}</span>
-        : isCurrent
-          ? <span className="text-[12px] font-extrabold text-magenta">{s.note ?? "Now"}</span>
+      top: isCurrent
+        ? <span className="text-[12px] font-extrabold text-magenta">{s.note ?? "Now"}</span>
+        : s.done
+          ? <span className={`text-[12px] font-bold ${GREEN}`}>✓ {s.date ? shortDate(s.date) : ""}</span>
           : s.optional
             ? <span className="text-[12px] text-state-disabled">{skipped ? "skipped" : "optional"}</span>
             : <span className="text-[12px] text-state-border">&nbsp;</span>,

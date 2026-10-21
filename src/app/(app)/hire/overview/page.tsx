@@ -2,7 +2,10 @@ import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { appCounts } from "@/lib/attention";
-import { buyerHireTabs, buyerLiveWork, buyerTests, hireToday, weekInterviews, type JobTabRow } from "@/lib/live-work";
+import { buyerHireTabs, buyerLiveWork, buyerTests, hireOverviewData, weekInterviews, type JobTabRow } from "@/lib/live-work";
+import { AttentionGroups } from "@/components/hire/AttentionGroups";
+import { buyerEstimateEvents } from "@/lib/estimate-events";
+import { DiscardDraft } from "@/components/hire/DiscardDraft";
 import { listInterviews } from "@/lib/interviews";
 import { dailyConfigured } from "@/lib/daily";
 import { WeekSchedule } from "@/components/home/LiveWork";
@@ -38,7 +41,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
   ];
   return (
     <div className="pm-white-page">
-      <HireTabBar tabs={tabs} current={tab} right={<Link href="/hire" className={`${BTN} shrink-0 px-3 text-[13px] sm:px-5 sm:text-[14px]`} data-post-job>Post a Job</Link>} />
+      <HireTabBar tabs={tabs} current={tab} right={
+        <span className="flex shrink-0 gap-2">
+          {/* HB-E008: Request an Estimate (secondary) beside Post a Job (primary). */}
+          <Link href="/shop/estimates/new" className={`${BTN_OUT} hidden px-4 text-[14px] md:inline-flex`} data-request-estimate>Request an Estimate</Link>
+          <Link href="/hire" className={`${BTN} shrink-0 px-3 text-[13px] sm:px-5 sm:text-[14px]`} data-post-job>Post a Job</Link>
+        </span>
+      } />
       <div className="mx-auto w-full max-w-[1120px] pb-14 pt-8">
         {tab === "overview" && <Overview personId={me.id} slice={sp.slice} view={sp.view ?? null} />}
         {tab === "jobs" && <JobsTab personId={me.id} step={sp.step ?? null} slice={sp.slice} q={sp.q ?? ""} />}
@@ -50,56 +59,45 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
   );
 }
 
-// ── HL-E001 ──────────────────────────────────────────────────────────────────────────────────────────────────
-const NEEDS_STEP: Record<string, string> = { proposals: "proposals", accept: "wo", approval: "approval", confirm: "interview", interview: "interview", tests: "test", closing: "proposals", expired: "proposals" };
+// ── HL-E001 + HB-E003/E004/E006/E007: one source for everything on the Overview ───────────────────────────────
+/** HB-E004: In Process excludes drafts; Drafts is its own chip. */
+const jobSlice = (rows: JobTabRow[], slice?: string) => (slice === "drafts" ? rows.filter((j) => j.draft) : rows.filter((j) => inSlice(j, sliceOf(slice)) && (sliceOf(slice) !== "process" || !j.draft)));
+const jobSliceCounts = (rows: JobTabRow[]) => ({ ...sliceCounts(rows.filter((j) => !j.draft)), all: rows.length, drafts: rows.filter((j) => j.draft).length });
 
 async function Overview({ personId, slice, view }: { personId: string; slice?: string; view: string | null }) {
-  const [today, w, tabs] = await Promise.all([hireToday(personId), buyerLiveWork(personId), buyerHireTabs(personId)]);
-  const n = today.items.length;
-  const needs = new Set(today.items.map((i) => NEEDS_STEP[i.kind]));
-  const counts = new Map(w.strip.map((s) => [s.key, s.count]));
-  const firstNeed = PATH_STEPS.findIndex((s) => needs.has(s.key));
-  const lastBusy = Math.max(-1, ...PATH_STEPS.map((s, i) => (s.key !== "wo" && (counts.get(s.key) ?? 0) > 0 ? i : -1)));
+  const [d, w] = await Promise.all([hireOverviewData(personId), buyerLiveWork(personId)]);
+  const n = d.count;
+  const needsStep: Record<string, boolean> = { proposals: d.needs.proposals, interview: d.needs.interview, test: d.needs.test };
+  const firstNeed = PATH_STEPS.findIndex((s) => needsStep[s.key] && (d.stepCounts.get(s.key) ?? 0) > 0);
+  const lastBusy = Math.max(-1, ...PATH_STEPS.map((s, i) => (s.key !== "wo" && (d.stepCounts.get(s.key) ?? 0) > 0 ? i : -1)));
   const active = firstNeed >= 0 ? firstNeed : lastBusy;
   const band: BandStep[] = PATH_STEPS.map((s, i) => {
-    const c = counts.get(s.key) ?? 0;
-    return { key: s.key, label: s.key === "wo" ? "Work Order" : s.label, top: <span className={`text-[22px] font-extrabold ${c ? (i === active ? "text-magenta" : "text-ink") : "text-state-border"}`}>{c}</span>, bar: i <= active ? "done" : "todo", current: i === active, needs: needs.has(s.key), href: `/hire/overview?tab=jobs&step=${s.key}`, muted: !c && i !== active };
+    const c = d.stepCounts.get(s.key) ?? 0;
+    const label = s.key === "wo" ? <>Work Order Created · <span className="text-magenta-dark">Orders →</span></> : s.label;
+    return { key: s.key, label, top: <span className={`text-[22px] font-extrabold ${c ? (i === active ? "text-magenta" : "text-ink") : "text-state-border"}`}>{c}</span>, bar: i <= active ? "done" : "todo", current: i === active, needs: c > 0 && !!needsStep[s.key], href: s.key === "wo" ? "/orders/overview" : `/hire/overview?tab=jobs&step=${s.key}`, muted: !c && i !== active };
   });
-  const s = sliceOf(slice);
-  const rows = tabs.jobRows.filter((j) => inSlice(j, s));
-  const recent = rows.filter((j) => !j.old).slice(0, 6);
-  const older = rows.filter((j) => j.old).length;
+  const rows = jobSlice(d.jobRows, slice);
+  const recent = rows.filter((j) => !j.old || j.draft).slice(0, 8);
+  const older = rows.filter((j) => j.old && !j.draft).length;
   const week = view === "week" ? await weekInterviews("buyer", personId) : null;
   const dateLabel = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }).toUpperCase();
   return (
     <div className="flex flex-col gap-10">
       <section className="flex flex-wrap items-start gap-10" data-hire-today>
-        <div className="min-w-0 flex-[1_1_320px]">
+        <div className="min-w-0 flex-[1_1_300px]">
           <span className="text-[12px] font-bold tracking-[0.12em] text-magenta">{dateLabel}</span>
           <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{n ? `${n} thing${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} you today` : "Nothing needs you today"}</h1>
-          <p className="text-[15px] leading-relaxed text-state-inactive">{today.sentence}</p>
+          <p className="text-[14px] leading-[1.7] text-state-inactive" data-hire-summary>{d.summary}</p>
+          <p className="mt-[18px] text-[13px] leading-relaxed text-state-inactive">Work Orders to accept are in <Link href="/orders/overview">Orders</Link>.</p>
         </div>
-        {n > 0 && (
-          <div className="flex min-w-0 flex-[1_1_480px] flex-col border-b border-state-border">
-            {today.items.map((it) => (
-              <div key={it.id} className="flex flex-wrap items-center gap-3.5 border-t border-state-border py-4 sm:flex-nowrap" data-today-item={it.kind}>
-                <RedDot />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[15px] font-bold">{it.what}</div>
-                  <div className="text-[13px] text-state-inactive">{it.detail}</div>
-                </div>
-                <Link href={it.href} className={`${BTN_OUT} w-full sm:w-auto`}>{it.action}</Link>
-              </div>
-            ))}
-          </div>
-        )}
+        <AttentionGroups groups={d.groups} />
       </section>
 
       <PathBand steps={band} label="Work Request path" />
 
       <section className="flex flex-wrap items-start gap-12">
         <div className="min-w-0 flex-[999_1_560px]" data-my-jobs>
-          <HeadRow title="My Jobs"><SliceChips tabKey="hire-overview-jobs" counts={sliceCounts(tabs.jobRows)} base="/hire/overview" /></HeadRow>
+          <HeadRow title="My Jobs"><SliceChips tabKey="hire-overview-jobs" counts={jobSliceCounts(d.jobRows)} base="/hire/overview" extra={[["drafts", "Drafts"]]} /></HeadRow>
           {recent.length ? recent.map((j) => <CompactJob key={j.id} j={j} />) : <p className="py-5 text-[14px] text-state-inactive">No jobs here. <Link href="/hire">Post a Job</Link> and it shows here with its next step.</p>}
           <p className="mt-3.5 text-[13px] text-state-inactive">Older than 5 days ({older}) · <Link href="/hire/overview?tab=jobs" className="font-semibold">See all jobs</Link></p>
         </div>
@@ -120,7 +118,7 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
             </>
           )}
           <div className="mt-7 grid grid-cols-2 gap-4">
-            <div><div className="text-[26px] font-extrabold">{w.footer.openJobs}</div><div className={LABEL}>Open jobs</div></div>
+            <div><div className="text-[26px] font-extrabold">{d.openJobs}</div><div className={LABEL}>Open jobs</div></div>
             <div><div className="text-[26px] font-extrabold">{w.footer.monthOrders}</div><div className={LABEL}>Work Orders this month</div></div>
           </div>
         </aside>
@@ -130,9 +128,10 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
 }
 
 const stepLabel = (j: JobTabRow) => {
+  if (j.draft) return j.draftLine ?? "Draft";
   const base = PATH_STEPS.find((p) => p.key === j.step)?.label ?? j.step;
   if (j.step === "proposals" && j.proposals) return `${base} · ${j.proposals.replace(/ in$/, "")}`;
-  if (j.step === "wo") return `Work Order · ${j.wo?.waiting === "You, then the provider" ? "waiting on you to accept" : j.wo?.waiting === "The provider" ? "waiting on the provider" : j.wo?.waiting.toLowerCase() ?? "created"}`;
+  if (j.step === "wo") return `Work Order ${j.wo?.number ?? ""} created`.replace("  ", " ");
   return base;
 };
 
@@ -144,23 +143,25 @@ function CompactJob({ j }: { j: JobTabRow }) {
         <Link href={`/work-requests/${j.id}`} className="block text-[15px] font-bold text-ink hover:underline">{j.title}</Link>
         <div className="mt-0.5 text-[13px] text-state-inactive">{[j.posted ? `Posted ${shortDate(j.posted)}` : null, j.facts.split(" · ").find((x) => x.startsWith("$")), j.origin].filter(Boolean).join(" · ")}</div>
         <div className="mt-1.5 flex flex-wrap items-center gap-2.5 text-[13px]">
-          <span className={`font-bold ${STATE_TEXT[stepState(j.step, { completed: j.completed })]}`}>{j.completed ? "Completed" : stepLabel(j)}</span>
+          <span className={`font-bold ${STATE_TEXT[stepState(j.step, { completed: j.completed, draft: j.draft })]}`}>{j.completed ? "Completed" : stepLabel(j)}</span>
           {(j.rates || j.due) && j.step === "proposals" && <span className="text-state-inactive">{[j.rates, j.due ? `due ${j.due}` : null].filter(Boolean).join(" · ")}</span>}
         </div>
         {j.recurring && <RecurringLine r={j.recurring} />}
       </div>
-      {j.action && <Link href={j.action.href} className={`${j.needsAction ? BTN : BTN_OUT} w-full sm:w-auto`}>{j.action.label}</Link>}
+      <span className="flex w-full gap-2 sm:w-auto">
+        {j.action && <Link href={j.action.href} className={`${j.needsAction ? BTN : BTN_OUT} flex-1 sm:flex-none`}>{j.action.label}</Link>}
+        {j.draft && <DiscardDraft jobId={j.id} />}
+      </span>
     </div>
   );
 }
 
 // ── HL-E002 ──────────────────────────────────────────────────────────────────────────────────────────────────
 async function JobsTab({ personId, step, slice, q }: { personId: string; step: string | null; slice?: string; q: string }) {
-  const { jobRows } = await buyerHireTabs(personId);
-  const s = sliceOf(slice);
+  const [{ jobRows }, estimates] = await Promise.all([buyerHireTabs(personId), buyerEstimateEvents(personId)]);
   const needle = q.trim().toLowerCase();
-  const list = jobRows
-    .filter((j) => (!step || j.step === step) && inSlice(j, s) && (!needle || `${j.title} ${j.ref ?? ""} ${j.facts}`.toLowerCase().includes(needle)))
+  const list = jobSlice(jobRows, slice)
+    .filter((j) => (!step || j.step === step) && (!needle || `${j.title} ${j.ref ?? ""} ${j.facts}`.toLowerCase().includes(needle)))
     .sort((a, b) => Number(b.needsAction) - Number(a.needsAction) || (a.deadlineAt ?? "9").localeCompare(b.deadlineAt ?? "9"));
   const recent = list.filter((j) => !j.old);
   const older = list.filter((j) => j.old);
@@ -175,11 +176,22 @@ async function JobsTab({ personId, step, slice, q }: { personId: string; step: s
         </form>
       </div>
       <div className="flex flex-wrap items-center gap-2 border-b border-ink pb-3">
-        <SliceChips tabKey="hire-jobs" counts={sliceCounts(jobRows)} base={step ? `/hire/overview?tab=jobs&step=${step}` : "/hire/overview?tab=jobs"} />
+        <SliceChips tabKey="hire-jobs" counts={jobSliceCounts(jobRows)} base={step ? `/hire/overview?tab=jobs&step=${step}` : "/hire/overview?tab=jobs"} extra={[["drafts", "Drafts"]]} />
         <span className="flex-1" />
         <span className="text-[12px] text-state-inactive">Sorted by what needs you first</span>
       </div>
       {recent.length ? recent.map((j) => <JobArticle key={j.id} j={j} />) : <p className="text-[14px] text-state-inactive">No jobs here.</p>}
+      {/* HB-E008: Estimate requests list here too (and stay in Shop › Estimates). */}
+      {!step && slice !== "drafts" && estimates.filter((e) => !needle || e.what.toLowerCase().includes(needle)).filter((e) => (sliceOf(slice) === "completed" ? e.completed : sliceOf(slice) === "all" ? true : !e.completed)).map((e) => (
+        <article key={e.id} className="flex flex-wrap items-start gap-4 border-b border-state-border pb-5 sm:flex-nowrap" data-estimate-job>
+          <TypeArt typeName="report" size={52} />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">{e.needsAction && <RedDot size={9} />}<Link href={`/shop/estimates/${e.id}`} className="text-[17px] font-bold text-ink hover:underline">{e.what}</Link><span className="rounded-[14px] bg-state-inactive-bg px-2.5 py-0.5 text-[11px] font-bold text-state-inactive">Estimate</span></div>
+            <div className="mt-1 text-[13px] text-state-inactive">{e.number} · {e.in} of {e.asked} in{e.range ? ` · ${e.range}` : ""} · due {e.due} · {e.step}</div>
+          </div>
+          <Link href={`/shop/estimates/${e.id}`} className={`${e.needsAction ? BTN : BTN_OUT} w-full sm:w-auto`}>{e.needsAction ? "Review estimates" : "Open"}</Link>
+        </article>
+      ))}
       {older.length > 0 ? (
         <details>
           <summary className="cursor-pointer text-[13px] text-state-inactive">Older than 5 days ({older.length})</summary>
@@ -201,11 +213,16 @@ function JobArticle({ j }: { j: JobTabRow }) {
             {j.needsAction && <RedDot size={9} />}
             <Link href={`/work-requests/${j.id}`} className="text-[17px] font-bold text-ink hover:underline">{j.title}</Link>
           </div>
-          <div className="mt-1 text-[13px] text-state-inactive">{j.facts}{j.origin && !j.facts.includes(j.origin) ? ` · ${j.origin}` : ""}</div>
+          <div className="mt-1 text-[13px] text-state-inactive">{j.draft ? j.draftLine : <>{j.facts}{j.origin && !j.facts.includes(j.origin) ? ` · ${j.origin}` : ""}</>}</div>
+          {j.wo && j.step === "wo" && <div className="mt-1 text-[13px]"><b className="text-state-accepted">Work Order {j.wo.number} created</b> · <Link href={`/orders/${j.wo.id}`}>Open in Orders</Link></div>}
           {j.recurring && <RecurringLine r={j.recurring} />}
         </div>
-        {j.completed ? <Link href="/hire" className={`${BTN_OUT} w-full sm:w-auto`}>Hire Again</Link> : j.action && <Link href={j.action.href} className={`${j.needsAction ? BTN : BTN_OUT} w-full sm:w-auto`}>{j.action.label}</Link>}
+        <span className="flex w-full gap-2 sm:w-auto">
+          {j.completed ? <Link href="/hire" className={`${BTN_OUT} flex-1 sm:flex-none`}>Hire Again</Link> : j.action && <Link href={j.action.href} className={`${j.needsAction ? BTN : BTN_OUT} flex-1 sm:flex-none`}>{j.action.label}</Link>}
+          {j.draft && <DiscardDraft jobId={j.id} />}
+        </span>
       </div>
+      {!j.draft && (
       <div className="grid grid-cols-2 gap-4 border border-state-border bg-state-sunken/40 px-4 py-3.5 sm:ml-[68px] sm:grid-cols-4" data-facts-strip>
         {woStep && j.wo ? (
           <>
@@ -223,6 +240,7 @@ function JobArticle({ j }: { j: JobTabRow }) {
           </>
         )}
       </div>
+      )}
       {!woStep && (j.proposalLines.length > 0 || j.asked > 0) && (
         <div className="flex flex-col sm:ml-[68px]">
           {j.proposalLines.map((p) => (

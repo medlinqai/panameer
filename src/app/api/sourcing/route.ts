@@ -3,10 +3,10 @@ import { apiError } from "@/lib/api-errors";
 import { guardApi } from "@/lib/guard";
 import { WorkRequestError } from "@/lib/work-request";
 import { SourcingError } from "@/lib/sourcing";
-import { declineInEvent, extendDeadline, notifyOthers, proposeInEvent, setProposalStatus } from "@/lib/sourcing-events";
+import { closeEvent, decideProposals, declineInEvent, extendDeadline, notifyOthers, proposeInEvent, setProposalStatus } from "@/lib/sourcing-events";
 
 // SE: Sourcing Event actions — the provider proposes or declines; the buyer runs the event.
-type Body = { action?: string; jobId?: string; eventId?: string; rateCents?: number; start?: string | null; note?: string | null; reason?: string; hours?: number; proposalId?: string };
+type Body = { proposalIds?: string[]; decision?: string; action?: string; jobId?: string; eventId?: string; rateCents?: number; start?: string | null; note?: string | null; reason?: string; hours?: number; proposalId?: string };
 const PROVIDER = new Set(["propose", "decline"]);
 
 export async function POST(request: Request) {
@@ -27,6 +27,11 @@ export async function POST(request: Request) {
       case "declineProposal":
         await setProposalStatus(gate, String(body.eventId ?? ""), String(body.proposalId ?? ""), body.action === "shortlist" ? "SHORTLISTED" : body.action === "unshortlist" ? "SUBMITTED" : "DECLINED");
         return NextResponse.json({ ok: true });
+      case "close":
+        await closeEvent(gate, String(body.eventId ?? ""));
+        return NextResponse.json({ ok: true });
+      case "decide":
+        return NextResponse.json(await decideProposals(gate, (body.proposalIds ?? []).map(String).slice(0, 50), body.decision === "DECLINED" ? "DECLINED" : "SHORTLISTED", body.reason));
       case "notifyOthers":
         return NextResponse.json(await notifyOthers(gate, String(body.eventId ?? ""), String(body.note ?? "")));
       default:

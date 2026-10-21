@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/lib/api-errors";
 import { guardApi } from "@/lib/guard";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
-import { HireError, hireMatches, requestProposals, resolveSkill, saveHireJob, setHidden, suggestSkills, type HireInput } from "@/lib/hire-questionnaire";
+import { HireError, discardDraft, hireMatches, requestProposals, resolveSkill, saveHireJob, setHidden, suggestSkills, type HireInput } from "@/lib/hire-questionnaire";
 import { WorkRequestError } from "@/lib/work-request";
 import { reparseWho } from "@/lib/service-description";
 import { jobPosted } from "@/lib/hire-direct";
@@ -36,6 +36,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       case "resolveSkill":
         return NextResponse.json({ skill: await resolveSkill(String(body.name ?? "")) });
+      case "discard":
+        if (!body.jobId) return NextResponse.json({ error: "Pick a draft." }, { status: 400 });
+        await discardDraft(gate, body.jobId);
+        return NextResponse.json({ ok: true });
       case "star":
         if (!body.jobId || !body.personIds?.[0]) return NextResponse.json({ error: "Pick a provider." }, { status: 400 });
         await setStar(gate, body.jobId, body.personIds[0], body.on !== false);

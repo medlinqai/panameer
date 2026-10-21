@@ -63,7 +63,7 @@ export function HeadRow({ title, children }: { title: string; children?: ReactNo
   );
 }
 
-export type BandStep = { key: string; label: string; top: ReactNode; bar: "done" | "todo" | "dashed"; current?: boolean; needs?: boolean; href?: string; muted?: boolean };
+export type BandStep = { key: string; label: ReactNode; top: ReactNode; bar: "done" | "todo" | "dashed"; current?: boolean; needs?: boolean; href?: string; muted?: boolean };
 /** The thin path band: something above each step, a 4 px bar, the label under; scrolls inside its box on phones. */
 export function PathBand({ steps, label = "Path" }: { steps: BandStep[]; label?: string }) {
   return (
@@ -89,13 +89,13 @@ export function PathBand({ steps, label = "Path" }: { steps: BandStep[]; label?:
 }
 
 /** HL-E004: the Hire tab bar — "HIRE" eyebrow + divider, 3 px magenta underline on the active tab, red pills, Post a Job. */
-export function HireTabBar({ tabs, current, right }: { tabs: { key: string; label: string; href: string; n?: number }[]; current: string; right?: ReactNode }) {
+export function HireTabBar({ tabs, current, right, eyebrow = "HIRE" }: { tabs: { key: string; label: string; href: string; n?: number }[]; current: string; right?: ReactNode; eyebrow?: string }) {
   return (
     <div className="relative isolate border-b border-state-border" data-hire-tabs>
       <div aria-hidden className="pointer-events-none absolute -top-6 bottom-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-white" />
       <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-0 sm:px-2">
-        <nav aria-label="Hire" className="flex min-w-0 items-center gap-6 overflow-x-auto">
-          <span className="shrink-0 border-r border-state-border pr-5 text-[12px] font-extrabold tracking-[0.12em]">HIRE</span>
+        <nav aria-label={eyebrow} className="flex min-w-0 items-center gap-6 overflow-x-auto">
+          <span className="shrink-0 border-r border-state-border pr-5 text-[12px] font-extrabold tracking-[0.12em]">{eyebrow}</span>
           {tabs.map((t) => {
             const on = t.key === current;
             return (

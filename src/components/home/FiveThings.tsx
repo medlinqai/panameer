@@ -153,7 +153,8 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
 // ── RA-E002: red counts on the road, the Connect/Learn line, Needs Your Attention ─────────────────────────────
 function buyerBadges(c: AppCounts): Record<string, RoadBadge> {
   const h = APP_HOME.buyer;
-  return { find: { n: c.shop.total, href: h.shop, label: "Shop" }, order: { n: c.request.total, href: h.request, label: "Hire" }, approve: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, pay: { n: c.payment.total, href: h.payment, label: "Payments" } };
+  // HB-E006: Hire + Shop on "Post a Job or Shop"; the Order step is Orders (Work Orders to accept).
+  return { find: { n: c.request.total + c.shop.total, href: c.request.total || !c.shop.total ? h.request : h.shop, label: "Hire and Shop" }, order: { n: c.order.total, href: h.order, label: "Orders" }, approve: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, pay: { n: c.payment.total, href: h.payment, label: "Payments" } };
 }
 function providerBadges(c: AppCounts): Record<string, RoadBadge> {
   const h = APP_HOME.provider;
