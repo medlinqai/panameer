@@ -257,7 +257,7 @@ export async function notifyOthers(viewer: Viewer, eventId: string, message: str
 /** ES-E005: on Release, every other estimate in the event is told "not selected" and closed; the event closes. */
 async function estimatesNotSelected(eventId: string, title: string) {
   const reqs = await prisma.estimateRequest.findMany({ where: { sourcing_event_id: eventId, cost_estimate_id: { not: null } }, select: { provider_person_id: true, cost_estimate_id: true } });
-  const others = await prisma.estimate.findMany({ where: { id: { in: reqs.map((r) => r.cost_estimate_id!) }, status: { in: ["SENT", "CHANGES_REQUESTED"] } }, select: { id: true, provider_person_id: true } });
+  const others = await prisma.estimate.findMany({ where: { id: { in: reqs.map((r) => r.cost_estimate_id!) }, status: { in: ["SENT", "CHANGES_REQUESTED", "DECLINED"] } }, select: { id: true, provider_person_id: true } });
   const { notify } = await import("@/lib/notifications");
   for (const e of others) {
     await notify({ event: "work.not_awarded", personId: e.provider_person_id, entityType: "cost_estimate", entityId: e.id, dedupeKey: `work.not_awarded:${eventId}:${e.provider_person_id}`, vars: { workTitle: title, message: `Thank you for your estimate on “${title}”. The buyer went with another provider this time.` } });

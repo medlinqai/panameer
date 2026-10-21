@@ -181,6 +181,7 @@ export async function estimateFor(viewer: Viewer, id: string) {
   const people = await prisma.person.findMany({ where: { id: { in: [e.provider_person_id, e.customer_person_id].filter((x): x is string => !!x) } }, select: { id: true, first_name: true, last_name: true, user_id: true, company: { select: { name: true } } } });
   const prov = people.find((x) => x.id === e!.provider_person_id) ?? null;
   const cust = people.find((x) => x.id === e!.customer_person_id) ?? null;
+  if (e.status === "DECLINED" && e.provider_person_id === p.id && (await heldDeclines([e.id])).has(e.id)) e = { ...e, status: "SENT" };
   return { e, party: e.provider_person_id === p.id ? ("PROVIDER" as const) : ("CUSTOMER" as const), providerName: nameOf(prov), customerName: cust ? `${nameOf(cust)}${cust.company?.name ? ` · ${cust.company.name}` : ""}` : e.customer_email ?? "Customer", providerUserId: prov?.user_id ?? null };
 }
 
@@ -208,7 +209,10 @@ export async function decideEstimate(viewer: Viewer, id: string, decision: "ACCE
   if (decision === "ACCEPT") orderId = await orderFromEstimate(e.id);
   const cust = await prisma.person.findUnique({ where: { id: e.customer_person_id! }, select: { first_name: true, last_name: true } });
   const event = decision === "ACCEPT" ? "estimate.accepted" : decision === "CHANGES" ? "estimate.changes_requested" : "estimate.declined";
-  await notify({ event, personId: e.provider_person_id, entityType: "cost_estimate", entityId: e.id, dedupeKey: `${event}:${e.id}:${rev.revision_number}`, vars: { estimateId: e.id, estimateNumber: e.estimate_number, title: e.title, customerName: nameOf(cust), comment: note, orderId } });
+  // Same rule as Hire: in an Estimate Event a declined provider is told only when the Work Order is Released
+  // (estimatesNotSelected in sourcing-events.ts sends it then). A one-off estimate outside an event is answered now.
+  const inEvent = decision === "DECLINE" && !!(await prisma.estimateRequest.findFirst({ where: { cost_estimate_id: e.id, sourcing_event_id: { not: null } }, select: { id: true } }));
+  if (!inEvent) await notify({ event, personId: e.provider_person_id, entityType: "cost_estimate", entityId: e.id, dedupeKey: `${event}:${e.id}:${rev.revision_number}`, vars: { estimateId: e.id, estimateNumber: e.estimate_number, title: e.title, customerName: nameOf(cust), comment: note, orderId } });
   return { status, orderId };
 }
 
@@ -293,11 +297,22 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
 export type EstimateRow = { id: string; number: string; title: string; status: string; totalCents: number; currency: string; counterpart: string; validUntil: string; revision: number };
 
 /** My Estimates (owner-only) — the estimates you've written. */
+/** A decline inside an Estimate Event stays hidden from the provider until the event's Work Order is Released
+ *  (others_notified_at set) — same rule as Hire. Returns the ids whose DECLINED status must still read as SENT. */
+async function heldDeclines(estimateIds: string[]): Promise<Set<string>> {
+  if (!estimateIds.length) return new Set();
+  const reqs = await prisma.estimateRequest.findMany({ where: { cost_estimate_id: { in: estimateIds }, sourcing_event_id: { not: null } }, select: { cost_estimate_id: true, sourcing_event_id: true } });
+  if (!reqs.length) return new Set();
+  const told = new Set((await prisma.sourcingEvent.findMany({ where: { id: { in: reqs.map((r) => r.sourcing_event_id!) }, others_notified_at: { not: null } }, select: { id: true } })).map((x) => x.id));
+  return new Set(reqs.filter((r) => !told.has(r.sourcing_event_id!)).map((r) => r.cost_estimate_id!));
+}
+
 export async function myEstimates(viewer: Viewer): Promise<EstimateRow[]> {
   const p = await me(viewer);
   const rows = await prisma.estimate.findMany({ where: { provider_person_id: p.id }, orderBy: { updated_at: "desc" }, take: 100, include: { revisions: { orderBy: { revision_number: "desc" }, take: 1, select: { total_cents: true } } } });
   const custs = new Map((await prisma.person.findMany({ where: { id: { in: rows.map((r) => r.customer_person_id).filter((x): x is string => !!x) } }, select: { id: true, first_name: true, last_name: true } })).map((c) => [c.id, nameOf(c)]));
-  return rows.map((r) => ({ id: r.id, number: r.estimate_number, title: r.title, status: r.status, totalCents: r.revisions[0]?.total_cents ?? 0, currency: r.currency, counterpart: (r.customer_person_id && custs.get(r.customer_person_id)) || r.customer_email || "—", validUntil: r.valid_until.toISOString().slice(0, 10), revision: r.current_revision }));
+  const held = await heldDeclines(rows.filter((r) => r.status === "DECLINED").map((r) => r.id));
+  return rows.map((r) => ({ id: r.id, number: r.estimate_number, title: r.title, status: held.has(r.id) ? ("SENT" as typeof r.status) : r.status, totalCents: r.revisions[0]?.total_cents ?? 0, currency: r.currency, counterpart: (r.customer_person_id && custs.get(r.customer_person_id)) || r.customer_email || "—", validUntil: r.valid_until.toISOString().slice(0, 10), revision: r.current_revision }));
 }
 
 /** ES-E003: an estimate in an Estimate Event can be saved / sent only while the event is open. */
