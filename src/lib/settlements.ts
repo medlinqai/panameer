@@ -684,7 +684,14 @@ export async function approveSettlement(viewer: Viewer, id: string): Promise<Set
         : "This payment request is not waiting for a decision",
       current.party === "PROVIDER" ? "FORBIDDEN" : "INVALID"
     );
-  const order = await prisma.workOrder.findUnique({ where: { id: current.orderId }, select: { status: true } });
+  const order = await prisma.workOrder.findUnique({ where: { id: current.orderId }, select: { status: true, lines: { select: { line_number: true, quantity: true, amount_cents: true, drawn_quantity: true, drawn_amount_cents: true, transaction_type: true, uom: true } } } });
+  // WS-E003: matching — never approve past the ordered quantity (Service – Rate / Product) or amount (Service – Fixed Price).
+  for (const l of order?.lines ?? []) {
+    if (l.transaction_type !== "SERVICE_BY_AMT" && l.quantity != null && Number(l.drawn_quantity ?? 0) > Number(l.quantity))
+      throw new SettlementError(`Line ${l.line_number} is over-drawn: ${Number(l.drawn_quantity)} of ${Number(l.quantity)} ${l.uom?.toLowerCase() ?? "units"} used. Send it back or raise a change order.`, "INVALID");
+    if (l.transaction_type === "SERVICE_BY_AMT" && l.amount_cents != null && (l.drawn_amount_cents ?? 0) > l.amount_cents)
+      throw new SettlementError(`Line ${l.line_number} is over-drawn: $${((l.drawn_amount_cents ?? 0) / 100).toFixed(2)} of $${(l.amount_cents / 100).toFixed(2)}. Send it back or raise a change order.`, "INVALID");
+  }
   if (order && !PAYABLE.includes(order.status))
     throw new SettlementError(order.status === "ON_HOLD" ? "This work order is on hold. Release the hold before approving." : "This work order can't take approvals", "INVALID");
   await prisma.paymentRequest.updateMany({

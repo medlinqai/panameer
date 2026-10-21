@@ -222,7 +222,8 @@ export function assertSettlementDraw(input: {
       const ordered = orderLine.quantity ?? 0;
       if (already + want > ordered)
         throw new SpineError(
-          `Drawing ${want} would exceed the ordered quantity (${already} of ${ordered} already drawn)`,
+          // WS-E003: say what's left.
+          `Only ${Math.max(0, ordered - already)} ${orderLine.uom ? orderLine.uom.toLowerCase() + (ordered - already === 1 ? "" : "s") : "units"} left on this line (${already} of ${ordered} used) — you entered ${want}.`,
           "RATE_OVERDRAW"
         );
       drawCents += Math.round(want * (priced.unit_price_cents ?? 0));
@@ -233,7 +234,7 @@ export function assertSettlementDraw(input: {
       const want = priced.amount_cents ?? 0;
       if (want <= 0) throw new SpineError("An AMOUNT draw needs an amount", "AMOUNT_DRAW_EMPTY");
       if (want > left)
-        throw new SpineError(`Drawing ${(want / 100).toFixed(2)} would exceed what's left on the line (${(left / 100).toFixed(2)})`, "AMOUNT_OVERDRAW");
+        throw new SpineError(`Only $${(left / 100).toFixed(2)} left on this line — you entered $${(want / 100).toFixed(2)}.`, "AMOUNT_OVERDRAW");
       drawCents += want;
     }
   }
