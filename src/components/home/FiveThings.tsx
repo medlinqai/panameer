@@ -1,5 +1,6 @@
 import { BUYER_ROAD, BUYER_ROAD_TITLE, ROAD_TITLE } from "@/lib/user-levels";
-import { BuyerLiveWork, ProviderLiveWork } from "@/components/home/LiveWork";
+import { appCounts, APP_HOME, type AppCounts } from "@/lib/attention";
+import type { RoadBadge } from "@/components/lifecycle/RoadGraphic";
 import { BuyerThings } from "@/components/home/BuyerThings";
 import { prisma } from "@/lib/prisma";
 import { sellerRegistration } from "@/lib/seller-registration";
@@ -12,7 +13,6 @@ import { fiveThings, type Thing } from "@/lib/five-things";
 import { lifecycleForUser } from "@/lib/your-path";
 import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
 import { RoadGraphic } from "@/components/lifecycle/RoadGraphic";
-import { RoadStepper } from "@/components/lifecycle/RoadStepper";
 import { TurnOnButton, MoreCards } from "@/components/home/FiveThingsClient";
 
 // Dashboard (mockup dashboard_five_things 2026-10-06): greeting + Your Path bar, 5 cards, "Waiting on you" tiles.
@@ -47,27 +47,29 @@ function Card({ t, i }: { t: Thing; i: number }) {
 }
 
 export async function FiveThings({ viewer, firstName, firstVisit = false, step = null, view = null }: { viewer: Viewer; firstName: string; firstVisit?: boolean; step?: string | null; view?: string | null }) {
-  const me0 = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+  void step; void view;
   const path = await lifecycleForUser(viewer.userId);
   // BD-E002/E005: a buyer's dashboard = greeting · their road · the five cards. Nothing else.
   if (path?.road === "buyer") {
+    const bc = await appCounts(viewer, "buyer");
+    const setUp = path.current >= 2 && !path.waiting;
     return (
       <section data-five-things data-buyer-dashboard className="mb-8 font-body text-ink">
         <h1 className="text-[28px] font-extrabold leading-tight sm:text-[32px]">Welcome{firstName ? `, ${firstName}` : ""}.</h1>
-        {/* DB-E002–E004: live work first. */}
-        {me0 && <BuyerLiveWork personId={me0.id} step={step} view={view} />}
         <div data-path-road className="mt-5 rounded-[14px] border border-line bg-surface px-4 py-5 sm:px-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="flex items-center gap-1.5 text-[17px] font-bold">{BUYER_ROAD_TITLE} <LifecycleHelp /></h2>
             <span className="text-[11px] font-bold tracking-[0.1em] text-ink-2">STEP {path.current + 1} OF {path.steps.length}</span>
           </div>
-          <div className="mt-2 hidden overflow-x-auto sm:block"><div className="min-w-[560px]"><RoadGraphic current={path.current} road={BUYER_ROAD} label="Buyer road" waiting={path.waiting} /></div></div>
-          <div className="mt-4 sm:hidden"><RoadStepper current={path.current} road={BUYER_ROAD} waiting={path.waiting} /></div>
+          {/* RA-E002: red counts on the stops that own them; the graphic scrolls inside its card on phones. */}
+          <div className="-mx-1 mt-2 overflow-x-auto px-1 pt-2"><div className="min-w-[560px]"><RoadGraphic current={path.current} road={BUYER_ROAD} label="Buyer road" waiting={path.waiting} badges={buyerBadges(bc)} /></div></div>
+          <AppChips c={bc} />
           {/* DC-E001: the road is a picture of the journey — the cards below are the way in. */}
           {path.waiting && <p className="mt-3 text-[13.5px] text-ink-2">Your company&apos;s admin has your request. Everything below is open while you wait.</p>}
         </div>
         {/* Scott 10-16: the seller is told "Not live yet"; the buyer is told they're live and ready. Same card shape. */}
-        {!path.waiting && (
+        {setUp && <NeedsYourAttention c={bc} />}
+        {!path.waiting && !setUp && (
           <Link href="/shop" data-buyer-live className="group mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[14px] border-2 border-ink bg-surface p-5 transition-colors hover:border-magenta-dark sm:p-6">
             <span className="min-w-0">
               <span className="inline-block bg-magenta px-2 py-0.5 text-[11.5px] font-bold text-white">Live</span>
@@ -77,8 +79,12 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
             <span className="inline-flex min-h-[44px] items-center bg-ink px-6 text-[14.5px] font-bold text-surface group-hover:bg-magenta-dark">Start Shopping</span>
           </Link>
         )}
-        <h2 className="mt-9 text-[19px] font-extrabold">What do you want to do{firstVisit ? " first" : ""}?</h2>
-        <BuyerThings />
+        {!setUp && (
+          <>
+            <h2 className="mt-9 text-[19px] font-extrabold">What do you want to do{firstVisit ? " first" : ""}?</h2>
+            <BuyerThings />
+          </>
+        )}
       </section>
     );
   }
@@ -89,7 +95,9 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
   // While on the provider road (before Request Payment), the cards become one question with four directions.
   // DB-E005: once live, the provider's live work replaces the onboarding strip.
   const live = !!reg?.live;
-  const onRoad = !live && !!path && path.road === "provider" && path.current < 6;
+  // RA-E002: one graphic for providers too (the 8 stops), with red counts once live.
+  const onRoad = !!path && path.road === "provider";
+  const pc = live ? await appCounts(viewer, "provider") : null;
   return (
     <section data-five-things className="mb-8 font-body text-ink">
       <h1 className="text-[26px] font-extrabold leading-tight sm:text-[30px]">Welcome{firstName ? `, ${firstName}` : ""}.</h1>
@@ -99,27 +107,11 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
             <h2 className="flex items-center gap-1.5 text-[17px] font-bold">{ROAD_TITLE} <LifecycleHelp /></h2>
             <span className="text-[11px] font-bold tracking-[0.1em] text-ink-2">STEP {path.current + 1} OF {path.steps.length}</span>
           </div>
-          <div className="mt-3 hidden overflow-x-auto sm:block"><div className="min-w-[640px]"><RoadGraphic current={path.current} waiting={path.waiting} /></div></div>
-          <div className="mt-4 sm:hidden"><RoadStepper current={path.current} waiting={path.waiting} /></div>
+          <div className="-mx-1 mt-3 overflow-x-auto px-1 pt-2"><div className="min-w-[640px]"><RoadGraphic current={path.current} waiting={path.waiting} badges={pc ? providerBadges(pc) : undefined} /></div></div>
+          {pc && <AppChips c={pc} />}
           <p className="mt-2 text-[13.5px] text-ink-2">Learn, Connect and Create What You Sell are open now.</p>
         </div>
       )}
-      {live && me && <ProviderLiveWork personId={me.id} step={step} view={view} />}
-      {path && !onRoad && !live && (
-        <div data-path-bar className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border border-line px-4 py-3">
-          <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.1em] text-ink-2">
-            YOUR PATH{path.current < path.steps.length ? ` · STEP ${path.current + 1} OF ${path.steps.length}` : " · DONE"}
-            <LifecycleHelp />
-          </span>
-          <span className={"grid w-[140px] gap-1 " + (path.steps.length === 8 ? "grid-cols-8" : "grid-cols-7")} aria-hidden>
-            {path.done.map((d, i) => (
-              <span key={i} className={"h-1.5 " + (d ? "bg-magenta" : i === path.current ? "bg-ink" : "bg-line")} />
-            ))}
-          </span>
-
-        </div>
-      )}
-
       {reg && !reg.live && (
         <Link href={reg.registered ? "/catalog/create" : reg.step ? "/join/provider/register" : "/join/provider/start"} data-get-found className="group mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[14px] border-2 border-ink bg-surface p-5 transition-colors hover:border-magenta-dark sm:p-6">
           <span className="min-w-0">
@@ -130,7 +122,9 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
           <span className="inline-flex min-h-[44px] items-center bg-ink px-6 text-[14.5px] font-bold text-surface group-hover:bg-magenta-dark">{reg.registered ? "Start" : "Continue"}</span>
         </Link>
       )}
-      {onRoad ? (
+      {pc ? (
+        <NeedsYourAttention c={pc} />
+      ) : onRoad ? (
         <>
           <h2 className="mt-9 text-[19px] font-extrabold">What do you want to do{firstVisit ? " first" : ""}?</h2>
           <BuyerThings seller />
@@ -152,6 +146,55 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
       )}
 
       {/* Scott 10-15: like the buyer dashboard — greeting, road, cards. No Waiting on You below. */}
+    </section>
+  );
+}
+
+// ── RA-E002: red counts on the road, the Connect/Learn line, Needs Your Attention ─────────────────────────────
+function buyerBadges(c: AppCounts): Record<string, RoadBadge> {
+  const h = APP_HOME.buyer;
+  return { order: { n: c.request.total, href: h.request, label: "Hire" }, approve: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, pay: { n: c.payment.total, href: h.payment, label: "Payments" } };
+}
+function providerBadges(c: AppCounts): Record<string, RoadBadge> {
+  const h = APP_HOME.provider;
+  return { sell: { n: c.request.total, href: h.request, label: "Jobs" }, deliver: { n: c.order.total, href: h.order, label: "Orders" }, request: { n: c.settlement.total, href: h.settlement, label: "Settlements" }, paid: { n: c.payment.total, href: h.payment, label: "Payments" } };
+}
+const Red = ({ n }: { n: number }) => (n > 0 ? <span className="ml-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[#D92D20] px-1 text-[11px] font-extrabold text-white">{n}</span> : null);
+
+function AppChips({ c }: { c: AppCounts }) {
+  const h = APP_HOME[c.side];
+  return (
+    <p className="mt-3 flex flex-wrap items-center gap-2 text-[13px]" data-app-chips>
+      <Link href={h.connect} className="inline-flex items-center rounded-full border border-line px-3 py-1 font-semibold hover:border-magenta">Connect<Red n={c.connect.total} /></Link>
+      <span className="text-ink-3">·</span>
+      <Link href={h.learn} className="inline-flex items-center rounded-full border border-line px-3 py-1 font-semibold hover:border-magenta">Learn<Red n={c.learn.total} /></Link>
+    </p>
+  );
+}
+
+function NeedsYourAttention({ c }: { c: AppCounts }) {
+  const apps = [...new Set(c.items.map((i) => i.app))];
+  return (
+    <section className="mt-6 rounded-[14px] border border-line bg-white p-4 sm:p-5" data-needs-attention>
+      <h2 className="text-[17px] font-extrabold">Needs Your Attention</h2>
+      {c.items.length ? (
+        <>
+          <ul className="mt-2 divide-y divide-line">
+            {c.items.slice(0, 8).map((i) => (
+              <li key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5">
+                <span className="min-w-0 flex-1">
+                  <b className="block text-[14px]">{i.what}</b>
+                  <span className="text-[12.5px] text-ink-2">{i.appLabel}{i.due ? ` · due ${i.due}` : ""}</span>
+                </span>
+                <Link href={i.href} className="inline-flex min-h-9 items-center bg-ink px-3.5 text-[13px] font-bold text-surface hover:bg-ink-hover">{i.action}</Link>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
+            {apps.map((a) => <Link key={a} href={APP_HOME[c.side][a]} className="font-semibold text-magenta-dark underline underline-offset-4">See all in {c.items.find((i) => i.app === a)!.appLabel}</Link>)}
+          </p>
+        </>
+      ) : <p className="mt-1 text-[13.5px] text-ink-3">Nothing is waiting on you right now.</p>}
     </section>
   );
 }

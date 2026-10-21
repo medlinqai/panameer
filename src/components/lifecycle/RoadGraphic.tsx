@@ -18,12 +18,14 @@ function Lock({ color }: { color: string }) {
  *  `waiting` marks a stop counted done but not yet confirmed (a pending company join). */
 export type RoadCount = { n: number; label: string; sub?: ReactNode; href?: string };
 /** `counts` (admin): every stop drawn in its colour, no "you are here", with a count block under each stop. */
-export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider road", waiting, counts }: { current: number; hereLabel?: string; road?: LifecycleStep[]; label?: string; waiting?: { key: string; label: string } | null; counts?: RoadCount[] }) {
+/** RA-E002: a red count on a stop (that app's waiting items) — clicking opens the app's Overview. */
+export type RoadBadge = { n: number; href: string; label: string };
+export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider road", waiting, counts, badges }: { current: number; hereLabel?: string; road?: LifecycleStep[]; label?: string; waiting?: { key: string; label: string } | null; counts?: RoadCount[]; badges?: Partial<Record<string, RoadBadge>> }) {
   const here = counts ? -1 : Math.min(Math.max(current, 0), road.length);
   const n = road.length;
   const phases = (["join", "win", "paid"] as RoadPhase[]).map((ph) => ({ ph, span: road.filter((s) => s.phase === ph).length })).filter((x) => x.span > 0);
   return (
-    <div role="img" aria-label={`${label}, ${n} stops`} data-road-graphic data-current={here + 1} className="pt-5">
+    <div role={badges ? undefined : "img"} aria-label={`${label}, ${n} stops`} data-road-graphic data-current={here + 1} className="pt-5">
       <div className="grid" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
         {road.map((s, i) => {
           const C = ROAD_PHASES[s.phase ?? "join"].color;
@@ -46,6 +48,11 @@ export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider r
                 style={{ borderColor: C, background: done && !wait ? C : "#fff", color: done && !wait ? "#fff" : C }}
               >
                 {wait ? "…" : done ? "✓" : i + 1}
+                {badges?.[s.key] && badges[s.key]!.n > 0 && (
+                  <a href={badges[s.key]!.href} data-road-badge={s.key} aria-label={`${badges[s.key]!.n} waiting in ${badges[s.key]!.label}`} className="absolute -right-3 -top-2.5 grid h-[22px] min-w-[22px] place-items-center rounded-full border-2 border-white bg-[#D92D20] px-1 text-[11.5px] font-extrabold text-white hover:bg-[#B42318]">
+                    {badges[s.key]!.n}
+                  </a>
+                )}
               </span>
               <span className={"mt-2 whitespace-nowrap px-1 text-[12.5px] leading-[1.25] text-ink " + (now ? "font-extrabold" : "font-semibold")}>
                 {a}<br />{b}<br />{c}
