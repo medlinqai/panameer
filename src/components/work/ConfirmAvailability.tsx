@@ -95,7 +95,7 @@ export function ConfirmAvailability({ jobId, v, startDeclining = false }: { jobI
             </div>
           )}
           <div className="flex flex-wrap items-center gap-2">
-            {(!v.responded || changing) && <button type="button" disabled={busy || !(cents > 0)} onClick={want} className={BTN} data-want-this-job>{v.responded ? "Update My Rate" : "I Want This Job"}</button>}
+            {(!v.responded || changing) && <button type="button" disabled={busy || !(cents > 0)} onClick={want} className={BTN} data-want-this-job>{v.responded ? "Update My Rate" : v.mode === "asked" ? "I'm Available" : "I Want This Job"}</button>}
             {v.mode === "asked" && !v.responded && !v.declined && <button type="button" onClick={() => setDeclining(true)} className={BTN_OUT} data-not-this-time>Not This Time</button>}
             {!changing && <button type="button" onClick={() => setChanging(true)} className="ml-1 text-[13px] font-semibold text-ink-2 underline underline-offset-4" data-change-my-rate>Change My Rate for This Job</button>}
           </div>
