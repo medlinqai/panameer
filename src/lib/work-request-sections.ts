@@ -39,7 +39,7 @@ export async function workRequestSections(viewer: Viewer, jobId: string) {
   const now = Date.now();
   const requestRows = requests.map((r) => ({
     who: who(r.provider_person_id), number: r.request_number, asked: when(r.issued_at ?? r.created_at), due: r.responds_by ? when(r.responds_by) : null,
-    status: r.status === "DECLINED" ? `Declined${r.decline_reason ? ` — “${r.decline_reason}”` : ""}` : r.bid?.submitted_at || r.status === "RESPONDED" ? "Responded" : r.status === "EXPIRED" || (r.responds_by && r.responds_by.getTime() < now) ? "Expired" : "Waiting",
+    status: r.status === "DECLINED" ? `Not This Time${r.decline_reason ? ` — “${r.decline_reason}”` : ""}` : r.bid?.submitted_at || r.status === "RESPONDED" ? "Responded" : r.status === "EXPIRED" || (r.responds_by && r.responds_by.getTime() < now) ? "Expired" : "Waiting",
   }));
   const evalRows = evaluations.map((e) => ({ who: who(e.provider_person_id), rating: e.overall_rating, summary: e.summary }));
   const testRows = tests.map((t) => {

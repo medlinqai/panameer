@@ -73,7 +73,7 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
       </Group>
       <Group title="Available Providers" n={rates.length}>
         {rates.map((g) => (
-          <Row key={g.key} href={`/work-requests/${g.jobId}`} what={`${g.who} proposed ${g.rate ?? "a rate"}`} detail={[g.title, g.inRange == null ? null : g.inRange ? "in range" : "over range", g.start, "you asked them"].filter(Boolean).join(" · ")}>
+          <Row key={g.key} href={`/work-requests/${g.jobId}`} what={`${g.who} is available${g.rate ? ` at ${g.rate}` : ""}`} detail={[g.title, g.inRange == null ? null : g.inRange ? "in range" : "over range", g.start, "you asked them"].filter(Boolean).join(" · ")}>
             <button type="button" className={BTN_OUT} onClick={() => act(g.key, "Shortlisted", { action: "decide", proposalIds: [g.proposalId], decision: "SHORTLISTED" })}>Shortlist</button>
             <button type="button" className={BTN_OUT} onClick={() => act(g.key, "Declined", { action: "decide", proposalIds: [g.proposalId], decision: "DECLINED" })}>Decline</button>
           </Row>

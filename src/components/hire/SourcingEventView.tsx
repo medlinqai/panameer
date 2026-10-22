@@ -14,6 +14,9 @@ const BTN = "inline-flex min-h-9 items-center justify-center bg-ink px-4 text-[1
 const GHOST = "inline-flex min-h-9 items-center justify-center border border-ink bg-white px-3.5 text-[13px] font-semibold text-ink hover:bg-bg-soft disabled:cursor-not-allowed disabled:opacity-40";
 const usd = (c: number | null) => (c == null ? null : `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}`);
 
+// CA-E004: Available first, then Declined, then no answer, then Not This Time.
+const rank = (p: { proposal: { status: string } | null; requestStatus: string }) => (p.proposal ? (p.proposal.status === "DECLINED" ? 1 : 0) : p.requestStatus === "DECLINED" ? 3 : 2);
+
 export function SourcingEventView({ ev }: { ev: Ev }) {
   const router = useRouter();
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -79,7 +82,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
           <button type="button" className={GHOST} disabled={picked.size < 2 || picked.size > 4} onClick={() => setComparing(true)} data-compare-proposals title="Tick 2 to 4 responses">Compare{picked.size >= 2 ? ` ${picked.size}` : ""}</button>
         </div>
         <ul className="mt-2 divide-y divide-line border-y border-line">
-          {ev.proposals.map((p) => {
+          {[...ev.proposals].sort((a, b) => rank(a) - rank(b) || (a.proposal?.rateCents ?? Infinity) - (b.proposal?.rateCents ?? Infinity)).map((p) => {
             const pr = p.proposal;
             const over = pr?.rateCents != null && ev.job.budget_max_cents != null && pr.rateCents > ev.job.budget_max_cents;
             return (
@@ -90,9 +93,9 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                   <p className="text-[15px] font-bold">{p.match.name}{pr?.status === "SHORTLISTED" && <span className="ml-2 text-magenta-dark">★</span>}{pr?.status === "AWARDED" && <span className="ml-2 rounded-full bg-ink px-2 py-0.5 text-[11px] text-surface">Awarded</span>}</p>
                   <p className="text-[13px] text-ink-2">{p.match.line}</p>
                   {pr ? (
-                    <p className="mt-1 text-[13.5px]"><b className={over ? "text-magenta-dark" : ""}>{usd(pr.rateCents)}{per}</b>{range && <span className="text-ink-2"> vs {range}</span>}{pr.start && <span className="text-ink-2"> · earliest start {pr.start}</span>}{pr.status === "DECLINED" && <span className="text-ink-3"> · you declined</span>}</p>
+                    <p className="mt-1 text-[13.5px]" data-response-line>{pr.status === "DECLINED" ? <b className="text-state-declined">Declined</b> : <b className="text-state-accepted">Available</b>} · <b className={over ? "text-state-declined" : ""}>{usd(pr.rateCents)}{per}</b>{range && <span className="text-ink-2"> vs {range}</span>}{pr.start && <span className="text-ink-2"> · start {pr.start}</span>}</p>
                   ) : (
-                    <p className="mt-1 text-[13.5px] text-ink-3">{p.requestStatus === "DECLINED" ? `Declined${p.declineReason ? ` — “${p.declineReason}”` : ""}` : "No response yet"}</p>
+                    <p className="mt-1 text-[13.5px] text-ink-3">{p.requestStatus === "DECLINED" ? <><b className="text-state-declined">Not This Time</b>{p.declineReason ? ` — “${p.declineReason}”` : ""}</> : "No response yet"}</p>
                   )}
                   {pr?.note && <p className="mt-1 whitespace-pre-line text-[13px] text-ink-2">{pr.note}</p>}
                   <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]">
@@ -103,10 +106,10 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                 {pr && pr.status !== "DECLINED" && !awarded && (
                   <div className="flex flex-wrap justify-end gap-1.5">
                     <button type="button" className={GHOST} disabled={busy} onClick={() => act("/api/sourcing", { action: pr.status === "SHORTLISTED" ? "unshortlist" : "shortlist", eventId: ev.id, proposalId: pr.id })}>{pr.status === "SHORTLISTED" ? "★ Shortlisted" : "☆ Shortlist"}</button>
-                    <button type="button" className={GHOST} disabled={busy} onClick={() => act(`/api/work-requests/${ev.jobId}/interview`, { providerPersonId: p.personId }, "Interview requested — they'll offer times.")} data-request-interview>Request Interview</button>
-                    <button type="button" className={GHOST} disabled={busy || !ev.certificationTestId} title={ev.certificationTestId ? undefined : "No certification test exists for this job's skills yet"} onClick={() => act(`/api/work-requests/${ev.jobId}/test`, { providerPersonId: p.personId, learnAssessmentId: ev.certificationTestId }, "Certification test sent.")} data-request-test>Request Certification Test</button>
+                    <button type="button" className={GHOST} disabled={busy} onClick={() => act(`/api/work-requests/${ev.jobId}/interview`, { providerPersonId: p.personId }, "Interview requested — they'll offer times.")} data-request-interview>Interview</button>
+                    <button type="button" className={GHOST} disabled={busy || !ev.certificationTestId} title={ev.certificationTestId ? undefined : "No certification test exists for this job's skills yet"} onClick={() => act(`/api/work-requests/${ev.jobId}/test`, { providerPersonId: p.personId, learnAssessmentId: ev.certificationTestId }, "Certification test sent.")} data-request-test>Request Test</button>
                     <button type="button" className={GHOST} disabled={busy} onClick={() => act("/api/sourcing", { action: "declineProposal", eventId: ev.id, proposalId: pr.id })}>Decline</button>
-                    <Link href={`/hire/terms?job=${ev.jobId}&provider=${p.personId}`} className={BTN} data-award>Award</Link>
+                    <Link href={`/hire/terms?job=${ev.jobId}&provider=${p.personId}`} className={BTN} data-award>Hire</Link>
                   </div>
                 )}
               </li>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProposalActions } from "@/components/work/ProposalActions";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { appCounts } from "@/lib/attention";
@@ -232,10 +233,10 @@ function JobArticle({ j }: { j: JobTabRow }) {
           {j.proposalLines.map((p) => (
             <div key={p.personId} className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t border-state-sunken py-2.5" data-proposal-line>
               <NeutralAvatar size={32} photoUrl={p.photoUrl} />
-              <span className="w-[70px] text-[14px] font-bold">{p.who}</span>
-              <span className="min-w-0 flex-1 text-[13px] text-state-inactive">{p.summary}</span>
-              <span className="text-[14px] font-bold">{p.rate ?? "—"}</span>
-              <span className="w-[110px] text-[13px] text-state-inactive">{p.start ?? ""}</span>
+              <span className="text-[14px] font-bold" data-response-line>{p.who} · {p.available ? <span className="text-state-accepted">Available</span> : <span className="text-state-declined">Not This Time</span>}{p.rate ? ` · ${p.rate}` : ""}</span>
+              <span className="min-w-0 flex-1 text-[13px] text-state-inactive">{p.available ? p.summary : p.reason ? `“${p.reason}”` : ""}</span>
+              {p.available && <span className="w-[110px] text-[13px] text-state-inactive">{p.start ?? ""}</span>}
+              {p.proposalId && <ProposalActions compact jobId={j.id} providerPersonId={p.personId} proposalId={p.proposalId} status={p.status ?? undefined} testId={null} awarded={p.status === "AWARDED"} interviewStatus={null} testStatus={null} />}
               {j.eventId && <Link href={`/hire/sourcing/${j.eventId}`} className="text-[13px] font-semibold">Compare</Link>}
             </div>
           ))}

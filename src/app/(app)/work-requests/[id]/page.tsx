@@ -93,6 +93,8 @@ export default async function Page({
 
   const sec = await workRequestSections(viewer, detail.id);
   const photos = await providerPhotos(proposals.map((p) => p.providerPersonId));
+  // CA-E004: providers who answered Not This Time (reason shown).
+  const notNow = sec.requestRows.filter((r) => r.status.startsWith("Not This Time")).map((r) => ({ who: r.who, number: r.number, reason: /“(.*)”/.exec(r.status)?.[1] ?? null }));
   const buyerInterviews = await listInterviews({ jobId: detail.id, buyerPersonId: (await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }))?.id });
   const actions = [
     ...(detail.status === "DRAFT" ? [{ label: "Edit the Job", href: `/hire?job=${detail.id}&step=0` }] : []),
@@ -176,26 +178,31 @@ export default async function Page({
           <div key={r.number} className={`flex flex-wrap items-center gap-3.5 py-3 text-[14px] ${ROW_RULE}`}>
             <span className="w-[70px] font-bold">{r.who.replace(/^Provider /, "")}</span>
             <span className="min-w-0 flex-[1_1_200px] text-state-inactive">Asked {r.asked}{r.due ? ` · due ${r.due}` : ""}</span>
-            <span className={`font-bold ${r.status === "Responded" ? GREEN : r.status.startsWith("Declined") ? "text-state-declined" : "text-state-inactive"}`}>{r.status}</span>
+            <span className={`font-bold ${r.status === "Responded" ? GREEN : r.status.startsWith("Not This Time") ? "text-state-declined" : "text-state-inactive"}`}>{r.status}</span>
           </div>
         )) : empty("No requests yet. Star providers in Matches and request their availability.")}
       </Section>
 
       <Section title="Responses" right={sourcing ? <Link href={`/hire/sourcing/${sourcing.id}`}>Compare</Link> : null}>
-        {proposals.length ? proposals.map((p) => {
+        {proposals.length || notNow.length ? [...proposals].sort((a, b) => Number(a.status === "DECLINED") - Number(b.status === "DECLINED") || (a.rate?.unitPriceCents ?? Infinity) - (b.rate?.unitPriceCents ?? Infinity)).map((p) => {
           const primary = p.id === topProposalId;
           const x = sec.proposalExtra(p.providerPersonId);
           return (
             <div key={p.id} className={`flex flex-wrap items-center gap-3.5 py-3.5 ${ROW_RULE}`} data-proposal-row>
               <NeutralAvatar size={36} photoUrl={photos.get(p.providerPersonId)} />
               <div className="min-w-0 flex-[1_1_260px]">
-                <div className="text-[15px] font-bold">{[p.providerName.replace(/^Provider /, ""), p.rate ? `${formatCents(p.rate.unitPriceCents)}${p.rate.basis === "RATE" ? "/hr" : " fixed"}` : "no rate", x.start ? `start ${x.start}` : null].filter(Boolean).join(" · ")}</div>
+                <div className="text-[15px] font-bold" data-response-line>{p.providerName.replace(/^Provider /, "")} · {p.status === "DECLINED" ? <span className="text-state-declined">Declined</span> : <span className="text-state-accepted">Available</span>} · {p.rate ? `${formatCents(p.rate.unitPriceCents)}${p.rate.basis === "RATE" ? "/hr" : " fixed"}` : "no rate"}{x.start ? ` · start ${x.start}` : ""}</div>
                 <div className="mt-0.5 text-[13px] text-state-inactive">{[x.summary || null, p.coverNote ? `“${p.coverNote.slice(0, 120)}”` : "no note"].filter(Boolean).join(" · ")}</div>
               </div>
-              <ProposalActions jobId={detail.id} providerPersonId={p.providerPersonId} testId={testId} awarded={p.status === "AWARDED"} interviewStatus={p.interviewStatus} testStatus={p.testStatus} primary={primary} />
+              <ProposalActions jobId={detail.id} providerPersonId={p.providerPersonId} testId={testId} awarded={p.status === "AWARDED"} interviewStatus={p.interviewStatus} testStatus={p.testStatus} primary={primary} proposalId={p.id} status={p.status} />
             </div>
           );
-        }) : empty(posted ? "No responses yet. They show here as providers answer." : "No responses yet — a Job takes responses once it is posted.")}
+        }).concat(notNow.map((r) => (
+          <div key={`n-${r.number}`} className={`flex flex-wrap items-center gap-3.5 py-3.5 ${ROW_RULE}`} data-not-this-time-row>
+            <NeutralAvatar size={36} />
+            <div className="min-w-0 flex-1 text-[15px] font-bold">{r.who.replace(/^Provider /, "")} · <span className="text-state-declined">Not This Time</span>{r.reason && <span className="font-normal text-state-inactive"> · “{r.reason}”</span>}</div>
+          </div>
+        ))) : empty(posted ? "No responses yet. They show here as providers answer." : "No responses yet — a Job takes responses once it is posted.")}
       </Section>
 
       <Section id="interviews" title="Interviews">

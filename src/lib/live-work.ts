@@ -139,7 +139,9 @@ export async function weekInterviews(side: "buyer" | "provider", personId: strin
 }
 
 // ── RA-E005: the HIRE app's Jobs / Requests / Tests tabs ──────────────────────────────────────────────────────
-export type ProposalLine = { personId: string; who: string; photoUrl: string | null; summary: string; rate: string | null; start: string | null; inRange: boolean | null };
+export type ProposalLine = { personId: string; who: string; photoUrl: string | null;
+  /** CA-E004: the response — Available (with its id and status) or Not This Time (with the provider's reason). */
+  proposalId: string | null; status: string | null; available: boolean; reason: string | null; rateCents: number | null; summary: string; rate: string | null; start: string | null; inRange: boolean | null };
 export type JobTabRow = WorkRow & { draft: boolean; draftLine: string | null; category: string | null; origin: string | null; facts: string; inRange: boolean | null; wo: { id: string; number: string; provider: string; waiting: string } | null; proposalLines: ProposalLine[]; asked: number; eventId: string | null; deadlineAt: string | null; completed: boolean; recurring: import("@/lib/slices").Recurring | null; proposals: string | null; rates: string | null; range: string | null; booked: string | null; needsAction: boolean };
 const usd = (c: number) => `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
@@ -150,8 +152,9 @@ export async function buyerHireTabs(personId: string) {
   const paths = (await Promise.all(jobs.map((j) => jobPath(j.id)))).filter((p): p is NonNullable<typeof p> => !!p);
   // HL-E002: proposal lines (provider number · role · domain · years · skills matched · rate · start) and WO waiting-on.
   const { providerLabel, providerNumbers } = await import("@/lib/provider-number");
-  const propRows = await prisma.proposal.findMany({ where: { job_id: { in: paths.map((p) => p.job.id) }, status: { in: ["SUBMITTED", "SHORTLISTED", "AWARDED"] } }, orderBy: { submitted_at: "asc" }, select: { job_id: true, provider_person_id: true, lines: { take: 1, select: { unit_price_cents: true, uom: true, available_from: true } } } });
-  const provIds = [...new Set(propRows.map((r) => r.provider_person_id))];
+  const propRows = await prisma.proposal.findMany({ where: { job_id: { in: paths.map((p) => p.job.id) }, status: { in: ["SUBMITTED", "SHORTLISTED", "AWARDED"] } }, orderBy: { submitted_at: "asc" }, select: { id: true, status: true, job_id: true, provider_person_id: true, lines: { take: 1, select: { unit_price_cents: true, uom: true, available_from: true } } } });
+  const notNowRows = await prisma.proposalRequest.findMany({ where: { job_id: { in: paths.map((p) => p.job.id) }, status: "DECLINED" }, select: { job_id: true, provider_person_id: true, decline_reason: true } });
+  const provIds = [...new Set([...propRows, ...notNowRows].map((r) => r.provider_person_id))];
   const profs = provIds.length ? await prisma.providerProfile.findMany({ where: { person_id: { in: provIds } }, select: { id: true, person_id: true, person: { select: { title: true, photo_url: true } }, employers: { select: { start_date: true } }, skills: { select: { skill_id: true } } } }) : [];
   const nums = await providerNumbers(profs.map((p) => p.id));
   const woRows = await prisma.workOrder.findMany({ where: { id: { in: paths.flatMap((p) => p.orders.map((o) => o.id)) } }, select: { id: true, status: true, buyer_accepted_at: true, provider_accepted_at: true } });
@@ -187,7 +190,7 @@ export async function buyerHireTabs(personId: string) {
     const jobDone = ["CLOSED", "CANCELED", "FILLED"].includes(p.job.status) || woSl.length > 0;
     const pr = j.budget_min_cents ?? null, prMax = j.budget_max_cents ?? null;
     const within = (c: number | null) => (c == null || (pr == null && prMax == null) ? null : (pr == null || c >= pr) && (prMax == null || c <= prMax));
-    const proposalLines: ProposalLine[] = propRows.filter((r) => r.job_id === p.job.id).map((r) => {
+    const responded: ProposalLine[] = propRows.filter((r) => r.job_id === p.job.id).map((r) => {
       const pf = profs.find((x) => x.person_id === r.provider_person_id);
       const starts = pf?.employers.map((e) => e.start_date?.getTime()).filter((t): t is number => !!t) ?? [];
       const years = starts.length ? Math.floor((Date.now() - Math.min(...starts)) / (365.25 * DAY)) : null;
@@ -196,10 +199,16 @@ export async function buyerHireTabs(personId: string) {
       const c = r.lines[0]?.unit_price_cents ?? null;
       return {
         personId: r.provider_person_id, who: providerLabel(pf ? nums.get(pf.id) : null).replace(/^Provider /, ""), photoUrl: pf?.person.photo_url ?? null,
+        proposalId: r.id, status: r.status, available: true, reason: null, rateCents: c,
         summary: [pf?.person.title, j.domains[0], years ? `${years}+ years` : null, jobSkills.size ? `${hit} of ${jobSkills.size} skills` : null].filter(Boolean).join(" · "),
         rate: c != null ? `${usd(c)}${per}` : null, start: r.lines[0]?.available_from ? `Start ${short(r.lines[0].available_from).replace(/, \d.*$/, "")}` : null, inRange: within(c),
       };
     });
+    // CA-E004: Available first (lowest rate first), then Not This Time.
+    const proposalLines: ProposalLine[] = [...responded.sort((x, y) => (x.rateCents ?? Infinity) - (y.rateCents ?? Infinity)), ...notNowRows.filter((r) => r.job_id === p.job.id).map((r) => {
+      const pf = profs.find((x) => x.person_id === r.provider_person_id);
+      return { personId: r.provider_person_id, who: providerLabel(pf ? nums.get(pf.id) : null).replace(/^Provider /, ""), photoUrl: pf?.person.photo_url ?? null, proposalId: null, status: null, available: false, reason: r.decline_reason, rateCents: null, summary: "", rate: null, start: null, inRange: null };
+    })];
     const firstWo = p.orders[0] ? woRows.find((w) => w.id === p.orders[0].id) : null;
     const woLine = p.wrs.flatMap((w) => w.lines).find((l) => l.work_order_id === p.orders[0]?.id);
     const waiting = !firstWo ? "" : firstWo.status === "ISSUED" ? (!firstWo.buyer_accepted_at ? "You, then the provider" : "The provider") : firstWo.status === "ACCEPTED" ? "Release" : ["RELEASED", "ACTIVE"].includes(firstWo.status) ? "Delivery" : "Nobody";
