@@ -97,6 +97,7 @@ export default async function Page({
       providerProfile: {
         select: {
           id: true,
+          provider_number: true,
           _count: { select: { serviceProducts: { where: { status: "PUBLISHED" } } } },
           status: true,
           validation_status: true,
@@ -301,6 +302,8 @@ export default async function Page({
           >
             {name}
           </Link>
+          {/* Admins see who a buyer-facing number (P-1127) belongs to. */}
+          {p.providerProfile?.provider_number && <span className="text-[12px] text-ink-2">{p.providerProfile.provider_number}</span>}
           {/* THE `TEST` CHIP . Scott's trigger for this whole */}
           {isTest && (
             <span className="rounded-full border border-ink-3 px-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-ink-2">
@@ -333,7 +336,7 @@ export default async function Page({
 
     // THE SEARCH AND SORT METADATA (WS-2)
     const meta = {
-      text: [name, roles, u?.email ?? "", level, p.company?.name ?? ""]
+      text: [name, roles, u?.email ?? "", level, p.company?.name ?? "", p.providerProfile?.provider_number ? `provider ${p.providerProfile.provider_number} ${p.providerProfile.provider_number.replace("-", "")}` : ""]
         .join(" ")
         .toLowerCase(),
       sort: [
