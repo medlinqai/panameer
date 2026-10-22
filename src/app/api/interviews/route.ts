@@ -3,7 +3,8 @@ import { apiError } from "@/lib/api-errors";
 import { checkTransact, guardApi } from "@/lib/guard";
 import { SourcingError } from "@/lib/sourcing";
 import { closeInterview, completeInterview, confirmSlot, offerSlots, requestInterview } from "@/lib/interviews";
-import { addOpenTime, bookSlot, removeOpenTime } from "@/lib/open-times";
+import { addOpenTime, bookSlot, freeSlots, myOpenTimes, removeOpenTime } from "@/lib/open-times";
+import { prisma } from "@/lib/prisma";
 import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 
 // DB-E008/E009: the provider offers times; the buyer confirms one (that makes the video room) or marks it done.
@@ -29,6 +30,14 @@ export async function POST(request: Request) {
       case "complete":
         await completeInterview(gate, id);
         return NextResponse.json({ ok: true });
+      case "preview": {
+        // IW-E004: the dialog's "Your Open Times: n windows → n free slots".
+        const me = await prisma.person.findUnique({ where: { user_id: gate.userId }, select: { id: true } });
+        if (!me) return NextResponse.json({ error: "No person for this account." }, { status: 400 });
+        const minutes = [15, 30, 45, 60].includes(Number(body.minutes)) ? Number(body.minutes) : 30;
+        const [windows, free] = await Promise.all([myOpenTimes(me.id), freeSlots(me.id, minutes, 5)]);
+        return NextResponse.json({ windows, free: free.length, next: free.slice(0, 6).map((d) => d.toISOString()) });
+      }
       case "openTimeAdd":
         return NextResponse.json(await addOpenTime(gate, { date: String(body.date ?? ""), from: String(body.from ?? ""), to: String(body.to ?? ""), timeZone: String(body.timeZone ?? "") }));
       case "openTimeRemove":

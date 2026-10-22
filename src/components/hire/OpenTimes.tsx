@@ -11,7 +11,7 @@ const tzNow = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZ
 const day = (iso: string, tz: string) => new Date(iso).toLocaleDateString("en-US", { timeZone: tz, weekday: "short", month: "short", day: "numeric" });
 const time = (iso: string, tz: string) => new Date(iso).toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" });
 
-export function OpenTimes({ windows, compact = false }: { windows: OpenWindow[]; compact?: boolean }) {
+export function OpenTimes({ windows, compact = false, onChanged }: { windows: OpenWindow[]; compact?: boolean; onChanged?: () => void }) {
   const router = useRouter();
   const tz = tzNow();
   const [date, setDate] = useState(() => new Date(Date.now() + 86_400_000).toLocaleDateString("en-CA"));
@@ -26,6 +26,7 @@ export function OpenTimes({ windows, compact = false }: { windows: OpenWindow[];
     setBusy(false);
     if (!r?.ok) { setError(j.error ?? "Couldn't save — try again."); return false; }
     router.refresh();
+    onChanged?.();
     return true;
   };
   return (
