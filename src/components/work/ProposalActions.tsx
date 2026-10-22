@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BTN_MAGENTA, BTN_OUT } from "@/components/hire/HireUI";
+import { BTN, BTN_OUT } from "@/components/hire/HireUI";
 import { InterviewDialog } from "@/components/hire/InterviewDialog";
 
-// HL-E003 / CA-E004: one response's actions — Shortlist · Decline · Interview · Request Test · Hire (Hire is the one magenta primary).
+// HL-E003 / CA-E004: one response's actions — Shortlist · Decline · Interview · Request Test · Hire (Scott 10-22: every Hire looks the same — dark, like the Sourcing Event).
 export function ProposalActions({ jobId, providerPersonId, testId, awarded, interviewStatus, testStatus, primary = false, proposalId, status, compact = false }: { compact?: boolean; jobId: string; providerPersonId: string; testId: string | null; awarded: boolean; interviewStatus: string | null; testStatus: string | null; primary?: boolean; proposalId?: string; status?: string }) {
+  void primary;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -30,7 +31,7 @@ export function ProposalActions({ jobId, providerPersonId, testId, awarded, inte
       <button type="button" disabled={busy || !!interviewStatus} onClick={() => setInterviewing(true)} className={`${BTN_OUT} disabled:opacity-50`}>{interviewStatus ? "Interview Requested" : "Interview"}</button>
       <button type="button" disabled={busy || !testId || !!testStatus} title={testId ? undefined : "No certification test exists for this job's skills yet"} onClick={() => post("test", { providerPersonId, learnAssessmentId: testId }, "Test sent.")} className={`${BTN_OUT} disabled:opacity-50`}>{testStatus ? "Test Sent" : "Request Test"}</button>
       </>}
-      <Link href={`/hire/terms?job=${jobId}&provider=${providerPersonId}`} className={primary ? BTN_MAGENTA : BTN_OUT} data-award>Hire</Link>
+      <Link href={`/hire/terms?job=${jobId}&provider=${providerPersonId}`} className={BTN} data-award>Hire</Link>
       {interviewing && <InterviewDialog jobId={jobId} providerPersonIds={[providerPersonId]} onClose={() => setInterviewing(false)} onSent={setMsg} />}
       {msg && <span role="status" className="w-full text-[12.5px] font-semibold text-magenta-dark">{msg}</span>}
     </span>
