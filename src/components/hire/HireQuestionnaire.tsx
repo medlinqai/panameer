@@ -27,7 +27,7 @@ const CONTRACTS: { value: SdContract; line: string }[] = [
   { value: "C2H", line: "Contract to hire" },
   { value: "1099", line: "Independent contractor" },
 ];
-const WORKSITES = [["OFFSITE", "Offsite", "Works from their own place"], ["ONSITE", "Onsite", "At your site"], ["HYBRID", "Hybrid", "Some days at your site"]] as const;
+const WORKSITES = [["OFFSITE", "Offsite", "Works at Provider Location"], ["ONSITE", "Onsite", "Works at Buyer Company Location"], ["HYBRID", "Hybrid", "Some days at your site"]] as const;
 
 type Hierarchy = { name: string; businessTypes: { id: string; name: string; usesSkills: boolean }[] }[];
 type Props = {
