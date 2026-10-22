@@ -4,6 +4,7 @@ import { z } from "zod";
 import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { checkTransact, guardApi } from "@/lib/guard";
 import { submitProposal } from "@/lib/proposals";
+import { prisma } from "@/lib/prisma";
 
 const bodySchema = z
   .object({
@@ -38,7 +39,7 @@ export async function POST(
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "That proposal couldn't be read.", code: "BAD_BODY" },
+      { error: "That response couldn't be read.", code: "BAD_BODY" },
       { status: 400 }
     );
   }
@@ -50,6 +51,9 @@ export async function POST(
       validUntil: parsed.data.validUntil ?? null,
       rate: parsed.data.rate ?? null,
     });
+    // CA-E006: the dates are the job's — the response starts on the job's Start Date.
+    const job = await prisma.job.findUnique({ where: { id }, select: { start_date: true } });
+    if (job?.start_date) await prisma.proposalLine.updateMany({ where: { proposal_id: result.id, available_from: null }, data: { available_from: job.start_date } });
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof Error && e.name === "SourcingError") {

@@ -70,10 +70,7 @@ export async function providerEventView(providerPersonId: string, jobId: string)
     select: { id: true, status: true, decline_reason: true, sourcingEvent: { select: { id: true, event_number: true, status: true, deadline_at: true, deadline_hours: true } }, bid: { select: { status: true, submitted_at: true, cover_note: true, lines: { take: 1, orderBy: { line_number: "asc" }, select: { unit_price_cents: true, available_from: true } } } } },
   });
   if (!req?.sourcingEvent) return null;
-  const [job, profile] = await Promise.all([
-    prisma.job.findUnique({ where: { id: jobId }, select: { budget_type: true, budget_min_cents: true, budget_max_cents: true, worksite: true } }),
-    prisma.providerProfile.findUnique({ where: { person_id: providerPersonId }, select: { onsite_rate_cents: true, remote_rate_cents: true } }),
-  ]);
+  const job = await prisma.job.findUnique({ where: { id: jobId }, select: { budget_type: true, budget_min_cents: true, budget_max_cents: true, start_date: true, end_date: true } });
   const ev = req.sourcingEvent;
   const line = req.bid?.lines[0];
   return {
@@ -82,8 +79,19 @@ export async function providerEventView(providerPersonId: string, jobId: string)
     declined: req.status === "DECLINED", declineReason: req.decline_reason,
     proposed: req.bid?.status === "SUBMITTED" || req.bid?.status === "SHORTLISTED" || req.bid?.status === "AWARDED" ? { rateCents: line?.unit_price_cents ?? null, start: line?.available_from?.toISOString().slice(0, 10) ?? null, note: req.bid?.cover_note ?? null } : null,
     range: { type: job?.budget_type ?? "HOURLY", minCents: job?.budget_min_cents ?? null, maxCents: job?.budget_max_cents ?? null },
-    rateCardCents: (job?.worksite === "OFFSITE" ? profile?.remote_rate_cents ?? profile?.onsite_rate_cents : profile?.onsite_rate_cents ?? profile?.remote_rate_cents) ?? null,
+    rateCardCents: await rateCardFor(providerPersonId, jobId),
+    dates: { start: job?.start_date?.toISOString().slice(0, 10) ?? null, end: job?.end_date?.toISOString().slice(0, 10) ?? null },
   };
+}
+
+/** CA-E002: the provider's rate-card rate for this job (Offsite rate for Offsite work, else Onsite). */
+export async function rateCardFor(providerPersonId: string, jobId: string): Promise<number | null> {
+  const [job, profile] = await Promise.all([
+    prisma.job.findUnique({ where: { id: jobId }, select: { worksite: true } }),
+    prisma.providerProfile.findUnique({ where: { person_id: providerPersonId }, select: { onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true } }),
+  ]);
+  if (!profile) return null;
+  return (job?.worksite === "OFFSITE" ? profile.remote_rate_cents ?? profile.onsite_rate_cents : profile.onsite_rate_cents ?? profile.remote_rate_cents) ?? profile.hourly_rate_cents ?? null;
 }
 
 async function openRequestFor(viewer: Viewer, jobId: string) {
@@ -94,13 +102,14 @@ async function openRequestFor(viewer: Viewer, jobId: string) {
   return req;
 }
 
-/** Submit Proposal: rate, earliest start, note — before the deadline. */
+/** I Want This Job (asked): rate, note — before the deadline. */
 export async function proposeInEvent(viewer: Viewer, jobId: string, input: { rateCents: number; start?: string | null; note?: string | null }) {
   const req = await openRequestFor(viewer, jobId);
   if (!Number.isFinite(input.rateCents) || input.rateCents <= 0) throw new WorkRequestError("Enter your rate.", "INVALID");
   const { submitProposal } = await import("@/lib/proposals");
   const out = await submitProposal(viewer, { workRequestId: jobId, coverNote: input.note ?? null, rate: { unitPriceCents: Math.round(input.rateCents), basis: "RATE" } });
-  const start = input.start && /^\d{4}-\d{2}-\d{2}$/.test(input.start) ? new Date(input.start) : null;
+  // CA-E002: the dates are the job's — the response starts on the job's Start Date.
+  const start = input.start && /^\d{4}-\d{2}-\d{2}$/.test(input.start) ? new Date(input.start) : (await prisma.job.findUnique({ where: { id: jobId }, select: { start_date: true } }))?.start_date ?? null;
   await prisma.proposalLine.updateMany({ where: { proposal_id: out.id }, data: { available_from: start } });
   await prisma.proposalRequest.update({ where: { id: req.id }, data: { status: "RESPONDED", declined_at: null, decline_reason: null } });
   return out;
