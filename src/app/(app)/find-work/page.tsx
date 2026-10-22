@@ -12,7 +12,7 @@ export const metadata = { title: "Find Work · Panameer" };
 export default async function FindWorkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string; view?: string; slice?: string } & WorkFilters>;
+  searchParams: Promise<{ tab?: string; q?: string; view?: string; slice?: string; show?: string; date?: string } & WorkFilters>;
 }) {
   await guardPage("canProvideServices");
   const viewer = await getSessionViewer();
@@ -30,16 +30,16 @@ export default async function FindWorkPage({
         select: { id: true, person_id: true, onboarding_completed_at: true },
       })
     : null;
-  // SO-E004: browsing is open; proposals wait for Go Live.
+  // SO-E004: browsing is open; responses wait for Go Live.
   const notLive = profile && !profile.onboarding_completed_at ? (
     <p data-not-live-jobs className="mb-4 border-l-2 border-magenta py-1 pl-3 text-[14px]">
-      Finish Create What You Sell to send proposals. <a href="/catalog/create" className="font-bold text-magenta-dark underline underline-offset-4">Start</a>
+      Finish Create What You Sell to say I Want This Job. <a href="/catalog/create" className="font-bold text-magenta-dark underline underline-offset-4">Start</a>
     </p>
   ) : null;
 
   // RA-E006: no tab = the JOBS Overview; Interviews and Tests are their own views.
   if (profile && !sp.tab && !query && (!Object.keys(sp).length || sp.view)) return <>{notLive}<JobsOverview personId={profile.person_id} view={sp.view ?? null} /></>;
-  if (profile && sp.tab === "interviews") return <JobsInterviews personId={profile.person_id} view={sp.view ?? null} slice={sp.slice} />;
+  if (profile && sp.tab === "interviews") return <JobsInterviews personId={profile.person_id} userId={viewer!.userId} view={sp.view ?? null} show={sp.show ?? null} date={sp.date ?? null} />;
   if (profile && sp.tab === "tests") return <JobsTests personId={profile.person_id} slice={sp.slice} />;
 
   const cards = await getWorkFeed({

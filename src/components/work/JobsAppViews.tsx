@@ -2,9 +2,9 @@ import Link from "next/link";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { providerLiveWork, providerTests, weekInterviews } from "@/lib/live-work";
 import { listInterviews } from "@/lib/interviews";
-import { dailyConfigured } from "@/lib/daily";
 import { TodaysInterviews, WeekSchedule } from "@/components/home/LiveWork";
-import { InterviewCards } from "@/components/work/InterviewCards";
+import { InterviewWorkday, WorkdayWeek } from "@/components/work/InterviewWorkday";
+import { gridDay, interviewGrid, rowsOn } from "@/lib/interview-grid";
 import { RedDot, StripColumn } from "@/components/home/AppHome";
 import { SliceChips } from "@/components/casing/SliceChips";
 import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
@@ -55,21 +55,18 @@ export async function JobsOverview({ personId, view }: { personId: string; view:
   );
 }
 
-export async function JobsInterviews({ personId, view, slice }: { personId: string; view: string | null; slice?: string }) {
-  if (view === "week") {
-    const week = await weekInterviews("provider", personId);
-    return <div className="mx-auto w-full max-w-6xl"><WeekSchedule start={week.start} rows={week.rows} side="provider" backHref="/find-work?tab=interviews" /></div>;
-  }
-  const all = (await listInterviews({ providerPersonId: personId })).map((r) => ({ ...r, completed: !["REQUESTED", "SLOTS_OFFERED", "SCHEDULED"].includes(r.status), recurring: null }));
-  const rows = all.filter((r) => inSlice(r, sliceOf(slice)));
+export async function JobsInterviews({ personId, userId, view, show, date }: { personId: string; userId: string; view: string | null; show: string | null; date: string | null }) {
+  // IW-E003: the provider's twin of the buyer Workday — the hiring company shows; tiles Today · To Confirm · This Week · Tests to Take.
+  const { rows, tiles, weekStart } = await interviewGrid("provider", personId, userId);
+  const base = "/find-work?tab=interviews";
+  if (view === "week") return <div className="mx-auto w-full max-w-6xl py-2"><WorkdayWeek side="provider" rows={rows} weekStart={weekStart} base={base} /></div>;
+  const day = gridDay(date);
+  const list = show === "confirm" ? rows.filter((r) => r.status === "To Confirm") : rowsOn(rows, day.key);
   return (
-    <section className="mx-auto w-full max-w-6xl py-2" data-jobs-interviews>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-[22px] font-bold">Interviews</h1>
-        <Link href="/find-work?tab=interviews&view=week" className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View Week</Link>
-      </div>
-      <div className="mt-3"><SliceChips tabKey="jobs-interviews" counts={sliceCounts(all)} base="/find-work?tab=interviews" />{rows.length ? <InterviewCards rows={rows} side="provider" videoReady={dailyConfigured()} /> : <p className="text-[13.5px] text-ink-3">No interviews right now.</p>}</div>
-    </section>
+    <div className="mx-auto w-full max-w-6xl py-2" data-jobs-interviews>
+      <InterviewWorkday side="provider" rows={list} tiles={tiles} show={show === "confirm" ? show : null} base={base} testsHref="/find-work?tab=tests"
+        day={{ ...day, label: day.start.toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }) }} />
+    </div>
   );
 }
 
