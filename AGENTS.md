@@ -24,3 +24,7 @@ Key reminders:
 - After schema changes: `prisma generate` + restart (`rm -rf .next`) before
   verifying. Stale Prisma client is the #1 false alarm.
 - Commit one logical change at a time; always push to `origin/main`.
+- ⚠ **Title Case on every UI label — Scott's standing rule, don't make him ask.** Buttons, links that act,
+  page/section headings, tabs, step names, chips and column headers: "Your Matches", "Star the Ones You Like",
+  "Request Proposals from Your Shortlist". Sentences (help text, descriptions) stay sentence case. Full rule:
+  `../2. Claude Sub-Files/conventions.md` › "UI copy — Title Case for all labels". Check every string you add.

@@ -75,7 +75,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
     <div data-match-list>
       {/* HP-E003: how the shortlist works. */}
       <ol className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]" data-shortlist-steps>
-        {["Star the ones you like", "Compare", "Request proposals from your shortlist"].map((t, i) => (
+        {["Star the Ones You Like", "Compare", "Request Proposals from Your Shortlist"].map((t, i) => (
           <li key={t} className="flex items-center gap-2">
             {i > 0 && <span aria-hidden className="text-ink-3">→</span>}
             <span className={shortlistStep === i + 1 ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-2.5 py-0.5 font-bold text-magenta-dark" : shortlistStep > i + 1 ? "rounded-full border border-ink px-2.5 py-0.5 font-semibold" : "rounded-full border border-line px-2.5 py-0.5 font-semibold text-ink-3"} aria-current={shortlistStep === i + 1 ? "step" : undefined}>{i + 1} {t}</span>

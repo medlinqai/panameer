@@ -333,7 +333,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         )}
         {step === 5 && matches && (
           <div data-hire-matches>
-            <h2 className="text-[19px] font-extrabold">Your matches</h2>
+            <h2 className="text-[19px] font-extrabold">Your Matches</h2>
             <p className="text-[13.5px] text-ink-2">Ranked by role, skills, product and location, then rate inside your budget. Star who should propose; click a row for a quick view.</p>
             <MatchList key={jobId ?? "new"} jobId={jobId} matches={matches} state={f.state} empty={<p className="mt-4 text-[14px] text-ink-3">No one in {f.category} matches yet. Your Service Description is saved as a draft — <Link href={`/work-requests/${jobId}`} className="font-semibold text-magenta-dark underline">open it</Link>.</p>} />
           </div>
