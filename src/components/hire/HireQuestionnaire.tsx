@@ -269,7 +269,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         )}
         {step === 2 && (
           <>
-            <h2 className="text-[19px] font-extrabold">3. How Will You Contract Them?</h2>
+            <h2 className="text-[19px] font-extrabold">3. Which Contract Type?</h2>
             <p className="text-[13.5px] text-ink-2">Pick every contract type you accept.{from("contractTypes")}</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {CONTRACTS.map((c) => {
