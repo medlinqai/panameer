@@ -24,7 +24,7 @@ export async function JobsOverview({ personId, view }: { personId: string; view:
         stackKpis
         picture={<StripColumn steps={w.strip} href={(k) => STEP_HREF[k] ?? "/find-work"} />}
         eyebrow="Jobs"
-        title="What Needs You Today"
+        title="What Needs Attention"
         kpis={[
           { value: stat("due"), label: "REQUESTS DUE < 24 H" },
           { value: w.todays.length, label: "INTERVIEWS TODAY" },

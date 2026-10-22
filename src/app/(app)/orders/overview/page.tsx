@@ -29,7 +29,7 @@ export default async function Page() {
         <section className="flex flex-wrap items-start gap-10" data-orders-today>
           <div className="min-w-0 flex-[1_1_300px]">
             <span className="text-[12px] font-bold tracking-[0.12em] text-magenta">{dateLabel}</span>
-            <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{n ? `${n} thing${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} you today` : "Nothing needs you today"}</h1>
+            <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{n ? `${n} ${n === 1 ? "Thing Needs" : "Things Need"} Attention` : "Nothing Needs Attention"}</h1>
             <p className="text-[14px] leading-relaxed text-state-inactive">{t.open} open Work Order{t.open === 1 ? "" : "s"} · <Link href="/orders" className="font-semibold">All Work Orders →</Link></p>
           </div>
           <div className="flex min-w-0 flex-[1_1_520px] flex-col border-b border-state-border">

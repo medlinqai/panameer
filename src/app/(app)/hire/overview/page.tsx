@@ -83,7 +83,7 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
       <section className="flex flex-wrap items-start gap-10" data-hire-today>
         <div className="min-w-0 flex-[1_1_300px]">
           <span className="text-[12px] font-bold tracking-[0.12em] text-magenta">{dateLabel}</span>
-          <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{n ? `${n} thing${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} you today` : "Nothing needs you today"}</h1>
+          <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{n ? `${n} ${n === 1 ? "Thing Needs" : "Things Need"} Attention` : "Nothing Needs Attention"}</h1>
           <p className="text-[14px] leading-[1.7] text-state-inactive" data-hire-summary>{d.summary}</p>
           <p className="mt-[18px] text-[13px] leading-relaxed text-state-inactive">Work Orders to accept are in <Link href="/orders/overview">Orders</Link>.</p>
         </div>
