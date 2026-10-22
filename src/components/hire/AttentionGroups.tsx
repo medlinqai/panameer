@@ -79,7 +79,7 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
           </Row>
         ))}
       </Group>
-      <Group title="Today's Interviews" n={ivs.length}>
+      <Group title="Today's Interviews" n={ivs.length} href="/hire/overview?tab=interviews">
         {ivs.map((g) => (
           <Row key={g.key} href={`/work-requests/${g.jobId}#interviews`} what={`${g.time} · ${g.who} · ${g.minutes} min`} detail={g.title}>
             {g.hasRoom ? <a href={`/api/interviews/${g.id}/join`} target="_blank" rel="noreferrer" className={BTN}>Join</a> : <span className="self-center text-[12.5px] text-state-inactive">Video link not set up yet</span>}
@@ -110,11 +110,11 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
   );
 }
 
-function Group({ title, n, children, last = false }: { title: string; n: number; children: ReactNode; last?: boolean }) {
+function Group({ title, n, children, last = false, href }: { title: string; n: number; children: ReactNode; last?: boolean; href?: string }) {
   return (
     <div data-attention-group={title}>
       <div className={`flex items-baseline justify-between border-t border-ink pb-1.5 pt-3.5 ${n ? "" : "pb-3.5 text-state-inactive"}`}>
-        <span className="text-[12px] font-extrabold uppercase tracking-[0.1em]">{title}</span>
+        {href ? <Link href={href} className="text-[12px] font-extrabold uppercase tracking-[0.1em] text-ink hover:underline">{title}</Link> : <span className="text-[12px] font-extrabold uppercase tracking-[0.1em]">{title}</span>}
         {n ? <span className="text-[12px] font-bold text-state-declined">{n}</span> : <span className="text-[12px]">None waiting</span>}
       </div>
       {children}

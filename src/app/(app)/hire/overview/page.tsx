@@ -3,10 +3,9 @@ import { ProposalActions } from "@/components/work/ProposalActions";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { appCounts } from "@/lib/attention";
-import { buyerHireTabs, buyerLiveWork, buyerTests, hireOverviewData, weekInterviews, type JobTabRow } from "@/lib/live-work";
+import { buyerHireTabs, buyerLiveWork, buyerTests, hireOverviewData, type JobTabRow } from "@/lib/live-work";
 import { AttentionGroups } from "@/components/hire/AttentionGroups";
 import { DiscardDraft } from "@/components/hire/DiscardDraft";
-import { WeekSchedule } from "@/components/home/LiveWork";
 import { InterviewWorkday, WorkdayWeek } from "@/components/work/InterviewWorkday";
 import { gridDay, interviewGrid, rowsOn } from "@/lib/interview-grid";
 import { NeutralAvatar } from "@/components/Avatar";
@@ -46,7 +45,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
         </span>
       } />
       <div className="mx-auto w-full max-w-[1120px] pb-14 pt-8">
-        {tab === "overview" && <Overview personId={me.id} slice={sp.slice} view={sp.view ?? null} />}
+        {tab === "overview" && <Overview personId={me.id} slice={sp.slice} />}
         {tab === "jobs" && <JobsTab personId={me.id} step={sp.step ?? null} slice={sp.slice} q={sp.q ?? ""} />}
         {tab === "requests" && <RequestsTab personId={me.id} slice={sp.slice} />}
         {tab === "interviews" && <InterviewsTab personId={me.id} userId={viewer.userId} view={sp.view ?? null} show={sp.show ?? null} date={sp.date ?? null} />}
@@ -61,7 +60,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
 const jobSlice = (rows: JobTabRow[], slice?: string) => (slice === "drafts" ? rows.filter((j) => j.draft) : rows.filter((j) => inSlice(j, sliceOf(slice)) && (sliceOf(slice) !== "process" || !j.draft)));
 const jobSliceCounts = (rows: JobTabRow[]) => ({ ...sliceCounts(rows.filter((j) => !j.draft)), all: rows.length, drafts: rows.filter((j) => j.draft).length });
 
-async function Overview({ personId, slice, view }: { personId: string; slice?: string; view: string | null }) {
+async function Overview({ personId, slice }: { personId: string; slice?: string }) {
   const [d, w] = await Promise.all([hireOverviewData(personId), buyerLiveWork(personId)]);
   const n = d.count;
   const needsStep: Record<string, boolean> = { proposals: d.needs.proposals, interview: d.needs.interview, test: d.needs.test };
@@ -76,7 +75,6 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
   const rows = jobSlice(d.jobRows, slice);
   const recent = rows.filter((j) => !j.old || j.draft).slice(0, 8);
   const older = rows.filter((j) => j.old && !j.draft).length;
-  const week = view === "week" ? await weekInterviews("buyer", personId) : null;
   const dateLabel = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }).toUpperCase();
   return (
     <div className="flex flex-col gap-10">
@@ -92,34 +90,16 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
 
       <PathBand steps={band} label="Work Request Path" />
 
-      <section className="flex flex-wrap items-start gap-12">
-        <div className="min-w-0 flex-[999_1_560px]" data-my-jobs>
-          <HeadRow title="My Jobs"><SliceChips labels={{ completed: "Filled" }} tabKey="hire-overview-jobs" counts={jobSliceCounts(d.jobRows)} base="/hire/overview" extra={[["drafts", "Drafts"]]} /></HeadRow>
-          {recent.length ? recent.map((j) => <CompactJob key={j.id} j={j} />) : <p className="py-5 text-[14px] text-state-inactive">No jobs here. <Link href="/hire">Create a Job</Link> and it shows here with its next step.</p>}
-          <p className="mt-3.5 text-[13px] text-state-inactive">Older than 5 days ({older}) · <Link href="/hire/overview?tab=jobs" className="font-semibold">See all jobs</Link></p>
-        </div>
-        <aside className="min-w-0 flex-[1_1_300px]">
-          {week ? <WeekSchedule start={week.start} rows={week.rows} side="buyer" backHref="/hire/overview" /> : (
-            <>
-              <HeadRow title="Today's Interviews"><Link href="/hire/overview?view=week" className="text-[13px] font-semibold">View Week</Link></HeadRow>
-              {w.todays.length ? (
-                <ul>{w.todays.map((iv) => (
-                  <li key={iv.id} className="flex items-center gap-3 border-b border-state-border py-3.5">
-                    <b className="w-[64px] shrink-0 text-[14px] tabular-nums">{iv.startsAt ? new Date(iv.startsAt).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) : "—"}</b>
-                    <NeutralAvatar size={32} photoUrl={iv.providerPhotoUrl} />
-                    <span className="min-w-0 flex-1"><b className="block text-[14px]">{iv.providerLabel}</b><span className="block truncate text-[12.5px] text-state-inactive">{iv.jobTitle}</span></span>
-                    {iv.hasRoom ? <a href={`/api/interviews/${iv.id}/join`} target="_blank" rel="noreferrer" className={BTN}>Join</a> : <Link href={`/work-requests/${iv.jobId}#interviews`} className={BTN_OUT}>Open</Link>}
-                  </li>
-                ))}</ul>
-              ) : <p className="border-b border-state-border py-5 text-[14px] leading-relaxed text-state-inactive">No interviews today. Interviews you schedule from a job&apos;s responses show here, with a Join link.</p>}
-            </>
-          )}
-          <div className="mt-7 grid grid-cols-2 gap-4">
-            <div><div className="text-[26px] font-extrabold">{d.openJobs}</div><div className={LABEL}>Open jobs</div></div>
-            <div><div className="text-[26px] font-extrabold">{w.footer.monthOrders}</div><div className={LABEL}>Work Orders this month</div></div>
-          </div>
-        </aside>
+      {/* IW-E004: My Jobs takes the full width; Today's Interviews moved to the Interviews tab (the attention group links there). */}
+      <section className="min-w-0" data-my-jobs>
+        <HeadRow title="My Jobs"><SliceChips labels={{ completed: "Filled" }} tabKey="hire-overview-jobs" counts={jobSliceCounts(d.jobRows)} base="/hire/overview" extra={[["drafts", "Drafts"]]} /></HeadRow>
+        {recent.length ? recent.map((j) => <CompactJob key={j.id} j={j} />) : <p className="py-5 text-[14px] text-state-inactive">No jobs here. <Link href="/hire">Create a Job</Link> and it shows here with its next step.</p>}
+        <p className="mt-3.5 text-[13px] text-state-inactive">Older than 5 days ({older}) · <Link href="/hire/overview?tab=jobs" className="font-semibold">See All Jobs</Link></p>
       </section>
+      <footer className="flex flex-wrap gap-x-10 gap-y-2 border-t border-state-border pt-4 text-[13px] text-state-inactive" data-hire-footer>
+        <span><b className="text-[15px] font-extrabold text-ink">{d.openJobs}</b> Open Jobs</span>
+        <span><b className="text-[15px] font-extrabold text-ink">{w.footer.monthOrders}</b> Work Orders This Month</span>
+      </footer>
     </div>
   );
 }

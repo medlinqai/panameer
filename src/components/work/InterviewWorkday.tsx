@@ -92,7 +92,7 @@ function Grid({ side, rows }: { side: GridSide; rows: GridRow[] }) {
         <div className="divide-y divide-state-sunken">
           {rows.map((r) => (
             <div key={r.id} className="grid items-center gap-2 px-5 py-3 hover:bg-bg-soft" style={{ gridTemplateColumns: cols }} data-workday-row={r.status}>
-              <Link href={open(r)} className="text-[14px] font-bold tabular-nums text-ink hover:underline" title="Open the interview">{r.time}</Link>
+              <Link href={open(r)} className="text-[14px] font-bold tabular-nums text-ink hover:underline" title="Open Interview">{r.time}</Link>
               <span className={`inline-block h-2.5 w-2.5 rounded-full ${DOT[r.status]}`} title={r.status} />
               {side === "buyer" && <NeutralAvatar size={32} photoUrl={r.photoUrl} />}
               <div className="min-w-0">
