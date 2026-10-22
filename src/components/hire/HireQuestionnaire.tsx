@@ -184,7 +184,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
       <section className="min-w-0">
         {step === 0 && start === "choose" && (
           <div data-hire-start>
-            <h2 className="text-[19px] font-extrabold">What Do You Need Done?</h2>
+            <h2 className="text-[19px] font-extrabold">1. What Do You Need Done?</h2>
             <p className="text-[13.5px] text-ink-2">Start from a posting you already have, or fill it in yourself.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <button type="button" onClick={() => setStart("upload")} className={OPT_OFF} data-upload-posting><b className="text-[15px]">Create Job Using AI</b><small className="text-[12.5px] text-ink-2">Upload a job description (Word or PDF) or paste it in. AI fills in the five steps; you check them.</small></button>
@@ -213,7 +213,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         )}
         {step === 0 && start === "form" && (
           <>
-            <h2 className="text-[19px] font-extrabold">What Do You Need Done?</h2>
+            <h2 className="text-[19px] font-extrabold">1. What Do You Need Done?</h2>
             <p className="text-[13.5px] text-ink-2">Pick the closest category, give it a short title and say what the work is.</p>
             {f.businessTypeId && !changing ? (
               <p className="mt-4 flex flex-wrap items-center gap-2 text-[14px]" data-class-playback>
@@ -250,7 +250,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         )}
         {step === 1 && (
           <>
-            <h2 className="text-[19px] font-extrabold">Where Is the Work?</h2>
+            <h2 className="text-[19px] font-extrabold">2. Where Is the Work?</h2>
             <div className="mt-4 grid grid-cols-3 gap-2">
               {WORKSITES.map(([v, t, l]) => <button key={v} type="button" aria-pressed={f.worksite === v} onClick={() => set({ worksite: v })} className={f.worksite === v ? OPT_ON : OPT_OFF}><b className="text-[14px]">{t}</b><small className="text-[12px] text-ink-2">{l}</small></button>)}
             </div>
@@ -269,7 +269,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         )}
         {step === 2 && (
           <>
-            <h2 className="text-[19px] font-extrabold">How Will You Contract Them?</h2>
+            <h2 className="text-[19px] font-extrabold">3. How Will You Contract Them?</h2>
             <p className="text-[13.5px] text-ink-2">Pick every type you accept.{from("contractTypes")}</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {CONTRACTS.map((c) => {
@@ -281,7 +281,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         )}
         {step === 3 && (
           <>
-            <h2 className="text-[19px] font-extrabold">Who Do You Need?</h2>
+            <h2 className="text-[19px] font-extrabold">4. Who Do You Need?</h2>
             {f.usesSkills && <div className="grid gap-x-3 sm:grid-cols-2">
               <label className={LABEL}>Role{from("roleId")}
                 <select value={f.specificRole} onChange={(e) => set({ specificRole: e.target.value, roleId: roles.find((r) => r.name === e.target.value)?.roleId ?? null })} className={FIELD}><option value="">Any role</option>{f.specificRole && !roles.some((r) => r.name === f.specificRole) && <option value={f.specificRole}>{f.specificRole}</option>}{roles.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}</select>
@@ -311,7 +311,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         )}
         {step === 4 && (
           <>
-            <h2 className="text-[19px] font-extrabold">When, and What&apos;s Your Budget?</h2>
+            <h2 className="text-[19px] font-extrabold">5. When, and What&apos;s Your Budget?</h2>
             <p className={LABEL}>Start{from("startText")}</p>
             <div className="mt-1.5 flex flex-wrap items-center gap-2" data-start-chips>
               {f.startText && !pickDate && !(START_CHIPS as readonly string[]).includes(f.startText) && <button type="button" aria-pressed className={CHIP_ON}>{f.startText}</button>}
@@ -340,7 +340,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         {step === 5 && matches && (
           <div data-hire-matches>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-[19px] font-extrabold">Here Are the Providers That Match Your Job</h2>
+              <h2 className="text-[19px] font-extrabold">6. Here Are the Providers That Match Your Job</h2>
               <details className="relative text-[13px]" data-how-we-match>
                 <summary className="cursor-pointer list-none font-semibold text-magenta-dark underline underline-offset-4">ⓘ How We Match</summary>
                 <div className="absolute right-0 z-20 mt-2 w-[min(92vw,420px)] border border-line bg-white p-4 text-[13px] leading-relaxed text-ink shadow-lg">
