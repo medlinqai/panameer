@@ -53,7 +53,7 @@ export function BuyerProfileEditor({ initial, firstName, lastName }: { initial: 
       )}
       <FillFromResume className="mt-4" onFilled={(v) => { load(v); router.refresh(); }} />
 
-      <div className="mt-6 grid gap-5 sm:grid-cols-[140px_1fr]">
+      <div className="mt-6 flex flex-col gap-5">
         <PhotoUpload firstName={firstName} lastName={lastName} photoUrl={p.photoUrl} onChange={(url) => { setP({ ...p, photoUrl: url }); router.refresh(); }} size={120} />
         <div className="space-y-3">
           <label className={LABEL}>TITLE<input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Procurement Director" className={INPUT + " mt-1 font-normal tracking-normal"} /></label>
