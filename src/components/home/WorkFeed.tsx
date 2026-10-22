@@ -42,7 +42,7 @@ export function WorkFeed({
         <EmptyFeed title={`No ${labelFor(tab)} yet`} detail={UNBACKED_TABS[tab]} />
       ) : cards.length === 0 ? (
         <EmptyFeed
-          title={query ? `Nothing matches “${query}”` : tab === "invitations" ? "No open availability requests" : tab === "proposals" ? "No responses yet" : tab === "best" ? "No posted jobs match your skills right now" : "No posted jobs right now"}
+          title={query ? `Nothing matches “${query}”` : tab === "invitations" ? "No availability requests yet" : tab === "proposals" ? "No responses yet" : tab === "best" ? "No posted jobs match your skills right now" : "No posted jobs right now"}
           detail={
             query
               // RULING 18: no promise, no date, no apology. *"when this

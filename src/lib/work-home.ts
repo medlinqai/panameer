@@ -30,9 +30,13 @@ export async function workHome(personId: string) {
 
 /** Work request ids behind the Invitations and My Proposals tabs. */
 export async function myWorkRequestIds(personId: string, tab: "invitations" | "proposals"): Promise<string[]> {
-  const rows =
-    tab === "invitations"
-      ? await prisma.proposalRequest.findMany({ where: { provider_person_id: personId, status: { in: OPEN_INVITE } }, select: { job_id: true } })
-      : await prisma.proposal.findMany({ where: { provider_person_id: personId, status: { not: "DRAFT" } }, select: { job_id: true } });
-  return rows.map((r) => r.job_id);
+  // Scott 10-22: an answered request doesn't vanish — Availability Requests lists every request (waiting first)
+  // plus the jobs the provider applied to with I Want This Job; each card shows where it stands.
+  const [asked, responded] = await Promise.all([
+    prisma.proposalRequest.findMany({ where: { provider_person_id: personId }, orderBy: { created_at: "desc" }, select: { job_id: true, status: true } }),
+    prisma.proposal.findMany({ where: { provider_person_id: personId, status: { not: "DRAFT" } }, orderBy: { created_at: "desc" }, select: { job_id: true } }),
+  ]);
+  if (tab === "proposals") return [...new Set(responded.map((r) => r.job_id))];
+  const waiting = asked.filter((r) => OPEN_INVITE.includes(r.status)).map((r) => r.job_id);
+  return [...new Set([...waiting, ...asked.map((r) => r.job_id), ...responded.map((r) => r.job_id)])];
 }

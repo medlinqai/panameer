@@ -151,7 +151,6 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Overview", href: "/find-work" },
     { label: "Jobs", href: "/find-work?tab=best" },
     { label: "Availability Requests", href: "/find-work?tab=invitations" },
-    { label: "My Responses", href: "/find-work?tab=proposals" },
     { label: "Interview Requests", href: "/find-work?tab=interviews" },
     { label: "Test Requests", href: "/find-work?tab=tests" },
   ],
