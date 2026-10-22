@@ -10,7 +10,7 @@ import type { SdContract, ServiceDescription } from "@/lib/service-description";
 
 // SD-E003: Hire follows the Service Description standard. Step 1 can start from an uploaded posting (read like a résumé);
 // every step is then prefilled with "From AI" hints; Next saves the draft Job.
-const STEPS = ["The Work", "Where", "Contract", "Who", "When & Rate", "Request Proposals"];
+const STEPS = ["The Work", "Where", "Contract Type", "Who", "When & Rate", "Request Proposals"];
 const CHIP_ON = "rounded-full border border-magenta-dark bg-[#fbeafb] px-3.5 py-1.5 text-[13px] font-semibold text-magenta-dark";
 const CHIP_OFF = "rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink hover:border-magenta-dark";
 const OPT_ON = "flex flex-col items-start rounded-[10px] border border-magenta-dark bg-white p-3 text-left ring-1 ring-magenta-dark";
@@ -269,7 +269,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         )}
         {step === 2 && (
           <>
-            <h2 className="text-[19px] font-extrabold">3. How Will You Contract Them?</h2>
+            <h2 className="text-[19px] font-extrabold">3. Which Contract Type?</h2>
             <p className="text-[13.5px] text-ink-2">Pick every type you accept.{from("contractTypes")}</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {CONTRACTS.map((c) => {
