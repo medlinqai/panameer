@@ -82,7 +82,7 @@ export type HireTerms = {
   overtimeAllowed: boolean; overtimeMultiplier: number | null; expensesAllowed: boolean; expensesCapCents: number | null;
 };
 
-export async function confirmTerms(viewer: Viewer, t: HireTerms): Promise<{ orderId: string | null; orderNumber: string | null; erp: boolean }> {
+export async function confirmTerms(viewer: Viewer, t: HireTerms): Promise<{ orderId: string | null; orderNumber: string | null; wrNumber?: string | null; approvalNote?: string | null; erp: boolean }> {
   if (!Number.isInteger(t.unitPriceCents) || t.unitPriceCents <= 0) throw new HireTermsError("Enter the rate.");
   if (t.overtimeAllowed && !(t.overtimeMultiplier && t.overtimeMultiplier >= 1 && t.overtimeMultiplier <= 3)) throw new HireTermsError("Overtime rate: between 1× and 3×.");
   if (t.expensesAllowed && t.expensesCapCents != null && t.expensesCapCents < 0) throw new HireTermsError("The expenses cap can't be negative.");
@@ -102,5 +102,6 @@ export async function confirmTerms(viewer: Viewer, t: HireTerms): Promise<{ orde
   const { hire } = await import("@/lib/work-orders");
   const order = await hire(viewer, { jobId: t.jobId, description: t.description.trim().slice(0, 500) || undefined });
   await (await import("@/lib/sourcing-events")).markAwarded(t.jobId, t.providerPersonId, order.id);
-  return { orderId: order.id, orderNumber: order.orderNumber, erp: false };
+  const wr = await prisma.workOrder.findUnique({ where: { id: order.id }, select: { workRequest: { select: { wr_number: true, approval_note: true } } } });
+  return { orderId: order.id, orderNumber: order.orderNumber, wrNumber: wr?.workRequest?.wr_number ?? null, approvalNote: wr?.workRequest?.approval_note ?? null, erp: false };
 }

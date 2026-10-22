@@ -19,7 +19,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ w
     <div className="pm-white-page mx-auto w-full max-w-2xl" data-wr-submitted>
       <h1 className="mt-4 text-[26px] font-extrabold">Work Request submitted</h1>
       <p className="mt-2 text-[15px]">
-        Work Request <b>{wr?.wr_number ?? "—"}</b> submitted and approved. Work Order <b>{order.order_number}</b> is ready for your review — we&apos;ve sent you a link.
+        Work Request <b>{wr?.wr_number ?? "—"}</b> submitted and approved. Work Order <b>{order.order_number}</b>{" "}is ready for your review. We&apos;ve also sent you a link.
       </p>
       {wr?.approval_note && <p className="mt-1 text-[13px] text-ink-3">{wr.approval_note}</p>}
       <div className="mt-5 flex flex-wrap items-center gap-4">

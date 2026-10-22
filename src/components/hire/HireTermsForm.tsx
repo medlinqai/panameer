@@ -4,6 +4,7 @@ import { NeutralAvatar } from "@/components/Avatar";
 import { BILLING_CYCLE_LABEL, HIRE_BILLING_CYCLES, HIRE_PAYMENT_EVENTS, PAYMENT_EVENT_LABEL, PER_UOM_LABEL } from "@/lib/billing-terms";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { HireDefaults } from "@/lib/hire-direct";
 
 // HS-E005: work · provider · rate + recurrence · dates · location · payment event · overtime · expenses.
@@ -19,6 +20,7 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<{ orderId: string; orderNumber: string; wrNumber: string | null; approvalNote: string | null } | null>(null);
   const set = (p: Partial<typeof t>) => setT((x) => ({ ...x, ...p }));
   const submit = async () => {
     setBusy(true);
@@ -32,12 +34,13 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
         expensesAllowed: t.expensesAllowed, expensesCapCents: t.expensesAllowed && t.expensesCap ? Math.round(Number(t.expensesCap) * 100) : null,
       }),
     }).catch(() => null);
-    const j = (await r?.json().catch(() => ({}))) as { orderId?: string | null; erp?: boolean; error?: string };
+    const j = (await r?.json().catch(() => ({}))) as { orderId?: string | null; orderNumber?: string | null; wrNumber?: string | null; approvalNote?: string | null; erp?: boolean; error?: string };
     setBusy(false);
     if (!r?.ok) { setError(j.error ?? "That didn't work."); return; }
     if (j.erp) router.push("/punchout");
     // WA-E001: Submit stays on a confirmation — the buyer opens the Work Order from there (or from the link we send).
-    else if (j.orderId) router.push(`/hire/submitted?wo=${j.orderId}`);
+    // Oracle-style confirmation: a dialog with the numbers just created, then review it or go on.
+    else if (j.orderId) setDone({ orderId: j.orderId, orderNumber: j.orderNumber ?? "", wrNumber: j.wrNumber ?? null, approvalNote: j.approvalNote ?? null });
   };
   return (
     <div className="mt-4 rounded-[14px] border border-line bg-white p-5" data-hire-terms>
@@ -88,6 +91,25 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
         {!d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">Hiring awards the job and creates the Work Request. It is approved, then the Work Order comes to you to accept.</p>}
         {d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">This request came from your ERP — Submit returns it there to raise the PO.</p>}
       </div>
+      {done && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(20,18,30,0.45)] px-4" role="dialog" aria-modal="true" aria-labelledby="hire-done-title" data-wr-submitted>
+          <div className="w-full max-w-md bg-white p-6 text-ink shadow-xl">
+            <h2 id="hire-done-title" className="text-[20px] font-extrabold">Confirmation</h2>
+            <p className="mt-3 text-[14.5px] leading-relaxed">
+              Work Request <b>{done.wrNumber ?? "—"}</b> was submitted and approved.
+            </p>
+            <p className="mt-1 text-[14.5px] leading-relaxed">
+              Work Order <b>{done.orderNumber}</b> is ready for your review. We&apos;ve also sent you a link.
+            </p>
+            {done.approvalNote && <p className="mt-1 text-[12.5px] text-ink-3">{done.approvalNote}</p>}
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Link href={`/orders/${done.orderId}`} className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover" data-review-work-order>Review Work Order</Link>
+              <Link href="/hire" className="inline-flex min-h-11 items-center border border-ink px-5 text-[14px] font-bold text-ink">Post Another Job</Link>
+              <Link href="/hire/overview" className="text-[14px] font-semibold text-magenta-dark underline underline-offset-4">Done</Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
