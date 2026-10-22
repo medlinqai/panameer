@@ -59,8 +59,8 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
         <label className={LABEL}>Billed<select value={t.billingCycle} onChange={(e) => set({ billingCycle: e.target.value as typeof t.billingCycle })} className={FIELD}>{HIRE_BILLING_CYCLES.map((v) => <option key={v} value={v}>{BILLING_CYCLE_LABEL[v]}</option>)}</select></label>
       </div>
       <div className="grid gap-x-3 sm:grid-cols-3">
-        <label className={LABEL}>Start<input type="date" value={t.start} onChange={(e) => set({ start: e.target.value })} className={FIELD} /></label>
-        <label className={LABEL}>End<input type="date" value={t.end} onChange={(e) => set({ end: e.target.value })} className={FIELD} /></label>
+        <label className={LABEL}>Start Date<input type="date" value={t.start} onChange={(e) => set({ start: e.target.value })} className={FIELD} /></label>
+        <label className={LABEL}>End Date<input type="date" value={t.end} onChange={(e) => set({ end: e.target.value })} className={FIELD} /></label>
         <p className={LABEL}>Location<span className="mt-1 block text-[14.5px] font-normal">{d.location || "Not set on the job"}</span></p>
       </div>
       <label className={LABEL}>Payment Event <span className="font-normal text-ink-3">(what raises each payment request)</span>
