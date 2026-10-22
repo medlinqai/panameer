@@ -57,7 +57,11 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   const weak = shown.filter((m) => m.weak && !m.starred);
   const visible = showWeak ? [...strong, ...weak] : strong;
   const starred = list.filter((m) => m.starred && !m.hidden && !m.requested);
-  const shortlistStep = !starred.length ? 2 : compared || starred.length === 1 ? 4 : 3;
+  // Scott 10-22: the Shortlisted chip counts everyone starred, asked or not; the request bar only those not asked yet.
+  const allStarred = list.filter((m) => m.starred && !m.hidden);
+  const asked = allStarred.filter((m) => m.requested);
+  const allAsked = asked.length > 0 && !starred.length;
+  const shortlistStep = allAsked ? 5 : !starred.length ? 2 : compared || starred.length === 1 ? 4 : 3;
   const at = visible.findIndex((m) => m.personId === active);
   const cur = at >= 0 ? visible[at] : null;
 
@@ -88,7 +92,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
       </ol>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
         <button type="button" aria-pressed={!starredOnly} onClick={() => setStarredOnly(false)} className={!starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>All ({list.filter((m) => !m.hidden).length})</button>
-        <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({starred.length})</button>
+        <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({allStarred.length})</button>
         <button type="button" disabled={starred.length < 2 || starred.length > 4} onClick={() => { setComparing(true); setCompared(true); }} className={GHOST} data-compare title="Star 2 to 4 providers to compare them">Compare{starred.length >= 2 ? ` ${Math.min(starred.length, 4)}` : ""}</button>
         <MinChip label="Min Oracle Cloud Years" value={minYears} options={[2, 5, 8, 10]} onChange={setMinYears} />
         <MinChip label="Min Implementations" value={minImpl} options={[1, 3, 5, 10]} onChange={setMinImpl} />
@@ -140,7 +144,9 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
       )}
 
       <div className="sticky bottom-0 z-10 mt-4 flex flex-wrap items-center gap-3 border-t border-line bg-white py-3" data-proposals-bar>
-        {opened ? (
+        {!opened && allAsked ? (
+          <p className="text-[14px]" data-all-asked>All {asked.length} on your shortlist were asked. <Link href={`/hire/sourcing/${asked[0].requested!.eventId}`} className="font-semibold text-magenta-dark underline underline-offset-4">See their answers on the Sourcing Event →</Link> <span className="text-ink-2">Star someone new to ask them too.</span></p>
+        ) : opened ? (
           <p className="text-[14px]"><b>{opened.eventNumber}</b> is open — {opened.count} request{opened.count === 1 ? "" : "s"} sent. <Link href={`/hire/sourcing/${opened.eventId}`} className="font-semibold text-magenta-dark underline underline-offset-4">View the Sourcing Event →</Link></p>
         ) : (
           <>
