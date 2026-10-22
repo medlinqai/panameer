@@ -7,9 +7,9 @@ const TBD5: Tile[] = Array.from({ length: 5 }, () => ({ label: "TBD", tbd: true 
 
 /** The four tiles Work Requests / Orders / Packages share (deck slides 3–5). */
 const WORK_TILES: Tile[] = [
-  { label: "Open Work Requests" },
+  { label: "Open Service Requisitions" },
   { label: "Open Work Orders" },
-  { label: "Work Requests in Last 30 Days" },
+  { label: "Service Requisitions in Last 30 Days" },
   { label: "Work Orders in Last 30 Days" },
 ];
 
@@ -29,12 +29,12 @@ export type AdminPageSpec = {
 export const ADMIN_PAGES: Record<string, AdminPageSpec> = {
   "work-requests": {
     tiles: WORK_TILES,
-    listingTitle: "Work Requests",
+    listingTitle: "Service Requisitions",
     columns: ["Time", "Buyer - Company", "Role", "Status", "Start Date", "Message"],
-    what: "work requests",
+    what: "service requisitions",
     why: WHY_TRANSACTION,
     volume: [
-      { label: "Work Requests" },
+      { label: "Service Requisitions" },
       { label: "Work Orders" },
       { label: "Invites" },
       { label: "Responses" },

@@ -91,7 +91,7 @@ ${signOff("The Panameer Team")}`,
 
 Hi ${name},
 
-Companies come to Panameer to work with experts like you. ${requesterCompany} has invited you to submit a proposal for a Work Request:
+Companies come to Panameer to work with experts like you. ${requesterCompany} has invited you to submit a proposal for a Service Requisition:
 
 ${workRequestTitle}${budgetLabel ? ` · ${budgetLabel}` : ""}
 ${description ? `\nDescription\n${description}\n` : ""}${

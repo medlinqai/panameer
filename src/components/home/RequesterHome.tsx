@@ -21,7 +21,7 @@ export function RequesterHome({
     <div className="mx-auto w-full max-w-6xl">
       {}
       <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
-        Work Requests
+        Service Requisitions
       </h2>
 
       {/* ---- 1. What is in flight ---------------------------------------- */}
@@ -44,14 +44,14 @@ export function RequesterHome({
             {}
             <div className="mt-6 flex justify-center">
               {}
-              <Button href="/create-work">Create Work Request</Button>
+              <Button href="/create-work">Create Service Requisition</Button>
             </div>
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="font-display text-[21px] font-bold">
-                {openWorkCount} work request{openWorkCount === 1 ? "" : "s"} in
+                {openWorkCount} service requisition{openWorkCount === 1 ? "" : "s"} in
                 progress
               </p>
               <p className="mt-1 text-[14.5px] text-ink-2">
@@ -59,7 +59,7 @@ export function RequesterHome({
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button href="/create-work">Create Work Request</Button>
+              <Button href="/create-work">Create Service Requisition</Button>
               <Button href="/orders" variant="ghost">
                 Manage Work
               </Button>

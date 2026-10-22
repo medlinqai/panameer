@@ -11,7 +11,7 @@ export function WorkRequestDraftShot() {
     <ShotCard>
       <div className="flex items-baseline justify-between border-b border-line pb-3">
         <span className="text-[13px] font-semibold text-ink">
-          Draft Work Request
+          Draft Service Requisition
         </span>
         <span className="rounded-full bg-[#eef0f6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.07em] text-ink-2">
           Draft
@@ -29,7 +29,7 @@ export function WorkRequestDraftShot() {
           </span>
         </span>
         <span className="mt-1 block text-[11.5px] leading-[1.45] text-ink-2">
-          Paste it in and we&rsquo;ll draft the Work Request from what it says.
+          Paste it in and we&rsquo;ll draft the Service Requisition from what it says.
         </span>
       </div>
 

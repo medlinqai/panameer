@@ -28,7 +28,7 @@ export default async function AdminDashboardPage() {
         tiles={[
           { label: "New Buyers/Sellers Last 30 Days", value: newPeople, hint: "Joined in the last 30 days" },
           { label: "New Lessons Last 30 Days", value: newLessons, hint: "Added in the last 30 days" },
-          { label: "New Work Last 30 Days", hint: "Awaits work requests" },
+          { label: "New Work Last 30 Days", hint: "Awaits service requisitions" },
           { label: "New Service Products Last 30 Days", hint: "Awaits service products" },
           {
             label: "Tickets Waiting on Us",
@@ -62,7 +62,7 @@ export default async function AdminDashboardPage() {
 
       <VolumeFooter
         tiles={linkVolume([
-          { label: "Work Requests" },
+          { label: "Service Requisitions" },
           { label: "Work Orders" },
           { label: "Contracts" },
           { label: "Settlement Requests" },

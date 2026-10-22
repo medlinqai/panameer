@@ -181,7 +181,7 @@ export const FULFILLMENT_FLOW: FlowSpec = {
     { y: 472, h: 46, lines: ["Purchase Order", "Acknowledge"] },
   ],
   steps: [
-    { y: 95, actor: "Buyer", label: "Creates Work Request" },
+    { y: 95, actor: "Buyer", label: "Creates Service Requisition" },
     { y: 140, actor: "Buyer", label: "Invites Providers to Bid", follows: true },
     { y: 185, actor: "Provider", label: "Confirms Availability" },
     { y: 230, actor: "Buyer", label: "Accepts Rate", follows: true },

@@ -552,7 +552,7 @@ export const NOTIFICATION_EVENTS = {
     visibility: "FEED",
     requiresAction: true,
     title: (v) => `${str(v, "askerName", "Someone")} Is Still Waiting to Join ${str(v, "companyName", "your company")}`,
-    body: () => "They can't submit their work request until you approve. Approve or decline on your company's People tab.",
+    body: () => "They can't submit their service requisition until you approve. Approve or decline on your company's People tab.",
     href: () => "/company/team",
   },
   "company.join_approved": {
@@ -563,7 +563,7 @@ export const NOTIFICATION_EVENTS = {
     visibility: "FEED",
     requiresAction: false,
     // PB-E004: a buyer who built a work request while waiting goes straight to it.
-    title: (v) => (str(v, "readyHref", "") ? "You're in. Your work request is ready to submit." : `You're in ${str(v, "companyName", "the company")} on Panameer`),
+    title: (v) => (str(v, "readyHref", "") ? "You're in. Your service requisition is ready to submit." : `You're in ${str(v, "companyName", "the company")} on Panameer`),
     body: (v) => (str(v, "readyHref", "") ? `${str(v, "companyName", "Your company")} approved you — submit when you're ready.` : "Your company's page and people are on the Company tab."),
     href: (v) => str(v, "readyHref", "") || "/company",
   },
@@ -575,7 +575,7 @@ export const NOTIFICATION_EVENTS = {
     visibility: "FEED",
     requiresAction: false,
     title: (v) => `Your Request to Join ${str(v, "companyName", "a company")} Wasn't Approved`,
-    body: () => "Your work request is still yours — add your own company to submit it.",
+    body: () => "Your service requisition is still yours — add your own company to submit it.",
     href: () => "/company",
   },
   "group.reply_posted": {
@@ -716,7 +716,7 @@ export const NOTIFICATION_EVENTS = {
   // DEFINED AND NOT YET CALLED — THE WRITER TEST (ruling 34e)
   "work.proposal_received": {
     event: "work.proposal_received",
-    recipient: "the buyer who posted the work request",
+    recipient: "the buyer who posted the service requisition",
     category: "buyer.proposals.received",
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",

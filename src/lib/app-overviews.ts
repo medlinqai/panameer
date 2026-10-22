@@ -107,7 +107,7 @@ export async function shopOverview(viewer: Viewer, personId: string, side: "buye
   const band: Band = [
     { key: "browse", label: "Browse", count: 0, href: "/shop?tab=browse" },
     { key: "offer", label: "Offer", count: offers.length, href: "/shop?tab=offers", needs: groups.slice(0, 2).some((g) => g.rows.length > 0) },
-    { key: "wr", label: "Work Request", count: cartLines.length, href: side === "buyer" ? "/shop?tab=cart" : "/shop?tab=sales" },
+    { key: "wr", label: "Service Requisition", count: cartLines.length, href: side === "buyer" ? "/shop?tab=cart" : "/shop?tab=sales" },
     { key: "wo", label: "Work Order Created · Orders →", count: woCount, href: "/orders/overview" },
   ];
   const summary = [`${offers.length} open offer${offers.length === 1 ? "" : "s"}`, side === "buyer" ? `${cartLines.length} in cart` : null, `${woCount} product Work Order${woCount === 1 ? "" : "s"} in flight`].filter(Boolean).join(" · ");

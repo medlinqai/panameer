@@ -5,13 +5,13 @@ export function WorkRequestScene() {
     <div className="scene wr">
       <div className="sh">
         <div className="lg"><i>P</i>Panameer</div>
-        <span className="t">Work request created — experts matched and ready to invite</span>
+        <span className="t">Service requisition created — experts matched and ready to invite</span>
         <span className="sh-sp" />
         <span className="pill">4 MATCHES · 2.1s</span>
       </div>
       <div className="wrbody">
         <div className="wrleft">
-          <span className="wrbadge">✓ WORK REQUEST CREATED</span>
+          <span className="wrbadge">✓ SERVICE REQUISITION CREATED</span>
           <h4>Procurement Contracts configuration — Oracle Cloud</h4>
           <div className="wrmeta">WR-2214 · raised from requisition REQ-104903 · Clinical Operations</div>
 
@@ -31,7 +31,7 @@ export function WorkRequestScene() {
           <h4>Four experts match this work</h4>
           <div className="rsub">
             Ranked on the skills you just entered — not on who paid for placement. Invite now;
-            they reply in the work request.
+            they reply in the service requisition.
           </div>
 
           {WR_EXPERTS.map((e) => (
@@ -55,7 +55,7 @@ export function WorkRequestScene() {
 
           <div className="wrfoot">
             <b>This is the part the ERP does not do.</b> The requisition raised the need; the
-            moment the work request exists, the people who can do it are already in front of you —
+            moment the service requisition exists, the people who can do it are already in front of you —
             rate, availability and validation pulled from their profile, nothing re-keyed. Invite
             three, compare replies, contract and settle without leaving the record.
           </div>

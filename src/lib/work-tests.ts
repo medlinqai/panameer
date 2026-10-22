@@ -34,7 +34,7 @@ export async function sendTest(
     where: { id: input.workRequestId },
     select: { id: true, buyer_person_id: true, status: true, title: true },
   });
-  if (!wr) throw new SourcingError("That work request isn't available.", "NOT_FOUND");
+  if (!wr) throw new SourcingError("That service requisition isn't available.", "NOT_FOUND");
   if (wr.buyer_person_id !== me.id) {
     throw new SourcingError("Only the buyer can send a test.", "NOT_BUYER");
   }
@@ -56,7 +56,7 @@ export async function sendTest(
   });
   if (!proposal || proposal.status === "WITHDRAWN") {
     throw new SourcingError(
-      "That provider hasn't responded on this work request.",
+      "That provider hasn't responded on this service requisition.",
       "NO_PROPOSAL"
     );
   }

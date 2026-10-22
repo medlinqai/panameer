@@ -331,11 +331,11 @@ for (const { name, out } of SUITE) {
 const posted = SUITE[0].out;
 ok(
   "posted: subject matches the deck",
-  posted.subject === "Work Request Posted: Oracle Payables cutover support",
+  posted.subject === "Service Requisition Posted: Oracle Payables cutover support",
   posted.subject
 );
 ok("posted: says the request is live", posted.text.includes("is live for ABC Consulting"));
-ok("posted: CTA is View Work Request", posted.html.includes("View Work Request"));
+ok("posted: CTA is View Service Requisition", posted.html.includes("View Service Requisition"));
 
 const invite = SUITE[1].out;
 ok(
@@ -354,14 +354,14 @@ ok(
 );
 
 const removed = SUITE[2].out;
-ok("removed: subject matches the deck", removed.subject === "Your Work Request was removed", removed.subject);
+ok("removed: subject matches the deck", removed.subject === "Your Service Requisition was removed", removed.subject);
 ok("removed: signs off as Trust & Safety", removed.text.includes("Panameer Trust & Safety"));
 ok("removed: has no CTA button", !removed.html.includes(`background:${EMAIL_COLORS.magenta};`));
 
 const draft = SUITE[3].out;
 ok(
   "draft: subject matches the deck",
-  draft.subject === "Almost there — finish your Work Request, Scott",
+  draft.subject === "Almost there — finish your Service Requisition, Scott",
   draft.subject
 );
 ok("draft: CTA is Finish & Post", draft.html.includes("Finish &amp; Post"));

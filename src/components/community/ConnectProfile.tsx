@@ -582,7 +582,7 @@ export function ConnectProfile({
                 <Link href={`/estimates/request?provider=${p.person.personId}`} data-request-estimate-link className="mt-2 flex min-h-[44px] w-full items-center justify-center border border-ink bg-surface text-[14px] font-semibold text-ink hover:bg-surface-hover">Request an Estimate</Link>
                 <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
                   {/* It says what the click DOES, because it creates a row. A control that */}
-                  Starts a work request for this provider only. You can complete the
+                  Starts a service requisition for this provider only. You can complete the
                   details before anyone is contacted.
                 </p>
               </section>

@@ -292,7 +292,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
       + add("request", closing.length, "Sourcing Event closing in 24 h", `/hire/sourcing/${closing[0]?.id ?? ""}`, "Open", closing[0]?.deadline_at)
       + add("request", expired, "Sourcing Event expired, no award", "/hire/overview?tab=jobs", "Decide");
     // HB-E006: each app lists only its own tasks — Work Orders (accept, release, changes) belong to Orders.
-    const requests = add("request", approvals, "Work Request approvals", "/hire/overview?tab=requests", "Approve");
+    const requests = add("request", approvals, "Service Requisition approvals", "/hire/overview?tab=requests", "Approve");
     add("order", woAccept, "Work Orders to accept", "/orders/overview", "Accept");
     const interviews = add("request", confirm, "Interview times to confirm", "/hire/overview?tab=interviews", "Confirm") + add("request", todays, "Interviews today", "/hire/overview?tab=interviews", "Join");
     const tests = add("request", testsIn, "Test results in", "/hire/overview?tab=tests", "See results");

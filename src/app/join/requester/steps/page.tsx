@@ -336,7 +336,7 @@ export default function RequesterStepsPage() {
             onPhoneCountry={setPhoneCountry}
             titleHint="Your role at your company — for example, Director of Procurement. Providers see it next to your name."
             titlePlaceholder="Director of Procurement"
-            photoLine="Providers see this next to your name on a work request. A clear headshot gets a faster response than an empty circle."
+            photoLine="Providers see this next to your name on a service requisition. A clear headshot gets a faster response than an empty circle."
           />
           {/* THE `Your address` BLOCK STOOD HERE AND IS GONE . */}
         </div>

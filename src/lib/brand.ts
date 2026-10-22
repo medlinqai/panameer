@@ -40,7 +40,7 @@ export const HERO_COPY = {
     searchPlaceholder: "Describe what you need done…",
     searchCta: "Search →",
     aiHint:
-      "Describe it in a sentence or drop a document — AI drafts your scoped Work Request.",
+      "Describe it in a sentence or drop a document — AI drafts your scoped Service Requisition.",
     chips: [
       "Procurement",
       "Supply Chain",
@@ -280,7 +280,7 @@ export const AI_STRIP = {
   lead: "Panameer is AI-native",
   tags: {
     buyer: [
-      { text: "AI-drafted Work Requests", soon: false },
+      { text: "AI-drafted Service Requisitions", soon: false },
       { text: "AI-built profiles", soon: false },
       { text: "Extend your ERP with AI", soon: false },
       { text: "Price alerts", soon: true },
@@ -554,10 +554,10 @@ export const BUY_SERVICES_HERO = {
 export const AI_MATCH_COPY = {
   eyebrow: "AI matching",
   headline: "Post what you need. Get ranked, vetted experts.",
-  lead: "Your Work Request is matched against every expert's actual work history — the systems they ran, how deep, how recently — and comes back ranked.",
+  lead: "Your Service Requisition is matched against every expert's actual work history — the systems they ran, how deep, how recently — and comes back ranked.",
   steps: [
     {
-      label: "Your Work Request",
+      label: "Your Service Requisition",
       body: "Say what you need, in your own words.",
     },
     {
@@ -586,7 +586,7 @@ export const APP_SHOTS_COPY = {
   hire: {
     eyebrow: "Inside the product",
     headline: "See the tools you'd be using.",
-    lead: "Work Requests, matched experts, contracts and settlement — the buyer side, end to end.",
+    lead: "Service Requisitions, matched experts, contracts and settlement — the buyer side, end to end.",
   },
   work: {
     eyebrow: "Inside the product",

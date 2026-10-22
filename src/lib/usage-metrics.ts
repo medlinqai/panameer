@@ -37,7 +37,7 @@ export const METRICS: MetricDef[] = [
   { area: "connect", label: "Groups Joined", hint: "Groups you belong to", goal: 5 },
   { area: "connect", label: "Total Community", hint: "Colleagues + their colleagues you can reach", goal: 100 },
 
-  { area: "work", label: "Job Postings", hint: "Work requests you posted (as a buyer)", goal: 5 },
+  { area: "work", label: "Job Postings", hint: "Service requisitions you posted (as a buyer)", goal: 5 },
   { area: "work", label: "Interviews", hint: "Interviews held", goal: 5 },
   { area: "work", label: "Hires", hint: "Work orders you created by hiring", goal: 5 },
   { area: "work", label: "People Billing", hint: "People currently billing on your orders", goal: 5, uncounted: "Needs an active order with a timesheet or settlement — neither exists yet" },

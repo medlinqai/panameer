@@ -65,7 +65,7 @@ async function fileSupportTicket(
       reporter_email: panameer.user?.email ?? "",
       application: "Company",
       title: `Join request waiting ${days} business days — ${m.company.name}`,
-      description: `${requester} asked to join ${m.company.name} and is still waiting.\nCompany admin(s): ${admins.join(", ") || "none on file"}.\nThey can shop and build a work request; only submitting waits. Please nudge the admin or help them decide.`,
+      description: `${requester} asked to join ${m.company.name} and is still waiting.\nCompany admin(s): ${admins.join(", ") || "none on file"}.\nThey can shop and build a service requisition; only submitting waits. Please nudge the admin or help them decide.`,
       priority: "Medium",
       status: "Open",
       date_found: new Date(),

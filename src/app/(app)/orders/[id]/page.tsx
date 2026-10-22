@@ -225,7 +225,7 @@ export default async function Page({
 
       {o.party === "BUYER" && (
         <p className="mt-8 border-t border-line pt-5 text-[14px]">
-          <Link href={o.jobId ? `/work-requests/${o.jobId}` : "/orders/work-requests"} className="font-semibold text-magenta-dark underline underline-offset-4">{o.jobId ? "Open the job" : "Open the work request"}</Link>
+          <Link href={o.jobId ? `/work-requests/${o.jobId}` : "/orders/work-requests"} className="font-semibold text-magenta-dark underline underline-offset-4">{o.jobId ? "Open the job" : "Open the service requisition"}</Link>
         </p>
       )}
     </div>
@@ -375,7 +375,7 @@ async function chainLine(orderId: string) {
   const was = w.legacy_number ? <> · was {w.legacy_number}</> : null;
   return (
     <p className="mt-0.5 text-[13px] text-ink-2" data-order-chain>
-      From Work Request {wr.job ? <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.wr_number ?? "—"}</Link> : <b>{wr.wr_number ?? "—"}</b>}
+      From Service Requisition {wr.job ? <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.wr_number ?? "—"}</Link> : <b>{wr.wr_number ?? "—"}</b>}
       {wr.job && <> · Job: <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.job.title || "Untitled"}</Link></>}
       {was}
       {/* MS-E002: this Work Order is a SOW under the Panameer MSA. */}

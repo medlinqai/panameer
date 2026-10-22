@@ -70,7 +70,7 @@ export function IntegrationModelDiagram() {
           <rect x="786.7" y="353.9" width="369" height="193.6" rx="12" fill={AIP} stroke={AIP_EDGE} strokeWidth="1.4" />
           <rect x="298.9" y="361.1" width="326.9" height="149.4" rx="10" fill={AIP_INNER} stroke={AIP_EDGE} />
           <rect x="306.1" y="368.3" width="270" height="37.8" rx="7" fill="#fff" stroke={AIP_EDGE} />
-          <text style={T.n} x="404" y="392">Work Request</text>
+          <text style={T.n} x="404" y="392">Service Requisition</text>
           <rect x="306.1" y="453" width="135" height="41.4" rx="7" fill="#fff" stroke={AIP_EDGE} />
           <text style={T.n} x="329" y="470">Services</text>
           <text style={T.n} x="333" y="483">Catalog</text>

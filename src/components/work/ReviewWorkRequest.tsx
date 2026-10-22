@@ -72,14 +72,14 @@ export function ReviewStep({
   const waiting = useMe().me?.pendingJoin ?? null;
   return (
     <AppWizardShell
-      title="Looking Good — Here's Your Work Request"
+      title="Looking Good — Here's Your Service Requisition"
       subtitle="Check it over. You can change anything before you post."
       canBack
       onBack={onBack}
       busy={busy}
       wide
       onContinue={() => setConfirm(true)}
-      continueLabel="Post Work Request"
+      continueLabel="Post Service Requisition"
       continueDisabled={
         !!waiting ||
         !draft ||
@@ -201,12 +201,12 @@ export function ReviewStep({
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Post this Work Request"
+          aria-label="Post this Service Requisition"
           className="fixed inset-0 z-[70] grid place-items-center bg-black/40 p-4"
         >
           <div className="w-full max-w-md rounded-brand border border-line bg-white p-6">
             <h2 className="font-display text-[20px] font-bold">
-              What happens after you post your Work Request?
+              What Happens After You Post Your Service Requisition?
             </h2>
             {/* PANAMEER'S VOICE, and only claims that are true. No "job", no */}
             <ul className="mt-3 grid gap-2 text-[14.5px] leading-relaxed text-ink-2">
@@ -229,7 +229,7 @@ export function ReviewStep({
                 disabled={busy}
                 className="bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
               >
-                {busy ? "Posting…" : "Post Work Request"}
+                {busy ? "Posting…" : "Post Service Requisition"}
               </button>
             </div>
           </div>

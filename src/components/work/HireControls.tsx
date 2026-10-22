@@ -174,7 +174,7 @@ export function CreateOrder({ workRequestId, description: initial = "" }: { work
       <p className="text-[15px] font-bold">A provider is selected.</p>
       {/* IT NAMES WHAT CHANGES AND WHAT STOPS BEING POSSIBLE. Ruling 17's */}
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">
-        Submitting the work request creates the work order and sends it to them
+        Submitting the service requisition creates the work order and sends it to them
         to accept; the selection can&apos;t be changed after that.
       </p>
       <div className="mt-3">

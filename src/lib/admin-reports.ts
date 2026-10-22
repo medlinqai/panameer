@@ -14,7 +14,7 @@ export type Report = { label: string; href: string; metric: string; scope: strin
 
 const EXTRA_VOLUME: Record<string, string[]> = {
   "/admin": [
-    "Work Requests",
+    "Service Requisitions",
     "Work Orders",
     "Contracts",
     "Settlement Requests",

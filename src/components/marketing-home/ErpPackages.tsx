@@ -49,7 +49,7 @@ const EXAMPLES: Example[] = [
     name: "Extend Your Apps",
     desc: "Whole capabilities the standard product does not have, added alongside it — without a re-implementation.",
     open: "See the matches ›",
-    label: "Work request with matched experts",
+    label: "Service requisition with matched experts",
     tf: "scale(.44) translate(-330px,-96px)",
     scene: <WorkRequestScene />,
   },

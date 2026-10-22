@@ -34,7 +34,7 @@ export default async function Page() {
       <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">Work Orders</h1>
       {/* SH-E001: Estimates and the open cart left the Shop tabs; they're reached from Orders. */}
       <p className="mt-1 flex flex-wrap gap-4 text-[13.5px] font-semibold" data-orders-shop-links>
-        <Link href="/cart" className="text-magenta-dark underline underline-offset-4">Work Request (Incomplete)</Link>
+        <Link href="/cart" className="text-magenta-dark underline underline-offset-4">Service Requisition (Incomplete)</Link>
         <Link href="/estimates" className="text-magenta-dark underline underline-offset-4">My Estimates</Link>
         <Link href="/agreements" className="text-magenta-dark underline underline-offset-4">Agreements</Link>
       </p>
@@ -52,7 +52,7 @@ export default async function Page() {
 
       {buys && (
         <p className="mt-2 text-[14px]">
-          <Link href="/orders/work-requests" className="font-semibold underline underline-offset-4 hover:text-magenta">My Work Requests</Link>
+          <Link href="/orders/work-requests" className="font-semibold underline underline-offset-4 hover:text-magenta">My Service Requisitions</Link>
         </p>
       )}
 

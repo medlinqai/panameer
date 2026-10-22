@@ -28,12 +28,12 @@ export function WorkFeed({
   return (
     <section id="work-feed" className="scroll-mt-6">
       {/* WS-E002: the tab row lives in the Work layout; this is the list for one tab. */}
-      <h1 className="mb-3 font-display text-[22px] font-bold">{TITLE[tab] ?? "Work Requests"}</h1>
+      <h1 className="mb-3 font-display text-[22px] font-bold">{TITLE[tab] ?? "Service Requisitions"}</h1>
 
       {/* WS-E007: search + filters from required fields; state in the URL. */}
       {filters && (
         <Suspense>
-          <FilterBar placeholder="Search work requests…" filters={filters} keep={["tab"]} />
+          <FilterBar placeholder="Search service requisitions…" filters={filters} keep={["tab"]} />
         </Suspense>
       )}
 
@@ -46,7 +46,7 @@ export function WorkFeed({
           detail={
             query
               // RULING 18: no promise, no date, no apology. *"when this
-              ? "No work request matches that search yet."
+              ? "No service requisition matches that search yet."
               : tab === "invitations"
                 ? "When a buyer asks if you're available, it shows here."
                 : tab === "proposals"
@@ -67,7 +67,7 @@ export function WorkFeed({
   );
 }
 
-const TITLE: Partial<Record<WorkFeedTab, string>> = { best: "Best Matches for Your Skills", recent: "All Work Requests", us: "Work Requests in the US", saved: "Saved", invitations: "Availability Requests", proposals: "My Responses" };
+const TITLE: Partial<Record<WorkFeedTab, string>> = { best: "Best Matches for Your Skills", recent: "All Service Requisitions", us: "Service Requisitions in the US", saved: "Saved", invitations: "Availability Requests", proposals: "My Responses" };
 
 function labelFor(tab: WorkFeedTab): string {
   return WORK_FEED_TABS.find((t) => t.id === tab)?.label.toLowerCase() ?? "work";

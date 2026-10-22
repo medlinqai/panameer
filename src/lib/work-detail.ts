@@ -111,7 +111,7 @@ export async function getWorkDetailForProvider(input: {
 
   return {
     id: w.id,
-    title: w.title || "Untitled work request",
+    title: w.title || "Untitled service requisition",
     description: w.description,
     budgetLabel: workBudgetLabel({
       amountCents: w.budget_amount_cents,

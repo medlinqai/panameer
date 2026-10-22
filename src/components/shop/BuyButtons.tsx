@@ -19,7 +19,7 @@ export function BuyButtons({ productId, signedIn, size = "md", openToOffers = fa
     return (
       <div data-buy-buttons className="flex flex-wrap items-center gap-2">
         <Link href={back} className={primary}>Buy Now</Link>
-        {!(pair && openToOffers) && <Link href={back} className={secondary}>{pair ? "Add to Work Request" : "Add to Cart"}</Link>}
+        {!(pair && openToOffers) && <Link href={back} className={secondary}>{pair ? "Add to Service Requisition" : "Add to Cart"}</Link>}
         {openToOffers && <Link href={`/login?callbackUrl=${encodeURIComponent(`/shop/${productId}`)}`} className={secondary}>Make an Offer</Link>}
       </div>
     );
@@ -58,7 +58,7 @@ export function BuyButtons({ productId, signedIn, size = "md", openToOffers = fa
       {pair && openToOffers ? null : added ? (
         <Link href="/cart" className={secondary}>{pair ? "Added · View" : "Added · View Cart"}</Link>
       ) : (
-        <button type="button" disabled={busy} onClick={() => add(false)} className={secondary}>{pair ? "Add to Work Request" : "Add to Cart"}</button>
+        <button type="button" disabled={busy} onClick={() => add(false)} className={secondary}>{pair ? "Add to Service Requisition" : "Add to Cart"}</button>
       )}
       {openToOffers && !offer.sent && <button type="button" disabled={busy} onClick={() => setOffer((o) => ({ ...o, open: !o.open }))} data-make-offer className={secondary}>Make an Offer</button>}
       {offer.open && (

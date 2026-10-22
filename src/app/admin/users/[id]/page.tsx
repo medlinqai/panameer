@@ -235,7 +235,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
         </Step>
 
         <Step n={`${nOf(steps.some((s) => s.key === "sell") ? "sell" : "contract")}–${nOf("paid")}`} title="Contracts & Payments" tag={payouts + payments > 0 ? "PAID" : signed > 0 ? "CONTRACTED" : "—"} tone={signed > 0 ? "done" : "none"}>
-          <Row label="Work Requests · Responses" value={`${workRequests} · ${proposals}`} />
+          <Row label="Service Requisitions · Responses" value={`${workRequests} · ${proposals}`} />
           <Row label="Signed work orders" value={signed} />
           <Row label="Payouts · payments" value={`${payouts} · ${payments}`} />
         </Step>

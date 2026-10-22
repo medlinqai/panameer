@@ -299,7 +299,7 @@ export async function hireToday(personId: string): Promise<{ items: TodayItem[];
   for (const iv of ivConfirm) items.push({ id: `i-${iv.id}`, kind: "confirm", what: "Confirm an interview time", detail: "The provider offered times", href: `/work-requests/${iv.job_id}#interviews`, action: "Confirm" });
   for (const iv of ivToday) items.push({ id: `t-${iv.id}`, kind: "interview", what: `Interview at ${iv.startsAt ? new Date(iv.startsAt).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" }) : "today"}`, detail: `${iv.providerLabel} · ${iv.jobTitle}`, href: `/work-requests/${iv.jobId}#interviews`, action: iv.hasRoom ? "Join" : "Open" });
   if (testsIn) items.push({ id: "tests", kind: "tests", what: `${testsIn} test result${testsIn === 1 ? "" : "s"} in`, detail: "Scores and pass / fail are on the Tests tab", href: "/hire/overview?tab=tests", action: "See results" });
-  for (const w of approvals) items.push({ id: `w-${w.id}`, kind: "approval", what: `Approve Work Request ${w.wr_number ?? ""}`.trim(), detail: "Approval creates the Work Order", href: w.job_id ? `/work-requests/${w.job_id}` : "/hire/overview?tab=requests", action: "Approve" });
+  for (const w of approvals) items.push({ id: `w-${w.id}`, kind: "approval", what: `Approve Service Requisition ${w.wr_number ?? ""}`.trim(), detail: "Approval creates the Work Order", href: w.job_id ? `/work-requests/${w.job_id}` : "/hire/overview?tab=requests", action: "Approve" });
   const count = (k: TodayItem["kind"]) => items.filter((i) => i.kind === k).length;
   const word = (n: number) => (n === 1 ? "One" : String(n));
   const parts: string[] = [];
@@ -310,7 +310,7 @@ export async function hireToday(personId: string): Promise<{ items: TodayItem[];
   if (count("interview")) parts.push(`you have ${count("interview")} interview${count("interview") === 1 ? "" : "s"} today`);
   if (count("closing") + count("expired")) parts.push(`${count("closing") + count("expired")} Sourcing Event${count("closing") + count("expired") === 1 ? " needs" : "s need"} a decision`);
   if (count("tests")) parts.push("test results are in");
-  if (count("approval")) parts.push(`${count("approval")} Work Request${count("approval") === 1 ? " needs" : "s need"} approval`);
+  if (count("approval")) parts.push(`${count("approval")} Service Requisition${count("approval") === 1 ? " needs" : "s need"} approval`);
   const s = parts.length ? parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")}, and ${parts.at(-1)}` : "Your jobs are moving on their own. Post a job or check on the ones below.";
   return { items, sentence: parts.length ? `${s[0].toUpperCase()}${s.slice(1)}.` : s };
 }

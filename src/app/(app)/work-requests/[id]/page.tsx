@@ -141,7 +141,7 @@ export default async function Page({
           <Fact label="Buyer">{sec.header.buyer}</Fact>
           <Fact label="Provider">{sec.provider ?? <span className="text-state-disabled">Not awarded yet</span>}</Fact>
           <Fact label="Style">{sec.header.style ?? <span className="text-state-disabled">Set on Award</span>}</Fact>
-          <Fact label="Work Request">{sec.header.workRequest ?? <span className="text-state-disabled">Created on Award</span>}</Fact>
+          <Fact label="Service Requisition">{sec.header.workRequest ?? <span className="text-state-disabled">Created on Award</span>}</Fact>
         </div>
       </section>
 
@@ -223,7 +223,7 @@ export default async function Page({
       <Section title="Award">
         {sec.awardRows.length ? sec.awardRows.map((a, k) => (
           <div key={k} className={`flex flex-wrap justify-between gap-2 py-2.5 text-[14px] ${ROW_RULE}`}><span><b>{a.who.replace(/^Provider /, "")}</b>{a.wr ? <span className="text-state-inactive"> · {a.wr}</span> : null}</span><span className="text-state-inactive">{a.rate != null ? `${formatCents(a.rate)}${a.uom === "HOUR" ? "/hr" : ""} · ` : ""}{a.when}</span></div>
-        )) : empty("Not awarded yet. Awarding a response creates the Work Request.")}
+        )) : empty("Not awarded yet. Awarding a response creates the Service Requisition.")}
         {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && <AssignDirectly workRequestId={detail.id} providers={options} />}
         {awarded && <CreateOrder workRequestId={detail.id} description={detail.workRequestDescription} />}
       </Section>

@@ -29,7 +29,7 @@ export const FOOTER_VIDEO_COLUMNS: FooterVideoColumn[] = [
   {
     title: 'Buyer "How To" Videos',
     items: [
-      "Post Free Work Requests (Jobs)",
+      "Post Free Service Requisitions (Jobs)",
       "Create Optimization Dashboard",
       "Create 1 Year AI Roadmap",
       "Buy Application Demonstrations",

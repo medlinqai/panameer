@@ -45,13 +45,13 @@ export function workRequestRemovedTemplate({
       : "";
 
   return {
-    subject: "Your Work Request was removed",
+    subject: "Your Service Requisition was removed",
     html: emailShell({
       logoUrl,
-      bodyHtml: `<h1 style="font-size:22px;margin:0 0 16px;color:${EMAIL_COLORS.ink};">Your Work Request was removed</h1>
+      bodyHtml: `<h1 style="font-size:22px;margin:0 0 16px;color:${EMAIL_COLORS.ink};">Your Service Requisition was removed</h1>
 ${greeting(name)}
 ${paragraph(
-  `We've removed your Work Request, <b style="color:${EMAIL_COLORS.ink};">"${title},"</b> because it looked ` +
+  `We've removed your Service Requisition, <b style="color:${EMAIL_COLORS.ink};">"${title},"</b> because it looked ` +
     `incomplete, unclear, or unrelated to work to be completed on Panameer — which is against our ` +
     `<a href="${termsUrl}" style="color:${EMAIL_COLORS.magentaDark};">Terms of Use</a>.`
 )}
@@ -63,11 +63,11 @@ ${section(
 )}
 ${signOff("Panameer Trust & Safety")}`,
     }),
-    text: `Your Work Request was removed
+    text: `Your Service Requisition was removed
 
 Hi ${name},
 
-We've removed your Work Request, "${workRequestTitle}," because it looked incomplete, unclear, or unrelated to work to be completed on Panameer — which is against our Terms of Use (${termsUrl}).
+We've removed your Service Requisition, "${workRequestTitle}," because it looked incomplete, unclear, or unrelated to work to be completed on Panameer — which is against our Terms of Use (${termsUrl}).
 ${list.length > 0 ? `\nWhat we saw:\n${list.map((r) => `- ${r}`).join("\n")}\n` : ""}
 What's next: your account is active and no action is required. Give the details another pass and you're welcome to repost. If you think this was a mistake, reply and a person will look.
 

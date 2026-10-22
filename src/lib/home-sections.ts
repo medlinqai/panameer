@@ -3,7 +3,7 @@ export const HOME_OPTIMIZE_CTA = "Start Optimizing My Business Now";
 export const HOME_LEARN_CTA = "Start Learning Now";
 export const HOME_TALENT_CTA = "Sell More Time Now";
 export const HOME_SHOP_CTA = "Shop for Service Products Now";
-export const HOME_WORK_CTA = "Create A Work Request Now";
+export const HOME_WORK_CTA = "Create A Service Requisition Now";
 export const HOME_INTEGRATE_CTA = "Integrate with Panameer’s AIP";
 
 export type HomeSection = {
@@ -117,14 +117,14 @@ export const HOME_SECTIONS: HomeSection[] = [
     eyebrow: "Reduce Costs....Remove Employment Risks",
     headline: { a: "Go Direct & Save Money.", b: "One Contract, No W2 Risk." },
     body:
-      "Create Work Requests using AI with the click of a button and a JD. Instantly " +
+      "Create Service Requisitions using AI with the click of a button and a JD. Instantly " +
       "see the talent you want, ranked by experts and your peers. Interview, hire, " +
       "track and settle with that talent with the click of a button on a " +
       "predetermined contract. You can even integrate your ERP to automate the " +
       "whole process.",
     chipsTitle: "What you get",
     chips: [
-      "Post Jobs/Create Work Requests for Free",
+      "Post Jobs/Create Service Requisitions for Free",
       "Immediately Ask Talent If They Are Available",
       "Hire, Work, and Settle All Talent Under 1 Contract",
       "Track Worker Progress through Entire Work Order",

@@ -10,7 +10,7 @@ export default function ScopePage() {
           <ComingSoon title="The Detailed Scope Assessment" />
           <p className="mx-auto mt-4 max-w-2xl px-6 text-center text-[15px] text-ink-2">
             Your report shows the moves and what they&rsquo;re worth. The full scope — every
-            requirement, who owns it, and a pre-filled Work Request for each — is being
+            requirement, who owns it, and a pre-filled Service Requisition for each — is being
             built. In the meantime, the 20-minute call is where we walk your numbers.
           </p>
         </div>

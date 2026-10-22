@@ -17,7 +17,7 @@ export default async function Page() {
   const tabs = [
     { key: "overview", label: "Overview", href: "/orders/overview", n },
     { key: "orders", label: "Work Orders", href: "/orders" },
-    { key: "requests", label: "Work Requests", href: "/orders/work-requests" },
+    { key: "requests", label: "Service Requisitions", href: "/orders/work-requests" },
   ];
   const firstBusy = t.band.findIndex((b) => b.count > 0);
   const band: BandStep[] = t.band.map((b, k) => ({ key: b.key, label: b.label, href: "/orders", current: k === firstBusy, muted: !b.count, bar: firstBusy >= 0 && k <= firstBusy ? "done" : "todo", needs: b.count > 0 && (b.key === "buyer" || b.key === "provider") && n > 0, top: <span className={`text-[22px] font-extrabold ${b.count ? (k === firstBusy ? "text-magenta" : "text-ink") : "text-state-border"}`}>{b.count}</span> }));

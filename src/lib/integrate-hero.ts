@@ -31,14 +31,14 @@ export async function integrateHeroStats(): Promise<IntegrateStat[]> {
     },
     {
       value: String(serviceWorkRequests),
-      label: plural(serviceWorkRequests, "Service Work Request"),
+      label: plural(serviceWorkRequests, "Service Service Requisition"),
       stub: false,
     },
     {
       value: String(STUB_SERVICE_PRODUCT_REQUESTS),
       label: plural(
         STUB_SERVICE_PRODUCT_REQUESTS,
-        "Service Product Work Request",
+        "Service Product Service Requisition",
       ),
       stub: true,
     },

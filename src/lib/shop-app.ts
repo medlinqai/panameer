@@ -169,7 +169,7 @@ export async function shopStrip(viewer: Viewer, personId: string, side: ShopSide
   return [
     { key: "browse", label: "Browse", count: 0, href: "/shop?tab=browse" },
     { key: "offer", label: "Offer", count: offers, href: "/shop?tab=offers" },
-    { key: "wr", label: "Work Request", count: cart, href: side === "buyer" ? "/shop?tab=cart" : base },
+    { key: "wr", label: "Service Requisition", count: cart, href: side === "buyer" ? "/shop?tab=cart" : base },
     { key: "wo", label: "Work Order", count: by("Work Order"), href: `${base}&step=Work+Order` },
     { key: "delivered", label: "Delivered", count: by("Delivered"), href: `${base}&step=Delivered` },
     { key: "paid", label: "Paid", count: by("Paid"), href: `${base}&step=Paid` },

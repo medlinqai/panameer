@@ -185,7 +185,7 @@ const RULES: Rule[] = [
         title,
         line: `${r.title ? `"${r.title}." ` : ""}Review the matches and ask the ones you like if they are available.`,
         cta: { label: "See Your Matches", href: `/work-requests/${r.id}/invite` },
-        why: "You have an open work request. Asking providers now usually brings responses within a day.",
+        why: "You have an open service requisition. Asking providers now usually brings responses within a day.",
         ticks: [
           { label: "Request posted", done: true },
           ...(r.invited !== null ? [{ label: `Providers invited: ${r.invited}`, done: r.invited > 0 }] : []),
@@ -202,16 +202,16 @@ const RULES: Rule[] = [
     matches: (m) => !!m.buyer && !m.buyer.openRequest,
     card: () => ({
       rule: 7,
-      title: "Post your first work request (free)",
+      title: "Post your first service requisition (free)",
       line: "Describe the work and we'll show you the providers who match.",
-      cta: { label: "Post a Work Request", href: "/create-work" },
+      cta: { label: "Post a Service Requisition", href: "/create-work" },
       why: "Posting is free; matches show right away.",
       ticks: [
         { label: "Account ready", done: true },
-        { label: "Work request posted", done: false },
+        { label: "Service requisition posted", done: false },
       ],
     }),
-    then: () => [{ rule: 7, title: "Post a work request (free)", line: "Matches show right away.", link: "Post", href: "/create-work" }],
+    then: () => [{ rule: 7, title: "Post a service requisition (free)", line: "Matches show right away.", link: "Post", href: "/create-work" }],
   },
 ];
 

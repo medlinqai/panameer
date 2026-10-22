@@ -187,7 +187,7 @@ export function StatisticsCards({
                 note="Work you were invited to, and what came of it."
               >
                 <StatFigureRow
-                  label="Work Requests"
+                  label="Service Requisitions"
                   figure={s.work.requestsReceived}
                   hint="Buyers who invited you to bid"
                 />
@@ -311,7 +311,7 @@ export function workCreditLine(s: Statistics): string {
   const n = (f: Figure) => (typeof f === "number" ? f : 0);
   if (n(s.work.requestsReceived) > 0)
     bits.push(
-      `${n(s.work.requestsReceived)} work request${n(s.work.requestsReceived) === 1 ? "" : "s"} received`
+      `${n(s.work.requestsReceived)} service requisition${n(s.work.requestsReceived) === 1 ? "" : "s"} received`
     );
   if (n(s.work.interviews) > 0)
     bits.push(`${n(s.work.interviews)} interview${n(s.work.interviews) === 1 ? "" : "s"}`);

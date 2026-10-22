@@ -1,5 +1,5 @@
 
-export const WORK_CTA_LABEL = "Create a Work Request";
+export const WORK_CTA_LABEL = "Create a Service Requisition";
 
 export type WorkStepLabel = {
   /** The drawn numeral, 1-based. */
@@ -11,7 +11,7 @@ export type WorkStepLabel = {
 export const WORK_STEPS: WorkStepLabel[] = [
   {
     n: 1,
-    summary: "Create Work Request",
+    summary: "Create Service Requisition",
     description:
       "Paste a job description and the AIP drafts the request for you — title, dates, budget and location — or answer seven short questions instead.",
   },

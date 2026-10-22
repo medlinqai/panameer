@@ -23,7 +23,7 @@ export async function workHome(personId: string) {
       prisma.job.findUnique({ where: { id: newest.job_id }, select: { title: true } }),
       prisma.person.findUnique({ where: { id: newest.invited_by_person_id }, select: { first_name: true, last_name: true } }),
     ]);
-    newestLine = { title: wr?.title || "Untitled work request", from: by ? `${by.first_name} ${by.last_name}`.trim() : "a buyer" };
+    newestLine = { title: wr?.title || "Untitled service requisition", from: by ? `${by.first_name} ${by.last_name}`.trim() : "a buyer" };
   }
   return { invitations, proposalsOut, openOrders, funnel: { invited: invited30, proposed: proposed30, agreed: agreed30, inWork: working30 }, newest: newestLine };
 }

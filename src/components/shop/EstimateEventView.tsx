@@ -88,7 +88,7 @@ export function EstimateEventView({ ev }: { ev: Ev }) {
                       {e.exclusions && <p className="mt-1 text-[12.5px]"><b>Not included:</b> {e.exclusions}</p>}
                       {!awarded && e.status === "SENT" && (
                         <div className="mt-3 flex flex-wrap gap-1.5">
-                          <button type="button" className={BTN} disabled={busy} onClick={() => window.confirm(`Award ${x.who} at ${usd(e.totalCents)}?`) && post("/api/estimate-events", { action: "award", eventId: ev.id, estimateId: e.id }, "Awarded — the Work Request and Work Order are created.")} data-award-estimate>Award</button>
+                          <button type="button" className={BTN} disabled={busy} onClick={() => window.confirm(`Award ${x.who} at ${usd(e.totalCents)}?`) && post("/api/estimate-events", { action: "award", eventId: ev.id, estimateId: e.id }, "Awarded — the Service Requisition and Work Order are created.")} data-award-estimate>Award</button>
                           <button type="button" className={GHOST} disabled={busy} onClick={() => setChanging(changing === e.id ? null : e.id)}>Request Changes</button>
                           {x.userId && <Link href={`/messages?with=${x.userId}`} className={GHOST}>Ask a Question</Link>}
                         </div>

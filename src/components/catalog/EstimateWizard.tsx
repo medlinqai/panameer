@@ -98,7 +98,7 @@ export function EstimateWizard({ initial, customers, workRequests, services, sou
                 {d.toEmail && <input type="email" value={d.customerEmail} onChange={(e) => set("customerEmail", e.target.value)} placeholder="jane@acme.com" className={INPUT} aria-label="Customer email" />}
                 <p className="mt-1 text-[12px] text-ink-3">Only this customer can see it. It doesn&apos;t appear on your profile.</p>
               </fieldset>
-              <label className={LABEL}>For a work request? (optional)
+              <label className={LABEL}>For a service requisition? (optional)
                 <select value={d.workRequestId} onChange={(e) => set("workRequestId", e.target.value)} className={INPUT}>
                   <option value="">No — a direct estimate</option>
                   {workRequests.map((w) => <option key={w.id} value={w.id}>{w.label}</option>)}

@@ -40,7 +40,7 @@ export async function OrderLifecycle({ workRequestId, focusOrderId }: { workRequ
   const pct = (c: number) => `${Math.min(100, Math.round((c / base) * 100))}%`;
   return (
     <section data-lifecycle className="mt-5 rounded-brand border border-line bg-white p-5">
-      <h2 className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Life Cycle · {wr.wr_number ?? "Work Request"}</h2>
+      <h2 className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Life Cycle · {wr.wr_number ?? "Service Requisition"}</h2>
       <ol className="mt-3 grid grid-cols-4 gap-2">
         {stages.map((s, i) => {
           const done = reached(s);

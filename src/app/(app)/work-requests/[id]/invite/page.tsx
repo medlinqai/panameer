@@ -70,7 +70,7 @@ export default async function Page({
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <BackLink href={`/work-requests/${id}`} label={detail.title.trim() || "Work Request"} />
+      <BackLink href={`/work-requests/${id}`} label={detail.title.trim() || "Service Requisition"} />
       <h1 className="mt-2 font-display text-[28px] font-bold tracking-[-0.5px]">
         Invite providers to bid
       </h1>

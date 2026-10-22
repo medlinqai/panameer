@@ -156,7 +156,7 @@ export function usageAreas(u: UsageInput): UsageArea[] {
       key: "work",
       // SCOTT'S *"HIRE"* IS THIS ITEM. `Hire` is the buyer's label for the same
       eyebrow: navLabel("/find-work"),
-      label: "Work Requests",
+      label: "Service Requisitions",
       figure: u.workRequests,
       goal: USAGE_GOALS.work,
       subs: [
@@ -165,8 +165,8 @@ export function usageAreas(u: UsageInput): UsageArea[] {
       ],
       href: "/find-work",
       go: navLabel("/find-work"),
-      tip: tipFor(u.workRequests, "work request received", "work requests received"),
-      counts: "work requests",
+      tip: tipFor(u.workRequests, "service requisition received", "service requisitions received"),
+      counts: "service requisitions",
     },
     {
       key: "shop",
@@ -313,7 +313,7 @@ export function usageSummary(areas: UsageArea[]): string {
     connect: "Inviting a colleague is the quickest way to start a network here.",
     learn: "A lesson or two is the fastest way to show what you know.",
     shop: "Listing one service product gives buyers something to buy.",
-    orders: "Orders follow work requests, so that is the thread to pull first.",
+    orders: "Orders follow service requisitions, so that is the thread to pull first.",
     profile: "Profile views come from being findable — the Score tab says what is missing.",
     pay: "Earnings follow work orders, so work is the thread to pull first.",
   };

@@ -33,7 +33,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
   const tabs = [
     { key: "overview", label: "Overview", href: "/hire/overview" },
     { key: "jobs", label: "Jobs", href: "/hire/overview?tab=jobs", n: r.jobs },
-    { key: "requests", label: "Requests", href: "/hire/overview?tab=requests", n: r.requests },
+    { key: "requests", label: "Requisitions", href: "/hire/overview?tab=requests", n: r.requests },
     { key: "interviews", label: "Interviews", href: "/hire/overview?tab=interviews", n: r.interviews },
     { key: "tests", label: "Tests", href: "/hire/overview?tab=tests", n: r.tests },
   ];
@@ -88,7 +88,7 @@ async function Overview({ personId, slice }: { personId: string; slice?: string 
         <AttentionGroups groups={d.groups} />
       </section>
 
-      <PathBand steps={band} label="Work Request Path" />
+      <PathBand steps={band} label="Requisition Path" />
 
       {/* IW-E004: My Jobs takes the full width; Today's Interviews moved to the Interviews tab (the attention group links there). */}
       <section className="min-w-0" data-my-jobs>
@@ -236,7 +236,7 @@ async function RequestsTab({ personId, slice }: { personId: string; slice?: stri
   const rows = all.filter((r) => inSlice(r, sliceOf(slice)));
   return (
     <div className="flex flex-col gap-5" data-requests-tab>
-      <h1 className="text-[30px] font-extrabold">Work Requests</h1>
+      <h1 className="text-[30px] font-extrabold">Service Requisitions</h1>
       <div className="border-b border-ink pb-3"><SliceChips tabKey="hire-requests" counts={sliceCounts(all)} base="/hire/overview?tab=requests" /></div>
       {rows.length ? rows.map((w) => (
         <article key={w.id} className="flex flex-col gap-3.5 border-b border-state-border pb-5">
@@ -244,7 +244,7 @@ async function RequestsTab({ personId, slice }: { personId: string; slice?: stri
             <TypeArt typeName={w.title} size={52} />
             <div className="min-w-0 flex-1">
               <Link href={`/work-requests/${w.jobId}`} className="text-[17px] font-bold text-ink hover:underline">{w.title}</Link>
-              <div className="mt-1 text-[13px] text-state-inactive">{w.wr ?? "Work Request"} · {w.who}</div>
+              <div className="mt-1 text-[13px] text-state-inactive">{w.wr ?? "Service Requisition"} · {w.who}</div>
               {w.recurring && <RecurringLine r={w.recurring} />}
             </div>
             {w.completed ? <Link href={`/hire/terms?job=${w.jobId}&provider=${w.providerPersonId}`} className={`${BTN_OUT} w-full sm:w-auto`}>Hire Again</Link> : <Link href={w.wo ? `/orders/${w.wo.id}` : `/work-requests/${w.jobId}`} className={`${BTN_OUT} w-full sm:w-auto`}>Open</Link>}
@@ -256,7 +256,7 @@ async function RequestsTab({ personId, slice }: { personId: string; slice?: stri
             <Fact label="Work Order">{w.wo ? <Link href={`/orders/${w.wo.id}`} className="text-ink">{w.wo.number}</Link> : "—"}</Fact>
           </div>
         </article>
-      )) : <p className="text-[14px] text-state-inactive">No Work Requests yet — Award a response or Hire directly and it shows here.</p>}
+      )) : <p className="text-[14px] text-state-inactive">No Service Requisitions yet — Award a response or Hire directly and it shows here.</p>}
     </div>
   );
 }

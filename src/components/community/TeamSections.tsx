@@ -210,7 +210,7 @@ export function RecruiterTeamSections({
         <div className="border-t border-line py-5">
           {}
           <p className="text-[14px] leading-relaxed text-ink-2">
-            Nothing here yet. Work requests exist but none has been posted — they
+            Nothing here yet. Service requisitions exist but none has been posted — they
             are all still drafts — and a posted request is not yet routed to a
             recruiter&rsquo;s roster.
           </p>

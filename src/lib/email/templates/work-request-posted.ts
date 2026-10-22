@@ -29,25 +29,25 @@ export function workRequestPostedTemplate({
   const year = new Date().getFullYear();
 
   return {
-    subject: `Work Request Posted: ${workRequestTitle}`,
+    subject: `Service Requisition Posted: ${workRequestTitle}`,
     html: emailShell({
       logoUrl,
-      bodyHtml: `<h1 style="font-size:22px;margin:0 0 16px;color:${EMAIL_COLORS.ink};">Your Work Request is live</h1>
+      bodyHtml: `<h1 style="font-size:22px;margin:0 0 16px;color:${EMAIL_COLORS.ink};">Your Service Requisition is live</h1>
 ${greeting(name)}
 ${paragraph(
-  `Your Work Request — <b style="color:${EMAIL_COLORS.ink};">${title}</b> — is live for ${company}. ` +
+  `Your Service Requisition — <b style="color:${EMAIL_COLORS.ink};">${title}</b> — is live for ${company}. ` +
     `Providers who match your skills can find it now, and we'll let you know the moment providers say they want it.`
 )}
-${primaryButton(viewUrl, "View Work Request")}
+${primaryButton(viewUrl, "View Service Requisition")}
 ${signOff("The Panameer Team")}`,
     }),
-    text: `Your Work Request is live
+    text: `Your Service Requisition is live
 
 Hi ${name},
 
-Your Work Request — ${workRequestTitle} — is live for ${requesterCompany}. Providers who match your skills can find it now, and we'll let you know the moment proposals start coming in.
+Your Service Requisition — ${workRequestTitle} — is live for ${requesterCompany}. Providers who match your skills can find it now, and we'll let you know the moment proposals start coming in.
 
-View Work Request: ${viewUrl}
+View Service Requisition: ${viewUrl}
 
 — The Panameer Team
 

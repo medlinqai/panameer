@@ -192,7 +192,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
 export const WORK_FEED_EXTRA_TITLES: NavItem[] = [
   { label: "Find Work", href: "/find-work" },
   { label: "Best Matches", href: "/find-work/for-my-skills" },
-  { label: "My Work Requests (Saved)", href: "/find-work/saved" },
+  { label: "My Service Requisitions (Saved)", href: "/find-work/saved" },
   { label: "Availability Requests", href: "/find-work/invitations" },
   { label: "My Responses", href: "/find-work/proposals" },
 ];
@@ -340,7 +340,7 @@ export const ADMIN_NAV: NavGroup[] = [
     items: [
       { label: "Usage", href: "/admin/usage", icon: "BarChart3" },
       { label: "Learn", href: "/admin/learn", icon: "GraduationCap" },
-      { label: "Work Requests", href: "/admin/work-requests", icon: "ClipboardList" },
+      { label: "Service Requisitions", href: "/admin/work-requests", icon: "ClipboardList" },
       { label: "Work Orders", href: "/admin/work-orders", icon: "ClipboardCheck" },
       { label: "Work Packages", href: "/admin/work-packages", icon: "Package" },
       { label: "Contracts", href: "/admin/contracts", icon: "FileSignature" },

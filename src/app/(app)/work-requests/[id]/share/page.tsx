@@ -7,7 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/casing/Button";
 import { formatCents } from "@/lib/display";
 
-export const metadata = { title: "Share your Work Request · Panameer" };
+export const metadata = { title: "Share your Service Requisition · Panameer" };
 
 export default async function Page({
   params,
@@ -24,7 +24,7 @@ export default async function Page({
   return (
     <div className="mx-auto w-full max-w-4xl">
       <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-emerald-700">
-        ✓ Your Work Request is live
+        ✓ Your Service Requisition is live
       </p>
       <h1 className="mt-1 font-display text-[28px] font-bold tracking-[-0.5px]">
         Share it with providers
@@ -115,7 +115,7 @@ export default async function Page({
       <div className="mt-9 flex flex-wrap items-center gap-4 border-t border-line pt-6">
         <Button href="/dashboard">Done</Button>
         <Button href="/create-work" variant="quiet">
-          Create another Work Request
+          Create another Service Requisition
         </Button>
       </div>
     </div>

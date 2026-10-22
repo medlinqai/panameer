@@ -25,7 +25,7 @@ const JOBS: Record<UserType, { id: Job; title: string; description: string }[]> 
     {
       id: "buyer-admin",
       title: "Buyer",
-      description: "I review other people's work requests",
+      description: "I review other people's service requisitions",
     },
   ],
 };

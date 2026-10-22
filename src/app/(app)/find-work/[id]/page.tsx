@@ -12,7 +12,7 @@ import { InterviewCards } from "@/components/work/InterviewCards";
 import { ConfirmAvailability, type AvailabilityView } from "@/components/work/ConfirmAvailability";
 import { ServiceDescriptionView } from "@/components/hire/ServiceDescriptionView";
 
-export const metadata = { title: "Work Request · Panameer" };
+export const metadata = { title: "Service Requisition · Panameer" };
 
 export default async function Page({
   params,
@@ -55,7 +55,7 @@ export default async function Page({
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <BackLink href="/find-work" label="Work Requests" />
+      <BackLink href="/find-work" label="Service Requisitions" />
 
       <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
         {detail.title}

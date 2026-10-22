@@ -3,7 +3,7 @@ import { APP_SHOTS_COPY } from "@/lib/brand";
 type Shot = { title: string; caption: string };
 
 const HIRE_SHOTS: Shot[] = [
-  { title: "Post a Work Request", caption: "Say what you need in your own words." },
+  { title: "Post a Service Requisition", caption: "Say what you need in your own words." },
   { title: "Ranked matches", caption: "Experts ordered by depth and recency." },
   { title: "Contract & settlement", caption: "One agreement, one monthly payment." },
 ];

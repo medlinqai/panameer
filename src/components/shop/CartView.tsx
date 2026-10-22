@@ -43,7 +43,7 @@ export function CartView({ groups, totalCents, currency, hasCompany, workRequest
   if (placed)
     return (
       <section data-order-placed className="mt-6 border-t border-line pt-5">
-        <h2 className="text-[20px] font-bold">Work Request Submitted</h2>
+        <h2 className="text-[20px] font-bold">Service Requisition Submitted</h2>
         <ul className="mt-3 grid gap-2 text-[14.5px]">
           {placed.map((o) => (
             <li key={o.orderId} className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2">
@@ -59,7 +59,7 @@ export function CartView({ groups, totalCents, currency, hasCompany, workRequest
   if (!groups.length)
     return (
       <p className="mt-6 border-t border-line pt-5 text-[14.5px] text-ink-2">
-        Your work request is empty. <Link href="/shop" className="font-semibold text-ink underline underline-offset-4">Shop Service Products</Link>
+        Your service requisition is empty. <Link href="/shop" className="font-semibold text-ink underline underline-offset-4">Shop Service Products</Link>
       </p>
     );
 
@@ -98,7 +98,7 @@ export function CartView({ groups, totalCents, currency, hasCompany, workRequest
       ))}
       <label className="mt-6 block border-t border-line pt-4 text-[13px] font-semibold">
         Description{workRequest?.descriptionRequired ? "" : " (optional)"}
-        <input data-wr-description value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} placeholder="What is this work request for?" className="mt-1 block h-11 w-full border border-line bg-surface px-3 text-[14.5px] font-normal text-ink" />
+        <input data-wr-description value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} placeholder="What is this service requisition for?" className="mt-1 block h-11 w-full border border-line bg-surface px-3 text-[14.5px] font-normal text-ink" />
       </label>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink pt-4">
         <span className="text-[18px] font-bold">Total {formatCents(totalCents, currency)}</span>

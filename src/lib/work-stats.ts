@@ -11,7 +11,7 @@ export async function workHeroStats(): Promise<TalentStat[]> {
   return [
     {
       value: String(workRequests),
-      label: plural(workRequests, "Work Request"),
+      label: plural(workRequests, "Service Requisition"),
     },
     {
       value: String(workOrders),
