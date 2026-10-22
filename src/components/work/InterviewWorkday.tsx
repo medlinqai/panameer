@@ -107,7 +107,7 @@ function Grid({ side, rows }: { side: GridSide; rows: GridRow[] }) {
                 </Link>
               )}
               {r.messagesHref ? (
-                <Link href={r.messagesHref} className="flex justify-center" title={r.unread ? "Unread messages" : "Messages"}><MessageSquare size={17} strokeWidth={1.8} style={{ color: r.unread ? "#2F6FDB" : GREY }} /></Link>
+                <Link href={r.messagesHref} className="flex justify-center" title={r.unread ? "Unread messages" : "Messages"}><MessageSquare size={17} strokeWidth={1.8} style={{ color: r.unread ? "#B3261E" : GREY }} /></Link>
               ) : <span className="flex justify-center"><MessageSquare size={17} strokeWidth={1.8} style={{ color: GREY }} /></span>}
               {side === "buyer" && <span className="text-right text-[13px] font-semibold tabular-nums">{r.rate ?? <span className="text-state-border">—</span>}</span>}
               <span className="flex justify-end">

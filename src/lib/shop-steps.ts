@@ -15,7 +15,7 @@ export const SHOP_STEPS: ShopStepLabel[] = [
   },
   {
     n: 2,
-    summary: "Buy Now or Add to Cart",
+    summary: "Buy Now or Add to Requisition",
     description:
       "You buy at the published price, with no bidding. For anything custom, Request an Estimate instead.",
   },

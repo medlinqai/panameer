@@ -114,7 +114,7 @@ export default function DetailedRoadPage() {
           <span><b className="text-[10px] text-ink">GATE</b> = needed before the next stop · 🔒 = payout details, if required</span>
         </p>
         <ul className="mt-5 max-w-[800px] list-disc space-y-1 pl-5 text-[14px] leading-relaxed">
-          <li><b>5.A · Product Bought:</b> Product Located → Added to Cart → Order Placed. Listed price; orders are accepted automatically (providers can switch to manual). Want something custom? Request an Estimate (5.C).</li>
+          <li><b>5.A · Product Bought:</b> Product Located → Added to Requisition → Order Placed. Listed price; orders are accepted automatically (providers can switch to manual). Want something custom? Request an Estimate (5.C).</li>
           <li><b>5.B · Rate Accepted:</b> Provider Asked → Provider Available → Rate Accepted.</li>
           <li><b>5.C · Estimate Accepted:</b> Estimate Requested → Provider Estimates → Estimate Accepted.</li>
           <li><b>6 · Deliver Services &amp; Products:</b> Work Order Signed → tracker updates → the buyer accepts the deliverable or the timesheet.</li>

@@ -50,7 +50,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
         { label: "Overview", href: "/shop", badge: counts?.total },
         { label: "Browse", href: "/shop?tab=browse" },
         { label: `Compare (${compareIds.length})`, href: "/shop?tab=compare" },
-        { label: `Cart (${counts?.cart ?? 0})`, href: "/shop?tab=cart" },
+        { label: `Requisition (${counts?.cart ?? 0})`, href: "/shop?tab=cart" },
         { label: "Offers", href: "/shop?tab=offers", badge: counts?.offers },
         { label: "Purchases", href: "/shop?tab=purchases", badge: counts?.purchases },
       ]

@@ -68,9 +68,9 @@ export async function shopOverview(viewer: Viewer, personId: string, side: "buye
       ],
     })) });
     groups.push({ title: "In cart", rows: staleCart.map((l) => ({
-      key: `c-${l.id}`, href: "/shop?tab=cart", what: l.description ?? "Cart item", detail: `In your cart since ${when(l.created_at)}`,
+      key: `c-${l.id}`, href: "/shop?tab=cart", what: l.description ?? "Requisition item", detail: `On your requisition since ${when(l.created_at)}`,
       actions: [
-        { label: "Check out", href: "/shop?tab=cart" },
+        { label: "Review Requisition", href: "/shop?tab=cart" },
         { label: "Remove", post: { url: "/api/cart", body: { action: "remove", lineId: l.id } }, toast: "Removed from cart" },
       ],
     })) });

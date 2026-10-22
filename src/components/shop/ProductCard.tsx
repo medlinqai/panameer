@@ -66,7 +66,7 @@ function ProductRow({ p, signedIn, own = false, inCartLineId = null }: { p: Card
   const router = useRouter();
   const { refresh } = useMe();
   const [busy, setBusy] = useState(false);
-  const tag = inCartLineId ? "In Your Cart" : p.orders > 0 ? "Popular with Buyers" : p.fresh ? "New" : null;
+  const tag = inCartLineId ? "On Your Requisition" : p.orders > 0 ? "Popular with Buyers" : p.fresh ? "New" : null;
   const meta = [p.durationWeeks ? `${p.durationWeeks} week${p.durationWeeks === 1 ? "" : "s"}` : null, KIND_LABEL[p.kind] ?? null].filter(Boolean).join(" · ");
   const remove = async () => {
     setBusy(true);
@@ -109,7 +109,7 @@ function ProductRow({ p, signedIn, own = false, inCartLineId = null }: { p: Card
         </p>
         {own && (
           <p data-own-product className="mt-2 text-[12.5px] text-ink-2">
-            Your Service Product — buyers see Buy Now and Add to Cart here{p.openToOffers ? ", and Make an Offer" : ""}.{" "}
+            Your Service Product — buyers see Buy Now and Add to Requisition here{p.openToOffers ? ", and Make an Offer" : ""}.{" "}
             <Link href={`/catalog/products?edit=${p.id}`} className="font-bold text-magenta-dark underline underline-offset-4">Edit</Link>
           </p>
         )}
