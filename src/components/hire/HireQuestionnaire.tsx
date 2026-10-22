@@ -200,7 +200,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
               <textarea value={paste} onChange={(e) => setPaste(e.target.value)} rows={8} className={FIELD} placeholder="Paste the whole posting here" />
             </label>
             <div className="mt-3 flex flex-wrap gap-3">
-              <button type="button" className={BTN} disabled={busy || paste.trim().length < 60} onClick={() => read(null)}>{busy ? "Reading…" : "Read My Posting"}</button>
+              <button type="button" className={BTN} disabled={busy || paste.trim().length < 60} onClick={() => read(null)}>{busy ? "Creating…" : "Create Job Using AI"}</button>
               <button type="button" className={GHOST} disabled={busy} onClick={() => setStart("form")}>Create Job Manually</button>
             </div>
           </div>
