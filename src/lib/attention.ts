@@ -307,7 +307,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
 
   const [dueSoon, toOffer, todays, testsToTake, woAccept, drafts, paidIn] = await Promise.all([
     prisma.proposalRequest.findMany({ where: { provider_person_id: id, status: { in: ["ISSUED", "VIEWED"] }, OR: [{ responds_by: null }, { responds_by: { gt: now } }], bid: null }, orderBy: { responds_by: "asc" }, select: { job_id: true, responds_by: true } }),
-    prisma.interviewRequest.findMany({ where: { provider_person_id: id, status: "REQUESTED" }, select: { job_id: true } }),
+    prisma.interviewRequest.findMany({ where: { provider_person_id: id, status: "REQUESTED" }, select: { job_id: true, slot_minutes: true } }),
     prisma.interviewRequest.count({ where: { provider_person_id: id, status: "SCHEDULED", response: { lines: { some: { starts_at: today } } } } }),
     prisma.testRequest.count({ where: { provider_person_id: id, status: { in: ["ISSUED", "IN_PROGRESS"] } } }),
     prisma.workOrder.findMany({ where: { provider_person_id: id, status: "ISSUED", provider_accepted_at: null }, select: { id: true } }),
@@ -315,7 +315,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     prisma.paymentRequest.count({ where: { provider_person_id: id, status: "APPROVED" } }),
   ]);
   const requests = add("request", dueSoon.length, "Someone Wants to Buy Your Services — Are You Available?", dueSoon[0] ? `/find-work/${dueSoon[0].job_id}` : "/find-work?tab=invitations", "Respond", dueSoon[0]?.responds_by);
-  const interviews = add("request", toOffer.length, "Interview times to offer", toOffer[0] ? `/find-work/${toOffer[0].job_id}#interview` : "/find-work?tab=interviews", "Offer times") + add("request", todays, "Interviews today", "/find-work?tab=interviews", "Join");
+  const interviews = add("request", toOffer.length, toOffer.some((i) => i.slot_minutes) ? "A Buyer Wants to Interview You — Pick a Time" : "Interview Times to Offer", toOffer[0] ? `/find-work/${toOffer[0].job_id}#interview` : "/find-work?tab=interviews", toOffer.some((i) => i.slot_minutes) ? "Pick a Time" : "Offer Times") + add("request", todays, "Interviews today", "/find-work?tab=interviews", "Join");
   const tests = add("request", testsToTake, "Tests to take", "/find-work?tab=tests", "Take");
   const myOrders = (await prisma.workOrder.findMany({ where: { provider_person_id: id }, select: { id: true } })).map((o) => o.id);
   const changes = myOrders.length ? await prisma.workOrderRevision.count({ where: { status: "PENDING", work_order_id: { in: myOrders } } }) : 0;
