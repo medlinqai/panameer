@@ -183,7 +183,8 @@ export async function buyerHireTabs(personId: string) {
     const iv = ivs.find((x) => x.job_id === p.job.id)?._count._all ?? 0;
     const ts = tests.find((x) => x.job_id === p.job.id)?._count._all ?? 0;
     const woSl = p.orders.map((o) => slices.get(o.id)).filter((x): x is NonNullable<typeof x> => !!x);
-    const jobDone = ["CLOSED", "CANCELED"].includes(p.job.status) || (woSl.length > 0 && woSl.every((x) => x.completed));
+    // Hire's part ends at the handoff: once a job has its Work Order it is Filled (the WO lives on in Orders).
+    const jobDone = ["CLOSED", "CANCELED", "FILLED"].includes(p.job.status) || woSl.length > 0;
     const pr = j.budget_min_cents ?? null, prMax = j.budget_max_cents ?? null;
     const within = (c: number | null) => (c == null || (pr == null && prMax == null) ? null : (pr == null || c >= pr) && (prMax == null || c <= prMax));
     const proposalLines: ProposalLine[] = propRows.filter((r) => r.job_id === p.job.id).map((r) => {

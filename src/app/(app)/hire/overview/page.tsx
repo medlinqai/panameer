@@ -94,7 +94,7 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
 
       <section className="flex flex-wrap items-start gap-12">
         <div className="min-w-0 flex-[999_1_560px]" data-my-jobs>
-          <HeadRow title="My Jobs"><SliceChips tabKey="hire-overview-jobs" counts={jobSliceCounts(d.jobRows)} base="/hire/overview" extra={[["drafts", "Drafts"]]} /></HeadRow>
+          <HeadRow title="My Jobs"><SliceChips labels={{ completed: "Filled" }} tabKey="hire-overview-jobs" counts={jobSliceCounts(d.jobRows)} base="/hire/overview" extra={[["drafts", "Drafts"]]} /></HeadRow>
           {recent.length ? recent.map((j) => <CompactJob key={j.id} j={j} />) : <p className="py-5 text-[14px] text-state-inactive">No jobs here. <Link href="/hire">Post a Job</Link> and it shows here with its next step.</p>}
           <p className="mt-3.5 text-[13px] text-state-inactive">Older than 5 days ({older}) · <Link href="/hire/overview?tab=jobs" className="font-semibold">See all jobs</Link></p>
         </div>
@@ -140,7 +140,7 @@ function CompactJob({ j }: { j: JobTabRow }) {
         <Link href={`/work-requests/${j.id}`} className="block text-[15px] font-bold text-ink hover:underline">{j.title}</Link>
         <div className="mt-0.5 text-[13px] text-state-inactive">{[j.posted ? `Posted ${shortDate(j.posted)}` : null, j.facts.split(" · ").find((x) => x.startsWith("$")), j.origin].filter(Boolean).join(" · ")}</div>
         <div className="mt-1.5 flex flex-wrap items-center gap-2.5 text-[13px]">
-          <span className={`font-bold ${STATE_TEXT[stepState(j.step, { completed: j.completed, draft: j.draft })]}`}>{j.completed ? "Completed" : stepLabel(j)}</span>
+          <span className={`font-bold ${STATE_TEXT[stepState(j.step, { completed: j.completed, draft: j.draft })]}`}>{j.completed ? (j.wo ? "Filled" : "Closed") : stepLabel(j)}</span>
           {(j.rates || j.due) && j.step === "proposals" && <span className="text-state-inactive">{[j.rates, j.due ? `due ${j.due}` : null].filter(Boolean).join(" · ")}</span>}
         </div>
         {j.recurring && <RecurringLine r={j.recurring} />}
@@ -173,7 +173,7 @@ async function JobsTab({ personId, step, slice, q }: { personId: string; step: s
         </form>
       </div>
       <div className="flex flex-wrap items-center gap-2 border-b border-ink pb-3">
-        <SliceChips tabKey="hire-jobs" counts={jobSliceCounts(jobRows)} base={step ? `/hire/overview?tab=jobs&step=${step}` : "/hire/overview?tab=jobs"} extra={[["drafts", "Drafts"]]} />
+        <SliceChips labels={{ completed: "Filled" }} tabKey="hire-jobs" counts={jobSliceCounts(jobRows)} base={step ? `/hire/overview?tab=jobs&step=${step}` : "/hire/overview?tab=jobs"} extra={[["drafts", "Drafts"]]} />
         <span className="flex-1" />
         <span className="text-[12px] text-state-inactive">Sorted by what needs you first</span>
       </div>
@@ -219,7 +219,7 @@ function JobArticle({ j }: { j: JobTabRow }) {
           </>
         ) : (
           <>
-            <Fact label="Step"><span className={STATE_TEXT[stepState(j.step, { completed: j.completed })]}>{j.completed ? "Completed" : PATH_STEPS.find((p) => p.key === j.step)?.label ?? j.step}</span></Fact>
+            <Fact label="Step"><span className={STATE_TEXT[stepState(j.step, { completed: j.completed })]}>{j.completed ? (j.wo ? "Filled" : "Closed") : PATH_STEPS.find((p) => p.key === j.step)?.label ?? j.step}</span></Fact>
             <Fact label="Proposals">{j.proposals ?? "—"}</Fact>
             <Fact label="Rates Proposed">{j.rates ?? "—"}{j.rates && j.inRange != null && <span className={`font-medium ${j.inRange ? GREEN : "text-state-declined"}`}> · {j.inRange ? "in range" : "over range"}</span>}</Fact>
             <Fact label="Deadline">{j.deadlineAt ? shortWhen(j.deadlineAt) : "—"}</Fact>

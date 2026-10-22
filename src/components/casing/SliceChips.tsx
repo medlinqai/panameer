@@ -9,7 +9,7 @@ import { useState } from "react";
 // The last chip per tab is remembered per viewer (localStorage, guarded).
 const SL = [["process", "In Process"], ["recurring", "Recurring"], ["completed", "Completed"], ["all", "All"]] as const;
 
-export function SliceChips({ tabKey, counts, base, extra = [] }: { tabKey: string; counts: Record<string, number>; base: string; extra?: [string, string][] }) {
+export function SliceChips({ tabKey, counts, base, extra = [], labels = {} }: { tabKey: string; counts: Record<string, number>; base: string; extra?: [string, string][]; labels?: Partial<Record<string, string>> }) {
   const router = useRouter();
   const sp = useSearchParams();
   const current = sp?.get("slice") ?? "process";
@@ -27,12 +27,12 @@ export function SliceChips({ tabKey, counts, base, extra = [] }: { tabKey: strin
   }, []);
   return (
     <nav aria-label="Show" className="-mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 text-[12.5px]" data-slice-chips>
-      {[...SL, ...extra].map(([k, l]) => (
+      {[...SL, ...extra].map(([k, l0]) => { const l = labels[k] ?? l0; return (
         <Link key={k} href={href(k)} scroll={false} onClick={() => { try { localStorage.setItem(key, k); } catch {} }} aria-current={current === k ? "true" : undefined}
           className={current === k ? "shrink-0 rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "shrink-0 rounded-full border border-line px-3 py-1 font-semibold hover:border-magenta"}>
           {l} <span className="tabular-nums text-ink-3">{counts[k] ?? 0}</span>
         </Link>
-      ))}
+      ); })}
     </nav>
   );
 }
