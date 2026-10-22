@@ -7,6 +7,7 @@ import type { HireMatch } from "@/lib/hire-questionnaire";
 import { MatchList } from "@/components/hire/MatchList";
 import type { JobDefaults } from "@/lib/work-request";
 import type { SdContract, ServiceDescription } from "@/lib/service-description";
+import { defaultDates, howLongText } from "@/lib/job-dates";
 
 // SD-E003: Hire follows the Service Description standard. Step 1 can start from an uploaded posting (read like a résumé);
 // every step is then prefilled with "From AI" hints; Next saves the draft Job.
@@ -16,7 +17,6 @@ const CHIP_OFF = "rounded-full border border-line bg-white px-3.5 py-1.5 text-[1
 const OPT_ON = "flex flex-col items-start rounded-[10px] border border-magenta-dark bg-white p-3 text-left ring-1 ring-magenta-dark";
 const OPT_OFF = "flex flex-col items-start rounded-[10px] border border-line bg-white p-3 text-left hover:border-magenta-dark";
 const RATE_ON = "flex flex-col items-start rounded-[10px] border-2 border-magenta-dark bg-[#fbeafb] p-3 text-left";
-const START_CHIPS = ["ASAP", "Within 2 weeks"] as const;
 const FIELD = "mt-1 block w-full rounded-[8px] border border-line bg-white px-3 py-2.5 text-[14.5px] font-normal text-ink";
 const LABEL = "mt-4 block text-[13px] font-bold";
 const BTN = "inline-flex min-h-10 items-center justify-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40";
@@ -40,7 +40,7 @@ type Props = {
   initialStep: number;
 };
 
-export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial, initialJobId, initialStep }: Props) {
+export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initialJobId, initialStep }: Props) {
   const categories = hierarchy.map((h) => h.name);
   const [step, setStep] = useState(initialStep);
   // Rail stops are clickable for any step already reached (furthest step seen this session).
@@ -49,7 +49,10 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
   const [rangeAsked, setRangeAsked] = useState(false);
   if (step > furthest) setFurthest(step);
   useEffect(() => {
-    if (step !== 4 || rangeAsked) return;
+    if (step !== 4) return;
+    // CA-E001: Start two weeks out and End = Start + the posting's duration unless the posting gave dates.
+    setF((x) => (x.startDate && x.endDate ? x : { ...x, ...defaultDates(x) }));
+    if (rangeAsked) return;
     setRangeAsked(true);
     void (async () => {
       const r = await fetch("/api/hire", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "rateRange", input: { ...f, budgetType: f.budgetType ?? "HOURLY" } }) }).catch(() => null);
@@ -62,7 +65,6 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
   // SM-E006: fields prefilled from the buyer's last job (cleared once the posting or the buyer sets them).
-  const [pickDate, setPickDate] = useState(!!initial.startDate);
   const [fromLast, setFromLast] = useState<string[]>(initialJobId ? [] : defaults.fromLast);
   const [jobId, setJobId] = useState<string | null>(initialJobId);
   const [f, setF] = useState<ServiceDescription>(initial);
@@ -118,6 +120,8 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         if (j) setSuggested((j.skills as string[]) ?? []);
       }
     }
+    if (step === 4 && (!f.startDate || !f.endDate)) { setError("Set a Start Date and an End Date."); return; }
+    if (step === 4 && f.endDate <= f.startDate) { setError("The End Date must be after the Start Date."); return; }
     if (step === 4 && (f.budgetMin == null || f.budgetMax == null || f.budgetMin <= 0 || f.budgetMax <= 0)) {
       setError("Enter a rate range (From and To). Providers use it to decide whether to propose, and we use it to rank matches.");
       return;
@@ -331,17 +335,14 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         {step === 4 && (
           <>
             <h2 className="text-[19px] font-extrabold">5. When, and What&apos;s Your Budget?</h2>
-            <p className={LABEL}>Start{from("startText")}</p>
-            <div className="mt-1.5 flex flex-wrap items-center gap-2" data-start-chips>
-              {f.startText && !pickDate && !(START_CHIPS as readonly string[]).includes(f.startText) && <button type="button" aria-pressed className={CHIP_ON}>{f.startText}</button>}
-              {START_CHIPS.map((c) => { const on = !pickDate && f.startText === c; return <button key={c} type="button" aria-pressed={on} onClick={() => { setPickDate(false); set({ startText: c, startDate: "" }); }} className={on ? CHIP_ON : CHIP_OFF}>{c}</button>; })}
-              <button type="button" aria-pressed={pickDate} onClick={() => { setPickDate(true); set({ startText: "" }); }} className={pickDate ? CHIP_ON : CHIP_OFF}>Pick a Date</button>
-              {pickDate && <input type="date" aria-label="Start date" value={f.startDate} onChange={(e) => set({ startDate: e.target.value })} className="rounded-[8px] border border-line bg-white px-3 py-1.5 text-[14px]" />}
-            </div>
-            <div className="grid gap-x-3 sm:grid-cols-3">
-              <label className={LABEL}>How long{from("duration")}
-                <select value={f.duration ?? ""} onChange={(e) => set({ duration: (e.target.value || null) as ServiceDescription["duration"] })} className={FIELD}><option value="">Not sure yet</option>{howLong.map((h) => <option key={h.value} value={h.value}>{h.label}</option>)}</select>
+            <div className="grid gap-x-3 sm:grid-cols-3" data-job-dates>
+              <label className={LABEL}>Start Date{from("startDate")}
+                <input type="date" required value={f.startDate} onChange={(e) => set({ startDate: e.target.value })} className={FIELD} />
               </label>
+              <label className={LABEL}>End Date{from("endDate")}
+                <input type="date" required min={f.startDate || undefined} value={f.endDate} onChange={(e) => set({ endDate: e.target.value })} className={FIELD} />
+              </label>
+              <p className={LABEL}>How Long<span className="mt-1 block py-2.5 text-[14.5px] font-normal text-ink-2" data-how-long>{f.startDate && f.endDate ? (f.endDate > f.startDate ? howLongText(f.startDate, f.endDate) : "End is before Start") : "—"}</span></p>
             </div>
             <p className="mb-1.5 mt-5 text-[13px] font-bold">Rate{from("budget") ?? from("budgetType")}</p>
             <div className="grid grid-cols-2 gap-2">

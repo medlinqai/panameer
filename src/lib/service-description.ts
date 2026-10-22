@@ -1,6 +1,7 @@
 import type { BudgetType, ContractType, WorkRequestDuration, WorksiteType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { OFFERABLE } from "@/lib/catalog";
+import { durationBucket } from "@/lib/job-dates";
 import { matchSkills } from "@/lib/resume/match";
 import { aiClassifyPosting, aiExtractServiceDescription, stripContacts, type AiServiceDescription, type HierarchyOption, type PostingClass } from "@/lib/work-request/job-import";
 
@@ -22,7 +23,7 @@ export type ServiceDescription = {
   domains: string[]; product: string; skills: { id: string; name: string }[]; customSkills: string[];
   years: number | null; education: string; credentials: string[]; specialties: string[];
   responsibilities: string; required: string; niceToHave: string;
-  startText: string; startDate: string; duration: WorkRequestDuration | null;
+  startText: string; startDate: string; endDate: string; duration: WorkRequestDuration | null;
   budgetType: BudgetType | null; budgetMin: number | null; budgetMax: number | null;
   sourceText: string;
   /** Which fields the posting filled — for the "from your posting" hints. */
@@ -32,7 +33,7 @@ export type ServiceDescription = {
 export const emptySd = (): ServiceDescription => ({
   category: "", businessTypeId: null, businessType: "", classConfidence: null, usesSkills: true, title: "", summary: "", worksite: null, city: "", state: "", country: "", onsiteDays: null, contractTypes: [],
   roleId: null, specificRole: "", domains: [], product: "", skills: [], customSkills: [], years: null, education: "", credentials: [], specialties: [],
-  responsibilities: "", required: "", niceToHave: "", startText: "", startDate: "", duration: null, budgetType: null, budgetMin: null, budgetMax: null,
+  responsibilities: "", required: "", niceToHave: "", startText: "", startDate: "", endDate: "", duration: null, budgetType: null, budgetMin: null, budgetMax: null,
   sourceText: "", fromPosting: [],
 });
 
@@ -140,7 +141,7 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string, p
     roleId: role?.id ?? null, specificRole, domains: ai.domains, product: ai.product ?? "", skills, customSkills: [...new Set(unmatched)].slice(0, 12),
     years: ai.yearsExperience, education: ai.education ?? "", credentials: ai.credentials, specialties: ai.specialties,
     responsibilities: ai.responsibilities.join("\n"), required: ai.mustHave.join("\n"), niceToHave: ai.niceToHave.join("\n"),
-    startText: ai.startText ?? "", startDate: ai.startDate ?? "", duration: ai.duration,
+    startText: ai.startText ?? "", startDate: ai.startDate ?? "", endDate: ai.endDate ?? "", duration: ai.duration,
     budgetType: ai.budgetType, budgetMin: ai.budgetMin, budgetMax: ai.budgetMax,
     sourceText,
   };
@@ -151,7 +152,7 @@ export async function fromParsed(ai: AiServiceDescription, sourceText: string, p
     ...filled("roleId", sd.roleId || sd.specificRole), ...filled("domains", sd.domains), ...filled("product", sd.product), ...filled("skills", sd.skills),
     ...filled("years", sd.years), ...filled("education", sd.education), ...filled("credentials", sd.credentials),
     ...filled("responsibilities", sd.responsibilities), ...filled("required", sd.required), ...filled("niceToHave", sd.niceToHave),
-    ...filled("startText", sd.startText), ...filled("duration", sd.duration), ...filled("budget", sd.budgetMin ?? sd.budgetMax),
+    ...filled("startDate", sd.startDate), ...filled("endDate", sd.endDate), ...filled("startText", sd.startText), ...filled("duration", sd.duration), ...filled("budget", sd.budgetMin ?? sd.budgetMax),
   ];
   return sd;
 }
@@ -176,7 +177,7 @@ export async function writeServiceDescription(jobId: string, sd: ServiceDescript
       custom_skills: [...new Set(sd.customSkills.map((s) => s.trim()).filter(Boolean))].slice(0, 30),
       years_experience: sd.years, education: sd.education.trim() || null,
       responsibilities: lines(sd.responsibilities), required: lines(sd.required), nice_to_have: lines(sd.niceToHave),
-      start_text: sd.startText.trim() || null, start_date: /^\d{4}-\d{2}-\d{2}$/.test(sd.startDate) ? new Date(sd.startDate) : null, duration: sd.duration,
+      start_text: sd.startText.trim() || null, start_date: /^\d{4}-\d{2}-\d{2}$/.test(sd.startDate) ? new Date(sd.startDate) : null, end_date: /^\d{4}-\d{2}-\d{2}$/.test(sd.endDate) ? new Date(sd.endDate) : null, duration: sd.endDate && sd.startDate ? durationBucket(sd.startDate, sd.endDate) : sd.duration,
       budget_type: sd.budgetType, budget_min_cents: sd.budgetMin != null ? Math.round(sd.budgetMin * 100) : null, budget_max_cents: sd.budgetMax != null ? Math.round(sd.budgetMax * 100) : null, budget_amount_cents: null,
       ...(sd.sourceText ? { source_text: sd.sourceText.slice(0, 20000) } : {}),
     },
@@ -212,7 +213,7 @@ export async function readServiceDescription(jobId: string): Promise<ServiceDesc
     roleId: j.role_id, specificRole: j.specificRole?.name ?? deepRolesIn(`${j.title} ${j.description ?? ""}`)[0] ?? "", domains: j.domains, product: j.product ?? "", skills: j.skills.map((s) => ({ id: s.skill.id, name: s.skill.name })), customSkills: j.custom_skills,
     years: j.years_experience, education: j.education ?? "", credentials: j.credentials.map((c) => c.name), specialties: j.specializations.map((s) => s.specialization.name),
     responsibilities: j.responsibilities ?? "", required: j.required ?? "", niceToHave: j.nice_to_have ?? "",
-    startText: j.start_text ?? "", startDate: j.start_date ? j.start_date.toISOString().slice(0, 10) : "", duration: j.duration,
+    startText: j.start_text ?? "", startDate: j.start_date ? j.start_date.toISOString().slice(0, 10) : "", endDate: j.end_date ? j.end_date.toISOString().slice(0, 10) : "", duration: j.duration,
     budgetType: j.budget_type, budgetMin: j.budget_min_cents != null ? j.budget_min_cents / 100 : null, budgetMax: j.budget_max_cents != null ? j.budget_max_cents / 100 : null,
     sourceText: "",
   };

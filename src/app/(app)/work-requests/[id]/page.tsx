@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { howLongText } from "@/lib/job-dates";
 import { WorkRequestPath } from "@/components/work/WorkRequestPath";
 import { Fact, GREEN, MUTED, ROW_RULE, Section, BTN_OUT, StatePill, stepState } from "@/components/hire/HireUI";
 import { ProposalActions } from "@/components/work/ProposalActions";
@@ -151,7 +152,7 @@ export default async function Page({
             <Fact label="Where"><span className="font-normal">{[sd.worksite ? sd.worksite[0] + sd.worksite.slice(1).toLowerCase() : null, [sd.city, sd.state].filter(Boolean).join(", ") || null].filter(Boolean).join(" · ") || "—"}</span></Fact>
             <Fact label="Type"><span className="font-normal">{sd.contractTypes.length ? `Contract · ${sd.contractTypes.join("/")}` : "—"}</span></Fact>
             <Fact label="Who"><span className="font-normal">{[sd.specificRole || null, sd.domains[0], sd.product || null, sd.years ? `${sd.years}+ years` : null, sd.skills.length ? `${sd.skills.length} skills` : null].filter(Boolean).join(" · ") || "—"}</span></Fact>
-            <Fact label="When"><span className="font-normal">{[sd.duration ? HOW_LONG.find((h) => h.value === sd.duration)?.label : null, sd.startText || (sd.startDate ? `start ${sd.startDate}` : null)].filter(Boolean).join(" · ") || "—"}</span></Fact>
+            <Fact label="When"><span className="font-normal">{sd.startDate && sd.endDate ? `${sd.startDate} – ${sd.endDate} · ${howLongText(sd.startDate, sd.endDate)}` : [sd.duration ? HOW_LONG.find((h) => h.value === sd.duration)?.label : null, sd.startText || (sd.startDate ? `start ${sd.startDate}` : null)].filter(Boolean).join(" · ") || "—"}</span></Fact>
             <Fact label="Rate"><span className="font-normal">{rangeText ?? "—"}</span></Fact>
           </div>
         ) : empty("The Service Description shows here once the job has one.")}

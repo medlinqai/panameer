@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { howLongText } from "@/lib/job-dates";
 import { prisma } from "@/lib/prisma";
 import { readServiceDescription } from "@/lib/service-description";
 import { HOW_LONG } from "@/lib/hire-questionnaire";
@@ -61,7 +62,7 @@ export async function ServiceDescriptionView({ jobId, editable, bare = false }: 
         <List label="Nice to Have" text={sd.niceToHave} />
       </Section>
       <Section n={5} title="When" step={4} jobId={jobId} editable={editable}>
-        <p>{[sd.startDate || sd.startText || "Start not set", sd.duration ? HOW_LONG.find((h) => h.value === sd.duration)?.label : null].filter(Boolean).join(" · ")}</p>
+        <p>{sd.startDate && sd.endDate ? `${sd.startDate} – ${sd.endDate} · ${howLongText(sd.startDate, sd.endDate)}` : [sd.startDate || sd.startText || "Start not set", sd.duration ? HOW_LONG.find((h) => h.value === sd.duration)?.label : null].filter(Boolean).join(" · ")}</p>
       </Section>
       <Section n={6} title="Rate" step={4} jobId={jobId} editable={editable}>
         <p>{rate ?? <span className="text-ink-3">Not set — add your budget</span>}</p>
