@@ -167,7 +167,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
   "/hire": [
     { label: "Find Jobs", href: "/find-work", requires: "canProvideServices" },
     { label: "My Jobs", href: "/hire/jobs", requires: "canHireTalent" },
-    { label: "Post a Job", href: "/create-work", requires: "canHireTalent" },
+    { label: "Create a Job", href: "/create-work", requires: "canHireTalent" },
     { label: "My Proposals", href: "/find-work?tab=proposals", requires: "canProvideServices" },
   ],
   "/payments": [

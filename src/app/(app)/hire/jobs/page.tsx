@@ -63,7 +63,7 @@ export default async function Page() {
                 } · ${posted} posted`}
           </p>
         </div>
-        <Button href="/create-work">Post a Job</Button>
+        <Button href="/create-work">Create a Job</Button>
       </div>
 
       {requests.length === 0 ? (

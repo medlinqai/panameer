@@ -42,7 +42,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
     <div className="pm-white-page">
       <HireTabBar tabs={tabs} current={tab} right={
         <span className="flex shrink-0 gap-2">
-          <Link href="/hire" className={`${BTN} shrink-0 px-3 text-[13px] sm:px-5 sm:text-[14px]`} data-post-job>Post a Job</Link>
+          <Link href="/hire" className={`${BTN} shrink-0 px-3 text-[13px] sm:px-5 sm:text-[14px]`} data-post-job>Create a Job</Link>
         </span>
       } />
       <div className="mx-auto w-full max-w-[1120px] pb-14 pt-8">
@@ -95,7 +95,7 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
       <section className="flex flex-wrap items-start gap-12">
         <div className="min-w-0 flex-[999_1_560px]" data-my-jobs>
           <HeadRow title="My Jobs"><SliceChips labels={{ completed: "Filled" }} tabKey="hire-overview-jobs" counts={jobSliceCounts(d.jobRows)} base="/hire/overview" extra={[["drafts", "Drafts"]]} /></HeadRow>
-          {recent.length ? recent.map((j) => <CompactJob key={j.id} j={j} />) : <p className="py-5 text-[14px] text-state-inactive">No jobs here. <Link href="/hire">Post a Job</Link> and it shows here with its next step.</p>}
+          {recent.length ? recent.map((j) => <CompactJob key={j.id} j={j} />) : <p className="py-5 text-[14px] text-state-inactive">No jobs here. <Link href="/hire">Create a Job</Link> and it shows here with its next step.</p>}
           <p className="mt-3.5 text-[13px] text-state-inactive">Older than 5 days ({older}) · <Link href="/hire/overview?tab=jobs" className="font-semibold">See all jobs</Link></p>
         </div>
         <aside className="min-w-0 flex-[1_1_300px]">
