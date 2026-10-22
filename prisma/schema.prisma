@@ -7116,6 +7116,9 @@ model InterviewRequest {
   status           InterviewStatus @default(REQUESTED)
   mode             InterviewMode?
   duration_minutes Int             @default(30)
+  /// IW-E001: Open Times flow — the buyer's slot length and gap; null on old rows = the provider-offers-times flow.
+  slot_minutes     Int?
+  gap_minutes      Int?            @default(5)
 
   /// The slot the requester picked — an `InterviewResponseLine.id`.
   confirmed_line_id String?   @db.Uuid
@@ -7241,6 +7244,20 @@ model ProviderEvaluationLine {
   @@unique([provider_evaluation_id, line_number])
   @@index([provider_evaluation_id])
   @@map("provider_evaluation_lines")
+}
+
+/// IW-E001: one buyer's Open Times — windows providers book interviews in, shared by every job of that buyer.
+model BuyerOpenTime {
+  id         String   @id @default(uuid()) @db.Uuid
+  person_id  String   @db.Uuid
+  starts_at  DateTime
+  ends_at    DateTime
+  /// IANA zone the buyer entered the window in.
+  time_zone  String
+  created_at DateTime @default(now())
+
+  @@index([person_id, starts_at])
+  @@map("buyer_open_times")
 }
 
 model InterviewResponse {
