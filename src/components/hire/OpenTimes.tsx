@@ -90,3 +90,29 @@ export function InvitedNotBooked({ rows }: { rows: { id: string; who: string; jo
     </section>
   );
 }
+
+/** Scott 10-22: the schedule leads the Interviews page; Open Times sit behind one button. */
+export function OpenTimesButton({ windows }: { windows: OpenWindow[] }) {
+  const [open, setOpen] = useState(false);
+  const booked = windows.reduce((n, w) => n + w.booked.length, 0);
+  return (
+    <>
+      <span className="flex flex-wrap items-center gap-3">
+        <span className="text-[13px] text-state-inactive" data-open-times-summary>{windows.length ? `${windows.length} open window${windows.length === 1 ? "" : "s"} · ${booked} booked` : "No open times yet"}</span>
+        <button type="button" onClick={() => setOpen(true)} className={BTN} data-set-interview-times>Set Interview Times</button>
+      </span>
+      {open && (
+        <div role="dialog" aria-label="Set Interview Times" className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4" onClick={() => setOpen(false)}>
+          <div className="mt-10 w-full max-w-2xl rounded-[12px] bg-white p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-[18px] font-extrabold">Set Interview Times</h2>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-[22px] leading-none text-state-inactive hover:text-ink">×</button>
+            </div>
+            <div className="mt-3"><OpenTimes compact windows={windows} /></div>
+            <div className="mt-5 flex justify-end"><button type="button" onClick={() => setOpen(false)} className={BTN_OUT}>Done</button></div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

@@ -21,7 +21,7 @@ const TEST: Record<GridRow["test"], { color: string; label: string }> = {
 
 export type WorkdayDay = { key: string; prev: string; next: string; isToday: boolean; label: string };
 
-export function InterviewWorkday({ side, rows, tiles, day, base, show, testsHref, top }: { side: GridSide; rows: GridRow[]; tiles: GridTiles; day: WorkdayDay; base: string; show: string | null; testsHref: string; top?: ReactNode }) {
+export function InterviewWorkday({ side, rows, tiles, day, base, show, testsHref, top, actions, bottom }: { side: GridSide; rows: GridRow[]; tiles: GridTiles; day: WorkdayDay; base: string; show: string | null; testsHref: string; top?: ReactNode; actions?: ReactNode; bottom?: ReactNode }) {
   const href = (q: string) => `${base}${q ? `&${q}` : ""}`;
   const tileList: [string, number, string, boolean][] = [
     ["Today", tiles.today, href(""), !show],
@@ -33,11 +33,14 @@ export function InterviewWorkday({ side, rows, tiles, day, base, show, testsHref
   const title = show === "confirm" ? "To Confirm" : show === "feedback" ? "Feedback Due" : null;
   return (
     <div className="flex flex-col gap-6" data-interview-workday={side}>
-      <div>
-        <h1 className="text-[30px] font-extrabold">Interviews</h1>
-        <p className="mt-1 text-[14px] text-state-inactive">
-          You have <Link href={href("")} className="font-semibold">{tiles.today} interview{tiles.today === 1 ? "" : "s"} today</Link> and <Link href={href("show=confirm")} className="font-semibold">{tiles.toConfirm} to confirm</Link>.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-[30px] font-extrabold">Interviews</h1>
+          <p className="mt-1 text-[14px] text-state-inactive">
+            You have <Link href={href("")} className="font-semibold">{tiles.today} interview{tiles.today === 1 ? "" : "s"} today</Link> and <Link href={href("show=confirm")} className="font-semibold">{tiles.toConfirm} to confirm</Link>.
+          </p>
+        </div>
+        {actions}
       </div>
       {top}
       <div className={`grid grid-cols-2 gap-3 ${side === "buyer" ? "sm:grid-cols-5" : "sm:grid-cols-4"}`} data-workday-tiles>
@@ -69,6 +72,7 @@ export function InterviewWorkday({ side, rows, tiles, day, base, show, testsHref
           </div>
         )}
       </section>
+      {bottom}
     </div>
   );
 }
