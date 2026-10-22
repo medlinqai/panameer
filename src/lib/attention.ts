@@ -272,7 +272,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   const { estimateCounts } = await import("@/lib/estimate-events");
   const ec = await estimateCounts(id, side === "buyer" ? "buyer" : "seller");
   const estimate = { total: ec.total };
-  const add = (app: AppKey, n: number, what: string, href: string, action: string, due?: Date | null) => { if (n > 0) items.push({ id: `${app}:${what}`, what: n > 1 ? `${what} (${n})` : what, app, appLabel: APP_LABEL[app], due: dueText(due), href, action }); return n; };
+  const add = (app: AppKey, n: number, what: string, href: string, action: string, due?: Date | null) => { if (n > 0) items.push({ id: `${app}:${what}`, what: n > 1 ? `${what} (${n})` : what, app, appLabel: app === "request" && side === "provider" ? "Jobs" : APP_LABEL[app], due: dueText(due), href, action }); return n; };
 
   if (side === "buyer") {
     const [toReview, closing, expired, confirm, todays, testsIn, approvals, woAccept, settle, pay] = await Promise.all([
