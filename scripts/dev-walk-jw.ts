@@ -65,7 +65,7 @@ async function main() {
 
   // 4 · Externally sourced Work Request (no Job) → Submit → WO
   const xid = crypto.randomUUID();
-  await prisma.workRequest.create({ data: { id: xid, wr_number: await nextNumber("WR", { pAccountId: buyer.pAccountId }), source: "EXTERNALLY_SOURCED", status: "INCOMPLETE", buyer_person_id: buyer.personId, p_account_id: buyer.pAccountId, proposal_access: "INVITE_ONLY", sole_sourced: true, description: "Walk: outside consultant",
+  await prisma.workRequest.create({ data: { id: xid, wr_number: await nextNumber("RQ", { pAccountId: buyer.pAccountId }), source: "EXTERNALLY_SOURCED", status: "INCOMPLETE", buyer_person_id: buyer.personId, p_account_id: buyer.pAccountId, proposal_access: "INVITE_ONLY", sole_sourced: true, description: "Walk: outside consultant",
     lines: { create: { line_number: 1, transaction_type: "SERVICE_BY_AMT", description: "Fixed fee", currency: "USD", amount_cents: 500000, provider_person_id: pat.personId } } } });
   const [xo] = await submitWorkRequest(buyer.viewer, { workRequestId: xid });
   const x = await prisma.workOrder.findUniqueOrThrow({ where: { id: xo!.id } });

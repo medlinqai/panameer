@@ -2,7 +2,7 @@
 // year from each row's creation date); the old number goes to legacy_number. ERP refs (PO numbers, cXML ids) untouched.
 // Usage: npx tsx --env-file=.env.local scripts/backfill-transaction-numbers.ts [--apply]
 import { prisma } from "@/lib/prisma";
-import { nextNumber } from "@/lib/numbering";
+import { nextNumber, type NumberPrefix } from "@/lib/numbering";
 
 const NEW = /^[A-Z]{2}-[A-Z0-9]{3,6}-\d{2}-\d{8}$/;
 const apply = process.argv.includes("--apply");
@@ -15,7 +15,7 @@ async function run(prefix: "JB" | "WR" | "WO" | "ST" | "PY" | "CO" | "ES", rows:
   for (const r of todo) {
     if (!r.pAccountId && !r.companyId) continue;
     if (!apply) continue;
-    const num = await nextNumber(prefix, { pAccountId: r.pAccountId, companyId: r.companyId }, { at: r.at });
+    const num = await nextNumber(prefix as NumberPrefix, { pAccountId: r.pAccountId, companyId: r.companyId }, { at: r.at });
     await write(r.id, num, r.old);
     if (samples.length < 8 && r.old) samples.push(`${r.old} → ${num}`);
   }

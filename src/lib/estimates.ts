@@ -1,7 +1,7 @@
 import { activeMsa } from "@/lib/agreements";
 import { defaultPaymentEvent, styleForLine, styleForLines } from "@/lib/work-order-styles";
 import type { TransactionType } from "@prisma/client";
-import { nextNumber } from "@/lib/numbering";
+import { nextNumber, PREFIX } from "@/lib/numbering";
 import { providerNameForBuyer } from "@/lib/provider-number";
 import { assertCanSign } from "@/lib/your-path";
 import { Prisma, type BillingCycle, type EstimateLineKind, type PaymentTerms } from "@prisma/client";
@@ -252,7 +252,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
     const wrId = crypto.randomUUID();
     await tx.workRequest.create({
       data: {
-        id: wrId, wr_number: await nextNumber("WR", { pAccountId }, { tx }), source: "ESTIMATE", status: "ORDERED", submitted_at: now, approved_at: now, description, sole_sourced: true, job_id: jobId,
+        id: wrId, wr_number: await nextNumber(PREFIX.WORK_REQUEST, { pAccountId }, { tx }), source: "ESTIMATE", status: "ORDERED", submitted_at: now, approved_at: now, description, sole_sourced: true, job_id: jobId,
         buyer_person_id: buyer.id, p_account_id: pAccountId, currency: e.currency, proposal_access: "INVITE_ONLY", style: styleForLines(mapped.map((m) => ({ transaction_type: m.type, uom: m.uom, billing_cycle: m.type === "SERVICE_BY_QTY" ? recurring : null }))),
         lines: { create: mapped.map((m) => ({ line_number: m.l.line_number, transaction_type: m.type, description: m.l.description, currency: e.currency, status: "ORDERED" as const, uom: m.uom, quantity: m.quantity, unit_price_cents: m.unit, amount_cents: m.amount, provider_service_id: m.l.provider_service_id, service_product_id: m.l.service_product_id, provider_person_id: e.provider_person_id })) },
       },

@@ -1,4 +1,4 @@
-import { nextNumber } from "@/lib/numbering";
+import { nextNumber, PREFIX } from "@/lib/numbering";
 import { prisma } from "@/lib/prisma";
 
 // JW-E003/E004: the Work Request is the requisition header (Oracle POR_REQUISITION_HEADERS_ALL). A Job's hires, the Shop
@@ -16,7 +16,7 @@ export async function requisitionForJob(jobId: string): Promise<{ id: string; st
   const id = crypto.randomUUID();
   return prisma.workRequest.create({
     data: {
-      id, wr_number: await nextNumber("WR", { pAccountId: job.p_account_id }), job_id: jobId, source: "JOB_HIRE", status: "INCOMPLETE",
+      id, wr_number: await nextNumber(PREFIX.WORK_REQUEST, { pAccountId: job.p_account_id }), job_id: jobId, source: "JOB_HIRE", status: "INCOMPLETE",
       buyer_person_id: job.buyer_person_id, p_account_id: job.p_account_id, currency: job.currency, proposal_access: job.proposal_access,
       // JW-E007: pre-filled from the Job title (editable before Submit).
       description: job.title || job.description?.split("\n")[0] || null, start_date: job.start_date, end_date: job.end_date,

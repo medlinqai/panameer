@@ -1,4 +1,4 @@
-import { nextNumber } from "@/lib/numbering";
+import { nextNumber, PREFIX } from "@/lib/numbering";
 import { searchVariants } from "@/lib/search-synonyms";
 import { prisma } from "@/lib/prisma";
 import { effectiveRates } from "@/lib/company-catalog";
@@ -35,7 +35,7 @@ async function cartRequest(s: PunchoutSessionLive): Promise<string> {
   const id = crypto.randomUUID();
   const wr = await prisma.workRequest.create({
     data: {
-      id, wr_number: await nextNumber("WR", { pAccountId: s.connection.p_account_id }), source: "PUNCHOUT", description: `Punchout ${new Date().toISOString().slice(0, 10)}`,
+      id, wr_number: await nextNumber(PREFIX.WORK_REQUEST, { pAccountId: s.connection.p_account_id }), source: "PUNCHOUT", description: `Punchout ${new Date().toISOString().slice(0, 10)}`,
       buyer_person_id: s.requester_person_id, p_account_id: s.connection.p_account_id, title: `Punchout ${new Date().toISOString().slice(0, 10)}`,
       status: "INCOMPLETE", proposal_access: "INVITE_ONLY", sole_sourced: true, erp_connection_id: s.connection_id,
     },

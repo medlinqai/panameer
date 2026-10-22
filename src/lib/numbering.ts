@@ -2,10 +2,14 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ensureCompanyCode } from "@/lib/company-code";
 
-// NB-E001: every transaction number = PREFIX-COMPANY-YY-######## (WR-STRAT-26-00000001) — the BUYER company's code,
+// NB-E001: every transaction number = PREFIX-COMPANY-YY-######## (RQ-STRAT-26-00000001) — the BUYER company's code,
 // the calendar year of creation (America/New_York), one sequence per prefix per buyer account that never resets.
-export const PREFIX = { JOB: "JB", WORK_REQUEST: "WR", WORK_ORDER: "WO", SETTLEMENT: "ST", PAYMENT: "PY", CHANGE_ORDER: "CO", ESTIMATE: "ES", AGREEMENT: "MS", SOURCING_EVENT: "SE" } as const;
+export const PREFIX = { JOB: "JB", WORK_REQUEST: "RQ", WORK_ORDER: "WO", SETTLEMENT: "ST", PAYMENT: "PY", CHANGE_ORDER: "CO", ESTIMATE: "ES", AGREEMENT: "MS", SOURCING_EVENT: "SE" } as const;
 export type NumberPrefix = (typeof PREFIX)[keyof typeof PREFIX];
+// SQ-E002: Service Requisitions print RQ but keep counting on the WR sequence (no reset); old WR- numbers stay as issued.
+const SEQUENCE_KEY: Partial<Record<NumberPrefix, string>> = { RQ: "WR" };
+/** A requisition number in either form — RQ-… (from 2026-10-22) or WR-… (issued before). */
+export const REQUISITION_NUMBER = /^(RQ|WR)-[A-Z0-9]+-\d{2}-\d{8}$/i;
 
 type Tx = Prisma.TransactionClient | typeof prisma;
 
@@ -33,7 +37,7 @@ export async function nextNumber(prefix: NumberPrefix, buyer: { companyId?: stri
   // Atomic: the row is created at 1 or incremented — two inserts never share a number.
   const rows = await db.$queryRaw<{ last_value: number }[]>`
     INSERT INTO number_sequences (id, prefix, p_account_id, last_value, updated_at)
-    VALUES (gen_random_uuid(), ${prefix}, ${pAccountId}::uuid, 1, now())
+    VALUES (gen_random_uuid(), ${SEQUENCE_KEY[prefix] ?? prefix}, ${pAccountId}::uuid, 1, now())
     ON CONFLICT (prefix, p_account_id) DO UPDATE SET last_value = number_sequences.last_value + 1, updated_at = now()
     RETURNING last_value`;
   return formatNumber(prefix, code, opts.at ?? new Date(), Number(rows[0].last_value));

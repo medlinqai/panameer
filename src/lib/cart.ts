@@ -1,7 +1,7 @@
 import { activeMsa } from "@/lib/agreements";
 import { styleForLine } from "@/lib/work-order-styles";
 import type { WorkOrderStyle } from "@prisma/client";
-import { nextNumber } from "@/lib/numbering";
+import { nextNumber, PREFIX } from "@/lib/numbering";
 import type { PaymentEvent, PaymentTerms, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { pendingJoin, waitingLine } from "@/lib/pending-join";
@@ -57,7 +57,7 @@ export async function shopRequest(personId: string): Promise<{ id: string }> {
   const p = await prisma.person.findUnique({ where: { id: personId }, select: { company: { select: { p_account_id: true } } } });
   if (!p?.company?.p_account_id) throw new CartError("Add your company before you add to a service requisition", "NO_COMPANY");
   const id = crypto.randomUUID();
-  return prisma.workRequest.create({ data: { id, wr_number: await nextNumber("WR", { pAccountId: p.company.p_account_id }), buyer_person_id: personId, p_account_id: p.company.p_account_id, source: "SHOP", status: "INCOMPLETE", proposal_access: "INVITE_ONLY", sole_sourced: true }, select: { id: true } });
+  return prisma.workRequest.create({ data: { id, wr_number: await nextNumber(PREFIX.WORK_REQUEST, { pAccountId: p.company.p_account_id }), buyer_person_id: personId, p_account_id: p.company.p_account_id, source: "SHOP", status: "INCOMPLETE", proposal_access: "INVITE_ONLY", sole_sourced: true }, select: { id: true } });
 }
 
 /** Put (or replace) one item on the Shop work request. Shop lines keep quantity × unit price; by-amount lines also carry the amount. */

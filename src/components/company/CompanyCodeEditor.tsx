@@ -39,7 +39,7 @@ export function CompanyCodeEditor({ companyId, initial, canEdit }: { companyId: 
         {!editing ? (
           <>
             <b className="font-mono text-[15px]">{initial ?? "—"}</b>
-            <span className="text-ink-2">in every number, e.g. WR-{initial ?? "CODE"}-26-00000001</span>
+            <span className="text-ink-2">in every number, e.g. RQ-{initial ?? "CODE"}-26-00000001</span>
             {canEdit && <button type="button" onClick={() => { setEditing(true); setCode(initial ?? ""); }} className="font-semibold text-magenta-dark underline underline-offset-4">Change</button>}
           </>
         ) : (
