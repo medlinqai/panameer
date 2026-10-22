@@ -96,10 +96,10 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
           <div className="w-full max-w-md bg-white p-6 text-ink shadow-xl">
             <h2 id="hire-done-title" className="text-[20px] font-extrabold">Confirmation</h2>
             <p className="mt-3 text-[14.5px] leading-relaxed">
-              Work Request <b>{done.wrNumber ?? "—"}</b> was submitted and approved.
+              Work Request <b className="whitespace-nowrap">{done.wrNumber ?? "—"}</b>{"\u00a0"}was submitted and approved.
             </p>
             <p className="mt-1 text-[14.5px] leading-relaxed">
-              Work Order <b>{done.orderNumber}</b> is ready for your review. We&apos;ve also sent you a link.
+              Work Order <b className="whitespace-nowrap">{done.orderNumber}</b>{"\u00a0"}is ready for your review. We&apos;ve also sent you a link.
             </p>
             {done.approvalNote && <p className="mt-1 text-[12.5px] text-ink-3">{done.approvalNote}</p>}
             <div className="mt-5 flex flex-wrap items-center gap-3">
