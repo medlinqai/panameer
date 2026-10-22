@@ -304,6 +304,8 @@ export type InterviewRow = {
   startsAt: string | null; slots: { id: string; startsAt: string; timeZone: string }[];
   providerPersonId: string; providerLabel: string; providerPhotoUrl: string | null; providerUserId: string | null; buyerCompany: string; buyerUserId: string | null;
   skills: { id: string; name: string }[]; hasRoom: boolean;
+  /** IW-E005: set = Open Times flow (the provider books one of the buyer's slots). */
+  slotMinutes: number | null;
   rating: string | null; comment: string | null;
 };
 
@@ -313,7 +315,7 @@ export async function listInterviews(input: { buyerPersonId?: string; providerPe
     where: { ...(input.buyerPersonId ? { requested_by_person_id: input.buyerPersonId } : {}), ...(input.providerPersonId ? { provider_person_id: input.providerPersonId } : {}), ...(input.jobId ? { job_id: input.jobId } : {}) },
     orderBy: { created_at: "asc" },
     select: {
-      id: true, request_number: true, status: true, mode: true, duration_minutes: true, confirmed_line_id: true, room_url: true, provider_person_id: true, requested_by_person_id: true,
+      id: true, request_number: true, status: true, mode: true, duration_minutes: true, slot_minutes: true, confirmed_line_id: true, room_url: true, provider_person_id: true, requested_by_person_id: true,
       job_id: true,
       response: { select: { lines: { orderBy: { line_number: "asc" }, select: { id: true, starts_at: true, time_zone: true } } } },
       notes: { orderBy: { created_at: "desc" }, take: 1, select: { body: true, rating: true } },
@@ -338,7 +340,7 @@ export async function listInterviews(input: { buyerPersonId?: string; providerPe
       slots: r.status === "SLOTS_OFFERED" ? (r.response?.lines ?? []).map((l) => ({ id: l.id, startsAt: l.starts_at.toISOString(), timeZone: l.time_zone })) : [],
       providerPersonId: r.provider_person_id, providerLabel: labels.get(r.provider_person_id)!, providerPhotoUrl: photoOf.get(r.provider_person_id) ?? null, providerUserId: userOf.get(r.provider_person_id) ?? null,
       buyerCompany: companies.get(r.requested_by_person_id)!, buyerUserId: userOf.get(r.requested_by_person_id) ?? null,
-      skills: job.skills.map((s) => s.skill), hasRoom: !!r.room_url,
+      skills: job.skills.map((s) => s.skill), hasRoom: !!r.room_url, slotMinutes: r.slot_minutes,
       rating: input.buyerPersonId ? r.notes[0]?.rating ?? null : null, comment: input.buyerPersonId ? r.notes[0]?.body ?? null : null,
     };
   });

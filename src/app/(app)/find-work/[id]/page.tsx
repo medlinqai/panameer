@@ -9,6 +9,8 @@ import { providerEventView, rateCardFor } from "@/lib/sourcing-events";
 import { listInterviews } from "@/lib/interviews";
 import { dailyConfigured } from "@/lib/daily";
 import { InterviewCards } from "@/components/work/InterviewCards";
+import { BookInterview } from "@/components/work/BookInterview";
+import { slotsForInterview } from "@/lib/open-times";
 import { ConfirmAvailability, type AvailabilityView } from "@/components/work/ConfirmAvailability";
 import { ServiceDescriptionView } from "@/components/hire/ServiceDescriptionView";
 
@@ -101,9 +103,14 @@ export default async function Page({
           </div>
 
           {interviews.length > 0 && (
-            <section id="interview" className="mt-5">
-              <h2 className="mb-2 text-[17px] font-extrabold">Interview</h2>
-              <InterviewCards rows={interviews} side="provider" videoReady={dailyConfigured()} />
+            <section id="interview" className="mt-5 flex flex-col gap-3">
+              <h2 className="text-[17px] font-extrabold">Interview</h2>
+              {/* IW-E005: Open Times invitations — book a slot (or cancel a booked one); older interviews keep the offer-times cards. */}
+              {await Promise.all(interviews.filter((r) => r.slotMinutes && (r.status === "REQUESTED" || r.status === "SCHEDULED")).map(async (r) => (
+                <BookInterview key={r.id} interviewId={r.id} company={r.buyerCompany} jobTitle={r.jobTitle} minutes={r.slotMinutes!} booked={r.status === "SCHEDULED" ? r.startsAt : null}
+                  slots={r.status === "REQUESTED" ? (await slotsForInterview(viewer, r.id)).map((d) => d.toISOString()) : []} />
+              )))}
+              {interviews.some((r) => !(r.slotMinutes && r.status === "REQUESTED")) && <InterviewCards rows={interviews.filter((r) => !(r.slotMinutes && r.status === "REQUESTED"))} side="provider" videoReady={dailyConfigured()} />}
             </section>
           )}
           {sourcing && (
