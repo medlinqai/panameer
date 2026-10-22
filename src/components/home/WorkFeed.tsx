@@ -4,6 +4,7 @@ import { FilterBar, type FilterDef } from "@/components/casing/FilterBar";
 import { relativeDay } from "@/lib/relative-day";
 import { WhoIsAsking } from "@/components/work/WhoIsAsking";
 import { TypeArt } from "@/components/shop/TypeArt";
+import { WantThisJob } from "@/components/work/WantThisJob";
 import {
   UNBACKED_TABS,
   WORK_FEED_TABS,
@@ -120,6 +121,7 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
                   {card.myProposal}
                 </Link>
               )}
+              {card.oneClick && <WantThisJob jobId={card.id} rateCents={card.oneClick.rateCents} per={card.oneClick.per} />}
 
               {card.description && (
                 <p className="mt-2 line-clamp-3 text-[14px] leading-relaxed text-ink-2">

@@ -48,6 +48,8 @@ export type WorkCard = {
   category?: string | null;
   /** WP-E004: the provider's own proposal on My Proposals / Invitations ("Submitted · $110/hr · start Oct 26 · due Oct 22 1:53 PM"). */
   myProposal?: string | null;
+  /** CA-E006: the one-click I Want This Job — rate-card rate and the job's dates (null for a non-provider viewer). */
+  oneClick?: { rateCents: number | null; per: string; start: string | null; end: string | null } | null;
 };
 
 const PROPOSAL_LABEL: Record<string, string> = { SUBMITTED: "Available", SHORTLISTED: "Shortlisted", AWARDED: "Awarded", NOT_SELECTED: "Not selected", DECLINED: "Not selected", WITHDRAWN: "Withdrawn", DRAFT: "Draft" };
@@ -179,6 +181,8 @@ export async function getWorkFeed(input: {
       duration: true,
       location_country: true,
       worksite: true,
+      start_date: true,
+      end_date: true,
       posted_at: true,
       role: { select: { display: true, name: true } },
       // — the poster, their company and their account. All of it
@@ -275,12 +279,18 @@ export async function getWorkFeed(input: {
     skills: w.skills.map((s) => s.skill.name),
     postedAt: w.posted_at?.toISOString() ?? null,
     _overlap: w.skills.filter((s) => skillIds.includes(s.skill.id)).length,
+    _raw: { worksite: w.worksite, start: w.start_date, end: w.end_date, fixed: w.budget_type === "FIXED" },
   }));
 
   if (input.tab === "best") {
     cards.sort((a, b) => b._overlap - a._overlap);
   }
 
-  const mineMap = mine && input.personId ? await myProposals(input.personId, cards.map((c) => c.id)) : null;
-  return cards.map(({ _overlap, ...card }) => ({ ...card, matched: _overlap, myProposal: mineMap?.get(card.id) ?? null }));
+  const mineMap = input.personId ? await myProposals(input.personId, cards.map((c) => c.id)) : null;
+  const card$ = input.personId ? await prisma.providerProfile.findUnique({ where: { person_id: input.personId }, select: { onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true } }) : null;
+  const iso = (d: Date | null) => d?.toISOString().slice(0, 10) ?? null;
+  return cards.map(({ _overlap, _raw, ...card }) => ({
+    ...card, matched: _overlap, myProposal: mine ? mineMap?.get(card.id) ?? null : null,
+    oneClick: card$ && !mineMap?.has(card.id) ? { rateCents: (_raw.worksite === "OFFSITE" ? card$.remote_rate_cents ?? card$.onsite_rate_cents : card$.onsite_rate_cents ?? card$.remote_rate_cents) ?? card$.hourly_rate_cents ?? null, per: _raw.fixed ? "" : "/hr", start: iso(_raw.start), end: iso(_raw.end) } : null,
+  }));
 }
