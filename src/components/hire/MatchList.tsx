@@ -39,6 +39,8 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   const [opened, setOpened] = useState<{ eventId: string; eventNumber: string; count: number } | null>(null);
   const [compared, setCompared] = useState(false);
   const [showWeak, setShowWeak] = useState(false);
+  const [minYears, setMinYears] = useState(0);
+  const [minImpl, setMinImpl] = useState(0);
 
   const patch = (personId: string, p: Partial<HireMatch>) => setList((ms) => ms.map((m) => (m.personId === personId ? { ...m, ...p } : m)));
   const star = (m: HireMatch) => { patch(m.personId, { starred: !m.starred }); void post({ action: "star", jobId, personIds: [m.personId], on: !m.starred }); };
@@ -49,7 +51,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
     if (hidden && m.starred) void post({ action: "star", jobId, personIds: [m.personId], on: false });
   };
 
-  const shown = list.filter((m) => !m.hidden && (showOutside || !m.outside) && (!starredOnly || m.starred));
+  const shown = list.filter((m) => !m.hidden && (showOutside || !m.outside) && (!starredOnly || m.starred) && (m.detail.ocYears ?? 0) >= minYears && (m.detail.implementations ?? 0) >= minImpl);
   // HP-E004: product-only matches (no domain, no skill) go under "Weaker matches", folded.
   const strong = shown.filter((m) => !m.weak || m.starred);
   const weak = shown.filter((m) => m.weak && !m.starred);
@@ -88,6 +90,8 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
         <button type="button" aria-pressed={!starredOnly} onClick={() => setStarredOnly(false)} className={!starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>All ({list.filter((m) => !m.hidden).length})</button>
         <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({starred.length})</button>
         <button type="button" disabled={starred.length < 2 || starred.length > 4} onClick={() => { setComparing(true); setCompared(true); }} className={GHOST} data-compare title="Star 2 to 4 providers to compare them">Compare{starred.length >= 2 ? ` ${Math.min(starred.length, 4)}` : ""}</button>
+        <MinChip label="Min Oracle Cloud Years" value={minYears} options={[2, 5, 8, 10]} onChange={setMinYears} />
+        <MinChip label="Min Implementations" value={minImpl} options={[1, 3, 5, 10]} onChange={setMinImpl} />
       </div>
 
       <ul className="mt-3 divide-y divide-line border-y border-line">
@@ -184,12 +188,14 @@ function QuickView({ m, jobId, onClose, onStar, onHide, prev, next }: { m: HireM
       </div>
       {d.summary && <Section title="Summary"><p className="whitespace-pre-line text-ink-2">{d.summary}</p></Section>}
       <Section title="Role">{d.role ?? "—"}</Section>
-      <Section title={`Skills matched (${d.skillsMatched})`}>
+      <Section title={`Skills Matched (${d.skillsMatched})`}>
         <p className="flex flex-wrap gap-1.5 text-[12px]">{m.why.map((k) => <span key={k} className={WHY}>{k}</span>)}{m.matched.map((k) => <span key={k} className={CHIP}>{k}</span>)}</p>
       </Section>
       <div className="grid grid-cols-2 gap-x-4">
         <Section title="Years">{d.years != null ? `${d.years} yrs` : "—"}</Section>
         <Section title="Location">{d.location ?? "—"}</Section>
+        <Section title="Oracle Cloud Years">{d.ocYearsLabel?.replace(/ Oracle Cloud$/, "") ?? "—"}</Section>
+        <Section title="Implementations">{d.implementationsLabel?.replace(/ Implementations?$/, "") ?? "—"}</Section>
       </div>
       <Section title="Certifications">{d.certifications.length ? d.certifications.join(" · ") : "—"}</Section>
       <Section title="Rates">{d.rates.length ? <ul>{d.rates.map((r) => <li key={r.name} className="flex justify-between gap-3"><span>{r.name}</span><b>{r.rate}</b></li>)}</ul> : m.rate ?? "—"}</Section>
@@ -213,13 +219,17 @@ export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: Hi
   const bestRate = best(rows.map((r) => num(r.proposed ?? r.m.rate)), "min");
   const bestYears = best(rows.map((r) => r.m.detail.years), "max");
   const bestSkills = best(rows.map((r) => skillsN(r.m)), "max");
+  const bestOc = best(rows.map((r) => r.m.detail.ocYears), "max");
+  const bestImpl = best(rows.map((r) => r.m.detail.implementations), "max");
   const HL = "rounded-full bg-[#fbeafb] px-2 py-0.5 font-bold text-magenta-dark";
   const lines: [string, (r: (typeof rows)[number]) => ReactNode][] = [
-    ...(withProposal ? ([["Proposed rate", (r) => <span className={num(r.proposed) != null && num(r.proposed) === bestRate ? HL : ""}>{r.proposed ?? "—"}</span>], ["Earliest start", (r) => r.start ?? "—"]] as [string, (r: (typeof rows)[number]) => ReactNode][]) : []),
+    ...(withProposal ? ([["Proposed Rate", (r) => <span className={num(r.proposed) != null && num(r.proposed) === bestRate ? HL : ""}>{r.proposed ?? "—"}</span>], ["Earliest Start", (r) => r.start ?? "—"]] as [string, (r: (typeof rows)[number]) => ReactNode][]) : []),
     ["Rate", (r) => <span><span className={!withProposal && num(r.m.rate) != null && num(r.m.rate) === bestRate ? HL : ""}>{r.m.rate ?? "—"}</span>{r.m.rate && <span className="ml-1.5 text-[12px] text-ink-2">{r.m.inBudget ? "in budget" : "over budget"}</span>}</span>],
     ["Years", (r) => <span className={r.m.detail.years != null && r.m.detail.years === bestYears ? HL : ""}>{r.m.detail.years != null ? `${r.m.detail.years} yrs` : "—"}</span>],
+    ["Oracle Cloud Years", (r) => <span className={r.m.detail.ocYears != null && r.m.detail.ocYears === bestOc ? HL : ""}>{r.m.detail.ocYearsLabel?.replace(/ Oracle Cloud$/, "") ?? "—"}</span>],
+    ["Implementations", (r) => <span className={r.m.detail.implementations != null && r.m.detail.implementations === bestImpl ? HL : ""}>{r.m.detail.implementationsLabel?.replace(/ Implementations?$/, "") ?? "—"}</span>],
     ["Role", (r) => r.m.detail.role ?? "—"],
-    ["Skills matched", (r) => <span><span className={skillsN(r.m) === bestSkills ? HL : "font-semibold"}>{r.m.detail.skillsMatched}</span>{r.m.matched.length > 0 && <span className="mt-1 block text-[12px] text-ink-2">{r.m.matched.join(", ")}</span>}</span>],
+    ["Skills Matched", (r) => <span><span className={skillsN(r.m) === bestSkills ? HL : "font-semibold"}>{r.m.detail.skillsMatched}</span>{r.m.matched.length > 0 && <span className="mt-1 block text-[12px] text-ink-2">{r.m.matched.join(", ")}</span>}</span>],
     ["Certifications", (r) => (r.m.detail.certifications.length ? <span title={r.m.detail.certifications.join(" · ")}>{r.m.detail.certifications.length} · {r.m.detail.certifications.slice(0, 3).join(" · ")}{r.m.detail.certifications.length > 3 ? " …" : ""}</span> : "—")],
     ["Location", (r) => r.m.detail.location ?? "—"],
     ["Products", (r) => r.m.detail.products.map((p) => p.title).join(" · ") || "—"],
@@ -254,5 +264,18 @@ export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: Hi
         </div>
       </div>
     </div>
+  );
+}
+
+/** MR-E004: a "minimum" filter chip — Any, or one of a few thresholds. */
+function MinChip({ label, value, options, onChange }: { label: string; value: number; options: number[]; onChange: (n: number) => void }) {
+  return (
+    <label className={value ? "inline-flex items-center gap-1 rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "inline-flex items-center gap-1 rounded-full border border-line px-3 py-1 font-semibold"} data-min-chip={label}>
+      {label}
+      <select value={value} onChange={(e) => onChange(Number(e.target.value))} aria-label={label} className="bg-transparent font-semibold outline-none">
+        <option value={0}>Any</option>
+        {options.map((n) => <option key={n} value={n}>{n}+</option>)}
+      </select>
+    </label>
   );
 }

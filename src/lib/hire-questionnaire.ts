@@ -5,7 +5,7 @@ import type { Viewer } from "@/lib/access";
 import { marketplaceWhere } from "@/lib/visibility";
 import { createDraft, resolveBuyer, loadOwned } from "@/lib/work-request";
 import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
-import { matchBadges, recruiterNumbers, type MatchBadge } from "@/lib/recruiter-numbers";
+import { implementationsBadge, matchBadges, recruiterNumbers, yearsBadge, type MatchBadge } from "@/lib/recruiter-numbers";
 import { productPillarName, writeServiceDescription, type ServiceDescription, deepRolesIn } from "@/lib/service-description";
 import { requisitionForJob } from "@/lib/requisition";
 import { ensureFirstLine } from "@/lib/work-request-lines";
@@ -109,7 +109,9 @@ export type HireMatch = { personId: string; profileId: string; name: string; com
   weak: boolean;
   /** SE-E002: the quick-view panel. */
   detail: MatchDetail };
-export type MatchDetail = { summary: string; role: string | null; skillsMatched: string; years: number | null; certifications: string[]; location: string | null; rates: { name: string; rate: string }[]; products: { title: string; price: string | null }[] };
+export type MatchDetail = { summary: string; role: string | null; skillsMatched: string; years: number | null;
+  /** MR-E004: Oracle Cloud years / Implementations (labels carry ≈ when derived). */
+  ocYears: number | null; ocYearsLabel: string | null; implementations: number | null; implementationsLabel: string | null; certifications: string[]; location: string | null; rates: { name: string; rate: string }[]; products: { title: string; price: string | null }[] };
 const money = (c: number) => `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 const PER: Record<string, string> = { HOUR: "/hr", DAY: "/day", WEEK: "/wk", MONTH: "/mo" };
 
@@ -140,9 +142,10 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
     pillarName ? prisma.pillar.findFirst({ where: { name: pillarName }, select: { name: true } }) : null,
   ]);
   const ids = rows.map((r) => r.id);
-  const [services, products] = await Promise.all([
+  const [services, products, ocNums] = await Promise.all([
     prisma.providerService.findMany({ where: { provider_profile_id: { in: ids }, active: true, published_at: { not: null } }, select: { provider_profile_id: true, name: true, rate_cents: true, uom: true } }),
     prisma.serviceProduct.findMany({ where: { provider_profile_id: { in: ids }, status: "PUBLISHED", offered: true }, select: { provider_profile_id: true, title: true, summary: true, price_cents: true } }),
+    recruiterNumbers(ids),
   ]);
   // MQ-E004: count against the job's 10 most important skills — the ones its Required list names first.
   const req = input.required.toLowerCase();
@@ -180,6 +183,9 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
     const inBudget = budgetSet && basis.some((c) => (min == null || c >= min * 0.8) && (max == null || c <= max));
     const starts = r.employers.map((e) => e.start_date?.getTime()).filter((t): t is number => !!t);
     const years = starts.length ? Math.floor((Date.now() - Math.min(...starts)) / (365.25 * 86_400_000)) : null;
+    const oc = ocNums.get(r.id);
+    // MR-E004: the years term uses Oracle Cloud years when known.
+    const fitYears = oc?.years ?? years;
     const total = wantNames.length + fallback.length;
     const theirDomains = domainsIn([r.person.title ?? "", ...r.skills.map((k) => `${k.skill.name} ${k.skill.area ?? ""}`)].join(" "));
     const sharedDomains = [...jobDomains].filter((d) => theirDomains.has(d));
@@ -205,14 +211,16 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
       weak: sharedDomains.length === 0 && matched.length === 0,
       detail: {
         summary: (r.overview ?? "").slice(0, 600), role: deepHit ?? [...theirDeep][0] ?? r.person.title ?? null,
-        skillsMatched: `${matched.length} of ${Math.min(total, 10) || 10}`, years, certifications: r.credentials.map((c) => c.name),
+        skillsMatched: `${matched.length} of ${Math.min(total, 10) || 10}`, years,
+        ocYears: oc?.years ?? null, ocYearsLabel: yearsBadge(oc), implementations: oc?.implementations ?? null, implementationsLabel: implementationsBadge(oc),
+        certifications: r.credentials.map((c) => c.name),
         location: addr?.city ? [addr.city, addr.state].filter(Boolean).join(", ") : addr?.state ?? null,
         rates: mine.filter((x) => x.rate_cents != null).slice(0, 6).map((x) => ({ name: x.name, rate: `${money(x.rate_cents!)}${PER[x.uom ?? ""] ?? ""}` })),
         products: prods.slice(0, 6).map((x) => ({ title: x.title, price: x.price_cents != null ? money(x.price_cents) : null })),
       },
     };
     // Role + Domain (strong) + skills + Product + years; with job domains, a provider sharing none ranks below all who share one.
-    const score = (deepHit ? 45 : roleHit ? 15 : 0) + sharedDomains.length * 40 + matched.length * 5 + Number(productHit) * 10 + Math.min(years ?? 0, 20) / 2;
+    const score = (deepHit ? 45 : roleHit ? 15 : 0) + sharedDomains.length * 40 + matched.length * 5 + Number(productHit) * 10 + Math.min(fitYears ?? 0, 20) / 2;
     return { m, key: [Number(!(onsite && !placeHit)), jobDomains.size ? Number(sharedDomains.length > 0) : 1, score, Number(inBudget)] };
   });
   const relevant = scored.filter((x) => x.key[2] > 0);
@@ -220,7 +228,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
     .sort((a, b) => { for (let i = 0; i < a.key.length; i++) if (b.key[i] !== a.key[i]) return b.key[i] - a.key[i]; return a.m.name.localeCompare(b.m.name); })
     .slice(0, 40)
     .map((x) => x.m);
-  const badges = await matchBadges(top.map((m) => ({ profileId: m.profileId, personId: m.personId, certifications: m.detail.certifications })), await recruiterNumbers(top.map((m) => m.profileId)));
+  const badges = await matchBadges(top.map((m) => ({ profileId: m.profileId, personId: m.personId, certifications: m.detail.certifications })), ocNums);
   for (const m of top) m.badges = badges.get(m.profileId) ?? [];
   // AN-E003: no name or company until a Work Order exists (MR-E001: the photo shows) — "Provider P-1038" (title, city, rate and skills stay).
   const [seen, numbers] = await Promise.all([identityVisibleTo(viewer ?? null, top.map((m) => m.personId)), providerNumbers(top.map((m) => m.profileId))]);
