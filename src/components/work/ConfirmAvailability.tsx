@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Countdown } from "@/components/hire/Countdown";
 import { BTN, BTN_OUT } from "@/components/hire/HireUI";
@@ -31,7 +31,10 @@ export function ConfirmAvailability({ jobId, v, startDeclining = false }: { jobI
   const [note, setNote] = useState(v.responded?.note ?? "");
   const [declining, setDeclining] = useState(startDeclining && v.mode === "asked");
   const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [sending, setBusy] = useState(false);
+  // Scott 10-22: stay busy (spinner) until the refreshed page lands, so nobody clicks twice thinking it stalled.
+  const [refreshing, startRefresh] = useTransition();
+  const busy = sending || refreshing;
   const [error, setError] = useState<string | null>(null);
   const per = v.range.type === "FIXED" ? "" : "/hr";
   const range = v.range.minCents != null || v.range.maxCents != null ? `${usd(v.range.minCents) ?? "…"} – ${usd(v.range.maxCents) ?? "…"}${per}` : "Not given";
@@ -44,7 +47,7 @@ export function ConfirmAvailability({ jobId, v, startDeclining = false }: { jobI
     const j = (await r?.json().catch(() => ({}))) as { error?: string };
     setBusy(false);
     if (!r?.ok) { setError(j.error ?? "That didn't work."); return; }
-    router.refresh();
+    startRefresh(() => router.refresh());
   };
   const want = () => {
     if (!(cents > 0)) { setError("Enter your rate for this job."); return; }
@@ -80,13 +83,13 @@ export function ConfirmAvailability({ jobId, v, startDeclining = false }: { jobI
         <div className="mt-4">
           <label className="block text-[13px] font-bold">Reason (Optional — the Buyer Sees It)<textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} maxLength={500} className={FIELD} placeholder="Booked those dates, rate too low…" /></label>
           <div className="mt-3 flex gap-2">
-            <button type="button" disabled={busy} onClick={() => post("/api/sourcing", { jobId, action: "decline", reason })} className={BTN}>Send Not This Time</button>
+            <button type="button" disabled={busy} onClick={() => post("/api/sourcing", { jobId, action: "decline", reason })} className={BTN}>{busy ? <><Spin />Sending…</> : "Send Not This Time"}</button>
             <button type="button" onClick={() => setDeclining(false)} className={BTN_OUT}>Back</button>
           </div>
         </div>
       ) : (
         <div className="mt-4">
-          {v.responded && <p className="mb-2 text-[13.5px] font-semibold text-state-accepted" data-availability-sent>You said you want this job{v.mode === "asked" ? " — you can change your rate until the deadline" : ""}.</p>}
+          {v.responded && <p className="mb-2 text-[13.5px] font-semibold text-state-accepted" data-availability-sent>{v.mode === "asked" ? "You said you're available — you can change your rate until the deadline" : "You said you want this job"}.</p>}
           {v.declined && <p className="mb-2 text-[13.5px] text-ink-2">You said Not This Time{v.declineReason ? ` (“${v.declineReason}”)` : ""}. You can still say you want it.</p>}
           {changing && (
             <div className="mb-3 grid gap-x-3 sm:grid-cols-2" data-change-rate>
@@ -95,7 +98,7 @@ export function ConfirmAvailability({ jobId, v, startDeclining = false }: { jobI
             </div>
           )}
           <div className="flex flex-wrap items-center gap-2">
-            {(!v.responded || changing) && <button type="button" disabled={busy || !(cents > 0)} onClick={want} className={BTN} data-want-this-job>{v.responded ? "Update My Rate" : v.mode === "asked" ? "I'm Available" : "I Want This Job"}</button>}
+            {(!v.responded || changing) && <button type="button" disabled={busy || !(cents > 0)} onClick={want} className={BTN} data-want-this-job>{busy ? <><Spin />Sending…</> : v.responded ? "Update My Rate" : v.mode === "asked" ? "I'm Available" : "I Want This Job"}</button>}
             {v.mode === "asked" && !v.responded && !v.declined && <button type="button" onClick={() => setDeclining(true)} className={BTN_OUT} data-not-this-time>Not This Time</button>}
             {!changing && <button type="button" onClick={() => setChanging(true)} className="ml-1 text-[13px] font-semibold text-ink-2 underline underline-offset-4" data-change-my-rate>Change My Rate for This Job</button>}
           </div>
@@ -104,4 +107,8 @@ export function ConfirmAvailability({ jobId, v, startDeclining = false }: { jobI
       {error && <p role="alert" className="mt-3 text-[13.5px] font-semibold text-state-declined">{error}</p>}
     </section>
   );
+}
+
+function Spin() {
+  return <span aria-hidden className="mr-2 inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent" />;
 }

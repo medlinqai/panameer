@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 
 // HL: the Hire look (Scott's approved mockups 10-21) — white page, ink rule under section headings, light rules between rows,
 // magenta only for current/active, red only for "needs you", 11 px uppercase labels over 14 px values, square buttons.
-export const BTN = "inline-flex min-h-10 items-center justify-center whitespace-nowrap bg-ink px-3.5 text-[13px] font-semibold text-surface hover:bg-ink-hover";
-export const BTN_OUT = "inline-flex min-h-10 items-center justify-center whitespace-nowrap border border-ink bg-white px-3.5 text-[13px] font-semibold text-ink hover:bg-bg-soft";
+export const BTN = "inline-flex min-h-10 items-center justify-center whitespace-nowrap bg-ink px-3.5 text-[13px] font-semibold text-surface hover:bg-ink-hover disabled:cursor-not-allowed disabled:opacity-50";
+export const BTN_OUT = "inline-flex min-h-10 items-center justify-center whitespace-nowrap border border-ink bg-white px-3.5 text-[13px] font-semibold text-ink hover:bg-bg-soft disabled:cursor-not-allowed disabled:opacity-50";
 export const BTN_MAGENTA = "inline-flex min-h-10 items-center justify-center whitespace-nowrap bg-magenta px-3.5 text-[13px] font-bold text-white hover:bg-magenta-dark";
 export const LABEL = "text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive";
 export const MUTED = "text-[14px] text-state-disabled";
