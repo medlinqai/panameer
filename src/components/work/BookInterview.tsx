@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BTN, BTN_OUT } from "@/components/hire/HireUI";
+import { useMe } from "@/components/MeProvider";
 
 // IW-E005: the provider books one of the buyer's Open Times — free slots in the provider's own time zone, grouped by day.
 export function BookInterview({ interviewId, company, jobTitle, minutes, slots, booked }: { interviewId: string; company: string; jobTitle: string; minutes: number; slots: string[]; booked: string | null }) {
   const router = useRouter();
+  const { refresh: refreshMe } = useMe();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const tz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return "America/New_York"; } })();
@@ -16,6 +18,7 @@ export function BookInterview({ interviewId, company, jobTitle, minutes, slots, 
     const j = (await r?.json().catch(() => ({}))) as { error?: string };
     setBusy(null);
     if (!r?.ok) { setError(j.error ?? "That didn't work."); router.refresh(); return; }
+    refreshMe();
     router.refresh();
   };
   const dayOf = (iso: string) => new Date(iso).toLocaleDateString("en-US", { timeZone: tz, weekday: "long", month: "short", day: "numeric" });

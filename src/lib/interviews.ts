@@ -280,8 +280,9 @@ export const interviewWhen = (d: Date, tz = "America/New_York") => d.toLocaleStr
 
 /** IW-E005: a provider booked an Open Time — room, notices ("P-1126 Booked Tue Oct 27, 2:00 PM"), the invite answered. */
 export async function afterBooked(interviewId: string, startsAt: Date) {
+  // Clear the invitation first (and mark it read) so a room/notice hiccup can't leave it on the provider's list.
+  await prisma.notification.updateMany({ where: { dedupe_key: `work.interview_requested:${interviewId}`, resolved_at: null }, data: { resolved_at: new Date(), read_at: new Date() } }).catch(() => {});
   await afterConfirm(interviewId, startsAt, true);
-  await prisma.notification.updateMany({ where: { dedupe_key: `work.interview_requested:${interviewId}`, resolved_at: null }, data: { resolved_at: new Date() } }).catch(() => {});
 }
 
 /** On confirm: a private Daily room (expires 2 h after the slot) and a notice to both sides. */
@@ -295,7 +296,8 @@ async function afterConfirm(interviewId: string, startsAt: Date, booked = false)
   const [label, company] = await Promise.all([providerLabelFor(iv.provider_person_id), buyerCompanyName(iv.requested_by_person_id)]);
   const when = interviewWhen(startsAt);
   await notify({ event: "work.interview_confirmed", personId: iv.requested_by_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_confirmed:${iv.id}:buyer`, vars: { when, workTitle: iv.job.title, counterpart: label, href: `/work-requests/${iv.job.id}#interviews`, ...(booked ? { booked: "1" } : {}) } });
-  await notify({ event: "work.interview_confirmed", personId: iv.provider_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_confirmed:${iv.id}:provider`, vars: { when, workTitle: iv.job.title, counterpart: company, href: `/find-work/${iv.job.id}#interview` } });
+  // The provider who just booked doesn't need a notice about their own click.
+  if (!booked) await notify({ event: "work.interview_confirmed", personId: iv.provider_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_confirmed:${iv.id}:provider`, vars: { when, workTitle: iv.job.title, counterpart: company, href: `/find-work/${iv.job.id}#interview` } });
   await prisma.notification.updateMany({ where: { dedupe_key: `work.interview_slots_offered:${iv.id}`, resolved_at: null }, data: { resolved_at: new Date() } }).catch(() => {});
 }
 
