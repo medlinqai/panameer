@@ -52,11 +52,11 @@ export function OpenTimes({ windows, compact = false, onChanged }: { windows: Op
           ))}
         </ul>
       ) : <p className="mt-2 text-[13.5px] text-state-inactive">No Open Times yet. Add a window and invited providers book a slot inside it.</p>}
-      <div className="mt-3 grid grid-cols-2 items-end gap-3 sm:grid-cols-[1fr_1fr_1fr_auto]" data-add-open-time>
+      <div className="mt-3 grid grid-cols-2 items-end gap-3 sm:grid-cols-3" data-add-open-time>
         <label className={LABEL}>Date<input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={FIELD} /></label>
         <label className={LABEL}>From<input type="time" step={300} value={from} onChange={(e) => setFrom(e.target.value)} className={FIELD} /></label>
         <label className={LABEL}>To<input type="time" step={300} value={to} onChange={(e) => setTo(e.target.value)} className={FIELD} /></label>
-        <button type="button" disabled={busy} onClick={() => post({ action: "openTimeAdd", date, from, to, timeZone: tz })} className={BTN}>Add Open Time</button>
+        <button type="button" disabled={busy} onClick={() => post({ action: "openTimeAdd", date, from, to, timeZone: tz })} className={`${BTN} col-span-2 justify-self-start sm:col-span-3`}>Add Open Time</button>
       </div>
       {error && <p role="alert" className="mt-2 text-[13px] font-semibold text-state-declined">{error}</p>}
     </section>

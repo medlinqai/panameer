@@ -32,23 +32,31 @@ export function InterviewDialog({ jobId, providerPersonIds, onClose, onSent }: {
     onClose();
   };
   const tz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return "America/New_York"; } })();
-  const fmt = (iso: string) => new Date(iso).toLocaleString("en-US", { timeZone: tz, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   const n = providerPersonIds.length;
   return (
     <div role="dialog" aria-label="Interview" className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4" onClick={onClose} data-interview-dialog>
-      <div className="mt-10 w-full max-w-xl rounded-[12px] bg-white p-5" onClick={(e) => e.stopPropagation()}>
+      <div className="mt-10 w-full max-w-2xl rounded-[12px] bg-white p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-[18px] font-extrabold">Interview {n === 1 ? "1 Provider" : `${n} Providers`}</h2>
           <button type="button" onClick={onClose} aria-label="Close" className="text-[22px] leading-none text-state-inactive hover:text-ink">×</button>
         </div>
         <p className={`${LABEL} mt-4`}>Interview Length</p>
         <div className="mt-1.5 flex flex-wrap gap-2">
-          {LENGTHS.map((m) => <button key={m} type="button" aria-pressed={minutes === m} onClick={() => setMinutes(m)} className={minutes === m ? "rounded-full border border-magenta bg-white px-3.5 py-1.5 text-[13px] font-bold text-magenta" : "rounded-full border border-state-border bg-white px-3.5 py-1.5 text-[13px] font-semibold"}>{m} min</button>)}
+          {LENGTHS.map((m) => <button key={m} type="button" aria-pressed={minutes === m} onClick={() => setMinutes(m)} className={minutes === m ? "rounded-full border border-ink bg-ink px-3.5 py-1.5 text-[13px] font-bold text-surface" : "rounded-full border border-state-border bg-white px-3.5 py-1.5 text-[13px] font-semibold"}>{m} min</button>)}
         </div>
         <p className="mt-3 text-[13px] text-state-inactive">Video (Daily) · a 5-minute gap between interviews</p>
         <div className="mt-4 border-t border-state-border pt-3" data-dialog-open-times>
           <p className="text-[14px] font-bold">Your Open Times: {preview ? `${preview.windows.length} window${preview.windows.length === 1 ? "" : "s"} → ${preview.free} free slot${preview.free === 1 ? "" : "s"}` : "…"}</p>
-          {preview && preview.next.length > 0 && <p className="mt-1 text-[13px] text-state-inactive">Next: {preview.next.map(fmt).join(" · ")}</p>}
+          {preview && preview.next.length > 0 && (
+            <div className="mt-2 flex flex-col gap-1.5" data-next-slots>
+              {Object.entries(preview.next.reduce<Record<string, string[]>>((g, iso) => { const d = new Date(iso).toLocaleDateString("en-US", { timeZone: tz, weekday: "short", month: "short", day: "numeric" }); (g[d] ??= []).push(new Date(iso).toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" })); return g; }, {})).map(([d, times]) => (
+                <div key={d} className="flex flex-wrap items-center gap-1.5 text-[12.5px]">
+                  <span className="w-[92px] shrink-0 font-semibold text-ink-2">{d}</span>
+                  {times.map((t) => <span key={t} className="rounded-full border border-state-border px-2 py-0.5 text-ink">{t}</span>)}
+                </div>
+              ))}
+            </div>
+          )}
           {preview && <div className="mt-2"><OpenTimes compact windows={preview.windows} onChanged={() => void load()} /></div>}
         </div>
         {error && <p role="alert" className="mt-3 text-[13px] font-semibold text-state-declined">{error}</p>}
