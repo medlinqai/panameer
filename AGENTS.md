@@ -26,5 +26,8 @@ Key reminders:
 - Commit one logical change at a time; always push to `origin/main`.
 - ⚠ **Title Case on every UI label — Scott's standing rule, don't make him ask.** Buttons, links that act,
   page/section headings, tabs, step names, chips and column headers: "Your Matches", "Star the Ones You Like",
-  "Request Proposals from Your Shortlist". Sentences (help text, descriptions) stay sentence case. Full rule:
+  "Request Availability from Your Shortlist". Sentences (help text, descriptions) stay sentence case. Full rule:
   `../2. Claude Sub-Files/conventions.md` › "UI copy — Title Case for all labels". Check every string you add.
+- **Service Requisition, not Work Request (Scott 2026-10-22):** the buying document's screen name is
+  Service Requisition ("Requisition" where space is tight), numbered RQ-…; code names (`WorkRequest`, `wr_number`,
+  `/work-requests`) stay. Work chain: Job → Service Requisition → Work Order.
