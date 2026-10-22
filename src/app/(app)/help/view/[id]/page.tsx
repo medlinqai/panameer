@@ -27,7 +27,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       ) : (
         <div className="mt-4 rounded-[10px] border border-line bg-white p-5" data-help-new-tab>
           <p className="text-[14.5px]">This one can&apos;t be shown inside Panameer — it opens on its own site.</p>
-          <a href={link.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-10 items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover">Open in a new tab</a>
+          <a href={link.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-10 items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover">Open in a New Tab</a>
         </div>
       )}
     </div>

@@ -136,7 +136,7 @@ export function NotificationBell({
                   onClick={() => setOpen(false)}
                   className="text-[13px] font-bold text-magenta hover:underline"
                 >
-                  {needActionCount} need action
+                  {needActionCount} Need Action
                 </Link>
               )}
             </span>

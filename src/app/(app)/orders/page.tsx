@@ -121,7 +121,7 @@ export default async function Page() {
                       <>
                         {" · "}
                         {o.party === "BUYER" ? (
-                          <Link href={`/orders/work-requests#${o.wrNumber}`} className="underline underline-offset-2 hover:text-magenta">from {o.wrNumber}</Link>
+                          <Link href={`/orders/work-requests#${o.wrNumber}`} className="underline underline-offset-2 hover:text-magenta">From {o.wrNumber}</Link>
                         ) : (
                           <>from {o.wrNumber}</>
                         )}

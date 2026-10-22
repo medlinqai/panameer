@@ -25,7 +25,7 @@ export function AttentionTiles({ tiles }: { tiles: Tile[] }) {
   if (!tiles.length) return null;
   return (
     <section aria-label="Needs your attention" className="mt-4" data-attention-tiles>
-      <h2 className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Needs your attention</h2>
+      <h2 className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Needs Your Attention</h2>
       <div className="mt-2 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
         {tiles.map((t) => (
           <Link key={t.id} href={t.href} data-tile={t.id} className="flex min-w-0 flex-col rounded-[12px] border border-line bg-white p-3.5 hover:border-magenta">
@@ -63,7 +63,7 @@ function InterviewLine({ r, side }: { r: InterviewRow; side: "buyer" | "provider
 
 export function TodaysInterviews({ rows, side, weekHref }: { rows: InterviewRow[]; side: "buyer" | "provider"; weekHref: string }) {
   return (
-    <Card id="todays-interviews" title={`Today's Interviews (${rows.length})`} right={<Link href={weekHref} className="font-semibold text-magenta-dark underline underline-offset-4">View week</Link>}>
+    <Card id="todays-interviews" title={`Today's Interviews (${rows.length})`} right={<Link href={weekHref} className="font-semibold text-magenta-dark underline underline-offset-4">View Week</Link>}>
       {rows.length ? <ul className="divide-y divide-line">{rows.map((r) => <InterviewLine key={r.id} r={r} side={side} />)}</ul> : <p className="text-[13.5px] text-ink-3">No interviews today.</p>}
       <p className="mt-2 text-[11.5px] leading-snug text-ink-3"><b>Interview guidelines:</b> {INTERVIEW_GUIDELINES}</p>
     </Card>
@@ -75,7 +75,7 @@ export function WeekSchedule({ start, rows, side, backHref }: { start: Date; row
   const days = Array.from({ length: 7 }, (_, i) => new Date(start.getTime() + i * 86_400_000));
   const key = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: TZ });
   return (
-    <Card id="week" title="This week's interviews" right={<Link href={backHref} className="font-semibold text-magenta-dark underline underline-offset-4">Today</Link>}>
+    <Card id="week" title="This Week's Interviews" right={<Link href={backHref} className="font-semibold text-magenta-dark underline underline-offset-4">Today</Link>}>
       <div className="grid gap-2 md:grid-cols-7" data-week-schedule>
         {days.map((d) => {
           const list = rows.filter((r) => r.startsAt && key(new Date(r.startsAt)) === key(d));
@@ -137,7 +137,7 @@ export function LiveWorkList({ title, steps, rows, active, base, footer }: { tit
   const recent = list.filter((r) => !r.old);
   const older = list.filter((r) => r.old);
   return (
-    <Card id="live-work" title={title} right={active ? <Link href={`${base}#live-work`} className="font-semibold text-magenta-dark underline underline-offset-4">Show all</Link> : null}>
+    <Card id="live-work" title={title} right={active ? <Link href={`${base}#live-work`} className="font-semibold text-magenta-dark underline underline-offset-4">Show All</Link> : null}>
       <ProcessStrip steps={steps} active={active} base={base} />
       {list.length ? (
         <>

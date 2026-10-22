@@ -24,7 +24,7 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
   const cart = await cartFor(viewer);
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl">
-      <p className="mt-2 text-[13px] font-semibold"><Link href="/orders" className="text-magenta-dark">← Orders</Link> · <Link href="/shop" className="text-magenta-dark">Keep shopping</Link></p>
+      <p className="mt-2 text-[13px] font-semibold"><Link href="/orders" className="text-magenta-dark">← Orders</Link> · <Link href="/shop" className="text-magenta-dark">Keep Shopping</Link></p>
       <h1 className="text-[28px] font-bold">Work Request <span className="font-normal text-ink-2">(Incomplete)</span></h1>
       {cart.workRequest?.wrNumber && <p className="text-[13px] text-ink-2">{cart.workRequest.wrNumber}</p>}
       {sp.error && <p role="alert" className="mt-2 text-[14px] font-semibold text-magenta-dark">{sp.error}</p>}

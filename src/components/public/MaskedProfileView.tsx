@@ -283,7 +283,7 @@ export function MaskedProfileView({
         {/* THE END CARD — the brief's wording, verbatim. */}
         <div className="mt-7 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-ink p-[22px] dark:border-white/40">
           <div>
-            <h2 className="text-[18px] font-bold">See who this is</h2>
+            <h2 className="text-[18px] font-bold">See Who This Is</h2>
             <p className="mt-1 max-w-[460px] text-[13.5px] text-ink-2">
               Register free to see their name, photo, employers and rates, and to
               message or hire them.

@@ -55,7 +55,7 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
 
   return (
     <div className="flex min-w-0 flex-[1_1_520px] flex-col" data-attention-groups>
-      <Group title="Jobs expiring" n={expiring.length}>
+      <Group title="Jobs Expiring" n={expiring.length}>
         {expiring.map((g) => (
           <Row key={g.key} href={`/work-requests/${g.jobId}`} what={g.title} detail={`${g.when} · ${g.inText}`}>
             <button type="button" className={BTN_OUT} onClick={() => extend(g.eventId, g.key)}>Extend</button>
@@ -71,7 +71,7 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
           </Row>
         ))}
       </Group>
-      <Group title="Rate proposals" n={rates.length}>
+      <Group title="Rate Proposals" n={rates.length}>
         {rates.map((g) => (
           <Row key={g.key} href={`/work-requests/${g.jobId}`} what={`${g.who} proposed ${g.rate ?? "a rate"}`} detail={[g.title, g.inRange == null ? null : g.inRange ? "in range" : "over range", g.start, "you asked them"].filter(Boolean).join(" · ")}>
             <button type="button" className={BTN_OUT} onClick={() => act(g.key, "Shortlisted", { action: "decide", proposalIds: [g.proposalId], decision: "SHORTLISTED" })}>Shortlist</button>
@@ -79,7 +79,7 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
           </Row>
         ))}
       </Group>
-      <Group title="Today's interviews" n={ivs.length}>
+      <Group title="Today's Interviews" n={ivs.length}>
         {ivs.map((g) => (
           <Row key={g.key} href={`/work-requests/${g.jobId}#interviews`} what={`${g.time} · ${g.who} · ${g.minutes} min`} detail={g.title}>
             {g.hasRoom ? <a href={`/api/interviews/${g.id}/join`} target="_blank" rel="noreferrer" className={BTN}>Join</a> : <span className="self-center text-[12.5px] text-state-inactive">Video link not set up yet</span>}
@@ -87,7 +87,7 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
           </Row>
         ))}
       </Group>
-      <Group title="Test results" n={tests.length} last>
+      <Group title="Test Results" n={tests.length} last>
         {tests.map((g) => (
           <Row key={g.key} href={`/work-requests/${g.jobId}`} what={`${g.who} · ${g.skill}`} detail={[g.score != null ? `${g.score}%` : null, g.result].filter(Boolean).join(" · ")}>
             {g.proposalId ? (

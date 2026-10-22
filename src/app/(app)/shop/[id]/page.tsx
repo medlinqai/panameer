@@ -37,7 +37,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       {p.detailsPdfUrl && <p className="mt-3"><a href={p.detailsPdfUrl} target="_blank" rel="noreferrer" data-details-pdf className="text-[14.5px] font-bold text-magenta-dark underline underline-offset-4">Details (PDF)</a></p>}
       {p.deliverables.length > 0 && (
         <section className="mt-6 border-t border-line pt-4">
-          <h2 className="text-[18px] font-bold">What you get</h2>
+          <h2 className="text-[18px] font-bold">What You Get</h2>
           <ul className="mt-2 list-disc pl-5 text-[14.5px] leading-relaxed">
             {p.deliverables.map((d) => <li key={d}>{d}</li>)}
           </ul>

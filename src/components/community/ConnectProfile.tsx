@@ -381,7 +381,7 @@ export function ConnectProfile({
                   aria-label="Edit Photo"
                   className="pm-photo-edit text-magenta-dark hover:underline"
                 >
-                  Edit photo
+                  Edit Photo
                 </Link>
               )}
             </div>
@@ -807,7 +807,7 @@ export function ConnectProfile({
               No skills listed yet.{" "}
               {owner && (
                 <Link href={editHref("skills")} className="font-bold text-magenta hover:underline">
-                  Add your skills
+                  Add Your Skills
                 </Link>
               )}
             </p>

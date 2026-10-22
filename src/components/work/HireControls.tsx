@@ -106,7 +106,7 @@ export function AssignDirectly({
       {gateModal}
       {/* THE WORD, RENAMED WS-D) */}
       {/* SCOTT'S PHRASE, NOT A PLAINER ONE OF MINE. I first wrote *"a provider you */}
-      <h3 className="text-[15px] font-bold">Assign an externally sourced provider</h3>
+      <h3 className="text-[15px] font-bold">Assign an Externally Sourced Provider</h3>
       <p className="mt-1 text-[13.5px] text-ink-2">
         No proposal needed — but their rate is, because the order is priced from it.
       </p>

@@ -179,7 +179,7 @@ async function Browse({ viewer, f, browsing, compareIds }: { viewer: Viewer; f: 
           </div>
           {info.length > 0 && (
             <section className="mt-6" data-informational-items>
-              <h2 className="mb-2 text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Informational items</h2>
+              <h2 className="mb-2 text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Informational Items</h2>
               <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3">
                 {info.map((l) => (
                   <article key={l.id} className="flex flex-col gap-1 rounded-[10px] border border-line bg-white p-3.5" data-info-card>
@@ -227,7 +227,7 @@ async function OrdersTab({ viewer, personId, side, step, slice }: { viewer: View
   const tabName = side === "buyer" ? "purchases" : "sales";
   return (
     <section className="py-4">
-      <h2 className="mb-2 text-[22px] font-bold">{side === "buyer" ? "Purchases" : "Sales"}{step ? <small className="ml-2 text-[13px] font-semibold text-ink-3">{step} · <Link href={`/shop?tab=${side === "buyer" ? "purchases" : "sales"}`} className="text-magenta-dark underline">all</Link></small> : null}</h2>
+      <h2 className="mb-2 text-[22px] font-bold">{side === "buyer" ? "Purchases" : "Sales"}{step ? <small className="ml-2 text-[13px] font-semibold text-ink-3">{step} · <Link href={`/shop?tab=${side === "buyer" ? "purchases" : "sales"}`} className="text-magenta-dark underline">All</Link></small> : null}</h2>
       <SliceChips tabKey={`shop-${tabName}`} counts={sliceCounts(rows)} base={`/shop?tab=${tabName}`} />
       <ShopOrders rows={list} side={side} empty={side === "buyer" ? "No purchases yet." : "No product sales yet."} />
     </section>

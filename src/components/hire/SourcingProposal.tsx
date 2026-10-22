@@ -39,7 +39,7 @@ export function SourcingProposal({ jobId, v, startDeclining = false }: { jobId: 
   return (
     <section className="rounded-brand border border-line bg-white p-5" data-sourcing-proposal>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-[17px] font-extrabold">Request to propose · {v.eventNumber}</h2>
+        <h2 className="text-[17px] font-extrabold">Request to Propose · {v.eventNumber}</h2>
         <span className="text-[13.5px] font-bold text-magenta-dark"><Countdown at={v.deadlineAt} /></span>
       </div>
       <p className="mt-1 text-[13px] text-ink-2">Due {new Date(v.deadlineAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ({v.hours} hours)</p>

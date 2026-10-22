@@ -18,7 +18,7 @@ export async function OrderSettlements({ orderId, currency }: { orderId: string;
   return (
     <div data-order-settlements>
       {weeks.length > 0 && <Timesheets weeks={weeks} currency={currency} />}
-      <h2 className="mt-6 text-[17px] font-bold">Settlement transactions</h2>
+      <h2 className="mt-6 text-[17px] font-bold">Settlement Transactions</h2>
       {rows.length === 0 ? (
         <p className="mt-2 text-[14px] text-ink-3">None yet.</p>
       ) : (

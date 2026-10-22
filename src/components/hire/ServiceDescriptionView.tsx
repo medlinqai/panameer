@@ -58,7 +58,7 @@ export async function ServiceDescriptionView({ jobId, editable, bare = false }: 
         <Row label="Specialties" value={sd.specialties.join(", ")} />
         <List label="Responsibilities" text={sd.responsibilities} />
         <List label="Required" text={sd.required} />
-        <List label="Nice to have" text={sd.niceToHave} />
+        <List label="Nice to Have" text={sd.niceToHave} />
       </Section>
       <Section n={5} title="When" step={4} jobId={jobId} editable={editable}>
         <p>{[sd.startDate || sd.startText || "Start not set", sd.duration ? HOW_LONG.find((h) => h.value === sd.duration)?.label : null].filter(Boolean).join(" · ")}</p>

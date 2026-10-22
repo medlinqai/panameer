@@ -93,11 +93,11 @@ export default async function Page({
           <Fact label="Value">{money(o.valueCents)}</Fact>
           <Fact label="Drawn">{money(o.drawnCents)}</Fact>
           <Fact label="Remaining">{money(o.remainingCents)}</Fact>
-          <Fact label="Not to exceed">{o.notToExceedCents == null ? "No cap" : money(o.notToExceedCents)}</Fact>
-          <Fact label="Buyer accepted">{(o.buyerAcceptedAt ?? o.buyerReleasedAt)?.slice(0, 10) ?? "Not yet"}</Fact>
-          <Fact label="Provider accepted">{o.providerAcceptedAt ? o.providerAcceptedAt.slice(0, 10) : "Not yet"}</Fact>
+          <Fact label="Not to Exceed">{o.notToExceedCents == null ? "No cap" : money(o.notToExceedCents)}</Fact>
+          <Fact label="Buyer Accepted">{(o.buyerAcceptedAt ?? o.buyerReleasedAt)?.slice(0, 10) ?? "Not yet"}</Fact>
+          <Fact label="Provider Accepted">{o.providerAcceptedAt ? o.providerAcceptedAt.slice(0, 10) : "Not yet"}</Fact>
           {o.party === "PROVIDER" ? (
-            <Fact label="You'll get">{money(o.netCents)} <span className="text-ink-2">· fee {o.lineFeeBps != null ? bpsToPercentLabel(o.lineFeeBps) : "varies"}</span></Fact>
+            <Fact label="You'll Get">{money(o.netCents)} <span className="text-ink-2">· fee {o.lineFeeBps != null ? bpsToPercentLabel(o.lineFeeBps) : "varies"}</span></Fact>
           ) : (
             <Fact label="Hours">{o.hoursOrdered > 0 ? `${o.hoursClaimed} of ${o.hoursOrdered}` : "—"}</Fact>
           )}
@@ -145,7 +145,7 @@ export default async function Page({
       {view && (
         <p className="mt-4 flex flex-wrap items-center justify-between gap-2">
           <b className="text-[17px]">{view === "history" ? "Transaction History" : "Change History"}</b>
-          <Link href={`/orders/${o.id}`} className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">← Back to the order</Link>
+          <Link href={`/orders/${o.id}`} className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">← Back to the Order</Link>
         </p>
       )}
       {view === "history" && <section data-view="history" className="mt-2"><History events={await orderHistory(o.id)} /></section>}

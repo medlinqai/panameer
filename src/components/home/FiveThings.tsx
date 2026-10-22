@@ -62,7 +62,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
             <span className="text-[11px] font-bold tracking-[0.1em] text-ink-2">STEP {path.current + 1} OF {path.steps.length}</span>
           </div>
           {/* RA-E002: red counts on the stops that own them; the graphic scrolls inside its card on phones. */}
-          <div className="-mx-1 mt-2 overflow-x-auto px-1 pt-2"><div className="min-w-[560px]"><RoadGraphic current={path.current} road={BUYER_ROAD} label="Buyer road" waiting={path.waiting} badges={buyerBadges(bc)} /></div></div>
+          <div className="-mx-1 mt-2 overflow-x-auto px-1 pt-2"><div className="min-w-[560px]"><RoadGraphic current={path.current} road={BUYER_ROAD} label="Buyer Road" waiting={path.waiting} badges={buyerBadges(bc)} /></div></div>
           <AppChips c={bc} />
           {/* DC-E001: the road is a picture of the journey — the cards below are the way in. */}
           {path.waiting && <p className="mt-3 text-[13.5px] text-ink-2">Your company&apos;s admin has your request. Everything below is open while you wait.</p>}
@@ -81,7 +81,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
         )}
         {!setUp && (
           <>
-            <h2 className="mt-9 text-[19px] font-extrabold">What do you want to do{firstVisit ? " first" : ""}?</h2>
+            <h2 className="mt-9 text-[19px] font-extrabold">What Do You Want to Do{firstVisit ? " First" : ""}?</h2>
             <BuyerThings />
           </>
         )}
@@ -126,7 +126,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
         <NeedsYourAttention c={pc} />
       ) : onRoad ? (
         <>
-          <h2 className="mt-9 text-[19px] font-extrabold">What do you want to do{firstVisit ? " first" : ""}?</h2>
+          <h2 className="mt-9 text-[19px] font-extrabold">What Do You Want to Do{firstVisit ? " First" : ""}?</h2>
           <BuyerThings seller />
         </>
       ) : (
@@ -192,7 +192,7 @@ function NeedsYourAttention({ c }: { c: AppCounts }) {
             ))}
           </ul>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
-            {apps.map((a) => <Link key={a} href={APP_HOME[c.side][a]} className="font-semibold text-magenta-dark underline underline-offset-4">See all in {c.items.find((i) => i.app === a)!.appLabel}</Link>)}
+            {apps.map((a) => <Link key={a} href={APP_HOME[c.side][a]} className="font-semibold text-magenta-dark underline underline-offset-4">See All In {c.items.find((i) => i.app === a)!.appLabel}</Link>)}
           </p>
         </>
       ) : <p className="mt-1 text-[13.5px] text-ink-3">Nothing is waiting on you right now.</p>}

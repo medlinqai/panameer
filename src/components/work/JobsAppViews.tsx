@@ -66,7 +66,7 @@ export async function JobsInterviews({ personId, view, slice }: { personId: stri
     <section className="mx-auto w-full max-w-6xl py-2" data-jobs-interviews>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="font-display text-[22px] font-bold">Interviews</h1>
-        <Link href="/find-work?tab=interviews&view=week" className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View week</Link>
+        <Link href="/find-work?tab=interviews&view=week" className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View Week</Link>
       </div>
       <div className="mt-3"><SliceChips tabKey="jobs-interviews" counts={sliceCounts(all)} base="/find-work?tab=interviews" />{rows.length ? <InterviewCards rows={rows} side="provider" videoReady={dailyConfigured()} /> : <p className="text-[13.5px] text-ink-3">No interviews right now.</p>}</div>
     </section>

@@ -191,7 +191,7 @@ function QuickView({ m, jobId, onClose, onStar, onHide, prev, next }: { m: HireM
       <Section title="Certifications">{d.certifications.length ? d.certifications.join(" · ") : "—"}</Section>
       <Section title="Rates">{d.rates.length ? <ul>{d.rates.map((r) => <li key={r.name} className="flex justify-between gap-3"><span>{r.name}</span><b>{r.rate}</b></li>)}</ul> : m.rate ?? "—"}</Section>
       <Section title="Products">{d.products.length ? <ul>{d.products.map((p) => <li key={p.title} className="flex justify-between gap-3"><span>{p.title}</span>{p.price && <b>{p.price}</b>}</li>)}</ul> : "—"}</Section>
-      <Link href={`/providers/${m.profileId}?from=matches`} className="mt-4 text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View the full profile</Link>
+      <Link href={`/providers/${m.profileId}?from=matches`} className="mt-4 text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">View the Full Profile</Link>
       <div className="mt-auto flex justify-between gap-3 border-t border-line pt-4">
         <button type="button" onClick={prev ?? undefined} disabled={!prev} className={GHOST} data-quick-prev>‹ Previous</button>
         <button type="button" onClick={next ?? undefined} disabled={!next} className={GHOST} data-quick-next>Next ›</button>

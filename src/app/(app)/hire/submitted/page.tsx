@@ -17,7 +17,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ w
   const wr = order.workRequest;
   return (
     <div className="pm-white-page mx-auto w-full max-w-2xl" data-wr-submitted>
-      <h1 className="mt-4 text-[26px] font-extrabold">Work Request submitted</h1>
+      <h1 className="mt-4 text-[26px] font-extrabold">Work Request Submitted</h1>
       <p className="mt-2 text-[15px]">
         Work Request <b>{wr?.wr_number ?? "—"}</b> submitted and approved. Work Order <b className="whitespace-nowrap">{order.order_number}</b>{"\u00a0"}is ready for your review. We&apos;ve also sent you a link.
       </p>

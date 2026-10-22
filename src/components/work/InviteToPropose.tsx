@@ -231,7 +231,7 @@ export function InviteToPropose({
           href={`/work-requests/${workRequestId}`}
           className="text-[14.5px] font-bold text-ink-2 underline underline-offset-4 hover:text-magenta"
         >
-          Back to the request
+          Back to the Request
         </Link>
       </div>
       {/* THE BUTTON SAYS WHY IT IS OFF — the same rule the detail page follows. */}

@@ -32,7 +32,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         <p className="mt-1 text-[13.5px] text-ink-2">Version {a.version} · effective {a.effective_date.toISOString().slice(0, 10)} · {a.status === "ACTIVE" ? "Active" : "Superseded"} · <Link href={a.document_url} className="font-semibold text-magenta-dark underline underline-offset-4">Read the full Terms of Service →</Link></p>
       </header>
 
-      <h2 className="mt-6 text-[18px] font-bold">SOWs under this MSA</h2>
+      <h2 className="mt-6 text-[18px] font-bold">SOWs Under This MSA</h2>
       {admin && (
         <form className="mt-2 flex flex-wrap gap-2 text-[13.5px]" data-msa-filters>
           <select name="buyer" defaultValue={f.buyer ?? ""} className="border border-line px-2 py-1.5">

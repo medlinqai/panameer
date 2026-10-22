@@ -42,7 +42,7 @@ export default async function Page() {
             )) : <p className="border-t border-state-border py-4 text-[14px] text-state-inactive">None waiting. Work Orders to accept, change orders and deliveries to approve show here.</p>}
           </div>
         </section>
-        <PathBand steps={band} label="Work Order path" />
+        <PathBand steps={band} label="Work Order Path" />
       </div>
     </div>
   );

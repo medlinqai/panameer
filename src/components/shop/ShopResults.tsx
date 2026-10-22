@@ -73,7 +73,7 @@ export function ShopResults({ products, compare, signedIn }: { products: ResultP
           <p className="mt-2 text-[22px] font-extrabold tabular-nums">{priceLabel(cur)}</p>
           <p className="text-[13px] text-ink-2">{cur.pricingType === "HOURLY" ? "Service – Rate · Services" : "Product · Goods"} · Delivery {deliveryLabel(cur)}{cur.terms ? ` · ${cur.terms}` : ""}</p>
           {cur.summary && <p className="mt-3 text-[14px] text-ink-2">{cur.summary}</p>}
-          <h3 className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.08em] text-ink-3">What&apos;s included</h3>
+          <h3 className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.08em] text-ink-3">What&apos;s Included</h3>
           {cur.deliverables.length ? <ul className="mt-1 list-disc pl-5 text-[13.5px]">{cur.deliverables.map((d, i) => <li key={i}>{d}</li>)}</ul> : <p className="text-[13.5px] text-ink-3">See the product page.</p>}
           <h3 className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.08em] text-ink-3">Seller</h3>
           <p className="mt-1 flex items-center gap-2 text-[14px]"><NeutralAvatar size={28} /><b>{cur.providerName}</b>{cur.rating != null && <span className="text-magenta-dark">★ {cur.rating.toFixed(1)}</span>}{cur.certified && <span className="rounded-full border border-ink px-2 text-[11px] font-bold">Certified</span>}</p>
@@ -81,7 +81,7 @@ export function ShopResults({ products, compare, signedIn }: { products: ResultP
             <BuyButtons productId={cur.id} signedIn={signedIn} openToOffers={cur.openToOffers} pair />
             <button type="button" onClick={() => toggle(cur)} className="inline-flex min-h-10 items-center border border-ink px-4 text-[13.5px] font-semibold hover:bg-bg-soft">{list.some((x) => x.id === cur.id) ? "In Compare ✓" : "Add to Compare"}</button>
           </div>
-          <Link href={`/shop/${cur.id}`} className="mt-4 text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">Open the product page</Link>
+          <Link href={`/shop/${cur.id}`} className="mt-4 text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">Open the Product Page</Link>
           <p className="mt-2 text-[13.5px]">Need it different? <Link href={`/estimate/new?product=${cur.id}`} className="font-semibold text-magenta-dark underline underline-offset-4" data-request-estimate-link>Request an Estimate</Link></p>
           <div className="mt-auto flex justify-between gap-3 border-t border-line pt-4">
             <button type="button" disabled={at <= 0} onClick={() => setActive(products[at - 1].id)} className="inline-flex min-h-9 items-center border border-ink px-3.5 text-[13px] font-semibold disabled:opacity-40">‹ Previous</button>

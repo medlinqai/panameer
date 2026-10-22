@@ -20,7 +20,7 @@ export function StoreFilters({ base, f, categories }: { base: string; f: StoreQu
         {STORE_DELIVERY.map((o) => <Row key={o.value} href={storeHref(base, f, "delivery", o.value)} on={f.delivery === o.value} label={o.label} />)}
       </Group>
       <Group title="Offers">
-        <Row href={storeHref(base, f, "offers", "1")} on={f.offers === "1"} label="Open to offers" />
+        <Row href={storeHref(base, f, "offers", "1")} on={f.offers === "1"} label="Open to Offers" />
       </Group>
     </div>
   );

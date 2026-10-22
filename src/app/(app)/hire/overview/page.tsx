@@ -90,7 +90,7 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
         <AttentionGroups groups={d.groups} />
       </section>
 
-      <PathBand steps={band} label="Work Request path" />
+      <PathBand steps={band} label="Work Request Path" />
 
       <section className="flex flex-wrap items-start gap-12">
         <div className="min-w-0 flex-[999_1_560px]" data-my-jobs>
@@ -101,7 +101,7 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
         <aside className="min-w-0 flex-[1_1_300px]">
           {week ? <WeekSchedule start={week.start} rows={week.rows} side="buyer" backHref="/hire/overview" /> : (
             <>
-              <HeadRow title="Today's Interviews"><Link href="/hire/overview?view=week" className="text-[13px] font-semibold">View week</Link></HeadRow>
+              <HeadRow title="Today's Interviews"><Link href="/hire/overview?view=week" className="text-[13px] font-semibold">View Week</Link></HeadRow>
               {w.todays.length ? (
                 <ul>{w.todays.map((iv) => (
                   <li key={iv.id} className="flex items-center gap-3 border-b border-state-border py-3.5">
@@ -215,13 +215,13 @@ function JobArticle({ j }: { j: JobTabRow }) {
             <Fact label="Step"><span className="text-ink">{PATH_STEPS.find((p) => p.key === j.step)?.label}</span></Fact>
             <Fact label="Work Order"><Link href={`/orders/${j.wo.id}`} className="text-ink">{j.wo.number}</Link></Fact>
             <Fact label="Provider">{j.wo.provider}</Fact>
-            <Fact label="Waiting on">{j.wo.waiting}</Fact>
+            <Fact label="Waiting On">{j.wo.waiting}</Fact>
           </>
         ) : (
           <>
             <Fact label="Step"><span className={STATE_TEXT[stepState(j.step, { completed: j.completed })]}>{j.completed ? "Completed" : PATH_STEPS.find((p) => p.key === j.step)?.label ?? j.step}</span></Fact>
             <Fact label="Proposals">{j.proposals ?? "—"}</Fact>
-            <Fact label="Rates proposed">{j.rates ?? "—"}{j.rates && j.inRange != null && <span className={`font-medium ${j.inRange ? GREEN : "text-state-declined"}`}> · {j.inRange ? "in range" : "over range"}</span>}</Fact>
+            <Fact label="Rates Proposed">{j.rates ?? "—"}{j.rates && j.inRange != null && <span className={`font-medium ${j.inRange ? GREEN : "text-state-declined"}`}> · {j.inRange ? "in range" : "over range"}</span>}</Fact>
             <Fact label="Deadline">{j.deadlineAt ? shortWhen(j.deadlineAt) : "—"}</Fact>
           </>
         )}
@@ -291,7 +291,7 @@ async function InterviewsTab({ personId, view, slice }: { personId: string; view
   const rows = all.filter((r) => inSlice(r, s)).sort((a, b) => (s === "completed" ? (b.startsAt ?? "").localeCompare(a.startsAt ?? "") : 0));
   return (
     <div className="flex flex-col gap-5" data-interviews-tab>
-      <div className="flex flex-wrap items-end justify-between gap-3"><h1 className="text-[30px] font-extrabold">Interviews</h1><Link href="/hire/overview?tab=interviews&view=week" className="text-[13px] font-semibold">View week</Link></div>
+      <div className="flex flex-wrap items-end justify-between gap-3"><h1 className="text-[30px] font-extrabold">Interviews</h1><Link href="/hire/overview?tab=interviews&view=week" className="text-[13px] font-semibold">View Week</Link></div>
       <div className="border-b border-ink pb-3"><SliceChips tabKey="hire-interviews" counts={sliceCounts(all)} base="/hire/overview?tab=interviews" /></div>
       {rows.length ? <InterviewCards rows={rows} side="buyer" videoReady={dailyConfigured()} /> : <p className="text-[14px] text-state-inactive">No interviews here. Use Interview on a proposal; times, Join links and notes show here.</p>}
     </div>

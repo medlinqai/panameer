@@ -51,7 +51,7 @@ export async function BrowseTalentGrid({
         Browse Talent
       </p>
       <h1 className="text-balance text-[24px] font-bold leading-tight tracking-[-0.5px] sm:text-[30px]">
-        Oracle experts, verified by their work
+        Oracle Experts, Verified by Their Work
       </h1>
       <p className="mt-2 max-w-[640px] text-[14.5px] leading-relaxed text-ink-2">
         See the depth of every profile before you join. Register free to see who
@@ -201,7 +201,7 @@ function TalentCard({ c }: { c: MaskedCard }) {
 function TooFast() {
   return (
     <div className="mx-auto max-w-[620px] py-12 text-center">
-      <h1 className="text-[24px] font-bold">One moment</h1>
+      <h1 className="text-[24px] font-bold">One Moment</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
         That was a lot of requests in a short time. Give it a few seconds and
         reload, or{" "}

@@ -100,7 +100,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
               <span className={t.default_on ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white"} />
             </button>
           </td>
-          <td className={`${TD} whitespace-nowrap text-[12px] tabular-nums`}>{counts(t.use)}{t.use.sellers + t.use.products + t.use.rates > 0 && <button type="button" onClick={() => showUsedBy("type", t.id)} className={LNK}>Used by</button>}<UsedBy id={t.id} /></td>
+          <td className={`${TD} whitespace-nowrap text-[12px] tabular-nums`}>{counts(t.use)}{t.use.sellers + t.use.products + t.use.rates > 0 && <button type="button" onClick={() => showUsedBy("type", t.id)} className={LNK}>Used By</button>}<UsedBy id={t.id} /></td>
           <td className={`${TD} text-right`}><Move level="type" id={t.id} /><Acts level="type" id={t.id} name={t.name} used={t.used} hidden={t.hidden} /></td>
         </tr>
       ))}
@@ -149,7 +149,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
               {CATEGORY_ICONS.map((k) => <option key={k} value={k}>{k}</option>)}
             </select>
             {edit?.key === `tl:${g.id}` ? inline({ k: `tl:${g.id}`, initial: g.tileLine ?? "", placeholder: "One line under the name", onSave: (v) => call({ action: "tile", id: g.id, tile_line: v }) }) : <span className="text-ink-2">{g.tileLine ?? "No line yet"}</span>}
-            <button type="button" onClick={() => open(`tl:${g.id}`, g.tileLine ?? "")} className={LNK}>Edit line</button>
+            <button type="button" onClick={() => open(`tl:${g.id}`, g.tileLine ?? "")} className={LNK}>Edit Line</button>
             <button type="button" role="switch" aria-checked={g.showInShop} aria-label={`${g.name} shows in Shop`} onClick={() => call({ action: "tile", id: g.id, show_in_shop: !g.showInShop })} className={g.showInShop ? "relative ml-2 h-[22px] w-[38px] rounded-full bg-ink" : "relative ml-2 h-[22px] w-[38px] rounded-full bg-[#C9CDDC]"}>
               <span className={g.showInShop ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white"} />
             </button>
@@ -174,7 +174,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
                   <button type="button" onClick={() => open(`d:${b.id}`, b.description ?? "")} className={LNK}>{b.description ? "Edit description" : "+ Description"}</button>
                   {b.uses_skills && <span className="border border-line px-1.5 text-[10px] font-bold tracking-[0.08em] text-ink-2">USES SKILLS</span>}
                   <span className="text-[12px] text-ink-3">{`${b.companies} ${b.companies === 1 ? "COMPANY" : "COMPANIES"}`} · {counts(b.categories.flatMap((c) => c.types).reduce((m, t) => ({ sellers: m.sellers + t.use.sellers, products: m.products + t.use.products, rates: m.rates + t.use.rates }), { sellers: 0, products: 0, rates: 0 }))}</span>
-                  <button type="button" onClick={() => showUsedBy("businessType", b.id)} className={LNK}>Used by</button>
+                  <button type="button" onClick={() => showUsedBy("businessType", b.id)} className={LNK}>Used By</button>
                   <select aria-label={`Move ${b.name} to…`} value="" onChange={(e) => e.target.value && call({ action: "moveBusinessType", id: b.id, to: e.target.value })} className={SEL}>
                     <option value="">Move to…</option>
                     {groups.filter((x) => x.id !== g.id).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
@@ -218,7 +218,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
                             <td className={TD}><select aria-label="Delivery" value={t.delivery ?? ""} onChange={(e) => update(t.id, { delivery: e.target.value || null })} className={SEL}><option value="">—</option>{DELIVERY.map(([x, l]) => <option key={x} value={x}>{l}</option>)}</select></td>
                             <td className={TD}><input defaultValue={t.lead_time_days ?? ""} aria-label="Lead time days" inputMode="numeric" onBlur={(e) => update(t.id, { lead_time_days: e.target.value ? Number(e.target.value) : null })} className={`${SEL} w-14`} /></td>
                             <td className={TD}><input defaultValue={t.commodity_code ?? ""} aria-label="Commodity code" maxLength={8} onBlur={(e) => e.target.value !== (t.commodity_code ?? "") && update(t.id, { commodity_code: e.target.value.trim() || null })} className={`${SEL} w-24 font-mono`} /></td>
-                            <td className={`${TD} whitespace-nowrap text-[12px] tabular-nums`}>{counts(t.use)}{t.use.sellers + t.use.products + t.use.rates > 0 && <button type="button" onClick={() => showUsedBy("type", t.id)} className={LNK}>Used by</button>}<UsedBy id={t.id} /></td>
+                            <td className={`${TD} whitespace-nowrap text-[12px] tabular-nums`}>{counts(t.use)}{t.use.sellers + t.use.products + t.use.rates > 0 && <button type="button" onClick={() => showUsedBy("type", t.id)} className={LNK}>Used By</button>}<UsedBy id={t.id} /></td>
                             <td className={`${TD} text-right`}>
                               <select aria-label={`Move ${t.name} to…`} value="" onChange={(e) => e.target.value && call({ action: "moveType", id: t.id, to: e.target.value })} className={`${SEL} mr-1 w-28`}>
                                 <option value="">Move to…</option>

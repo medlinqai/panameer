@@ -208,7 +208,7 @@ export function WorkRequestLines({ initial }: { initial: WorkRequestDetail }) {
                   href={`/work-requests/${detail.id}/invite?line=${l.id}`}
                   className="text-[14.5px] font-bold text-ink-2 underline underline-offset-4 hover:text-magenta"
                 >
-                  Invite providers to bid
+                  Invite Providers to Bid
                 </Link>
 
                 {detail.lines.length > 1 && l.invitedCount === 0 && (

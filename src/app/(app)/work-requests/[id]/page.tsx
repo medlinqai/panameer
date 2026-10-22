@@ -95,8 +95,8 @@ export default async function Page({
   const actions = [
     ...(detail.status === "DRAFT" ? [{ label: "Edit the Job", href: `/hire?job=${detail.id}&step=0` }] : []),
     ...(sourcing ? [{ label: `Open Sourcing Event ${sourcing.event_number}`, href: `/hire/sourcing/${sourcing.id}` }] : []),
-    ...(!detail.soleSourced ? [{ label: "Invite providers", href: `/work-requests/${id}/invite` }] : []),
-    ...(posted ? [{ label: "Share with providers", href: `/work-requests/${id}/share` }] : []),
+    ...(!detail.soleSourced ? [{ label: "Invite Providers", href: `/work-requests/${id}/invite` }] : []),
+    ...(posted ? [{ label: "Share with Providers", href: `/work-requests/${id}/share` }] : []),
     ...sec.orders.map((o) => ({ label: `Open Work Order ${o.order_number}`, href: `/orders/${o.id}` })),
     { label: "My Jobs", href: "/hire/jobs" },
   ];
@@ -143,7 +143,7 @@ export default async function Page({
 
       <WorkRequestPath jobId={detail.id} />
 
-      <Section title="Job details" right={detail.status === "DRAFT" ? <Link href={`/hire?job=${detail.id}&step=0`}>Edit</Link> : null}>
+      <Section title="Job Details" right={detail.status === "DRAFT" ? <Link href={`/hire?job=${detail.id}&step=0`}>Edit</Link> : null}>
         {sd ? (
           <div className="grid grid-cols-1 gap-x-6 gap-y-[18px] sm:grid-cols-3" data-job-facts>
             <Fact label="What"><span className="font-normal">{[sd.summary || sd.title, sd.category].filter(Boolean).join(" · ")}</span></Fact>
@@ -169,7 +169,7 @@ export default async function Page({
         </Section>
       )}
 
-      <Section title="Requests to Propose" extra={sec.requestRows.length ? `· ${sec.requestRows.length} asked · ${sec.responded} responded` : null} right={!awarded && (detail.status === "OPEN" || detail.status === "DRAFT") ? <Link href={`/work-requests/${detail.id}#matches`}>Request more</Link> : null}>
+      <Section title="Requests to Propose" extra={sec.requestRows.length ? `· ${sec.requestRows.length} asked · ${sec.responded} responded` : null} right={!awarded && (detail.status === "OPEN" || detail.status === "DRAFT") ? <Link href={`/work-requests/${detail.id}#matches`}>Request More</Link> : null}>
         {sec.requestRows.length ? sec.requestRows.map((r) => (
           <div key={r.number} className={`flex flex-wrap items-center gap-3.5 py-3 text-[14px] ${ROW_RULE}`}>
             <span className="w-[70px] font-bold">{r.who.replace(/^Provider /, "")}</span>
@@ -205,7 +205,7 @@ export default async function Page({
         )}
       </Section>
 
-      <Section title="Test requests">
+      <Section title="Test Requests">
         {sec.testRows.length ? sec.testRows.map((t) => (
           <div key={t.number} className={`flex flex-wrap justify-between gap-2 py-2.5 text-[14px] ${ROW_RULE}`}><span><b>{t.who.replace(/^Provider /, "")}</b> · {t.skill}</span><span className="text-state-inactive">{t.score != null ? `${t.score}% · ` : ""}<b className={t.result === "Pass" ? GREEN : t.result === "Fail" ? "text-state-declined" : "text-ink"}>{t.result}</b></span></div>
         )) : empty("None requested. Scores and pass/fail show here.")}
