@@ -22,6 +22,8 @@ import { growthBoard, growthScore, rankFor } from "@/lib/growth-score";
 import { prisma } from "@/lib/prisma";
 import { buyerProfileFor } from "@/lib/buyer-profile";
 import { BuyerProfileEditor } from "@/components/buyer/BuyerProfileEditor";
+import { RecruiterNumbers } from "@/components/profile/RecruiterNumbers";
+import { recruiterNumbers } from "@/lib/recruiter-numbers";
 import { ResumePrefillBanner } from "@/components/profile/ResumePrefillBanner";
 import type { ResumePrefill } from "@/lib/resume/prefill";
 
@@ -57,6 +59,9 @@ export default async function MyProfilePage() {
   const industryMissing = !!(await industryGap(profile.person.personId, profile.id));
   const industries = industryMissing ? await prisma.specialization.findMany({ where: { kind: "INDUSTRY", status: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true } }) : [];
   const prefill = (await prisma.providerProfile.findUnique({ where: { id: profile.id }, select: { resume_prefill: true } }))?.resume_prefill as ResumePrefill | null;
+  const own = await prisma.providerProfile.findUnique({ where: { id: profile.id }, select: { oracle_cloud_years: true, implementations_count: true } });
+  // Derived numbers for the placeholders: computed as if the provider had entered nothing.
+  const derived = (await recruiterNumbers([profile.id])).get(profile.id);
   const publicUrl = slug
     ? `${(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100").replace(/\/$/, "")}/pro/${slug}`
     : null;
@@ -83,6 +88,7 @@ export default async function MyProfilePage() {
       <div className="account-surface">
       {prefill?.fields?.length ? <ResumePrefillBanner fields={prefill.fields} /> : null}
       {industryMissing && <IndustryAsk industries={industries} />}
+      <RecruiterNumbers years={own?.oracle_cloud_years ?? null} implementations={own?.implementations_count ?? null} derivedYears={derived?.yearsDerived ? derived.years : null} derivedImplementations={derived?.implementationsDerived ? derived.implementations : null} />
       <ConnectProfile
         whatIDo={(await taxonomyV2()) ? <CapabilityLines profileId={profile.id} owner /> : undefined}
         // above. The view model carries `null` for every other surface.

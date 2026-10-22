@@ -1114,6 +1114,9 @@ model ProviderProfile {
   accepts_orders_manually   Boolean          @default(false)
   /// Lane 7 (Scott 10-15): "Open to offers on price and delivery" — replaces accepts_orders_manually (kept, unused).
   open_to_offers            Boolean          @default(false)
+  /// MR-E003: the two numbers recruiters ask for, as the provider states them (null = derived from Oracle Cloud projects).
+  oracle_cloud_years        Int?
+  implementations_count     Int?
   region_id                 String?          @db.Uuid
   /// ── ⚠⚠⚠ `headline` IS GONE (`P0-E595` WS-B) ───────────────────────────
   ///
