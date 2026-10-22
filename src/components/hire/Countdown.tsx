@@ -13,7 +13,7 @@ export function Countdown({ at, className = "" }: { at: string; className?: stri
   }, []);
   if (now == null) return <span className={className}>&nbsp;</span>;
   const ms = new Date(at).getTime() - now;
-  if (ms <= 0) return <span className={className} data-countdown="closed">Closed</span>;
+  if (ms <= 0) return <span className={className} data-countdown="closed">Passed</span>;
   const h = Math.floor(ms / 3_600_000);
   const m = Math.floor((ms % 3_600_000) / 60_000);
   const text = h >= 24 ? `${Math.floor(h / 24)} d ${h % 24} h left` : h > 0 ? `${h} h ${m} min left` : `${m} min left`;
