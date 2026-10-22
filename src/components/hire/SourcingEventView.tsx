@@ -7,6 +7,7 @@ import type { eventForBuyer } from "@/lib/sourcing-events";
 import { Countdown, DeadlineBadge } from "@/components/hire/Countdown";
 import { CompareTable } from "@/components/hire/MatchList";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
+import { InterviewDialog } from "@/components/hire/InterviewDialog";
 
 type Ev = Awaited<ReturnType<typeof eventForBuyer>>;
 const STATUS: Record<string, string> = { DRAFT: "Draft", OPEN: "Open", CLOSED: "Closed", AWARDED: "Awarded" };
@@ -21,6 +22,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
   const router = useRouter();
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [comparing, setComparing] = useState(false);
+  const [interviewing, setInterviewing] = useState<string[] | null>(null);
   const [extendBy, setExtendBy] = useState("24");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -39,6 +41,8 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
     if (ok) setMsg(ok);
     router.refresh();
   };
+  /** Run one call per ticked row, then one message. */
+  const bulk = async (one: (personId: string) => Promise<void>, ok: string) => { for (const id of picked) await one(id); setMsg(ok); setPicked(new Set()); };
   const toggle = (id: string) => setPicked((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const withProposal = ev.proposals.filter((p) => p.proposal && p.proposal.status !== "DECLINED");
 
@@ -55,7 +59,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
         <p className="text-[14.5px] font-semibold"><Link href={`/work-requests/${ev.jobId}`} className="hover:underline">{ev.job.title}</Link></p>
         <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-ink-2">
           <span>Deadline {new Date(ev.deadlineAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · <Countdown at={ev.deadlineAt} /></span>
-          <span data-event-counts>{ev.counts.requested} requested · {ev.counts.proposed} proposed · {ev.counts.declined} declined</span>
+          <span data-event-counts>{ev.counts.requested} requested · {ev.counts.proposed} responded · {ev.counts.declined} declined</span>
           {range && <span>Your range {range}</span>}
         </p>
         {!awarded && (
@@ -79,10 +83,19 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
       {ev.othersNotifiedAt && <p className="mt-4 text-[13.5px] text-ink-2">The other candidates were told on {new Date(ev.othersNotifiedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.</p>}
 
       <section className="mt-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[18px] font-extrabold">Responses</h2>
-          <button type="button" className={GHOST} disabled={picked.size < 2 || picked.size > 4} onClick={() => setComparing(true)} data-compare-proposals title="Tick 2 to 4 responses">Compare{picked.size >= 2 ? ` ${picked.size}` : ""}</button>
-        </div>
+        <h2 className="text-[18px] font-extrabold">Responses</h2>
+        {/* IW-E003: joint actions on the ticked rows; the row buttons stay as they are. */}
+        {!awarded && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 border-y border-state-border bg-bg-soft px-3 py-2" data-bulk-bar>
+            <button type="button" className={GHOST} onClick={() => setPicked(new Set(withProposal.filter((p) => p.proposal?.status === "SHORTLISTED").map((p) => p.personId)))} data-select-shortlisted>Select All Shortlisted</button>
+            <span className="text-[13px] text-state-inactive">{picked.size} selected</span>
+            <span className="flex-1" />
+            <button type="button" className={GHOST} disabled={picked.size < 2 || picked.size > 4} onClick={() => setComparing(true)} data-compare-proposals title="Tick 2 to 4 responses">Compare{picked.size >= 2 ? ` ${picked.size}` : ""}</button>
+            <button type="button" className={GHOST} disabled={busy || !picked.size} onClick={() => setInterviewing([...picked])} data-bulk-interview>Interview{picked.size ? ` ${picked.size}` : ""}</button>
+            <button type="button" className={GHOST} disabled={busy || !picked.size || !ev.certificationTestId} title={ev.certificationTestId ? undefined : "No certification test exists for this job's skills yet"} onClick={() => bulk((id) => act(`/api/work-requests/${ev.jobId}/test`, { providerPersonId: id, learnAssessmentId: ev.certificationTestId }), "Tests sent.")} data-bulk-test>Request Test{picked.size ? ` ${picked.size}` : ""}</button>
+            <button type="button" className={GHOST} disabled={busy || !picked.size} onClick={() => act("/api/sourcing", { action: "decide", proposalIds: withProposal.filter((p) => picked.has(p.personId)).map((p) => p.proposal!.id), decision: "DECLINED" }, "Declined.").then(() => setPicked(new Set()))} data-bulk-decline>Decline{picked.size ? ` ${picked.size}` : ""}</button>
+          </div>
+        )}
         <ul className="mt-2 divide-y divide-line border-y border-line">
           {[...ev.proposals].sort((a, b) => rank(a) - rank(b) || (a.proposal?.rateCents ?? Infinity) - (b.proposal?.rateCents ?? Infinity)).map((p) => {
             const pr = p.proposal;
@@ -100,6 +113,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                     <p className="mt-1 text-[13.5px] text-ink-3">{p.requestStatus === "DECLINED" ? <><b className="text-state-declined">Not This Time</b>{p.declineReason ? ` — “${p.declineReason}”` : ""}</> : "No response yet"}</p>
                   )}
                   {pr?.note && <p className="mt-1 whitespace-pre-line text-[13px] text-ink-2">{pr.note}</p>}
+                  {p.interview && <InterviewState iv={p.interview} />}
                   <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]">
                     {p.match.why.map((k) => <span key={k} className="rounded-full border border-magenta-dark bg-[#fbeafb] px-2 font-semibold text-magenta-dark">{k}</span>)}
                     {p.match.matched.map((k) => <span key={k} className="rounded-full border border-line bg-bg-soft px-2">{k}</span>)}
@@ -108,7 +122,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                 {pr && pr.status !== "DECLINED" && !awarded && (
                   <div className="flex flex-wrap justify-end gap-1.5">
                     <button type="button" className={GHOST} disabled={busy} onClick={() => act("/api/sourcing", { action: pr.status === "SHORTLISTED" ? "unshortlist" : "shortlist", eventId: ev.id, proposalId: pr.id })}>{pr.status === "SHORTLISTED" ? "★ Shortlisted" : "☆ Shortlist"}</button>
-                    <button type="button" className={GHOST} disabled={busy} onClick={() => act(`/api/work-requests/${ev.jobId}/interview`, { providerPersonId: p.personId }, "Interview requested — they'll offer times.")} data-request-interview>Interview</button>
+                    <button type="button" className={GHOST} disabled={busy} onClick={() => setInterviewing([p.personId])} data-request-interview>Interview</button>
                     <button type="button" className={GHOST} disabled={busy || !ev.certificationTestId} title={ev.certificationTestId ? undefined : "No certification test exists for this job's skills yet"} onClick={() => act(`/api/work-requests/${ev.jobId}/test`, { providerPersonId: p.personId, learnAssessmentId: ev.certificationTestId }, "Certification test sent.")} data-request-test>Request Test</button>
                     <button type="button" className={GHOST} disabled={busy} onClick={() => act("/api/sourcing", { action: "declineProposal", eventId: ev.id, proposalId: pr.id })}>Decline</button>
                     <Link href={`/hire/terms?job=${ev.jobId}&provider=${p.personId}`} className={BTN} data-award>Hire</Link>
@@ -122,7 +136,15 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
         {msg && <p role="status" className="mt-3 text-[13.5px] font-semibold text-magenta-dark">{msg}</p>}
         {ev.workOrderId && <p className="mt-3 text-[13.5px]">Work Order: <Link href={`/orders/${ev.workOrderId}`} className="font-semibold text-magenta-dark underline underline-offset-4">open it</Link></p>}
       </section>
+      {interviewing && <InterviewDialog jobId={ev.jobId} providerPersonIds={interviewing} onClose={() => setInterviewing(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
       {comparing && <CompareTable rows={withProposal.filter((p) => picked.has(p.personId)).map((p) => ({ m: p.match, proposed: p.proposal?.rateCents != null ? `${usd(p.proposal.rateCents)}${per}` : null, start: p.proposal?.start ?? null }))} onClose={() => setComparing(false)} />}
     </div>
   );
+}
+
+/** IW-E006: "Interview Booked · Tue 2:00 PM" (green) or "Interview Invited · Not Booked" (amber). */
+function InterviewState({ iv }: { iv: NonNullable<Ev["proposals"][number]["interview"]> }) {
+  if (iv.status === "SCHEDULED" && iv.startsAt) return <p className="mt-1 text-[13px] font-semibold text-state-accepted" data-interview-state="booked">Interview Booked · {new Date(iv.startsAt).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })}</p>;
+  if (iv.status === "COMPLETED") return <p className="mt-1 text-[13px] font-semibold text-state-inactive" data-interview-state="done">Interview Done</p>;
+  return <p className="mt-1 text-[13px] font-semibold text-state-pending" data-interview-state="invited">Interview Invited · Not Booked</p>;
 }

@@ -150,6 +150,8 @@ export type EventProposal = {
   personId: string; requestStatus: string; declineReason: string | null;
   proposal: { id: string; status: string; rateCents: number | null; start: string | null; note: string | null } | null;
   match: import("@/lib/hire-questionnaire").HireMatch;
+  /** IW-E006: this provider's latest interview on the job — booked (with when) or invited and not booked yet. */
+  interview: { id: string; status: string; startsAt: string | null; openTimes: boolean } | null;
 };
 
 export async function eventForBuyer(viewer: Viewer, eventId: string) {
@@ -170,12 +172,15 @@ export async function eventForBuyer(viewer: Viewer, eventId: string) {
     const nums = await providerNumbers(profiles.map((p) => p.id));
     for (const p of profiles) byPerson.set(p.person_id, { personId: p.person_id, profileId: p.id, name: providerLabel(nums.get(p.id)), company: null, photoUrl: p.person.photo_url ?? null, badges: [], line: p.person.title ?? "", rate: null, matched: [], why: [], fit: 0, inBudget: false, outside: false, hidden: false, starred: false, requested: null, weak: false, detail: { summary: "", role: p.person.title, skillsMatched: "0 of 10", years: null, ocYears: null, ocYearsLabel: null, implementations: null, implementationsLabel: null, certifications: [], location: null, rates: [], products: [] } });
   }
+  const ivs = await prisma.interviewRequest.findMany({ where: { job_id: ev.job_id, status: { in: ["REQUESTED", "SLOTS_OFFERED", "SCHEDULED", "COMPLETED"] } }, orderBy: { created_at: "desc" }, select: { id: true, provider_person_id: true, status: true, slot_minutes: true, confirmed_line_id: true, response: { select: { lines: { select: { id: true, starts_at: true } } } } } });
   const proposals: EventProposal[] = requests.filter((r) => byPerson.has(r.provider_person_id)).map((r) => {
     const line = r.bid?.lines[0];
+    const iv = ivs.find((x) => x.provider_person_id === r.provider_person_id);
     return {
       personId: r.provider_person_id, requestStatus: r.status, declineReason: r.decline_reason,
       proposal: r.bid && r.bid.status !== "DRAFT" && r.bid.status !== "WITHDRAWN" ? { id: r.bid.id, status: r.bid.status, rateCents: line?.unit_price_cents ?? null, start: line?.available_from?.toISOString().slice(0, 10) ?? null, note: r.bid.cover_note } : null,
       match: byPerson.get(r.provider_person_id)!,
+      interview: iv ? { id: iv.id, status: iv.status, startsAt: iv.response?.lines.find((l) => l.id === iv.confirmed_line_id)?.starts_at.toISOString() ?? null, openTimes: iv.slot_minutes != null } : null,
     };
   });
   let testId: string | null = null;
