@@ -6,10 +6,9 @@ import { appCounts } from "@/lib/attention";
 import { buyerHireTabs, buyerLiveWork, buyerTests, hireOverviewData, weekInterviews, type JobTabRow } from "@/lib/live-work";
 import { AttentionGroups } from "@/components/hire/AttentionGroups";
 import { DiscardDraft } from "@/components/hire/DiscardDraft";
-import { listInterviews } from "@/lib/interviews";
-import { dailyConfigured } from "@/lib/daily";
 import { WeekSchedule } from "@/components/home/LiveWork";
-import { InterviewCards } from "@/components/work/InterviewCards";
+import { InterviewWorkday } from "@/components/work/InterviewWorkday";
+import { gridDay, interviewGrid, rowsOn } from "@/lib/interview-grid";
 import { NeutralAvatar } from "@/components/Avatar";
 import { TypeArt } from "@/components/shop/TypeArt";
 import { RecurringLine, SliceChips } from "@/components/casing/SliceChips";
@@ -22,7 +21,7 @@ export const metadata = { title: "Hire · Panameer" };
 
 const TABS = ["overview", "jobs", "requests", "interviews", "tests"] as const;
 type Tab = (typeof TABS)[number];
-type SP = { tab?: string; step?: string; view?: string; slice?: string; q?: string };
+type SP = { tab?: string; step?: string; view?: string; slice?: string; q?: string; show?: string; date?: string };
 
 // RA-E004/E005 + HL-E001–E005: the buyer's Request app home, styled to Scott's mockups (10-21).
 export default async function Page({ searchParams }: { searchParams: Promise<SP> }) {
@@ -50,7 +49,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
         {tab === "overview" && <Overview personId={me.id} slice={sp.slice} view={sp.view ?? null} />}
         {tab === "jobs" && <JobsTab personId={me.id} step={sp.step ?? null} slice={sp.slice} q={sp.q ?? ""} />}
         {tab === "requests" && <RequestsTab personId={me.id} slice={sp.slice} />}
-        {tab === "interviews" && <InterviewsTab personId={me.id} view={sp.view ?? null} slice={sp.slice} />}
+        {tab === "interviews" && <InterviewsTab personId={me.id} userId={viewer.userId} view={sp.view ?? null} show={sp.show ?? null} date={sp.date ?? null} />}
         {tab === "tests" && <TestsTab personId={me.id} slice={sp.slice} />}
       </div>
     </div>
@@ -282,21 +281,17 @@ async function RequestsTab({ personId, slice }: { personId: string; slice?: stri
   );
 }
 
-async function InterviewsTab({ personId, view, slice }: { personId: string; view: string | null; slice?: string }) {
+async function InterviewsTab({ personId, userId, view, show, date }: { personId: string; userId: string; view: string | null; show: string | null; date: string | null }) {
   if (view === "week") {
     const week = await weekInterviews("buyer", personId);
     return <WeekSchedule start={week.start} rows={week.rows} side="buyer" backHref="/hire/overview?tab=interviews" />;
   }
-  const all = (await listInterviews({ buyerPersonId: personId })).map((r) => ({ ...r, completed: !["REQUESTED", "SLOTS_OFFERED", "SCHEDULED"].includes(r.status), recurring: null }));
-  const s = sliceOf(slice);
-  const rows = all.filter((r) => inSlice(r, s)).sort((a, b) => (s === "completed" ? (b.startsAt ?? "").localeCompare(a.startsAt ?? "") : 0));
-  return (
-    <div className="flex flex-col gap-5" data-interviews-tab>
-      <div className="flex flex-wrap items-end justify-between gap-3"><h1 className="text-[30px] font-extrabold">Interviews</h1><Link href="/hire/overview?tab=interviews&view=week" className="text-[13px] font-semibold">View Week</Link></div>
-      <div className="border-b border-ink pb-3"><SliceChips tabKey="hire-interviews" counts={sliceCounts(all)} base="/hire/overview?tab=interviews" /></div>
-      {rows.length ? <InterviewCards rows={rows} side="buyer" videoReady={dailyConfigured()} /> : <p className="text-[14px] text-state-inactive">No interviews here. Use Interview on a response; times, Join links and notes show here.</p>}
-    </div>
-  );
+  // IW-E001: the Workday — tiles, a day navigator and the fixed-column grid.
+  const { rows, tiles } = await interviewGrid("buyer", personId, userId);
+  const day = gridDay(date);
+  const list = show === "confirm" ? rows.filter((r) => r.status === "To Confirm") : show === "feedback" ? rows.filter((r) => r.status === "Done" && !r.ranked) : rowsOn(rows, day.key);
+  return <InterviewWorkday side="buyer" rows={list} tiles={tiles} show={show} base="/hire/overview?tab=interviews" testsHref="/hire/overview?tab=tests"
+    day={{ ...day, label: day.start.toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }) }} />;
 }
 
 async function TestsTab({ personId, slice }: { personId: string; slice?: string }) {
