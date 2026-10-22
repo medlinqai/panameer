@@ -4,7 +4,7 @@ import { parsePosting } from "@/lib/service-description";
 import { extractText, mimeFromName, ExtractError } from "@/lib/resume/extract";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 180;
 
 // SD-E003: "Upload a posting" — pasted text or a .docx / .pdf, read into the Service Description standard (not saved yet).
 export async function POST(request: Request) {
@@ -29,6 +29,6 @@ export async function POST(request: Request) {
   if (text.length < 60) return NextResponse.json({ error: "Paste the whole posting — that's too short to read." }, { status: 400 });
   // PC-E001: pass 1 classifies the Business Type, pass 2 reads the six parts with it.
   const out = await parsePosting(text.slice(0, 40_000));
-  if (!out.ok) return NextResponse.json({ error: out.reason === "no_key" ? "The posting reader isn't switched on here. Fill it in yourself." : "We couldn't read that posting. Fill it in yourself, or try again." }, { status: out.reason === "no_key" ? 503 : 422 });
+  if (!out.ok) return NextResponse.json({ error: out.reason === "no_key" ? "The posting reader isn't switched on here. Fill it in yourself." : out.reason === "deadline" ? "The AI took too long reading this posting. Try again, or Create Job Manually." : "We couldn't read that posting. Try again, or Create Job Manually." }, { status: out.reason === "no_key" ? 503 : 422 });
   return NextResponse.json({ sd: out.sd });
 }

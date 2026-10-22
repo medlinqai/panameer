@@ -337,7 +337,7 @@ export async function aiExtractServiceDescription(text: string, bt?: { category:
   if (catalog?.skills.length) props.skills = { type: "array", items: { type: "string", enum: catalog.skills }, description: "Catalog skills the posting asks for — only names from this list." };
   const schema = { ...SD_TOOL, properties: props };
   const call = await callExtractionModel({
-    timeoutMs: 60_000,
+    timeoutMs: 110_000,
     system: SD_SYSTEM + who + (catalog?.skills.length ? `\n${SKILL_MAP_HINTS}` : ""),
     schema: schema as unknown as Record<string, unknown>,
     schemaName: "record_service_description",
