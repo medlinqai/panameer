@@ -149,11 +149,11 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
   // RA-E006: JOBS | Overview · Find Jobs (Best Matches / All Jobs / Saved as filters) · Proposal Requests · My Proposals · Interviews · Tests.
   "/find-work": [
     { label: "Overview", href: "/find-work" },
-    { label: "Find Jobs", href: "/find-work?tab=best" },
+    { label: "Jobs", href: "/find-work?tab=best" },
     { label: "Availability Requests", href: "/find-work?tab=invitations" },
     { label: "My Responses", href: "/find-work?tab=proposals" },
-    { label: "Interviews", href: "/find-work?tab=interviews" },
-    { label: "Tests", href: "/find-work?tab=tests" },
+    { label: "Interview Requests", href: "/find-work?tab=interviews" },
+    { label: "Test Requests", href: "/find-work?tab=tests" },
   ],
   "/learn": [
     { label: "Home", href: "/learn" },
