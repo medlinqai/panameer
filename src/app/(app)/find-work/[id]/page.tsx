@@ -78,7 +78,8 @@ export default async function Page({
               <p className="text-[13.5px] text-ink-2">{meta.join(" · ")}</p>
             )}
 
-            {detail.skills.length > 0 && (
+            {/* With an Availability Request, the full Service Description sits below the action card — don't repeat skills/description up here. */}
+            {!sourcing && detail.skills.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {detail.skills.map((s) => (
                   <span
@@ -92,7 +93,7 @@ export default async function Page({
             )}
 
             {}
-            {detail.description && (
+            {!sourcing && detail.description && (
               <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-ink-2">
                 {detail.description}
               </p>
