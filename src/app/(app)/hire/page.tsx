@@ -7,7 +7,7 @@ import { emptySd, postingHierarchy, readServiceDescription, topRoleCodeFor, work
 import { lastJobDefaults, loadOwned, resolveBuyer } from "@/lib/work-request";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Hire · Panameer" };
+export const metadata = { title: "Post a Job · Panameer" };
 
 // SD-E003: Hire follows the Service Description standard; ?job=<draft>&step=<n> reopens a saved draft at a step (Edit).
 export default async function Page({ searchParams }: { searchParams: Promise<{ job?: string; step?: string }> }) {
@@ -34,7 +34,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
     <div className="pm-white-page mx-auto w-full max-w-5xl">
       <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[26px] font-extrabold">Hire</h1>
+          <h1 className="text-[26px] font-extrabold">Post a Job</h1>
           <p className="text-[14px] text-ink-2">Tell us what you need — or upload a posting. We&apos;ll show you who fits, and you choose who sends a proposal.</p>
         </div>
         <Link href="/hire/jobs" className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">My Jobs →</Link>
