@@ -46,3 +46,25 @@ export async function recruiterNumbers(profileIds: string[]): Promise<Map<string
 
 export const yearsBadge = (n: RecruiterNumbers | undefined) => (n?.years ? `${n.yearsDerived ? "≈" : ""}${n.years} yrs Oracle Cloud` : null);
 export const implementationsBadge = (n: RecruiterNumbers | undefined) => (n?.implementations ? `${n.implementationsDerived ? "≈" : ""}${n.implementations} Implementation${n.implementations === 1 ? "" : "s"}` : null);
+
+// MR-E002: credential badges on a match row — Panameer Certified (green), Oracle Cloud certifications, years, implementations.
+export type MatchBadge = { label: string; certified?: boolean; title?: string };
+const isOracleCloud = (name: string) => /oracle/i.test(name) && /cloud|fusion|\boci\b/i.test(name);
+
+export async function matchBadges(rows: { profileId: string; personId: string; certifications: string[] }[], numbers: Map<string, RecruiterNumbers>): Promise<Map<string, MatchBadge[]>> {
+  const persons = await prisma.person.findMany({ where: { id: { in: rows.map((r) => r.personId) } }, select: { id: true, user_id: true } });
+  const userIds = persons.map((p) => p.user_id).filter((u): u is string => !!u);
+  const passed = new Set((await prisma.certificationAttempt.findMany({ where: { user_id: { in: userIds }, passed: true, is_preview: false }, distinct: ["user_id"], select: { user_id: true } })).map((a) => a.user_id));
+  const userOf = new Map(persons.map((p) => [p.id, p.user_id]));
+  return new Map(rows.map((r) => {
+    const oc = r.certifications.filter(isOracleCloud).sort((a, b) => a.localeCompare(b));
+    const n = numbers.get(r.profileId);
+    const out: MatchBadge[] = [];
+    if (passed.has(userOf.get(r.personId) ?? "")) out.push({ label: "Panameer Certified", certified: true });
+    if (oc.length) out.push({ label: `${oc[0].replace(/^Oracle\s+/i, "Oracle ")}${oc.length > 1 ? ` +${oc.length - 1}` : ""}`, title: oc.join("\n") });
+    const y = yearsBadge(n), i = implementationsBadge(n);
+    if (y) out.push({ label: y });
+    if (i) out.push({ label: i });
+    return [r.profileId, out];
+  }));
+}

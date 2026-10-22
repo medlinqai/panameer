@@ -5,6 +5,7 @@ import type { Viewer } from "@/lib/access";
 import { marketplaceWhere } from "@/lib/visibility";
 import { createDraft, resolveBuyer, loadOwned } from "@/lib/work-request";
 import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
+import { matchBadges, recruiterNumbers, type MatchBadge } from "@/lib/recruiter-numbers";
 import { productPillarName, writeServiceDescription, type ServiceDescription, deepRolesIn } from "@/lib/service-description";
 import { requisitionForJob } from "@/lib/requisition";
 import { ensureFirstLine } from "@/lib/work-request-lines";
@@ -93,7 +94,9 @@ export function domainsIn(text: string): Set<string> {
   return new Set(Object.entries(DOMAIN_WORDS).filter(([, re]) => re.test(text)).map(([k]) => k));
 }
 
-export type HireMatch = { personId: string; profileId: string; name: string; company: string | null; photoUrl: string | null; line: string; rate: string | null; matched: string[]; why: string[]; fit: number; inBudget: boolean;
+export type HireMatch = { personId: string; profileId: string; name: string; company: string | null; photoUrl: string | null;
+  /** MR-E002: credential pills (max 4 shown). */
+  badges: MatchBadge[]; line: string; rate: string | null; matched: string[]; why: string[]; fit: number; inBudget: boolean;
   /** MQ-E001: an Onsite/Hybrid job lists only providers in its state; the rest come after, behind "Show providers outside". */
   outside: boolean;
   /** MQ-E005: hidden by the buyer on this job (restorable). */
@@ -191,7 +194,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
     ];
     const company = r.person.company?.name && !r.person.company.name.includes(r.person.last_name) ? r.person.company.name : null;
     const m: HireMatch = {
-      personId: r.person.id, profileId: r.id, name: `${r.person.first_name} ${r.person.last_name}`.trim(), company, photoUrl: r.person.photo_url,
+      personId: r.person.id, profileId: r.id, name: `${r.person.first_name} ${r.person.last_name}`.trim(), company, photoUrl: r.person.photo_url, badges: [],
       line: [r.person.title, addr?.city ? [addr.city, addr.state].filter(Boolean).join(", ") : null].filter(Boolean).join(" · "),
       rate: hourly.length ? `$${Math.round(hourly[0] / 100)}/hr` : priced.length ? `from $${Math.round(priced[0] / 100)}` : null,
       matched: matched.slice(0, 8), why, fit: total ? Math.round((matched.length / total) * 100) : 0, inBudget,
@@ -217,6 +220,8 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
     .sort((a, b) => { for (let i = 0; i < a.key.length; i++) if (b.key[i] !== a.key[i]) return b.key[i] - a.key[i]; return a.m.name.localeCompare(b.m.name); })
     .slice(0, 40)
     .map((x) => x.m);
+  const badges = await matchBadges(top.map((m) => ({ profileId: m.profileId, personId: m.personId, certifications: m.detail.certifications })), await recruiterNumbers(top.map((m) => m.profileId)));
+  for (const m of top) m.badges = badges.get(m.profileId) ?? [];
   // AN-E003: no name or company until a Work Order exists (MR-E001: the photo shows) — "Provider P-1038" (title, city, rate and skills stay).
   const [seen, numbers] = await Promise.all([identityVisibleTo(viewer ?? null, top.map((m) => m.personId)), providerNumbers(top.map((m) => m.profileId))]);
   return top.map((m) => (seen.has(m.personId) ? m : { ...m, name: providerLabel(numbers.get(m.profileId)), company: null }));

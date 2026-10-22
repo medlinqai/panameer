@@ -114,3 +114,15 @@ export function HireTabBar({ tabs, current, right, eyebrow = "HIRE" }: { tabs: {
 
 export const shortDate = (d: Date | string) => new Date(d).toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" });
 export const shortWhen = (d: Date | string) => new Date(d).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+/** MR-E002: credential pills on a match — certified = accepted green, the rest steel-blue outline; 4 at most, then "+n". */
+export function MatchBadges({ badges, className = "" }: { badges: { label: string; certified?: boolean; title?: string }[]; className?: string }) {
+  if (!badges.length) return null;
+  const shown = badges.slice(0, 4);
+  return (
+    <span className={`flex flex-wrap gap-1.5 ${className}`} data-match-badges>
+      {shown.map((b) => <span key={b.label} title={b.title} className={b.certified ? "rounded-full bg-state-accepted-bg px-2 py-0.5 text-[11.5px] font-bold text-state-accepted" : "rounded-full border border-state-inactive px-2 py-0.5 text-[11.5px] font-semibold text-state-inactive"}>{b.label}</span>)}
+      {badges.length > 4 && <span className="rounded-full border border-state-inactive px-2 py-0.5 text-[11.5px] font-semibold text-state-inactive">+{badges.length - 4}</span>}
+    </span>
+  );
+}

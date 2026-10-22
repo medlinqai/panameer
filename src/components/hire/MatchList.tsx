@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import type { HireMatch } from "@/lib/hire-questionnaire";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
+import { MatchBadges } from "@/components/hire/HireUI";
 
 // SE-E002/E003: one match list for Hire and the Job page — star (Shortlist), quick view, Compare, Request Proposals by a deadline.
 const BTN = "inline-flex min-h-10 items-center justify-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover disabled:opacity-50";
@@ -97,6 +98,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
             <button type="button" onClick={() => setActive(m.personId)} className="min-w-0 flex-1 text-left" data-quick-view-open>
               <p className="text-[15px] font-bold hover:underline">{m.company ? `${m.company} · ` : ""}{m.name}</p>
               <p className="text-[13px] text-ink-2">{m.line}</p>
+              <MatchBadges badges={m.badges} className="mt-1" />
               <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]" data-why>
                 {m.why.map((k) => <span key={k} className={WHY}>{k}</span>)}
                 {m.matched.map((k) => <span key={k} className={CHIP}>{k}</span>)}
@@ -171,6 +173,7 @@ function QuickView({ m, jobId, onClose, onStar, onHide, prev, next }: { m: HireM
         <div className="min-w-0 flex-1">
           <p className="text-[17px] font-extrabold">{m.company ? `${m.company} · ` : ""}{m.name}</p>
           <p className="text-[13px] text-ink-2">{m.line}</p>
+          <MatchBadges badges={m.badges} className="mt-1.5" />
         </div>
         <button type="button" onClick={onClose} aria-label="Close" className="text-[22px] leading-none text-ink-3 hover:text-ink">×</button>
       </div>
@@ -237,6 +240,7 @@ export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: Hi
                 {rows.map((r) => (
                   <th key={r.m.personId} className="border-b border-line p-2 text-left align-bottom">
                     <span className="flex items-center gap-2">{isMaskedName(r.m.name) || r.m.photoUrl ? <NeutralAvatar size={32} photoUrl={r.m.photoUrl} /> : null}<span className="min-w-0 truncate text-[14px] font-extrabold">{r.m.name}</span></span>
+                    <MatchBadges badges={r.m.badges} className="mt-1.5 font-normal" />
                     <span className="mt-2 flex flex-wrap gap-1.5">
                       {jobId && <Link href={`/hire/terms?job=${jobId}&provider=${r.m.personId}`} className="inline-flex min-h-8 items-center bg-ink px-3 text-[12.5px] font-bold text-surface hover:bg-ink-hover">Hire</Link>}
                       {onRemove && <button type="button" onClick={() => onRemove(r.m.personId)} className="inline-flex min-h-8 items-center border border-ink px-2.5 text-[12.5px] font-semibold">Remove</button>}
