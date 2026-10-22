@@ -243,7 +243,10 @@ export async function buyerHireTabs(personId: string) {
       requestRows.push({ completed: !!sl?.completed, recurring: sl?.recurring ?? null, providerPersonId: l.provider_person_id!, id: `${w.id}:${l.provider_person_id}`, jobId: p.job.id, title: p.job.title, wr: w.wr_number, who: p.numberOf(l.provider_person_id!), step: wo ? "Work Order Created" : w.approved_at ? "Approval" : "Award", approval: w.approved_at ? "Auto-approved" : w.status === "PENDING_APPROVAL" ? "Waiting" : "—", wo: wo ? { id: wo.id, number: wo.order_number } : null });
     }
   }
-  return { jobRows, requestRows };
+  // Discarded drafts (Canceled, no Work Order) leave the lists entirely — they are not "Filled".
+  const discarded = new Set((await prisma.job.findMany({ where: { id: { in: jobRows.map((j) => j.id) }, status: { in: ["CANCELED", "CLOSED"] } }, select: { id: true } })).map((j) => j.id));
+  const kept = jobRows.filter((j) => !(discarded.has(j.id) && !j.wo));
+  return { jobRows: kept, requestRows };
 }
 
 /** Tests the buyer sent (provider number, skill, sent, score, pass/fail). */
