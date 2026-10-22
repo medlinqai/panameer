@@ -120,7 +120,7 @@ export const POST_REQUIREMENTS: {
   {
     key: "photo",
     field: "Add a photo",
-    reason: "Providers see who is asking before they spend an afternoon on a proposal.",
+    reason: "Providers see who is asking before they say they want the job.",
     href: "/profile",
   },
   {

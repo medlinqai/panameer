@@ -21,7 +21,7 @@ const short = (d: Date) => d.toLocaleString("en-US", { timeZone: TZ, month: "sho
 const daysSince = (d: Date | null) => (d ? Math.max(0, Math.floor((Date.now() - d.getTime()) / DAY)) : 0);
 
 // ── Buyer ──────────────────────────────────────────────────────────────────────────────────────────────────
-const BUYER_ACTION: Partial<Record<PathKey, string>> = { shortlist: "Shortlist", request: "Request Proposals", proposals: "Review proposals", award: "Award", approval: "Open", wo: "Open Work Order" };
+const BUYER_ACTION: Partial<Record<PathKey, string>> = { shortlist: "Shortlist", request: "Request Availability", proposals: "Review Responses", award: "Award", approval: "Open", wo: "Open Work Order" };
 
 export async function buyerLiveWork(personId: string) {
   const now = new Date();
@@ -71,7 +71,7 @@ export async function buyerLiveWork(personId: string) {
     prisma.workOrder.count({ where: { buyer_person_id: personId, created_at: { gte: nyDayStart(new Date(now.getFullYear(), now.getMonth(), 1)) } } }),
   ]);
   const tiles: Tile[] = [
-    { id: "proposals", label: "Proposals to review", count: proposalsToReview, href: "/dashboard?step=proposals#live-work" },
+    { id: "proposals", label: "Responses to Review", count: proposalsToReview, href: "/dashboard?step=proposals#live-work" },
     { id: "closing", label: "Sourcing Events closing < 24 h", count: closing, href: "/dashboard?step=proposals#live-work" },
     { id: "expired", label: "Sourcing Events expired, no award", count: expired, href: "/dashboard?step=proposals#live-work" },
     { id: "interviews", label: "Interviews today", count: todays.length, href: "#todays-interviews" },
@@ -115,12 +115,12 @@ export async function providerLiveWork(personId: string) {
   for (const i of interviews) push(i.job_id, "interview", i.created_at, null, { label: "Interview", href: `/find-work/${i.job_id}#interview` });
   for (const p of proposals.filter((x) => x.status === "SHORTLISTED")) push(p.job_id, "shortlisted", p.updated_at, null, { label: "Open", href: `/find-work/${p.job_id}` });
   for (const p of proposals.filter((x) => x.status === "SUBMITTED")) push(p.job_id, "submitted", p.submitted_at, requests.find((r) => r.job_id === p.job_id)?.responds_by ?? null, { label: "Update", href: `/find-work/${p.job_id}` });
-  for (const r of requests) push(r.job_id, "requested", r.created_at, r.responds_by, { label: "Propose", href: `/find-work/${r.job_id}` });
+  for (const r of requests) push(r.job_id, "requested", r.created_at, r.responds_by, { label: "Respond", href: `/find-work/${r.job_id}` });
 
   const strip: StripStep[] = PROVIDER_STRIP.map((s) => ({ key: s.key, label: s.label, count: rows.filter((r) => r.step === s.key).length }));
   const dueSoon = requests.filter((r) => r.responds_by && r.responds_by > now && r.responds_by <= soon && !proposals.some((p) => p.job_id === r.job_id)).length;
   const tiles: Tile[] = [
-    { id: "due", label: "Requests to Propose due < 24 h", count: dueSoon, href: "/dashboard?step=requested#live-work" },
+    { id: "due", label: "Availability Requests due < 24 h", count: dueSoon, href: "/dashboard?step=requested#live-work" },
     { id: "interviews", label: "Interviews today", count: todays.length, href: "#todays-interviews" },
     { id: "tests", label: "Test requests", count: testReqs, href: "/find-work?tab=invitations" },
     { id: "accept", label: "Work Orders to accept", count: toAccept.length, href: "/dashboard?step=accept#live-work" },
@@ -176,8 +176,8 @@ export async function buyerHireTabs(personId: string) {
     const lastDone = [...p.shown].reverse().find((s) => s.done)?.date ?? postedAt;
     const submitted = mine.filter((x) => x.status === "SUBMITTED").length;
     const expired = !!p.event && p.event.deadline_at < now && !p.awarded;
-    const action = step === "proposals" && p.event ? { label: "Review proposals", href: `/hire/sourcing/${p.event.id}` }
-      : step === "shortlist" || step === "request" ? { label: "Request proposals", href: `/work-requests/${p.job.id}#matches` }
+    const action = step === "proposals" && p.event ? { label: "Review Responses", href: `/hire/sourcing/${p.event.id}` }
+      : step === "shortlist" || step === "request" ? { label: "Request Availability", href: `/work-requests/${p.job.id}#matches` }
       : step === "award" || (step === "interview" || step === "test") ? { label: "Award", href: p.event ? `/hire/sourcing/${p.event.id}` : `/work-requests/${p.job.id}` }
       : p.orders[0] ? { label: "Open Work Order", href: `/orders/${p.orders[0].id}` } : { label: "Open", href: `/work-requests/${p.job.id}` };
     const iv = ivs.find((x) => x.job_id === p.job.id)?._count._all ?? 0;
@@ -283,7 +283,7 @@ export async function hireToday(personId: string): Promise<{ items: TodayItem[];
     const per = ev.job.budget_type === "FIXED" ? "" : "/hr";
     const rates = subs.map((r) => r.bid!.lines[0]?.unit_price_cents).filter((c): c is number => c != null).sort((a, b) => a - b);
     if (subs.length) items.push({ id: `p-${ev.id}`, kind: "proposals", what: `Review ${subs.length} proposal${subs.length === 1 ? "" : "s"}`, detail: [ev.job.title, rates.length ? (rates[0] === rates.at(-1) ? `${usd0(rates[0])}${per}` : `${usd0(rates[0])}–${usd0(rates.at(-1)!)}${per}`) : null, `due ${short(ev.deadline_at)}`].filter(Boolean).join(" · "), href: `/hire/sourcing/${ev.id}`, action: "Review" });
-    else if (ev.deadline_at <= now) items.push({ id: `x-${ev.id}`, kind: "expired", what: `${ev.event_number} closed with no proposals`, detail: `${ev.job.title} · extend the deadline or ask more providers`, href: `/hire/sourcing/${ev.id}`, action: "Open" });
+    else if (ev.deadline_at <= now) items.push({ id: `x-${ev.id}`, kind: "expired", what: `${ev.event_number} closed with no responses`, detail: `${ev.job.title} · extend the deadline or ask more providers`, href: `/hire/sourcing/${ev.id}`, action: "Open" });
     else if (ev.deadline_at.getTime() - now.getTime() < DAY) items.push({ id: `c-${ev.id}`, kind: "closing", what: `${ev.event_number} closes in under 24 hours`, detail: `${ev.job.title} · due ${short(ev.deadline_at)}`, href: `/hire/sourcing/${ev.id}`, action: "Open" });
   }
   for (const o of orders) items.push({ id: `a-${o.id}`, kind: "accept", what: `Accept Work Order ${o.order_number}`, detail: "The provider accepts once you have", href: `/orders/${o.id}`, action: "Review & Accept" });
@@ -295,7 +295,7 @@ export async function hireToday(personId: string): Promise<{ items: TodayItem[];
   const word = (n: number) => (n === 1 ? "One" : String(n));
   const parts: string[] = [];
   const pr = items.filter((i) => i.kind === "proposals").reduce((n, i) => n + Number(/\d+/.exec(i.what)?.[0] ?? 1), 0);
-  if (pr) parts.push(`${word(pr)} proposal${pr === 1 ? " is" : "s are"} waiting for your review`);
+  if (pr) parts.push(`${word(pr)} response${pr === 1 ? " is" : "s are"} waiting for your review`);
   if (count("accept")) parts.push(`${word(count("accept")).toLowerCase()} Work Order${count("accept") === 1 ? " needs" : "s need"} your acceptance before the provider can accept`);
   if (count("confirm")) parts.push(`${word(count("confirm")).toLowerCase()} interview${count("confirm") === 1 ? " needs" : "s need"} a time confirmed`);
   if (count("interview")) parts.push(`you have ${count("interview")} interview${count("interview") === 1 ? "" : "s"} today`);
@@ -389,7 +389,7 @@ export async function hireOverviewData(personId: string) {
     tests: tests.map((t) => { const r = t.response?.lines[0]; return { id: t.id, jobId: t.job_id, who: who(t.provider_person_id), skill: skills.find((s) => s.id === t.lines[0]?.skill_id)?.name ?? "Certification test", score: r?.score ?? null, result: r?.passed == null ? "Completed" : r.passed ? "Pass" : "Fail", proposalId: proposals.find((p) => p.job_id === t.job_id && p.provider_person_id === t.provider_person_id)?.id ?? null }; }),
   };
   const nextIv = todays.filter((i) => i.startsAt && new Date(i.startsAt) > now).sort((a, b) => a.startsAt!.localeCompare(b.startsAt!))[0];
-  const summary = [`${openJobs} job${openJobs === 1 ? "" : "s"} open`, `${weekProposals} proposal${weekProposals === 1 ? "" : "s"} this week`, nextIv?.startsAt ? `next interview today ${time(new Date(nextIv.startsAt))}` : null].filter(Boolean).join(" · ");
+  const summary = [`${openJobs} job${openJobs === 1 ? "" : "s"} open`, `${weekProposals} response${weekProposals === 1 ? "" : "s"} this week`, nextIv?.startsAt ? `next interview today ${time(new Date(nextIv.startsAt))}` : null].filter(Boolean).join(" · ");
   const count = groups.expiring.length + groups.applications.length + groups.rateProposals.length + groups.interviews.length + groups.tests.length;
   return { jobRows, stepCounts, openJobs, groups, count, summary, needs: { proposals: groups.rateProposals.length + groups.applications.length + groups.expiring.length > 0, interview: groups.interviews.length > 0, test: groups.tests.length > 0 } };
 }

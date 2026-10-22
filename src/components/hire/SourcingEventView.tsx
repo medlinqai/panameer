@@ -75,8 +75,8 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
 
       <section className="mt-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[18px] font-extrabold">Proposals</h2>
-          <button type="button" className={GHOST} disabled={picked.size < 2 || picked.size > 4} onClick={() => setComparing(true)} data-compare-proposals title="Tick 2 to 4 proposals">Compare{picked.size >= 2 ? ` ${picked.size}` : ""}</button>
+          <h2 className="text-[18px] font-extrabold">Responses</h2>
+          <button type="button" className={GHOST} disabled={picked.size < 2 || picked.size > 4} onClick={() => setComparing(true)} data-compare-proposals title="Tick 2 to 4 responses">Compare{picked.size >= 2 ? ` ${picked.size}` : ""}</button>
         </div>
         <ul className="mt-2 divide-y divide-line border-y border-line">
           {ev.proposals.map((p) => {
@@ -92,7 +92,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                   {pr ? (
                     <p className="mt-1 text-[13.5px]"><b className={over ? "text-magenta-dark" : ""}>{usd(pr.rateCents)}{per}</b>{range && <span className="text-ink-2"> vs {range}</span>}{pr.start && <span className="text-ink-2"> · earliest start {pr.start}</span>}{pr.status === "DECLINED" && <span className="text-ink-3"> · you declined</span>}</p>
                   ) : (
-                    <p className="mt-1 text-[13.5px] text-ink-3">{p.requestStatus === "DECLINED" ? `Declined${p.declineReason ? ` — “${p.declineReason}”` : ""}` : "No proposal yet"}</p>
+                    <p className="mt-1 text-[13.5px] text-ink-3">{p.requestStatus === "DECLINED" ? `Declined${p.declineReason ? ` — “${p.declineReason}”` : ""}` : "No response yet"}</p>
                   )}
                   {pr?.note && <p className="mt-1 whitespace-pre-line text-[13px] text-ink-2">{pr.note}</p>}
                   <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]">

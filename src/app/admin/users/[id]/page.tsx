@@ -125,7 +125,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
     curKey === "verify" ? { text: "email not verified", sub: verifySent ? `Verification email sent ${d(verifySent.created_at)}` : "No verification email on record", fix: userId ? <><ResendVerification userId={userId} /><MarkVerified personId={person.id} /></> : null }
     : curKey === "profile" ? { text: "profile checklist not complete", sub: missing?.length ? `Missing: ${missing.join(", ")}` : person.providerProfile ? `Score ${score} of 80` : "Buyer profile not finished", fix: person.providerProfile ? <NudgeToFinish personId={person.id} /> : null }
     : curKey === "link" || curKey === "register" ? { text: "not linked to a company", sub: pending.length ? `Asked to join ${pending.map((p) => p.company.name).join(", ")}` : "No company and no pending request", fix: <AddToCompany personId={person.id} /> }
-    : curKey === "list" ? { text: "nothing for sale yet", sub: "No published service product and no proposal sent.", fix: null }
+    : curKey === "list" ? { text: "nothing for sale yet", sub: "No published service product and no response sent.", fix: null }
     : curKey === "validate" ? { text: "company not validated", sub: check ? `Missing: ${check.items.filter((i) => !i.done).map((i) => i.item).join(", ")}` : "", fix: co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : null }
     : curKey === "deliver" ? { text: "nothing delivered yet", sub: "The buyer hasn't accepted a deliverable or approved a timesheet.", fix: null }
     : curKey === "contract" || curKey === "sell" ? { text: "no signed work order yet", sub: "A product bought, a rate accepted or an estimate accepted, then the work order signed.", fix: null }
@@ -235,7 +235,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
         </Step>
 
         <Step n={`${nOf(steps.some((s) => s.key === "sell") ? "sell" : "contract")}–${nOf("paid")}`} title="Contracts & Payments" tag={payouts + payments > 0 ? "PAID" : signed > 0 ? "CONTRACTED" : "—"} tone={signed > 0 ? "done" : "none"}>
-          <Row label="Work requests · proposals" value={`${workRequests} · ${proposals}`} />
+          <Row label="Work Requests · Responses" value={`${workRequests} · ${proposals}`} />
           <Row label="Signed work orders" value={signed} />
           <Row label="Payouts · payments" value={`${payouts} · ${payments}`} />
         </Step>

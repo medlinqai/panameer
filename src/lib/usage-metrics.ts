@@ -59,7 +59,7 @@ export const METRICS: MetricDef[] = [
 ];
 
 export const PROVIDER_WORK: MetricDef[] = [
-  { area: "work", label: "Proposals Sent", hint: "Proposals you have sent on work requests", goal: 10 },
+  { area: "work", label: "Responses Sent", hint: "Jobs you said you want", goal: 10 },
   { area: "work", label: "Interviews", hint: "Interviews held", goal: 5 },
   { area: "work", label: "Contracts Won", hint: "Work orders where you are the provider", goal: 5 },
   { area: "work", label: "Active Engagements", hint: "Orders you are currently working", goal: 5, uncounted: "Nothing marks an order as being worked yet" },

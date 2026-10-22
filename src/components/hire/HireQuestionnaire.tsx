@@ -11,7 +11,7 @@ import { defaultDates, howLongText } from "@/lib/job-dates";
 
 // SD-E003: Hire follows the Service Description standard. Step 1 can start from an uploaded posting (read like a résumé);
 // every step is then prefilled with "From AI" hints; Next saves the draft Job.
-const STEPS = ["What", "Where", "How", "Who", "When & Rate", "Request Proposals"];
+const STEPS = ["What", "Where", "How", "Who", "When & Rate", "Request Availability"];
 const CHIP_ON = "rounded-full border border-magenta-dark bg-[#fbeafb] px-3.5 py-1.5 text-[13px] font-semibold text-magenta-dark";
 const CHIP_OFF = "rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink hover:border-magenta-dark";
 const OPT_ON = "flex flex-col items-start rounded-[10px] border border-magenta-dark bg-white p-3 text-left ring-1 ring-magenta-dark";
@@ -123,7 +123,7 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
     if (step === 4 && (!f.startDate || !f.endDate)) { setError("Set a Start Date and an End Date."); return; }
     if (step === 4 && f.endDate <= f.startDate) { setError("The End Date must be after the Start Date."); return; }
     if (step === 4 && (f.budgetMin == null || f.budgetMax == null || f.budgetMin <= 0 || f.budgetMax <= 0)) {
-      setError("Enter a rate range (From and To). Providers use it to decide whether to propose, and we use it to rank matches.");
+      setError("Enter a rate range (From and To). Providers use it to decide whether they want the job, and we use it to rank matches.");
       return;
     }
     if (step === 4 && f.budgetMin != null && f.budgetMax != null && f.budgetMin > f.budgetMax) {
@@ -360,7 +360,7 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
         {step === 5 && matches && (
           <div data-hire-matches>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-[19px] font-extrabold">6. View Providers and Hire or Shortlist (and Invite to Propose)</h2>
+              <h2 className="text-[19px] font-extrabold">6. View Providers and Hire or Shortlist (and Request Availability)</h2>
               <details className="relative text-[13px]" data-how-we-match>
                 <summary className="cursor-pointer list-none font-semibold text-magenta-dark underline underline-offset-4">ⓘ How We Match</summary>
                 <div className="absolute right-0 z-20 mt-2 w-[min(92vw,420px)] border border-line bg-white p-4 text-[13px] leading-relaxed text-ink shadow-lg">

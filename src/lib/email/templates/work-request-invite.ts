@@ -62,14 +62,14 @@ export function workRequestInviteTemplate({
 
   // NO "ABOUT THE REQUESTER" BLOCK. The deck marks it optional and shown ONLY
   return {
-    subject: `You're invited to propose — ${workRequestTitle}`,
+    subject: `You're asked if you're available — ${workRequestTitle}`,
     html: emailShell({
       logoUrl,
-      bodyHtml: `<h1 style="font-size:22px;margin:0 0 16px;color:${EMAIL_COLORS.ink};">You're invited to propose</h1>
+      bodyHtml: `<h1 style="font-size:22px;margin:0 0 16px;color:${EMAIL_COLORS.ink};">You're asked if you're available</h1>
 ${greeting(name)}
 ${paragraph(
   `Companies come to Panameer to work with experts like you. <b style="color:${EMAIL_COLORS.ink};">${company}</b> ` +
-    `has invited you to submit a proposal for a Work Request:`
+    `wants to know if you're available for a job:`
 )}
 <p style="font-size:17px;line-height:1.5;margin:0 0 4px;">
   <a href="${proposeUrl}" style="color:${EMAIL_COLORS.magentaDark};font-weight:700;text-decoration:none;">${title}</a>${budgetBit}
@@ -78,7 +78,7 @@ ${descriptionBlock}
 ${skillsBlock}
 ${noteBlock}
 <div style="margin:28px 0 0;">
-  ${primaryButton(proposeUrl, "Submit a Proposal")}
+  ${primaryButton(proposeUrl, "I Want This Job")}
   <span style="display:inline-block;width:10px;"></span>
   ${ghostButton(declineUrl, "Decline")}
 </div>

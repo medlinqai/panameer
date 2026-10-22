@@ -645,7 +645,7 @@ export function CreateWorkRequest({
           {...shell({
             title: "Where Will This Work Be Performed?",
             subtitle:
-              "A preference, not a filter — providers see it, and anyone may still propose.",
+              "A preference, not a filter — providers see it, and anyone may still respond.",
             continueDisabled: !locationCountry,
             onContinue: () =>
               saveAnd("location", {
@@ -777,7 +777,7 @@ export function CreateWorkRequest({
             <TextArea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What needs doing, what done looks like, and anything a provider should know before proposing."
+              placeholder="What needs doing, what done looks like, and anything a provider should know before responding."
               className="min-h-[260px]"
             />
             <aside className="rounded-brand border border-line bg-bg-soft p-5">

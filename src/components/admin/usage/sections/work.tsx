@@ -48,7 +48,7 @@ export async function Work({ c }: { c: Ctx }) {
           { label: "Awarded", n: d.wrs.filter((w) => w.status === "FILLED").length },
           { label: "Canceled", n: d.wrs.filter((w) => w.status === "CANCELED").length, href: listHref(c, "canceled") },
         ]} />
-        <Bars title="Proposals per Request" subtitle={`requests posted ${c.label}`} rows={[
+        <Bars title="Responses per Request" subtitle={`requests posted ${c.label}`} rows={[
           { label: "Average", n: perReq.length ? Math.round((perReq.reduce((a, b) => a + b, 0) / perReq.length) * 10) / 10 : 0 },
           { label: "With none", n: perReq.filter((n) => n === 0).length },
           { label: "With 3 or more", n: perReq.filter((n) => n >= 3).length },

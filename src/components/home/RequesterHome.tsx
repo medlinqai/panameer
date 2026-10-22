@@ -55,7 +55,7 @@ export function RequesterHome({
                 progress
               </p>
               <p className="mt-1 text-[14.5px] text-ink-2">
-                Track proposals and orders under Manage Work.
+                Track responses and orders under Manage Work.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">

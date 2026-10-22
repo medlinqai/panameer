@@ -11,7 +11,7 @@ export function CompanyDetailsRead({ c, role, editor }: { c: NonNullable<Company
     { k: "Website", v: site ? <a href={`https://${site}`} target="_blank" rel="noopener noreferrer" className="text-magenta-dark hover:underline">{site}</a> : null },
     { k: "Company Name", v: c.name },
     { k: "Industry", v: c.industry },
-    { k: "Description", v: c.description, add: "Add · what the company does and for whom — shown on every proposal", stack: true },
+    { k: "Description", v: c.description, add: "Add · what the company does and for whom — shown on every response", stack: true },
   ];
   return (
     <CompanySection
@@ -41,7 +41,7 @@ export function PayReadyBox({ c }: { c: NonNullable<CompanyView> }) {
           </span>
         </p>
         <p className="mt-1 text-[13.5px] text-ink-2">
-          Add {missing.join(" and ")}. You can post and send proposals now. Private — admins only.
+          Add {missing.join(" and ")}. You can post and respond to jobs now. Private — admins only.
         </p>
       </div>
       <Link href="/company/legal" className="mt-3 inline-flex min-h-[42px] items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover sm:mt-0">

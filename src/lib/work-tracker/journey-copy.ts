@@ -4,7 +4,7 @@ export const JOURNEY_COPY: Record<string, string> = {
   "Profile": "Profile, Search Score and validated experience",
   "Connect": "Colleagues, messages, forums and mentoring",
   "Learn": "Courses and certification",
-  "Hire": "Requests, proposals and work orders",
+  "Hire": "Requests, responses and work orders",
   "Shop": "Service products you can buy as-is",
   "Pay": "Settlement, payout and fees",
   "Optimize": "AI maturity assessment and roadmap",

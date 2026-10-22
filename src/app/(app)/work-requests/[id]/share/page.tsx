@@ -32,7 +32,7 @@ export default async function Page({
       <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-ink-2">
         These providers claim the skills you asked for. Inviting one puts your
         request in front of them directly — anyone else can still find it and
-        propose.
+        say they want it.
       </p>
 
       {providers.length === 0 ? (
@@ -105,7 +105,7 @@ export default async function Page({
                 variant="ghost"
                 className="mt-4 w-full"
               >
-                Invite to propose
+                Request Availability
               </Button>
             </li>
           ))}

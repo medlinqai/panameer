@@ -171,17 +171,17 @@ export default async function Page({
         </Section>
       )}
 
-      <Section title="Requests to Propose" extra={sec.requestRows.length ? `· ${sec.requestRows.length} asked · ${sec.responded} responded` : null} right={!awarded && (detail.status === "OPEN" || detail.status === "DRAFT") ? <Link href={`/work-requests/${detail.id}#matches`}>Request More</Link> : null}>
+      <Section title="Availability Requests" extra={sec.requestRows.length ? `· ${sec.requestRows.length} asked · ${sec.responded} responded` : null} right={!awarded && (detail.status === "OPEN" || detail.status === "DRAFT") ? <Link href={`/work-requests/${detail.id}#matches`}>Request More</Link> : null}>
         {sec.requestRows.length ? sec.requestRows.map((r) => (
           <div key={r.number} className={`flex flex-wrap items-center gap-3.5 py-3 text-[14px] ${ROW_RULE}`}>
             <span className="w-[70px] font-bold">{r.who.replace(/^Provider /, "")}</span>
             <span className="min-w-0 flex-[1_1_200px] text-state-inactive">Asked {r.asked}{r.due ? ` · due ${r.due}` : ""}</span>
             <span className={`font-bold ${r.status === "Responded" ? GREEN : r.status.startsWith("Declined") ? "text-state-declined" : "text-state-inactive"}`}>{r.status}</span>
           </div>
-        )) : empty("No requests yet. Star providers in Matches and request proposals from your shortlist.")}
+        )) : empty("No requests yet. Star providers in Matches and request their availability.")}
       </Section>
 
-      <Section title="Proposals" right={sourcing ? <Link href={`/hire/sourcing/${sourcing.id}`}>Compare</Link> : null}>
+      <Section title="Responses" right={sourcing ? <Link href={`/hire/sourcing/${sourcing.id}`}>Compare</Link> : null}>
         {proposals.length ? proposals.map((p) => {
           const primary = p.id === topProposalId;
           const x = sec.proposalExtra(p.providerPersonId);
@@ -195,11 +195,11 @@ export default async function Page({
               <ProposalActions jobId={detail.id} providerPersonId={p.providerPersonId} testId={testId} awarded={p.status === "AWARDED"} interviewStatus={p.interviewStatus} testStatus={p.testStatus} primary={primary} />
             </div>
           );
-        }) : empty(posted ? "No proposals yet. They show here as providers respond." : "No proposals yet — a Job takes proposals once it is posted.")}
+        }) : empty(posted ? "No responses yet. They show here as providers answer." : "No responses yet — a Job takes responses once it is posted.")}
       </Section>
 
       <Section id="interviews" title="Interviews">
-        {buyerInterviews.length ? <InterviewCards rows={buyerInterviews} side="buyer" videoReady={dailyConfigured()} /> : empty("None scheduled. Use Interview on a proposal; ranking and comments land here.")}
+        {buyerInterviews.length ? <InterviewCards rows={buyerInterviews} side="buyer" videoReady={dailyConfigured()} /> : empty("None scheduled. Use Interview on a response; ranking and comments land here.")}
         {sec.evalRows.length > 0 && (
           <div className="mt-3">
             {sec.evalRows.map((e, k) => <div key={k} className={`py-2 text-[14px] ${ROW_RULE}`}><b>{e.who}</b>{e.rating != null && <span className="ml-2 text-magenta-dark">{"★".repeat(e.rating)}{"☆".repeat(5 - e.rating)}</span>}{e.summary && <p className="text-state-inactive">{e.summary}</p>}</div>)}
@@ -216,7 +216,7 @@ export default async function Page({
       <Section title="Award">
         {sec.awardRows.length ? sec.awardRows.map((a, k) => (
           <div key={k} className={`flex flex-wrap justify-between gap-2 py-2.5 text-[14px] ${ROW_RULE}`}><span><b>{a.who.replace(/^Provider /, "")}</b>{a.wr ? <span className="text-state-inactive"> · {a.wr}</span> : null}</span><span className="text-state-inactive">{a.rate != null ? `${formatCents(a.rate)}${a.uom === "HOUR" ? "/hr" : ""} · ` : ""}{a.when}</span></div>
-        )) : empty("Not awarded yet. Awarding a proposal creates the Work Request.")}
+        )) : empty("Not awarded yet. Awarding a response creates the Work Request.")}
         {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && options.length > 0 && <AssignDirectly workRequestId={detail.id} providers={options} />}
         {awarded && <CreateOrder workRequestId={detail.id} description={detail.workRequestDescription} />}
       </Section>

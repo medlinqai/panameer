@@ -136,7 +136,7 @@ const RULES: Rule[] = [
       return {
         rule: 4,
         title: "Find work",
-        line: n ? `${plural(n, "open request")} ${n === 1 ? "matches" : "match"} your skills. Send a proposal on the ones that fit.` : "See what buyers are asking for and send a proposal on the ones that fit.",
+        line: n ? `${plural(n, "open request")} ${n === 1 ? "matches" : "match"} your skills. Say I Want This Job on the ones that fit.` : "See what buyers are asking for and say I Want This Job on the ones that fit.",
         cta: { label: "Find Work", href: "/find-work" },
         why: `Your profile is published and you have ${plural(s.colleagues, "colleague")}.${n !== null ? ` ${plural(n, "open request")} ${n === 1 ? "matches" : "match"} your skills.` : ""}`,
         ticks: [
@@ -183,9 +183,9 @@ const RULES: Rule[] = [
       return {
         rule: 6,
         title,
-        line: `${r.title ? `"${r.title}." ` : ""}Review the matches and invite the ones you like to send a proposal.`,
+        line: `${r.title ? `"${r.title}." ` : ""}Review the matches and ask the ones you like if they are available.`,
         cta: { label: "See Your Matches", href: `/work-requests/${r.id}/invite` },
-        why: "You have an open work request. Inviting providers now usually brings proposals within a day.",
+        why: "You have an open work request. Asking providers now usually brings responses within a day.",
         ticks: [
           { label: "Request posted", done: true },
           ...(r.invited !== null ? [{ label: `Providers invited: ${r.invited}`, done: r.invited > 0 }] : []),
@@ -194,7 +194,7 @@ const RULES: Rule[] = [
     },
     then: (m) => {
       const r = m.buyer!.openRequest!;
-      return [{ rule: 6, title: r.matches ? `${plural(r.matches, "provider")} ${r.matches === 1 ? "matches" : "match"} your request` : "Review your request's matches", line: r.title || "Invite providers to send a proposal.", link: "See matches", href: `/work-requests/${r.id}/invite` }];
+      return [{ rule: 6, title: r.matches ? `${plural(r.matches, "provider")} ${r.matches === 1 ? "matches" : "match"} your request` : "Review your request's matches", line: r.title || "Ask providers if they are available.", link: "See matches", href: `/work-requests/${r.id}/invite` }];
     },
   },
   {
@@ -229,7 +229,7 @@ export function nextStep(m: MemberFacts): FirstPage {
   if (!m.seller && m.buyer)
     rows.push(
       { rule: 0, title: "Browse service products", line: "Fixed-price packages you can buy today.", link: "Shop", href: "/shop" },
-      { rule: 0, title: "Invite your team", line: "Colleagues can review proposals with you.", link: "Connect", href: "/connect" }
+      { rule: 0, title: "Invite your team", line: "Colleagues can review responses with you.", link: "Connect", href: "/connect" }
     );
   // A member who is both seller and buyer always sees their buyer row in "Then".
   const buyerRows = card.rule <= 5 ? rows.filter((r) => r.rule >= 6).slice(0, 1) : [];

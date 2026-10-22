@@ -160,7 +160,7 @@ export function usageAreas(u: UsageInput): UsageArea[] {
       figure: u.workRequests,
       goal: USAGE_GOALS.work,
       subs: [
-        { label: "Proposals Sent", figure: u.proposalsSent },
+        { label: "Responses Sent", figure: u.proposalsSent },
         { label: "Interviews", figure: u.interviews },
       ],
       href: "/find-work",

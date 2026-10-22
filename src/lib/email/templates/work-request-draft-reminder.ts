@@ -30,7 +30,7 @@ export function workRequestDraftReminderTemplate({
 
   const help = helpUrl
     ? `<p style="font-size:13px;line-height:1.6;color:${EMAIL_COLORS.muted};margin:20px 0 0;">
-         <a href="${helpUrl}" style="color:${EMAIL_COLORS.magentaDark};">How to write a Work Request that gets strong proposals</a>
+         <a href="${helpUrl}" style="color:${EMAIL_COLORS.magentaDark};">How to write a Work Request that gets strong responses</a>
        </p>`
     : "";
 
@@ -55,7 +55,7 @@ Hi ${name},
 Your Work Request, ${workRequestTitle}, is one step from live. Add the last few details and post it — you're one step from the right expert.
 
 Finish & Post: ${resumeUrl}
-${helpUrl ? `\nHow to write a Work Request that gets strong proposals: ${helpUrl}\n` : ""}
+${helpUrl ? `\nHow to write a Work Request that gets strong responses: ${helpUrl}\n` : ""}
 — The Panameer Team
 
 ${footerText(year)}`,

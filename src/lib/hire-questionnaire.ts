@@ -256,7 +256,7 @@ export async function setHidden(viewer: Viewer, jobId: string, providerPersonId:
   else await prisma.jobHiddenProvider.deleteMany({ where: { job_id: jobId, provider_person_id: providerPersonId } });
 }
 
-/** "Request proposals": proposal requests on the Job's requisition line, answer within 7 days. */
+/** "Request Availability": proposal requests on the Job's requisition line, answer within 7 days. */
 export async function requestProposals(viewer: Viewer, jobId: string, providerPersonIds: string[]) {
   const req = await requisitionForJob(jobId);
   await ensureFirstLine(jobId, req.id);

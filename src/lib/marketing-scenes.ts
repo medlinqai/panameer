@@ -183,7 +183,7 @@ export const FULFILLMENT_FLOW: FlowSpec = {
   steps: [
     { y: 95, actor: "Buyer", label: "Creates Work Request" },
     { y: 140, actor: "Buyer", label: "Invites Providers to Bid", follows: true },
-    { y: 185, actor: "Provider", label: "Proposes Rate" },
+    { y: 185, actor: "Provider", label: "Confirms Availability" },
     { y: 230, actor: "Buyer", label: "Accepts Rate", follows: true },
     { y: 310, actor: "Panameer", label: "Creates Work Order" },
     { y: 355, actor: "Panameer", label: "Invites Provider to Accept WO", follows: true },

@@ -125,7 +125,7 @@ export const HOME_SECTIONS: HomeSection[] = [
     chipsTitle: "What you get",
     chips: [
       "Post Jobs/Create Work Requests for Free",
-      "Immediately Invite Talent to Propose Rate",
+      "Immediately Ask Talent If They Are Available",
       "Hire, Work, and Settle All Talent Under 1 Contract",
       "Track Worker Progress through Entire Work Order",
       "Settle All Talent with Single Payment",

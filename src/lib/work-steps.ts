@@ -17,7 +17,7 @@ export const WORK_STEPS: WorkStepLabel[] = [
   },
   {
     n: 2,
-    summary: "Accept Proposal",
+    summary: "Accept Response",
     description:
       "Experts respond with a price, either bid against your request or offered from a published rate, and you accept one.",
   },

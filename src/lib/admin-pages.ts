@@ -37,7 +37,7 @@ export const ADMIN_PAGES: Record<string, AdminPageSpec> = {
       { label: "Work Requests" },
       { label: "Work Orders" },
       { label: "Invites" },
-      { label: "Proposals" },
+      { label: "Responses" },
       { label: "Interviews" },
     ],
   },

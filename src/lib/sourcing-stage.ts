@@ -18,8 +18,8 @@ export const SOURCING_STAGE_LABEL: Record<SourcingStage, string> = {
   SHORTLISTED: "You are on the shortlist",
   INTERVIEWED: "Your interview is done",
   TESTED: "Your work test is done",
-  PROPOSED: "Your proposal is in",
-  INVITED: "You were invited to propose",
+  PROPOSED: "You said you want this job",
+  INVITED: "You were asked for your availability",
 };
 
 export type SourcingEvidence = {

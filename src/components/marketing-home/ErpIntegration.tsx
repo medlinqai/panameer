@@ -23,7 +23,7 @@ const PANAMEER_OBJECTS: readonly { name: string; qualifier?: string }[] = [
   { name: ASSESSMENT_PRODUCT },
   { name: "Project Timeline Tracker" },
   { name: "Work Request" },
-  { name: "Invitation to Propose" },
+  { name: "Availability Request" },
   { name: "Service Package" },
   { name: "Offer for Service Package" },
   { name: "Work Order" },

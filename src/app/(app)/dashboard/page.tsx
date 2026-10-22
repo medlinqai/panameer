@@ -191,7 +191,7 @@ export default async function DashboardPage({
               yet, so there is nothing here to miss.
             </p>
             <ul className="mt-4 grid gap-2 text-sm text-black/70 dark:text-white/70">
-              <li>· Proposals from providers on your requests</li>
+              <li>· Responses from providers on your requests</li>
               <li>· Work orders, once your company&apos;s payment method is set up</li>
               <li>· Milestones and settlement</li>
             </ul>
@@ -217,7 +217,7 @@ export default async function DashboardPage({
           <h2 className="text-lg">Hire</h2>
           <p className="mt-2 text-black/70 dark:text-white/70">
             Tell us what you need done. We show you who fits, and you choose
-            who sends a proposal.
+            whose availability to request.
           </p>
           <Link
             href="/hire"

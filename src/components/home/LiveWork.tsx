@@ -179,7 +179,7 @@ export async function ProviderLiveWork({ personId, step, view }: { personId: str
     <div data-provider-live-work>
       <AttentionTiles tiles={w.tiles} />
       {week ? <WeekSchedule start={week.start} rows={week.rows} side="provider" backHref="/dashboard#todays-interviews" /> : <TodaysInterviews rows={w.todays} side="provider" weekHref="/dashboard?view=week#week" />}
-      <LiveWorkList title="Your Proposals" steps={w.strip} rows={w.rows} active={step} base="/dashboard" />
+      <LiveWorkList title="Your Responses" steps={w.strip} rows={w.rows} active={step} base="/dashboard" />
     </div>
   );
 }

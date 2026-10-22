@@ -147,7 +147,7 @@ export function HowToWorkWith({
       </div>
       {}
       <p className="mt-3 text-[12.5px] text-ink-2">
-        Then: review the proposal &rarr; start the work.
+        Then: review the response &rarr; start the work.
       </p>
     </section>
   );

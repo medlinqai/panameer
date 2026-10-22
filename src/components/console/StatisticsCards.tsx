@@ -192,12 +192,12 @@ export function StatisticsCards({
                   hint="Buyers who invited you to bid"
                 />
                 <StatFigureRow
-                  label="Proposals Sent"
+                  label="Responses Sent"
                   figure={s.work.proposalsSent}
-                  hint="Bids you submitted — a draft is not a proposal"
+                  hint="Jobs you said you want"
                 />
                 <StatFigureRow
-                  label="Proposal Requests"
+                  label="Availability Requests"
                   figure={s.work.invitationsToPropose}
                 />
                 <StatFigureRow label="Interviews" figure={s.work.interviews} />

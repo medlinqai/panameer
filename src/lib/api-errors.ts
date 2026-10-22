@@ -5,7 +5,7 @@ import { randomBytes } from "node:crypto";
 // unexpected says "Couldn't save — try again" with a short reference that is logged server-side.
 const KNOWN_DUPES: [RegExp, string][] = [
   [/proposal_requests.*job_id.*provider_person_id|job_id_provider_person_id/i, "This provider already has a request on this job."],
-  [/proposals.*job_id.*provider_person_id/i, "This provider already has a proposal on this job."],
+  [/proposals.*job_id.*provider_person_id/i, "This provider already responded on this job."],
   [/shortlist/i, "That provider is already on the shortlist."],
 ];
 

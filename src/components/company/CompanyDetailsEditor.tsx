@@ -129,7 +129,7 @@ export function CompanyDetailsEditor({
         <span className="flex justify-between text-[13px] font-semibold">
           Description <span className="font-normal text-ink-3">{f.description.length}/{MAX}</span>
         </span>
-        <span className="block text-[12.5px] text-ink-3">What the company does and for whom. Buyers read this on every proposal.</span>
+        <span className="block text-[12.5px] text-ink-3">What the company does and for whom. Buyers read this on every response.</span>
         <textarea value={f.description} onChange={set("description")} maxLength={MAX} rows={4} className={`${INPUT} py-2`} name="description" />
         <FieldMsg field="description" err={fieldErr} />
       </label>}

@@ -121,7 +121,7 @@ export async function usageFigures(opts: {
     "Settlement Requests": settlements,
     "Awaiting Approval": awaiting,
 
-    "Proposals Sent": proposalsSent,
+    "Responses Sent": proposalsSent,
     "Contracts Won": contractsWon,
   };
 }

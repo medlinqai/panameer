@@ -188,7 +188,7 @@ export function SellerRegistration({ onDone, onLeave, preview = null, onRefresh 
             onPhoneCountry={setPhoneCountry}
             titleHint="What you do, in one line — for example, Oracle Procurement Consultant."
             titlePlaceholder="Oracle Procurement Consultant"
-            photoLine="Buyers see this next to your name on your profile and proposals. A clear headshot gets a faster response than an empty circle."
+            photoLine="Buyers see this next to your name on your profile and responses. A clear headshot gets a faster response than an empty circle."
             photoFirst
             compact
             titleNote={imported && person.title ? "from your résumé — check it" : null}

@@ -30,11 +30,11 @@ export async function JobsOverview({ personId, view }: { personId: string; view:
           { value: w.todays.length, label: "INTERVIEWS TODAY" },
           { value: stat("accept"), label: "WORK ORDERS TO ACCEPT" },
         ]}
-        actions={<><Link href="/find-work?tab=best" className={HERO_BTN}>Find Jobs</Link><Link href="/find-work?tab=proposals" className={HERO_BTN_W}>My Proposals</Link></>}
+        actions={<><Link href="/find-work?tab=best" className={HERO_BTN}>Find Jobs</Link><Link href="/find-work?tab=proposals" className={HERO_BTN_W}>My Responses</Link></>}
       />
       <div className="grid md:grid-cols-2">
         <section className="min-w-0 py-6 md:border-r md:border-line md:pr-7" data-requests-due>
-          <h2 className="text-[22px] font-bold">Proposal Requests</h2>
+          <h2 className="text-[22px] font-bold">Availability Requests</h2>
           {due.length ? (
             <ul className="mt-2 divide-y divide-line">
               {due.map((r) => (
@@ -45,7 +45,7 @@ export async function JobsOverview({ personId, view }: { personId: string; view:
                 </li>
               ))}
             </ul>
-          ) : <p className="mt-2 text-[13.5px] text-ink-3">No open requests to propose.</p>}
+          ) : <p className="mt-2 text-[13.5px] text-ink-3">No open availability requests.</p>}
         </section>
         <section className="min-w-0 py-6 md:pl-7">
           {week ? <WeekSchedule start={week.start} rows={week.rows} side="provider" backHref="/find-work" /> : <TodaysInterviews rows={w.todays} side="provider" weekHref="/find-work?view=week" />}

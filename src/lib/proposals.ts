@@ -149,7 +149,7 @@ export async function proposeEligibility(
     request.status === "DRAFT" &&
     (await prisma.proposalRequest.count({ where: { job_id: request.id, provider_person_id: providerPersonId, sourcing_event_id: { not: null } } })) > 0;
   if (request.status !== "OPEN" && !askedInEvent) {
-    return no("REQUEST_NOT_OPEN", "This work request isn't open for proposals.");
+    return no("REQUEST_NOT_OPEN", "This work request isn't open for responses.");
   }
 
   let inviteId: string | null = null;
@@ -173,7 +173,7 @@ export async function proposeEligibility(
   if (existing && !existing.editable) {
     return no(
       "ALREADY_DECIDED",
-      "This proposal has already been answered and can't be changed."
+      "This response has already been answered and can't be changed."
     );
   }
 
@@ -282,7 +282,7 @@ export async function withdrawProposal(
   });
   if (res.count === 0) {
     throw new SourcingError(
-      "That proposal can't be withdrawn.",
+      "That response can't be withdrawn.",
       "NOT_WITHDRAWABLE"
     );
   }

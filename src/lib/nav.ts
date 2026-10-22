@@ -150,8 +150,8 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
   "/find-work": [
     { label: "Overview", href: "/find-work" },
     { label: "Find Jobs", href: "/find-work?tab=best" },
-    { label: "Proposal Requests", href: "/find-work?tab=invitations" },
-    { label: "My Proposals", href: "/find-work?tab=proposals" },
+    { label: "Availability Requests", href: "/find-work?tab=invitations" },
+    { label: "My Responses", href: "/find-work?tab=proposals" },
     { label: "Interviews", href: "/find-work?tab=interviews" },
     { label: "Tests", href: "/find-work?tab=tests" },
   ],
@@ -168,7 +168,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Find Jobs", href: "/find-work", requires: "canProvideServices" },
     { label: "My Jobs", href: "/hire/jobs", requires: "canHireTalent" },
     { label: "Create a Job", href: "/create-work", requires: "canHireTalent" },
-    { label: "My Proposals", href: "/find-work?tab=proposals", requires: "canProvideServices" },
+    { label: "My Responses", href: "/find-work?tab=proposals", requires: "canProvideServices" },
   ],
   "/payments": [
     { label: "Payments", href: "/payments" },
@@ -194,8 +194,8 @@ export const WORK_FEED_EXTRA_TITLES: NavItem[] = [
   { label: "Find Work", href: "/find-work" },
   { label: "Best Matches", href: "/find-work/for-my-skills" },
   { label: "My Work Requests (Saved)", href: "/find-work/saved" },
-  { label: "Proposal Requests", href: "/find-work/invitations" },
-  { label: "My Proposals", href: "/find-work/proposals" },
+  { label: "Availability Requests", href: "/find-work/invitations" },
+  { label: "My Responses", href: "/find-work/proposals" },
 ];
 
 export const COMPANY_NAV: NavItem[] = [

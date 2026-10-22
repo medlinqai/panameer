@@ -5,7 +5,7 @@ import { providerLabel, providerNumbers } from "@/lib/provider-number";
 export type PathStep = { key: PathKey; label: string; done: boolean; date: Date | null; note?: string | null; href?: string; optional?: boolean; hidden?: boolean };
 export type PathKey = "job" | "shortlist" | "request" | "proposals" | "interview" | "test" | "award" | "approval" | "wo";
 export const PATH_STEPS: { key: PathKey; label: string }[] = [
-  { key: "job", label: "Job" }, { key: "shortlist", label: "Shortlist" }, { key: "request", label: "Request Proposals" }, { key: "proposals", label: "Proposals In" },
+  { key: "job", label: "Job" }, { key: "shortlist", label: "Shortlist" }, { key: "request", label: "Request Availability" }, { key: "proposals", label: "Responses In" },
   { key: "interview", label: "Interview" }, { key: "test", label: "Test" }, { key: "award", label: "Award" }, { key: "approval", label: "Approval" }, { key: "wo", label: "Work Order Created" },
 ];
 const when = (d: Date) => d.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -42,8 +42,8 @@ export async function jobPath(jobId: string) {
   const steps: PathStep[] = [
     { key: "job", label: est ? "Describe" : "Job", done: true, date: job.created_at },
     { key: "shortlist", hidden: est, label: "Shortlist", done: stars.length > 0 || sourced, date: first(stars.map((s) => s.created_at)) ?? event?.created_at ?? null, href: "#matches" },
-    { key: "request", label: est ? "Ask Providers" : "Request Proposals", done: sourced, date: event?.created_at ?? null, note: event ? `${asked} asked · due ${when(event.deadline_at)}` : null, href: "#matches", hidden: !sourced && awarded },
-    { key: "proposals", label: est ? "Estimates In" : "Proposals In", done: bids.length > 0, date: first(bids.map((b) => b.bid?.submitted_at)), note: event ? `${bids.length} of ${asked} in` : null, href: event ? (est ? `/estimate/${event.id}` : `/hire/sourcing/${event.id}`) : undefined, hidden: !sourced && awarded },
+    { key: "request", label: est ? "Ask Providers" : "Request Availability", done: sourced, date: event?.created_at ?? null, note: event ? `${asked} asked · due ${when(event.deadline_at)}` : null, href: "#matches", hidden: !sourced && awarded },
+    { key: "proposals", label: est ? "Estimates In" : "Responses In", done: bids.length > 0, date: first(bids.map((b) => b.bid?.submitted_at)), note: event ? `${bids.length} of ${asked} in` : null, href: event ? (est ? `/estimate/${event.id}` : `/hire/sourcing/${event.id}`) : undefined, hidden: !sourced && awarded },
     { key: "interview", hidden: est, label: "Interview", done: !!interview, date: interview?.created_at ?? null, optional: true },
     { key: "test", hidden: est, label: "Test", done: !!test, date: test?.created_at ?? null, optional: true },
     { key: "award", label: "Award", done: awarded, date: awardedAt },

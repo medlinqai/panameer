@@ -33,7 +33,7 @@ const CARDS: Card[] = [
     ],
     price: 
     "$125/hr",
-    priceNote: "proposed rate · est. 4 wks",
+    priceNote: "available · est. 4 wks",
     action: "Interview",
     actionTone: "",
   },

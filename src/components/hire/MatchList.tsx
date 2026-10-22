@@ -76,10 +76,10 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   if (!list.length) return <>{empty}</>;
   return (
     <div data-match-list>
-      <p className="mt-2 text-[13.5px]"><b>Two ways to go:</b> <b>Hire</b> one provider directly from their row, or <b>Shortlist</b> several and request proposals from them all at once:</p>
+      <p className="mt-2 text-[13.5px]"><b>Two ways to go:</b> <b>Hire</b> one provider directly from their row, or <b>Shortlist</b> several and request availability from them all at once:</p>
       {/* HP-E003: how the shortlist works. */}
       <ol className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]" data-shortlist-steps>
-        {["Hide Who You Don't Want", "Star Who You Like", "Compare (Optional)", "Request Proposals from All Starred"].map((t, i) => (
+        {["Hide Who You Don't Want", "Star Who You Like", "Compare (Optional)", "Request Availability from All Starred"].map((t, i) => (
           <li key={t} className="flex items-center gap-2">
             {i > 0 && <span aria-hidden className="text-ink-3">→</span>}
             <span className={shortlistStep === i + 1 ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-2.5 py-0.5 font-bold text-magenta-dark" : shortlistStep > i + 1 ? "rounded-full border border-ink px-2.5 py-0.5 font-semibold" : "rounded-full border border-line px-2.5 py-0.5 font-semibold text-ink-3"} aria-current={shortlistStep === i + 1 ? "step" : undefined}>{i + 1} {t}</span>
@@ -144,11 +144,11 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
           <p className="text-[14px]"><b>{opened.eventNumber}</b> is open — {opened.count} request{opened.count === 1 ? "" : "s"} sent. <Link href={`/hire/sourcing/${opened.eventId}`} className="font-semibold text-magenta-dark underline underline-offset-4">View the Sourcing Event →</Link></p>
         ) : (
           <>
-            <button type="button" className={BTN} disabled={busy || !starred.length || !jobId} onClick={request} data-request-proposals>{`Request Proposals from Your Shortlist (${starred.length})`}</button>
+            <button type="button" className={BTN} disabled={busy || !starred.length || !jobId} onClick={request} data-request-proposals>{`Request Availability from Your Shortlist (${starred.length})`}</button>
             <label className="flex items-center gap-2 text-[13px] font-semibold">Deadline
               <input inputMode="numeric" value={hours} onChange={(e) => setHours(e.target.value.replace(/\D/g, "").slice(0, 3))} aria-label="Deadline in hours" className="w-16 rounded-[8px] border border-line px-2 py-1.5 text-right" data-deadline-hours /> hours
             </label>
-            <span className="w-full text-[12.5px] text-ink-2" data-request-help>{starred.length ? `Each gets the job, your rate range and a ${Number(hours) || 48}-hour deadline. You'll see their proposals on the Sourcing Event.` : "Star who should propose — or Hire one directly."}</span>
+            <span className="w-full text-[12.5px] text-ink-2" data-request-help>{starred.length ? `Each gets the job, your rate range and a ${Number(hours) || 48}-hour deadline. You'll see who is available on the Sourcing Event.` : "Star who you want to ask — or Hire one directly."}</span>
           </>
         )}
         {error && <p role="alert" className="w-full text-[13.5px] font-semibold text-magenta-dark">{error}</p>}
@@ -224,7 +224,7 @@ export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: Hi
   const bestImpl = best(rows.map((r) => r.m.detail.implementations), "max");
   const HL = "rounded-full bg-[#fbeafb] px-2 py-0.5 font-bold text-magenta-dark";
   const lines: [string, (r: (typeof rows)[number]) => ReactNode][] = [
-    ...(withProposal ? ([["Proposed Rate", (r) => <span className={num(r.proposed) != null && num(r.proposed) === bestRate ? HL : ""}>{r.proposed ?? "—"}</span>], ["Earliest Start", (r) => r.start ?? "—"]] as [string, (r: (typeof rows)[number]) => ReactNode][]) : []),
+    ...(withProposal ? ([["Their Rate", (r) => <span className={num(r.proposed) != null && num(r.proposed) === bestRate ? HL : ""}>{r.proposed ?? "—"}</span>], ["Earliest Start", (r) => r.start ?? "—"]] as [string, (r: (typeof rows)[number]) => ReactNode][]) : []),
     ["Rate", (r) => <span><span className={!withProposal && num(r.m.rate) != null && num(r.m.rate) === bestRate ? HL : ""}>{r.m.rate ?? "—"}</span>{r.m.rate && <span className="ml-1.5 text-[12px] text-ink-2">{r.m.inBudget ? "in budget" : "over budget"}</span>}</span>],
     ["Years", (r) => <span className={r.m.detail.years != null && r.m.detail.years === bestYears ? HL : ""}>{r.m.detail.years != null ? `${r.m.detail.years} yrs` : "—"}</span>],
     ["Oracle Cloud Years", (r) => <span className={r.m.detail.ocYears != null && r.m.detail.ocYears === bestOc ? HL : ""}>{r.m.detail.ocYearsLabel?.replace(/ Oracle Cloud$/, "") ?? "—"}</span>],

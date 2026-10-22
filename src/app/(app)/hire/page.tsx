@@ -35,7 +35,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
       <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-[26px] font-extrabold">Create a Job</h1>
-          <p className="text-[14px] text-ink-2">Tell us what you need, or let AI read your job description. We&apos;ll show you who fits, and you choose who sends a proposal.</p>
+          <p className="text-[14px] text-ink-2">Tell us what you need, or let AI read your job description. We&apos;ll show you who fits, and you choose whose availability to request.</p>
         </div>
         <Link href="/hire/jobs" className="text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4">My Jobs →</Link>
       </div>

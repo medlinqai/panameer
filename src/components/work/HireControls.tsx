@@ -74,7 +74,7 @@ export function SelectProposal({
         </Button>
       ) : (
         <p className="text-[13.5px] text-ink-2">
-          {providerName} hasn&apos;t stated a rate, so this proposal can&apos;t be
+          {providerName} hasn&apos;t stated a rate, so this response can&apos;t be
           priced or selected yet.
         </p>
       )}
@@ -108,7 +108,7 @@ export function AssignDirectly({
       {/* SCOTT'S PHRASE, NOT A PLAINER ONE OF MINE. I first wrote *"a provider you */}
       <h3 className="text-[15px] font-bold">Assign an Externally Sourced Provider</h3>
       <p className="mt-1 text-[13.5px] text-ink-2">
-        No proposal needed — but their rate is, because the order is priced from it.
+        No response needed — but their rate is, because the order is priced from it.
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <select

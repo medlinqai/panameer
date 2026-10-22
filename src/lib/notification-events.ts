@@ -538,7 +538,7 @@ export const NOTIFICATION_EVENTS = {
     visibility: "FEED",
     requiresAction: false,
     title: (v) => `Your job ${str(v, "title", "")} is posted — see your matches.`.replace("job  is", "job is"),
-    body: () => "Pick who to hire, or ask a few for proposals.",
+    body: () => "Pick who to hire, or ask a few if they are available.",
     href: (v) => `/hire?job=${str(v, "jobId", "")}&step=4`,
   },
   // PB-E005: a join request has waited 2 business days — one reminder to the company's admins.
@@ -722,7 +722,7 @@ export const NOTIFICATION_EVENTS = {
     title: (v) => {
       const who = str(v, "providerNumber", "");
       const rate = str(v, "rateText", "");
-      return `Proposal from ${who || "a provider"}${rate ? ` at ${rate}` : ""} on ${str(v, "requestTitle", "your work request")}`;
+      return `${who || "A Provider"} Is Available${rate ? ` at ${rate}` : ""} for ${str(v, "requestTitle", "Your Job")}`;
     },
     body: () => "Open it to compare, shortlist or award.",
     // A proposal in a Sourcing Event opens the event (where the buyer compares and awards); otherwise the work request.
@@ -731,14 +731,14 @@ export const NOTIFICATION_EVENTS = {
   // THE ONE WORK-CHAIN EVENT WITH A LIVE WRITER
   "work.invited_to_propose": {
     event: "work.invited_to_propose",
-    recipient: "the provider invited to propose",
+    recipient: "the provider asked for availability",
     // THE SIBLING'S CATEGORY, NOT A NEW ONE. `work_request.matched` already
     category: "work_request.matched",
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: true,
     title: (v) =>
-      `${str(v, "buyerName", "A buyer")} Invited You to Propose a Rate`,
+      `${str(v, "buyerName", "A buyer")} Asked If You Are Available`,
     // The work's own title, or null — never a filler sentence built from
     body: (v) => (str(v, "workTitle") ? str(v, "workTitle") : null),
     href: (v) =>
@@ -770,24 +770,24 @@ export const NOTIFICATION_EVENTS = {
   // SE-E004: asked to propose in a Sourcing Event — with the deadline.
   "work.sourcing_event_invited": {
     event: "work.sourcing_event_invited",
-    recipient: "a provider asked to propose in a Sourcing Event",
+    recipient: "a provider asked for availability in a Sourcing Event",
     category: "work_request.matched",
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: true,
-    title: (v) => `Request to Propose on ${str(v, "workTitle", "a job")}`,
+    title: (v) => `Availability Request: ${str(v, "workTitle", "a job")}`,
     body: (v) => `Due ${str(v, "due", "soon")} (${str(v, "hours", "48")} hours)`,
     href: (v) => (str(v, "requestId") ? `/find-work/${str(v, "requestId")}` : "/find-work"),
   },
   // SE-E006: sent only once the awarded Work Order is Released.
   "work.not_awarded": {
     event: "work.not_awarded",
-    recipient: "a provider who proposed but was not awarded",
+    recipient: "a provider who responded but was not awarded",
     category: "work_request.matched",
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: false,
-    title: (v) => `Not Awarded: ${str(v, "workTitle", "a job you proposed on")}`,
+    title: (v) => `Not Awarded: ${str(v, "workTitle", "a Job You Wanted")}`,
     body: (v) => (str(v, "message") ? str(v, "message") : null),
     href: () => "/find-work?tab=proposals",
   },
@@ -886,7 +886,7 @@ export const NOTIFICATION_EVENTS = {
     visibility: "FEED",
     requiresAction: true,
     title: (v) => `${str(v, "providerName", "The provider")} Declined Work Order ${str(v, "orderNumber", "")}`,
-    body: (v) => str(v, "reason", "") || "The job is open again — hire someone else or ask for proposals.",
+    body: (v) => str(v, "reason", "") || "The job is open again — hire someone else or ask who is available.",
     href: (v) => `/work-requests/${str(v, "jobId", "")}`,
   },
   "work.order_control": {

@@ -7,8 +7,8 @@ import { resolveNotifications } from "@/lib/notifications";
 export const WORK_RESOLVERS: Record<string, string> = {
   "work.order_created": "the buyer accepts / declines / asks for changes, or the Work Order leaves Issued",
   "work.order_offered": "the provider accepts / declines / asks for changes, or the Work Order leaves Issued",
-  "work.invited_to_propose": "the provider proposes or declines, the deadline passes, or the job closes",
-  "work.sourcing_event_invited": "the provider proposes or declines, the deadline passes, or the Sourcing Event closes",
+  "work.invited_to_propose": "the provider responds or declines, the deadline passes, or the job closes",
+  "work.sourcing_event_invited": "the provider responds or declines, the deadline passes, or the Sourcing Event closes",
   "work.proposal_received": "the buyer shortlists / declines / awards, or the Sourcing Event is awarded or closed",
   "work.job_posted": "the buyer opens the job's matches (or the job moves on)",
   "work.change_order_received": "the change order is approved or rejected",

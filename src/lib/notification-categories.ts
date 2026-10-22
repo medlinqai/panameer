@@ -80,7 +80,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     lane: "work",
     audience: "buyer",
     group: "messages",
-    label: "Proposals on your work request",
+    label: "Responses on your work request",
     blurb: "A provider responded to work you posted.",
     defaults: { inApp: true, email: true, sms: false },
   },

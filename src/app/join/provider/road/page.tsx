@@ -115,7 +115,7 @@ export default function DetailedRoadPage() {
         </p>
         <ul className="mt-5 max-w-[800px] list-disc space-y-1 pl-5 text-[14px] leading-relaxed">
           <li><b>5.A · Product Bought:</b> Product Located → Added to Cart → Order Placed. Listed price; orders are accepted automatically (providers can switch to manual). Want something custom? Request an Estimate (5.C).</li>
-          <li><b>5.B · Rate Accepted:</b> Provider Invited → Rate Proposed → Rate Accepted.</li>
+          <li><b>5.B · Rate Accepted:</b> Provider Asked → Provider Available → Rate Accepted.</li>
           <li><b>5.C · Estimate Accepted:</b> Estimate Requested → Provider Estimates → Estimate Accepted.</li>
           <li><b>6 · Deliver Services &amp; Products:</b> Work Order Signed → tracker updates → the buyer accepts the deliverable or the timesheet.</li>
           <li><b>🔒 Payout details (if required), before 8 · Get Paid:</b> a payout account in your company&apos;s legal name (everyone), plus Tax ID and tax form where your country&apos;s rule needs them (US: W-9 + Tax ID). Ordering, signing work orders and requesting payment never ask for them — only the payout does.</li>

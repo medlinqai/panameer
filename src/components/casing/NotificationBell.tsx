@@ -153,7 +153,7 @@ export function NotificationBell({
             /* THE EMPTY STATE SAYS WHAT WILL APPEAR THERE (WS-C item 4). */
             <p className="px-4 py-6 text-center text-[13.5px] leading-relaxed text-ink-2">
               Nothing yet. When something needs you — a request to join a group,
-              an invitation, a proposal — it appears here.
+              an invitation, a response — it appears here.
             </p>
           ) : (
             <ul>

@@ -11,14 +11,14 @@ export const ROAD_FAQ: Record<string, { q: string; a: string }[]> = {
   ],
   profile: [
     { q: "What counts as a complete profile?", a: "No empty sections: photo, bio, 3 skills, a specialization, rate, language and location. Your Search Score shows what's left." },
-    { q: "Why is this a gate?", a: "Buyers find you through your profile, so it has to be complete before you show up in search and can propose." },
+    { q: "Why is this a gate?", a: "Buyers find you through your profile, so it has to be complete before you show up in search and can say you want a job." },
   ],
   list: [
     { q: "What's the difference between a service and a service product?", a: "A service is your rate for a kind of work (say, Onsite Consulting per hour). A service product is a fixed scope at a listed price that buyers can buy right away." },
     { q: "When do they go live?", a: "As soon as you publish, once your company is linked. No Panameer review." },
   ],
   sell: [
-    { q: "What are the three ways to win work?", a: "5.A a buyer buys your service product; 5.B a buyer accepts the rate you proposed on their work request; 5.C a buyer accepts the estimate you sent. Each ends in a signed work order." },
+    { q: "What are the three ways to win work?", a: "5.A a buyer buys your service product; 5.B a buyer hires you at your rate after you said you want their job; 5.C a buyer accepts the estimate you sent. Each ends in a signed work order." },
     { q: "Can buyers negotiate?", a: "Only if you want them to. Orders at your price and date open at once. Turn on \"Open to offers on price and delivery\" (or open a single product or service) and buyers can propose a different price or date; you accept, counter once, or decline." },
     { q: "Do I need a W-9 or tax ID to sell?", a: "No. Selling, signing work orders and requesting payment only need a linked company. Payout details are asked for just before you get paid." },
   ],

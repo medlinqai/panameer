@@ -289,7 +289,7 @@ export const AI_STRIP = {
     provider: [
       { text: "AI-built profiles", soon: false },
       { text: "AI-labeled services", soon: false },
-      { text: "AI-drafted proposals", soon: false },
+      { text: "AI-drafted responses", soon: false },
       { text: "Price alerts", soon: true },
       { text: "Smart matching", soon: true },
     ],

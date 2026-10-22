@@ -48,7 +48,7 @@ export async function PATCH(
       return NextResponse.json(
         {
           error:
-            "Choose a provider by selecting their proposal, or assign one directly with their rate.",
+            "Choose a provider by selecting their response, or assign one directly with their rate.",
           code: "USE_SELECTION",
         },
         { status: 400 }

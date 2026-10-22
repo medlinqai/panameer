@@ -23,7 +23,7 @@ export function SignGateModal({ gate, onClose }: { gate: SignGate | null; onClos
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-[13px] text-ink-2">Your proposal and this work order are saved. Come back and sign once it&apos;s done.</p>
+          <p className="mt-3 text-[13px] text-ink-2">Your response and this work order are saved. Come back and sign once it&apos;s done.</p>
           <div className="mt-4 flex flex-wrap justify-end gap-2">
             <button type="button" onClick={onClose} className="min-h-[42px] border border-ink px-4 text-[13px] font-bold">
               Later

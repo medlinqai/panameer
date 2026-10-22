@@ -36,7 +36,7 @@ export function workRequestPostedTemplate({
 ${greeting(name)}
 ${paragraph(
   `Your Work Request — <b style="color:${EMAIL_COLORS.ink};">${title}</b> — is live for ${company}. ` +
-    `Providers who match your skills can find it now, and we'll let you know the moment proposals start coming in.`
+    `Providers who match your skills can find it now, and we'll let you know the moment providers say they want it.`
 )}
 ${primaryButton(viewUrl, "View Work Request")}
 ${signOff("The Panameer Team")}`,

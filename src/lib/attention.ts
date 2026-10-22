@@ -103,7 +103,7 @@ export async function getAttentionCards(input: {
   add(
     {
       id: "invites",
-      label: "Invites Awaiting Proposal",
+      label: "Availability Requests Awaiting You",
       detail: "buyers want your rate",
       href: "/find-work/invitations",
       icon: "Briefcase",
@@ -288,7 +288,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
       prisma.workOrder.findMany({ where: { buyer_person_id: id }, select: { id: true } }).then((os) => prisma.paymentRequest.count({ where: { status: "APPROVED", work_order_id: { in: os.map((o) => o.id) } } })),
     ]);
     const ev = toReview[0]?.proposalRequest?.sourcingEvent;
-    const jobs = add("request", toReview.length, "Proposals to review", ev ? `/hire/sourcing/${ev.id}` : "/hire/overview?tab=jobs", "Review", ev?.deadline_at)
+    const jobs = add("request", toReview.length, "Responses to Review", ev ? `/hire/sourcing/${ev.id}` : "/hire/overview?tab=jobs", "Review", ev?.deadline_at)
       + add("request", closing.length, "Sourcing Event closing in 24 h", `/hire/sourcing/${closing[0]?.id ?? ""}`, "Open", closing[0]?.deadline_at)
       + add("request", expired, "Sourcing Event expired, no award", "/hire/overview?tab=jobs", "Decide");
     // HB-E006: each app lists only its own tasks — Work Orders (accept, release, changes) belong to Orders.
@@ -314,7 +314,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     prisma.paymentRequest.count({ where: { provider_person_id: id, status: { in: ["DRAFT", "REJECTED"] } } }),
     prisma.paymentRequest.count({ where: { provider_person_id: id, status: "APPROVED" } }),
   ]);
-  const requests = add("request", dueSoon.length, "Requests to propose due in 24 h", dueSoon[0] ? `/find-work/${dueSoon[0].job_id}` : "/find-work?tab=invitations", "Propose", dueSoon[0]?.responds_by);
+  const requests = add("request", dueSoon.length, "Availability Requests Due in 24 h", dueSoon[0] ? `/find-work/${dueSoon[0].job_id}` : "/find-work?tab=invitations", "Respond", dueSoon[0]?.responds_by);
   const interviews = add("request", toOffer.length, "Interview times to offer", toOffer[0] ? `/find-work/${toOffer[0].job_id}#interview` : "/find-work?tab=interviews", "Offer times") + add("request", todays, "Interviews today", "/find-work?tab=interviews", "Join");
   const tests = add("request", testsToTake, "Tests to take", "/find-work?tab=tests", "Take");
   const myOrders = (await prisma.workOrder.findMany({ where: { provider_person_id: id }, select: { id: true } })).map((o) => o.id);

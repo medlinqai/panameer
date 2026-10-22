@@ -97,7 +97,7 @@ export async function rateCardFor(providerPersonId: string, jobId: string): Prom
 async function openRequestFor(viewer: Viewer, jobId: string) {
   const me = await myPerson(viewer);
   const req = await prisma.proposalRequest.findFirst({ where: { job_id: jobId, provider_person_id: me, sourcing_event_id: { not: null } }, select: { id: true, status: true, sourcingEvent: { select: { status: true, deadline_at: true } } } });
-  if (!req?.sourcingEvent) throw new WorkRequestError("You weren't asked to propose on this job.", "NOT_FOUND");
+  if (!req?.sourcingEvent) throw new WorkRequestError("You weren't asked for your availability on this job.", "NOT_FOUND");
   if (req.sourcingEvent.status !== "OPEN" || req.sourcingEvent.deadline_at.getTime() <= Date.now()) throw new WorkRequestError("This Sourcing Event is closed.", "INVALID");
   return req;
 }
@@ -192,8 +192,8 @@ export async function eventForBuyer(viewer: Viewer, eventId: string) {
 export async function setProposalStatus(viewer: Viewer, eventId: string, proposalId: string, status: "SHORTLISTED" | "SUBMITTED" | "DECLINED") {
   const ev = await ownEvent(viewer, eventId);
   const p = await prisma.proposal.findFirst({ where: { id: proposalId, job_id: ev.job_id, proposalRequest: { sourcing_event_id: ev.id } }, select: { id: true, status: true } });
-  if (!p) throw new WorkRequestError("Proposal not found", "NOT_FOUND");
-  if (p.status === "AWARDED") throw new WorkRequestError("That proposal is awarded.", "INVALID");
+  if (!p) throw new WorkRequestError("Response not found", "NOT_FOUND");
+  if (p.status === "AWARDED") throw new WorkRequestError("That response is awarded.", "INVALID");
   await prisma.proposal.update({ where: { id: p.id }, data: status === "DECLINED" ? { status, declined_at: new Date() } : { status, declined_at: null } });
   // HP-E001: the buyer acted on this proposal.
   const { resolveNotifications } = await import("@/lib/notifications");
@@ -233,7 +233,7 @@ export async function sourcingOnReleased(orderId: string) {
   await notify({ event: "buyer.sourcing.notify_others", personId: ev.created_by_person_id, entityType: "SourcingEvent", entityId: ev.id, dedupeKey: `sourcing.notify_others:${ev.id}`, vars: { eventId: ev.id, workTitle: ev.job.title, count: String(count) } });
 }
 
-export const notAwardedMessage = (title: string) => `Thank you for your proposal on “${title}”. We've filled this role with another provider, so we won't be going ahead with your proposal this time. We'd be glad to work with you on a future job.`;
+export const notAwardedMessage = (title: string) => `Thank you for saying you're available for “${title}”. We've filled this role with another provider, so we won't be going ahead with you this time. We'd be glad to work with you on a future job.`;
 
 /** Whether the buyer may send the not-awarded notice now (the WO is Released and nobody was told yet). */
 export async function canNotifyOthers(eventId: string) {
@@ -281,7 +281,7 @@ async function estimatesNotSelected(eventId: string, title: string) {
 export async function decideProposals(viewer: Viewer, proposalIds: string[], decision: "SHORTLISTED" | "DECLINED", reason?: string | null) {
   const me = await myPerson(viewer);
   const props = await prisma.proposal.findMany({ where: { id: { in: proposalIds }, job: { buyer_person_id: me }, status: { in: ["SUBMITTED", "SHORTLISTED"] } }, select: { id: true } });
-  if (!props.length) throw new WorkRequestError("Those proposals aren't waiting on you any more.", "NOT_FOUND");
+  if (!props.length) throw new WorkRequestError("Those responses aren't waiting on you any more.", "NOT_FOUND");
   // Declined providers are told only when the Work Order is Released (the Sourcing Event rule) — nothing is sent now.
   await prisma.proposal.updateMany({ where: { id: { in: props.map((p) => p.id) } }, data: decision === "DECLINED" ? { status: "DECLINED", declined_at: new Date(), decline_reason: reason?.trim().slice(0, 500) || null } : { status: "SHORTLISTED" } });
   const { resolveNotifications } = await import("@/lib/notifications");

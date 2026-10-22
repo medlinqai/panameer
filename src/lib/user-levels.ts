@@ -123,7 +123,7 @@ export type LifecycleStep = { key: string; phase?: RoadPhase; step: string; stat
 export const LIFECYCLE: LifecycleStep[] = [
   { key: "account", step: "Create Your Account", status: "Registered", who: "you", gate: false, desc: "One account per email.", href: "/join", next: "Create Your Account" },
   { key: "verify", step: "Verify Account", status: "Verified", who: "you", gate: false, desc: "Click the link sent to your email.", unlocks: "Learn, Connect", href: "/join", next: "Verify Your Account" },
-  { key: "profile", step: "Complete Your Profile", status: "Profiled", who: "you", gate: true, desc: "No empty sections: photo, bio, 3 skills, a specialization, rate, language, location.", unlocks: "being found, posting, proposals", href: "/profile", next: "Complete Your Profile" },
+  { key: "profile", step: "Complete Your Profile", status: "Profiled", who: "you", gate: true, desc: "No empty sections: photo, bio, 3 skills, a specialization, rate, language, location.", unlocks: "being found, posting, responses", href: "/profile", next: "Complete Your Profile" },
   { key: "link", step: "Add Company", status: "Linked", who: "you", gate: false, desc: "Add your company, or join it by website — a one-person business is a company too.", href: "/company?join=1#join", next: "Add Your Company" },
   { key: "validate", step: "Validate Company", status: "Validated", who: "company", gate: true, desc: "Admin adds legal name, tax ID and W-9 (US) or W-8BEN-E (outside US).", unlocks: "signing work orders", href: "/company/legal", next: "Validate Your Company" },
   { key: "contract", step: "Get Contracted", status: "Contracted", who: "both", gate: true, desc: "Two validated companies sign a work order.", href: "/orders", next: "Get Contracted" },
@@ -138,7 +138,7 @@ export const PROVIDER_ROAD: LifecycleStep[] = [
   // Scott 10-16: Register swallows the profile — you, your company and its locations. Done when registration is finished.
   { key: "profile", phase: "join", step: "Complete Your Profile", status: "Profiled", who: "you", gate: false, desc: "You, your company and its locations. Done when you finish registering; people can see you and connect.", unlocks: "Connect, Learn", href: "/profile", next: "Complete Your Profile", time: "about 3 min" },
   // Scott 10-16: what you sell — résumé and skills (so buyers find you), rates, products — ends with Go Live.
-  { key: "list", phase: "join", step: "Create What You Sell", status: "Live", who: "you", gate: true, desc: "Your résumé and skills so buyers can find you, your rates and your products. Ends with Enable My Catalog.", unlocks: "being found, proposals, selling", href: "/catalog/create", next: "Create What You Sell", time: "about 10 min" },
+  { key: "list", phase: "join", step: "Create What You Sell", status: "Live", who: "you", gate: true, desc: "Your résumé and skills so buyers can find you, your rates and your products. Ends with Enable My Catalog.", unlocks: "being found, responses, selling", href: "/catalog/create", next: "Create What You Sell", time: "about 10 min" },
   { key: "sell", phase: "win", step: "Sell Products & Services", status: "Contracted", who: "both", gate: false, desc: "Win work three ways: a product bought, your rate accepted, or an estimate accepted. Each ends in a signed work order.", href: "/orders", next: "Sell Services & Products", time: "signed work order" },
   { key: "deliver", phase: "win", step: "Deliver Products & Services", status: "Delivered", who: "both", gate: false, desc: "Work the signed work order: tracker updates, then the buyer accepts the deliverable or the timesheet.", href: "/orders", next: "Deliver the Work", time: "per work order" },
   { key: "request", phase: "paid", step: "Request Your Payment", status: "Requested", who: "you", gate: false, desc: "Send a payment request against accepted work — a timesheet, a milestone…", href: "/orders", next: "Request Payment", time: "5 min each" },
@@ -150,8 +150,8 @@ export const BUYER_ROAD_TITLE = "From Signing Up to Getting the Work Done";
 export const BUYER_ROAD: LifecycleStep[] = [
   { key: "account", phase: "join", step: "Create Your Account", status: "Registered", who: "you", gate: false, desc: "You, your company and its addresses, in one go.", href: "/profile", next: "Create Your Account", time: "about 3 min" },
   { key: "link", phase: "join", step: "Add Your Company", status: "Linked", who: "you", gate: false, desc: "Add your company, or ask to join it if it's already here. Its admin approves you.", href: "/company?join=1#join", next: "Add Your Company", time: "1 min" },
-  { key: "find", phase: "win", lines: ["Post", "a Job", "or Shop"], step: "Post a Job or Shop", status: "Sourcing", who: "you", gate: false, desc: "Post a job for proposals, shop products and rates, or ask a provider for an estimate.", href: "/hire", next: "Post a Job or Shop", time: "minutes" },
-  { key: "order", phase: "win", lines: ["Hire", "Your", "Provider"], step: "Hire Your Provider", status: "Hired", who: "both", gate: false, desc: "Hire from a job's proposals or submit your work request: one work order per provider. Ordering needs your company's legal name, billing address and invoice email.", href: "/hire", next: "Hire Your Provider", time: "5 min" },
+  { key: "find", phase: "win", lines: ["Post", "a Job", "or Shop"], step: "Post a Job or Shop", status: "Sourcing", who: "you", gate: false, desc: "Post a job and ask who is available, shop products and rates, or ask a provider for an estimate.", href: "/hire", next: "Post a Job or Shop", time: "minutes" },
+  { key: "order", phase: "win", lines: ["Hire", "Your", "Provider"], step: "Hire Your Provider", status: "Hired", who: "both", gate: false, desc: "Hire from a job's responses or submit your work request: one work order per provider. Ordering needs your company's legal name, billing address and invoice email.", href: "/hire", next: "Hire Your Provider", time: "5 min" },
   { key: "approve", phase: "win", step: "Approve the Delivery", status: "Approved", who: "you", gate: false, desc: "Accept the deliverable, or approve the timesheet for time-based work.", href: "/orders", next: "Approve the Delivery", time: "per work order" },
   { key: "pay", phase: "paid", step: "Pay the Invoice", status: "Paid", who: "company", gate: false, desc: "Pay the payment request. Panameer pays the provider's company.", href: "/pay", next: "Pay the Invoice", time: "automatic" },
 ];
@@ -180,7 +180,7 @@ export const roadLabelLines = (step: string): [string, string] => {
 /** Stop 5's three lanes; each ends in "Work Order Signed". */
 export const ROAD_LANES: { id: string; name: string; steps: string[] }[] = [
   { id: "5.A", name: "Product Bought", steps: ["Product Located", "Added to Cart", "Order Placed"] },
-  { id: "5.B", name: "Rate Accepted", steps: ["Provider Invited", "Rate Proposed", "Rate Accepted"] },
+  { id: "5.B", name: "Rate Accepted", steps: ["Provider Invited", "Available", "Rate Accepted"] },
   { id: "5.C", name: "Estimate Accepted", steps: ["Estimate Requested", "Provider Estimates", "Estimate Accepted"] },
 ];
 

@@ -111,7 +111,7 @@ export default async function ExplorePage({
                 </p>
                 <p className="mt-1.5 max-w-[680px] text-[15px] leading-relaxed text-ink-2">
                   An account unlocks the full request, the requester, and the
-                  ability to propose.
+                  ability to say I Want This Job.
                 </p>
                 <div className="mt-5 flex flex-wrap items-center gap-3">
                   <Btn href={loginHref}>

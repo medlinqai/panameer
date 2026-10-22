@@ -111,7 +111,7 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
                     {iv.hasRoom ? <a href={`/api/interviews/${iv.id}/join`} target="_blank" rel="noreferrer" className={BTN}>Join</a> : <Link href={`/work-requests/${iv.jobId}#interviews`} className={BTN_OUT}>Open</Link>}
                   </li>
                 ))}</ul>
-              ) : <p className="border-b border-state-border py-5 text-[14px] leading-relaxed text-state-inactive">No interviews today. Interviews you schedule from a job&apos;s proposals show here, with a Join link.</p>}
+              ) : <p className="border-b border-state-border py-5 text-[14px] leading-relaxed text-state-inactive">No interviews today. Interviews you schedule from a job&apos;s responses show here, with a Join link.</p>}
             </>
           )}
           <div className="mt-7 grid grid-cols-2 gap-4">
@@ -220,8 +220,8 @@ function JobArticle({ j }: { j: JobTabRow }) {
         ) : (
           <>
             <Fact label="Step"><span className={STATE_TEXT[stepState(j.step, { completed: j.completed })]}>{j.completed ? (j.wo ? "Filled" : "Closed") : PATH_STEPS.find((p) => p.key === j.step)?.label ?? j.step}</span></Fact>
-            <Fact label="Proposals">{j.proposals ?? "—"}</Fact>
-            <Fact label="Rates Proposed">{j.rates ?? "—"}{j.rates && j.inRange != null && <span className={`font-medium ${j.inRange ? GREEN : "text-state-declined"}`}> · {j.inRange ? "in range" : "over range"}</span>}</Fact>
+            <Fact label="Responses">{j.proposals ?? "—"}</Fact>
+            <Fact label="Rates Offered">{j.rates ?? "—"}{j.rates && j.inRange != null && <span className={`font-medium ${j.inRange ? GREEN : "text-state-declined"}`}> · {j.inRange ? "in range" : "over range"}</span>}</Fact>
             <Fact label="Deadline">{j.deadlineAt ? shortWhen(j.deadlineAt) : "—"}</Fact>
           </>
         )}
@@ -241,7 +241,7 @@ function JobArticle({ j }: { j: JobTabRow }) {
           ))}
           {j.asked === 1 && (
             <div className="flex items-center gap-3.5 border-t border-state-sunken py-2.5 text-[13px] text-state-disabled">
-              <span className="w-8 shrink-0" />No other providers were asked. <Link href={`/work-requests/${j.id}#matches`}>Request more proposals</Link>
+              <span className="w-8 shrink-0" />No other providers were asked. <Link href={`/work-requests/${j.id}#matches`}>Request More Availability</Link>
             </div>
           )}
         </div>
@@ -276,7 +276,7 @@ async function RequestsTab({ personId, slice }: { personId: string; slice?: stri
             <Fact label="Work Order">{w.wo ? <Link href={`/orders/${w.wo.id}`} className="text-ink">{w.wo.number}</Link> : "—"}</Fact>
           </div>
         </article>
-      )) : <p className="text-[14px] text-state-inactive">No Work Requests yet — Award a proposal or Hire directly and it shows here.</p>}
+      )) : <p className="text-[14px] text-state-inactive">No Work Requests yet — Award a response or Hire directly and it shows here.</p>}
     </div>
   );
 }
@@ -293,7 +293,7 @@ async function InterviewsTab({ personId, view, slice }: { personId: string; view
     <div className="flex flex-col gap-5" data-interviews-tab>
       <div className="flex flex-wrap items-end justify-between gap-3"><h1 className="text-[30px] font-extrabold">Interviews</h1><Link href="/hire/overview?tab=interviews&view=week" className="text-[13px] font-semibold">View Week</Link></div>
       <div className="border-b border-ink pb-3"><SliceChips tabKey="hire-interviews" counts={sliceCounts(all)} base="/hire/overview?tab=interviews" /></div>
-      {rows.length ? <InterviewCards rows={rows} side="buyer" videoReady={dailyConfigured()} /> : <p className="text-[14px] text-state-inactive">No interviews here. Use Interview on a proposal; times, Join links and notes show here.</p>}
+      {rows.length ? <InterviewCards rows={rows} side="buyer" videoReady={dailyConfigured()} /> : <p className="text-[14px] text-state-inactive">No interviews here. Use Interview on a response; times, Join links and notes show here.</p>}
     </div>
   );
 }
@@ -319,7 +319,7 @@ async function TestsTab({ personId, slice }: { personId: string; slice?: string 
             <Fact label="Result"><span className={t.result === "Pass" ? GREEN : t.result === "Fail" ? "text-state-declined" : ""}>{t.result}</span></Fact>
           </div>
         </article>
-      )) : <p className="text-[14px] text-state-inactive">No test requests yet. Use Request Test on a proposal; scores and pass / fail show here.</p>}
+      )) : <p className="text-[14px] text-state-inactive">No test requests yet. Use Request Test on a response; scores and pass / fail show here.</p>}
     </div>
   );
 }

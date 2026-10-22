@@ -222,16 +222,16 @@ export async function selectProvider(
     },
   });
   if (!winner) {
-    throw new SourcingError("That provider hasn't proposed on this work request.", "NO_PROPOSAL");
+    throw new SourcingError("That provider hasn't responded on this work request.", "NO_PROPOSAL");
   }
   if (winner.status === "WITHDRAWN" || winner.status === "DECLINED") {
-    throw new SourcingError("That proposal is no longer open.", "PROPOSAL_CLOSED");
+    throw new SourcingError("That response is no longer open.", "PROPOSAL_CLOSED");
   }
   const proposalLine = winner.lines[0];
   if (!proposalLine || proposalLine.unit_price_cents == null) {
     // A REFUSAL, NOT A FALLBACK. Without their rate there is nothing to
     throw new SourcingError(
-      "That proposal doesn't state a rate, so the hours can't be priced.",
+      "That response doesn't state a rate, so the hours can't be priced.",
       "PROPOSAL_HAS_NO_RATE"
     );
   }

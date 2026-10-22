@@ -56,7 +56,7 @@ export async function sendTest(
   });
   if (!proposal || proposal.status === "WITHDRAWN") {
     throw new SourcingError(
-      "That provider hasn't proposed on this work request.",
+      "That provider hasn't responded on this work request.",
       "NO_PROPOSAL"
     );
   }

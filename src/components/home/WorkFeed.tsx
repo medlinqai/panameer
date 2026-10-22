@@ -41,16 +41,16 @@ export function WorkFeed({
         <EmptyFeed title={`No ${labelFor(tab)} yet`} detail={UNBACKED_TABS[tab]} />
       ) : cards.length === 0 ? (
         <EmptyFeed
-          title={query ? `Nothing matches “${query}”` : tab === "invitations" ? "No open proposal requests" : tab === "proposals" ? "No proposals yet" : tab === "best" ? "No posted jobs match your skills right now" : "No posted jobs right now"}
+          title={query ? `Nothing matches “${query}”` : tab === "invitations" ? "No open availability requests" : tab === "proposals" ? "No responses yet" : tab === "best" ? "No posted jobs match your skills right now" : "No posted jobs right now"}
           detail={
             query
               // RULING 18: no promise, no date, no apology. *"when this
               ? "No work request matches that search yet."
               : tab === "invitations"
-                ? "When a buyer asks you to propose your rate, it shows here."
+                ? "When a buyer asks if you're available, it shows here."
                 : tab === "proposals"
-                  ? "Proposals you send on work requests show here."
-                  : "Jobs a buyer invites you to propose on show under Proposal Requests. Your profile is how buyers find you, so keep it current."
+                  ? "Jobs you said you want show here."
+                  : "Jobs a buyer asks you about show under Availability Requests. Your profile is how buyers find you, so keep it current."
           }
         />
       ) : (
@@ -66,7 +66,7 @@ export function WorkFeed({
   );
 }
 
-const TITLE: Partial<Record<WorkFeedTab, string>> = { best: "Best Matches for Your Skills", recent: "All Work Requests", us: "Work Requests in the US", saved: "Saved", invitations: "Proposal Requests", proposals: "My Proposals" };
+const TITLE: Partial<Record<WorkFeedTab, string>> = { best: "Best Matches for Your Skills", recent: "All Work Requests", us: "Work Requests in the US", saved: "Saved", invitations: "Availability Requests", proposals: "My Responses" };
 
 function labelFor(tab: WorkFeedTab): string {
   return WORK_FEED_TABS.find((t) => t.id === tab)?.label.toLowerCase() ?? "work";

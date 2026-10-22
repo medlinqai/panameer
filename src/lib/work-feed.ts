@@ -19,8 +19,8 @@ export const WORK_FEED_TABS: { id: WorkFeedTab; label: string }[] = [
   { id: "recent", label: "Most Recent" },
   { id: "us", label: "US Only" },
   { id: "saved", label: "Saved Work" },
-  { id: "invitations", label: "Proposal Requests" },
-  { id: "proposals", label: "My Proposals" },
+  { id: "invitations", label: "Availability Requests" },
+  { id: "proposals", label: "My Responses" },
 ];
 
 export const UNBACKED_TABS: Record<string, string> = {
@@ -50,7 +50,7 @@ export type WorkCard = {
   myProposal?: string | null;
 };
 
-const PROPOSAL_LABEL: Record<string, string> = { SUBMITTED: "Submitted", SHORTLISTED: "Shortlisted", AWARDED: "Awarded", NOT_SELECTED: "Not selected", DECLINED: "Not selected", WITHDRAWN: "Withdrawn", DRAFT: "Draft" };
+const PROPOSAL_LABEL: Record<string, string> = { SUBMITTED: "Available", SHORTLISTED: "Shortlisted", AWARDED: "Awarded", NOT_SELECTED: "Not selected", DECLINED: "Not selected", WITHDRAWN: "Withdrawn", DRAFT: "Draft" };
 const PER_UOM: Record<string, string> = { HOUR: "/hr", DAY: "/day", WEEK: "/wk", MONTH: "/mo" };
 
 async function myProposals(personId: string, jobIds: string[]): Promise<Map<string, string>> {
@@ -66,7 +66,7 @@ async function myProposals(personId: string, jobIds: string[]): Promise<Map<stri
     const l = p?.lines[0];
     const parts = p
       ? [PROPOSAL_LABEL[p.status] ?? p.status, l?.unit_price_cents != null ? `${money(l.unit_price_cents, p.currency)}${l.basis === "RATE" ? PER_UOM[l.uom ?? "HOUR"] ?? "" : ""}` : null, l?.available_from ? `start ${fmt(l.available_from, false)}` : null]
-      : r ? [r.status === "DECLINED" ? "You declined" : "Invited — no proposal yet"] : [];
+      : r ? [r.status === "DECLINED" ? "You declined" : "Asked — no response yet"] : [];
     if (r?.responds_by && (!p || ["SUBMITTED", "SHORTLISTED"].includes(p.status))) parts.push(`due ${fmt(r.responds_by, true)}`);
     if (parts.length) out.set(id, parts.filter(Boolean).join(" · "));
   }

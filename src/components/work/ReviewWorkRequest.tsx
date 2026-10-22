@@ -99,8 +99,7 @@ export function ReviewStep({
           </p>
           <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
             Posting is free. Posting anonymously is not something providers will
-            answer — they see who is asking before they spend an afternoon on a
-            proposal.
+            answer — they see who is asking before they say they want the job.
           </p>
           <ul className="mt-3 grid gap-2.5">
             {identityGaps.map((g) => (
@@ -211,7 +210,7 @@ export function ReviewStep({
             </h2>
             {/* PANAMEER'S VOICE, and only claims that are true. No "job", no */}
             <ul className="mt-3 grid gap-2 text-[14.5px] leading-relaxed text-ink-2">
-              <li>· Providers can find it and send you proposals.</li>
+              <li>· Providers can find it and tell you they want it.</li>
               <li>· You can invite providers to it directly.</li>
               <li>· Nothing is charged until you hire someone.</li>
             </ul>
