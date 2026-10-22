@@ -79,7 +79,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
     const r = await fetch("/api/hire/parse", { method: "POST", body }).catch(() => null);
     const j = (await r?.json().catch(() => ({}))) as { sd?: ServiceDescription; error?: string };
     setBusy(false);
-    if (!r?.ok || !j.sd) { setError(j.error ?? "We couldn't read that posting."); return; }
+    if (!r?.ok || !j.sd) { setError(j.error ?? "We couldn't read that job description."); return; }
     // SM-E006: posting values win; where the posting is silent, keep the last job's defaults.
     const p = j.sd;
     const keep = { worksite: !p.worksite, contractTypes: !p.contractTypes.length, duration: !p.duration, budgetType: !p.budgetType };
@@ -196,8 +196,8 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
               <span className="text-[12.5px] text-ink-2">or click to choose a file</span>
               <input type="file" accept=".docx,.pdf,.doc,.txt" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void read(file); }} />
             </label>
-            <label className={LABEL}>Or paste the posting
-              <textarea value={paste} onChange={(e) => setPaste(e.target.value)} rows={8} className={FIELD} placeholder="Paste the whole posting here" />
+            <label className={LABEL}>Or Paste the Job Description
+              <textarea value={paste} onChange={(e) => setPaste(e.target.value)} rows={8} className={FIELD} placeholder="Paste the whole job description here" />
             </label>
             <div className="mt-3 flex flex-wrap gap-3">
               <button type="button" className={BTN} disabled={busy || paste.trim().length < 60} onClick={() => read(null)}>{busy ? "Creating…" : "Create Job Using AI"}</button>

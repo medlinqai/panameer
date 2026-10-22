@@ -26,9 +26,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: e instanceof ExtractError ? e.message : "We couldn't read that file." }, { status: 400 });
   }
   text = text.trim();
-  if (text.length < 60) return NextResponse.json({ error: "Paste the whole posting — that's too short to read." }, { status: 400 });
+  if (text.length < 60) return NextResponse.json({ error: "Paste the whole job description. That's too short to read." }, { status: 400 });
   // PC-E001: pass 1 classifies the Business Type, pass 2 reads the six parts with it.
   const out = await parsePosting(text.slice(0, 40_000));
-  if (!out.ok) return NextResponse.json({ error: out.reason === "no_key" ? "The posting reader isn't switched on here. Fill it in yourself." : out.reason === "deadline" ? "The AI took too long reading this posting. Try again, or Create Job Manually." : "We couldn't read that posting. Try again, or Create Job Manually." }, { status: out.reason === "no_key" ? 503 : 422 });
+  if (!out.ok) return NextResponse.json({ error: out.reason === "no_key" ? "The posting reader isn't switched on here. Fill it in yourself." : out.reason === "deadline" ? "The AI took too long reading this job description. Try again, or Create Job Manually." : "We couldn't read that job description. Try again, or Create Job Manually." }, { status: out.reason === "no_key" ? 503 : 422 });
   return NextResponse.json({ sd: out.sd });
 }
