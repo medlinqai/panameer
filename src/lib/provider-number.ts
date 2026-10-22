@@ -35,10 +35,16 @@ export async function providerNumbers(profileIds: string[]): Promise<Map<string,
   return out;
 }
 
-// DB-E010: names, photos and companies show once a Work Order is Released (not merely issued).
+/** MR-E001 (Scott 10-22): photos show to buyers before the Work Order — only names, companies, logos and contacts stay hidden. */
+export async function providerPhotos(personIds: string[]): Promise<Map<string, string | null>> {
+  const rows = await prisma.person.findMany({ where: { id: { in: [...new Set(personIds)].filter(Boolean) } }, select: { id: true, photo_url: true } });
+  return new Map(rows.map((r) => [r.id, r.photo_url]));
+}
+
+// DB-E010: names, companies and companies show once a Work Order is Released (not merely issued).
 const REVEALED = ["RELEASED" as const, "ACTIVE" as const, "ON_HOLD" as const, "CLOSED" as const, "FINALLY_CLOSED" as const];
 
-// ── AN-E002: one rule — a buyer sees a provider's identity (PII) only once a Work Order exists between them ────────
+// ── AN-E002: one rule — a buyer sees a provider's name and company only once a Work Order exists between them ────────
 /** For each provider: may this viewer see who they are? The provider themself, an admin, a colleague in the
  *  provider's own company, or a viewer whose company has a Released Work Order with the provider. */
 export async function identityVisibleTo(viewer: Viewer | null, providerPersonIds: string[]): Promise<Set<string>> {

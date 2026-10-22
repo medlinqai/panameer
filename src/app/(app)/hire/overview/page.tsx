@@ -106,7 +106,7 @@ async function Overview({ personId, slice, view }: { personId: string; slice?: s
                 <ul>{w.todays.map((iv) => (
                   <li key={iv.id} className="flex items-center gap-3 border-b border-state-border py-3.5">
                     <b className="w-[64px] shrink-0 text-[14px] tabular-nums">{iv.startsAt ? new Date(iv.startsAt).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) : "—"}</b>
-                    <NeutralAvatar size={32} />
+                    <NeutralAvatar size={32} photoUrl={iv.providerPhotoUrl} />
                     <span className="min-w-0 flex-1"><b className="block text-[14px]">{iv.providerLabel}</b><span className="block truncate text-[12.5px] text-state-inactive">{iv.jobTitle}</span></span>
                     {iv.hasRoom ? <a href={`/api/interviews/${iv.id}/join`} target="_blank" rel="noreferrer" className={BTN}>Join</a> : <Link href={`/work-requests/${iv.jobId}#interviews`} className={BTN_OUT}>Open</Link>}
                   </li>
@@ -231,7 +231,7 @@ function JobArticle({ j }: { j: JobTabRow }) {
         <div className="flex flex-col sm:ml-[68px]">
           {j.proposalLines.map((p) => (
             <div key={p.personId} className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t border-state-sunken py-2.5" data-proposal-line>
-              <NeutralAvatar size={32} />
+              <NeutralAvatar size={32} photoUrl={p.photoUrl} />
               <span className="w-[70px] text-[14px] font-bold">{p.who}</span>
               <span className="min-w-0 flex-1 text-[13px] text-state-inactive">{p.summary}</span>
               <span className="text-[14px] font-bold">{p.rate ?? "—"}</span>
@@ -308,7 +308,7 @@ async function TestsTab({ personId, slice }: { personId: string; slice?: string 
       {rows.length ? rows.map((t) => (
         <article key={t.id} className="flex flex-col gap-3.5 border-b border-state-border pb-5">
           <div className="flex flex-wrap items-center gap-4 sm:flex-nowrap">
-            <NeutralAvatar size={44} />
+            <NeutralAvatar size={44} photoUrl={t.photoUrl} />
             <div className="min-w-0 flex-1"><b className="text-[17px]">{t.who}</b><div className="mt-1 text-[13px] text-state-inactive">{t.skill}</div></div>
             <Link href={`/work-requests/${t.jobId}`} className={`${BTN_OUT} w-full sm:w-auto`}>Open</Link>
           </div>

@@ -139,7 +139,7 @@ export async function weekInterviews(side: "buyer" | "provider", personId: strin
 }
 
 // ── RA-E005: the HIRE app's Jobs / Requests / Tests tabs ──────────────────────────────────────────────────────
-export type ProposalLine = { personId: string; who: string; summary: string; rate: string | null; start: string | null; inRange: boolean | null };
+export type ProposalLine = { personId: string; who: string; photoUrl: string | null; summary: string; rate: string | null; start: string | null; inRange: boolean | null };
 export type JobTabRow = WorkRow & { draft: boolean; draftLine: string | null; category: string | null; origin: string | null; facts: string; inRange: boolean | null; wo: { id: string; number: string; provider: string; waiting: string } | null; proposalLines: ProposalLine[]; asked: number; eventId: string | null; deadlineAt: string | null; completed: boolean; recurring: import("@/lib/slices").Recurring | null; proposals: string | null; rates: string | null; range: string | null; booked: string | null; needsAction: boolean };
 const usd = (c: number) => `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
@@ -152,7 +152,7 @@ export async function buyerHireTabs(personId: string) {
   const { providerLabel, providerNumbers } = await import("@/lib/provider-number");
   const propRows = await prisma.proposal.findMany({ where: { job_id: { in: paths.map((p) => p.job.id) }, status: { in: ["SUBMITTED", "SHORTLISTED", "AWARDED"] } }, orderBy: { submitted_at: "asc" }, select: { job_id: true, provider_person_id: true, lines: { take: 1, select: { unit_price_cents: true, uom: true, available_from: true } } } });
   const provIds = [...new Set(propRows.map((r) => r.provider_person_id))];
-  const profs = provIds.length ? await prisma.providerProfile.findMany({ where: { person_id: { in: provIds } }, select: { id: true, person_id: true, person: { select: { title: true } }, employers: { select: { start_date: true } }, skills: { select: { skill_id: true } } } }) : [];
+  const profs = provIds.length ? await prisma.providerProfile.findMany({ where: { person_id: { in: provIds } }, select: { id: true, person_id: true, person: { select: { title: true, photo_url: true } }, employers: { select: { start_date: true } }, skills: { select: { skill_id: true } } } }) : [];
   const nums = await providerNumbers(profs.map((p) => p.id));
   const woRows = await prisma.workOrder.findMany({ where: { id: { in: paths.flatMap((p) => p.orders.map((o) => o.id)) } }, select: { id: true, status: true, buyer_accepted_at: true, provider_accepted_at: true } });
   const ids = paths.map((p) => p.job.id);
@@ -194,7 +194,7 @@ export async function buyerHireTabs(personId: string) {
       const hit = pf ? pf.skills.filter((s) => jobSkills.has(s.skill_id)).length : 0;
       const c = r.lines[0]?.unit_price_cents ?? null;
       return {
-        personId: r.provider_person_id, who: providerLabel(pf ? nums.get(pf.id) : null).replace(/^Provider /, ""),
+        personId: r.provider_person_id, who: providerLabel(pf ? nums.get(pf.id) : null).replace(/^Provider /, ""), photoUrl: pf?.person.photo_url ?? null,
         summary: [pf?.person.title, j.domains[0], years ? `${years}+ years` : null, jobSkills.size ? `${hit} of ${jobSkills.size} skills` : null].filter(Boolean).join(" · "),
         rate: c != null ? `${usd(c)}${per}` : null, start: r.lines[0]?.available_from ? `Start ${short(r.lines[0].available_from).replace(/, \d.*$/, "")}` : null, inRange: within(c),
       };
@@ -240,13 +240,13 @@ export async function buyerHireTabs(personId: string) {
 export async function buyerTests(personId: string) {
   const { providerLabel, providerNumbers } = await import("@/lib/provider-number");
   const rows = await prisma.testRequest.findMany({ where: { requested_by_person_id: personId }, orderBy: { created_at: "desc" }, take: 100, select: { id: true, job_id: true, provider_person_id: true, created_at: true, status: true, lines: { take: 1, select: { skill_id: true } }, response: { select: { lines: { take: 1, select: { score: true, passed: true } } } } } });
-  const profiles = await prisma.providerProfile.findMany({ where: { person_id: { in: rows.map((r) => r.provider_person_id) } }, select: { id: true, person_id: true } });
+  const profiles = await prisma.providerProfile.findMany({ where: { person_id: { in: rows.map((r) => r.provider_person_id) } }, select: { id: true, person_id: true, person: { select: { photo_url: true } } } });
   const nums = await providerNumbers(profiles.map((p) => p.id));
   const skills = await prisma.skill.findMany({ where: { id: { in: rows.map((r) => r.lines[0]?.skill_id).filter((x): x is string => !!x) } }, select: { id: true, name: true } });
   return rows.map((r) => {
     const res = r.response?.lines[0];
     const completed = res?.passed != null || ["COMPLETED", "DECLINED", "EXPIRED"].includes(r.status);
-    return { completed, recurring: null, providerPersonId: r.provider_person_id, id: r.id, jobId: r.job_id, who: providerLabel(nums.get(profiles.find((p) => p.person_id === r.provider_person_id)?.id ?? "")), skill: skills.find((s) => s.id === r.lines[0]?.skill_id)?.name ?? "Certification test", sent: short(r.created_at), score: res?.score ?? null, result: res?.passed == null ? (r.status === "COMPLETED" ? "Completed" : r.status === "DECLINED" ? "Declined" : "Pending") : res.passed ? "Pass" : "Fail" };
+    return { completed, recurring: null, providerPersonId: r.provider_person_id, id: r.id, jobId: r.job_id, who: providerLabel(nums.get(profiles.find((p) => p.person_id === r.provider_person_id)?.id ?? "")), photoUrl: profiles.find((p) => p.person_id === r.provider_person_id)?.person.photo_url ?? null, skill: skills.find((s) => s.id === r.lines[0]?.skill_id)?.name ?? "Certification test", sent: short(r.created_at), score: res?.score ?? null, result: res?.passed == null ? (r.status === "COMPLETED" ? "Completed" : r.status === "DECLINED" ? "Declined" : "Pending") : res.passed ? "Pass" : "Fail" };
   });
 }
 

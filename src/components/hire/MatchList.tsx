@@ -93,7 +93,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
         {visible.map((m) => (
           <li key={m.personId} className={`flex items-start gap-3 py-3 ${active === m.personId ? "bg-[#fbeafb]/40" : ""}`} data-hire-match={m.name}>
             <Star on={m.starred} onClick={() => star(m)} name={m.name} />
-            {isMaskedName(m.name) && <NeutralAvatar size={36} />}
+            {(isMaskedName(m.name) || m.photoUrl) && <NeutralAvatar size={36} photoUrl={m.photoUrl} />}
             <button type="button" onClick={() => setActive(m.personId)} className="min-w-0 flex-1 text-left" data-quick-view-open>
               <p className="text-[15px] font-bold hover:underline">{m.company ? `${m.company} · ` : ""}{m.name}</p>
               <p className="text-[13px] text-ink-2">{m.line}</p>
@@ -167,7 +167,7 @@ function QuickView({ m, jobId, onClose, onStar, onHide, prev, next }: { m: HireM
   return (
     <aside role="dialog" aria-label={`Quick view: ${m.name}`} data-quick-view className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-white p-5 shadow-[-8px_0_24px_rgba(0,0,0,0.12)] md:inset-y-0 md:left-auto md:right-0 md:w-[420px] md:border-l md:border-line">
       <div className="flex items-start gap-3">
-        {isMaskedName(m.name) && <NeutralAvatar size={48} />}
+        {(isMaskedName(m.name) || m.photoUrl) && <NeutralAvatar size={48} photoUrl={m.photoUrl} />}
         <div className="min-w-0 flex-1">
           <p className="text-[17px] font-extrabold">{m.company ? `${m.company} · ` : ""}{m.name}</p>
           <p className="text-[13px] text-ink-2">{m.line}</p>
@@ -236,7 +236,7 @@ export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: Hi
                 <th />
                 {rows.map((r) => (
                   <th key={r.m.personId} className="border-b border-line p-2 text-left align-bottom">
-                    <span className="flex items-center gap-2">{isMaskedName(r.m.name) ? <NeutralAvatar size={32} /> : null}<span className="min-w-0 truncate text-[14px] font-extrabold">{r.m.name}</span></span>
+                    <span className="flex items-center gap-2">{isMaskedName(r.m.name) || r.m.photoUrl ? <NeutralAvatar size={32} photoUrl={r.m.photoUrl} /> : null}<span className="min-w-0 truncate text-[14px] font-extrabold">{r.m.name}</span></span>
                     <span className="mt-2 flex flex-wrap gap-1.5">
                       {jobId && <Link href={`/hire/terms?job=${jobId}&provider=${r.m.personId}`} className="inline-flex min-h-8 items-center bg-ink px-3 text-[12.5px] font-bold text-surface hover:bg-ink-hover">Hire</Link>}
                       {onRemove && <button type="button" onClick={() => onRemove(r.m.personId)} className="inline-flex min-h-8 items-center border border-ink px-2.5 text-[12.5px] font-semibold">Remove</button>}

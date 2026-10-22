@@ -42,7 +42,7 @@ export function InterviewCards({ rows, side, videoReady }: { rows: InterviewRow[
         return (
           <article key={r.id} className="rounded-[10px] border border-line bg-white p-4" data-interview={r.status}>
             <div className="flex flex-wrap items-center gap-3">
-              {side === "buyer" && <NeutralAvatar size={32} />}
+              {side === "buyer" && <NeutralAvatar size={32} photoUrl={r.providerPhotoUrl} />}
               <div className="min-w-0 flex-1">
                 <p className="text-[14.5px] font-bold">{side === "buyer" ? r.providerLabel : r.buyerCompany} · <Link href={side === "buyer" ? `/work-requests/${r.jobId}` : `/find-work/${r.jobId}`} className="hover:underline">{r.jobTitle}</Link></p>
                 <p className="text-[12.5px] text-ink-2">{r.number} · {r.minutes} min · {STATUS[r.status] ?? r.status}{r.startsAt ? ` · ${fmt(r.startsAt)}` : ""}</p>

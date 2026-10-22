@@ -155,9 +155,9 @@ export async function eventForBuyer(viewer: Viewer, eventId: string) {
   const byPerson = new Map(matches.map((m) => [m.personId, m]));
   const missing = requests.filter((r) => !byPerson.has(r.provider_person_id));
   if (missing.length) {
-    const profiles = await prisma.providerProfile.findMany({ where: { person_id: { in: missing.map((r) => r.provider_person_id) } }, select: { id: true, person_id: true, person: { select: { title: true } } } });
+    const profiles = await prisma.providerProfile.findMany({ where: { person_id: { in: missing.map((r) => r.provider_person_id) } }, select: { id: true, person_id: true, person: { select: { title: true, photo_url: true } } } });
     const nums = await providerNumbers(profiles.map((p) => p.id));
-    for (const p of profiles) byPerson.set(p.person_id, { personId: p.person_id, profileId: p.id, name: providerLabel(nums.get(p.id)), company: null, line: p.person.title ?? "", rate: null, matched: [], why: [], fit: 0, inBudget: false, outside: false, hidden: false, starred: false, requested: null, weak: false, detail: { summary: "", role: p.person.title, skillsMatched: "0 of 10", years: null, certifications: [], location: null, rates: [], products: [] } });
+    for (const p of profiles) byPerson.set(p.person_id, { personId: p.person_id, profileId: p.id, name: providerLabel(nums.get(p.id)), company: null, photoUrl: p.person.photo_url ?? null, line: p.person.title ?? "", rate: null, matched: [], why: [], fit: 0, inBudget: false, outside: false, hidden: false, starred: false, requested: null, weak: false, detail: { summary: "", role: p.person.title, skillsMatched: "0 of 10", years: null, certifications: [], location: null, rates: [], products: [] } });
   }
   const proposals: EventProposal[] = requests.filter((r) => byPerson.has(r.provider_person_id)).map((r) => {
     const line = r.bid?.lines[0];

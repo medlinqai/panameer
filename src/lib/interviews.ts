@@ -282,7 +282,7 @@ async function afterConfirm(interviewId: string, startsAt: Date) {
 export type InterviewRow = {
   id: string; number: string; status: string; mode: string | null; minutes: number; jobId: string; jobTitle: string;
   startsAt: string | null; slots: { id: string; startsAt: string; timeZone: string }[];
-  providerPersonId: string; providerLabel: string; providerUserId: string | null; buyerCompany: string; buyerUserId: string | null;
+  providerPersonId: string; providerLabel: string; providerPhotoUrl: string | null; providerUserId: string | null; buyerCompany: string; buyerUserId: string | null;
   skills: { id: string; name: string }[]; hasRoom: boolean;
   rating: string | null; comment: string | null;
 };
@@ -300,7 +300,8 @@ export async function listInterviews(input: { buyerPersonId?: string; providerPe
     },
   });
   const jobs = new Map((await prisma.job.findMany({ where: { id: { in: [...new Set(rows.map((r) => r.job_id))] } }, select: { id: true, title: true, skills: { take: 6, select: { skill: { select: { id: true, name: true } } } } } })).map((j) => [j.id, j]));
-  const persons = await prisma.person.findMany({ where: { id: { in: [...new Set(rows.flatMap((r) => [r.provider_person_id, r.requested_by_person_id]))] } }, select: { id: true, user_id: true } });
+  const persons = await prisma.person.findMany({ where: { id: { in: [...new Set(rows.flatMap((r) => [r.provider_person_id, r.requested_by_person_id]))] } }, select: { id: true, user_id: true, photo_url: true } });
+  const photoOf = new Map(persons.map((p) => [p.id, p.photo_url]));
   const userOf = new Map(persons.map((p) => [p.id, p.user_id]));
   const labels = new Map<string, string>();
   const companies = new Map<string, string>();
@@ -315,7 +316,7 @@ export async function listInterviews(input: { buyerPersonId?: string; providerPe
       id: r.id, number: r.request_number, status: r.status, mode: r.mode, minutes: r.duration_minutes, jobId: job.id, jobTitle: job.title,
       startsAt: confirmed?.starts_at.toISOString() ?? null,
       slots: r.status === "SLOTS_OFFERED" ? (r.response?.lines ?? []).map((l) => ({ id: l.id, startsAt: l.starts_at.toISOString(), timeZone: l.time_zone })) : [],
-      providerPersonId: r.provider_person_id, providerLabel: labels.get(r.provider_person_id)!, providerUserId: userOf.get(r.provider_person_id) ?? null,
+      providerPersonId: r.provider_person_id, providerLabel: labels.get(r.provider_person_id)!, providerPhotoUrl: photoOf.get(r.provider_person_id) ?? null, providerUserId: userOf.get(r.provider_person_id) ?? null,
       buyerCompany: companies.get(r.requested_by_person_id)!, buyerUserId: userOf.get(r.requested_by_person_id) ?? null,
       skills: job.skills.map((s) => s.skill), hasRoom: !!r.room_url,
       rating: input.buyerPersonId ? r.notes[0]?.rating ?? null : null, comment: input.buyerPersonId ? r.notes[0]?.body ?? null : null,

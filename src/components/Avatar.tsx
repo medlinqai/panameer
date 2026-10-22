@@ -1,8 +1,10 @@
 /** NA-E001: a provider not yet revealed to this viewer reads "Provider P-1038". */
 export const isMaskedName = (name: string) => /^Provider P-/.test(name.trim());
 
-/** NA-E001: the neutral avatar for an unrevealed provider — ink, white person outline, never a photo. */
-export function NeutralAvatar({ size = 48, square = false, className = "" }: { size?: number; square?: boolean; className?: string }) {
+/** NA-E001 / MR-E001: an unrevealed provider — their photo when they have one (the name stays hidden), else ink with a white outline. */
+export function NeutralAvatar({ size = 48, square = false, className = "", photoUrl }: { size?: number; square?: boolean; className?: string; photoUrl?: string | null }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  if (photoUrl) return <img src={photoUrl} alt="" width={size} height={size} data-provider-photo className={`shrink-0 object-cover ${square ? "rounded-[6px]" : "rounded-full"} ${className}`} style={{ width: size, height: size }} />;
   return (
     <span
       aria-hidden
@@ -35,7 +37,7 @@ export function Avatar({
   /** Unrevealed provider → the neutral avatar (also detected from a "Provider P-…" name). */
   masked?: boolean;
 }) {
-  if (masked ?? isMaskedName(`${firstName} ${lastName}`)) return <NeutralAvatar size={size} />;
+  if (masked ?? isMaskedName(`${firstName} ${lastName}`)) return <NeutralAvatar size={size} photoUrl={photoUrl} />;
   const initials =
     `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase() || "?";
 

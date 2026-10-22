@@ -192,8 +192,8 @@ export async function matchProvidersFor(
   // does not own throws before any provider is read.
   const wr = await getWorkRequest(viewer, workRequestId);
   const out = await matchProvidersForSkills({ skillIds: wr.skillIds, pillarId: wr.pillarId, industryIds: wr.specializationIds });
-  // NA-E002: no name or photo for a provider this buyer has no Work Order with.
+  // NA-E002 / MR-E001: no name for a provider (the photo shows) this buyer has no Work Order with.
   const persons = new Map((await prisma.providerProfile.findMany({ where: { id: { in: out.providers.map((p) => p.profileId) } }, select: { id: true, person_id: true } })).map((r) => [r.id, r.person_id]));
   const [seen, numbers] = await Promise.all([identityVisibleTo(viewer, [...persons.values()]), providerNumbers(out.providers.map((p) => p.profileId))]);
-  return { ...out, providers: out.providers.map((p) => (seen.has(persons.get(p.profileId) ?? "") ? p : { ...p, firstName: providerLabel(numbers.get(p.profileId)), lastName: "", name: providerLabel(numbers.get(p.profileId)), photoUrl: null })) };
+  return { ...out, providers: out.providers.map((p) => (seen.has(persons.get(p.profileId) ?? "") ? p : { ...p, firstName: providerLabel(numbers.get(p.profileId)), lastName: "", name: providerLabel(numbers.get(p.profileId)) })) };
 }

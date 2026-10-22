@@ -11,7 +11,7 @@ import { dailyConfigured } from "@/lib/daily";
 import { InterviewCards } from "@/components/work/InterviewCards";
 import { ActionsMenu } from "@/components/casing/ActionsMenu";
 import { NeutralAvatar } from "@/components/Avatar";
-import { identityVisibleTo, providerLabel, providerNumbers } from "@/lib/provider-number";
+import { identityVisibleTo, providerLabel, providerNumbers, providerPhotos } from "@/lib/provider-number";
 import { PENDING_ON_LABEL, WORK_ORDER_LABEL, waitingOn } from "@/lib/oracle-status";
 import { notFound, redirect } from "next/navigation";
 import { checkTransact, guardPage } from "@/lib/guard";
@@ -91,6 +91,7 @@ export default async function Page({
   const awarded = detail.completeness.complete && !["ORDERED", "CANCELLED"].includes(detail.workRequestStatus) && detail.status !== "FILLED";
 
   const sec = await workRequestSections(viewer, detail.id);
+  const photos = await providerPhotos(proposals.map((p) => p.providerPersonId));
   const buyerInterviews = await listInterviews({ jobId: detail.id, buyerPersonId: (await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }))?.id });
   const actions = [
     ...(detail.status === "DRAFT" ? [{ label: "Edit the Job", href: `/hire?job=${detail.id}&step=0` }] : []),
@@ -185,7 +186,7 @@ export default async function Page({
           const x = sec.proposalExtra(p.providerPersonId);
           return (
             <div key={p.id} className={`flex flex-wrap items-center gap-3.5 py-3.5 ${ROW_RULE}`} data-proposal-row>
-              <NeutralAvatar size={36} />
+              <NeutralAvatar size={36} photoUrl={photos.get(p.providerPersonId)} />
               <div className="min-w-0 flex-[1_1_260px]">
                 <div className="text-[15px] font-bold">{[p.providerName.replace(/^Provider /, ""), p.rate ? `${formatCents(p.rate.unitPriceCents)}${p.rate.basis === "RATE" ? "/hr" : " fixed"}` : "no rate", x.start ? `start ${x.start}` : null].filter(Boolean).join(" · ")}</div>
                 <div className="mt-0.5 text-[13px] text-state-inactive">{[x.summary || null, p.coverNote ? `“${p.coverNote.slice(0, 120)}”` : "no note"].filter(Boolean).join(" · ")}</div>

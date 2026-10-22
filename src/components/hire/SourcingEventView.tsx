@@ -85,7 +85,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
             return (
               <li key={p.personId} className="flex flex-wrap items-start gap-3 py-3" data-event-proposal={p.match.name}>
                 {pr && pr.status !== "DECLINED" ? <input type="checkbox" checked={picked.has(p.personId)} onChange={() => toggle(p.personId)} aria-label={`Compare ${p.match.name}`} className="mt-1 h-4 w-4" /> : <span className="w-4" />}
-                {isMaskedName(p.match.name) && <NeutralAvatar size={36} />}
+                {isMaskedName(p.match.name) && <NeutralAvatar size={36} photoUrl={p.match.photoUrl} />}
                 <div className="min-w-0 flex-1">
                   <p className="text-[15px] font-bold">{p.match.name}{pr?.status === "SHORTLISTED" && <span className="ml-2 text-magenta-dark">★</span>}{pr?.status === "AWARDED" && <span className="ml-2 rounded-full bg-ink px-2 py-0.5 text-[11px] text-surface">Awarded</span>}</p>
                   <p className="text-[13px] text-ink-2">{p.match.line}</p>
