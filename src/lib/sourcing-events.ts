@@ -16,6 +16,24 @@ async function ownJob(viewer: Viewer, jobId: string) {
   return { personId, pAccountId, job };
 }
 
+/** Scott 10-22: one shortlist. The stars on the matches ARE the shortlist on the Sourcing Event — a starred provider's
+ *  response arrives Shortlisted, and Shortlist / un-Shortlist / Decline on the event moves the star with it. */
+async function starredOn(jobId: string): Promise<Set<string>> {
+  const rows = await prisma.shortlistLine.findMany({ where: { shortlist: { job_id: jobId } }, select: { provider_person_id: true } });
+  return new Set(rows.map((r) => r.provider_person_id));
+}
+async function syncStar(jobId: string, providerPersonId: string, on: boolean) {
+  const sl = await prisma.shortlist.findFirst({ where: { job_id: jobId }, select: { id: true } });
+  if (!sl) return;
+  if (!on) { await prisma.shortlistLine.deleteMany({ where: { shortlist_id: sl.id, provider_person_id: providerPersonId } }); return; }
+  const last = await prisma.shortlistLine.findFirst({ where: { shortlist_id: sl.id }, orderBy: { line_number: "desc" }, select: { line_number: true } });
+  await prisma.shortlistLine.upsert({
+    where: { shortlist_id_provider_person_id: { shortlist_id: sl.id, provider_person_id: providerPersonId } },
+    update: {},
+    create: { shortlist_id: sl.id, line_number: (last?.line_number ?? 0) + 1, provider_person_id: providerPersonId, source: "SHORTLISTED" },
+  });
+}
+
 /** SE-E003: star (or unstar) a provider onto the Job's Shortlist. */
 export async function setStar(viewer: Viewer, jobId: string, providerPersonId: string, on: boolean) {
   const { personId } = await ownJob(viewer, jobId);
@@ -114,6 +132,7 @@ export async function proposeInEvent(viewer: Viewer, jobId: string, input: { rat
   const start = input.start && /^\d{4}-\d{2}-\d{2}$/.test(input.start) ? new Date(input.start) : (await prisma.job.findUnique({ where: { id: jobId }, select: { start_date: true } }))?.start_date ?? null;
   await prisma.proposalLine.updateMany({ where: { proposal_id: out.id }, data: { available_from: start } });
   await prisma.proposalRequest.update({ where: { id: req.id }, data: { status: "RESPONDED", declined_at: null, decline_reason: null } });
+  if ((await starredOn(jobId)).has(await myPerson(viewer))) await prisma.proposal.updateMany({ where: { id: out.id, status: "SUBMITTED" }, data: { status: "SHORTLISTED" } });
   return out;
 }
 
@@ -156,6 +175,9 @@ export type EventProposal = {
 
 export async function eventForBuyer(viewer: Viewer, eventId: string) {
   const ev = await ownEvent(viewer, eventId);
+  // One shortlist: responses from starred providers read as Shortlisted (heals responses sent before 10-22).
+  const stars = await starredOn(ev.job_id);
+  if (stars.size) await prisma.proposal.updateMany({ where: { status: "SUBMITTED", job_id: ev.job_id, provider_person_id: { in: [...stars] }, proposalRequest: { sourcing_event_id: ev.id } }, data: { status: "SHORTLISTED" } });
   const [{ hireMatches }, { readServiceDescription }, { seesTestAccounts }, { providerLabel, providerNumbers }, { certificationTestForSkill }] = await Promise.all([
     import("@/lib/hire-questionnaire"), import("@/lib/service-description"), import("@/lib/admin/test-accounts"), import("@/lib/provider-number"), import("@/lib/certification-tests"),
   ]);
@@ -198,10 +220,11 @@ export async function eventForBuyer(viewer: Viewer, eventId: string) {
 /** Shortlist / un-shortlist / Decline one proposal (Decline is silent — the not-awarded notice waits for Released). */
 export async function setProposalStatus(viewer: Viewer, eventId: string, proposalId: string, status: "SHORTLISTED" | "SUBMITTED" | "DECLINED") {
   const ev = await ownEvent(viewer, eventId);
-  const p = await prisma.proposal.findFirst({ where: { id: proposalId, job_id: ev.job_id, proposalRequest: { sourcing_event_id: ev.id } }, select: { id: true, status: true } });
+  const p = await prisma.proposal.findFirst({ where: { id: proposalId, job_id: ev.job_id, proposalRequest: { sourcing_event_id: ev.id } }, select: { id: true, status: true, provider_person_id: true } });
   if (!p) throw new WorkRequestError("Response not found", "NOT_FOUND");
   if (p.status === "AWARDED") throw new WorkRequestError("That response is awarded.", "INVALID");
   await prisma.proposal.update({ where: { id: p.id }, data: status === "DECLINED" ? { status, declined_at: new Date() } : { status, declined_at: null } });
+  await syncStar(ev.job_id, p.provider_person_id, status === "SHORTLISTED");
   // HP-E001: the buyer acted on this proposal.
   const { resolveNotifications } = await import("@/lib/notifications");
   await resolveNotifications({ event_key: "work.proposal_received", entity_id: p.id });
@@ -287,10 +310,11 @@ async function estimatesNotSelected(eventId: string, title: string) {
 // ── HB-E009: act from the Overview — Shortlist / Decline any proposal (invited or applied), Close an event ─────
 export async function decideProposals(viewer: Viewer, proposalIds: string[], decision: "SHORTLISTED" | "DECLINED", reason?: string | null) {
   const me = await myPerson(viewer);
-  const props = await prisma.proposal.findMany({ where: { id: { in: proposalIds }, job: { buyer_person_id: me }, status: { in: ["SUBMITTED", "SHORTLISTED"] } }, select: { id: true } });
+  const props = await prisma.proposal.findMany({ where: { id: { in: proposalIds }, job: { buyer_person_id: me }, status: { in: ["SUBMITTED", "SHORTLISTED"] } }, select: { id: true, job_id: true, provider_person_id: true } });
   if (!props.length) throw new WorkRequestError("Those responses aren't waiting on you any more.", "NOT_FOUND");
   // Declined providers are told only when the Work Order is Released (the Sourcing Event rule) — nothing is sent now.
   await prisma.proposal.updateMany({ where: { id: { in: props.map((p) => p.id) } }, data: decision === "DECLINED" ? { status: "DECLINED", declined_at: new Date(), decline_reason: reason?.trim().slice(0, 500) || null } : { status: "SHORTLISTED" } });
+  for (const p of props) await syncStar(p.job_id, p.provider_person_id, decision === "SHORTLISTED");
   const { resolveNotifications } = await import("@/lib/notifications");
   await resolveNotifications({ event_key: "work.proposal_received", entity_id: { in: props.map((p) => p.id) } });
   return { updated: props.length };
