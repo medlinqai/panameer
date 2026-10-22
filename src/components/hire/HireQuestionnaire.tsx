@@ -343,7 +343,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         {step < 5 && !(step === 0 && start !== "form") && (
           <div className="mt-5 flex justify-between gap-3 border-t border-line pt-4">
             <button type="button" className={GHOST} disabled={busy} onClick={() => (step === 0 ? setStart("choose") : setStep(step - 1))}>Back</button>
-            <button type="button" className={BTN} disabled={busy} onClick={next}>{busy ? "Saving…" : step === 4 ? "Show My Matches" : `Next: ${STEPS[step + 1]}`}</button>
+            <button type="button" className={BTN} disabled={busy} onClick={next}>{busy ? "Saving…" : step === 4 ? "Create Job & Show Matches" : `Next: ${STEPS[step + 1]}`}</button>
           </div>
         )}
         {step === 5 && <button type="button" className="mt-4 text-[13px] font-semibold text-ink-2 underline" onClick={() => setStep(4)}>Change my answers</button>}
