@@ -44,7 +44,7 @@ export function EstimateEventView({ ev }: { ev: Ev }) {
         <p className="text-[15px] font-semibold">{ev.job.title}</p>
         {ev.job.description && <p className="mt-1 whitespace-pre-line text-[13.5px] text-ink-2">{ev.job.description}</p>}
         <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-2">
-          <span>Deadline {new Date(ev.deadlineAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · <b className="text-magenta-dark"><Countdown at={ev.deadlineAt} /></b></span>
+          <span>Deadline {new Date(ev.deadlineAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · <Countdown at={ev.deadlineAt} /></span>
           {(ev.job.budget_min_cents != null || ev.job.budget_max_cents != null) && <span>Budget {usd(ev.job.budget_min_cents)} – {usd(ev.job.budget_max_cents)}</span>}
         </p>
       </header>

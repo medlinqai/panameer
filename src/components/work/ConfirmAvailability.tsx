@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Countdown } from "@/components/hire/Countdown";
+import { Countdown, DeadlineTag } from "@/components/hire/Countdown";
 import { BTN, BTN_OUT } from "@/components/hire/HireUI";
 
 // CA-E002/E006: one click — the job fixes the dates, the rate card fills the rate. Same card for "asked" (an Availability
@@ -61,14 +61,14 @@ export function ConfirmAvailability({ jobId, v, startDeclining = false }: { jobI
     <section className="rounded-brand border border-line bg-white p-5" data-confirm-availability={v.mode}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-[17px] font-extrabold">{v.mode === "asked" ? `Availability Request${v.eventNumber ? ` · ${v.eventNumber}` : ""}` : "Want This Job?"}</h2>
-        {v.mode === "asked" && v.deadlineAt && v.open && (v.responded || v.declined) && <span className="text-[13.5px] font-bold text-magenta-dark"><Countdown at={v.deadlineAt} /></span>}
+        {v.mode === "asked" && v.deadlineAt && v.open && (v.responded || v.declined) && <span className="text-[13.5px]"><Countdown at={v.deadlineAt} /></span>}
       </div>
       {v.mode === "asked" && v.open && !v.responded && !v.declined && (
         <div className="mt-2 flex flex-wrap gap-1.5 text-[12.5px] font-bold" data-shortlist-context>
           <span className="rounded-full bg-[#DEF0E6] px-2.5 py-1 text-[#1F7A4D]">You&apos;re Shortlisted</span>
           <span className="rounded-full bg-[#E8EAF1] px-2.5 py-1 text-[#3A4166]">{v.positions ?? 1} Position{(v.positions ?? 1) === 1 ? "" : "s"}</span>
           {v.askedCount && v.askedCount > 1 ? <span className="rounded-full bg-[#FAF0DA] px-2.5 py-1 text-[#8a5a00]">{v.askedCount - 1} Other{v.askedCount - 1 === 1 ? "" : "s"} Asked</span> : null}
-          {v.deadlineAt && <span className="rounded-full bg-[#F7E1DF] px-2.5 py-1 text-[#B3261E]">Reply in <Countdown at={v.deadlineAt} /></span>}
+          {v.deadlineAt && <DeadlineTag at={v.deadlineAt} prefix="Reply in" />}
         </div>
       )}
       <dl className="mt-3 grid grid-cols-2 gap-3 text-[14px] sm:grid-cols-3">

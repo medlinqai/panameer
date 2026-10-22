@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { eventForBuyer } from "@/lib/sourcing-events";
-import { Countdown } from "@/components/hire/Countdown";
+import { Countdown, DeadlineBadge } from "@/components/hire/Countdown";
 import { CompareTable } from "@/components/hire/MatchList";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
 
@@ -48,14 +48,13 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
         <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Sourcing Event</p>
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h1 className="text-[24px] font-extrabold">{ev.number}</h1>
-          {/* An Open event past its deadline isn't "Open" to the buyer — say so (they can Extend or Hire). */}
-          {ev.status === "OPEN" && new Date(ev.deadlineAt).getTime() <= Date.now()
-            ? <span className="rounded-full border border-state-pending px-3 py-0.5 text-[12.5px] font-bold text-state-pending" data-event-status>Deadline Passed</span>
+          {ev.status === "OPEN"
+            ? <DeadlineBadge at={ev.deadlineAt} />
             : <span className="rounded-full border border-ink px-3 py-0.5 text-[12.5px] font-bold" data-event-status>{STATUS[ev.status]}</span>}
         </div>
         <p className="text-[14.5px] font-semibold"><Link href={`/work-requests/${ev.jobId}`} className="hover:underline">{ev.job.title}</Link></p>
         <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-ink-2">
-          <span>Deadline {new Date(ev.deadlineAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · <b className="text-magenta-dark"><Countdown at={ev.deadlineAt} /></b></span>
+          <span>Deadline {new Date(ev.deadlineAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · <Countdown at={ev.deadlineAt} /></span>
           <span data-event-counts>{ev.counts.requested} requested · {ev.counts.proposed} proposed · {ev.counts.declined} declined</span>
           {range && <span>Your range {range}</span>}
         </p>
