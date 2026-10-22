@@ -43,6 +43,9 @@ type Props = {
 export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial, initialJobId, initialStep }: Props) {
   const categories = hierarchy.map((h) => h.name);
   const [step, setStep] = useState(initialStep);
+  // Rail stops are clickable for any step already reached (furthest step seen this session).
+  const [furthest, setFurthest] = useState(initialStep);
+  if (step > furthest) setFurthest(step);
   // SM-E006: fields prefilled from the buyer's last job (cleared once the posting or the buyer sets them).
   const [pickDate, setPickDate] = useState(!!initial.startDate);
   const [fromLast, setFromLast] = useState<string[]>(initialJobId ? [] : defaults.fromLast);
@@ -168,9 +171,12 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
     <div className="mt-4 grid gap-7 rounded-[14px] border border-line bg-white p-5 md:grid-cols-[220px_minmax(0,1fr)] md:p-6" data-hire>
       <ol className="flex gap-1 overflow-x-auto text-[14px] md:block md:space-y-1" data-hire-rail>
         {STEPS.map((s, i) => (
-          <li key={s} className={"flex items-center gap-2.5 whitespace-nowrap rounded-[8px] px-2.5 py-2 font-semibold " + (i === step ? "bg-[#fbeafb] text-magenta-dark" : i < step ? "text-ink" : "text-ink-2")}>
+          <li key={s}>
+            <button type="button" disabled={i === step || i > furthest || busy || (i > 0 && !jobId)} onClick={() => { setError(null); setStep(i); if (i === 5) void loadMatches(); }} aria-current={i === step ? "step" : undefined}
+              className={"flex w-full items-center gap-2.5 whitespace-nowrap rounded-[8px] px-2.5 py-2 text-left font-semibold enabled:cursor-pointer enabled:hover:bg-[#f6f5f9] " + (i === step ? "bg-[#fbeafb] text-magenta-dark" : i < step ? "text-ink" : "text-ink-2")}>
             <span aria-hidden className={"inline-grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full text-[11.5px] " + (i < step ? "bg-magenta-dark text-white" : i === step ? "border-[1.5px] border-magenta-dark" : "border-[1.5px] border-line")}>{i < step ? "✓" : i + 1}</span>
             {s}
+            </button>
           </li>
         ))}
       </ol>
