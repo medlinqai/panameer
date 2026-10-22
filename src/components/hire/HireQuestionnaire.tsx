@@ -333,8 +333,23 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         )}
         {step === 5 && matches && (
           <div data-hire-matches>
-            <h2 className="text-[19px] font-extrabold">Your Matches</h2>
-            <p className="text-[13.5px] text-ink-2">Ranked by role, skills, product and location, then rate inside your budget. Star who should propose; click a row for a quick view.</p>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="text-[19px] font-extrabold">Here Are the Providers That Match Your Job</h2>
+              <details className="relative text-[13px]" data-how-we-match>
+                <summary className="cursor-pointer list-none font-semibold text-magenta-dark underline underline-offset-4">ⓘ How We Match</summary>
+                <div className="absolute right-0 z-20 mt-2 w-[min(92vw,420px)] border border-line bg-white p-4 text-[13px] leading-relaxed text-ink shadow-lg">
+                  <p className="font-bold">How we rank providers for this job</p>
+                  <ol className="mt-2 list-decimal space-y-1.5 pl-5">
+                    <li><b>Where:</b> for onsite work, providers who can be on site come first.</li>
+                    <li><b>Domain:</b> providers who work in the job&apos;s domain (e.g. P2P) rank above those who don&apos;t.</li>
+                    <li><b>Fit score:</b> the role you asked for counts most, then each shared domain, the product (e.g. Oracle Fusion Cloud), each skill they share with the job, and years of experience (up to 20).</li>
+                    <li><b>Budget:</b> when two are equally close, the one whose rate is inside your range comes first.</li>
+                  </ol>
+                  <p className="mt-2 text-ink-2">Providers who share no domain or skill with the job sit under Weaker Matches. Names and companies stay hidden until a Work Order is released; you see each provider&apos;s number.</p>
+                </div>
+              </details>
+            </div>
+            <p className="text-[13.5px] text-ink-2">Star who should propose; click a row for a quick view.</p>
             <MatchList key={jobId ?? "new"} jobId={jobId} matches={matches} state={f.state} empty={<p className="mt-4 text-[14px] text-ink-3">No one in {f.category} matches yet. Your Service Description is saved as a draft — <Link href={`/work-requests/${jobId}`} className="font-semibold text-magenta-dark underline">open it</Link>.</p>} />
           </div>
         )}
