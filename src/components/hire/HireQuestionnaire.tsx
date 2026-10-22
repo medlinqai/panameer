@@ -9,7 +9,7 @@ import type { JobDefaults } from "@/lib/work-request";
 import type { SdContract, ServiceDescription } from "@/lib/service-description";
 
 // SD-E003: Hire follows the Service Description standard. Step 1 can start from an uploaded posting (read like a résumé);
-// every step is then prefilled with "from your posting" hints; Next saves the draft Job.
+// every step is then prefilled with "From AI" hints; Next saves the draft Job.
 const STEPS = ["The Work", "Where", "Contract", "Who", "When & Rate", "Request Proposals"];
 const CHIP_ON = "rounded-full border border-magenta-dark bg-[#fbeafb] px-3.5 py-1.5 text-[13px] font-semibold text-magenta-dark";
 const CHIP_OFF = "rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink hover:border-magenta-dark";
@@ -58,7 +58,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
   const [error, setError] = useState<string | null>(null);
   const [matches, setMatches] = useState<HireMatch[] | null>(null);
   const set = (patch: Partial<ServiceDescription>) => { setF((x) => ({ ...x, ...patch })); setFromLast((l) => l.filter((k) => !(k in patch))); };
-  const from = (k: string) => (f.fromPosting.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-posting>from your posting</span> : fromLast.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-last-job>from your last job</span> : null);
+  const from = (k: string) => (f.fromPosting.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-posting>From AI</span> : fromLast.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-last-job>from your last job</span> : null);
 
   const call = async (body: object) => {
     setBusy(true);
