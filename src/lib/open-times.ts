@@ -125,3 +125,19 @@ export async function bookSlot(viewer: Viewer, interviewId: string, startsAt: st
   const { afterBooked } = await import("@/lib/interviews");
   await afterBooked(iv.id, at);
 }
+
+/** IW-E006: Open Times invitations of this buyer still waiting for a booking. */
+export async function invitedNotBooked(personId: string) {
+  const rows = await prisma.interviewRequest.findMany({ where: { requested_by_person_id: personId, slot_minutes: { not: null }, status: "REQUESTED" }, orderBy: { created_at: "desc" }, take: 50, select: { id: true, job_id: true, provider_person_id: true, created_at: true } });
+  const { providerLabel, providerNumbers } = await import("@/lib/provider-number");
+  const [profiles, jobs] = await Promise.all([
+    prisma.providerProfile.findMany({ where: { person_id: { in: rows.map((r) => r.provider_person_id) } }, select: { id: true, person_id: true } }),
+    prisma.job.findMany({ where: { id: { in: rows.map((r) => r.job_id) } }, select: { id: true, title: true } }),
+  ]);
+  const nums = await providerNumbers(profiles.map((p) => p.id));
+  return rows.map((r) => ({
+    id: r.id, jobId: r.job_id, jobTitle: jobs.find((j) => j.id === r.job_id)?.title ?? "Job",
+    who: providerLabel(nums.get(profiles.find((p) => p.person_id === r.provider_person_id)?.id ?? "")).replace(/^Provider /, ""),
+    sent: r.created_at.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" }),
+  }));
+}

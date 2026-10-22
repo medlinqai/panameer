@@ -44,7 +44,7 @@ export function OpenTimes({ windows, compact = false, onChanged }: { windows: Op
               <div className="min-w-0 flex-1">
                 <b className="text-[14px]">{day(w.startsAt, tz)} · {time(w.startsAt, tz)} – {time(w.endsAt, tz)}</b>
                 {w.booked.length ? (
-                  <ul className="mt-1 text-[13px]">{w.booked.map((b) => <li key={b.id}><span className="font-semibold text-state-accepted">{time(b.startsAt, tz)}</span> · {b.who} · <span className="text-state-inactive">{b.jobTitle}</span></li>)}</ul>
+                  <ul className="mt-1 text-[13px]">{w.booked.map((b) => <li key={b.id} className="flex flex-wrap items-center gap-x-2"><span className="font-semibold text-state-accepted">{time(b.startsAt, tz)}</span> · {b.who} · <span className="text-state-inactive">{b.jobTitle}</span><button type="button" disabled={busy} onClick={() => post({ action: "cancel", as: "buyer", interviewId: b.id })} className="text-[12.5px] font-semibold text-state-declined underline underline-offset-2" data-cancel-booked>Cancel</button></li>)}</ul>
                 ) : <p className="mt-0.5 text-[13px] text-state-inactive">Nothing booked yet</p>}
               </div>
               {!w.booked.length && <button type="button" disabled={busy} onClick={() => post({ action: "openTimeRemove", openTimeId: w.id })} className={`${BTN_OUT} min-h-9`}>Remove</button>}
@@ -59,6 +59,34 @@ export function OpenTimes({ windows, compact = false, onChanged }: { windows: Op
         <button type="button" disabled={busy} onClick={() => post({ action: "openTimeAdd", date, from, to, timeZone: tz })} className={BTN}>Add Open Time</button>
       </div>
       {error && <p role="alert" className="mt-2 text-[13px] font-semibold text-state-declined">{error}</p>}
+    </section>
+  );
+}
+
+/** IW-E006: invitations sent from Open Times that no one has booked yet. */
+export function InvitedNotBooked({ rows }: { rows: { id: string; who: string; jobTitle: string; jobId: string; sent: string }[] }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const cancel = async (id: string) => {
+    setBusy(true);
+    await fetch("/api/interviews", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "cancel", as: "buyer", interviewId: id }) }).catch(() => null);
+    setBusy(false);
+    router.refresh();
+  };
+  if (!rows.length) return null;
+  return (
+    <section className="rounded-[12px] border border-state-border bg-white px-5 py-4" data-invited-not-booked>
+      <h2 className="text-[17px] font-extrabold">Invited, Not Booked <span className="text-[14px] font-semibold text-state-pending">{rows.length}</span></h2>
+      <ul className="mt-2 divide-y divide-state-sunken">
+        {rows.map((r) => (
+          <li key={r.id} className="flex flex-wrap items-center gap-3 py-2 text-[13.5px]">
+            <span className="h-2.5 w-2.5 rounded-full bg-state-pending" />
+            <b>{r.who}</b><a href={`/work-requests/${r.jobId}#interviews`} className="min-w-0 flex-1 truncate text-state-inactive">{r.jobTitle}</a>
+            <span className="text-state-inactive">Invited {r.sent}</span>
+            <button type="button" disabled={busy} onClick={() => cancel(r.id)} className={`${BTN_OUT} min-h-8 px-2.5 text-[12.5px]`}>Cancel</button>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
