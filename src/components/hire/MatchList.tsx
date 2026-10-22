@@ -106,7 +106,8 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
               <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]" data-why>
                 {m.why.map((k) => <span key={k} className={WHY}>{k}</span>)}
                 {m.matched.map((k) => <span key={k} className={CHIP}>{k}</span>)}
-                {m.inBudget && <span className="rounded-full border border-line px-2">In budget</span>}
+                {m.inBudget && <span className="rounded-full border border-line px-2">In Budget</span>}
+                {m.aboveRange && <span className="rounded-full bg-[#FAF0DA] px-2 font-semibold text-[#8a5a00]">Above Your Range</span>}
               </p>
               {m.requested && <span className="mt-1 block text-[12.5px] font-semibold text-state-pending" data-requested>Requested · due {new Date(m.requested.due).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>}
             </button>

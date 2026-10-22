@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/lib/api-errors";
 import { guardApi } from "@/lib/guard";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
-import { HireError, discardDraft, hireMatches, requestProposals, resolveSkill, saveHireJob, setHidden, suggestSkills, type HireInput } from "@/lib/hire-questionnaire";
+import { HireError, discardDraft, hireMatches, requestProposals, resolveSkill, saveHireJob, setHidden, suggestSkills, suggestRange, type HireInput } from "@/lib/hire-questionnaire";
 import { WorkRequestError } from "@/lib/work-request";
 import { reparseWho } from "@/lib/service-description";
 import { jobPosted } from "@/lib/hire-direct";
@@ -17,6 +17,8 @@ export async function POST(request: Request) {
     switch (body.action) {
       case "suggest":
         return NextResponse.json({ skills: await suggestSkills(String(body.category ?? ""), String(body.title ?? "")) });
+      case "rateRange":
+        return NextResponse.json({ range: await suggestRange(body.input!, await seesTestAccounts(gate)) });
       case "save":
         return NextResponse.json({ jobId: await saveHireJob(gate, body.jobId ?? null, body.input!) });
       case "matches": {

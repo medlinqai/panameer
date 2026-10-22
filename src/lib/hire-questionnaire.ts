@@ -97,6 +97,10 @@ export function domainsIn(text: string): Set<string> {
 export type HireMatch = { personId: string; profileId: string; name: string; company: string | null; photoUrl: string | null;
   /** MR-E002: credential pills (max 4 shown). */
   badges: MatchBadge[]; line: string; rate: string | null; matched: string[]; why: string[]; fit: number; inBudget: boolean;
+  /** Their lowest rate is above the job's range (shown lower, marked Above Your Range). */
+  aboveRange?: boolean;
+  /** Lowest rate in cents (for the suggested range). */
+  lowCents?: number | null;
   /** MQ-E001: an Onsite/Hybrid job lists only providers in its state; the rest come after, behind "Show providers outside". */
   outside: boolean;
   /** MQ-E005: hidden by the buyer on this job (restorable). */
@@ -181,6 +185,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
     const basis = input.budgetType === "FIXED" ? priced : hourly;
     const budgetSet = min != null || max != null;
     const inBudget = budgetSet && basis.some((c) => (min == null || c >= min * 0.8) && (max == null || c <= max));
+    const aboveRange = max != null && basis.length > 0 && basis[0] > max;
     const starts = r.employers.map((e) => e.start_date?.getTime()).filter((t): t is number => !!t);
     const years = starts.length ? Math.floor((Date.now() - Math.min(...starts)) / (365.25 * 86_400_000)) : null;
     const oc = ocNums.get(r.id);
@@ -203,7 +208,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
       personId: r.person.id, profileId: r.id, name: `${r.person.first_name} ${r.person.last_name}`.trim(), company, photoUrl: r.person.photo_url, badges: [],
       line: [r.person.title, addr?.city ? [addr.city, addr.state].filter(Boolean).join(", ") : null].filter(Boolean).join(" · "),
       rate: hourly.length ? `$${Math.round(hourly[0] / 100)}/hr` : priced.length ? `from $${Math.round(priced[0] / 100)}` : null,
-      matched: matched.slice(0, 8), why, fit: total ? Math.round((matched.length / total) * 100) : 0, inBudget,
+      matched: matched.slice(0, 8), why, fit: total ? Math.round((matched.length / total) * 100) : 0, inBudget, aboveRange, lowCents: basis[0] ?? null,
       outside: onsite && !placeHit,
       hidden: hiddenSet.has(r.person.id),
       starred: starSet.has(r.person.id),
@@ -221,7 +226,7 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
     };
     // Role + Domain (strong) + skills + Product + years; with job domains, a provider sharing none ranks below all who share one.
     const score = (deepHit ? 45 : roleHit ? 15 : 0) + sharedDomains.length * 40 + matched.length * 5 + Number(productHit) * 10 + Math.min(fitYears ?? 0, 20) / 2;
-    return { m, key: [Number(!(onsite && !placeHit)), jobDomains.size ? Number(sharedDomains.length > 0) : 1, score, Number(inBudget)] };
+    return { m, key: [Number(!(onsite && !placeHit)), jobDomains.size ? Number(sharedDomains.length > 0) : 1, Number(!aboveRange), score, Number(inBudget)] };
   });
   const relevant = scored.filter((x) => x.key[2] > 0);
   const top = (relevant.length ? relevant : scored)
@@ -257,4 +262,16 @@ export async function requestProposals(viewer: Viewer, jobId: string, providerPe
   await ensureFirstLine(jobId, req.id);
   const line = await prisma.workRequestLine.findFirstOrThrow({ where: { work_request_id: req.id }, orderBy: { line_number: "asc" }, select: { id: true } });
   return inviteProviders(viewer, jobId, { lineId: line.id, providerPersonIds, respondsBy: new Date(Date.now() + 7 * 86_400_000).toISOString() });
+}
+
+
+/** Required rate range: suggest one from what matching providers charge (middle half of their lowest rates). */
+export async function suggestRange(input: HireInput, seesTest: boolean): Promise<{ min: number; max: number; n: number } | null> {
+  const ms = await hireMatches({ ...input, budgetMin: null, budgetMax: null }, seesTest, null, null);
+  const c = ms.filter((m) => !m.weak).map((m) => m.lowCents).filter((x): x is number => x != null && x > 0).sort((a, b) => a - b);
+  if (c.length < 2) return null;
+  const q = (p: number) => c[Math.min(c.length - 1, Math.max(0, Math.round(p * (c.length - 1))))];
+  const r = (x: number) => Math.round(x / 500) * 5; // to the nearest $5
+  const min = r(q(0.25)), max = r(q(0.75));
+  return { min, max: Math.max(max, min + 5), n: c.length };
 }

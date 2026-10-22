@@ -45,7 +45,22 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
   const [step, setStep] = useState(initialStep);
   // Rail stops are clickable for any step already reached (furthest step seen this session).
   const [furthest, setFurthest] = useState(initialStep);
+  const [rangeHint, setRangeHint] = useState<string | null>(null);
+  const [rangeAsked, setRangeAsked] = useState(false);
   if (step > furthest) setFurthest(step);
+  useEffect(() => {
+    if (step !== 4 || rangeAsked) return;
+    setRangeAsked(true);
+    void (async () => {
+      const r = await fetch("/api/hire", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "rateRange", input: { ...f, budgetType: f.budgetType ?? "HOURLY" } }) }).catch(() => null);
+      const j = (await r?.json().catch(() => ({}))) as { range?: { min: number; max: number; n: number } | null };
+      if (!j.range) return;
+      const per = (f.budgetType ?? "HOURLY") === "FIXED" ? "" : "/hr";
+      setRangeHint(`${j.range.n} matching providers charge about $${j.range.min}–$${j.range.max}${per}.`);
+      if (f.budgetMin == null && f.budgetMax == null) setF((x) => ({ ...x, budgetMin: j.range!.min, budgetMax: j.range!.max }));
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
   // SM-E006: fields prefilled from the buyer's last job (cleared once the posting or the buyer sets them).
   const [pickDate, setPickDate] = useState(!!initial.startDate);
   const [fromLast, setFromLast] = useState<string[]>(initialJobId ? [] : defaults.fromLast);
@@ -102,6 +117,10 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         const j = await call({ action: "suggest", category: f.category, title: f.title });
         if (j) setSuggested((j.skills as string[]) ?? []);
       }
+    }
+    if (step === 4 && (f.budgetMin == null || f.budgetMax == null || f.budgetMin <= 0 || f.budgetMax <= 0)) {
+      setError("Enter a rate range (From and To). Providers use it to decide whether to propose, and we use it to rank matches.");
+      return;
     }
     if (step === 4 && f.budgetMin != null && f.budgetMax != null && f.budgetMin > f.budgetMax) {
       setError(`"From" ($${f.budgetMin}) is higher than "To" ($${f.budgetMax}). Swap them or fix one.`);
@@ -334,7 +353,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
             </div>
             {f.budgetMin != null && f.budgetMax != null && f.budgetMin > f.budgetMax ? (
               <p role="alert" className="mt-1 text-[12.5px] font-semibold text-[#B3261E]">&quot;From&quot; is higher than &quot;To&quot;. <button type="button" className="underline underline-offset-2" onClick={() => set({ budgetMin: f.budgetMax, budgetMax: f.budgetMin })}>Swap them</button></p>
-            ) : (<p className="mt-1 text-[12.5px] text-ink-3">{f.budgetType === "FIXED" ? "For the whole job." : "Per hour. Postings often leave this out — add yours."}</p>)}
+            ) : (<p className="mt-1 text-[12.5px] text-ink-3">{(f.budgetType === "FIXED" ? "Required. For the whole job." : "Required. Per hour; providers see this range.") + (rangeHint ? ` ${rangeHint}` : "")}</p>)}
           </>
         )}
         {step === 5 && matches && (
