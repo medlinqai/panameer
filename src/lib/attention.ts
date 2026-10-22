@@ -314,7 +314,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     prisma.paymentRequest.count({ where: { provider_person_id: id, status: { in: ["DRAFT", "REJECTED"] } } }),
     prisma.paymentRequest.count({ where: { provider_person_id: id, status: "APPROVED" } }),
   ]);
-  const requests = add("request", dueSoon.length, "Availability Requests to Answer", dueSoon[0] ? `/find-work/${dueSoon[0].job_id}` : "/find-work?tab=invitations", "Respond", dueSoon[0]?.responds_by);
+  const requests = add("request", dueSoon.length, "Someone Wants to Buy Your Services — Are You Available?", dueSoon[0] ? `/find-work/${dueSoon[0].job_id}` : "/find-work?tab=invitations", "Respond", dueSoon[0]?.responds_by);
   const interviews = add("request", toOffer.length, "Interview times to offer", toOffer[0] ? `/find-work/${toOffer[0].job_id}#interview` : "/find-work?tab=interviews", "Offer times") + add("request", todays, "Interviews today", "/find-work?tab=interviews", "Join");
   const tests = add("request", testsToTake, "Tests to take", "/find-work?tab=tests", "Take");
   const myOrders = (await prisma.workOrder.findMany({ where: { provider_person_id: id }, select: { id: true } })).map((o) => o.id);
