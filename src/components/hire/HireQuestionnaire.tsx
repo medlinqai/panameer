@@ -340,7 +340,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         {step === 5 && matches && (
           <div data-hire-matches>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-[19px] font-extrabold">6. Here Are the Providers That Match Your Job</h2>
+              <h2 className="text-[19px] font-extrabold">6. View Providers, Then Hire or Shortlist &amp; Invite to Propose</h2>
               <details className="relative text-[13px]" data-how-we-match>
                 <summary className="cursor-pointer list-none font-semibold text-magenta-dark underline underline-offset-4">ⓘ How We Match</summary>
                 <div className="absolute right-0 z-20 mt-2 w-[min(92vw,420px)] border border-line bg-white p-4 text-[13px] leading-relaxed text-ink shadow-lg">
