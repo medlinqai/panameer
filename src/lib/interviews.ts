@@ -32,6 +32,8 @@ export async function requestInterview(
     providerPersonId: string;
     mode?: InterviewMode | null;
     durationMinutes?: number;
+    /** IW-E004: Open Times flow — the provider books one of the buyer's slots of this length. */
+    slotMinutes?: number | null;
   }
 ): Promise<{ id: string; created: boolean }> {
   const me = await ownPerson(viewer);
@@ -71,7 +73,8 @@ export async function requestInterview(
       requested_by_person_id: me.id,
       status: "REQUESTED",
       mode: input.mode ?? null,
-      duration_minutes: input.durationMinutes ?? 30,
+      duration_minutes: input.slotMinutes ?? input.durationMinutes ?? 30,
+      ...(input.slotMinutes ? { slot_minutes: input.slotMinutes, gap_minutes: 5 } : {}),
     },
     select: { id: true },
   });
@@ -83,7 +86,7 @@ export async function requestInterview(
     entityType: "interview_request",
     entityId: created.id,
     dedupeKey: `work.interview_requested:${created.id}`,
-    vars: { requestId: wr.id, requestTitle: wr.title },
+    vars: { requestId: wr.id, requestTitle: wr.title, ...(input.slotMinutes ? { pick: "1", minutes: String(input.slotMinutes), buyerName: await buyerName(me.id) } : {}) },
   });
 
   return { id: created.id, created: true };
@@ -239,6 +242,12 @@ export async function closeInterview(
     where: { id: iv.id },
     data: { status: how },
   });
+  // IW-E006: a booked interview called off — the other side is told; the slot is free again.
+  if (iv.status === "SCHEDULED") {
+    const job = await prisma.job.findUnique({ where: { id: iv.job_id }, select: { title: true, buyer_person_id: true } });
+    const other = how === "CANCELLED" ? iv.provider_person_id : job?.buyer_person_id;
+    if (other) await notify({ event: "work.interview_cancelled", personId: other, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_cancelled:${iv.id}`, vars: { workTitle: job?.title ?? "", href: how === "CANCELLED" ? `/find-work/${iv.job_id}#interview` : `/work-requests/${iv.job_id}#interviews` } });
+  }
 
   /* Whoever owed something no longer does. */
   await prisma.notification
@@ -257,6 +266,11 @@ async function providerLabelFor(personId: string) {
   return providerLabel(p ? (await providerNumbers([p.id])).get(p.id) : null);
 }
 
+async function buyerName(personId: string) {
+  const p = await prisma.person.findUnique({ where: { id: personId }, select: { first_name: true, last_name: true } });
+  return `${p?.first_name ?? ""} ${p?.last_name ?? ""}`.trim() || "A Buyer";
+}
+
 async function buyerCompanyName(personId: string) {
   const m = await prisma.companyMembership.findFirst({ where: { person_id: personId, status: "APPROVED" }, select: { company: { select: { name: true } } } });
   return m?.company.name ?? "Buyer";
@@ -264,8 +278,14 @@ async function buyerCompanyName(personId: string) {
 
 export const interviewWhen = (d: Date, tz = "America/New_York") => d.toLocaleString("en-US", { timeZone: tz, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
 
+/** IW-E005: a provider booked an Open Time — room, notices ("P-1126 Booked Tue Oct 27, 2:00 PM"), the invite answered. */
+export async function afterBooked(interviewId: string, startsAt: Date) {
+  await afterConfirm(interviewId, startsAt, true);
+  await prisma.notification.updateMany({ where: { dedupe_key: `work.interview_requested:${interviewId}`, resolved_at: null }, data: { resolved_at: new Date() } }).catch(() => {});
+}
+
 /** On confirm: a private Daily room (expires 2 h after the slot) and a notice to both sides. */
-async function afterConfirm(interviewId: string, startsAt: Date) {
+async function afterConfirm(interviewId: string, startsAt: Date, booked = false) {
   const iv0 = await prisma.interviewRequest.findUniqueOrThrow({ where: { id: interviewId }, select: { id: true, request_number: true, duration_minutes: true, provider_person_id: true, requested_by_person_id: true, job_id: true } });
   const iv = { ...iv0, job: await prisma.job.findUniqueOrThrow({ where: { id: iv0.job_id }, select: { id: true, title: true } }) };
   const { createRoom } = await import("@/lib/daily");
@@ -274,7 +294,7 @@ async function afterConfirm(interviewId: string, startsAt: Date) {
   if (room) await prisma.interviewRequest.update({ where: { id: iv.id }, data: { room_name: room.name, room_url: room.url } });
   const [label, company] = await Promise.all([providerLabelFor(iv.provider_person_id), buyerCompanyName(iv.requested_by_person_id)]);
   const when = interviewWhen(startsAt);
-  await notify({ event: "work.interview_confirmed", personId: iv.requested_by_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_confirmed:${iv.id}:buyer`, vars: { when, workTitle: iv.job.title, counterpart: label, href: `/work-requests/${iv.job.id}#interviews` } });
+  await notify({ event: "work.interview_confirmed", personId: iv.requested_by_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_confirmed:${iv.id}:buyer`, vars: { when, workTitle: iv.job.title, counterpart: label, href: `/work-requests/${iv.job.id}#interviews`, ...(booked ? { booked: "1" } : {}) } });
   await notify({ event: "work.interview_confirmed", personId: iv.provider_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_confirmed:${iv.id}:provider`, vars: { when, workTitle: iv.job.title, counterpart: company, href: `/find-work/${iv.job.id}#interview` } });
   await prisma.notification.updateMany({ where: { dedupe_key: `work.interview_slots_offered:${iv.id}`, resolved_at: null }, data: { resolved_at: new Date() } }).catch(() => {});
 }

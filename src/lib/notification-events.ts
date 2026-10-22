@@ -765,7 +765,8 @@ export const NOTIFICATION_EVENTS = {
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: false,
-    title: (v) => `Interview Confirmed · ${str(v, "when", "")}`,
+    // IW-E005: the buyer's notice when a provider books an Open Time reads "P-1126 Booked Tue Oct 27, 2:00 PM".
+    title: (v) => (str(v, "booked", "") ? `${str(v, "counterpart", "A Provider").replace(/^Provider /, "")} Booked ${str(v, "when", "")}` : `Interview Confirmed · ${str(v, "when", "")}`),
     body: (v) => `${str(v, "workTitle", "")} — with ${str(v, "counterpart", "")}. Interview guidelines: ${INTERVIEW_GUIDELINES}`,
     href: (v) => str(v, "href", "/dashboard"),
   },
@@ -782,6 +783,18 @@ export const NOTIFICATION_EVENTS = {
     href: (v) => (str(v, "requestId") ? `/find-work/${str(v, "requestId")}` : "/find-work"),
   },
   // SE-E006: sent only once the awarded Work Order is Released.
+  // IW-E006: an interview called off — the other side is told and the slot is free again.
+  "work.interview_cancelled": {
+    event: "work.interview_cancelled",
+    recipient: "the other side of a cancelled interview",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `Interview Cancelled · ${str(v, "workTitle", "a Job")}`,
+    body: (v) => (str(v, "when", "") ? `${str(v, "when", "")} is cancelled.` : null),
+    href: (v) => str(v, "href", "/dashboard"),
+  },
   "work.not_awarded": {
     event: "work.not_awarded",
     recipient: "a provider who responded but was not awarded",
@@ -811,9 +824,10 @@ export const NOTIFICATION_EVENTS = {
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: true,
-    title: (v) => `${str(v, "buyerName", "A buyer")} Asked to Interview You`,
+    // IW-E004: an Open Times invitation reads "… Wants to Interview You for {job} — Pick a Time".
+    title: (v) => (str(v, "pick", "") ? `${str(v, "buyerName", "A Buyer")} Wants to Interview You for ${str(v, "requestTitle", "a Job")} — Pick a Time` : `${str(v, "buyerName", "A buyer")} Asked to Interview You`),
     // DB-E008: offer times on the job page; the guidelines travel with the notice.
-    body: () => `Offer a few times on the job page. Interview guidelines: ${INTERVIEW_GUIDELINES}`,
+    body: (v) => (str(v, "pick", "") ? `Book one of their open times (${str(v, "minutes", "30")} min) on the job page. Interview guidelines: ${INTERVIEW_GUIDELINES}` : `Offer a few times on the job page. Interview guidelines: ${INTERVIEW_GUIDELINES}`),
     // THE RECIPIENT IS THE PROVIDER — `recipient` says so one line up, and
     href: (v) => `/find-work/${str(v, "requestId", "")}`,
   },

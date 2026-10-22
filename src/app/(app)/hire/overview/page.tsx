@@ -9,6 +9,8 @@ import { AttentionGroups } from "@/components/hire/AttentionGroups";
 import { DiscardDraft } from "@/components/hire/DiscardDraft";
 import { InterviewWorkday, WorkdayWeek } from "@/components/work/InterviewWorkday";
 import { gridDay, interviewGrid, rowsOn } from "@/lib/interview-grid";
+import { myOpenTimes } from "@/lib/open-times";
+import { OpenTimes } from "@/components/hire/OpenTimes";
 import { NeutralAvatar } from "@/components/Avatar";
 import { TypeArt } from "@/components/shop/TypeArt";
 import { RecurringLine, SliceChips } from "@/components/casing/SliceChips";
@@ -269,7 +271,7 @@ async function InterviewsTab({ personId, userId, view, show, date }: { personId:
   if (view === "week") return <WorkdayWeek side="buyer" rows={rows} weekStart={weekStart} base="/hire/overview?tab=interviews" />;
   const day = gridDay(date);
   const list = show === "confirm" ? rows.filter((r) => r.status === "To Confirm") : show === "feedback" ? rows.filter((r) => r.status === "Done" && !r.ranked) : rowsOn(rows, day.key);
-  return <InterviewWorkday side="buyer" rows={list} tiles={tiles} show={show} base="/hire/overview?tab=interviews" testsHref="/hire/overview?tab=tests"
+  return <InterviewWorkday side="buyer" rows={list} tiles={tiles} show={show} base="/hire/overview?tab=interviews" testsHref="/hire/overview?tab=tests" top={<OpenTimes windows={await myOpenTimes(personId)} />}
     day={{ ...day, label: day.start.toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }) }} />;
 }
 

@@ -42,6 +42,7 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "work.interview_slots_offered",
   "work.interview_confirmed",
   "work.not_awarded",
+  "work.interview_cancelled",
   "work.interview_requested",
   "work.test_requested",
   "work.order_offered",
