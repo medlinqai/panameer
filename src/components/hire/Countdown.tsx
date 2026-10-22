@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from "react";
 
-/** Scott 10-22: deadline colours — green with more than one business day (8 working hours, Mon–Fri 9–5 ET) left,
+/** Scott 10-22: deadline colours — green with more than one business day (8 working hours, Mon–Fri 9–5 in the viewer's time zone) left,
  *  amber under 8 working hours (so "first thing tomorrow" is amber tonight), red under 1 hour (live mm:ss), Passed after. */
 export type DeadlineTone = "accepted" | "pending" | "declined" | "passed";
-const ET = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", hourCycle: "h23" });
+// Scott 10-22: working hours are the VIEWER's (browser time zone) — runs client-side only.
+let ET: Intl.DateTimeFormat | null = null;
+const fmt = () => (ET ??= new Intl.DateTimeFormat("en-US", { weekday: "short", hour: "numeric", hourCycle: "h23" }));
 const STEP = 15 * 60_000;
 /** Working time between now and the deadline, in 15-minute steps (stops counting once it passes 8 h). */
 export function workingMsLeft(now: number, at: number): number {
   let ms = 0;
   for (let t = now; t < at && ms < 8 * 3_600_000; t += STEP) {
-    const parts = ET.formatToParts(new Date(t));
+    const parts = fmt().formatToParts(new Date(t));
     const wd = parts.find((x) => x.type === "weekday")?.value ?? "";
     const hr = Number(parts.find((x) => x.type === "hour")?.value ?? 0);
     if (wd !== "Sat" && wd !== "Sun" && hr >= 9 && hr < 17) ms += Math.min(STEP, at - t);
