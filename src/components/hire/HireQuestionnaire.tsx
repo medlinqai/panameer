@@ -100,6 +100,10 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
         if (j) setSuggested((j.skills as string[]) ?? []);
       }
     }
+    if (step === 4 && f.budgetMin != null && f.budgetMax != null && f.budgetMin > f.budgetMax) {
+      setError(`"From" ($${f.budgetMin}) is higher than "To" ($${f.budgetMax}). Swap them or fix one.`);
+      return;
+    }
     if (step < 4) {
       const j = await call({ action: "save", jobId, input: { ...f, budgetType: f.budgetType ?? "HOURLY" } });
       if (!j) return;
@@ -322,7 +326,9 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
               <label className="text-[13px] font-bold">{f.budgetType === "FIXED" ? "From ($)" : "From ($/hour)"}<input inputMode="numeric" value={f.budgetMin ?? ""} onChange={(e) => set({ budgetMin: e.target.value ? Number(e.target.value.replace(/[^0-9.]/g, "")) : null })} className={FIELD} /></label>
               <label className="text-[13px] font-bold">{f.budgetType === "FIXED" ? "To ($)" : "To ($/hour)"}<input inputMode="numeric" value={f.budgetMax ?? ""} onChange={(e) => set({ budgetMax: e.target.value ? Number(e.target.value.replace(/[^0-9.]/g, "")) : null })} className={FIELD} /></label>
             </div>
-            <p className="mt-1 text-[12.5px] text-ink-3">{f.budgetType === "FIXED" ? "For the whole job." : "Per hour. Postings often leave this out — add yours."}</p>
+            {f.budgetMin != null && f.budgetMax != null && f.budgetMin > f.budgetMax ? (
+              <p role="alert" className="mt-1 text-[12.5px] font-semibold text-[#B3261E]">&quot;From&quot; is higher than &quot;To&quot;. <button type="button" className="underline underline-offset-2" onClick={() => set({ budgetMin: f.budgetMax, budgetMax: f.budgetMin })}>Swap them</button></p>
+            ) : (<p className="mt-1 text-[12.5px] text-ink-3">{f.budgetType === "FIXED" ? "For the whole job." : "Per hour. Postings often leave this out — add yours."}</p>)}
           </>
         )}
         {step === 5 && matches && (
