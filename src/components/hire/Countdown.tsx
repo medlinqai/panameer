@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-/** SE-E004/E005: time left to a Sourcing Event deadline ("1 d 4 h left" · "Closed"). */
+/** SE-E004/E005: time left to a Sourcing Event deadline ("1 d 4 h left" · "Passed"). */
 export function Countdown({ at, className = "" }: { at: string; className?: string }) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {

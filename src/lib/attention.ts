@@ -276,7 +276,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
 
   if (side === "buyer") {
     const [toReview, closing, expired, confirm, todays, testsIn, approvals, woAccept, settle, pay] = await Promise.all([
-      prisma.proposal.findMany({ where: { status: "SUBMITTED", job: { buyer_person_id: id }, proposalRequest: { sourcingEvent: { status: { in: ["OPEN", "CLOSED"] } } } }, select: { proposalRequest: { select: { sourcingEvent: { select: { id: true, deadline_at: true } } } } } }),
+      prisma.proposal.findMany({ where: { status: "SUBMITTED", job: { buyer_person_id: id }, proposalRequest: { sourcingEvent: { status: { in: ["OPEN", "CLOSED"] } } } }, orderBy: { submitted_at: "desc" }, select: { proposalRequest: { select: { sourcingEvent: { select: { id: true, deadline_at: true } } } } } }),
       prisma.sourcingEvent.findMany({ where: { created_by_person_id: id, status: "OPEN", deadline_at: { gt: now, lte: soon } }, select: { id: true, deadline_at: true } }),
       prisma.sourcingEvent.count({ where: { created_by_person_id: id, status: "OPEN", deadline_at: { lte: now } } }),
       prisma.interviewRequest.count({ where: { requested_by_person_id: id, status: "SLOTS_OFFERED" } }),
