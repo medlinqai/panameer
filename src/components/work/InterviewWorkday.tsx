@@ -122,3 +122,37 @@ function Grid({ side, rows }: { side: GridSide; rows: GridRow[] }) {
     </div>
   );
 }
+
+/** IW-E002: the week — Mon–Fri (Sat/Sun only when booked), today highlighted; solid magenta edge = confirmed, dashed = to confirm. */
+export function WorkdayWeek({ side, rows, weekStart, base }: { side: GridSide; rows: GridRow[]; weekStart: Date; base: string }) {
+  const TZ = "America/New_York";
+  const key = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: TZ });
+  const today = key(new Date());
+  const days = Array.from({ length: 7 }, (_, i) => new Date(weekStart.getTime() + (i + 0.5) * 86_400_000))
+    .map((d) => ({ d, k: key(d), list: rows.filter((r) => r.startsAt && key(new Date(r.startsAt)) === key(d) && r.status !== "Declined").sort((a, b) => a.startsAt!.localeCompare(b.startsAt!)) }))
+    .filter((x, i) => i < 5 || x.list.length > 0);
+  const open = (r: GridRow) => (side === "buyer" ? `/work-requests/${r.jobId}#interviews` : `/find-work/${r.jobId}#interview`);
+  return (
+    <section className="flex flex-col gap-4" data-workday-week>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-[30px] font-extrabold">This Week</h1>
+        <Link href={base} className="text-[13px] font-semibold">← Today</Link>
+      </div>
+      <div className={`grid gap-3 ${days.length > 5 ? (days.length > 6 ? "md:grid-cols-7" : "md:grid-cols-6") : "md:grid-cols-5"}`}>
+        {days.map(({ d, k, list }) => (
+          <div key={k} className={k === today ? "min-w-0 rounded-[12px] border-2 border-magenta bg-white p-3" : "min-w-0 rounded-[12px] border border-state-border bg-white p-3"} data-week-day={k}>
+            <Link href={`${base}&date=${k}`} className={`block text-[12px] font-extrabold uppercase tracking-[0.08em] no-underline ${k === today ? "text-magenta" : "text-ink"}`}>
+              {d.toLocaleDateString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" })}
+            </Link>
+            {list.length ? list.map((r) => (
+              <Link key={r.id} href={open(r)} className={r.status === "To Confirm" ? "mt-2 block border-l-[3px] border-dashed border-magenta bg-bg-soft px-2 py-1.5 text-[12.5px] text-ink no-underline hover:underline" : "mt-2 block border-l-[3px] border-solid border-magenta bg-bg-soft px-2 py-1.5 text-[12.5px] text-ink no-underline hover:underline"} data-week-block={r.status}>
+                <b className="tabular-nums">{r.time}</b> · {r.who}
+                <span className="block truncate text-state-inactive">{r.jobTitle}</span>
+              </Link>
+            )) : <p className="mt-2 text-[12.5px] text-state-border">—</p>}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}

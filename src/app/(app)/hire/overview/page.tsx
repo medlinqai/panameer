@@ -7,7 +7,7 @@ import { buyerHireTabs, buyerLiveWork, buyerTests, hireOverviewData, weekIntervi
 import { AttentionGroups } from "@/components/hire/AttentionGroups";
 import { DiscardDraft } from "@/components/hire/DiscardDraft";
 import { WeekSchedule } from "@/components/home/LiveWork";
-import { InterviewWorkday } from "@/components/work/InterviewWorkday";
+import { InterviewWorkday, WorkdayWeek } from "@/components/work/InterviewWorkday";
 import { gridDay, interviewGrid, rowsOn } from "@/lib/interview-grid";
 import { NeutralAvatar } from "@/components/Avatar";
 import { TypeArt } from "@/components/shop/TypeArt";
@@ -282,12 +282,9 @@ async function RequestsTab({ personId, slice }: { personId: string; slice?: stri
 }
 
 async function InterviewsTab({ personId, userId, view, show, date }: { personId: string; userId: string; view: string | null; show: string | null; date: string | null }) {
-  if (view === "week") {
-    const week = await weekInterviews("buyer", personId);
-    return <WeekSchedule start={week.start} rows={week.rows} side="buyer" backHref="/hire/overview?tab=interviews" />;
-  }
-  // IW-E001: the Workday — tiles, a day navigator and the fixed-column grid.
-  const { rows, tiles } = await interviewGrid("buyer", personId, userId);
+  // IW-E001/E002: the Workday — tiles, a day navigator and the fixed-column grid; or the week.
+  const { rows, tiles, weekStart } = await interviewGrid("buyer", personId, userId);
+  if (view === "week") return <WorkdayWeek side="buyer" rows={rows} weekStart={weekStart} base="/hire/overview?tab=interviews" />;
   const day = gridDay(date);
   const list = show === "confirm" ? rows.filter((r) => r.status === "To Confirm") : show === "feedback" ? rows.filter((r) => r.status === "Done" && !r.ranked) : rowsOn(rows, day.key);
   return <InterviewWorkday side="buyer" rows={list} tiles={tiles} show={show} base="/hire/overview?tab=interviews" testsHref="/hire/overview?tab=tests"
