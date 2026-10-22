@@ -23,7 +23,9 @@ export type NotificationEvent = {
 export type Vars = Record<string, string | number | null | undefined>;
 
 /** Scott 2026-10-04: profile views group into one bell line per day. */
-export const viewedTitle = (n: number) => `${n} ${n === 1 ? "person" : "people"} viewed your profile today`;
+/** The day is written into the title (it's stored), so "2d ago" never reads as "today". */
+export const viewedTitle = (n: number, at: Date = new Date()) =>
+  `${n} ${n === 1 ? "person" : "people"} viewed your profile on ${at.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "America/New_York" })}`;
 
 const str = (v: Vars, k: string, fallback = "") =>
   v[k] === undefined || v[k] === null ? fallback : String(v[k]);
