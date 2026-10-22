@@ -54,7 +54,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   const weak = shown.filter((m) => m.weak && !m.starred);
   const visible = showWeak ? [...strong, ...weak] : strong;
   const starred = list.filter((m) => m.starred && !m.hidden && !m.requested);
-  const shortlistStep = !starred.length ? 1 : compared || starred.length === 1 ? 3 : 2;
+  const shortlistStep = !starred.length ? 2 : compared || starred.length === 1 ? 4 : 3;
   const at = visible.findIndex((m) => m.personId === active);
   const cur = at >= 0 ? visible[at] : null;
 
@@ -75,13 +75,14 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
     <div data-match-list>
       {/* HP-E003: how the shortlist works. */}
       <ol className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]" data-shortlist-steps>
-        {["Star the Ones You Like", "Compare", "Request Proposals from Your Shortlist"].map((t, i) => (
+        {["Hide Who You Don't Want", "Star Who You Like", "Compare (Optional)", "Request Proposals from All Starred"].map((t, i) => (
           <li key={t} className="flex items-center gap-2">
             {i > 0 && <span aria-hidden className="text-ink-3">→</span>}
             <span className={shortlistStep === i + 1 ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-2.5 py-0.5 font-bold text-magenta-dark" : shortlistStep > i + 1 ? "rounded-full border border-ink px-2.5 py-0.5 font-semibold" : "rounded-full border border-line px-2.5 py-0.5 font-semibold text-ink-3"} aria-current={shortlistStep === i + 1 ? "step" : undefined}>{i + 1} {t}</span>
           </li>
         ))}
       </ol>
+      <p className="mt-1.5 text-[12.5px] text-ink-2"><b className="text-ink">Found the one?</b> Press <b className="text-ink">Hire</b> on their row to hire them directly. No proposals needed.</p>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
         <button type="button" aria-pressed={!starredOnly} onClick={() => setStarredOnly(false)} className={!starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>All ({list.filter((m) => !m.hidden).length})</button>
         <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({starred.length})</button>
