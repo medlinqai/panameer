@@ -16,6 +16,8 @@ export type AvailabilityView = {
   declined?: boolean; declineReason?: string | null;
   open: boolean;
   deadlineAt?: string; eventNumber?: string;
+  /** Shortlist context for the provider: how many were asked, how many positions. */
+  askedCount?: number; positions?: number;
 };
 const FIELD = "mt-1 block w-full rounded-[8px] border border-line bg-white px-3 py-2.5 text-[14.5px] font-normal text-ink";
 const usd = (c: number | null | undefined) => (c == null ? null : `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}`);
@@ -58,6 +60,13 @@ export function ConfirmAvailability({ jobId, v, startDeclining = false }: { jobI
         <h2 className="text-[17px] font-extrabold">{v.mode === "asked" ? `Availability Request${v.eventNumber ? ` · ${v.eventNumber}` : ""}` : "Want This Job?"}</h2>
         {v.mode === "asked" && v.deadlineAt && v.open && <span className="text-[13.5px] font-bold text-magenta-dark"><Countdown at={v.deadlineAt} /></span>}
       </div>
+      {v.mode === "asked" && v.open && !v.responded && !v.declined && (
+        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-2" data-shortlist-context>
+          <b className="text-ink">You&apos;re on the buyer&apos;s shortlist.</b> They&apos;re asking whether you want this job:{" "}
+          {v.positions ?? 1} position{(v.positions ?? 1) === 1 ? "" : "s"}
+          {v.askedCount && v.askedCount > 1 ? `, ${v.askedCount - 1} other provider${v.askedCount - 1 === 1 ? "" : "s"} asked` : ""}. Reply quickly, the buyer can hire as soon as someone fits.
+        </p>
+      )}
       <dl className="mt-3 grid grid-cols-2 gap-3 text-[14px] sm:grid-cols-3">
         <div><dt className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Dates</dt><dd className="mt-0.5 font-semibold" data-job-dates>{day(v.dates.start)} – {day(v.dates.end)}</dd></div>
         <div><dt className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Buyer&apos;s Rate Range</dt><dd className="mt-0.5 font-semibold" data-buyer-range>{range}</dd></div>

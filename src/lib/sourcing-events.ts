@@ -80,6 +80,8 @@ export async function providerEventView(providerPersonId: string, jobId: string)
     proposed: req.bid?.status === "SUBMITTED" || req.bid?.status === "SHORTLISTED" || req.bid?.status === "AWARDED" ? { rateCents: line?.unit_price_cents ?? null, start: line?.available_from?.toISOString().slice(0, 10) ?? null, note: req.bid?.cover_note ?? null } : null,
     range: { type: job?.budget_type ?? "HOURLY", minCents: job?.budget_min_cents ?? null, maxCents: job?.budget_max_cents ?? null },
     rateCardCents: await rateCardFor(providerPersonId, jobId),
+    askedCount: await prisma.proposalRequest.count({ where: { sourcing_event_id: ev.id } }),
+    positions: 1,
     dates: { start: job?.start_date?.toISOString().slice(0, 10) ?? null, end: job?.end_date?.toISOString().slice(0, 10) ?? null },
   };
 }

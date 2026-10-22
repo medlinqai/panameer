@@ -108,7 +108,7 @@ export default async function Page({
           )}
           {sourcing && (
             <div className="mt-5">
-              <ConfirmAvailability jobId={detail.id} v={{ mode: "asked", dates: sourcing.dates, range: sourcing.range, rateCardCents: sourcing.rateCardCents, responded: sourcing.proposed ? { rateCents: sourcing.proposed.rateCents, note: sourcing.proposed.note } : null, declined: sourcing.declined, declineReason: sourcing.declineReason, open: sourcing.open, deadlineAt: sourcing.deadlineAt, eventNumber: sourcing.eventNumber }} startDeclining={(await searchParams)?.decline === "1"} />
+              <ConfirmAvailability jobId={detail.id} v={{ mode: "asked", askedCount: sourcing.askedCount, positions: sourcing.positions, dates: sourcing.dates, range: sourcing.range, rateCardCents: sourcing.rateCardCents, responded: sourcing.proposed ? { rateCents: sourcing.proposed.rateCents, note: sourcing.proposed.note } : null, declined: sourcing.declined, declineReason: sourcing.declineReason, open: sourcing.open, deadlineAt: sourcing.deadlineAt, eventNumber: sourcing.eventNumber }} startDeclining={(await searchParams)?.decline === "1"} />
               <ServiceDescriptionView jobId={detail.id} editable={false} />
             </div>
           )}
