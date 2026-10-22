@@ -51,7 +51,7 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
           {d.identityShown ? d.providerPhotoUrl && <img src={d.providerPhotoUrl} alt="" className="h-9 w-9 rounded-full object-cover" /> : <NeutralAvatar size={36} />}
           <span>{d.providerCompany ? `${d.providerCompany} · ` : ""}{d.providerName}</span>
         </span>
-        {!d.identityShown && <span className="mt-1 block text-[12.5px] font-normal text-ink-2">Name and company show once the Work Order exists.</span>}
+        {!d.identityShown && <span className="mt-1 block text-[12.5px] font-normal text-ink-2">Name and company show once the Work Order is released.</span>}
       </p>
       <div className="grid gap-x-3 sm:grid-cols-3">
         <label className={LABEL}>Rate ($)<input inputMode="decimal" value={t.rate} onChange={(e) => set({ rate: e.target.value.replace(/[^0-9.]/g, "") })} className={FIELD} /></label>
