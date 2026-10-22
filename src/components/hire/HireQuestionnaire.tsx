@@ -349,7 +349,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
                 </div>
               </details>
             </div>
-            <p className="text-[13.5px] text-ink-2">Hide who you don&apos;t want, star who you do, then request proposals from everyone you starred at once. Click a row for a quick view.</p>
+            <p className="text-[13.5px] text-ink-2">Click a row for a quick view.</p>
             <MatchList key={jobId ?? "new"} jobId={jobId} matches={matches} state={f.state} empty={<p className="mt-4 text-[14px] text-ink-3">No one in {f.category} matches yet. Your Service Description is saved as a draft — <Link href={`/work-requests/${jobId}`} className="font-semibold text-magenta-dark underline">open it</Link>.</p>} />
           </div>
         )}

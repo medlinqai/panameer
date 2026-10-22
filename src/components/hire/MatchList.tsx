@@ -73,6 +73,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   if (!list.length) return <>{empty}</>;
   return (
     <div data-match-list>
+      <p className="mt-2 text-[13.5px]"><b>Two ways to go:</b> <b>Hire</b> one provider directly from their row, or <b>Shortlist</b> several and request proposals from them all at once:</p>
       {/* HP-E003: how the shortlist works. */}
       <ol className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]" data-shortlist-steps>
         {["Hide Who You Don't Want", "Star Who You Like", "Compare (Optional)", "Request Proposals from All Starred"].map((t, i) => (
@@ -82,7 +83,6 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
           </li>
         ))}
       </ol>
-      <p className="mt-1.5 text-[12.5px] text-ink-2"><b className="text-ink">Found the one?</b> Press <b className="text-ink">Hire</b> on their row to hire them directly. No proposals needed.</p>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
         <button type="button" aria-pressed={!starredOnly} onClick={() => setStarredOnly(false)} className={!starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>All ({list.filter((m) => !m.hidden).length})</button>
         <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({starred.length})</button>
