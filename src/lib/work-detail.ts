@@ -121,7 +121,7 @@ export async function getWorkDetailForProvider(input: {
       budgetType: w.budget_type,
     }),
     experienceLevel: pretty(w.experience_level),
-    duration: pretty(w.duration),
+    duration: w.duration ? ({ LT_1_MONTH: "Less Than 1 Month", ONE_TO_3_MONTHS: "1 to 3 Months", THREE_TO_6_MONTHS: "3 to 6 Months", GT_6_MONTHS: "6+ Months" } as Record<string, string>)[w.duration] ?? pretty(w.duration) : null,
     worksite: pretty(w.worksite),
     location: w.location_country,
     roleType: roleLong(w.role?.display ?? w.role?.name ?? null),

@@ -72,7 +72,7 @@ export function ConfirmAvailability({ jobId, v, startDeclining = false }: { jobI
         </div>
       )}
       <dl className="mt-3 grid grid-cols-2 gap-3 text-[14px] sm:grid-cols-3">
-        <div><dt className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Dates</dt><dd className="mt-0.5 font-semibold" data-job-dates>{day(v.dates.start)} – {day(v.dates.end)}</dd></div>
+        <div><dt className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Dates</dt><dd className="mt-0.5 font-semibold" data-job-dates>{v.dates.start || v.dates.end ? `${day(v.dates.start)} – ${day(v.dates.end)}` : "Not Set by the Buyer"}</dd></div>
         <div><dt className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Buyer&apos;s Rate Range</dt><dd className="mt-0.5 font-semibold" data-buyer-range>{range}</dd></div>
         <div><dt className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Your Rate</dt><dd className="mt-0.5 font-semibold" data-your-rate>{v.responded?.rateCents != null ? `${usd(v.responded.rateCents)}${per}` : noCard ? "Not on your rate card" : `${usd(v.rateCardCents)}${per} (from your rate card)`}</dd></div>
       </dl>
