@@ -139,7 +139,7 @@ async function JobsTab({ personId, step, slice, q }: { personId: string; step: s
   const needle = q.trim().toLowerCase();
   const list = jobSlice(jobRows, slice)
     .filter((j) => (!step || j.step === step) && (!needle || `${j.title} ${j.ref ?? ""} ${j.facts}`.toLowerCase().includes(needle)))
-    .sort((a, b) => Number(b.needsAction) - Number(a.needsAction) || (a.deadlineAt ?? "9").localeCompare(b.deadlineAt ?? "9"));
+    .sort((a, b) => Number(b.needsAction) - Number(a.needsAction) || (b.posted ? new Date(b.posted).getTime() : 0) - (a.posted ? new Date(a.posted).getTime() : 0)); // Scott 10-22: newest first
   const recent = list.filter((j) => !j.old);
   const older = list.filter((j) => j.old);
   return (
