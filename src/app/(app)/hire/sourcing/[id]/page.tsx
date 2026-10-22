@@ -1,3 +1,4 @@
+import { LiveRefresh } from "@/components/LiveRefresh";
 import { notFound } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { eventForBuyer } from "@/lib/sourcing-events";
@@ -18,6 +19,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     <div className="pm-white-page mx-auto w-full max-w-5xl">
       <div className="mt-2"><BackButton fallback={`/work-requests/${ev.jobId}`} label="Back to the Job" /></div>
       <SourcingEventView ev={ev} />
+      {ev.status === "OPEN" && <LiveRefresh />}
     </div>
   );
 }

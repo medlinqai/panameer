@@ -1,3 +1,4 @@
+import { LiveRefresh } from "@/components/LiveRefresh";
 import Link from "next/link";
 import { howLongText } from "@/lib/job-dates";
 import { WorkRequestPath } from "@/components/work/WorkRequestPath";
@@ -122,6 +123,7 @@ export default async function Page({
 
   return (
     <div className="pm-white-page mx-auto flex w-full min-w-0 max-w-[1120px] flex-col gap-[22px] pb-16" data-work-request-page>
+      <LiveRefresh />
       <Link href="/hire/overview?tab=jobs" className="text-[13px] font-semibold">‹ Back to Jobs</Link>
 
       <section aria-label="Header" className="flex flex-col gap-[18px]" data-wr-header>

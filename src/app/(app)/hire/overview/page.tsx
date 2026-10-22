@@ -1,3 +1,4 @@
+import { LiveRefresh } from "@/components/LiveRefresh";
 import Link from "next/link";
 import { ProposalActions } from "@/components/work/ProposalActions";
 import { guardPage } from "@/lib/guard";
@@ -39,6 +40,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
   ];
   return (
     <div className="pm-white-page">
+      <LiveRefresh seconds={30} />
       <HireTabBar tabs={tabs} current={tab} right={
         <span className="flex shrink-0 gap-2">
           <Link href="/hire" className={`${BTN} shrink-0 px-3 text-[13px] sm:px-5 sm:text-[14px]`} data-post-job>Create a Job</Link>
