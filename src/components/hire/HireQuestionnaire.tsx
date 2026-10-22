@@ -181,14 +181,14 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
             <h2 className="text-[19px] font-extrabold">What do you need done?</h2>
             <p className="text-[13.5px] text-ink-2">Start from a posting you already have, or fill it in yourself.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <button type="button" onClick={() => setStart("upload")} className={OPT_OFF} data-upload-posting><b className="text-[15px]">Upload a Posting</b><small className="text-[12.5px] text-ink-2">Paste it or drop a Word / PDF file — we fill in the steps, you check them.</small></button>
-              <button type="button" onClick={() => setStart("form")} className={OPT_OFF}><b className="text-[15px]">Fill It In Myself</b><small className="text-[12.5px] text-ink-2">Five short steps.</small></button>
+              <button type="button" onClick={() => setStart("upload")} className={OPT_OFF} data-upload-posting><b className="text-[15px]">Create Job Using AI</b><small className="text-[12.5px] text-ink-2">Upload a job description (Word or PDF) or paste it in. AI fills in the five steps; you check them.</small></button>
+              <button type="button" onClick={() => setStart("form")} className={OPT_OFF}><b className="text-[15px]">Create Job Manually</b><small className="text-[12.5px] text-ink-2">Fill in the five short steps yourself.</small></button>
             </div>
           </div>
         )}
         {step === 0 && start === "upload" && (
           <div data-hire-upload>
-            <h2 className="text-[19px] font-extrabold">Upload a posting</h2>
+            <h2 className="text-[19px] font-extrabold">Create Job Using AI</h2>
             <p className="text-[13.5px] text-ink-2">From LinkedIn or anywhere. Names, emails and phone numbers are taken out before we read it.</p>
             <label className="mt-4 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[12px] border-2 border-dashed border-line bg-bg-soft px-4 py-6 text-center hover:border-magenta-dark"
               onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); const file = e.dataTransfer.files?.[0]; if (file) void read(file); }}>
@@ -201,7 +201,7 @@ export function HireQuestionnaire({ hierarchy, howLong, roles, defaults, initial
             </label>
             <div className="mt-3 flex flex-wrap gap-3">
               <button type="button" className={BTN} disabled={busy || paste.trim().length < 60} onClick={() => read(null)}>{busy ? "Reading…" : "Read My Posting"}</button>
-              <button type="button" className={GHOST} disabled={busy} onClick={() => setStart("form")}>Fill It In Myself</button>
+              <button type="button" className={GHOST} disabled={busy} onClick={() => setStart("form")}>Create Job Manually</button>
             </div>
           </div>
         )}
