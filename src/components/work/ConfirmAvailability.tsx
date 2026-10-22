@@ -58,14 +58,15 @@ export function ConfirmAvailability({ jobId, v, startDeclining = false }: { jobI
     <section className="rounded-brand border border-line bg-white p-5" data-confirm-availability={v.mode}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-[17px] font-extrabold">{v.mode === "asked" ? `Availability Request${v.eventNumber ? ` · ${v.eventNumber}` : ""}` : "Want This Job?"}</h2>
-        {v.mode === "asked" && v.deadlineAt && v.open && <span className="text-[13.5px] font-bold text-magenta-dark"><Countdown at={v.deadlineAt} /></span>}
+        {v.mode === "asked" && v.deadlineAt && v.open && (v.responded || v.declined) && <span className="text-[13.5px] font-bold text-magenta-dark"><Countdown at={v.deadlineAt} /></span>}
       </div>
       {v.mode === "asked" && v.open && !v.responded && !v.declined && (
-        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-2" data-shortlist-context>
-          <b className="text-ink">You&apos;re on the buyer&apos;s shortlist.</b> They&apos;re asking whether you want this job:{" "}
-          {v.positions ?? 1} position{(v.positions ?? 1) === 1 ? "" : "s"}
-          {v.askedCount && v.askedCount > 1 ? `, ${v.askedCount - 1} other provider${v.askedCount - 1 === 1 ? "" : "s"} asked` : ""}. Reply quickly, the buyer can hire as soon as someone fits.
-        </p>
+        <div className="mt-2 flex flex-wrap gap-1.5 text-[12.5px] font-bold" data-shortlist-context>
+          <span className="rounded-full bg-[#DEF0E6] px-2.5 py-1 text-[#1F7A4D]">You&apos;re Shortlisted</span>
+          <span className="rounded-full bg-[#E8EAF1] px-2.5 py-1 text-[#3A4166]">{v.positions ?? 1} Position{(v.positions ?? 1) === 1 ? "" : "s"}</span>
+          {v.askedCount && v.askedCount > 1 ? <span className="rounded-full bg-[#FAF0DA] px-2.5 py-1 text-[#8a5a00]">{v.askedCount - 1} Other{v.askedCount - 1 === 1 ? "" : "s"} Asked</span> : null}
+          {v.deadlineAt && <span className="rounded-full bg-[#F7E1DF] px-2.5 py-1 text-[#B3261E]">Reply in <Countdown at={v.deadlineAt} /></span>}
+        </div>
       )}
       <dl className="mt-3 grid grid-cols-2 gap-3 text-[14px] sm:grid-cols-3">
         <div><dt className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Dates</dt><dd className="mt-0.5 font-semibold" data-job-dates>{day(v.dates.start)} – {day(v.dates.end)}</dd></div>
