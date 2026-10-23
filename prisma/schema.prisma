@@ -9632,3 +9632,19 @@ model QuestionAnswer {
   @@index([provider_person_id])
   @@map("question_answers")
 }
+
+/// QB-E004: a reusable Question Bank — a buyer's own, or shared with their company. Panameer Starters live in code.
+model QuestionBank {
+  id              String   @id @default(uuid()) @db.Uuid
+  owner_person_id String   @db.Uuid
+  p_account_id    String   @db.Uuid
+  name            String
+  questions       Json
+  shared          Boolean  @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@index([owner_person_id])
+  @@index([p_account_id, shared])
+  @@map("question_banks")
+}

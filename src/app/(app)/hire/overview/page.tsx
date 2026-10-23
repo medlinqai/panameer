@@ -11,6 +11,8 @@ import { InterviewWorkday, WorkdayWeek } from "@/components/work/InterviewWorkda
 import { gridDay, interviewGrid, rowsOn } from "@/lib/interview-grid";
 import { invitedNotBooked, myOpenTimes } from "@/lib/open-times";
 import { InvitedNotBooked, OpenTimesButton } from "@/components/hire/OpenTimes";
+import { QuestionBanks } from "@/components/hire/QuestionBanks";
+import { listBanks } from "@/lib/question-banks";
 import { NeutralAvatar } from "@/components/Avatar";
 import { TypeArt } from "@/components/shop/TypeArt";
 import { RecurringLine, SliceChips } from "@/components/casing/SliceChips";
@@ -21,7 +23,7 @@ import { BTN, BTN_OUT, Fact, GREEN, HeadRow, STATE_TEXT, stepState, HireTabBar, 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Hire · Panameer" };
 
-const TABS = ["overview", "jobs", "requests", "interviews", "tests"] as const;
+const TABS = ["overview", "jobs", "requests", "interviews", "tests", "questions"] as const;
 type Tab = (typeof TABS)[number];
 type SP = { tab?: string; step?: string; view?: string; slice?: string; q?: string; show?: string; date?: string };
 
@@ -39,6 +41,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
     { key: "requests", label: "Requests", href: "/hire/overview?tab=requests", n: r.requests },
     { key: "interviews", label: "Interviews", href: "/hire/overview?tab=interviews", n: r.interviews },
     { key: "tests", label: "Tests", href: "/hire/overview?tab=tests", n: r.tests },
+    { key: "questions", label: "Questions", href: "/hire/overview?tab=questions" },
   ];
   return (
     <div className="pm-white-page">
@@ -54,6 +57,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
         {tab === "requests" && <RequestsTab personId={me.id} slice={sp.slice} />}
         {tab === "interviews" && <InterviewsTab personId={me.id} userId={viewer.userId} view={sp.view ?? null} show={sp.show ?? null} date={sp.date ?? null} />}
         {tab === "tests" && <TestsTab personId={me.id} slice={sp.slice} />}
+        {tab === "questions" && <QuestionBanks banks={await listBanks(viewer).catch(() => [])} />}
       </div>
     </div>
   );
