@@ -43,7 +43,7 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
             <li key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5">
               <span className="min-w-0 flex-1">
                 <b className="block text-[14px]">{i.what}</b>
-                <span className="text-[12.5px] text-ink-2">{i.appLabel}{i.due ? <> · <span className={STATE(ms)}>due {i.due}</span></> : ""}</span>
+                <span className="text-[12.5px] text-ink-2">{i.appLabel}{i.sub ? <> · <span className="font-semibold text-ink">{i.sub}</span></> : null}{i.due ? <> · <span className={STATE(ms)}>due {i.due}</span></> : ""}</span>
               </span>
               <Link href={i.href} className="inline-flex min-h-9 items-center bg-ink px-3.5 text-[13px] font-bold text-surface hover:bg-ink-hover">{i.action}</Link>
             </li>
