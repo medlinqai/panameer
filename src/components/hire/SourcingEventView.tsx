@@ -126,6 +126,12 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                   )}
                   {pr?.note && <p className="mt-1 whitespace-pre-line text-[13px] text-ink-2">{pr.note}</p>}
                   <RowPills p={p} />
+                  {p.qa?.status === "in" && (
+                    <details className="mt-2 text-[13px]" data-qa>
+                      <summary className="cursor-pointer font-semibold">Read Answers ({p.qa.qa.length})</summary>
+                      <ol className="mt-1.5 flex flex-col gap-1.5">{p.qa.qa.map((x, i) => <li key={i}><b>{x.q}</b><p className="whitespace-pre-wrap text-ink-2">{x.a}</p></li>)}</ol>
+                    </details>
+                  )}
                   <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]">
                     {p.match.why.map((k) => <span key={k} className="rounded-full border border-magenta-dark bg-[#fbeafb] px-2 font-semibold text-magenta-dark">{k}</span>)}
                     {p.match.matched.map((k) => <span key={k} className="rounded-full border border-line bg-bg-soft px-2">{k}</span>)}
@@ -150,7 +156,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
       </section>
       {asking && <AskQuestionsDialog jobId={ev.jobId} providerPersonIds={asking} defaultDue={ev.deadlineAt} onClose={() => setAsking(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
       {interviewing && <InterviewDialog jobId={ev.jobId} providerPersonIds={interviewing} onClose={() => setInterviewing(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
-      {comparing && <CompareTable rows={withProposal.filter((p) => picked.has(p.personId)).map((p) => ({ m: p.match, proposed: p.proposal?.rateCents != null ? `${usd(p.proposal.rateCents)}${per}` : null, start: p.proposal?.start ?? null }))} onClose={() => setComparing(false)} />}
+      {comparing && <CompareTable rows={withProposal.filter((p) => picked.has(p.personId)).map((p) => ({ m: p.match, proposed: p.proposal?.rateCents != null ? `${usd(p.proposal.rateCents)}${per}` : null, start: p.proposal?.start ?? null, qa: p.qa?.status === "in" ? p.qa.qa : null }))} onClose={() => setComparing(false)} />}
     </div>
   );
 }
@@ -164,6 +170,7 @@ function RowPills({ p }: { p: Ev["proposals"][number] }) {
       {iv && (iv.status === "SCHEDULED" && iv.startsAt ? <span className={`${PILL} bg-state-accepted-bg text-state-accepted`} data-interview-state="booked">Interview {new Date(iv.startsAt).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })}</span>
         : iv.status === "COMPLETED" ? <span className={`${PILL} bg-state-inactive-bg text-state-inactive`} data-interview-state="done">Interview Done</span>
         : <span className={`${PILL} bg-state-pending-bg text-state-pending`} data-interview-state="invited">Invited, Not Booked</span>)}
+      {p.qa && <span className={`${PILL} ${p.qa.status === "in" ? "bg-state-accepted-bg text-state-accepted" : "bg-state-pending-bg text-state-pending"}`} data-qa-state={p.qa.status}>{p.qa.status === "in" ? "Answers In" : "Questions Sent"}</span>}
       {p.test && <span className={`${PILL} ${p.test === "PASSED" ? "bg-state-accepted-bg text-state-accepted" : p.test === "FAILED" ? "bg-state-declined-bg text-state-declined" : "bg-state-pending-bg text-state-pending"}`} data-test-state={p.test}>{p.test === "PASSED" ? "Test Passed" : p.test === "FAILED" ? "Test Failed" : "Test Sent"}</span>}
     </span>
   );

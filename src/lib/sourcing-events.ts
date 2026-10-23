@@ -173,6 +173,8 @@ export type EventProposal = {
   interview: { id: string; status: string; startsAt: string | null; openTimes: boolean } | null;
   /** OJ-E003: the job's latest test request for this provider. */
   test: "SENT" | "PASSED" | "FAILED" | null;
+  /** AQ-E004: written questions — Questions Sent, or Answers In with the Q&A. */
+  qa: import("@/lib/job-questions").BuyerQA | null;
 };
 
 export async function eventForBuyer(viewer: Viewer, eventId: string) {
@@ -198,6 +200,7 @@ export async function eventForBuyer(viewer: Viewer, eventId: string) {
   }
   const ivs = await prisma.interviewRequest.findMany({ where: { job_id: ev.job_id, status: { in: ["REQUESTED", "SLOTS_OFFERED", "SCHEDULED", "COMPLETED"] } }, orderBy: { created_at: "desc" }, select: { id: true, provider_person_id: true, status: true, slot_minutes: true, confirmed_line_id: true, response: { select: { lines: { select: { id: true, starts_at: true } } } } } });
   const tests = await prisma.testRequest.findMany({ where: { job_id: ev.job_id }, orderBy: { created_at: "desc" }, select: { provider_person_id: true, response: { select: { lines: { take: 1, select: { passed: true } } } } } });
+  const qaBy = await (await import("@/lib/job-questions")).buyerAnswers(ev.job_id);
   const proposals: EventProposal[] = requests.filter((r) => byPerson.has(r.provider_person_id)).map((r) => {
     const line = r.bid?.lines[0];
     const iv = ivs.find((x) => x.provider_person_id === r.provider_person_id);
@@ -205,6 +208,7 @@ export async function eventForBuyer(viewer: Viewer, eventId: string) {
       personId: r.provider_person_id, requestStatus: r.status, declineReason: r.decline_reason,
       proposal: r.bid && r.bid.status !== "DRAFT" && r.bid.status !== "WITHDRAWN" ? { id: r.bid.id, status: r.bid.status, rateCents: line?.unit_price_cents ?? null, start: line?.available_from?.toISOString().slice(0, 10) ?? null, note: r.bid.cover_note } : null,
       match: byPerson.get(r.provider_person_id)!,
+      qa: qaBy.get(r.provider_person_id) ?? null,
       test: ((t) => (!t ? null : t.response?.lines[0]?.passed === true ? "PASSED" : t.response?.lines[0]?.passed === false ? "FAILED" : "SENT"))(tests.find((t) => t.provider_person_id === r.provider_person_id)),
       interview: iv ? { id: iv.id, status: iv.status, startsAt: iv.response?.lines.find((l) => l.id === iv.confirmed_line_id)?.starts_at.toISOString() ?? null, openTimes: iv.slot_minutes != null } : null,
     };

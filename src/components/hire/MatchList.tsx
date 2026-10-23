@@ -216,7 +216,7 @@ function QuickView({ m, jobId, onClose, onStar, onHide, prev, next }: { m: HireM
  *  is highlighted (lowest rate, most years, most skills); equal columns, a fixed label column; Hire / Remove per column. */
 const num = (t: string | null | undefined) => { const m = /\$([\d,]+(?:\.\d+)?)/.exec(t ?? ""); return m ? Number(m[1].replace(/,/g, "")) : null; };
 const skillsN = (m: HireMatch) => Number(/^(\d+)/.exec(m.detail.skillsMatched)?.[1] ?? 0);
-export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: HireMatch; proposed?: string | null; start?: string | null }[]; onClose: () => void; jobId?: string | null; onRemove?: (personId: string) => void }) {
+export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: HireMatch; proposed?: string | null; start?: string | null; qa?: { q: string; a: string }[] | null }[]; onClose: () => void; jobId?: string | null; onRemove?: (personId: string) => void }) {
   const withProposal = rows.some((r) => r.proposed !== undefined);
   const best = (vals: (number | null)[], pick: "min" | "max") => { const v = vals.filter((x): x is number => x != null); return v.length > 1 ? (pick === "min" ? Math.min(...v) : Math.max(...v)) : null; };
   const bestRate = best(rows.map((r) => num(r.proposed ?? r.m.rate)), "min");
@@ -236,6 +236,8 @@ export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: Hi
     ["Certifications", (r) => (r.m.detail.certifications.length ? <span title={r.m.detail.certifications.join(" · ")}>{r.m.detail.certifications.length} · {r.m.detail.certifications.slice(0, 3).join(" · ")}{r.m.detail.certifications.length > 3 ? " …" : ""}</span> : "—")],
     ["Location", (r) => r.m.detail.location ?? "—"],
     ["Products", (r) => r.m.detail.products.map((p) => p.title).join(" · ") || "—"],
+    // AQ-E004: a row per written question, answers side by side.
+    ...((rows.find((r) => r.qa?.length)?.qa ?? []).map((x, i) => [`Q${i + 1}: ${x.q}`, (r: (typeof rows)[number]) => <span className="whitespace-pre-wrap text-[13px]">{r.qa?.[i]?.a || "—"}</span>] as [string, (r: (typeof rows)[number]) => ReactNode])),
   ];
   return (
     <div role="dialog" aria-label="Compare" data-compare-table className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4" onClick={onClose}>
