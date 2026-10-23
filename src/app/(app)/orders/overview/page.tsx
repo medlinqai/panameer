@@ -16,8 +16,8 @@ export default async function Page() {
   const n = t.items.length;
   const tabs = [
     { key: "overview", label: "Overview", href: "/orders/overview", n },
-    { key: "orders", label: "Work Orders", href: "/orders" },
-    { key: "requests", label: "Service Requisitions", href: "/orders/work-requests" },
+    { key: "orders", label: "Orders", href: "/orders" },
+    { key: "requests", label: "Requests", href: "/orders/work-requests" },
   ];
   const firstBusy = t.band.findIndex((b) => b.count > 0);
   const band: BandStep[] = t.band.map((b, k) => ({ key: b.key, label: b.label, href: "/orders", current: k === firstBusy, muted: !b.count, bar: firstBusy >= 0 && k <= firstBusy ? "done" : "todo", needs: b.count > 0 && (b.key === "buyer" || b.key === "provider") && n > 0, top: <span className={`text-[22px] font-extrabold ${b.count ? (k === firstBusy ? "text-magenta" : "text-ink") : "text-state-border"}`}>{b.count}</span> }));
@@ -30,7 +30,7 @@ export default async function Page() {
           <div className="min-w-0 flex-[1_1_300px]">
             <span className="text-[12px] font-bold tracking-[0.12em] text-magenta">{dateLabel}</span>
             <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{n ? `${n} ${n === 1 ? "Thing Needs" : "Things Need"} Attention` : "Nothing Needs Attention"}</h1>
-            <p className="text-[14px] leading-relaxed text-state-inactive">{t.open} open Work Order{t.open === 1 ? "" : "s"} · <Link href="/orders" className="font-semibold">All Work Orders →</Link></p>
+            <p className="text-[14px] leading-relaxed text-state-inactive">{t.open} open Order{t.open === 1 ? "" : "s"} · <Link href="/orders" className="font-semibold">All Orders →</Link></p>
           </div>
           <div className="flex min-w-0 flex-[1_1_520px] flex-col border-b border-state-border">
             {n ? t.items.map((it) => (
@@ -39,10 +39,10 @@ export default async function Page() {
                 <div className="min-w-0 flex-1"><div className="text-[15px] font-bold">{it.what}</div><div className="text-[13px] text-state-inactive">{it.detail}</div></div>
                 <Link href={it.href} className={`${BTN_OUT} w-full sm:w-auto`}>{it.action}</Link>
               </div>
-            )) : <p className="border-t border-state-border py-4 text-[14px] text-state-inactive">None waiting. Work Orders to accept, change orders and deliveries to approve show here.</p>}
+            )) : <p className="border-t border-state-border py-4 text-[14px] text-state-inactive">None waiting. Orders to accept, change orders and deliveries to approve show here.</p>}
           </div>
         </section>
-        <PathBand steps={band} label="Work Order Path" />
+        <PathBand steps={band} label="Order Path" />
       </div>
     </div>
   );

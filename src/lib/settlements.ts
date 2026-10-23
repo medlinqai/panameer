@@ -96,7 +96,7 @@ export async function settleFormFor(viewer: Viewer, orderId: string): Promise<Se
     throw new SettlementError("Only the provider on this order can raise a payment request", "FORBIDDEN");
   if (!BILLABLE.includes(o.status))
     throw new SettlementError(
-      o.status === "ON_HOLD" ? "This work order is on hold. Payment requests wait until the customer releases the hold." : "A payment request can only be raised against an open or closed work order",
+      o.status === "ON_HOLD" ? "This order is on hold. Payment requests wait until the customer releases the hold." : "A payment request can only be raised against an open or closed order",
       "INVALID"
     );
 
@@ -195,7 +195,7 @@ export async function createSettlement(
   let resubmitsId: string | null = null;
   if (input.resubmitsId) {
     const prev = await prisma.paymentRequest.findUnique({ where: { id: input.resubmitsId }, select: { id: true, work_order_id: true, status: true } });
-    if (!prev || prev.work_order_id !== o.id) throw new SettlementError("That request is not on this work order", "INVALID");
+    if (!prev || prev.work_order_id !== o.id) throw new SettlementError("That request is not on this order", "INVALID");
     if (prev.status !== "REJECTED") throw new SettlementError("Only a sent-back request can be resubmitted", "INVALID");
     if (await prisma.paymentRequest.count({ where: { resubmits_id: prev.id } }))
       throw new SettlementError("That request has already been resubmitted", "INVALID");
@@ -221,7 +221,7 @@ export async function createSettlement(
   const orderLineById = new Map(o.lines.map((l) => [l.id, l]));
   for (const r of rows)
     if (!orderLineById.has(r.workOrderLineId))
-      throw new SettlementError("That line is not on this work order", "NOT_FOUND");
+      throw new SettlementError("That line is not on this order", "NOT_FOUND");
 
   // THE AGGREGATION — see the docblock. One draft per ORDER LINE, carrying
   const byOrderLine = new Map<string, { quantity: number; count: number; amountCents: number | null }>();
@@ -441,7 +441,7 @@ async function providerPersonIdOf(orderId: string): Promise<string> {
     where: { id: orderId },
     select: { provider_person_id: true },
   });
-  if (!o) throw new SettlementError("Work order not found", "NOT_FOUND");
+  if (!o) throw new SettlementError("Order not found", "NOT_FOUND");
   return o.provider_person_id;
 }
 
@@ -701,7 +701,7 @@ export async function approveSettlement(viewer: Viewer, id: string): Promise<Set
       throw new SettlementError(`Line ${l.line_number} is over-drawn: $${((l.drawn_amount_cents ?? 0) / 100).toFixed(2)} of $${(l.amount_cents / 100).toFixed(2)}. Send it back or raise a change order.`, "INVALID");
   }
   if (order && !PAYABLE.includes(order.status))
-    throw new SettlementError(order.status === "ON_HOLD" ? "This work order is on hold. Release the hold before approving." : "This work order can't take approvals", "INVALID");
+    throw new SettlementError(order.status === "ON_HOLD" ? "This order is on hold. Release the hold before approving." : "This order can't take approvals", "INVALID");
   await prisma.paymentRequest.updateMany({
     where: { id, status: "SUBMITTED" },
     data: { status: "APPROVED", decided_at: new Date(), decided_by_person_id: await personIdOf(viewer) },

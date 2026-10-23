@@ -187,7 +187,7 @@ export function StatisticsCards({
                 note="Work you were invited to, and what came of it."
               >
                 <StatFigureRow
-                  label="Service Requisitions"
+                  label="Requests"
                   figure={s.work.requestsReceived}
                   hint="Buyers who invited you to bid"
                 />
@@ -201,7 +201,7 @@ export function StatisticsCards({
                   figure={s.work.invitationsToPropose}
                 />
                 <StatFigureRow label="Interviews" figure={s.work.interviews} />
-                <StatFigureRow label="Work Orders" figure={s.work.workOrders} />
+                <StatFigureRow label="Orders" figure={s.work.workOrders} />
                 <StatFigureRow label="Earnings" figure={s.work.earnings} />
               </Card>
             }
@@ -289,7 +289,7 @@ export function honeyCells(s: Statistics): HoneyCell[] {
       key: "work",
       label: "Your Work",
       figure: s.work.workOrders,
-      counts: "work orders",
+      counts: "orders",
       href: "/find-work",
     },
   ];
@@ -311,12 +311,12 @@ export function workCreditLine(s: Statistics): string {
   const n = (f: Figure) => (typeof f === "number" ? f : 0);
   if (n(s.work.requestsReceived) > 0)
     bits.push(
-      `${n(s.work.requestsReceived)} service requisition${n(s.work.requestsReceived) === 1 ? "" : "s"} received`
+      `${n(s.work.requestsReceived)} request${n(s.work.requestsReceived) === 1 ? "" : "s"} received`
     );
   if (n(s.work.interviews) > 0)
     bits.push(`${n(s.work.interviews)} interview${n(s.work.interviews) === 1 ? "" : "s"}`);
   if (n(s.work.workOrders) > 0)
-    bits.push(`${n(s.work.workOrders)} work order${n(s.work.workOrders) === 1 ? "" : "s"}`);
+    bits.push(`${n(s.work.workOrders)} order${n(s.work.workOrders) === 1 ? "" : "s"}`);
   return bits.length
     ? `${bits.join(", ")}.`
     : "No work has reached you yet. Buyers find you through your profile and your service products.";

@@ -59,7 +59,7 @@ async function BuyerLower({ personId }: { personId: string }) {
   return (
     <section className="flex flex-wrap items-start gap-12">
       <div className="min-w-0 flex-[999_1_560px]"><HeadRow title="My Requests" />{open.length ? open.map((r) => <Row key={r.id} r={r} />) : <p className="py-5 text-[14px] text-state-inactive">No open requests. <Link href="/estimate/new">Request an Estimate</Link> and it shows here.</p>}</div>
-      <aside className="min-w-0 flex-[1_1_300px]"><HeadRow title="Awarded" />{done.length ? done.map((r) => <Row key={r.id} r={r} />) : <p className="py-5 text-[14px] text-state-inactive">Awarded estimates show here with their Work Order.</p>}</aside>
+      <aside className="min-w-0 flex-[1_1_300px]"><HeadRow title="Awarded" />{done.length ? done.map((r) => <Row key={r.id} r={r} />) : <p className="py-5 text-[14px] text-state-inactive">Awarded estimates show here with their Order.</p>}</aside>
     </section>
   );
 }
@@ -85,7 +85,7 @@ async function SellerLower({ personId }: { personId: string }) {
 
 async function BuyerList({ personId, tab, slice }: { personId: string; tab: string; slice?: string }) {
   const all = await buyerEstimateEvents(personId);
-  const scoped = tab === "in" ? all.filter((r) => r.in > 0 && !r.completed) : tab === "awarded" ? all.filter((r) => r.step === "Award" || r.step === "Work Order Created") : all;
+  const scoped = tab === "in" ? all.filter((r) => r.in > 0 && !r.completed) : tab === "awarded" ? all.filter((r) => r.step === "Award" || r.step === "Order Created") : all;
   const rows = scoped.filter((r) => inSlice(r, sliceOf(slice)));
   return (
     <div className="flex flex-col gap-5">

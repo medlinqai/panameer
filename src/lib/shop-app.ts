@@ -103,7 +103,7 @@ export async function shopOffers(viewer: Viewer, personId: string, side: ShopSid
 }
 
 export type ShopOrderRow = { stepIndex: number; stepDetail: string; typeName: string | null; category: string | null; completed: boolean; recurring: Recurring | null; productId: string | null; id: string; number: string; product: string; who: string; step: string; status: string; amountCents: number; needsAction: boolean; action: { label: string; href: string } | null; date: string };
-const STEP_OF = (status: string, billed: boolean, paid: boolean) => (paid ? "Paid" : billed ? "Delivered" : (RELEASED as readonly string[]).includes(status) || status === "CLOSED" ? "Work Order" : "Work Order");
+const STEP_OF = (status: string, billed: boolean, paid: boolean) => (paid ? "Paid" : billed ? "Delivered" : (RELEASED as readonly string[]).includes(status) || status === "CLOSED" ? "Order" : "Order");
 
 export async function shopOrders(viewer: Viewer, personId: string, side: ShopSide): Promise<ShopOrderRow[]> {
   const orders = await prisma.workOrder.findMany({
@@ -147,10 +147,10 @@ export async function shopOrders(viewer: Viewer, personId: string, side: ShopSid
     const stepDetail = paid ? "Paid"
       : approved ? `Delivered · payment ${side === "buyer" ? "due from you" : "on the way"}`
       : billed ? `Delivered · ${you(side === "buyer")} to approve`
-      : o.status === "ISSUED" && !o.buyer_accepted_at ? `Work Order · ${you(side === "buyer")} to accept`
-      : o.status === "ISSUED" ? `Work Order · ${you(side === "seller")} to accept`
-      : (RELEASED as readonly string[]).includes(o.status) ? `Work Order · Released · ${side === "seller" ? "deliver and request payment" : "in delivery"}`
-      : o.status === "CLOSED" || o.status === "FINALLY_CLOSED" ? "Work Order · Closed" : `Work Order · ${o.status.toLowerCase().replace(/_/g, " ")}`;
+      : o.status === "ISSUED" && !o.buyer_accepted_at ? `Order · ${you(side === "buyer")} to accept`
+      : o.status === "ISSUED" ? `Order · ${you(side === "seller")} to accept`
+      : (RELEASED as readonly string[]).includes(o.status) ? `Order · Released · ${side === "seller" ? "deliver and request payment" : "in delivery"}`
+      : o.status === "CLOSED" || o.status === "FINALLY_CLOSED" ? "Order · Closed" : `Order · ${o.status.toLowerCase().replace(/_/g, " ")}`;
     const sl = slices.get(o.id);
     const firstProd = products.find((p) => p.id === o.lines.find((l) => l.service_product_id)?.service_product_id);
     return { stepIndex, stepDetail, typeName: firstProd?.serviceType?.name ?? null, category: firstProd?.serviceType?.serviceCategory?.businessType?.commodityGroup?.name ?? firstProd?.serviceType?.serviceCategory?.commodityGroup?.name ?? null, completed: !!sl?.completed || (paid && !sl?.recurring), recurring: sl?.recurring ?? null, productId: o.lines.find((l) => l.service_product_id)?.service_product_id ?? null, id: o.id, number: o.order_number, product, who, step: STEP_OF(o.status, billed, paid), status: o.status, amountCents: amount, needsAction: needs, action: action ?? { label: "Open", href: `/orders/${o.id}` }, date: short(o.created_at) };
@@ -169,8 +169,8 @@ export async function shopStrip(viewer: Viewer, personId: string, side: ShopSide
   return [
     { key: "browse", label: "Browse", count: 0, href: "/shop?tab=browse" },
     { key: "offer", label: "Offer", count: offers, href: "/shop?tab=offers" },
-    { key: "wr", label: "Service Requisition", count: cart, href: side === "buyer" ? "/shop?tab=cart" : base },
-    { key: "wo", label: "Work Order", count: by("Work Order"), href: `${base}&step=Work+Order` },
+    { key: "wr", label: "Request", count: cart, href: side === "buyer" ? "/shop?tab=cart" : base },
+    { key: "wo", label: "Order", count: by("Order"), href: `${base}&step=Work+Order` },
     { key: "delivered", label: "Delivered", count: by("Delivered"), href: `${base}&step=Delivered` },
     { key: "paid", label: "Paid", count: by("Paid"), href: `${base}&step=Paid` },
   ];

@@ -131,7 +131,7 @@ export const REQUESTER_NAV: NavItem[] = [
   { label: "Estimate", heading: "Estimate", href: "/estimate", icon: "ReceiptText" },
   {
     label: "Orders",
-    heading: "Work Orders",
+    heading: "Orders",
     href: "/orders",
     icon: "ClipboardCheck",
     requires: "canHireTalent",
@@ -192,7 +192,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
 export const WORK_FEED_EXTRA_TITLES: NavItem[] = [
   { label: "Find Work", href: "/find-work" },
   { label: "Best Matches", href: "/find-work/for-my-skills" },
-  { label: "My Service Requisitions (Saved)", href: "/find-work/saved" },
+  { label: "My Requests (Saved)", href: "/find-work/saved" },
   { label: "Availability Requests", href: "/find-work/invitations" },
   { label: "My Responses", href: "/find-work/proposals" },
 ];
@@ -220,7 +220,7 @@ export const PROVIDER_NAV: NavItem[] = [
     icon: "Tag",
   },
   { label: "Estimate", heading: "Estimate", href: "/estimate", icon: "ReceiptText" },
-  { label: "Orders", heading: "Work Orders", href: "/orders", icon: "ClipboardCheck" },
+  { label: "Orders", heading: "Orders", href: "/orders", icon: "ClipboardCheck" },
 ];
 
 // export const PERSONA_NAV_PRIMARY: NavItem[] = [
@@ -340,8 +340,8 @@ export const ADMIN_NAV: NavGroup[] = [
     items: [
       { label: "Usage", href: "/admin/usage", icon: "BarChart3" },
       { label: "Learn", href: "/admin/learn", icon: "GraduationCap" },
-      { label: "Service Requisitions", href: "/admin/work-requests", icon: "ClipboardList" },
-      { label: "Work Orders", href: "/admin/work-orders", icon: "ClipboardCheck" },
+      { label: "Requests", href: "/admin/work-requests", icon: "ClipboardList" },
+      { label: "Orders", href: "/admin/work-orders", icon: "ClipboardCheck" },
       { label: "Work Packages", href: "/admin/work-packages", icon: "Package" },
       { label: "Contracts", href: "/admin/contracts", icon: "FileSignature" },
       { label: "Settlements", href: "/admin/settlements", icon: "Scale" },

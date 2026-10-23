@@ -52,12 +52,12 @@ export async function orderHistory(orderId: string): Promise<HistoryEvent[]> {
   const who = await names([o.buyer_person_id, o.provider_person_id]);
   const buyer = who.get(o.buyer_person_id) ?? "Buyer";
   const provider = who.get(o.provider_person_id) ?? "Provider";
-  const out: HistoryEvent[] = [{ at: o.created_at.toISOString(), who: buyer, what: `created work order ${o.order_number}` }];
-  if (o.provider_accepted_at) out.push({ at: o.provider_accepted_at.toISOString(), who: provider, what: "accepted the work order" });
-  if (o.buyer_released_at) out.push({ at: o.buyer_released_at.toISOString(), who: buyer, what: "released the work order — work can start" });
+  const out: HistoryEvent[] = [{ at: o.created_at.toISOString(), who: buyer, what: `created order ${o.order_number}` }];
+  if (o.provider_accepted_at) out.push({ at: o.provider_accepted_at.toISOString(), who: provider, what: "accepted the order" });
+  if (o.buyer_released_at) out.push({ at: o.buyer_released_at.toISOString(), who: buyer, what: "released the order — work can start" });
   const reqs = await prisma.paymentRequest.findMany({ where: { work_order_id: o.id }, select: { id: true } });
   out.push(...(await settlementEvents(reqs.map((r) => r.id), who, true)));
-  if (o.status === "CLOSED") out.push({ at: o.updated_at.toISOString(), who: "", what: "work order closed" });
+  if (o.status === "CLOSED") out.push({ at: o.updated_at.toISOString(), who: "", what: "order closed" });
   const events = await prisma.workOrderEvent.findMany({ where: { work_order_id: o.id }, orderBy: { created_at: "asc" } });
   const eventWho = await names(events.map((e) => e.person_id));
   for (const e of events) out.push({ at: e.created_at.toISOString(), who: eventWho.get(e.person_id ?? "") ?? "", what: e.text });

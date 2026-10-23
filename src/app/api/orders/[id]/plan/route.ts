@@ -27,7 +27,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const plan = await ensurePlan(key, order.order_number, gate);
     const ownRow = async (rowId: string) => {
       const r = await prisma.planRow.findUnique({ where: { id: rowId }, select: { plan_id: true } });
-      if (!r || r.plan_id !== plan.id) throw new PlanError("That row isn't on this work order's plan.", "NOT_FOUND");
+      if (!r || r.plan_id !== plan.id) throw new PlanError("That row isn't on this order's plan.", "NOT_FOUND");
       return rowId;
     };
     const edited = (text = "edited the plan") => recordWoEvent(order.id, personId, "plan.edit", text);
@@ -90,7 +90,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         const from = String(body.from ?? "");
         const allowed = await copyableOrders(personId, order.id);
         const src = allowed.find((o) => o.id === from);
-        if (!src) return NextResponse.json({ error: "Pick one of your past work orders that has a plan." }, { status: 400 });
+        if (!src) return NextResponse.json({ error: "Pick one of your past orders that has a plan." }, { status: 400 });
         await copyPlan(woPlanKey(src.id), key, plan.title, gate);
         await recordWoEvent(order.id, personId, "plan.start", `copied the plan from ${src.number}`);
         return NextResponse.json({ ok: true });

@@ -60,7 +60,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "1. As an eligible referrer, you share your unique referral link or code with an eligible referee; 2. The eligible referee registers for a Panameer Account using your unique referral link or code; 3. The eligible referee enters into a Service Work Order within the time frame designated in the referral invitation; and 4. Any other requirements as detailed in your specific Referral Program offer are met. Check your Referral Program offer for eligibility details such as required minimum spend by the Referee or time limits."
+        "text": "1. As an eligible referrer, you share your unique referral link or code with an eligible referee; 2. The eligible referee registers for a Panameer Account using your unique referral link or code; 3. The eligible referee enters into a Service Order within the time frame designated in the referral invitation; and 4. Any other requirements as detailed in your specific Referral Program offer are met. Check your Referral Program offer for eligibility details such as required minimum spend by the Referee or time limits."
       },
       {
         "t": "h2",
@@ -888,7 +888,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Permitted Uses of the Panameer API. Your use of the Panameer API is limited to the purpose of facilitating your own or your Users’ use of the Panameer Site and Site Services. Some examples of permitted uses of the Panameer API would be to create Applications that: Allow Panameer Users to search for and browse Panameer job postings with a customized interface; Allow Panameer Users to manage active Work Orders; Allow Panameer Users to apply to jobs on Panameer; or Allow Panameer Users to manage invoices, billing, and communications on Panameer."
+        "text": "Permitted Uses of the Panameer API. Your use of the Panameer API is limited to the purpose of facilitating your own or your Users’ use of the Panameer Site and Site Services. Some examples of permitted uses of the Panameer API would be to create Applications that: Allow Panameer Users to search for and browse Panameer job postings with a customized interface; Allow Panameer Users to manage active Orders; Allow Panameer Users to apply to jobs on Panameer; or Allow Panameer Users to manage invoices, billing, and communications on Panameer."
       },
       {
         "t": "p",
@@ -1288,11 +1288,11 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "If a Service Buyer and a Provider (defined below) enter into a Fixed-Price Work Order on the Panameer site, these Fixed Price Service Work Order Escrow Instructions (“Escrow Instructions”) apply. These Escrow Instructions govern Fixed-Price Escrow Accounts. If you have a Fixed-Price Work Order and wish to make or receive a miscellaneous or bonus payment, those activities are governed by the Hourly, Bonus, and Expense Payment Agreement with Escrow Instructions."
+        "text": "If a Service Buyer and a Provider (defined below) enter into a Fixed-Price Order on the Panameer site, these Fixed Price Service Order Escrow Instructions (“Escrow Instructions”) apply. These Escrow Instructions govern Fixed-Price Escrow Accounts. If you have a Fixed-Price Order and wish to make or receive a miscellaneous or bonus payment, those activities are governed by the Hourly, Bonus, and Expense Payment Agreement with Escrow Instructions."
       },
       {
         "t": "p",
-        "text": "To the extent permitted by applicable law, we may modify these Escrow Instructions without prior notice to you, and any revisions to these Escrow Instructions will take effect when posted on the Site unless otherwise stated. The version of these Escrow Instructions in effect on the date any Fixed-Price Work Order is entered into apply to that Work Order. Please check the Site often for updates."
+        "text": "To the extent permitted by applicable law, we may modify these Escrow Instructions without prior notice to you, and any revisions to these Escrow Instructions will take effect when posted on the Site unless otherwise stated. The version of these Escrow Instructions in effect on the date any Fixed-Price Order is entered into apply to that Order. Please check the Site often for updates."
       },
       {
         "t": "p",
@@ -1312,7 +1312,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "By clicking to fund Escrow (a “Funding Approval”) or to accept a Fixed-Price Work Order, Service Buyer and Provider are deemed to have executed these Escrow Instructions electronically, effective on the date Provider clicks to accept the engagement, pursuant to California Civil Code Section 1633.8 and the federal Electronic Signatures in Global and National Commerce Act, 15 U.S.C. Sec. 7001, et seq., as may be amended from time to time (the \"E-Sign Act\"). Doing so constitutes an acknowledgement that Service Buyer and Provider agree to conduct the transaction electronically, and are able to electronically receive, download, and print these Escrow Instructions. All references to the Escrow in these Escrow Instructions will include the initial Funding Approval and any additional Funding Approval for a Fixed-Price Work Order."
+        "text": "By clicking to fund Escrow (a “Funding Approval”) or to accept a Fixed-Price Order, Service Buyer and Provider are deemed to have executed these Escrow Instructions electronically, effective on the date Provider clicks to accept the engagement, pursuant to California Civil Code Section 1633.8 and the federal Electronic Signatures in Global and National Commerce Act, 15 U.S.C. Sec. 7001, et seq., as may be amended from time to time (the \"E-Sign Act\"). Doing so constitutes an acknowledgement that Service Buyer and Provider agree to conduct the transaction electronically, and are able to electronically receive, download, and print these Escrow Instructions. All references to the Escrow in these Escrow Instructions will include the initial Funding Approval and any additional Funding Approval for a Fixed-Price Order."
       },
       {
         "t": "p",
@@ -1324,7 +1324,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Once a Service Buyer and Provider have agreed to a Service Work Order, and the Service Buyer and Provider have selected “Agree” on the send offer, accept offer, or pages relating to the Service Work Order to accept the Terms of Service (including these Escrow Instructions), these Escrow Instructions constitute a binding agreement between Service Buyer, Provider, and Panameer SA (collectively, the “Parties”). Service Buyer and Provider must execute (by digital signature or by a method mutually agreed upon by both parties), and Panameer SA must agree to, any supplemental instruction or addition, deletion or alteration thereto in writing (collectively the “Supplemental Escrow Instruction”). Panameer SA reserves the right to reject any Supplemental Escrow Instruction."
+        "text": "Once a Service Buyer and Provider have agreed to a Service Order, and the Service Buyer and Provider have selected “Agree” on the send offer, accept offer, or pages relating to the Service Order to accept the Terms of Service (including these Escrow Instructions), these Escrow Instructions constitute a binding agreement between Service Buyer, Provider, and Panameer SA (collectively, the “Parties”). Service Buyer and Provider must execute (by digital signature or by a method mutually agreed upon by both parties), and Panameer SA must agree to, any supplemental instruction or addition, deletion or alteration thereto in writing (collectively the “Supplemental Escrow Instruction”). Panameer SA reserves the right to reject any Supplemental Escrow Instruction."
       },
       {
         "t": "h2",
@@ -1332,7 +1332,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "By sending a Work Order offer to Provider or accepting a Work Order offer from Provider, Service Buyer agrees to deposit project funds for the amount of the first Milestone (as defined on the Site), or, if there are no Milestones, the full amount of the Service Work Order. Additional Milestones may be funded on the same Work Order by Service Buyer by selecting the button to add an additional Milestone or to activate the next Milestone on the Site. Project funds deposited by Service Buyer remain in the Service Buyer Escrow Account until they are released to the Provider Escrow Account or released to Service Buyer Escrow Account. Panameer SA will release project funds held in escrow pursuant to Section 4 of these Escrow Instructions (Release and Delivery of Amounts in Escrow)."
+        "text": "By sending an Order offer to Provider or accepting an Order offer from Provider, Service Buyer agrees to deposit project funds for the amount of the first Milestone (as defined on the Site), or, if there are no Milestones, the full amount of the Service Order. Additional Milestones may be funded on the same Order by Service Buyer by selecting the button to add an additional Milestone or to activate the next Milestone on the Site. Project funds deposited by Service Buyer remain in the Service Buyer Escrow Account until they are released to the Provider Escrow Account or released to Service Buyer Escrow Account. Panameer SA will release project funds held in escrow pursuant to Section 4 of these Escrow Instructions (Release and Delivery of Amounts in Escrow)."
       },
       {
         "t": "h3",
@@ -1356,7 +1356,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Provider and Service Buyer authorize and instruct Panameer SA to immediately release project funds to the Provider Escrow Account on the occurrence of any of the following Release Conditions, such authorization and instruction to be irrevocable except as expressly provided in these Escrow Instructions: 1. Service Buyer affirmatively selects the option to release project funds for a Milestone or Service Work Order to Provider."
+        "text": "Provider and Service Buyer authorize and instruct Panameer SA to immediately release project funds to the Provider Escrow Account on the occurrence of any of the following Release Conditions, such authorization and instruction to be irrevocable except as expressly provided in these Escrow Instructions: 1. Service Buyer affirmatively selects the option to release project funds for a Milestone or Service Order to Provider."
       },
       {
         "t": "p",
@@ -1404,7 +1404,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Provider and Service Buyer authorize and instruct Panameer SA to immediately release project funds to the Service Buyer Escrow Account on the occurrence of any of the following Release Conditions, such authorization and instruction to be irrevocable except as expressly provided in these Escrow Instructions: 1. Provider cancels the Service Work Order or accepts Service Buyer’s request to cancel the Service Work Order (as described in Section 4.4), and project funds for a Milestone or the Service Work Order are held in Escrow."
+        "text": "Provider and Service Buyer authorize and instruct Panameer SA to immediately release project funds to the Service Buyer Escrow Account on the occurrence of any of the following Release Conditions, such authorization and instruction to be irrevocable except as expressly provided in these Escrow Instructions: 1. Provider cancels the Service Order or accepts Service Buyer’s request to cancel the Service Order (as described in Section 4.4), and project funds for a Milestone or the Service Order are held in Escrow."
       },
       {
         "t": "p",
@@ -1412,7 +1412,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "3. Service Buyer and Provider agree to close the Service Work Order without release of funds to the Provider Escrow Account."
+        "text": "3. Service Buyer and Provider agree to close the Service Order without release of funds to the Provider Escrow Account."
       },
       {
         "t": "p",
@@ -1448,7 +1448,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "12. For Service Work Orders entered through a service product, Service Buyer has failed to respond to a request for project requirements within 48 hours, at which point any funds in escrow will be released to Service Buyer and the Work Order will be closed."
+        "text": "12. For Service Orders entered through a service product, Service Buyer has failed to respond to a request for project requirements within 48 hours, at which point any funds in escrow will be released to Service Buyer and the Order will be closed."
       },
       {
         "t": "h3",
@@ -1456,15 +1456,15 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "To be fair to Service Buyers and Providers, Panameer has a procedure for Fixed-Price Work Orders that appear to be Dormant Engagements (as defined below). For purposes of determining dormant status, “activity” means a change to the Service Work Order, including Milestone updates or requests, Fixed-Price Escrow Funding, Fixed-Price Escrow Release, Fixed-Price Escrow Refunds, Funding requests, Release requests, requests to close the Fixed-Price Work Order, or actions under the Dispute Assistance Program."
+        "text": "To be fair to Service Buyers and Providers, Panameer has a procedure for Fixed-Price Orders that appear to be Dormant Engagements (as defined below). For purposes of determining dormant status, “activity” means a change to the Service Order, including Milestone updates or requests, Fixed-Price Escrow Funding, Fixed-Price Escrow Release, Fixed-Price Escrow Refunds, Funding requests, Release requests, requests to close the Fixed-Price Order, or actions under the Dispute Assistance Program."
       },
       {
         "t": "p",
-        "text": "A “Dormant Engagement” is a Fixed-Price Work Order that has a Fixed-Price Escrow Account with a balance but has had no activity for 90 consecutive calendar days after the last Milestone date contained in the Service Work Order terms (“Dormant Date”). Dormant Engagements are subject to the following rules: 1. Panameer will notify Service Buyer when the Fixed-Price Work Order becomes Dormant."
+        "text": "A “Dormant Engagement” is a Fixed-Price Order that has a Fixed-Price Escrow Account with a balance but has had no activity for 90 consecutive calendar days after the last Milestone date contained in the Service Order terms (“Dormant Date”). Dormant Engagements are subject to the following rules: 1. Panameer will notify Service Buyer when the Fixed-Price Order becomes Dormant."
       },
       {
         "t": "p",
-        "text": "2. If the Service Buyer does not take any action within 7 calendar days after the Dormant Date and notification, Panameer will notify Provider that the Fixed-Price Work Order is Dormant (“Provider Notice of Dormant Engagement”)."
+        "text": "2. If the Service Buyer does not take any action within 7 calendar days after the Dormant Date and notification, Panameer will notify Provider that the Fixed-Price Order is Dormant (“Provider Notice of Dormant Engagement”)."
       },
       {
         "t": "p",
@@ -1480,7 +1480,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider are encouraged to come to a mutual agreement if refunds or cancellations are necessary. If there are no project funds in Escrow, Service Buyer and Provider have the ability to cancel the Service Work Order by clicking to close the Service Work Order. If project funds are held in Escrow, refunds and cancellations must be initiated by Service Buyer or Provider by following the steps in this Section."
+        "text": "Service Buyer and Provider are encouraged to come to a mutual agreement if refunds or cancellations are necessary. If there are no project funds in Escrow, Service Buyer and Provider have the ability to cancel the Service Order by clicking to close the Service Order. If project funds are held in Escrow, refunds and cancellations must be initiated by Service Buyer or Provider by following the steps in this Section."
       },
       {
         "t": "h4",
@@ -1488,11 +1488,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If Provider wants to cancel a Service Work Order with funds held in Escrow, Provider must select “End Work Order” on the Panameer platform. When Provider ends the Service Work Order on the Panameer platform, Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Work Order at that time."
+        "text": "If Provider wants to cancel a Service Order with funds held in Escrow, Provider must select “End Order” on the Panameer platform. When Provider ends the Service Order on the Panameer platform, Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Order at that time."
       },
       {
         "t": "p",
-        "text": "Provider may issue a refund to Service Buyer up to the amount paid on a Service Work Order in the past 180 days by selecting “Give a Refund” on the Panameer platform. Provider may not issue a refund in an amount greater than the combined amount of funds held in Provider Escrow Account, funds for transactions pending to be placed in the Provider Escrow Account, and funds for submitted Milestones. By selecting the option to give a refund, Provider agrees that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all Escrow funds currently held in the Provider Escrow Account and such funds as may be placed into the Provider Escrow Account once the funds are available, until the entire refund is provided to Service Buyer."
+        "text": "Provider may issue a refund to Service Buyer up to the amount paid on a Service Order in the past 180 days by selecting “Give a Refund” on the Panameer platform. Provider may not issue a refund in an amount greater than the combined amount of funds held in Provider Escrow Account, funds for transactions pending to be placed in the Provider Escrow Account, and funds for submitted Milestones. By selecting the option to give a refund, Provider agrees that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all Escrow funds currently held in the Provider Escrow Account and such funds as may be placed into the Provider Escrow Account once the funds are available, until the entire refund is provided to Service Buyer."
       },
       {
         "t": "h4",
@@ -1500,7 +1500,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If Service Buyer wants to cancel a Service Work Order with funds held in Escrow, Service Buyer must select “End Work Order” on the Panameer platform. Provider must select the option to either approve or dispute Service Buyer’s cancellation within 7 calendar days. If Provider approves the cancellation, Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Work Order at that time. If Provider is using the Site on a mobile device and does not have the ability to select the option to approve or dispute the cancellation on the mobile website or application, Provider must dispute Service Buyer’s cancellation via support ticket within 7 calendar days. If Provider takes no action within 7 calendar days from the date notification of the cancellation is sent to Provider by Panameer, Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Work Order at that time. If Provider disputes the cancellation, Provider and Service Buyer will be offered Panameer Dispute Assistance (as described in Section 6)."
+        "text": "If Service Buyer wants to cancel a Service Order with funds held in Escrow, Service Buyer must select “End Order” on the Panameer platform. Provider must select the option to either approve or dispute Service Buyer’s cancellation within 7 calendar days. If Provider approves the cancellation, Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Order at that time. If Provider is using the Site on a mobile device and does not have the ability to select the option to approve or dispute the cancellation on the mobile website or application, Provider must dispute Service Buyer’s cancellation via support ticket within 7 calendar days. If Provider takes no action within 7 calendar days from the date notification of the cancellation is sent to Provider by Panameer, Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Order at that time. If Provider disputes the cancellation, Provider and Service Buyer will be offered Panameer Dispute Assistance (as described in Section 6)."
       },
       {
         "t": "h3",
@@ -1524,7 +1524,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If Service Buyer and Provider fail to come to a mutual resolution by way of the Refund and Cancellation process as stated in Section 4.4, Panameer provides the dispute assistance program administered by Panameer and described in this Section 6 (the “Dispute Assistance Program”) as a mechanism to resolve the dispute. If the funds in dispute are held in Escrow, the Dispute Assistance Program will proceed as described in Section 6.1. If the funds in dispute have been released, the Dispute Assistance Program will proceed as described in Section 6.2. The Dispute Assistance Program is not available for disputes filed or initiated past the Dispute Assistance deadlines, as set forth in Sections 6.1 and 6.2, as applicable. The Dispute Assistance Program is offered as a form of non-binding assistance to facilitate communication and potential resolution of disputes between Service Buyers and providers. The Dispute Assistance Program as administered by Panameer in this Section 6 does not evaluate the quality or functionality of work and cannot render binding judgment or determination as to the parties’ respective rights to the disputed funds. Fixed-Price Work Orders with Enterprise Service Buyers or Panameer Business Service Buyers (defined in the Fee and ACH Authorization Agreement) are not subject to Sections 6 and 7, regarding Panameer’s Dispute Assistance Program and Arbitration, respectively."
+        "text": "If Service Buyer and Provider fail to come to a mutual resolution by way of the Refund and Cancellation process as stated in Section 4.4, Panameer provides the dispute assistance program administered by Panameer and described in this Section 6 (the “Dispute Assistance Program”) as a mechanism to resolve the dispute. If the funds in dispute are held in Escrow, the Dispute Assistance Program will proceed as described in Section 6.1. If the funds in dispute have been released, the Dispute Assistance Program will proceed as described in Section 6.2. The Dispute Assistance Program is not available for disputes filed or initiated past the Dispute Assistance deadlines, as set forth in Sections 6.1 and 6.2, as applicable. The Dispute Assistance Program is offered as a form of non-binding assistance to facilitate communication and potential resolution of disputes between Service Buyers and providers. The Dispute Assistance Program as administered by Panameer in this Section 6 does not evaluate the quality or functionality of work and cannot render binding judgment or determination as to the parties’ respective rights to the disputed funds. Fixed-Price Orders with Enterprise Service Buyers or Panameer Business Service Buyers (defined in the Fee and ACH Authorization Agreement) are not subject to Sections 6 and 7, regarding Panameer’s Dispute Assistance Program and Arbitration, respectively."
       },
       {
         "t": "h3",
@@ -1532,7 +1532,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "This Section applies to disputes over funds that are held in Escrow as of the date the dispute is filed (“Escrow Dispute”). The scope of the Escrow Dispute may cover the entirety of the Fixed-Price Work Order and all Milestones previously funded, approved, and released. In the event of an Escrow Dispute, funds in Escrow will remain in Escrow while the Dispute Assistance Program or Arbitration, as applicable, is being administered. The Dispute Assistance Program for an Escrow Dispute will be administered as set forth below: 1. Escrow Dispute Assistance Deadline: Escrow Disputes must be initiated before the funds in Escrow have been released in order to be eligible for the Dispute Assistance Program under"
+        "text": "This Section applies to disputes over funds that are held in Escrow as of the date the dispute is filed (“Escrow Dispute”). The scope of the Escrow Dispute may cover the entirety of the Fixed-Price Order and all Milestones previously funded, approved, and released. In the event of an Escrow Dispute, funds in Escrow will remain in Escrow while the Dispute Assistance Program or Arbitration, as applicable, is being administered. The Dispute Assistance Program for an Escrow Dispute will be administered as set forth below: 1. Escrow Dispute Assistance Deadline: Escrow Disputes must be initiated before the funds in Escrow have been released in order to be eligible for the Dispute Assistance Program under"
       },
       {
         "t": "p",
@@ -1540,7 +1540,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "2. Initiating A Dispute: Service Buyers have the option to release partial milestone payments or request an Escrow refund. In turn, Providers and Recruiters may initiate an Escrow Dispute when a Service Buyer fails to release a Milestone payment, releases a partial milestone payment, request an escrow refund, or ends the project with an escrow balance, despite any purported delivery of work. More information on how to file a dispute on active or ended Work Orders can be found"
+        "text": "2. Initiating A Dispute: Service Buyers have the option to release partial milestone payments or request an Escrow refund. In turn, Providers and Recruiters may initiate an Escrow Dispute when a Service Buyer fails to release a Milestone payment, releases a partial milestone payment, request an escrow refund, or ends the project with an escrow balance, despite any purported delivery of work. More information on how to file a dispute on active or ended Orders can be found"
       },
       {
         "t": "p",
@@ -1572,7 +1572,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "This Section applies to disputes filed by Service Buyers or Providers over funds that have been released from Escrow as of the date the dispute is filed (“Dispute Mediation”). The scope of the Dispute Mediation may cover any portion of or the entirety of the Fixed Price Work Order and any Milestone previously funded, approved, and released. The Dispute Assistance Program for Dispute Mediation will be administered as set forth below:"
+        "text": "This Section applies to disputes filed by Service Buyers or Providers over funds that have been released from Escrow as of the date the dispute is filed (“Dispute Mediation”). The scope of the Dispute Mediation may cover any portion of or the entirety of the Fixed Price Order and any Milestone previously funded, approved, and released. The Dispute Assistance Program for Dispute Mediation will be administered as set forth below:"
       },
       {
         "t": "p",
@@ -1592,7 +1592,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If the Provider rejects the request for a refund, grants a partial refund that is subsequently rejected by the Service Buyer, or takes no action, the dispute will be referred to the Dispute Assistance Program. More information on how to file a dispute on active or ended Work Orders can be found here."
+        "text": "If the Provider rejects the request for a refund, grants a partial refund that is subsequently rejected by the Service Buyer, or takes no action, the dispute will be referred to the Dispute Assistance Program. More information on how to file a dispute on active or ended Orders can be found here."
       },
       {
         "t": "h3",
@@ -1628,7 +1628,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "After a “Notice of Non-Resolution” is issued from the Panameer Dispute Assistance Program, Provider and Service Buyer each has the right to demand Arbitration of a Fixed-Price Work Order if the Fixed-Price Escrow associated with the Fixed-Price Work Order has been funded at least once. The demand for Arbitration must be communicated to the Escrow Disputes Team or Dispute Mediation Team, as applicable, within 7 calendar days of the date of the Notice of Non-Resolution. In any Arbitration, each of you and the other User is a “Dispute Party,” and collectively you are the “Dispute Parties.” Any Arbitration under this Section 7 will be conducted by a neutral third-party Arbitration service (the \"Arbitration Service Provider\"), Ejudicate, Inc. d/b/a BRIEF, unless Panameer chooses another Arbitration service. The Arbitration rules and fees are set out in Appendix A to these Escrow Instructions."
+        "text": "After a “Notice of Non-Resolution” is issued from the Panameer Dispute Assistance Program, Provider and Service Buyer each has the right to demand Arbitration of a Fixed-Price Order if the Fixed-Price Escrow associated with the Fixed-Price Order has been funded at least once. The demand for Arbitration must be communicated to the Escrow Disputes Team or Dispute Mediation Team, as applicable, within 7 calendar days of the date of the Notice of Non-Resolution. In any Arbitration, each of you and the other User is a “Dispute Party,” and collectively you are the “Dispute Parties.” Any Arbitration under this Section 7 will be conducted by a neutral third-party Arbitration service (the \"Arbitration Service Provider\"), Ejudicate, Inc. d/b/a BRIEF, unless Panameer chooses another Arbitration service. The Arbitration rules and fees are set out in Appendix A to these Escrow Instructions."
       },
       {
         "t": "h3",
@@ -1676,7 +1676,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "4. Arbitration Instructions: If both parties timely submit the Arbitration Payment, or if one party elects to pay the full Arbitration fee for both parties, Panameer will instruct the parties on the process for initiating the Arbitration with the Arbitration Service Provider. After the parties have initiated the Arbitration, Panameer will provide the Arbitration Service Provider with relevant documentation, including information collected in the Escrow Dispute or Dispute Mediation process and contents of the Contract Room. The scope of Arbitration may cover the entirety of the Fixed-Price Work Order and all Milestones previously funded, approved, and released."
+        "text": "4. Arbitration Instructions: If both parties timely submit the Arbitration Payment, or if one party elects to pay the full Arbitration fee for both parties, Panameer will instruct the parties on the process for initiating the Arbitration with the Arbitration Service Provider. After the parties have initiated the Arbitration, Panameer will provide the Arbitration Service Provider with relevant documentation, including information collected in the Escrow Dispute or Dispute Mediation process and contents of the Contract Room. The scope of Arbitration may cover the entirety of the Fixed-Price Order and all Milestones previously funded, approved, and released."
       },
       {
         "t": "h3",
@@ -1732,7 +1732,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Panameer, in its sole discretion, reserves the right to suspend or terminate your User Account, as defined in Section 1.4 of the User Agreement, immediately upon giving notice to you if Panameer believes you may be abusing the Dispute Assistance Program or as otherwise permitted by the Terms of Service, which may impact your ability to withdraw funds. However, any disputes for any Fixed-Price Work Orders that existed prior to termination will be subject to the Terms of Service."
+        "text": "Panameer, in its sole discretion, reserves the right to suspend or terminate your User Account, as defined in Section 1.4 of the User Agreement, immediately upon giving notice to you if Panameer believes you may be abusing the Dispute Assistance Program or as otherwise permitted by the Terms of Service, which may impact your ability to withdraw funds. However, any disputes for any Fixed-Price Orders that existed prior to termination will be subject to the Terms of Service."
       },
       {
         "t": "h2",
@@ -1772,7 +1772,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "1. The amount at issue in any claims or counterclaims relating to a Fixed-Price Work Order will be limited to the sum still held in Escrow and the sum previously released from Escrow for the Fixed-Price Work Order."
+        "text": "1. The amount at issue in any claims or counterclaims relating to a Fixed-Price Order will be limited to the sum still held in Escrow and the sum previously released from Escrow for the Fixed-Price Order."
       },
       {
         "t": "h2",
@@ -1780,7 +1780,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "3. All proceedings will be “on documents,” unless the parties opt for and fund payment for the additional cost of a live hearing (see fees below). The evidence admissible will consist solely and exclusively of documents and communications between the parties and related to the Work Order, and testimony if a live hearing is conducted. The arbitrator's award will be based on the supporting, relevant, admissible documents and statements. Once arbitration is initiated, the failure of one party or the other to respond to an arbitrator request or otherwise continue to participate in the Arbitration will not prevent the arbitrator from making an award."
+        "text": "3. All proceedings will be “on documents,” unless the parties opt for and fund payment for the additional cost of a live hearing (see fees below). The evidence admissible will consist solely and exclusively of documents and communications between the parties and related to the Order, and testimony if a live hearing is conducted. The arbitrator's award will be based on the supporting, relevant, admissible documents and statements. Once arbitration is initiated, the failure of one party or the other to respond to an arbitrator request or otherwise continue to participate in the Arbitration will not prevent the arbitrator from making an award."
       },
       {
         "t": "p",
@@ -1912,11 +1912,11 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "Users who enter into a Service Work Order on the Site with another User are free to agree to these Optional Service Terms in whole or in part, or to agree to different or additional terms for their Service Work Order(s). However, if and to the extent that the Users who are party to a Service Work Order have not agreed to different terms, then they agree to incorporate these Optional Terms. Users may not, by agreement amongst themselves, alter the rights or responsibilities of Panameer or Panameer SA, including any provision of the Escrow Instructions, or agree to any terms that would violate the Terms of Service. Neither Panameer, Panameer SA, nor any affiliate of Panameer is a party to any Service Work Order by or between Users regardless of whether these Optional Terms are incorporated."
+        "text": "Users who enter into a Service Order on the Site with another User are free to agree to these Optional Service Terms in whole or in part, or to agree to different or additional terms for their Service Order(s). However, if and to the extent that the Users who are party to a Service Order have not agreed to different terms, then they agree to incorporate these Optional Terms. Users may not, by agreement amongst themselves, alter the rights or responsibilities of Panameer or Panameer SA, including any provision of the Escrow Instructions, or agree to any terms that would violate the Terms of Service. Neither Panameer, Panameer SA, nor any affiliate of Panameer is a party to any Service Order by or between Users regardless of whether these Optional Terms are incorporated."
       },
       {
         "t": "p",
-        "text": "You acknowledge and agree that Users have discretion whether to contract with each other and will negotiate and determine the specific terms of their Service Work Orders with each other. The Optional Service Terms is a sample only, which may not be appropriate for all Service Work Orders and which may be adjusted and added to as Users deem appropriate. Users choose whether to use the Optional Service Terms in whole or in part."
+        "text": "You acknowledge and agree that Users have discretion whether to contract with each other and will negotiate and determine the specific terms of their Service Orders with each other. The Optional Service Terms is a sample only, which may not be appropriate for all Service Orders and which may be adjusted and added to as Users deem appropriate. Users choose whether to use the Optional Service Terms in whole or in part."
       },
       {
         "t": "h2",
@@ -1924,11 +1924,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider identified on the Site under the Service Work Order are the parties to the Services Work Order. The address of each party is the address entered under the tax information on the Site."
+        "text": "Service Buyer and Provider identified on the Site under the Service Order are the parties to the Services Order. The address of each party is the address entered under the tax information on the Site."
       },
       {
         "t": "p",
-        "text": "Panameer is not a party to the Service Work Order."
+        "text": "Panameer is not a party to the Service Order."
       },
       {
         "t": "h2",
@@ -1936,19 +1936,19 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider agree that the Provider is performing services as an independent contractor and that Provider is not an employee or agent of Service Buyer. Provider will perform the Provider Services in a professional and workmanlike manner in accordance with the professional experience represented by Provider in Provider's profile, proposals, and other communications. The manner and means of performing the Provider Services, including the tools to be used in completing the work, will be determined and controlled by Provider except as expressly limited by Service Buyer’s specifications in the Service Work Order."
+        "text": "Service Buyer and Provider agree that the Provider is performing services as an independent contractor and that Provider is not an employee or agent of Service Buyer. Provider will perform the Provider Services in a professional and workmanlike manner in accordance with the professional experience represented by Provider in Provider's profile, proposals, and other communications. The manner and means of performing the Provider Services, including the tools to be used in completing the work, will be determined and controlled by Provider except as expressly limited by Service Buyer’s specifications in the Service Order."
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider agree to respond to communications relevant to completion of the Service Work Order within 7 days, unless Provider has communicated to Service Buyer that they will be unavailable for an extended period. Provider will timely deliver any agreed upon Work Product within the timeframe agreed upon by Provider and Service Buyer, or will provide a minimum of 24 hours’ advance notice in the event that Provider will not be able to meet the deadline. For hourly Work Orders, Provider agrees to bill Service Buyer only for time spent working on Service Buyer’s Work Orders."
+        "text": "Service Buyer and Provider agree to respond to communications relevant to completion of the Service Order within 7 days, unless Provider has communicated to Service Buyer that they will be unavailable for an extended period. Provider will timely deliver any agreed upon Work Product within the timeframe agreed upon by Provider and Service Buyer, or will provide a minimum of 24 hours’ advance notice in the event that Provider will not be able to meet the deadline. For hourly Orders, Provider agrees to bill Service Buyer only for time spent working on Service Buyer’s Orders."
       },
       {
         "t": "p",
-        "text": "The terms concerning the services to be performed under the Service Work Order described on the Site form part of the Service Work Order. Users agree that, once accepted, the terms of the Service Work Order cannot be modified by a User without obtaining the consent of the other before making changes to the Service Work Order, including by adding additional or different milestones, by closing a Service Work Order, or making other changes to the Service Work Order on the Site. If consent of the other party is not first"
+        "text": "The terms concerning the services to be performed under the Service Order described on the Site form part of the Service Order. Users agree that, once accepted, the terms of the Service Order cannot be modified by a User without obtaining the consent of the other before making changes to the Service Order, including by adding additional or different milestones, by closing a Service Order, or making other changes to the Service Order on the Site. If consent of the other party is not first"
       },
       {
         "t": "p",
-        "text": "obtained, the other party may reject such changes by terminating the Service Work Order or accept such changes by continuing to work on the Service Work Order."
+        "text": "obtained, the other party may reject such changes by terminating the Service Order or accept such changes by continuing to work on the Service Order."
       },
       {
         "t": "p",
@@ -1964,7 +1964,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If a User subcontracts with or employs third parties to perform Provider Services on behalf of the User for any Engagement, the User represents and warrants that it does so as a legally recognized entity or person and in compliance with all applicable laws and regulations. Further, at all times a User that agreed to perform services under a Services Work Order remains responsible for the quality of the services and represents and warrants that User has entered into agreements with any such employees and subcontractors on confidentiality and intellectual property at least as strong as those in these Optional Service Terms."
+        "text": "If a User subcontracts with or employs third parties to perform Provider Services on behalf of the User for any Engagement, the User represents and warrants that it does so as a legally recognized entity or person and in compliance with all applicable laws and regulations. Further, at all times a User that agreed to perform services under a Services Order remains responsible for the quality of the services and represents and warrants that User has entered into agreements with any such employees and subcontractors on confidentiality and intellectual property at least as strong as those in these Optional Service Terms."
       },
       {
         "t": "h2",
@@ -1976,15 +1976,15 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "h2",
-        "text": "5. TERMINATION OF A SERVICE Work Order"
+        "text": "5. TERMINATION OF A SERVICE Order"
       },
       {
         "t": "p",
-        "text": "Under Hourly Work Orders, either Service Buyer or Provider has the right to terminate the Service Work Order after providing any agreed-upon notice, or immediately on the end date specified in the Service Work Order terms and/or upon completion of the Provider Services, in the event of a material breach, or with the consent of the other party. Except as required by law or as otherwise may be agreed to by the Parties, Service Buyer remains obligated to pay the Provider Fees for any Provider Services provided prior to termination of the Hourly Work Order."
+        "text": "Under Hourly Orders, either Service Buyer or Provider has the right to terminate the Service Order after providing any agreed-upon notice, or immediately on the end date specified in the Service Order terms and/or upon completion of the Provider Services, in the event of a material breach, or with the consent of the other party. Except as required by law or as otherwise may be agreed to by the Parties, Service Buyer remains obligated to pay the Provider Fees for any Provider Services provided prior to termination of the Hourly Order."
       },
       {
         "t": "p",
-        "text": "Under Fixed-Price Work Orders, once a Service Buyer’s Payment Method has been charged to fund the escrow account for the Engagement, absent a full refund to Service Buyer by Provider, the Service Work Order does not terminate until the Provider Services are completed. However, either Service Buyer or Provider has the right to terminate a Fixed-Price Work Order at any time with the consent of the other party or in the event of a material breach. If a Fixed-Price Work Order is terminated, Service Buyer does not have the right to recover any payments already released to Provider from the escrow account for the Engagement."
+        "text": "Under Fixed-Price Orders, once a Service Buyer’s Payment Method has been charged to fund the escrow account for the Engagement, absent a full refund to Service Buyer by Provider, the Service Order does not terminate until the Provider Services are completed. However, either Service Buyer or Provider has the right to terminate a Fixed-Price Order at any time with the consent of the other party or in the event of a material breach. If a Fixed-Price Order is terminated, Service Buyer does not have the right to recover any payments already released to Provider from the escrow account for the Engagement."
       },
       {
         "t": "h2",
@@ -2016,7 +2016,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer grants Provider a limited, non-exclusive, revocable (at any time, at Service Buyer’s sole discretion) right to use the Service Buyer Materials as necessary solely for the performance of the Provider Services under the applicable Service Work Order. Service Buyer reserves all other rights and interest, including, without limitation, all Intellectual Property Rights, in and to the Service Buyer Materials. Upon completion or termination of the Service Work Order, or upon Service Buyer’s written request, Provider will immediately return all Service Buyer Materials to Service Buyer and further agrees to destroy all copies of Service Buyer Materials and Deliverables (except for Background Technology as permitted by the Service Work Order) contained in or on Provider’s premises, systems, or any other equipment or location otherwise under Provider’s control. Within ten days of such request from Service Buyer, Provider agrees to provide written certification to Service Buyer that Provider has returned or destroyed all Service Buyer Materials and Work Product as provided in this subsection."
+        "text": "Service Buyer grants Provider a limited, non-exclusive, revocable (at any time, at Service Buyer’s sole discretion) right to use the Service Buyer Materials as necessary solely for the performance of the Provider Services under the applicable Service Order. Service Buyer reserves all other rights and interest, including, without limitation, all Intellectual Property Rights, in and to the Service Buyer Materials. Upon completion or termination of the Service Order, or upon Service Buyer’s written request, Provider will immediately return all Service Buyer Materials to Service Buyer and further agrees to destroy all copies of Service Buyer Materials and Deliverables (except for Background Technology as permitted by the Service Order) contained in or on Provider’s premises, systems, or any other equipment or location otherwise under Provider’s control. Within ten days of such request from Service Buyer, Provider agrees to provide written certification to Service Buyer that Provider has returned or destroyed all Service Buyer Materials and Work Product as provided in this subsection."
       },
       {
         "t": "h3",
@@ -2052,7 +2052,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Provider will assist Service Buyer in every way, including by signing any documents or instruments reasonably required, both during and after the term of the Service Work Order, to obtain and enforce Intellectual Property Rights relating to Work Product in all countries. In the event Service Buyer is unable, after reasonable effort, to secure Provider’s signature on any document needed in connection with the foregoing, Provider hereby designates and appoints Service Buyer and its duly authorized officers and agents as its agent and attorney in fact to act on its behalf to further the purposes of this Section with the same legal force and effect as if executed by Provider."
+        "text": "Provider will assist Service Buyer in every way, including by signing any documents or instruments reasonably required, both during and after the term of the Service Order, to obtain and enforce Intellectual Property Rights relating to Work Product in all countries. In the event Service Buyer is unable, after reasonable effort, to secure Provider’s signature on any document needed in connection with the foregoing, Provider hereby designates and appoints Service Buyer and its duly authorized officers and agents as its agent and attorney in fact to act on its behalf to further the purposes of this Section with the same legal force and effect as if executed by Provider."
       },
       {
         "t": "h2",
@@ -2072,7 +2072,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If and when Confidential Information is no longer needed for the performance of the Provider Services for a Services Work Order or at Service Buyer’s or Provider’s written request (which may be made at any time at Service Buyer’s or Provider’s sole discretion), the party that received Confidential Information, will, at its expense, promptly destroy or return the disclosing party’s Confidential Information and any copies thereof contained in or on its premises, systems, or any other equipment otherwise under its control. The party that received Confidential Information agrees to provide written certification to the party disclosing the Confidential Information of compliance with this subsection within ten days after the receipt of disclosing party’s written request for such certification."
+        "text": "If and when Confidential Information is no longer needed for the performance of the Provider Services for a Services Order or at Service Buyer’s or Provider’s written request (which may be made at any time at Service Buyer’s or Provider’s sole discretion), the party that received Confidential Information, will, at its expense, promptly destroy or return the disclosing party’s Confidential Information and any copies thereof contained in or on its premises, systems, or any other equipment otherwise under its control. The party that received Confidential Information agrees to provide written certification to the party disclosing the Confidential Information of compliance with this subsection within ten days after the receipt of disclosing party’s written request for such certification."
       },
       {
         "t": "h3",
@@ -2080,7 +2080,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Without limiting Section 7 (Confidentiality), Service Buyer and Provider will not publish, or cause to be published, any other party’s Confidential Information or Work Product, except as may be necessary for performance of Provider Services for a Services Work Order."
+        "text": "Without limiting Section 7 (Confidentiality), Service Buyer and Provider will not publish, or cause to be published, any other party’s Confidential Information or Work Product, except as may be necessary for performance of Provider Services for a Services Order."
       },
       {
         "t": "h3",
@@ -2096,11 +2096,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "The following capitalized terms have the following meanings: “Background Technology” means all Inventions developed by Provider other than in the course of providing Provider Services to Service Buyer under the Service Work Order and all Inventions that Provider incorporates into Work Product."
+        "text": "The following capitalized terms have the following meanings: “Background Technology” means all Inventions developed by Provider other than in the course of providing Provider Services to Service Buyer under the Service Order and all Inventions that Provider incorporates into Work Product."
       },
       {
         "t": "p",
-        "text": "“Service Buyer” means any person who entered into a Service Work Order to obtain Provider Services from a Provider."
+        "text": "“Service Buyer” means any person who entered into a Service Order to obtain Provider Services from a Provider."
       },
       {
         "t": "p",
@@ -2112,11 +2112,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "“Confidential Information” means Service Buyer Deliverables, Provider Deliverables, Work Product, and any other information provided to, or created by, a User for a Service Work Order or to perform or assist in performing Provider Services, regardless of whether in tangible, electronic, verbal, graphic, visual, or other form. Confidential Information does not include material or information that is known to the public or that: (a) is generally known by third parties as a result of no act or omission of Provider or Service Buyer; (b) subsequent to disclosure hereunder, was lawfully received without restriction on disclosure from a third party having the right to disseminate the information; (c) was already known by User prior to receiving it from the other party and was not received from a third party in breach of that third party’s obligations of confidentiality; or (d) was independently developed by User without use of another person’s Confidential Information."
+        "text": "“Confidential Information” means Service Buyer Deliverables, Provider Deliverables, Work Product, and any other information provided to, or created by, a User for a Service Order or to perform or assist in performing Provider Services, regardless of whether in tangible, electronic, verbal, graphic, visual, or other form. Confidential Information does not include material or information that is known to the public or that: (a) is generally known by third parties as a result of no act or omission of Provider or Service Buyer; (b) subsequent to disclosure hereunder, was lawfully received without restriction on disclosure from a third party having the right to disseminate the information; (c) was already known by User prior to receiving it from the other party and was not received from a third party in breach of that third party’s obligations of confidentiality; or (d) was independently developed by User without use of another person’s Confidential Information."
       },
       {
         "t": "p",
-        "text": "“Engagement” means an engagement for Provider Services that a Provider provides to a Service Buyer under a Service Work Order on the Site."
+        "text": "“Engagement” means an engagement for Provider Services that a Provider provides to a Service Buyer under a Service Order on the Site."
       },
       {
         "t": "p",
@@ -2124,19 +2124,19 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "“Fixed-Price Work Order” means a Service Work Order for which Service Buyer is charged a fixed fee agreed between a Service Buyer and a Provider, prior to the commencement of a Service Work Order, for the completion of all Provider Services contracted by Service Buyer for such Service Work Order."
+        "text": "“Fixed-Price Order” means a Service Order for which Service Buyer is charged a fixed fee agreed between a Service Buyer and a Provider, prior to the commencement of a Service Order, for the completion of all Provider Services contracted by Service Buyer for such Service Order."
       },
       {
         "t": "p",
-        "text": "“Provider” means any person who entered into a Service Work Order to perform Provider services for a Service Buyer."
+        "text": "“Provider” means any person who entered into a Service Order to perform Provider services for a Service Buyer."
       },
       {
         "t": "p",
-        "text": "“Provider Deliverables” means requests, intellectual property, and any other information or materials that a Service Buyer receives from a Provider for a particular Service Work Order."
+        "text": "“Provider Deliverables” means requests, intellectual property, and any other information or materials that a Service Buyer receives from a Provider for a particular Service Order."
       },
       {
         "t": "p",
-        "text": "“Provider Fees” means: (a) for an Hourly Work Order, an amount equal to the number of hours recorded by Provider in any Hourly Invoice, multiplied by the hourly rate set by the Provider; (b) for a FixedPrice Work Order, the fixed fee agreed between a Service Buyer and a Provider; and (c) any bonuses or other payments made by a Service Buyer."
+        "text": "“Provider Fees” means: (a) for an Hourly Order, an amount equal to the number of hours recorded by Provider in any Hourly Invoice, multiplied by the hourly rate set by the Provider; (b) for a FixedPrice Order, the fixed fee agreed between a Service Buyer and a Provider; and (c) any bonuses or other payments made by a Service Buyer."
       },
       {
         "t": "p",
@@ -2144,7 +2144,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "“Hourly Work Order” means a Service Work Order for which Service Buyer is charged based on the hourly rate set by the Provider."
+        "text": "“Hourly Order” means a Service Order for which Service Buyer is charged based on the hourly rate set by the Provider."
       },
       {
         "t": "p",
@@ -2164,7 +2164,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "“Service Work Order” means, as applicable, (a) the contractual provisions between a Service Buyer and a Provider governing the Provider Services to be performed by a Provider for Service Buyer for an Engagement; or (b) if you use Panameer Payroll, the contractual provisions between Provider and the Staffing Provider for the provision of services to Service Buyer."
+        "text": "“Service Order” means, as applicable, (a) the contractual provisions between a Service Buyer and a Provider governing the Provider Services to be performed by a Provider for Service Buyer for an Engagement; or (b) if you use Panameer Payroll, the contractual provisions between Provider and the Staffing Provider for the provision of services to Service Buyer."
       },
       {
         "t": "p",
@@ -2342,7 +2342,7 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "If Service Buyer and Provider enter into an Hourly Work Order, if Service Buyer makes a bonus or expense payment to Provider, or if you use Panameer Payroll, this Hourly, Bonus, and Expense Payment Agreement with Escrow Instructions (“Agreement”) applies."
+        "text": "If Service Buyer and Provider enter into an Hourly Order, if Service Buyer makes a bonus or expense payment to Provider, or if you use Panameer Payroll, this Hourly, Bonus, and Expense Payment Agreement with Escrow Instructions (“Agreement”) applies."
       },
       {
         "t": "p",
@@ -2350,7 +2350,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "This Agreement hereby incorporates by reference the Terms of Service. Capitalized terms not defined in this Agreement are defined in the User Agreement, elsewhere in the Terms of Service, or have the meanings given such terms on the Site. The Escrow Instructions in this Agreement do not apply to FixedPrice Escrow Accounts, except that they govern the making and receiving of bonus, expense and other miscellaneous payments for Fixed-Price Work Orders."
+        "text": "This Agreement hereby incorporates by reference the Terms of Service. Capitalized terms not defined in this Agreement are defined in the User Agreement, elsewhere in the Terms of Service, or have the meanings given such terms on the Site. The Escrow Instructions in this Agreement do not apply to FixedPrice Escrow Accounts, except that they govern the making and receiving of bonus, expense and other miscellaneous payments for Fixed-Price Orders."
       },
       {
         "t": "p",
@@ -2362,11 +2362,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "By clicking to accept an Hourly Work Order or make a bonus payment, Service Buyer and Provider are deemed to have executed this Agreement electronically, effective on the date Provider clicks to accept an Hourly Work Order, pursuant to California Civil Code section 1633.8 and the federal Electronic Signatures in Global and National Commerce Act, 15 U.S.C. Sec. 7001, et seq., as amended from time to time (the \"E-Sign Act\"). Doing so constitutes an acknowledgement that Service Buyer and Provider agree to conduct the transaction electronically, and are able to electronically receive, download, and print this Agreement and the Escrow Instructions it contains."
+        "text": "By clicking to accept an Hourly Order or make a bonus payment, Service Buyer and Provider are deemed to have executed this Agreement electronically, effective on the date Provider clicks to accept an Hourly Order, pursuant to California Civil Code section 1633.8 and the federal Electronic Signatures in Global and National Commerce Act, 15 U.S.C. Sec. 7001, et seq., as amended from time to time (the \"E-Sign Act\"). Doing so constitutes an acknowledgement that Service Buyer and Provider agree to conduct the transaction electronically, and are able to electronically receive, download, and print this Agreement and the Escrow Instructions it contains."
       },
       {
         "t": "p",
-        "text": "A Service Buyer's election of a Work Order Value Adjustment through the Site's rate change flow constitutes an electronic signature and irrevocable instruction for purposes of this Agreement, effective upon the Service Buyer's confirmation of the rate change as described in Section 2.1.1 of the Fee and ACH Authorization Agreement."
+        "text": "A Service Buyer's election of an Order Value Adjustment through the Site's rate change flow constitutes an electronic signature and irrevocable instruction for purposes of this Agreement, effective upon the Service Buyer's confirmation of the rate change as described in Section 2.1.1 of the Fee and ACH Authorization Agreement."
       },
       {
         "t": "h2",
@@ -2378,7 +2378,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "For Hourly Work Orders, the weekly billing cycle starts Monday at 00:00 midnight UTC and ends Sunday at 23:59 UTC. Invoices for hours recorded on Panameer in the Timesheet are generated each Monday following the week in which the hours were billed (the \"Hourly Invoice Deadline\"). Provider irrevocably authorizes and instructs Panameer, as its agent, to (i) create an invoice on behalf of Provider for payment due based upon the hours that the provider recorded in the Timesheet before the Hourly Invoice Deadline (such invoice, the \"Hourly Invoice\"); and (ii) submit the Hourly Invoice on behalf of Provider to Provider's Service Buyer for payment. For the avoidance of doubt, the “Timesheet” is the section of Panameer where hours can be recorded on an Hourly Work Order."
+        "text": "For Hourly Orders, the weekly billing cycle starts Monday at 00:00 midnight UTC and ends Sunday at 23:59 UTC. Invoices for hours recorded on Panameer in the Timesheet are generated each Monday following the week in which the hours were billed (the \"Hourly Invoice Deadline\"). Provider irrevocably authorizes and instructs Panameer, as its agent, to (i) create an invoice on behalf of Provider for payment due based upon the hours that the provider recorded in the Timesheet before the Hourly Invoice Deadline (such invoice, the \"Hourly Invoice\"); and (ii) submit the Hourly Invoice on behalf of Provider to Provider's Service Buyer for payment. For the avoidance of doubt, the “Timesheet” is the section of Panameer where hours can be recorded on an Hourly Order."
       },
       {
         "t": "p",
@@ -2390,7 +2390,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Work Order Value Adjustments. Where a Service Buyer has made a valid Work Order Value Adjustment election in accordance with Section 2.1.1 of the Fee and ACH Authorization Agreement, the hourly rate used to calculate the Hourly Invoice for all billing cycles after the effective date of the election is the Adjusted Rate as defined in that section, not the Provider's originally quoted rate. The Adjusted Rate is the rate of record for all purposes under these Escrow Instructions, including for the calculation of the Provider Service Fee deducted by Panameer SA prior to crediting the Provider Escrow Account. The Work Order Value Adjustment election applies prospectively only, it does not apply to any billing cycle already invoiced, in the Dispute Period, or released prior to the effective date of the election. The Adjusted Rate replaces the previously agreed hourly rate for all subsequent billing cycles on the same Hourly Work Order and is irrevocable upon Service Buyer's confirmation of the rate change, as described in Section 2.1.1 of the Fee and ACH Authorization Agreement."
+        "text": "Order Value Adjustments. Where a Service Buyer has made a valid Order Value Adjustment election in accordance with Section 2.1.1 of the Fee and ACH Authorization Agreement, the hourly rate used to calculate the Hourly Invoice for all billing cycles after the effective date of the election is the Adjusted Rate as defined in that section, not the Provider's originally quoted rate. The Adjusted Rate is the rate of record for all purposes under these Escrow Instructions, including for the calculation of the Provider Service Fee deducted by Panameer SA prior to crediting the Provider Escrow Account. The Order Value Adjustment election applies prospectively only, it does not apply to any billing cycle already invoiced, in the Dispute Period, or released prior to the effective date of the election. The Adjusted Rate replaces the previously agreed hourly rate for all subsequent billing cycles on the same Hourly Order and is irrevocable upon Service Buyer's confirmation of the rate change, as described in Section 2.1.1 of the Fee and ACH Authorization Agreement."
       },
       {
         "t": "h3",
@@ -2462,15 +2462,15 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Work Order that involves the use of Panameer Payroll."
+        "text": "Order that involves the use of Panameer Payroll."
       },
       {
         "t": "p",
-        "text": "4. Panameer reviews Service Buyer's dispute of amounts invoiced on Provider's Hourly Invoice for an Hourly Work Order with Timesheets pursuant to this Agreement and determines (1) that the time is related to the Hourly Work Order requirements or Service Buyer's instructions and (2) that Provider met any applicable Work Product delivery deadline or provided 24 hours' advance notice of Provider's inability to meet the deadline."
+        "text": "4. Panameer reviews Service Buyer's dispute of amounts invoiced on Provider's Hourly Invoice for an Hourly Order with Timesheets pursuant to this Agreement and determines (1) that the time is related to the Hourly Order requirements or Service Buyer's instructions and (2) that Provider met any applicable Work Product delivery deadline or provided 24 hours' advance notice of Provider's inability to meet the deadline."
       },
       {
         "t": "p",
-        "text": "5. Service Buyer initiates a Dispute with respect to Provider's Hourly Invoice for an Hourly Work Order without Timesheets pursuant to this Agreement and Service Buyer and Provider resolve the dispute without the assistance of Panameer."
+        "text": "5. Service Buyer initiates a Dispute with respect to Provider's Hourly Invoice for an Hourly Order without Timesheets pursuant to this Agreement and Service Buyer and Provider resolve the dispute without the assistance of Panameer."
       },
       {
         "t": "p",
@@ -2498,11 +2498,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "In the rare event that a Provider’s Service Buyer does not make payment for legitimate services performed by a Provider, Panameer will provide Hourly Payment Protection to the Provider as detailed in this Section 6.1 as a membership benefit to foster fairness, reward loyalty, and encourage the Provider to continue to use the Site Services for their business needs. Hourly Payment Protection will be offered to a Provider only if all of the following criteria are met in Panameer's sole discretion: 1. Both Service Buyer and Provider must have agreed to use Timesheets upon acceptance of the Hourly Work Order, as part of the terms."
+        "text": "In the rare event that a Provider’s Service Buyer does not make payment for legitimate services performed by a Provider, Panameer will provide Hourly Payment Protection to the Provider as detailed in this Section 6.1 as a membership benefit to foster fairness, reward loyalty, and encourage the Provider to continue to use the Site Services for their business needs. Hourly Payment Protection will be offered to a Provider only if all of the following criteria are met in Panameer's sole discretion: 1. Both Service Buyer and Provider must have agreed to use Timesheets upon acceptance of the Hourly Order, as part of the terms."
       },
       {
         "t": "p",
-        "text": "2. Service Buyer must have an Account in good standing and a valid and verified Payment Method at the start of the Hourly Work Order, and must agree to automatically pay for hours billed by Provider through Timesheets."
+        "text": "2. Service Buyer must have an Account in good standing and a valid and verified Payment Method at the start of the Hourly Order, and must agree to automatically pay for hours billed by Provider through Timesheets."
       },
       {
         "t": "p",
@@ -2518,15 +2518,15 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "5. Prior to any Hourly Invoice being submitted, Provider must have annotated the screenshots documented in Timesheets sufficient to demonstrate the work relates to the Hourly Work Order."
+        "text": "5. Prior to any Hourly Invoice being submitted, Provider must have annotated the screenshots documented in Timesheets sufficient to demonstrate the work relates to the Hourly Order."
       },
       {
         "t": "p",
-        "text": "6. The screenshots documented by Timesheets must be clearly related to the applicable Hourly Work Order requirements or Service Buyer instructions."
+        "text": "6. The screenshots documented by Timesheets must be clearly related to the applicable Hourly Order requirements or Service Buyer instructions."
       },
       {
         "t": "p",
-        "text": "7. The number of hours billed in the Timesheets must be within the hours authorized in the Hourly Work Order for the week."
+        "text": "7. The number of hours billed in the Timesheets must be within the hours authorized in the Hourly Order for the week."
       },
       {
         "t": "h2",
@@ -2558,11 +2558,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Hourly Payment Protection does not apply to: (a) hours invoiced for work not agreed to or authorized by Service Buyer; (b) bonus payments; (c) refunds; (d) manual time; (e) time added after Service Buyer has disputed a billing and before the resolution of that dispute; (6) Fixed-Price Work Orders; (f) hours reported by Payroll Employees; (g) any payments on Hourly Work Orders where the Hourly Work Order or the services provided thereunder are prohibited by the Terms of Service; (h) hours billed by Providers whom Panameer believes, in its sole discretion, to be aware of or complicit in another User’s violation of this Agreement or the other Terms of Service; or (i) Providers whom Panameer believes, in its sole discretion, to be involved in actual fraudulent activities or abuse of this Payment Protection."
+        "text": "Hourly Payment Protection does not apply to: (a) hours invoiced for work not agreed to or authorized by Service Buyer; (b) bonus payments; (c) refunds; (d) manual time; (e) time added after Service Buyer has disputed a billing and before the resolution of that dispute; (6) Fixed-Price Orders; (f) hours reported by Payroll Employees; (g) any payments on Hourly Orders where the Hourly Order or the services provided thereunder are prohibited by the Terms of Service; (h) hours billed by Providers whom Panameer believes, in its sole discretion, to be aware of or complicit in another User’s violation of this Agreement or the other Terms of Service; or (i) Providers whom Panameer believes, in its sole discretion, to be involved in actual fraudulent activities or abuse of this Payment Protection."
       },
       {
         "t": "p",
-        "text": "The maximum rate per hour protected by Panameer to Provider under the Hourly Payment Protection for Providers is the lesser of: (i) the rate provided in the Hourly Work Order terms (which, where a Work Order Value Adjustment is in effect, is the Adjusted Rate as defined in Section 2.1.1 of the Fee and ACH Authorization Agreement); (ii) the usual hourly rate billed by Provider on the Site across all Service Buyers; and (iii) the going rate for the same skills on the Site in Provider's area (such determination to be made in Panameer's sole discretion). The maximum amount of coverage under the Hourly Payment Protection for Providers for the life of a relationship between the same Service Buyer and Provider is $2,500 or 50 hours logged in Timesheet at Provider's average hourly rate billed to Service Buyer, based on whichever is less."
+        "text": "The maximum rate per hour protected by Panameer to Provider under the Hourly Payment Protection for Providers is the lesser of: (i) the rate provided in the Hourly Order terms (which, where an Order Value Adjustment is in effect, is the Adjusted Rate as defined in Section 2.1.1 of the Fee and ACH Authorization Agreement); (ii) the usual hourly rate billed by Provider on the Site across all Service Buyers; and (iii) the going rate for the same skills on the Site in Provider's area (such determination to be made in Panameer's sole discretion). The maximum amount of coverage under the Hourly Payment Protection for Providers for the life of a relationship between the same Service Buyer and Provider is $2,500 or 50 hours logged in Timesheet at Provider's average hourly rate billed to Service Buyer, based on whichever is less."
       },
       {
         "t": "h3",
@@ -2570,7 +2570,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Provider authorizes and instructs Panameer to adjust the Hourly Invoice to remove invoiced hours that are not (a) clearly related to either the Hourly Work Order terms or work agreed to by the Service Buyer, and (b) within the hours authorized in the Hourly Work Order for the week, subject to and conditioned on the following terms: Both Service Buyer and Provider must agree to use Timesheets as part of the Hourly Work Order terms."
+        "text": "Provider authorizes and instructs Panameer to adjust the Hourly Invoice to remove invoiced hours that are not (a) clearly related to either the Hourly Order terms or work agreed to by the Service Buyer, and (b) within the hours authorized in the Hourly Order for the week, subject to and conditioned on the following terms: Both Service Buyer and Provider must agree to use Timesheets as part of the Hourly Order terms."
       },
       {
         "t": "p",
@@ -2578,7 +2578,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Additionally, Service Buyer must either: Within the Hourly Invoice Review Period, submit a Dispute specifically identifying the time billed that is not clearly related to either the Hourly Work Order requirements or Service Buyer instructions in the Timesheets, or else identify an agreed upon timeframe for delivery of Work Product that was not met and specify that Provider did not provide 24 hours' advance notice that the deadline would not be met; OR Have previously submitted a complaint that Provider has failed to render services in a professional and workmanlike manner in accordance with the professional experience represented by the Provider to the Service Buyer or has taken more than 7 seven days to respond"
+        "text": "Additionally, Service Buyer must either: Within the Hourly Invoice Review Period, submit a Dispute specifically identifying the time billed that is not clearly related to either the Hourly Order requirements or Service Buyer instructions in the Timesheets, or else identify an agreed upon timeframe for delivery of Work Product that was not met and specify that Provider did not provide 24 hours' advance notice that the deadline would not be met; OR Have previously submitted a complaint that Provider has failed to render services in a professional and workmanlike manner in accordance with the professional experience represented by the Provider to the Service Buyer or has taken more than 7 seven days to respond"
       },
       {
         "t": "p",
@@ -2590,11 +2590,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Hourly Protection for Service Buyers only protects Service Buyer from the obligation to pay for Provider’s work if the documented hours worked are not clearly related to the Hourly Work Order requirements or Service Buyer instructions in the Timesheets. If Service Buyer has requested that the Provider use functionality of the Site or third-party software that hides, blurs, or distorts images in the Timesheet, the screenshots will be deemed to be “clearly related” to the Hourly Work Order requirements for purposes of the Service Buyer's eligibility for Hourly Payment Protection. Hourly Payment Protection for Service Buyers does not create any warranties, express or implied, beyond those expressly stated in the User Agreement."
+        "text": "Hourly Protection for Service Buyers only protects Service Buyer from the obligation to pay for Provider’s work if the documented hours worked are not clearly related to the Hourly Order requirements or Service Buyer instructions in the Timesheets. If Service Buyer has requested that the Provider use functionality of the Site or third-party software that hides, blurs, or distorts images in the Timesheet, the screenshots will be deemed to be “clearly related” to the Hourly Order requirements for purposes of the Service Buyer's eligibility for Hourly Payment Protection. Hourly Payment Protection for Service Buyers does not create any warranties, express or implied, beyond those expressly stated in the User Agreement."
       },
       {
         "t": "p",
-        "text": "Hourly Protection for Service Buyers does not apply to: (1) Fixed-Price Work Orders; (2) Hourly Work Orders using Panameer Payroll; or (3) hours billed by Providers who are aware of or complicit in another User's violation of this Agreement or the Terms of Service."
+        "text": "Hourly Protection for Service Buyers does not apply to: (1) Fixed-Price Orders; (2) Hourly Orders using Panameer Payroll; or (3) hours billed by Providers who are aware of or complicit in another User's violation of this Agreement or the Terms of Service."
       },
       {
         "t": "h2",
@@ -2602,11 +2602,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "For Hourly Work Orders, Service Buyer may dispute Provider’s hours invoiced on the Hourly Invoice for the prior week (Sunday 12:00 a.m. midnight UTC to Sunday 11:59 p.m. UTC) during the five days following the close of the weekly invoice period (Monday 12:00 a.m. midnight UTC to Friday 11:59 p.m. UTC) (the “Dispute Period“). It is Service Buyer’s responsibility to review the Hourly Invoice of every Hourly Work Order on a weekly basis and to file any disputes during the Dispute Period. Once the Dispute Period expires, Service Buyer will be deemed to have accepted the Provider Services and Provider Fees and can no longer dispute them. Disputes handled by Panameer can only address the hours billed, not the quality of the Provider Services or the Work Product provided under Hourly Work Orders. If Service Buyer disputes Provider’s hours invoiced in the Hourly Invoice under an Hourly Work Order during the Dispute Period, Service Buyer and Provider are encouraged to resolve the dispute between themselves. If Service Buyer and Provider fail to come to a resolution, Panameer will promptly investigate the Hourly Invoice and determine, in our sole discretion, whether an adjustment is appropriate consistent with Service Buyer’s and Provider’s instructions in these Escrow Instructions. Panameer's determination of such dispute shall be final."
+        "text": "For Hourly Orders, Service Buyer may dispute Provider’s hours invoiced on the Hourly Invoice for the prior week (Sunday 12:00 a.m. midnight UTC to Sunday 11:59 p.m. UTC) during the five days following the close of the weekly invoice period (Monday 12:00 a.m. midnight UTC to Friday 11:59 p.m. UTC) (the “Dispute Period“). It is Service Buyer’s responsibility to review the Hourly Invoice of every Hourly Order on a weekly basis and to file any disputes during the Dispute Period. Once the Dispute Period expires, Service Buyer will be deemed to have accepted the Provider Services and Provider Fees and can no longer dispute them. Disputes handled by Panameer can only address the hours billed, not the quality of the Provider Services or the Work Product provided under Hourly Orders. If Service Buyer disputes Provider’s hours invoiced in the Hourly Invoice under an Hourly Order during the Dispute Period, Service Buyer and Provider are encouraged to resolve the dispute between themselves. If Service Buyer and Provider fail to come to a resolution, Panameer will promptly investigate the Hourly Invoice and determine, in our sole discretion, whether an adjustment is appropriate consistent with Service Buyer’s and Provider’s instructions in these Escrow Instructions. Panameer's determination of such dispute shall be final."
       },
       {
         "t": "p",
-        "text": "Panameer further reserves the right to review the Provider's work for 30 days prior to the date of the Dispute for compliance with Hourly Payment Protection requirements, to make adjustments to invoices, and to direct Panameer SA to make appropriate releases to Service Buyer if it finds work that, in Panameer's sole discretion, clearly does not relate to Hourly Work Order requirements or to Service Buyer instructions in the Timesheets or violations of the Terms of Service during its review of the work."
+        "text": "Panameer further reserves the right to review the Provider's work for 30 days prior to the date of the Dispute for compliance with Hourly Payment Protection requirements, to make adjustments to invoices, and to direct Panameer SA to make appropriate releases to Service Buyer if it finds work that, in Panameer's sole discretion, clearly does not relate to Hourly Order requirements or to Service Buyer instructions in the Timesheets or violations of the Terms of Service during its review of the work."
       },
       {
         "t": "p",
@@ -2618,11 +2618,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "You acknowledge and agree that Panameer SA or its Affiliates may, at its sole discretion, withhold or delay payment in the event of dispute between a Service Buyer and a Provider. You further acknowledge and agree that Panameer and Affiliates are not and will not be a party to any dispute between a Service Buyer and Provider over an Hourly Invoice or Hourly Work Order."
+        "text": "You acknowledge and agree that Panameer SA or its Affiliates may, at its sole discretion, withhold or delay payment in the event of dispute between a Service Buyer and a Provider. You further acknowledge and agree that Panameer and Affiliates are not and will not be a party to any dispute between a Service Buyer and Provider over an Hourly Invoice or Hourly Order."
       },
       {
         "t": "p",
-        "text": "Service Buyers may not dispute hours worked with respect to any worker engaged as an employee through Panameer Payroll. The Dispute Period does not apply and payments are released immediately upon completion of the Hourly Invoice for the prior week for Hourly Work Orders where the Service Buyer has one or more Service Work Orders using Panameer Payroll."
+        "text": "Service Buyers may not dispute hours worked with respect to any worker engaged as an employee through Panameer Payroll. The Dispute Period does not apply and payments are released immediately upon completion of the Hourly Invoice for the prior week for Hourly Orders where the Service Buyer has one or more Service Orders using Panameer Payroll."
       },
       {
         "t": "h2",
@@ -2630,7 +2630,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider are encouraged to come to a mutual agreement if refunds or cancellations are necessary. If there are no funds in escrow, Provider may issue a refund via the Panameer platform up to the full amount paid on the Hourly Work Order."
+        "text": "Service Buyer and Provider are encouraged to come to a mutual agreement if refunds or cancellations are necessary. If there are no funds in escrow, Provider may issue a refund via the Panameer platform up to the full amount paid on the Hourly Order."
       },
       {
         "t": "h2",
@@ -2654,7 +2654,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Panameer, in its sole discretion, reserves the right to suspend or terminate your User Account, as defined in Section 1.4 of the User Agreement, immediately upon giving notice to you if Panameer believes you may be abusing the Disputes Program or as otherwise permitted by the Terms of Service, which may impact your ability to withdraw funds. However, any disputes for any Work Orders that existed prior to termination will be subject to the Terms of Service."
+        "text": "Panameer, in its sole discretion, reserves the right to suspend or terminate your User Account, as defined in Section 1.4 of the User Agreement, immediately upon giving notice to you if Panameer believes you may be abusing the Disputes Program or as otherwise permitted by the Terms of Service, which may impact your ability to withdraw funds. However, any disputes for any Orders that existed prior to termination will be subject to the Terms of Service."
       },
       {
         "t": "h2",
@@ -2776,7 +2776,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Pursuant to the User Agreement, we charge Providers a Service Fee on the amounts of Provider Fees invoiced by the Provider to their Service Buyer on a Service Work Order. The Provider Service Fee is described below in Section 2.1. Where applicable, Panameer Inc, Panameer SA, or Panameer SA may also collect taxes (such as value added tax (“VAT”) in Europe) on Service Fees."
+        "text": "Pursuant to the User Agreement, we charge Providers a Service Fee on the amounts of Provider Fees invoiced by the Provider to their Service Buyer on a Service Order. The Provider Service Fee is described below in Section 2.1. Where applicable, Panameer Inc, Panameer SA, or Panameer SA may also collect taxes (such as value added tax (“VAT”) in Europe) on Service Fees."
       },
       {
         "t": "p",
@@ -2792,27 +2792,27 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "We will charge you a Provider Service Fee based on the total Provider Fees invoiced by you to your Service Buyer (less any refunds or reversals) for each Service Work Order you enter into with a Service Buyer. The Provider Service Fee is a variable fee, meaning that the fee charged may fluctuate based on various factors. The fee is calculated using proprietary algorithms and may include but is not limited to components such as levels of Service Buyer demand, provider supply, job category, and applicable membership plans. The exact pricing methodology may change without notice and we reserve the right to modify or update"
+        "text": "We will charge you a Provider Service Fee based on the total Provider Fees invoiced by you to your Service Buyer (less any refunds or reversals) for each Service Order you enter into with a Service Buyer. The Provider Service Fee is a variable fee, meaning that the fee charged may fluctuate based on various factors. The fee is calculated using proprietary algorithms and may include but is not limited to components such as levels of Service Buyer demand, provider supply, job category, and applicable membership plans. The exact pricing methodology may change without notice and we reserve the right to modify or update"
       },
       {
         "t": "p",
-        "text": "our pricing at any time. Such changes may occur in real time or periodically based on our business needs and external factors. By continuing to use our Site and Services you acknowledge that prices may increase without prior individual notification. Unless different pricing described in in Sections 2.2 through 2.5 applies, the variable Service Fee will be charged per Service Work Order on the Provider Fees you invoice to your Service Buyer The Service Fee that applies to a Service Work Order is fixed for the life of the Service Work Order. Learn more about the Provider Service Fee here."
+        "text": "our pricing at any time. Such changes may occur in real time or periodically based on our business needs and external factors. By continuing to use our Site and Services you acknowledge that prices may increase without prior individual notification. Unless different pricing described in in Sections 2.2 through 2.5 applies, the variable Service Fee will be charged per Service Order on the Provider Fees you invoice to your Service Buyer The Service Fee that applies to a Service Order is fixed for the life of the Service Order. Learn more about the Provider Service Fee here."
       },
       {
         "t": "h4",
-        "text": "2.1.1 WORK ORDER VALUE ADJUSTMENT"
+        "text": "2.1.1 ORDER VALUE ADJUSTMENT"
       },
       {
         "t": "p",
-        "text": "Panameer may, at its sole discretion, offer Service Buyers the option to elect a Work Order Value Adjustment on an Hourly Service Work Order. Where elected, the resulting adjusted hourly rate (the \"Adjusted Rate\") is the Work Order rate of record for all purposes under the Terms of Service. The Provider Service Fee under Section 2.1 is calculated on and deducted from the Adjusted Rate by Panameer SA pursuant to the Provider's existing authorization; no modification to the Provider Service Fee rate is made by a Work Order Value Adjustment. The Adjusted Rate applies prospectively from the effective date of the Service Buyer's election and is irrevocable upon confirmation."
+        "text": "Panameer may, at its sole discretion, offer Service Buyers the option to elect an Order Value Adjustment on an Hourly Service Order. Where elected, the resulting adjusted hourly rate (the \"Adjusted Rate\") is the Order rate of record for all purposes under the Terms of Service. The Provider Service Fee under Section 2.1 is calculated on and deducted from the Adjusted Rate by Panameer SA pursuant to the Provider's existing authorization; no modification to the Provider Service Fee rate is made by an Order Value Adjustment. The Adjusted Rate applies prospectively from the effective date of the Service Buyer's election and is irrevocable upon confirmation."
       },
       {
         "t": "h3",
-        "text": "2.2 PROVIDER INITIATED DIRECT Work Orders"
+        "text": "2.2 PROVIDER INITIATED DIRECT Orders"
       },
       {
         "t": "p",
-        "text": "If you are a Provider who engaged an eligible Service Buyer via Provider Initiated Direct Work Orders, Panameer will charge you a flat 4.99% of the total Provider Fees you have invoiced to your Direct Work Order Service Buyer for the Engagement Relationship."
+        "text": "If you are a Provider who engaged an eligible Service Buyer via Provider Initiated Direct Orders, Panameer will charge you a flat 4.99% of the total Provider Fees you have invoiced to your Direct Order Service Buyer for the Engagement Relationship."
       },
       {
         "t": "h3",
@@ -2820,15 +2820,15 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "For some Service Work Orders, as described in this Section 2.4, we do not charge the variable Service Fee, but instead charge an alternate fee (“Alternate Pricing”) which only applies to Service Work Orders when any of the following are true: (a) you entered into the Service Work Order before Panameer first started charging Legacy Tiered Pricing or Flat Fee Pricing; (b) you entered into the Service Work Order pursuant to a feature of the Site where we advertised a different Service Fee, such as discounted Service Fees offered in some circumstances for amounts charged on a Work Order or for a Featured Job Post for Service Buyers;"
+        "text": "For some Service Orders, as described in this Section 2.4, we do not charge the variable Service Fee, but instead charge an alternate fee (“Alternate Pricing”) which only applies to Service Orders when any of the following are true: (a) you entered into the Service Order before Panameer first started charging Legacy Tiered Pricing or Flat Fee Pricing; (b) you entered into the Service Order pursuant to a feature of the Site where we advertised a different Service Fee, such as discounted Service Fees offered in some circumstances for amounts charged on an Order or for a Featured Job Post for Service Buyers;"
       },
       {
         "t": "p",
-        "text": "(c) you have an Any Hire Work Order or Service Buyer Initiated Direct Work Orders with a Service Buyer and you did not have a Panameer Relationship prior to the Any Hire or Service Buyer Initiated Direct Work Order (see Section 7 of the User Agreement) or for a Panameer Payroll engagement; or (d) the Service Work Order is with a Service Buyer who is not an Enterprise Service Buyer, but who has a legacy arrangement for lower fees that apply to the Service Work Order."
+        "text": "(c) you have an Any Hire Order or Service Buyer Initiated Direct Orders with a Service Buyer and you did not have a Panameer Relationship prior to the Any Hire or Service Buyer Initiated Direct Order (see Section 7 of the User Agreement) or for a Panameer Payroll engagement; or (d) the Service Order is with a Service Buyer who is not an Enterprise Service Buyer, but who has a legacy arrangement for lower fees that apply to the Service Order."
       },
       {
         "t": "p",
-        "text": "(e) you entered into the Service Work Order when Panameer charged the Service Fee based on Legacy Tiered Pricing and you have email or written communication from Panameer that the Legacy Tiered Pricing rate will be applied to the Service Work Order."
+        "text": "(e) you entered into the Service Order when Panameer charged the Service Fee based on Legacy Tiered Pricing and you have email or written communication from Panameer that the Legacy Tiered Pricing rate will be applied to the Service Order."
       },
       {
         "t": "p",
@@ -2836,7 +2836,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "For certain Service Work Orders, the Alternate Pricing may be a lower flat percentage (such as through a “bring your own” program) or may have a different tiered fee rates (such as for a Featured Job Post), or may not have a Service Fee (such as a Panameer Payroll Work Order, certain Any Hire Work Orders, or Service Buyer Initiated Direct Work Orders), in each case as clearly stated on the Site at the time the Service Work Order was or is entered into, and any applicable changes to Alternate Pricing or fees will be clearly communicated to the Service Buyer, including communications posted to the Site."
+        "text": "For certain Service Orders, the Alternate Pricing may be a lower flat percentage (such as through a “bring your own” program) or may have a different tiered fee rates (such as for a Featured Job Post), or may not have a Service Fee (such as a Panameer Payroll Order, certain Any Hire Orders, or Service Buyer Initiated Direct Orders), in each case as clearly stated on the Site at the time the Service Order was or is entered into, and any applicable changes to Alternate Pricing or fees will be clearly communicated to the Service Buyer, including communications posted to the Site."
       },
       {
         "t": "h3",
@@ -2864,15 +2864,15 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Panameer offers Service Buyer’s on the marketplace membership to the Service Buyer Basic Plan. The Basic Plan does not require a monthly membership fee. The Service Buyer Basic Plan includes access to the Site and related Site Services such as assisting Users in resolving disputes which may arise in connection with marketplace Service Work Orders, providing access to communication tools, and administrative services related to reporting and facilitating payments."
+        "text": "Panameer offers Service Buyer’s on the marketplace membership to the Service Buyer Basic Plan. The Basic Plan does not require a monthly membership fee. The Service Buyer Basic Plan includes access to the Site and related Site Services such as assisting Users in resolving disputes which may arise in connection with marketplace Service Orders, providing access to communication tools, and administrative services related to reporting and facilitating payments."
       },
       {
         "t": "h3",
-        "text": "3.3 SERVICE BUYER INITIATED DIRECT Work Orders"
+        "text": "3.3 SERVICE BUYER INITIATED DIRECT Orders"
       },
       {
         "t": "p",
-        "text": "Panameer may offer Service Buyers the option to engage eligible Providers through Service Buyer Initiated Direct Work Orders. Panameer will bill and charge Service Buyers a Direct Work Orders Fee of $49 for each active Service Work Order managed as a Service Buyer Initiated Direct Work Order in the prior month. Panameer will charge Service Buyers on the first of each month for each Service Buyer Initiated Direct Work Orders that was active in the prior month."
+        "text": "Panameer may offer Service Buyers the option to engage eligible Providers through Service Buyer Initiated Direct Orders. Panameer will bill and charge Service Buyers a Direct Orders Fee of $49 for each active Service Order managed as a Service Buyer Initiated Direct Order in the prior month. Panameer will charge Service Buyers on the first of each month for each Service Buyer Initiated Direct Orders that was active in the prior month."
       },
       {
         "t": "p",
@@ -2896,7 +2896,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Where applicable, Panameer Inc, Panameer SA, or Panameer SA may also collect taxes (such as VAT where applicable) on the Direct Work Orders Fee and the cost for premium services or features, as set forth in the User Agreement."
+        "text": "Where applicable, Panameer Inc, Panameer SA, or Panameer SA may also collect taxes (such as VAT where applicable) on the Direct Orders Fee and the cost for premium services or features, as set forth in the User Agreement."
       },
       {
         "t": "h2",
@@ -2934,7 +2934,7 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "If a Service Buyer and a Provider enter into a Service Buyer Initiated Direct Work Order, whether fixed-price or hourly service Work Orders, these Direct Work Order Escrow Instructions (“Escrow Instructions”) apply. These Escrow Instructions govern Escrow Accounts for Service Buyer Initiated Direct Work Orders. Marketplace Service Work Orders are governed by the applicable escrow instructions."
+        "text": "If a Service Buyer and a Provider enter into a Service Buyer Initiated Direct Order, whether fixed-price or hourly service Orders, these Direct Order Escrow Instructions (“Escrow Instructions”) apply. These Escrow Instructions govern Escrow Accounts for Service Buyer Initiated Direct Orders. Marketplace Service Orders are governed by the applicable escrow instructions."
       },
       {
         "t": "p",
@@ -2946,7 +2946,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Capitalized terms not defined in these Escrow Instructions are defined in the User Agreement, elsewhere in the Terms of Service, or have the meanings given such terms on the Site. These Escrow Instructions only apply to Service Buyer Initiated Direct Work Orders."
+        "text": "Capitalized terms not defined in these Escrow Instructions are defined in the User Agreement, elsewhere in the Terms of Service, or have the meanings given such terms on the Site. These Escrow Instructions only apply to Service Buyer Initiated Direct Orders."
       },
       {
         "t": "p",
@@ -2958,7 +2958,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "By clicking to accept a Service Buyer Initiated Direct Work Order, whether fixed-price or hourly, Service Buyer and Provider are deemed to have executed these Escrow Instructions electronically, effective on the date Service Buyer clicks to accept the Direct Work Order, pursuant to California Civil Code section 1633.8 and the federal Electronic Signatures in Global and National Commerce Act, 15 U.S.C. Sec. 7001, et seq., as may be amended from time to time (the \"E-Sign Act\"). Doing so constitutes an acknowledgement that Service Buyer and Provider agree to conduct the transaction electronically, and are able to electronically receive, download, and print these Escrow Instructions."
+        "text": "By clicking to accept a Service Buyer Initiated Direct Order, whether fixed-price or hourly, Service Buyer and Provider are deemed to have executed these Escrow Instructions electronically, effective on the date Service Buyer clicks to accept the Direct Order, pursuant to California Civil Code section 1633.8 and the federal Electronic Signatures in Global and National Commerce Act, 15 U.S.C. Sec. 7001, et seq., as may be amended from time to time (the \"E-Sign Act\"). Doing so constitutes an acknowledgement that Service Buyer and Provider agree to conduct the transaction electronically, and are able to electronically receive, download, and print these Escrow Instructions."
       },
       {
         "t": "h2",
@@ -2966,23 +2966,23 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "h3",
-        "text": "2.1 Direct Work Order Fixed-Price Work Orders"
+        "text": "2.1 Direct Order Fixed-Price Orders"
       },
       {
         "t": "p",
-        "text": "Service Buyer agrees to deposit funds to the Direct Work Order Escrow Account for the amount of any milestone(s) or the full amount of the Direct Work Order if there is only one milestone for each active fixed-price Direct Work Order when the Service Buyer approves the Provider’s submission of work. Any funds deposited by Service Buyer remain in the Direct Work Order Escrow Account until they are released to the Provider Escrow Account or released to the Service Buyer. Panameer SA will not release funds held in escrow except as described in these Escrow Instructions."
+        "text": "Service Buyer agrees to deposit funds to the Direct Order Escrow Account for the amount of any milestone(s) or the full amount of the Direct Order if there is only one milestone for each active fixed-price Direct Order when the Service Buyer approves the Provider’s submission of work. Any funds deposited by Service Buyer remain in the Direct Order Escrow Account until they are released to the Provider Escrow Account or released to the Service Buyer. Panameer SA will not release funds held in escrow except as described in these Escrow Instructions."
       },
       {
         "t": "h3",
-        "text": "2.2 Direct Work Order Hourly Work Orders and Invoices"
+        "text": "2.2 Direct Order Hourly Orders and Invoices"
       },
       {
         "t": "p",
-        "text": "Service Buyer agrees to fund through the Direct Work Order Escrow Account payments to Provider on a weekly basis for the amount of Provider’s applicable hours logged during the billing period (“Direct Work Order Hourly Work Order Funds”). Invoices for hours recorded by the Provider on Panameer will be generated each Monday, on the Monday that follows the end of the weekly billing cycle (such invoice, the \"Direct Work Order Hourly Invoice\")."
+        "text": "Service Buyer agrees to fund through the Direct Order Escrow Account payments to Provider on a weekly basis for the amount of Provider’s applicable hours logged during the billing period (“Direct Order Hourly Order Funds”). Invoices for hours recorded by the Provider on Panameer will be generated each Monday, on the Monday that follows the end of the weekly billing cycle (such invoice, the \"Direct Order Hourly Invoice\")."
       },
       {
         "t": "p",
-        "text": "It is the responsibility of the Service Buyer to review any Direct Work Order Hourly Invoice before agreeing to fund the Direct Work Order Escrow Account. Service Buyer will be deemed to have accepted the Provider Services and all hours invoiced by Provider during the invoice period upon funding. If the Service Buyer has deposited sufficient funds to the Direct Work Order Escrow Account and a Release Condition is met, Panameer SA will release the Direct Work Order Hourly Work Order Funds to Provider. Panameer SA will not release funds held in escrow except as described in these Escrow Instructions."
+        "text": "It is the responsibility of the Service Buyer to review any Direct Order Hourly Invoice before agreeing to fund the Direct Order Escrow Account. Service Buyer will be deemed to have accepted the Provider Services and all hours invoiced by Provider during the invoice period upon funding. If the Service Buyer has deposited sufficient funds to the Direct Order Escrow Account and a Release Condition is met, Panameer SA will release the Direct Order Hourly Order Funds to Provider. Panameer SA will not release funds held in escrow except as described in these Escrow Instructions."
       },
       {
         "t": "h2",
@@ -2990,7 +2990,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider irrevocably authorize and instruct Panameer SA to release applicable portions of the Direct Work Order Escrow Account (each portion, a “Release”) to their Provider Escrow Account or Service Buyer Escrow Account, as applicable, upon the occurrence of and in accordance with one or more Release Conditions provided below or as otherwise required by applicable law or the Terms of Service. If the funds are released to the Service Buyer Escrow Account, they will be automatically returned to the Service Buyer’s Payment Method that was charged to fund escrow. The amount of the Release will be delivered to the applicable Escrow Account in accordance with Provider’s or Service Buyer’s instructions, as applicable, these Escrow Instructions, and the other Terms of Service."
+        "text": "Service Buyer and Provider irrevocably authorize and instruct Panameer SA to release applicable portions of the Direct Order Escrow Account (each portion, a “Release”) to their Provider Escrow Account or Service Buyer Escrow Account, as applicable, upon the occurrence of and in accordance with one or more Release Conditions provided below or as otherwise required by applicable law or the Terms of Service. If the funds are released to the Service Buyer Escrow Account, they will be automatically returned to the Service Buyer’s Payment Method that was charged to fund escrow. The amount of the Release will be delivered to the applicable Escrow Account in accordance with Provider’s or Service Buyer’s instructions, as applicable, these Escrow Instructions, and the other Terms of Service."
       },
       {
         "t": "h3",
@@ -2998,23 +2998,23 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "As used in these Escrow Instructions, “Release Condition” means any of the following: 1. For fixed-price Direct Work Orders, Service Buyer affirmatively clicks to approve the milestone(s) or fixed-price Direct Work Order work submitted by Provider for approval."
+        "text": "As used in these Escrow Instructions, “Release Condition” means any of the following: 1. For fixed-price Direct Orders, Service Buyer affirmatively clicks to approve the milestone(s) or fixed-price Direct Order work submitted by Provider for approval."
       },
       {
         "t": "p",
-        "text": "2. For fixed-price Direct Work Orders, Service Buyer affirmatively clicks to accept the milestone(s) or fixedprice Direct Work Order work performed, but not yet submitted by Provider for approval. 3. For fixed-price Direct Work Orders, Service Buyer does not take any action for 14 days from the date Provider submits the milestone or fixed-price Work Order work for approval, in which case Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to Provider the amount associated with the applicable milestone(s) in connection with such Release request."
+        "text": "2. For fixed-price Direct Orders, Service Buyer affirmatively clicks to accept the milestone(s) or fixedprice Direct Order work performed, but not yet submitted by Provider for approval. 3. For fixed-price Direct Orders, Service Buyer does not take any action for 14 days from the date Provider submits the milestone or fixed-price Order work for approval, in which case Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to Provider the amount associated with the applicable milestone(s) in connection with such Release request."
       },
       {
         "t": "p",
-        "text": "4. For fixed-price Direct Work Orders, Provider cancels the Work Order before a payment has been released to Provider, in which case the funds are to be returned to the Service Buyer."
+        "text": "4. For fixed-price Direct Orders, Provider cancels the Order before a payment has been released to Provider, in which case the funds are to be returned to the Service Buyer."
       },
       {
         "t": "p",
-        "text": "5. For fixed-price Direct Work Orders, Service Buyer cancels the Work Order before a payment has been released to Provider and Provider approves the request or takes no action within seven (7) days, in which case the funds are to be released to the Service Buyer."
+        "text": "5. For fixed-price Direct Orders, Service Buyer cancels the Order before a payment has been released to Provider and Provider approves the request or takes no action within seven (7) days, in which case the funds are to be released to the Service Buyer."
       },
       {
         "t": "p",
-        "text": "6. For hourly Direct Work Orders, Service Buyer has approved all or a portion of the Direct Work Order Hourly Invoice submitted by Provider upon funding, which is deemed acceptance for purposes of this Release Condition."
+        "text": "6. For hourly Direct Orders, Service Buyer has approved all or a portion of the Direct Order Hourly Invoice submitted by Provider upon funding, which is deemed acceptance for purposes of this Release Condition."
       },
       {
         "t": "p",
@@ -3054,7 +3054,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider are encouraged to come to a mutual agreement if refunds or cancellations are necessary. Panameer will hold funds in the Direct Work Order Escrow Account until a Release Condition, as defined in Section 3.1 is fulfilled. If there are no funds in escrow, Provider may issue a refund via the Panameer platform up to the full amount paid on the hourly Direct Work Order or fixed-price Direct Work Order."
+        "text": "Service Buyer and Provider are encouraged to come to a mutual agreement if refunds or cancellations are necessary. Panameer will hold funds in the Direct Order Escrow Account until a Release Condition, as defined in Section 3.1 is fulfilled. If there are no funds in escrow, Provider may issue a refund via the Panameer platform up to the full amount paid on the hourly Direct Order or fixed-price Direct Order."
       },
       {
         "t": "h2",
@@ -3062,11 +3062,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Service Buyer Initiated Direct Work Orders. Panameer, Panameer SA, and Affiliates do not guarantee that Provider will be paid by Service Buyer. Upon occurrence of a Release Condition, as defined in Section 3.1, Panameer SA can release only the amount of funds that have been deposited by Service Buyer to the Direct Work Order Escrow Account."
+        "text": "Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Service Buyer Initiated Direct Orders. Panameer, Panameer SA, and Affiliates do not guarantee that Provider will be paid by Service Buyer. Upon occurrence of a Release Condition, as defined in Section 3.1, Panameer SA can release only the amount of funds that have been deposited by Service Buyer to the Direct Order Escrow Account."
       },
       {
         "t": "p",
-        "text": "Panameer, Panameer SA, and Affiliates are under no circumstances liable to Provider for payment for Service Buyer’s failure to deposit funds to the Direct Work Order Escrow Account to cover payment to Provider."
+        "text": "Panameer, Panameer SA, and Affiliates are under no circumstances liable to Provider for payment for Service Buyer’s failure to deposit funds to the Direct Order Escrow Account to cover payment to Provider."
       },
       {
         "t": "h2",
@@ -3120,7 +3120,7 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "This Panameer Service Buyer Initiated Direct Work Orders Terms (“Direct Work Order Terms”) defines the agreement between you (the “Service Buyer” or the “Provider”, as applicable) and Panameer Inc (“Panameer”) regarding Direct Work Order engagements and are part of and incorporate by reference the Panameer User Agreement the other Terms of Service, and the Fee and ACH Authorization Agreement (collectively, the “Agreement”). The Direct Work Order Terms are in addition to and, except where explicitly stated, does not supersede, replace, or limit other similar terms in the Terms of Service. Capitalized terms not defined herein are defined in the User Agreement or elsewhere in the Terms of Service."
+        "text": "This Panameer Service Buyer Initiated Direct Orders Terms (“Direct Order Terms”) defines the agreement between you (the “Service Buyer” or the “Provider”, as applicable) and Panameer Inc (“Panameer”) regarding Direct Order engagements and are part of and incorporate by reference the Panameer User Agreement the other Terms of Service, and the Fee and ACH Authorization Agreement (collectively, the “Agreement”). The Direct Order Terms are in addition to and, except where explicitly stated, does not supersede, replace, or limit other similar terms in the Terms of Service. Capitalized terms not defined herein are defined in the User Agreement or elsewhere in the Terms of Service."
       },
       {
         "t": "h2",
@@ -3128,15 +3128,15 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "To be eligible for Service Buyer Initiated Direct Work Orders, the Service Buyer must have an account in good standing and be offered the opportunity to join this program by Panameer. Under this program, a Service Buyer may manage service Work Orders with eligible providers pursuant to these Terms."
+        "text": "To be eligible for Service Buyer Initiated Direct Orders, the Service Buyer must have an account in good standing and be offered the opportunity to join this program by Panameer. Under this program, a Service Buyer may manage service Orders with eligible providers pursuant to these Terms."
       },
       {
         "t": "p",
-        "text": "Service Buyer Initiated Direct Work Orders may only be offered to Providers that do not have a pre-existing relationship with Panameer, and must register for a Panameer Account pursuant to Section 1 of the User Agreement."
+        "text": "Service Buyer Initiated Direct Orders may only be offered to Providers that do not have a pre-existing relationship with Panameer, and must register for a Panameer Account pursuant to Section 1 of the User Agreement."
       },
       {
         "t": "p",
-        "text": "A Service Buyer may have multiple active Service Buyer Initiated Direct Work Orders. A Provider may only be engaged with a single Service Buyer pursuant to a Service Buyer Initiated DIrect Work Order. All other engagements of the Provider will be subject to the fees and other terms and conditions of such offerings."
+        "text": "A Service Buyer may have multiple active Service Buyer Initiated Direct Orders. A Provider may only be engaged with a single Service Buyer pursuant to a Service Buyer Initiated DIrect Order. All other engagements of the Provider will be subject to the fees and other terms and conditions of such offerings."
       },
       {
         "t": "h2",
@@ -3144,7 +3144,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider acknowledge and agree that the Direct Work Order Escrow Instructions apply to any engagements via Service Buyer Initiated Direct Work Order (each such engagement, a “Direct Work Order”). Panameer SA provides escrow services, but does not guarantee that Provider will be paid except and only to the extent that all of the following are true: (a) Panameer has received funds from Service Buyer on behalf of the Provider, (b) Service Buyer has directed such funds to be released to Provider, and (c) any hold or security period has passed. Panameer otherwise does not guarantee that Service Buyer is able to or will pay Provider."
+        "text": "Service Buyer and Provider acknowledge and agree that the Direct Order Escrow Instructions apply to any engagements via Service Buyer Initiated Direct Order (each such engagement, a “Direct Order”). Panameer SA provides escrow services, but does not guarantee that Provider will be paid except and only to the extent that all of the following are true: (a) Panameer has received funds from Service Buyer on behalf of the Provider, (b) Service Buyer has directed such funds to be released to Provider, and (c) any hold or security period has passed. Panameer otherwise does not guarantee that Service Buyer is able to or will pay Provider."
       },
       {
         "t": "p",
@@ -3156,7 +3156,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider understand and agree that Panameer is not involved in or responsible for any work performed by Provider(s), is not involved in or responsible for any payment made under a Direct Work Order except as provided in Section 2 (Escrow Services), and has no control over any Provider or Service Buyer. Panameer does not guarantee that Service Buyer or Provider will perform on the Direct Work Order. Panameer does not have any power or authority to, and does not, determine any eligibility standards for any Direct Work Order, select or contract any Provider to provide services to Service Buyer, determine or control any term or condition of the Direct Work Order or Project, or cause any Provider to accept any Direct Work Order or perform any Provider Services. The Parties agree that Service Buyer will select the Provider, that the scope of work will be set exclusively by agreement between Service Buyer and Provider, and that Service Buyer and Provider will take up any issues with the work and/or its scope between each other."
+        "text": "Service Buyer and Provider understand and agree that Panameer is not involved in or responsible for any work performed by Provider(s), is not involved in or responsible for any payment made under a Direct Order except as provided in Section 2 (Escrow Services), and has no control over any Provider or Service Buyer. Panameer does not guarantee that Service Buyer or Provider will perform on the Direct Order. Panameer does not have any power or authority to, and does not, determine any eligibility standards for any Direct Order, select or contract any Provider to provide services to Service Buyer, determine or control any term or condition of the Direct Order or Project, or cause any Provider to accept any Direct Order or perform any Provider Services. The Parties agree that Service Buyer will select the Provider, that the scope of work will be set exclusively by agreement between Service Buyer and Provider, and that Service Buyer and Provider will take up any issues with the work and/or its scope between each other."
       },
       {
         "t": "h2",
@@ -3168,11 +3168,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Panameer will charge Service Buyers a Direct Work Orders Fee of $49 for each active Service Work Order that is designated as a Service Buyer Initiated Direct Work Orders. A Service Work Order is considered active if an invoice was generated or a milestone was active in the prior month (i.e. past 30 days). Panameer will bill and charge the Service Buyer’s Payment Method on file the applicable amount of Direct Work Orders Fees on the first of each calendar month. At its sole discretion, Panameer may offer Service Buyers a different Direct Work Orders Fee; any such rate must be explicitly communicated or agreed by an authorized representative of Panameer via email or a written agreement."
+        "text": "Panameer will charge Service Buyers a Direct Orders Fee of $49 for each active Service Order that is designated as a Service Buyer Initiated Direct Orders. A Service Order is considered active if an invoice was generated or a milestone was active in the prior month (i.e. past 30 days). Panameer will bill and charge the Service Buyer’s Payment Method on file the applicable amount of Direct Orders Fees on the first of each calendar month. At its sole discretion, Panameer may offer Service Buyers a different Direct Orders Fee; any such rate must be explicitly communicated or agreed by an authorized representative of Panameer via email or a written agreement."
       },
       {
         "t": "p",
-        "text": "No refunds of fees already paid will be given. Service Buyers may opt out of the Direct Work Order program or cancel a Service Work Order pursuant to the applicable Escow Instructions and terms at any time, however Panameer will not refund any fees for Service Work Orders that were considered active at any time in the month prior to the charge. Where applicable, Panameer will collect taxes (such as VAT) on the Direct Work Orders Fee."
+        "text": "No refunds of fees already paid will be given. Service Buyers may opt out of the Direct Order program or cancel a Service Order pursuant to the applicable Escow Instructions and terms at any time, however Panameer will not refund any fees for Service Orders that were considered active at any time in the month prior to the charge. Where applicable, Panameer will collect taxes (such as VAT) on the Direct Orders Fee."
       },
       {
         "t": "h3",
@@ -3180,7 +3180,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Providers engaged on a Service Buyer Initiated Direct Work Order are not charged Provider Service Fees (see Sections 2.1 and 2.2 of the Fee and ACH Authorization Agreement) for such Service Buyer Initiated Direct Work Order. However, Providers will pay any other applicable fees (see Section 2.5 of the Fee and ACH Authorization Agreement). If such Provider enters into a Service Work Order other than a Service Buyer Initiated Direct Work Order, such Service Work Order will be subject to Service Fees as applicable."
+        "text": "Providers engaged on a Service Buyer Initiated Direct Order are not charged Provider Service Fees (see Sections 2.1 and 2.2 of the Fee and ACH Authorization Agreement) for such Service Buyer Initiated Direct Order. However, Providers will pay any other applicable fees (see Section 2.5 of the Fee and ACH Authorization Agreement). If such Provider enters into a Service Order other than a Service Buyer Initiated Direct Order, such Service Order will be subject to Service Fees as applicable."
       },
       {
         "t": "h2",
@@ -3188,7 +3188,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Service Buyer Initiated Direct Work Orders. Panameer, Panameer SA, and Affiliates do not guarantee that Provider will be paid by Service Buyer. Panameer, Panameer SA, and Affiliates are under no circumstances liable to Provider for payment for Service Buyer’s failure to deposit funds to the Direct Work Order Escrow Account to cover payment to Provider."
+        "text": "Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Service Buyer Initiated Direct Orders. Panameer, Panameer SA, and Affiliates do not guarantee that Provider will be paid by Service Buyer. Panameer, Panameer SA, and Affiliates are under no circumstances liable to Provider for payment for Service Buyer’s failure to deposit funds to the Direct Order Escrow Account to cover payment to Provider."
       },
       {
         "t": "h2",
@@ -3196,7 +3196,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "These Direct Work Order Terms control for any express conflicts between the User Agreement and these Direct Work Order Terms concerning Service Buyer Fees, Provider Fees and dispute or payment protection assistance with respect to Service Buyer Initiated Direct Service Work Orders and Services only."
+        "text": "These Direct Order Terms control for any express conflicts between the User Agreement and these Direct Order Terms concerning Service Buyer Fees, Provider Fees and dispute or payment protection assistance with respect to Service Buyer Initiated Direct Service Orders and Services only."
       }
     ]
   }

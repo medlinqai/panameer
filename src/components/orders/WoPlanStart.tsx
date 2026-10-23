@@ -64,7 +64,7 @@ export function WoPlanStart({ orderId, copyable, withTe = true }: { orderId: str
         <Option title="Template" text="Kickoff, delivery, review and acceptance, and a sign-off milestone.">
           <button type="button" className={BTN_W} disabled={!!busy} onClick={() => run("template")}>Use the Template</button>
         </Option>
-        <Option title="Copy a past work order" text={copyable.length ? "Start from the plan on one of your earlier work orders." : "None of your earlier work orders has a plan yet."}>
+        <Option title="Copy a past order" text={copyable.length ? "Start from the plan on one of your earlier orders." : "None of your earlier orders has a plan yet."}>
           {copyable.length > 0 && (
             <>
               <select className="h-11 border border-line bg-surface px-2 text-[14px]" aria-label="Copy from" value={from} onChange={(e) => setFrom(e.target.value)}>

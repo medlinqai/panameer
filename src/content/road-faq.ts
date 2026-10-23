@@ -18,21 +18,21 @@ export const ROAD_FAQ: Record<string, { q: string; a: string }[]> = {
     { q: "When do they go live?", a: "As soon as you publish, once your company is linked. No Panameer review." },
   ],
   sell: [
-    { q: "What are the three ways to win work?", a: "5.A a buyer buys your service product; 5.B a buyer hires you at your rate after you said you want their job; 5.C a buyer accepts the estimate you sent. Each ends in a signed work order." },
+    { q: "What are the three ways to win work?", a: "5.A a buyer buys your service product; 5.B a buyer hires you at your rate after you said you want their job; 5.C a buyer accepts the estimate you sent. Each ends in a signed order." },
     { q: "Can buyers negotiate?", a: "Only if you want them to. Orders at your price and date open at once. Turn on \"Open to offers on price and delivery\" (or open a single product or service) and buyers can propose a different price or date; you accept, counter once, or decline." },
-    { q: "Do I need a W-9 or tax ID to sell?", a: "No. Selling, signing work orders and requesting payment only need a linked company. Payout details are asked for just before you get paid." },
+    { q: "Do I need a W-9 or tax ID to sell?", a: "No. Selling, signing orders and requesting payment only need a linked company. Payout details are asked for just before you get paid." },
   ],
   deliver: [
-    { q: "When is a work order delivered?", a: "When the buyer accepts the deliverable or approves your timesheet. Keep the tracker up to date on the work order as you go." },
-    { q: "What if the buyer asks for changes?", a: "Make them and send the update from the work order; the buyer accepts when it's done." },
+    { q: "When is an order delivered?", a: "When the buyer accepts the deliverable or approves your timesheet. Keep the tracker up to date on the order as you go." },
+    { q: "What if the buyer asks for changes?", a: "Make them and send the update from the order; the buyer accepts when it's done." },
   ],
   request: [
-    { q: "How do I request payment?", a: "From the work order: submit a timesheet for rate work, or report a milestone (delivered, installed…) for a service product." },
+    { q: "How do I request payment?", a: "From the order: submit a timesheet for rate work, or report a milestone (delivered, installed…) for a service product." },
     { q: "When is the buyer due to pay?", a: "Payment terms start when the request goes to the buyer, for example Net 30." },
   ],
   paid: [
     { q: "What does the lock before Get Paid mean?", a: "Before the first payout we need a payout account in your company's legal name, plus Tax ID and tax form where your country's rule needs them (US: W-9 + Tax ID). Requests made before that wait, then go out automatically." },
     { q: "Where does the money go?", a: "To your company's bank account in its legal name, after the buyer pays Panameer." },
-    { q: "What does Panameer keep?", a: "The fee shown on your work order. The rest is paid out to your company." },
+    { q: "What does Panameer keep?", a: "The fee shown on your order. The rest is paid out to your company." },
   ],
 };

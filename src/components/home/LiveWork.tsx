@@ -165,7 +165,7 @@ export async function BuyerLiveWork({ personId, step, view }: { personId: string
     <div data-buyer-live-work>
       <AttentionTiles tiles={w.tiles} />
       {week ? <WeekSchedule start={week.start} rows={week.rows} side="buyer" backHref="/dashboard#todays-interviews" /> : <TodaysInterviews rows={w.todays} side="buyer" weekHref="/dashboard?view=week#week" />}
-      <LiveWorkList title="Requisition Path" steps={w.strip} rows={w.rows} active={step} base="/dashboard" footer={<>{w.footer.openJobs} open Job{w.footer.openJobs === 1 ? "" : "s"} · {w.footer.monthOrders} Work Order{w.footer.monthOrders === 1 ? "" : "s"} this month</>} />
+      <LiveWorkList title="Request Path" steps={w.strip} rows={w.rows} active={step} base="/dashboard" footer={<>{w.footer.openJobs} open Job{w.footer.openJobs === 1 ? "" : "s"} · {w.footer.monthOrders} Order{w.footer.monthOrders === 1 ? "" : "s"} this month</>} />
     </div>
   );
 }

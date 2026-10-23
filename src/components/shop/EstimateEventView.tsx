@@ -88,7 +88,7 @@ export function EstimateEventView({ ev }: { ev: Ev }) {
                       {e.exclusions && <p className="mt-1 text-[12.5px]"><b>Not included:</b> {e.exclusions}</p>}
                       {!awarded && e.status === "SENT" && (
                         <div className="mt-3 flex flex-wrap gap-1.5">
-                          <button type="button" className={BTN} disabled={busy} onClick={() => window.confirm(`Award ${x.who} at ${usd(e.totalCents)}?`) && post("/api/estimate-events", { action: "award", eventId: ev.id, estimateId: e.id }, "Awarded — the Service Requisition and Work Order are created.")} data-award-estimate>Award</button>
+                          <button type="button" className={BTN} disabled={busy} onClick={() => window.confirm(`Award ${x.who} at ${usd(e.totalCents)}?`) && post("/api/estimate-events", { action: "award", eventId: ev.id, estimateId: e.id }, "Awarded — the Request and Order are created.")} data-award-estimate>Award</button>
                           <button type="button" className={GHOST} disabled={busy} onClick={() => setChanging(changing === e.id ? null : e.id)}>Request Changes</button>
                           {x.userId && <Link href={`/messages?with=${x.userId}`} className={GHOST}>Ask a Question</Link>}
                         </div>
@@ -109,7 +109,7 @@ export function EstimateEventView({ ev }: { ev: Ev }) {
           </div>
         </div>
         {msg && <p role="status" className="mt-2 text-[13.5px] font-semibold text-magenta-dark">{msg}</p>}
-        {ev.wo && <p className="mt-2 text-[13.5px]">Work Order <Link href={`/orders/${ev.wo.id}`} className="font-semibold text-magenta-dark underline underline-offset-4">{ev.wo.order_number}</Link></p>}
+        {ev.wo && <p className="mt-2 text-[13.5px]">Order <Link href={`/orders/${ev.wo.id}`} className="font-semibold text-magenta-dark underline underline-offset-4">{ev.wo.order_number}</Link></p>}
       </section>
     </div>
   );

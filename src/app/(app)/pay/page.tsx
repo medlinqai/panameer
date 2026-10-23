@@ -35,7 +35,7 @@ export default async function Page() {
           <p className="text-[16px] font-bold">Nothing to approve</p>
           <p className="mx-auto mt-2 max-w-lg text-[14.5px] leading-relaxed text-ink-2">
             When a provider claims time or a fixed amount against one of your
-            released work orders, it appears here for you to approve or send back.
+            released orders, it appears here for you to approve or send back.
           </p>
         </div>
       ) : (

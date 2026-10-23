@@ -243,7 +243,7 @@ export function PlanTimeline({ plan, today, footnote = true }: { plan: PublicPla
 
       {footnote && (
         <p className="mt-9 text-[13px] text-ink-2">
-          The same plan tool you&apos;ll use on your work orders.
+          The same plan tool you&apos;ll use on your orders.
         </p>
       )}
     </section>

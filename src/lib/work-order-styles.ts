@@ -36,7 +36,7 @@ export class StyleError extends Error {}
 /** WS-E002: block a line type the style doesn't allow, with a clear message. */
 export function assertLineAllowed(style: WorkOrderStyle, l: LineLike) {
   if (!STYLE_LINE_TYPES[style].includes(l.transaction_type))
-    throw new StyleError(`A ${STYLE_LABEL[style]} Work Order can't hold a "${LINE_TYPE_LABEL[l.transaction_type]}" line. Allowed: ${STYLE_LINE_TYPES[style].map((t) => LINE_TYPE_LABEL[t]).join(" or ")}.`);
+    throw new StyleError(`A ${STYLE_LABEL[style]} Order can't hold a "${LINE_TYPE_LABEL[l.transaction_type]}" line. Allowed: ${STYLE_LINE_TYPES[style].map((t) => LINE_TYPE_LABEL[t]).join(" or ")}.`);
   if (style === "RETAINER" && !l.billing_cycle) throw new StyleError("A Retainer line needs a billing cycle (weekly, every 2 weeks, monthly…).");
 }
 

@@ -122,7 +122,7 @@ export default async function StatusPage({
           {/* THE SUBLINE SAYS WHY THIS PAGE IS PUBLIC AT ALL  */}
           <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-white/80">
             We&apos;re eating our own cooking — this is the project tracker you&apos;ll use on your
-            Panameer work orders, and we&apos;re using it to build Panameer.
+            Panameer orders, and we&apos;re using it to build Panameer.
           </p>
 
           <p className="mt-7 flex flex-wrap items-center gap-4">

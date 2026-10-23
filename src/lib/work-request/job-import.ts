@@ -76,13 +76,13 @@ const TOOL_SCHEMA = {
   },
 } as const;
 
-const SYSTEM = `You convert a pasted job posting into a structured Service Requisition.
+const SYSTEM = `You convert a pasted job posting into a structured Request.
 
 Return ONLY what the posting actually states.
 
 Leave a field null when the posting does not state it. Do not infer, average,
 estimate, or fill a gap with what is typical for the role. A null field costs
-the user one keystroke; an invented one is a wrong Service Requisition they may post
+the user one keystroke; an invented one is a wrong Request they may post
 without noticing.
 
 Specific rules:
@@ -116,7 +116,7 @@ export async function aiExtractJobPosting(text: string): Promise<JobImportOutcom
     schema: TOOL_SCHEMA as unknown as Record<string, unknown>,
     schemaName: "record_work_request",
     text,
-    instruction: "Convert this job posting into a Service Requisition.",
+    instruction: "Convert this job posting into a Request.",
     tag: "posting",
     toolDescription: "Record the structured contents of this job posting.",
     maxOutputTokens: 8_000,

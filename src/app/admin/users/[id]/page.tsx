@@ -128,8 +128,8 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
     : curKey === "list" ? { text: "nothing for sale yet", sub: "No published service product and no response sent.", fix: null }
     : curKey === "validate" ? { text: "company not validated", sub: check ? `Missing: ${check.items.filter((i) => !i.done).map((i) => i.item).join(", ")}` : "", fix: co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : null }
     : curKey === "deliver" ? { text: "nothing delivered yet", sub: "The buyer hasn't accepted a deliverable or approved a timesheet.", fix: null }
-    : curKey === "contract" || curKey === "sell" ? { text: "no signed work order yet", sub: "A product bought, a rate accepted or an estimate accepted, then the work order signed.", fix: null }
-    : curKey === "request" ? { text: "no payment request yet", sub: "A timesheet or milestone request on a signed work order.", fix: null }
+    : curKey === "contract" || curKey === "sell" ? { text: "no signed order yet", sub: "A product bought, a rate accepted or an estimate accepted, then the order signed.", fix: null }
+    : curKey === "request" ? { text: "no payment request yet", sub: "A timesheet or milestone request on a signed order.", fix: null }
     : curKey === "paid" ? { text: "not paid yet", sub: "Paid to a bank account in the company's legal name.", fix: null }
     : null;
 
@@ -235,8 +235,8 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
         </Step>
 
         <Step n={`${nOf(steps.some((s) => s.key === "sell") ? "sell" : "contract")}–${nOf("paid")}`} title="Contracts & Payments" tag={payouts + payments > 0 ? "PAID" : signed > 0 ? "CONTRACTED" : "—"} tone={signed > 0 ? "done" : "none"}>
-          <Row label="Service Requisitions · Responses" value={`${workRequests} · ${proposals}`} />
-          <Row label="Signed work orders" value={signed} />
+          <Row label="Requests · Responses" value={`${workRequests} · ${proposals}`} />
+          <Row label="Signed orders" value={signed} />
           <Row label="Payouts · payments" value={`${payouts} · ${payments}`} />
         </Step>
 

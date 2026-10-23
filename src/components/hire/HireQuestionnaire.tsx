@@ -369,7 +369,7 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
                     <li><b>Fit score:</b> the role you asked for counts most, then each shared domain, the product (e.g. Oracle Fusion Cloud), each skill they share with the job, and years of experience (up to 20).</li>
                     <li><b>Budget:</b> when two are equally close, the one whose rate is inside your range comes first.</li>
                   </ol>
-                  <p className="mt-2 text-ink-2">Providers who share no domain or skill with the job sit under Weaker Matches. Names and companies stay hidden until a Work Order is released; you see each provider&apos;s number.</p>
+                  <p className="mt-2 text-ink-2">Providers who share no domain or skill with the job sit under Weaker Matches. Names and companies stay hidden until an Order is released; you see each provider&apos;s number.</p>
                 </div>
               </details>
             </div>

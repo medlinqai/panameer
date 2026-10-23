@@ -19,7 +19,7 @@ export function JobStrip({ steps }: { steps: StripStep[] }) {
 }
 
 export function JobTabs({ jobId, current, counts }: { jobId: string; current: JobTab; counts: Partial<Record<JobTab, number>> }) {
-  const tabs: [JobTab, string][] = [["matches", "Matches"], ["responses", "Responses"], ["interviews", "Interviews"], ["tests", "Tests"], ["work-order", "Work Order"], ["details", "Details"]];
+  const tabs: [JobTab, string][] = [["matches", "Matches"], ["responses", "Responses"], ["interviews", "Interviews"], ["tests", "Tests"], ["work-order", "Order"], ["details", "Details"]];
   return (
     <nav aria-label="Job" className="flex gap-6 overflow-x-auto border-b border-state-border" data-job-tabs>
       {tabs.map(([k, label]) => {

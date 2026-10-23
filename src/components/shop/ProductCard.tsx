@@ -52,7 +52,7 @@ function ProductTile({ p, signedIn, own, inCartLineId }: { p: CardProduct; signe
       {own ? (
         <p data-own-product className="text-[12.5px] text-ink-2">Your product. <Link href={`/catalog/products?edit=${p.id}`} className="font-bold text-magenta-dark underline underline-offset-4">Edit</Link></p>
       ) : inCartLineId ? (
-        <Link href="/cart" className="mt-1 inline-flex min-h-9 items-center justify-center bg-ink px-4 text-[13px] font-semibold text-surface hover:bg-ink-hover">In Your Service Requisition · View</Link>
+        <Link href="/cart" className="mt-1 inline-flex min-h-9 items-center justify-center bg-ink px-4 text-[13px] font-semibold text-surface hover:bg-ink-hover">In Your Request · View</Link>
       ) : p.priceCents == null ? (
         <Link href={`/estimates/request?provider=${p.providerPersonId}&product=${p.id}`} data-request-quote className="mt-1 inline-flex min-h-9 items-center justify-center bg-ink px-4 text-[13px] font-semibold text-surface hover:bg-ink-hover">Request a Quote</Link>
       ) : (

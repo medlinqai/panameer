@@ -28,14 +28,14 @@ export default async function Page({
     if (e instanceof SettlementError) {
       return (
         <div className="mx-auto w-full max-w-3xl">
-          <BackLink href={`/orders/${id}`} label="the Work Order" />
+          <BackLink href={`/orders/${id}`} label="the Order" />
           <div className="mt-5 rounded-brand border border-dashed border-line px-6 py-12 text-center">
             <p className="text-[16px] font-bold">This order cannot be settled yet</p>
             <p className="mx-auto mt-2 max-w-md text-[14.5px] leading-relaxed text-ink-2">
               {e.message}.
             </p>
             <Button href={`/orders/${id}`} className="mt-6" variant="ghost">
-              Open the work order
+              Open the order
             </Button>
           </div>
         </div>

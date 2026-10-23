@@ -31,7 +31,7 @@ export default async function AdminBuildPlanPage() {
         </h1>
         <p className="mt-1.5 max-w-[70ch] text-[14px] leading-relaxed text-ink-2">
           Phases, tasks and milestones — the rows you type here are what
-          status.panameer.com shows. This is the same plan tool your work orders will use.
+          status.panameer.com shows. This is the same plan tool your orders will use.
         </p>
         <p className="mt-3 text-[13px] text-ink-2">
           {}

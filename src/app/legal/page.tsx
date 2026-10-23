@@ -17,7 +17,7 @@ const CORE = [
     href: "/user-agreement",
     title: "User Agreement",
     summary:
-      "The binding agreement between you and Panameer: accounts, Work Orders, fees, payment, disputes.",
+      "The binding agreement between you and Panameer: accounts, Orders, fees, payment, disputes.",
   },
   {
     href: "/privacy",

@@ -22,7 +22,7 @@ export function AppOverview({ count, summary, groups, band, lower, intro }: { co
           <span className="text-[12px] font-bold tracking-[0.12em] text-magenta">{dateLabel}</span>
           <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{count ? `${count} ${count === 1 ? "Thing Needs" : "Things Need"} Attention` : "Nothing Needs Attention"}</h1>
           <p className="text-[14px] leading-[1.7] text-state-inactive">{summary}</p>
-          <p className="mt-[18px] text-[13px] leading-relaxed text-state-inactive">Work Order tasks are in <Link href="/orders/overview">Orders</Link>.</p>
+          <p className="mt-[18px] text-[13px] leading-relaxed text-state-inactive">Order tasks are in <Link href="/orders/overview">Orders</Link>.</p>
           {intro}
         </div>
         <ActGroups groups={groups} />

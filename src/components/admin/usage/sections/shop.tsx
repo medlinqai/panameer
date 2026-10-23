@@ -31,7 +31,7 @@ export async function shopLists(c: Ctx): Promise<Lists> {
     accepted: () => est((e) => e.status === "ACCEPTED" && inCur(c, e.decided_at), `Accepted (${c.label})`),
     changes: () => est((e) => e.status === "CHANGES_REQUESTED" && inCur(c, e.decided_at), `Changes requested (${c.label})`),
     declined: () => est((e) => e.status === "DECLINED" && inCur(c, e.decided_at), `Declined (${c.label})`),
-    orders: async () => ({ title: `Product orders (${c.label})`, head: ["Work order", "Placed"], rows: (await data(c)).orders.filter((o) => inCur(c, o.created_at)).map((o) => ({ cells: [o.order_number, isoDay(o.created_at)], href: `/orders/${o.id}` })) }),
+    orders: async () => ({ title: `Product orders (${c.label})`, head: ["Order", "Placed"], rows: (await data(c)).orders.filter((o) => inCur(c, o.created_at)).map((o) => ({ cells: [o.order_number, isoDay(o.created_at)], href: `/orders/${o.id}` })) }),
   };
 }
 

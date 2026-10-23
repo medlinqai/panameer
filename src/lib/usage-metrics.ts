@@ -37,9 +37,9 @@ export const METRICS: MetricDef[] = [
   { area: "connect", label: "Groups Joined", hint: "Groups you belong to", goal: 5 },
   { area: "connect", label: "Total Community", hint: "Colleagues + their colleagues you can reach", goal: 100 },
 
-  { area: "work", label: "Job Postings", hint: "Service requisitions you posted (as a buyer)", goal: 5 },
+  { area: "work", label: "Job Postings", hint: "Requests you posted (as a buyer)", goal: 5 },
   { area: "work", label: "Interviews", hint: "Interviews held", goal: 5 },
-  { area: "work", label: "Hires", hint: "Work orders you created by hiring", goal: 5 },
+  { area: "work", label: "Hires", hint: "Orders you created by hiring", goal: 5 },
   { area: "work", label: "People Billing", hint: "People currently billing on your orders", goal: 5, uncounted: "Needs an active order with a timesheet or settlement — neither exists yet" },
 
   { area: "shop", label: "Service Products Posted", hint: "Service products you published", goal: 10 },
@@ -61,7 +61,7 @@ export const METRICS: MetricDef[] = [
 export const PROVIDER_WORK: MetricDef[] = [
   { area: "work", label: "Responses Sent", hint: "Jobs you said you want", goal: 10 },
   { area: "work", label: "Interviews", hint: "Interviews held", goal: 5 },
-  { area: "work", label: "Contracts Won", hint: "Work orders where you are the provider", goal: 5 },
+  { area: "work", label: "Contracts Won", hint: "Orders where you are the provider", goal: 5 },
   { area: "work", label: "Active Engagements", hint: "Orders you are currently working", goal: 5, uncounted: "Nothing marks an order as being worked yet" },
 ];
 

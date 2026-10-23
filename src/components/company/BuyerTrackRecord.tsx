@@ -14,7 +14,7 @@ export function BuyerTrackRecord({ t, compact = false }: { t: TrackRecord; compa
   const stats = t.isNew
     ? []
     : [
-        { k: "Work orders issued", v: String(t.issued) },
+        { k: "Orders issued", v: String(t.issued) },
         { k: "Completed", v: String(t.completed) },
         { k: "Paid on time", v: t.paidOnTimePct == null ? "—" : `${t.paidOnTimePct}%` },
         { k: "Avg days to pay", v: t.avgDaysToPay == null ? "—" : String(t.avgDaysToPay) },

@@ -180,7 +180,7 @@ export default async function DashboardPage({
               href="/find-work/new"
               className="mt-5 inline-flex bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
             >
-              Create Service Requisition
+              Create Request
             </Link>
           </Card>
 
@@ -192,7 +192,7 @@ export default async function DashboardPage({
             </p>
             <ul className="mt-4 grid gap-2 text-sm text-black/70 dark:text-white/70">
               <li>· Responses from providers on your requests</li>
-              <li>· Work orders, once your company&apos;s payment method is set up</li>
+              <li>· Orders, once your company&apos;s payment method is set up</li>
               <li>· Milestones and settlement</li>
             </ul>
           </Card>

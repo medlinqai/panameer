@@ -54,8 +54,8 @@ export async function submitWorkRequest(
 ): Promise<BuiltOrder[]> {
   const me = await ownPerson(viewer);
   const head = await prisma.workRequest.findUnique({ where: { id: input.workRequestId }, select: { buyer_person_id: true, p_account_id: true, status: true, description: true } });
-  if (!head || head.buyer_person_id !== me.id) throw new SourcingError("That service requisition isn't available.", "NOT_FOUND");
-  if (!["INCOMPLETE", "RETURNED", "SUBMITTED", "APPROVED", "ASSIGNED", "DRAFT", "POSTED"].includes(head.status)) throw new SourcingError("This service requisition can't be submitted now.", head.status === "ORDERED" ? "ALREADY_ORDERED" : "CANCELLED");
+  if (!head || head.buyer_person_id !== me.id) throw new SourcingError("That request isn't available.", "NOT_FOUND");
+  if (!["INCOMPLETE", "RETURNED", "SUBMITTED", "APPROVED", "ASSIGNED", "DRAFT", "POSTED"].includes(head.status)) throw new SourcingError("This request can't be submitted now.", head.status === "ORDERED" ? "ALREADY_ORDERED" : "CANCELLED");
   const description = input.description !== undefined ? input.description?.trim() || null : head.description;
   if (!description && (await descriptionRequired(head.p_account_id))) throw new SourcingError("Add a description before you submit.", "NO_DESCRIPTION");
   const lines = await prisma.workRequestLine.findMany({ where: { work_request_id: input.workRequestId, work_order_id: null }, select: { line_number: true, description: true, provider_person_id: true, transaction_type: true, unit_price_cents: true, amount_cents: true } });
@@ -119,33 +119,33 @@ async function buildWorkOrders(
       },
     },
   });
-  if (!wr) throw new SourcingError("That service requisition isn't available.", "NOT_FOUND");
+  if (!wr) throw new SourcingError("That request isn't available.", "NOT_FOUND");
   const assignedTo = wr.lines.find((l) => l.provider_person_id)?.provider_person_id;
   if (assignedTo) await assertCanSign(me.id, wr.buyer_person_id, assignedTo);
   if (wr.buyer_person_id !== me.id) {
     throw new SourcingError("Only the buyer can order this work.", "NOT_BUYER");
   }
   if (wr.status === "CANCELLED") {
-    throw new SourcingError("This service requisition was cancelled.", "CANCELLED");
+    throw new SourcingError("This request was cancelled.", "CANCELLED");
   }
 
   if (wr.status === "ORDERED" || wr.lines.some((l) => l.work_order_id != null)) {
     throw new SourcingError(
-      "A work order has already been created from this service requisition.",
+      "An order has already been created from this request.",
       "ALREADY_ORDERED"
     );
   }
 
   if (wr.lines.length === 0) {
     throw new SourcingError(
-      "Select a provider before creating the work order.",
+      "Select a provider before creating the order.",
       "NOTHING_ASSIGNED"
     );
   }
 
   const providerIds = [...new Set(wr.lines.map((l) => l.provider_person_id).filter((x): x is string => !!x))];
   if (providerIds.length === 0) {
-    throw new SourcingError("No provider is on this service requisition.", "NO_PROVIDER");
+    throw new SourcingError("No provider is on this request.", "NO_PROVIDER");
   }
   // WS-E002: one Work Order per seller per style (T&M · Fixed Price · Product · Retainer).
   const subs = new Set((await prisma.serviceProduct.findMany({ where: { id: { in: wr.lines.map((l) => l.service_product_id).filter((x): x is string => !!x) }, pricing_type: "RECURRING" }, select: { id: true } })).map((p) => p.id));
@@ -359,11 +359,11 @@ export async function declineWorkOrder(
     where: { id: orderId, provider_person_id: me.id },
     select: { id: true, status: true, work_request_id: true, erp_connection_id: true },
   });
-  if (!order) throw new SourcingError("That work order isn't yours.", "NOT_FOUND");
+  if (!order) throw new SourcingError("That order isn't yours.", "NOT_FOUND");
   // ONLY BEFORE ACCEPTING. Once a provider has accepted the terms the order is
   if (order.status !== "ISSUED") {
     throw new SourcingError(
-      "This work order can no longer be declined.",
+      "This order can no longer be declined.",
       "NOT_DECLINABLE"
     );
   }

@@ -16,7 +16,7 @@ export default async function Page() {
       <h1 className="mb-4 text-[28px] font-bold">Payment Requests</h1>
       <Listing
         title={`Payment Requests (${rows.length})`}
-        columns={["Request", "Work order", "Status", "Provider", "Buyer", "Total", "Submitted", "Decided"]}
+        columns={["Request", "Order", "Status", "Provider", "Buyer", "Total", "Submitted", "Decided"]}
         rows={rows.map((r) => [
           r.settlementNumber, r.orderNumber, statusLabel(r), r.providerName, r.buyerName,
           formatCents(r.totalCents, r.currency), r.submittedAt ?? "—", r.decidedAt ?? "—",

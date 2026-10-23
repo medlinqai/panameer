@@ -21,7 +21,7 @@ const short = (d: Date) => d.toLocaleString("en-US", { timeZone: TZ, month: "sho
 const daysSince = (d: Date | null) => (d ? Math.max(0, Math.floor((Date.now() - d.getTime()) / DAY)) : 0);
 
 // ── Buyer ──────────────────────────────────────────────────────────────────────────────────────────────────
-const BUYER_ACTION: Partial<Record<PathKey, string>> = { shortlist: "Shortlist", request: "Request Availability", proposals: "Review Responses", award: "Award", approval: "Open", wo: "Open Work Order" };
+const BUYER_ACTION: Partial<Record<PathKey, string>> = { shortlist: "Shortlist", request: "Request Availability", proposals: "Review Responses", award: "Award", approval: "Open", wo: "Open Order" };
 
 export async function buyerLiveWork(personId: string) {
   const now = new Date();
@@ -53,7 +53,7 @@ export async function buyerLiveWork(personId: string) {
       rows.push({
         id: `${w.id}:${l.provider_person_id}`, step, title: p.job.title || "Untitled job", ref: w.wr_number ?? p.job.job_number, who: p.numberOf(l.provider_person_id!), posted: postedAt.toISOString(),
         days: daysSince(wo?.created_at ?? w.approved_at ?? w.submitted_at ?? w.created_at), due: null,
-        action: wo ? { label: "Open Work Order", href: `/orders/${wo.id}` } : { label: "Open", href: `/work-requests/${p.job.id}` }, old: false,
+        action: wo ? { label: "Open Order", href: `/orders/${wo.id}` } : { label: "Open", href: `/work-requests/${p.job.id}` }, old: false,
       });
     }
   }
@@ -76,7 +76,7 @@ export async function buyerLiveWork(personId: string) {
     { id: "expired", label: "Deadline passed — pick or extend", count: expired, href: "/dashboard?step=proposals#live-work" },
     { id: "interviews", label: "Interviews today", count: todays.length, href: "#todays-interviews" },
     { id: "tests", label: "Test results in", count: testsIn, href: "/dashboard?step=test#live-work" },
-    { id: "accept", label: "Work Orders to accept", count: toAccept, href: "/orders" },
+    { id: "accept", label: "Orders to accept", count: toAccept, href: "/orders" },
     { id: "approvals", label: "Approvals waiting", count: approvals, href: "/orders/work-requests" },
   ].filter((t) => t.count > 0);
   return { tiles, todays, strip, rows, footer: { openJobs, monthOrders } };
@@ -85,7 +85,7 @@ export async function buyerLiveWork(personId: string) {
 // ── Provider ───────────────────────────────────────────────────────────────────────────────────────────────
 export const PROVIDER_STRIP = [
   { key: "requested", label: "Requested" }, { key: "submitted", label: "Submitted" }, { key: "shortlisted", label: "Shortlisted" },
-  { key: "interview", label: "Interview" }, { key: "awarded", label: "Awarded" }, { key: "accept", label: "Work Order to Accept" },
+  { key: "interview", label: "Interview" }, { key: "awarded", label: "Awarded" }, { key: "accept", label: "Order to Accept" },
 ] as const;
 
 export async function providerLiveWork(personId: string) {
@@ -123,7 +123,7 @@ export async function providerLiveWork(personId: string) {
     { id: "due", label: "Availability Requests due < 24 h", count: dueSoon, href: "/dashboard?step=requested#live-work" },
     { id: "interviews", label: "Interviews today", count: todays.length, href: "#todays-interviews" },
     { id: "tests", label: "Test requests", count: testReqs, href: "/find-work?tab=invitations" },
-    { id: "accept", label: "Work Orders to accept", count: toAccept.length, href: "/dashboard?step=accept#live-work" },
+    { id: "accept", label: "Orders to accept", count: toAccept.length, href: "/dashboard?step=accept#live-work" },
     { id: "not-selected", label: "Not selected (recent)", count: notSelected, href: "/find-work?tab=proposals" },
   ].filter((t) => t.count > 0);
   return { tiles, todays, strip, rows };
@@ -182,7 +182,7 @@ export async function buyerHireTabs(personId: string) {
     const action = step === "proposals" && p.event ? { label: "Review Responses", href: `/work-requests/${p.job.id}?tab=responses` }
       : step === "shortlist" || step === "request" ? { label: "Request Availability", href: `/work-requests/${p.job.id}?tab=matches` }
       : step === "award" || (step === "interview" || step === "test") ? { label: "Award", href: `/work-requests/${p.job.id}?tab=responses` }
-      : p.orders[0] ? { label: "Open Work Order", href: `/work-requests/${p.job.id}?tab=work-order` } : { label: "Open", href: `/work-requests/${p.job.id}` };
+      : p.orders[0] ? { label: "Open Order", href: `/work-requests/${p.job.id}?tab=work-order` } : { label: "Open", href: `/work-requests/${p.job.id}` };
     const iv = ivs.find((x) => x.job_id === p.job.id)?._count._all ?? 0;
     const ts = tests.find((x) => x.job_id === p.job.id)?._count._all ?? 0;
     const woSl = p.orders.map((o) => slices.get(o.id)).filter((x): x is NonNullable<typeof x> => !!x);
@@ -240,7 +240,7 @@ export async function buyerHireTabs(personId: string) {
     for (const w of p.wrs) for (const l of w.lines) {
       const wo = p.orders.find((o) => o.id === l.work_order_id);
       const sl = wo ? slices.get(wo.id) : null;
-      requestRows.push({ completed: !!sl?.completed, recurring: sl?.recurring ?? null, providerPersonId: l.provider_person_id!, id: `${w.id}:${l.provider_person_id}`, jobId: p.job.id, title: p.job.title, wr: w.wr_number, who: p.numberOf(l.provider_person_id!), step: wo ? "Work Order Created" : w.approved_at ? "Approval" : "Award", approval: w.approved_at ? "Auto-approved" : w.status === "PENDING_APPROVAL" ? "Waiting" : "—", wo: wo ? { id: wo.id, number: wo.order_number } : null });
+      requestRows.push({ completed: !!sl?.completed, recurring: sl?.recurring ?? null, providerPersonId: l.provider_person_id!, id: `${w.id}:${l.provider_person_id}`, jobId: p.job.id, title: p.job.title, wr: w.wr_number, who: p.numberOf(l.provider_person_id!), step: wo ? "Order Created" : w.approved_at ? "Approval" : "Award", approval: w.approved_at ? "Auto-approved" : w.status === "PENDING_APPROVAL" ? "Waiting" : "—", wo: wo ? { id: wo.id, number: wo.order_number } : null });
     }
   }
   // Discarded drafts (Canceled, no Work Order) leave the lists entirely — they are not "Filled".
@@ -298,22 +298,22 @@ export async function hireToday(personId: string): Promise<{ items: TodayItem[];
     else if (ev.deadline_at <= now) items.push({ id: `x-${ev.id}`, kind: "expired", what: `${ev.event_number} closed with no responses`, detail: `${ev.job.title} · extend the deadline or ask more providers`, href: `/work-requests/${ev.job_id}?tab=responses`, action: "Open" });
     else if (ev.deadline_at.getTime() - now.getTime() < DAY) items.push({ id: `c-${ev.id}`, kind: "closing", what: `${ev.event_number} closes in under 24 hours`, detail: `${ev.job.title} · due ${short(ev.deadline_at)}`, href: `/work-requests/${ev.job_id}?tab=responses`, action: "Open" });
   }
-  for (const o of orders) items.push({ id: `a-${o.id}`, kind: "accept", what: `Accept Work Order ${o.order_number}`, detail: "The provider accepts once you have", href: `/orders/${o.id}`, action: "Review & Accept" });
+  for (const o of orders) items.push({ id: `a-${o.id}`, kind: "accept", what: `Accept Order ${o.order_number}`, detail: "The provider accepts once you have", href: `/orders/${o.id}`, action: "Review & Accept" });
   for (const iv of ivConfirm) items.push({ id: `i-${iv.id}`, kind: "confirm", what: "Confirm an interview time", detail: "The provider offered times", href: `/work-requests/${iv.job_id}?tab=interviews`, action: "Confirm" });
   for (const iv of ivToday) items.push({ id: `t-${iv.id}`, kind: "interview", what: `Interview at ${iv.startsAt ? new Date(iv.startsAt).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" }) : "today"}`, detail: `${iv.providerLabel} · ${iv.jobTitle}`, href: `/work-requests/${iv.jobId}?tab=interviews`, action: iv.hasRoom ? "Join" : "Open" });
   if (testsIn) items.push({ id: "tests", kind: "tests", what: `${testsIn} test result${testsIn === 1 ? "" : "s"} in`, detail: "Scores and pass / fail are on the Tests tab", href: "/hire/overview?tab=tests", action: "See results" });
-  for (const w of approvals) items.push({ id: `w-${w.id}`, kind: "approval", what: `Approve Service Requisition ${w.wr_number ?? ""}`.trim(), detail: "Approval creates the Work Order", href: w.job_id ? `/work-requests/${w.job_id}` : "/hire/overview?tab=requests", action: "Approve" });
+  for (const w of approvals) items.push({ id: `w-${w.id}`, kind: "approval", what: `Approve Request ${w.wr_number ?? ""}`.trim(), detail: "Approval creates the Order", href: w.job_id ? `/work-requests/${w.job_id}` : "/hire/overview?tab=requests", action: "Approve" });
   const count = (k: TodayItem["kind"]) => items.filter((i) => i.kind === k).length;
   const word = (n: number) => (n === 1 ? "One" : String(n));
   const parts: string[] = [];
   const pr = items.filter((i) => i.kind === "proposals").reduce((n, i) => n + Number(/\d+/.exec(i.what)?.[0] ?? 1), 0);
   if (pr) parts.push(`${word(pr)} response${pr === 1 ? " is" : "s are"} waiting for your review`);
-  if (count("accept")) parts.push(`${word(count("accept")).toLowerCase()} Work Order${count("accept") === 1 ? " needs" : "s need"} your acceptance before the provider can accept`);
+  if (count("accept")) parts.push(`${word(count("accept")).toLowerCase()} Order${count("accept") === 1 ? " needs" : "s need"} your acceptance before the provider can accept`);
   if (count("confirm")) parts.push(`${word(count("confirm")).toLowerCase()} interview${count("confirm") === 1 ? " needs" : "s need"} a time confirmed`);
   if (count("interview")) parts.push(`you have ${count("interview")} interview${count("interview") === 1 ? "" : "s"} today`);
   if (count("closing") + count("expired")) parts.push(`${count("closing") + count("expired")} Sourcing Event${count("closing") + count("expired") === 1 ? " needs" : "s need"} a decision`);
   if (count("tests")) parts.push("test results are in");
-  if (count("approval")) parts.push(`${count("approval")} Service Requisition${count("approval") === 1 ? " needs" : "s need"} approval`);
+  if (count("approval")) parts.push(`${count("approval")} Request${count("approval") === 1 ? " needs" : "s need"} approval`);
   const s = parts.length ? parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")}, and ${parts.at(-1)}` : "Your jobs are moving on their own. Post a job or check on the ones below.";
   return { items, sentence: parts.length ? `${s[0].toUpperCase()}${s.slice(1)}.` : s };
 }
@@ -330,12 +330,12 @@ export async function ordersToday(personId: string) {
     ids.length ? prisma.paymentRequest.findMany({ where: { work_order_id: { in: ids } }, select: { id: true, work_order_id: true, status: true, payment_request_number: true } }) : [],
     ids.length ? prisma.workOrderRevision.findMany({ where: { work_order_id: { in: ids }, status: "PENDING" }, select: { work_order_id: true, revision_number: true } }) : [],
   ]);
-  const title = (o: (typeof mine)[number]) => o.workRequest?.job?.title || o.description || "Work Order";
+  const title = (o: (typeof mine)[number]) => o.workRequest?.job?.title || o.description || "Order";
   const items: { id: string; what: string; detail: string; href: string; action: string }[] = [];
   for (const o of mine) {
     const buyer = o.buyer_person_id === personId;
-    if (o.status === "ISSUED" && buyer && !o.buyer_accepted_at) items.push({ id: `ba-${o.id}`, what: `Accept Work Order ${o.order_number}`, detail: `${title(o)} · the provider accepts once you have`, href: `/orders/${o.id}`, action: "Review & Accept" });
-    if (o.status === "ISSUED" && !buyer && o.buyer_accepted_at && !o.provider_accepted_at) items.push({ id: `pa-${o.id}`, what: `Accept Work Order ${o.order_number}`, detail: `${title(o)} · the buyer has accepted`, href: `/orders/${o.id}`, action: "Review & Accept" });
+    if (o.status === "ISSUED" && buyer && !o.buyer_accepted_at) items.push({ id: `ba-${o.id}`, what: `Accept Order ${o.order_number}`, detail: `${title(o)} · the provider accepts once you have`, href: `/orders/${o.id}`, action: "Review & Accept" });
+    if (o.status === "ISSUED" && !buyer && o.buyer_accepted_at && !o.provider_accepted_at) items.push({ id: `pa-${o.id}`, what: `Accept Order ${o.order_number}`, detail: `${title(o)} · the buyer has accepted`, href: `/orders/${o.id}`, action: "Review & Accept" });
     for (const r of revs.filter((x) => x.work_order_id === o.id && !buyer)) items.push({ id: `co-${o.id}-${r.revision_number}`, what: `Answer change order ${r.revision_number} on ${o.order_number}`, detail: title(o), href: `/orders/${o.id}?view=changes`, action: "Review" });
     for (const p of prs.filter((x) => x.work_order_id === o.id && x.status === "SUBMITTED" && buyer)) items.push({ id: `pr-${p.id}`, what: `Approve delivery ${p.payment_request_number}`, detail: `${title(o)} · ${o.order_number}`, href: `/orders/${o.id}?tab=settlements`, action: "Review" });
   }

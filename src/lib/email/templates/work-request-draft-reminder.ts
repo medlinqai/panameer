@@ -30,18 +30,18 @@ export function workRequestDraftReminderTemplate({
 
   const help = helpUrl
     ? `<p style="font-size:13px;line-height:1.6;color:${EMAIL_COLORS.muted};margin:20px 0 0;">
-         <a href="${helpUrl}" style="color:${EMAIL_COLORS.magentaDark};">How to write a Service Requisition that gets strong responses</a>
+         <a href="${helpUrl}" style="color:${EMAIL_COLORS.magentaDark};">How to write a Request that gets strong responses</a>
        </p>`
     : "";
 
   return {
-    subject: `Almost there — finish your Service Requisition, ${name}`,
+    subject: `Almost there — finish your Request, ${name}`,
     html: emailShell({
       logoUrl,
       bodyHtml: `<h1 style="font-size:22px;margin:0 0 16px;color:${EMAIL_COLORS.ink};">One step from live</h1>
 ${greeting(name)}
 ${paragraph(
-  `Your Service Requisition, <b style="color:${EMAIL_COLORS.ink};">${title}</b>, is one step from live. ` +
+  `Your Request, <b style="color:${EMAIL_COLORS.ink};">${title}</b>, is one step from live. ` +
     `Add the last few details and post it — you're one step from the right expert.`
 )}
 ${primaryButton(resumeUrl, "Finish & Post")}
@@ -52,10 +52,10 @@ ${signOff("The Panameer Team")}`,
 
 Hi ${name},
 
-Your Service Requisition, ${workRequestTitle}, is one step from live. Add the last few details and post it — you're one step from the right expert.
+Your Request, ${workRequestTitle}, is one step from live. Add the last few details and post it — you're one step from the right expert.
 
 Finish & Post: ${resumeUrl}
-${helpUrl ? `\nHow to write a Service Requisition that gets strong responses: ${helpUrl}\n` : ""}
+${helpUrl ? `\nHow to write a Request that gets strong responses: ${helpUrl}\n` : ""}
 — The Panameer Team
 
 ${footerText(year)}`,

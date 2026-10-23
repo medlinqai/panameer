@@ -385,7 +385,7 @@ export function ConnectProfile({
                 </Link>
               )}
             </div>
-            {p.identityMasked && <p data-identity-masked className="mt-2 text-[12.5px] leading-snug text-ink-2">Photo, name and company show once you have a Work Order with this provider.</p>}
+            {p.identityMasked && <p data-identity-masked className="mt-2 text-[12.5px] leading-snug text-ink-2">Photo, name and company show once you have an Order with this provider.</p>}
             {/* THE COMPANY, UNDER THE PHOTO (Scott 2026-10-07, LinkedIn-style): logo + name, one link. */}
             {p.sellingCompany ? (
               <Link href={`/companies/${p.sellingCompany.id}`} data-profile-company aria-label={p.sellingCompany.name} title={p.sellingCompany.name} className="group mt-5 flex justify-center">
@@ -582,7 +582,7 @@ export function ConnectProfile({
                 <Link href={`/estimates/request?provider=${p.person.personId}`} data-request-estimate-link className="mt-2 flex min-h-[44px] w-full items-center justify-center border border-ink bg-surface text-[14px] font-semibold text-ink hover:bg-surface-hover">Request an Estimate</Link>
                 <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
                   {/* It says what the click DOES, because it creates a row. A control that */}
-                  Starts a service requisition for this provider only. You can complete the
+                  Starts a request for this provider only. You can complete the
                   details before anyone is contacted.
                 </p>
               </section>

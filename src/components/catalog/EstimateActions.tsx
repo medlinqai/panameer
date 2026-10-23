@@ -29,7 +29,7 @@ export function EstimateActions({ id, party, status, sent, workOrderId }: { id: 
   };
   return (
     <div className="mt-5 border-t border-line pt-4" data-estimate-actions>
-      {workOrderId && <Link href={`/orders/${workOrderId}`} className={BTN_K}>Open the Work Order</Link>}
+      {workOrderId && <Link href={`/orders/${workOrderId}`} className={BTN_K}>Open the Order</Link>}
       {party === "CUSTOMER" && status === "SENT" && !mode && (
         <div className="flex flex-wrap gap-3">
           <button type="button" disabled={busy || !!waiting} onClick={() => post({ action: "decide", id, decision: "ACCEPT" })} data-accept className={BTN_K}>Accept</button>
@@ -47,7 +47,7 @@ export function EstimateActions({ id, party, status, sent, workOrderId }: { id: 
         </div>
       )}
       {party === "CUSTOMER" && status === "SENT" && waiting && <p data-waiting-line className="mt-2 text-[12.5px] text-ink-2">{waitingText(waiting)}</p>}
-      {party === "CUSTOMER" && status === "SENT" && <p className="mt-2 text-[12.5px] text-ink-2">Accept turns this into a work order; the provider then accepts its terms.</p>}
+      {party === "CUSTOMER" && status === "SENT" && <p className="mt-2 text-[12.5px] text-ink-2">Accept turns this into an order; the provider then accepts its terms.</p>}
       {party === "PROVIDER" && (status === "DRAFT" || status === "CHANGES_REQUESTED") && (
         <div className="flex flex-wrap gap-3">
           <Link href={`/catalog/estimates/new?id=${id}`} className={BTN}>{status === "CHANGES_REQUESTED" ? "Revise" : "Edit"}</Link>

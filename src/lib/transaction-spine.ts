@@ -111,7 +111,7 @@ export function fanOutByProvider<T extends FanOutLine>(lines: T[]): Map<string, 
   for (const line of lines) {
     if (!line.provider_person_id)
       throw new SpineError(
-        "Every line needs a provider before a work order can be cut",
+        "Every line needs a provider before an order can be cut",
         "LINE_UNASSIGNED"
       );
     const list = groups.get(line.provider_person_id) ?? [];
@@ -189,7 +189,7 @@ export function assertSettlementDraw(input: {
 }): void {
   if (!["RELEASED", "ACTIVE", "CLOSED"].includes(input.order.status))
     throw new SpineError(
-      input.order.status === "ON_HOLD" ? "This work order is on hold. Payment requests wait until the customer releases the hold." : "A payment request can only be raised against an open or closed work order",
+      input.order.status === "ON_HOLD" ? "This order is on hold. Payment requests wait until the customer releases the hold." : "A payment request can only be raised against an open or closed order",
       "ORDER_NOT_RELEASED"
     );
 
@@ -197,9 +197,9 @@ export function assertSettlementDraw(input: {
   if (input.periodEnd < input.periodStart)
     throw new SpineError("The period ends before it starts", "PERIOD_INVERTED");
   if (input.order.period_start && input.periodStart < input.order.period_start)
-    throw new SpineError("The period starts before the work order does", "PERIOD_BEFORE_ORDER");
+    throw new SpineError("The period starts before the order does", "PERIOD_BEFORE_ORDER");
   if (input.order.period_end && input.periodEnd > input.order.period_end)
-    throw new SpineError("The period ends after the work order does", "PERIOD_AFTER_ORDER");
+    throw new SpineError("The period ends after the order does", "PERIOD_AFTER_ORDER");
 
   let drawCents = 0;
 

@@ -10,7 +10,7 @@ export function OrderTabs({ id, current }: { id: string; current: OrderTab | nul
     { key: "settlements", label: "Settlements", href: `/orders/${id}?tab=settlements` },
   ] as const;
   return (
-    <nav aria-label="Work order" className="mt-6 flex gap-6 overflow-x-auto border-b border-line">
+    <nav aria-label="Order" className="mt-6 flex gap-6 overflow-x-auto border-b border-line">
       {tabs.map((t) => (
         <Link
           key={t.key}

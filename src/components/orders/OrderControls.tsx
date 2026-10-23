@@ -49,7 +49,7 @@ export function OrderControls({ orderId, controls, unusedLabel, pending }: { ord
   if (confirming)
     return (
       <div data-order-control={confirming} className="w-full border border-line bg-white p-4">
-        <p className="text-[15px] font-bold">{LABEL[confirming]} this work order?</p>
+        <p className="text-[15px] font-bold">{LABEL[confirming]} this order?</p>
         <p className="mt-1 text-[14px] text-ink-2">{EFFECT[confirming]}</p>
         {confirming === "FINALLY_CLOSE" && (
           <p className="mt-1 text-[14px] text-ink-2">

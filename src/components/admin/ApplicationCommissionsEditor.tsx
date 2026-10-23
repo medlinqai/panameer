@@ -146,7 +146,7 @@ export function ApplicationCommissionsEditor({ rows }: { rows: CommissionRow[] }
       {/* THE FOOTER THAT SAYS THE OPPOSITE OF THE PAGE BESIDE IT */}
       <p className="text-[13.5px] text-ink-2">
         ⚠ A change here applies to <strong className="text-ink">new transactions only</strong>.
-        The rate is resolved once when a work order is created and written onto
+        The rate is resolved once when an order is created and written onto
         the line, so nothing already agreed moves. A fee is a term of the
         contract, and a term that changes after signature is not a term.
       </p>

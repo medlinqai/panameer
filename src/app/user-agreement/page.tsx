@@ -13,7 +13,7 @@ export default function Page() {
       updated={LEGAL_UPDATED}
       doc={USER_AGREEMENT_DOC}
       summary={
-        "The binding agreement between you and Panameer: your account, how Work Orders between a Service Buyer and a Provider work, fees, payment and escrow, and how disputes are resolved."
+        "The binding agreement between you and Panameer: your account, how Orders between a Service Buyer and a Provider work, fees, payment and escrow, and how disputes are resolved."
       }
       self="user-agreement"
     />

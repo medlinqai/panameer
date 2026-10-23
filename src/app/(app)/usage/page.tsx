@@ -176,7 +176,7 @@ export default async function MyStatsPage({
     offersReceived,
     drafts: draftProducts,
     activeOrders: stats.work.workOrders,
-    ordersCompleted: { uncounted: "Nothing closes a work order yet" },
+    ordersCompleted: { uncounted: "Nothing closes an order yet" },
     awaitingApproval,
     earnings: stats.work.earnings,
     payoutsPending: { uncounted: "No payout is ever created" },

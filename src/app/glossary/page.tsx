@@ -7,7 +7,7 @@ import { GlossaryBrowser } from "@/components/glossary/GlossaryBrowser";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Glossary — Panameer",
-  description: "The words Panameer uses — buyer, provider, work order, ERP and more — and what each one means.",
+  description: "The words Panameer uses — buyer, provider, order, ERP and more — and what each one means.",
 };
 
 export default async function GlossaryPage() {

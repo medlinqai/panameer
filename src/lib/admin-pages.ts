@@ -7,10 +7,10 @@ const TBD5: Tile[] = Array.from({ length: 5 }, () => ({ label: "TBD", tbd: true 
 
 /** The four tiles Work Requests / Orders / Packages share (deck slides 3–5). */
 const WORK_TILES: Tile[] = [
-  { label: "Open Service Requisitions" },
-  { label: "Open Work Orders" },
-  { label: "Service Requisitions in Last 30 Days" },
-  { label: "Work Orders in Last 30 Days" },
+  { label: "Open Requests" },
+  { label: "Open Orders" },
+  { label: "Requests in Last 30 Days" },
+  { label: "Orders in Last 30 Days" },
 ];
 
 const WHY_TRANSACTION = "Not counted yet";
@@ -29,13 +29,13 @@ export type AdminPageSpec = {
 export const ADMIN_PAGES: Record<string, AdminPageSpec> = {
   "work-requests": {
     tiles: WORK_TILES,
-    listingTitle: "Service Requisitions",
+    listingTitle: "Requests",
     columns: ["Time", "Buyer - Company", "Role", "Status", "Start Date", "Message"],
-    what: "service requisitions",
+    what: "requests",
     why: WHY_TRANSACTION,
     volume: [
-      { label: "Service Requisitions" },
-      { label: "Work Orders" },
+      { label: "Requests" },
+      { label: "Orders" },
       { label: "Invites" },
       { label: "Responses" },
       { label: "Interviews" },
@@ -43,9 +43,9 @@ export const ADMIN_PAGES: Record<string, AdminPageSpec> = {
   },
   "work-orders": {
     tiles: WORK_TILES,
-    listingTitle: "Work Orders",
+    listingTitle: "Orders",
     columns: ["Provider - Company", "ServiceProduct", "Status", "Posted Date", "Message"],
-    what: "work orders",
+    what: "orders",
     why: WHY_TRANSACTION,
     volume: [
       { label: "F&A (ERP) WOs" },

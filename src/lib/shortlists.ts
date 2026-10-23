@@ -16,9 +16,9 @@ async function assertOwnsRequest(workRequestId: string, personId: string) {
     where: { id: workRequestId },
     select: { id: true, buyer_person_id: true },
   });
-  if (!wr) throw new SourcingError("That service requisition doesn't exist.", "NOT_FOUND");
+  if (!wr) throw new SourcingError("That request doesn't exist.", "NOT_FOUND");
   if (wr.buyer_person_id !== personId) {
-    throw new SourcingError("That service requisition isn't yours.", "NOT_YOURS");
+    throw new SourcingError("That request isn't yours.", "NOT_YOURS");
   }
   return wr;
 }

@@ -65,7 +65,7 @@ export async function overviewLists(c: Ctx): Promise<Lists> {
     "low-profile": async () => peopleList("Profile under 50% complete", personUsers(c, (await lackOfUse(c)).lowProfile.map((p) => p.person_id))),
     "paths-no-learners": async () => ({ title: "Published paths with no learners", head: ["Learning path"], rows: (await lackOfUse(c)).paths.map((p) => ({ cells: [p.title], href: `/learn/${p.slug}` })) }),
     "connections-waiting": async () => { const l = await lackOfUse(c); return peopleList("Connection requests waiting 7+ days — the members asked", l.waitingConns.map((x) => x.to_user_id)); },
-    "orders-waiting": async () => ({ title: "Work orders waiting on acceptance", head: ["Work order", "Created"], rows: (await lackOfUse(c)).waitingOrders.map((o) => ({ cells: [o.order_number, isoDay(o.created_at)], href: `/orders/${o.id}` })) }),
+    "orders-waiting": async () => ({ title: "Orders waiting on acceptance", head: ["Order", "Created"], rows: (await lackOfUse(c)).waitingOrders.map((o) => ({ cells: [o.order_number, isoDay(o.created_at)], href: `/orders/${o.id}` })) }),
   };
 }
 
@@ -131,7 +131,7 @@ export async function Overview({ c, app }: { c: Ctx; app: string | undefined }) 
         { cells: ["Profile under 50% complete", lack.lowProfile.length], href: listHref(c, "low-profile") },
         { cells: ["Published paths with no learners", lack.paths.length], href: listHref(c, "paths-no-learners") },
         { cells: ["Connection requests waiting 7+ days", lack.waitingConns.length], href: listHref(c, "connections-waiting") },
-        { cells: ["Work orders waiting on acceptance", lack.waitingOrders.length], href: listHref(c, "orders-waiting") },
+        { cells: ["Orders waiting on acceptance", lack.waitingOrders.length], href: listHref(c, "orders-waiting") },
       ]} />
     </div>
   );

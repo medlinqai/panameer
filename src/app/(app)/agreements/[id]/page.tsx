@@ -47,13 +47,13 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         </form>
       )}
       {rows.length === 0 ? (
-        <p className="mt-3 text-[14px] text-ink-3">No Work Orders of yours under this MSA yet.</p>
+        <p className="mt-3 text-[14px] text-ink-3">No Orders of yours under this MSA yet.</p>
       ) : (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[820px] border-collapse text-[13.5px]" data-sow-table>
             <thead>
               <tr className="border-b-2 border-ink text-left text-[11px] font-bold uppercase tracking-[0.08em] text-ink-2">
-                <th className="py-2 pr-3">Work Order (SOW)</th><th className="pr-3">Buyer</th><th className="pr-3">Provider</th><th className="pr-3">Status</th><th className="pr-3 text-right">Value</th><th className="pr-3 text-right">Settled</th><th className="pr-3 text-right">Paid</th><th>Period</th>
+                <th className="py-2 pr-3">Order (SOW)</th><th className="pr-3">Buyer</th><th className="pr-3">Provider</th><th className="pr-3">Status</th><th className="pr-3 text-right">Value</th><th className="pr-3 text-right">Settled</th><th className="pr-3 text-right">Paid</th><th>Period</th>
               </tr>
             </thead>
             <tbody>

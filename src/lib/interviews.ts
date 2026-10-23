@@ -18,7 +18,7 @@ async function assertIsBuyer(workRequestId: string, personId: string) {
     where: { id: workRequestId },
     select: { id: true, buyer_person_id: true, title: true },
   });
-  if (!wr) throw new SourcingError("That service requisition isn't available.", "NOT_FOUND");
+  if (!wr) throw new SourcingError("That request isn't available.", "NOT_FOUND");
   if (wr.buyer_person_id !== personId) {
     throw new SourcingError("Only the buyer can do that.", "NOT_BUYER");
   }
@@ -50,7 +50,7 @@ export async function requestInterview(
   });
   if (!proposal || proposal.status === "WITHDRAWN") {
     throw new SourcingError(
-      "That provider hasn't responded on this service requisition.",
+      "That provider hasn't responded on this request.",
       "NO_PROPOSAL"
     );
   }

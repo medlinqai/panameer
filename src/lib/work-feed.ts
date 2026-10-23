@@ -24,7 +24,7 @@ export const WORK_FEED_TABS: { id: WorkFeedTab; label: string }[] = [
 ];
 
 export const UNBACKED_TABS: Record<string, string> = {
-  saved: "Saving service requisitions isn't open yet.",
+  saved: "Saving requests isn't open yet.",
 };
 
 export type WorkCard = {
@@ -258,7 +258,7 @@ export async function getWorkFeed(input: {
   const cards = rows.map((w) => ({
     category: w.commodity_group_id ? groupNames.get(w.commodity_group_id) ?? null : null,
     id: w.id,
-    title: w.title || "Untitled service requisition",
+    title: w.title || "Untitled request",
     description: w.description,
     /* ONE DEFINITION, SHARED WITH `/find-work/[id]` (`P2-A8-E664`). */
     budgetLabel: workBudgetLabel({

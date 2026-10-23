@@ -37,7 +37,7 @@ export async function jobStrip(jobId: string) {
     release: released,
   };
   const skipped = (k: StripKey) => direct && (k === "ask" || k === "interview");
-  const order: [StripKey, string][] = [["create", "Create"], ["matches", "Matches"], ["ask", "Ask"], ["interview", "Interview"], ["hire", "Hire"], ["approve", "Approve"], ["wo", "Work Order"], ["release", "Release"]];
+  const order: [StripKey, string][] = [["create", "Create"], ["matches", "Matches"], ["ask", "Ask"], ["interview", "Interview"], ["hire", "Hire"], ["approve", "Approve"], ["wo", "Order"], ["release", "Release"]];
   // The current step: the first not done (and not skipped); while answers are in and nobody is hired, the job sits at Interview.
   let current = order.find(([k]) => !done[k] && !skipped(k))?.[0] ?? null;
   if (current === "matches" && job.status === "DRAFT") current = "create";

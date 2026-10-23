@@ -215,8 +215,8 @@ export function standingLine(s: BuyerStanding): string {
   }
   parts.push(
     s.postedCount <= 1
-      ? "First service requisition"
-      : `${s.postedCount} service requisitions posted`
+      ? "First request"
+      : `${s.postedCount} requests posted`
   );
   return parts.join(" · ");
 }

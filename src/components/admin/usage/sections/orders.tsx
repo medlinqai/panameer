@@ -15,12 +15,12 @@ async function data(c: Ctx) {
   const ids = new Set(real.map((o) => o.id));
   return { orders: real, revisions: revisions.filter((r) => ids.has(r.work_order_id)) };
 }
-const list = (title: string, rows: { id: string; order_number: string; created_at: Date; status: string }[]) => ({ title, head: ["Work order", "Created", "Status"], rows: rows.map((o) => ({ cells: [o.order_number, isoDay(o.created_at), WORK_ORDER_LABEL[o.status as keyof typeof WORK_ORDER_LABEL] ?? o.status], href: `/orders/${o.id}` })) });
+const list = (title: string, rows: { id: string; order_number: string; created_at: Date; status: string }[]) => ({ title, head: ["Order", "Created", "Status"], rows: rows.map((o) => ({ cells: [o.order_number, isoDay(o.created_at), WORK_ORDER_LABEL[o.status as keyof typeof WORK_ORDER_LABEL] ?? o.status], href: `/orders/${o.id}` })) });
 const waitingOn = (o: { status: string }) => o.status === "ISSUED" || o.status === "ACCEPTED";
 
 export async function ordersLists(c: Ctx): Promise<Lists> {
   return {
-    created: async () => list(`Work orders created (${c.label})`, (await data(c)).orders.filter((o) => inCur(c, o.created_at))),
+    created: async () => list(`Orders created (${c.label})`, (await data(c)).orders.filter((o) => inCur(c, o.created_at))),
     waiting: async () => list("Waiting on acceptance", (await data(c)).orders.filter(waitingOn)),
     held: async () => list("On hold or frozen", (await data(c)).orders.filter((o) => o.status === "ON_HOLD" || o.frozen_at)),
     erp: async () => list("ERP orders", (await data(c)).orders.filter((o) => o.erp_connection_id)),
@@ -41,21 +41,21 @@ export async function Orders({ c }: { c: Ctx }) {
   }
   return (
     <div className="space-y-3">
-      <UsageChart title="Work Orders Created per Day" subtitle={c.label} points={series(c, d.orders.map((o) => o.created_at))} />
+      <UsageChart title="Orders Created per Day" subtitle={c.label} points={series(c, d.orders.map((o) => o.created_at))} />
       <Tiles>
-        <Tile label="Work Orders Created" {...metric(c, d.orders.map((o) => o.created_at))} href={listHref(c, "created")} />
+        <Tile label="Orders Created" {...metric(c, d.orders.map((o) => o.created_at))} href={listHref(c, "created")} />
         <Tile label="Waiting on Acceptance" value={waiting.length} delta={waiting.length ? `median ${fmtDays(median(waiting.map((o) => daysBetween(o.created_at, now))))} waiting` : null} href={listHref(c, "waiting")} />
         <Tile label="Change Orders" {...metric(c, d.revisions.map((r) => r.created_at))} />
         <Tile label="On Hold / Frozen" value={d.orders.filter((o) => o.status === "ON_HOLD" || o.frozen_at).length} href={listHref(c, "held")} />
       </Tiles>
       <Grid2>
-        <Bars title="By Status" subtitle="work orders now (Oracle labels)" rows={[...byLabel.entries()].sort((a, b) => b[1].n - a[1].n).map(([label, v]) => ({ label, n: v.n, href: listHref(c, v.key) }))} />
-        <Bars title="ERP vs Web" subtitle="work orders now" rows={[
+        <Bars title="By Status" subtitle="orders now (Oracle labels)" rows={[...byLabel.entries()].sort((a, b) => b[1].n - a[1].n).map(([label, v]) => ({ label, n: v.n, href: listHref(c, v.key) }))} />
+        <Bars title="ERP vs Web" subtitle="orders now" rows={[
           { label: "ERP", n: d.orders.filter((o) => o.erp_connection_id).length, href: listHref(c, "erp") },
           { label: "Web", n: d.orders.filter((o) => !o.erp_connection_id).length },
         ]} />
       </Grid2>
-      <DataTable title="Waiting on Acceptance" subtitle="oldest first" head={["Work order", "Waiting", "Status"]} rows={[...waiting].sort((a, b) => a.created_at.getTime() - b.created_at.getTime()).map((o) => ({ cells: [o.order_number, fmtDays(daysBetween(o.created_at, now)), o.provider_accepted_at ? "Waiting on buyer" : "Waiting on provider"], href: `/orders/${o.id}` }))} />
+      <DataTable title="Waiting on Acceptance" subtitle="oldest first" head={["Order", "Waiting", "Status"]} rows={[...waiting].sort((a, b) => a.created_at.getTime() - b.created_at.getTime()).map((o) => ({ cells: [o.order_number, fmtDays(daysBetween(o.created_at, now)), o.provider_accepted_at ? "Waiting on buyer" : "Waiting on provider"], href: `/orders/${o.id}` }))} />
     </div>
   );
 }

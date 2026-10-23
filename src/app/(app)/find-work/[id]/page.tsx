@@ -17,7 +17,7 @@ import type { InterviewRow } from "@/lib/interviews";
 import { ConfirmAvailability, type AvailabilityView } from "@/components/work/ConfirmAvailability";
 import { ServiceDescriptionView } from "@/components/hire/ServiceDescriptionView";
 
-export const metadata = { title: "Service Requisition · Panameer" };
+export const metadata = { title: "Request · Panameer" };
 
 export default async function Page({
   params,
@@ -159,7 +159,7 @@ async function providerStrip(personId: string, jobId: string, interviews: Interv
     { key: "matches", label: "Answered", state: answered ? "done" : req?.status === "DECLINED" ? "done" : "current", top: answered ? `✓ ${rate}` : req?.status === "DECLINED" ? "✓ Not This Time" : "Now" },
     { key: "interview", label: "Interview", state: iv?.status === "COMPLETED" || (decided && iv) ? "done" : iv && answered ? "current" : "later", top: !iv ? "" : iv.status === "COMPLETED" ? "✓ Done" : iv.startsAt ? new Date(iv.startsAt).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit" }) : "Pick a Time" },
     { key: "hire", label: "Decision", state: decided ? "done" : answered && (!iv || iv.status === "COMPLETED") ? "current" : "later", top: decided ? `✓ ${decided}` : "" },
-    { key: "wo", label: "Work Order", state: wo ? "done" : decided === "Hired" ? "current" : "later", top: wo ? "✓ Issued" : "" },
+    { key: "wo", label: "Order", state: wo ? "done" : decided === "Hired" ? "current" : "later", top: wo ? "✓ Issued" : "" },
   ];
   const pill = decided === "Hired" ? "You're Hired" : decided ? "Not Selected" : prop?.status === "SHORTLISTED" ? "You're Shortlisted" : answered ? "You Answered" : req?.status === "DECLINED" ? "Not This Time" : asked ? "Asked for Your Availability" : null;
   return { steps, pill, pillTone: decided === "Not Selected" ? "no" : decided || prop?.status === "SHORTLISTED" || answered ? "ok" : "pend" };

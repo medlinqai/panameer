@@ -116,7 +116,7 @@ export async function buyerOrderChecklist(companyId: string) {
 export type SignGateItem = { company: string; item: string; done: boolean; href?: string };
 export class SignGateError extends Error {
   constructor(public gate: { items: SignGateItem[]; isAdmin: boolean }) {
-    super("Finish your company details to sign this work order");
+    super("Finish your company details to sign this order");
     this.name = "SignGateError";
   }
 }

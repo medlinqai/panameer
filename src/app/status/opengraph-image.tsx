@@ -70,7 +70,7 @@ export default async function Image() {
               <span style={{ color: MAGENTA }}>get built!</span>
             </div>
             <div style={{ marginTop: 18, fontSize: 24, lineHeight: 1.4, color: "rgba(255,255,255,0.8)" }}>
-              We&apos;re eating our own cooking — this is the project tracker you&apos;ll use on your Panameer work orders, and we&apos;re using it to build Panameer.
+              We&apos;re eating our own cooking — this is the project tracker you&apos;ll use on your Panameer orders, and we&apos;re using it to build Panameer.
             </div>
           </div>
           {(phase || release) && (

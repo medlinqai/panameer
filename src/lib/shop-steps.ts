@@ -23,7 +23,7 @@ export const SHOP_STEPS: ShopStepLabel[] = [
     n: 3,
     summary: "Order Placed",
     description:
-      "Place Order makes one work order per provider — the one agreement every pathway on Panameer converges on, however the price was reached.",
+      "Place Order makes one order per provider — the one agreement every pathway on Panameer converges on, however the price was reached.",
   },
   {
     n: 4,

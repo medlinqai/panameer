@@ -65,13 +65,13 @@ export async function getAttentionCards(input: {
   add(
     {
       id: "work-orders",
-      label: "Work Orders to Accept",
+      label: "Orders to Accept",
       detail: "waiting on your acceptance",
       href: "/orders",
       icon: "ClipboardCheck",
     },
     null,
-    "the Work Order model"
+    "the Order model"
   );
 
   /* 3 — Unbilled work. Needs timesheets/payment requests; neither exists. */
@@ -292,8 +292,8 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
       + add("request", closing.length, "Answers due in 24 h", closing[0] ? `/work-requests/${closing[0].job_id}?tab=responses` : "/hire/overview?tab=jobs", "Open", closing[0]?.deadline_at)
       + add("request", expired, "Deadline passed — pick or extend", "/hire/overview?tab=jobs", "Decide");
     // HB-E006: each app lists only its own tasks — Work Orders (accept, release, changes) belong to Orders.
-    const requests = add("request", approvals, "Service Requisition approvals", "/hire/overview?tab=requests", "Approve");
-    add("order", woAccept, "Work Orders to accept", "/orders/overview", "Accept");
+    const requests = add("request", approvals, "Request approvals", "/hire/overview?tab=requests", "Approve");
+    add("order", woAccept, "Orders to accept", "/orders/overview", "Accept");
     const interviews = add("request", confirm, "Interview times to confirm", "/hire/overview?tab=interviews", "Confirm") + add("request", todays, "Interviews today", "/hire/overview?tab=interviews", "Join");
     const tests = add("request", testsIn, "Test results in", "/hire/overview?tab=tests", "See results");
     add("shop", sc.offers, "Counter-offers waiting on you", "/shop?tab=offers", "Answer");
@@ -319,7 +319,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   const tests = add("request", testsToTake, "Tests to take", "/find-work?tab=tests", "Take");
   const myOrders = (await prisma.workOrder.findMany({ where: { provider_person_id: id }, select: { id: true } })).map((o) => o.id);
   const changes = myOrders.length ? await prisma.workOrderRevision.count({ where: { status: "PENDING", work_order_id: { in: myOrders } } }) : 0;
-  const order = add("order", woAccept.length, "Work Orders to accept", "/orders/overview", "Accept") + add("order", changes, "Change orders to answer", "/orders/overview", "Answer");
+  const order = add("order", woAccept.length, "Orders to accept", "/orders/overview", "Accept") + add("order", changes, "Change orders to answer", "/orders/overview", "Answer");
   add("shop", sc.offers, "Offers to answer", "/shop?tab=offers", "Answer");
   add("shop", sc.sales, "Product sales needing you", "/shop?tab=sales", "Open");
   add("estimate", ec.toPrice, "Estimates to price", "/estimate", "Price");

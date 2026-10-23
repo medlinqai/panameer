@@ -17,7 +17,7 @@ export function WorkSpine() {
           </p>
           {}
           <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-ink min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
-            From a job description to a signed work order &mdash; on one
+            From a job description to a signed order &mdash; on one
             contract, with no employment risk.
           </h2>
         </div>

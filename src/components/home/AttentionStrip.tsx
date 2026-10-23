@@ -162,7 +162,7 @@ function CalmStrip({
             —
           </p>
           <p className="mt-1.5 text-[12.5px] leading-snug text-ink-2">
-            Starts counting when work orders settle on Panameer.
+            Starts counting when orders settle on Panameer.
           </p>
         </div>
 

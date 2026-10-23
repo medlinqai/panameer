@@ -4,7 +4,7 @@ import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Service Requisition Submitted · Panameer" };
+export const metadata = { title: "Request Submitted · Panameer" };
 
 // WA-E001: after Submit — the Work Request was submitted and (auto-)approved, and its Work Order is ready for the buyer's review.
 export default async function Page({ searchParams }: { searchParams: Promise<{ wo?: string }> }) {
@@ -17,13 +17,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ w
   const wr = order.workRequest;
   return (
     <div className="pm-white-page mx-auto w-full max-w-2xl" data-wr-submitted>
-      <h1 className="mt-4 text-[26px] font-extrabold">Service Requisition Submitted</h1>
+      <h1 className="mt-4 text-[26px] font-extrabold">Request Submitted</h1>
       <p className="mt-2 text-[15px]">
-        Service Requisition <b>{wr?.wr_number ?? "—"}</b> submitted and approved. Work Order <b className="whitespace-nowrap">{order.order_number}</b>{"\u00a0"}is ready for your review. We&apos;ve also sent you a link.
+        Request <b>{wr?.wr_number ?? "—"}</b> submitted and approved. Order <b className="whitespace-nowrap">{order.order_number}</b>{"\u00a0"}is ready for your review. We&apos;ve also sent you a link.
       </p>
       {wr?.approval_note && <p className="mt-1 text-[13px] text-ink-3">{wr.approval_note}</p>}
       <div className="mt-5 flex flex-wrap items-center gap-4">
-        <Link href={`/orders/${order.id}`} className="inline-flex min-h-11 items-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover" data-review-work-order>Review Work Order</Link>
+        <Link href={`/orders/${order.id}`} className="inline-flex min-h-11 items-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover" data-review-work-order>Review Order</Link>
         {wr?.job && <Link href={`/work-requests/${wr.job.id}`} className="text-[14px] font-semibold text-magenta-dark underline underline-offset-4">Back to {wr.job.title || "the job"}</Link>}
       </div>
     </div>

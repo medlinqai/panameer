@@ -2180,7 +2180,7 @@ setScreen(target);
           {...shell({
             title: "Who Are You Working As?",
             subtitle:
-              "Work orders and payments are between companies. Working for yourself? That's a company of one — pick Sole Proprietor as the business type.",
+              "Orders and payments are between companies. Working for yourself? That's a company of one — pick Sole Proprietor as the business type.",
           })}
           /* The handlers are JSX props, not members of the `shell()` object:
              reading `submitRef.current` inside a plain object literal reads to

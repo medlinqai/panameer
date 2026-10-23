@@ -7,7 +7,7 @@ import { SignGateModal, type SignGate } from "@/components/work/SignGateModal";
 import type { OrderAction } from "@/lib/orders";
 
 const LABEL: Record<OrderAction, string> = {
-  ACCEPT: "Accept Work Order",
+  ACCEPT: "Accept Order",
   REQUEST_CHANGES: "Request Changes",
   DECLINE: "Decline",
 };

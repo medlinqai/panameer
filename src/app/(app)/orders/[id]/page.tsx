@@ -31,7 +31,7 @@ import { termsLine } from "@/lib/billing-terms";
 import { providerPayReady } from "@/lib/your-path";
 import { prisma } from "@/lib/prisma";
 
-export const metadata = { title: "Work Order · Panameer" };
+export const metadata = { title: "Order · Panameer" };
 
 export default async function Page({
   params,
@@ -64,7 +64,7 @@ export default async function Page({
 
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl">
-      <BackLink href="/orders" label="Work Orders" />
+      <BackLink href="/orders" label="Orders" />
 
       {/* ══ WT-E001 · THE HEADER — always on top ══ */}
       <header data-order-header className="mt-2">
@@ -134,7 +134,7 @@ export default async function Page({
       )}
       {o.origin === "DIRECT" && !o.erp && (
         <p className="mt-4 border-l-2 border-ink py-1 pl-3.5 text-[14px] text-ink-2">
-          An externally sourced work order — agreed outside Panameer and brought in to use settlement and payments.
+          An externally sourced order — agreed outside Panameer and brought in to use settlement and payments.
           {o.externalRef && <> The buyer&apos;s reference is <span className="font-mono font-semibold text-ink">{o.externalRef}</span>.</>}
         </p>
       )}
@@ -225,7 +225,7 @@ export default async function Page({
 
       {o.party === "BUYER" && (
         <p className="mt-8 border-t border-line pt-5 text-[14px]">
-          <Link href={o.jobId ? `/work-requests/${o.jobId}` : "/orders/work-requests"} className="font-semibold text-magenta-dark underline underline-offset-4">{o.jobId ? "Open the job" : "Open the service requisition"}</Link>
+          <Link href={o.jobId ? `/work-requests/${o.jobId}` : "/orders/work-requests"} className="font-semibold text-magenta-dark underline underline-offset-4">{o.jobId ? "Open the job" : "Open the request"}</Link>
         </p>
       )}
     </div>
@@ -375,7 +375,7 @@ async function chainLine(orderId: string) {
   const was = w.legacy_number ? <> · was {w.legacy_number}</> : null;
   return (
     <p className="mt-0.5 text-[13px] text-ink-2" data-order-chain>
-      From Service Requisition {wr.job ? <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.wr_number ?? "—"}</Link> : <b>{wr.wr_number ?? "—"}</b>}
+      From Request {wr.job ? <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.wr_number ?? "—"}</Link> : <b>{wr.wr_number ?? "—"}</b>}
       {wr.job && <> · Job: <Link href={`/work-requests/${wr.job.id}`} className="font-semibold text-ink underline underline-offset-2">{wr.job.title || "Untitled"}</Link></>}
       {was}
       {/* MS-E002: this Work Order is a SOW under the Panameer MSA. */}

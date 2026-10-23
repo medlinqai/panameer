@@ -403,7 +403,7 @@ export async function removeLine(viewer: Viewer, id: string, lineId: string) {
   const count = await prisma.workRequestLine.count({ where: { work_request_id: req.id } });
   if (count <= 1)
     throw new WorkRequestError(
-      "A service requisition needs at least one line — edit this one instead of removing it",
+      "A request needs at least one line — edit this one instead of removing it",
       "INVALID"
     );
 

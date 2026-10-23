@@ -123,7 +123,7 @@ async function writeRequisitionLine(args: {
   // THE BUYER'S DATES ARE REQUIRED, AND THEIR ABSENCE IS A REFUSAL RATHER
   if (!wr.start_date || !wr.end_date) {
     throw new SourcingError(
-      "Add a start and end date to this service requisition before selecting somebody — the hours are worked out from them.",
+      "Add a start and end date to this request before selecting somebody — the hours are worked out from them.",
       "NO_DATES"
     );
   }
@@ -195,12 +195,12 @@ export async function selectProvider(
   // RULING 17, THE FORWARD HALF: once the order exists the selection is
   if (wr.status === "ORDERED") {
     throw new SourcingError(
-      "This service requisition already has a work order — the selection can't be changed.",
+      "This request already has an order — the selection can't be changed.",
       "ALREADY_ORDERED"
     );
   }
   if (wr.status === "CANCELLED") {
-    throw new SourcingError("This service requisition was cancelled.", "CANCELLED");
+    throw new SourcingError("This request was cancelled.", "CANCELLED");
   }
   await assertCanSign(me.id, me.id, input.providerPersonId);
 
@@ -222,7 +222,7 @@ export async function selectProvider(
     },
   });
   if (!winner) {
-    throw new SourcingError("That provider hasn't responded on this service requisition.", "NO_PROPOSAL");
+    throw new SourcingError("That provider hasn't responded on this request.", "NO_PROPOSAL");
   }
   if (winner.status === "WITHDRAWN" || winner.status === "DECLINED") {
     throw new SourcingError("That response is no longer open.", "PROPOSAL_CLOSED");
@@ -305,12 +305,12 @@ export async function assignProviderDirectly(
   const wr = await buyerRequest(input.workRequestId, me.id);
   if (wr.status === "ORDERED") {
     throw new SourcingError(
-      "This service requisition already has a work order — the selection can't be changed.",
+      "This request already has an order — the selection can't be changed.",
       "ALREADY_ORDERED"
     );
   }
   if (wr.status === "CANCELLED") {
-    throw new SourcingError("This service requisition was cancelled.", "CANCELLED");
+    throw new SourcingError("This request was cancelled.", "CANCELLED");
   }
   if (!Number.isInteger(input.unitPriceCents) || input.unitPriceCents <= 0) {
     throw new SourcingError("Enter the rate for this engagement.", "NO_RATE");
@@ -365,7 +365,7 @@ export async function reverseSelection(
   });
   if (ordered || wr.status === "ORDERED") {
     throw new SourcingError(
-      "A work order has already been created from this selection, so it can't be reversed.",
+      "An order has already been created from this selection, so it can't be reversed.",
       "ALREADY_ORDERED"
     );
   }

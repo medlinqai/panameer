@@ -39,20 +39,20 @@ export default async function Page() {
       {/* THE ANSWER TO "WHAT DOES A PROVIDER SEE WHEN NOTHING IS RELEASED." */}
       {settleable.length === 0 ? (
         <div className="mt-7 rounded-brand border border-dashed border-line px-6 py-10 text-center">
-          <p className="text-[16px] font-bold">No work order is ready to bill against</p>
+          <p className="text-[16px] font-bold">No order is ready to bill against</p>
           <p className="mx-auto mt-2 max-w-lg text-[14.5px] leading-relaxed text-ink-2">
-            A payment request is raised against a <b>released</b> work order. An
+            A payment request is raised against a <b>released</b> order. An
             order becomes released after you accept its terms and the buyer
             releases it — until then there is nothing to claim.
           </p>
           <Button href="/orders" className="mt-6" variant="ghost">
-            See your work orders
+            See your orders
           </Button>
         </div>
       ) : (
         <div className="mt-7 rounded-brand border border-line bg-white p-5">
           <p className="text-[15px] font-bold">
-            {settleable.length} work order{settleable.length === 1 ? "" : "s"} ready to bill
+            {settleable.length} order{settleable.length === 1 ? "" : "s"} ready to bill
             against
           </p>
           <ul className="mt-3 grid gap-2">

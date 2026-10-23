@@ -80,7 +80,7 @@ export default function DetailedRoadPage() {
             <g data-stop="signed">
               <circle cx={200} cy={330} r={22} fill="#fff" stroke={W.color} strokeWidth={3} />
               <text x={200} y={336} textAnchor="middle" fill={W.color} fontWeight={800} fontSize={16}>✓</text>
-              <text x={166} y={329} textAnchor="end" fill={INK} fontWeight={700} fontSize={13}>Work Order Signed</text>
+              <text x={166} y={329} textAnchor="end" fill={INK} fontWeight={700} fontSize={13}>Order Signed</text>
               <text x={166} y={345} textAnchor="end" fill={NUM} fontWeight={700} fontSize={9.5} letterSpacing=".08em">{by("sell").status.toUpperCase()}</text>
             </g>
             {MAIN.map(({ s, n, x, y }) => {
@@ -117,8 +117,8 @@ export default function DetailedRoadPage() {
           <li><b>5.A · Product Bought:</b> Product Located → Added to Requisition → Order Placed. Listed price; orders are accepted automatically (providers can switch to manual). Want something custom? Request an Estimate (5.C).</li>
           <li><b>5.B · Rate Accepted:</b> Provider Asked → Provider Available → Rate Accepted.</li>
           <li><b>5.C · Estimate Accepted:</b> Estimate Requested → Provider Estimates → Estimate Accepted.</li>
-          <li><b>6 · Deliver Services &amp; Products:</b> Work Order Signed → tracker updates → the buyer accepts the deliverable or the timesheet.</li>
-          <li><b>🔒 Payout details (if required), before 8 · Get Paid:</b> a payout account in your company&apos;s legal name (everyone), plus Tax ID and tax form where your country&apos;s rule needs them (US: W-9 + Tax ID). Ordering, signing work orders and requesting payment never ask for them — only the payout does.</li>
+          <li><b>6 · Deliver Services &amp; Products:</b> Order Signed → tracker updates → the buyer accepts the deliverable or the timesheet.</li>
+          <li><b>🔒 Payout details (if required), before 8 · Get Paid:</b> a payout account in your company&apos;s legal name (everyone), plus Tax ID and tax form where your country&apos;s rule needs them (US: W-9 + Tax ID). Ordering, signing orders and requesting payment never ask for them — only the payout does.</li>
         </ul>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <Link href="/join/provider" className="inline-flex min-h-[48px] items-center bg-ink px-6 text-[15px] font-bold text-surface hover:bg-ink-hover">Complete My Profile</Link>

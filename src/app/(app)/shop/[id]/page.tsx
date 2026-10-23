@@ -45,7 +45,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       )}
       <section className="mt-6 border-t border-line pt-5">
         {own ? (
-          <p className="text-[14px] text-ink-2">This is your service product. Orders for it arrive in <Link href="/orders" className="underline">Work Orders</Link>.</p>
+          <p className="text-[14px] text-ink-2">This is your service product. Orders for it arrive in <Link href="/orders" className="underline">Orders</Link>.</p>
         ) : (
           <>
             {p.priceCents != null && <BuyButtons productId={p.id} signedIn openToOffers={p.openToOffers} />}

@@ -107,10 +107,10 @@ export async function shopOverview(viewer: Viewer, personId: string, side: "buye
   const band: Band = [
     { key: "browse", label: "Browse", count: 0, href: "/shop?tab=browse" },
     { key: "offer", label: "Offer", count: offers.length, href: "/shop?tab=offers", needs: groups.slice(0, 2).some((g) => g.rows.length > 0) },
-    { key: "wr", label: "Service Requisition", count: cartLines.length, href: side === "buyer" ? "/shop?tab=cart" : "/shop?tab=sales" },
-    { key: "wo", label: "Work Order Created · Orders →", count: woCount, href: "/orders/overview" },
+    { key: "wr", label: "Request", count: cartLines.length, href: side === "buyer" ? "/shop?tab=cart" : "/shop?tab=sales" },
+    { key: "wo", label: "Order Created · Orders →", count: woCount, href: "/orders/overview" },
   ];
-  const summary = [`${offers.length} open offer${offers.length === 1 ? "" : "s"}`, side === "buyer" ? `${cartLines.length} in cart` : null, `${woCount} product Work Order${woCount === 1 ? "" : "s"} in flight`].filter(Boolean).join(" · ");
+  const summary = [`${offers.length} open offer${offers.length === 1 ? "" : "s"}`, side === "buyer" ? `${cartLines.length} in cart` : null, `${woCount} product Order${woCount === 1 ? "" : "s"} in flight`].filter(Boolean).join(" · ");
   return { groups, count, band, summary };
 }
 
@@ -155,7 +155,7 @@ export async function estimateOverview(viewer: Viewer, personId: string, side: "
       { key: "in", label: "Estimates In", count: live.filter((e) => stepOf(e) === "in").length, href: "/estimate?tab=in", needs: ests.length > 0 },
       { key: "award", label: "Award", count: live.filter((e) => stepOf(e) === "award").length, href: "/estimate?tab=awarded" },
       { key: "approval", label: "Approval", count: 0, href: "/estimate?tab=awarded" },
-      { key: "wo", label: "Work Order Created · Orders →", count: events.filter((e) => e.work_order_id).length, href: "/orders/overview" },
+      { key: "wo", label: "Order Created · Orders →", count: events.filter((e) => e.work_order_id).length, href: "/orders/overview" },
     ];
     const count = groups.reduce((n, g) => n + g.rows.length, 0);
     return { groups, count, band, summary: `${open.length} open request${open.length === 1 ? "" : "s"} · ${ests.length} estimate${ests.length === 1 ? "" : "s"} waiting` };
@@ -187,7 +187,7 @@ export async function estimateOverview(viewer: Viewer, personId: string, side: "
     { key: "priced", label: "Priced", count: ests.filter((e) => e.status === "SENT" && !e.shortlisted_at).length, href: "/estimate?tab=sent" },
     { key: "shortlisted", label: "Shortlisted", count: ests.filter((e) => e.status === "SENT" && e.shortlisted_at).length, href: "/estimate?tab=sent" },
     { key: "won", label: "Won", count: ests.filter((e) => e.status === "ACCEPTED").length, href: "/estimate?tab=won" },
-    { key: "accept", label: "Work Order to Accept · Orders →", count: toAccept, href: "/orders/overview" },
+    { key: "accept", label: "Order to Accept · Orders →", count: toAccept, href: "/orders/overview" },
   ];
   const count = groups.reduce((n, g) => n + g.rows.length, 0);
   return { groups, count, band, summary: `${openReqs.length} open request${openReqs.length === 1 ? "" : "s"} · ${ests.filter((e) => e.status === "SENT").length} estimate${ests.filter((e) => e.status === "SENT").length === 1 ? "" : "s"} sent` };

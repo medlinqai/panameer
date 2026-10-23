@@ -19,7 +19,7 @@ export async function shopHeroStats(): Promise<TalentStat[]> {
     },
     {
       value: String(workOrders),
-      label: plural(workOrders, "Work Order"),
+      label: plural(workOrders, "Order"),
     },
   ];
 }

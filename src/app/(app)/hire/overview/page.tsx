@@ -36,7 +36,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
   const tabs = [
     { key: "overview", label: "Overview", href: "/hire/overview" },
     { key: "jobs", label: "Jobs", href: "/hire/overview?tab=jobs", n: r.jobs },
-    { key: "requests", label: "Requisitions", href: "/hire/overview?tab=requests", n: r.requests },
+    { key: "requests", label: "Requests", href: "/hire/overview?tab=requests", n: r.requests },
     { key: "interviews", label: "Interviews", href: "/hire/overview?tab=interviews", n: r.interviews },
     { key: "tests", label: "Tests", href: "/hire/overview?tab=tests", n: r.tests },
   ];
@@ -73,7 +73,7 @@ async function Overview({ personId, slice }: { personId: string; slice?: string 
   const active = firstNeed >= 0 ? firstNeed : lastBusy;
   const band: BandStep[] = PATH_STEPS.map((s, i) => {
     const c = d.stepCounts.get(s.key) ?? 0;
-    const label = s.key === "wo" ? <>Work Order Created · <span className="text-magenta-dark">Orders →</span></> : s.label;
+    const label = s.key === "wo" ? <>Order Created · <span className="text-magenta-dark">Orders →</span></> : s.label;
     return { key: s.key, label, top: <span className={`text-[22px] font-extrabold ${c ? (i === active ? "text-magenta" : "text-ink") : "text-state-border"}`}>{c}</span>, bar: i <= active ? "done" : "todo", current: i === active, needs: c > 0 && !!needsStep[s.key], href: s.key === "wo" ? "/orders/overview" : `/hire/overview?tab=jobs&step=${s.key}`, muted: !c && i !== active };
   });
   const rows = jobSlice(d.jobRows, slice);
@@ -87,12 +87,12 @@ async function Overview({ personId, slice }: { personId: string; slice?: string 
           <span className="text-[12px] font-bold tracking-[0.12em] text-magenta">{dateLabel}</span>
           <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{n ? `${n} ${n === 1 ? "Thing Needs" : "Things Need"} Attention` : "Nothing Needs Attention"}</h1>
           <p className="text-[14px] leading-[1.7] text-state-inactive" data-hire-summary>{d.summary}</p>
-          <p className="mt-[18px] text-[13px] leading-relaxed text-state-inactive">Work Orders to accept are in <Link href="/orders/overview">Orders</Link>.</p>
+          <p className="mt-[18px] text-[13px] leading-relaxed text-state-inactive">Orders to accept are in <Link href="/orders/overview">Orders</Link>.</p>
         </div>
         <AttentionGroups groups={d.groups} />
       </section>
 
-      <PathBand steps={band} label="Requisition Path" />
+      <PathBand steps={band} label="Request Path" />
 
       {/* IW-E004: My Jobs takes the full width; Today's Interviews moved to the Interviews tab (the attention group links there). */}
       <section className="min-w-0" data-my-jobs>
@@ -102,7 +102,7 @@ async function Overview({ personId, slice }: { personId: string; slice?: string 
       </section>
       <footer className="flex flex-wrap gap-x-10 gap-y-2 border-t border-state-border pt-4 text-[13px] text-state-inactive" data-hire-footer>
         <span><b className="text-[15px] font-extrabold text-ink">{d.openJobs}</b> Open Jobs</span>
-        <span><b className="text-[15px] font-extrabold text-ink">{w.footer.monthOrders}</b> Work Orders This Month</span>
+        <span><b className="text-[15px] font-extrabold text-ink">{w.footer.monthOrders}</b> Orders This Month</span>
       </footer>
     </div>
   );
@@ -112,7 +112,7 @@ const stepLabel = (j: JobTabRow) => {
   if (j.draft) return j.draftLine ?? "Draft";
   const base = PATH_STEPS.find((p) => p.key === j.step)?.label ?? j.step;
   if (j.step === "proposals" && j.proposals) return `${base} · ${j.proposals.replace(/ in$/, "")}`;
-  if (j.step === "wo") return `Work Order ${j.wo?.number ?? ""} created`.replace("  ", " ");
+  if (j.step === "wo") return `Order ${j.wo?.number ?? ""} created`.replace("  ", " ");
   return base;
 };
 
@@ -184,7 +184,7 @@ function JobArticle({ j }: { j: JobTabRow }) {
             <Link href={`/work-requests/${j.id}`} className="text-[17px] font-bold text-ink hover:underline">{j.title}</Link>
           </div>
           <div className="mt-1 text-[13px] text-state-inactive">{j.draft ? j.draftLine : <>{j.facts}{j.origin && !j.facts.includes(j.origin) ? ` · ${j.origin}` : ""}</>}</div>
-          {j.wo && j.step === "wo" && <div className="mt-1 text-[13px]"><b className="text-state-accepted">Work Order {j.wo.number} created</b> · <Link href={`/orders/${j.wo.id}`}>Open in Orders</Link></div>}
+          {j.wo && j.step === "wo" && <div className="mt-1 text-[13px]"><b className="text-state-accepted">Order {j.wo.number} created</b> · <Link href={`/orders/${j.wo.id}`}>Open in Orders</Link></div>}
           {j.recurring && <RecurringLine r={j.recurring} />}
         </div>
         <span className="flex w-full gap-2 sm:w-auto">
@@ -197,7 +197,7 @@ function JobArticle({ j }: { j: JobTabRow }) {
         {woStep && j.wo ? (
           <>
             <Fact label="Step"><span className="text-ink">{PATH_STEPS.find((p) => p.key === j.step)?.label}</span></Fact>
-            <Fact label="Work Order"><Link href={`/orders/${j.wo.id}`} className="text-ink">{j.wo.number}</Link></Fact>
+            <Fact label="Order"><Link href={`/orders/${j.wo.id}`} className="text-ink">{j.wo.number}</Link></Fact>
             <Fact label="Provider">{j.wo.provider}</Fact>
             <Fact label="Waiting On">{j.wo.waiting}</Fact>
           </>
@@ -240,7 +240,7 @@ async function RequestsTab({ personId, slice }: { personId: string; slice?: stri
   const rows = all.filter((r) => inSlice(r, sliceOf(slice)));
   return (
     <div className="flex flex-col gap-5" data-requests-tab>
-      <h1 className="text-[30px] font-extrabold">Service Requisitions</h1>
+      <h1 className="text-[30px] font-extrabold">Requests</h1>
       <div className="border-b border-ink pb-3"><SliceChips tabKey="hire-requests" counts={sliceCounts(all)} base="/hire/overview?tab=requests" /></div>
       {rows.length ? rows.map((w) => (
         <article key={w.id} className="flex flex-col gap-3.5 border-b border-state-border pb-5">
@@ -248,7 +248,7 @@ async function RequestsTab({ personId, slice }: { personId: string; slice?: stri
             <TypeArt typeName={w.title} size={52} />
             <div className="min-w-0 flex-1">
               <Link href={`/work-requests/${w.jobId}`} className="text-[17px] font-bold text-ink hover:underline">{w.title}</Link>
-              <div className="mt-1 text-[13px] text-state-inactive">{w.wr ?? "Service Requisition"} · {w.who}</div>
+              <div className="mt-1 text-[13px] text-state-inactive">{w.wr ?? "Request"} · {w.who}</div>
               {w.recurring && <RecurringLine r={w.recurring} />}
             </div>
             {w.completed ? <Link href={`/hire/terms?job=${w.jobId}&provider=${w.providerPersonId}`} className={`${BTN_OUT} w-full sm:w-auto`}>Hire Again</Link> : <Link href={w.wo ? `/orders/${w.wo.id}` : `/work-requests/${w.jobId}`} className={`${BTN_OUT} w-full sm:w-auto`}>Open</Link>}
@@ -257,10 +257,10 @@ async function RequestsTab({ personId, slice }: { personId: string; slice?: stri
             <Fact label="Step">{w.completed ? "Completed" : w.step}</Fact>
             <Fact label="Provider">{w.who}</Fact>
             <Fact label="Approval">{w.approval}</Fact>
-            <Fact label="Work Order">{w.wo ? <Link href={`/orders/${w.wo.id}`} className="text-ink">{w.wo.number}</Link> : "—"}</Fact>
+            <Fact label="Order">{w.wo ? <Link href={`/orders/${w.wo.id}`} className="text-ink">{w.wo.number}</Link> : "—"}</Fact>
           </div>
         </article>
-      )) : <p className="text-[14px] text-state-inactive">No Service Requisitions yet — Award a response or Hire directly and it shows here.</p>}
+      )) : <p className="text-[14px] text-state-inactive">No Requests yet — Award a response or Hire directly and it shows here.</p>}
     </div>
   );
 }

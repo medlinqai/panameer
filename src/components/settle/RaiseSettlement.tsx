@@ -149,7 +149,7 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
         </div>
         {(form.orderPeriodStart || form.orderPeriodEnd) && (
           <p className="text-[13px] text-ink-2 sm:col-span-2">
-            The work order runs {form.orderPeriodStart ?? "…"} → {form.orderPeriodEnd ?? "…"}, and a
+            The order runs {form.orderPeriodStart ?? "…"} → {form.orderPeriodEnd ?? "…"}, and a
             payment request has to sit inside it.
           </p>
         )}
@@ -195,7 +195,7 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
                   ? "Add hours or tick a fixed-amount line to claim."
                   : !periodStart || !periodEnd
                     ? "Set the period this covers."
-                    : "The rate on each line is the one agreed on the work order."}
+                    : "The rate on each line is the one agreed on the order."}
             </p>
           </div>
           <Button disabled={!ready} onClick={submit}>
@@ -241,7 +241,7 @@ function TimesheetLine({
           <p className="text-[15px] font-bold">
             {formatCents(line.unitPriceCents ?? 0, currency)} / {unit}
           </p>
-          <p className="text-[12.5px] text-ink-2">the rate agreed on the work order</p>
+          <p className="text-[12.5px] text-ink-2">the rate agreed on the order</p>
         </div>
       </div>
 

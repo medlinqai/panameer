@@ -95,7 +95,7 @@ export default async function Page({
     ...(detail.status === "DRAFT" ? [{ label: "Edit the Job", href: `/hire?job=${detail.id}&step=0` }] : []),
     ...(!detail.soleSourced ? [{ label: "Invite Providers", href: `/work-requests/${id}/invite` }] : []),
     ...(posted ? [{ label: "Share with Providers", href: `/work-requests/${id}/share` }] : []),
-    ...sec.orders.map((o) => ({ label: `Open Work Order ${o.order_number}`, href: `/orders/${o.id}` })),
+    ...sec.orders.map((o) => ({ label: `Open Order ${o.order_number}`, href: `/orders/${o.id}` })),
     { label: "My Jobs", href: "/hire/jobs" },
   ];
 
@@ -217,7 +217,7 @@ export default async function Page({
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               <section className="rounded-[12px] border border-state-border p-5" data-requisition-card>
-                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Service Requisition</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Request</p>
                 <h2 className="mt-1 text-[18px] font-extrabold">{sec.header.workRequest ?? "Created on Hire"}</h2>
                 {sec.awardRows.map((a, k) => <p key={k} className="mt-2 text-[14px]"><b>{a.who.replace(/^Provider /, "")}</b><span className="text-state-inactive"> · {a.rate != null ? `${formatCents(a.rate)}${a.uom === "HOUR" ? "/hr" : ""} · ` : ""}{a.when}</span></p>)}
                 <p className="mt-2 text-[14px]">Approval: {sec.approval?.at ? <b className="text-state-accepted">Auto-approved · {sec.approval.at}</b> : <span className="text-state-pending">Waiting</span>}</p>
@@ -225,12 +225,12 @@ export default async function Page({
               </section>
               {orders.map((wo) => (
                 <section key={wo.id} className="rounded-[12px] border border-state-border p-5" data-job-work-order>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Work Order</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Order</p>
                   <h2 className="mt-1 text-[18px] font-extrabold">{wo.order_number}</h2>
                   <p className="mt-2 text-[14px]">{[sec.header.style, wo.label].filter(Boolean).join(" · ")}</p>
                   <p className="mt-1 text-[13.5px]"><span className={wo.buyer_accepted_at ? "text-state-accepted" : "text-state-pending"}>{wo.buyer_accepted_at ? "✓ You Accepted" : "Your Acceptance Pending"}</span> · <span className={wo.provider_accepted_at ? "text-state-accepted" : "text-state-pending"}>{wo.provider_accepted_at ? "✓ Provider Accepted" : "Provider Acceptance Pending"}</span></p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <Link href={`/orders/${wo.id}`} className={BTN_OUT}>{wo.buyer_accepted_at ? "Open Work Order" : "Review & Accept"}</Link>
+                    <Link href={`/orders/${wo.id}`} className={BTN_OUT}>{wo.buyer_accepted_at ? "Open Order" : "Review & Accept"}</Link>
                     <Link href="/orders/overview" className="self-center text-[13px] font-semibold">Orders →</Link>
                   </div>
                 </section>
@@ -249,7 +249,7 @@ export default async function Page({
                 </div>
               ))}
             </div>
-          ) : empty("Lines are filled on Award: the role, quantity, rate and Payment Event that carry to the Work Order.")}
+          ) : empty("Lines are filled on Award: the role, quantity, rate and Payment Event that carry to the Order.")}
         </Section>
         </>
       )}

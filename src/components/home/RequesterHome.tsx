@@ -21,7 +21,7 @@ export function RequesterHome({
     <div className="mx-auto w-full max-w-6xl">
       {}
       <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
-        Service Requisitions
+        Requests
       </h2>
 
       {/* ---- 1. What is in flight ---------------------------------------- */}
@@ -35,7 +35,7 @@ export function RequesterHome({
               💼
             </span>
             <p className="mt-4 font-display text-[21px] font-bold">
-              No job posts or work orders in progress right now
+              No job posts or orders in progress right now
             </p>
             <p className="mx-auto mt-2 max-w-md text-[14.5px] leading-relaxed text-ink-2">
               Describe what you need and match with validated experts across the
@@ -44,14 +44,14 @@ export function RequesterHome({
             {}
             <div className="mt-6 flex justify-center">
               {}
-              <Button href="/create-work">Create Service Requisition</Button>
+              <Button href="/create-work">Create Request</Button>
             </div>
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="font-display text-[21px] font-bold">
-                {openWorkCount} service requisition{openWorkCount === 1 ? "" : "s"} in
+                {openWorkCount} request{openWorkCount === 1 ? "" : "s"} in
                 progress
               </p>
               <p className="mt-1 text-[14.5px] text-ink-2">
@@ -59,7 +59,7 @@ export function RequesterHome({
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button href="/create-work">Create Service Requisition</Button>
+              <Button href="/create-work">Create Request</Button>
               <Button href="/orders" variant="ghost">
                 Manage Work
               </Button>

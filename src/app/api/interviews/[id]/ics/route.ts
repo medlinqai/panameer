@@ -21,7 +21,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Panameer//Interviews//EN", "METHOD:PUBLISH", "BEGIN:VEVENT",
     `UID:${iv.request_number}@panameer.com`, `DTSTAMP:${stamp(new Date())}`, `DTSTART:${stamp(iv.startsAt)}`, `DTEND:${stamp(end)}`,
     `SUMMARY:${esc(`Panameer interview · ${who} · ${iv.jobTitle}`)}`,
-    `DESCRIPTION:${esc(`Join: ${join}\nKeep personal details out until a Work Order is in place.`)}`,
+    `DESCRIPTION:${esc(`Join: ${join}\nKeep personal details out until an Order is in place.`)}`,
     `URL:${join}`, "ORGANIZER;CN=Panameer:mailto:noreply@panameer.com", "END:VEVENT", "END:VCALENDAR",
   ].join("\r\n");
   return new NextResponse(ics, { headers: { "Content-Type": "text/calendar; charset=utf-8", "Content-Disposition": `attachment; filename="${iv.request_number}.ics"` } });

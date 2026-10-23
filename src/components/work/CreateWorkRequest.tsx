@@ -262,7 +262,7 @@ export function CreateWorkRequest({
 
   if (!ready) {
     return (
-      <AppWizardShell title="Create a Service Requisition" busy>
+      <AppWizardShell title="Create a Request" busy>
         <p className="text-[15px] text-ink-2">Loading…</p>
       </AppWizardShell>
     );
@@ -288,14 +288,14 @@ export function CreateWorkRequest({
               <p className="mb-1 text-[15px] font-bold">Bring your JD</p>
               <p className="mb-3 text-[13.5px] leading-relaxed text-ink-2">
                 Already have a job description? Start from it. Otherwise, build
-                the Service Requisition here.
+                the Request here.
               </p>
               <div className="space-y-3">
                 <JdDoor
                   title="Paste Your JD"
                   badge="Fastest"
                   primary
-                  description="Paste it in and we'll draft the Service Requisition from what it says."
+                  description="Paste it in and we'll draft the Request from what it says."
                   onClick={() => setDoorsOpen("paste")}
                 />
                 <JdDoor
@@ -337,7 +337,7 @@ export function CreateWorkRequest({
                     disabled={importText.trim().length < 40}
                     className="bg-magenta px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
                   >
-                    Draft My Service Requisition
+                    Draft My Request
                   </button>
                   <button
                     type="button"
@@ -767,7 +767,7 @@ export function CreateWorkRequest({
             title: "Describe What You Need in Detail",
             subtitle: "Already have a description? Paste it here.",
             continueDisabled: description.trim().length === 0,
-            continueLabel: "Review Service Requisition",
+            continueLabel: "Review Request",
             onContinue: () => saveAnd("description", { description }),
             wide: true,
           })}

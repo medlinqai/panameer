@@ -6,7 +6,7 @@ export type PathStep = { key: PathKey; label: string; done: boolean; date: Date 
 export type PathKey = "job" | "shortlist" | "request" | "proposals" | "interview" | "test" | "award" | "approval" | "wo";
 export const PATH_STEPS: { key: PathKey; label: string }[] = [
   { key: "job", label: "Job" }, { key: "shortlist", label: "Shortlist" }, { key: "request", label: "Request Availability" }, { key: "proposals", label: "Responses In" },
-  { key: "interview", label: "Interview" }, { key: "test", label: "Test" }, { key: "award", label: "Award" }, { key: "approval", label: "Approval" }, { key: "wo", label: "Work Order Created" },
+  { key: "interview", label: "Interview" }, { key: "test", label: "Test" }, { key: "award", label: "Award" }, { key: "approval", label: "Approval" }, { key: "wo", label: "Order Created" },
 ];
 const when = (d: Date) => d.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const first = (ds: (Date | null | undefined)[]) => ds.filter((d): d is Date => !!d).sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
@@ -48,7 +48,7 @@ export async function jobPath(jobId: string) {
     { key: "test", hidden: est, label: "Test", done: !!test, date: test?.created_at ?? null, optional: true },
     { key: "award", label: "Award", done: awarded, date: awardedAt },
     { key: "approval", label: "Approval", done: !!approvedAt, date: approvedAt, note: approvedAt ? "Auto-approved" : null },
-    { key: "wo", label: "Work Order Created", done: orders.length > 0, date: orders[0]?.created_at ?? null, href: orders[0] ? `/orders/${orders[0].id}` : undefined },
+    { key: "wo", label: "Order Created", done: orders.length > 0, date: orders[0]?.created_at ?? null, href: orders[0] ? `/orders/${orders[0].id}` : undefined },
   ];
   const shown = steps.filter((s) => !s.hidden);
   // HB-E003: proposals in and no award yet = the job sits at Proposals In (Award only once the buyer awards).

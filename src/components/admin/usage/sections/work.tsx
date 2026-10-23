@@ -17,7 +17,7 @@ async function data(c: Ctx) {
   for (const o of orders) { const j = o.workRequest.job_id!; if (!firstOrder.get(j) || o.created_at < firstOrder.get(j)!) firstOrder.set(j, o.created_at); }
   return { wrs: real, proposals: proposals.filter((p) => c.personOk(p.provider_person_id)), firstOrder };
 }
-const list = (title: string, rows: { id: string; title: string; posted_at: Date | null; status: string }[]) => ({ title, head: ["Service requisition", "Posted", "Status"], rows: rows.map((w) => ({ cells: [w.title || "Untitled", isoDay(w.posted_at), w.status], href: `/work-requests/${w.id}` })) });
+const list = (title: string, rows: { id: string; title: string; posted_at: Date | null; status: string }[]) => ({ title, head: ["Request", "Posted", "Status"], rows: rows.map((w) => ({ cells: [w.title || "Untitled", isoDay(w.posted_at), w.status], href: `/work-requests/${w.id}` })) });
 
 export async function workLists(c: Ctx): Promise<Lists> {
   return {
@@ -35,7 +35,7 @@ export async function Work({ c }: { c: Ctx }) {
   const toAward = d.wrs.filter((w) => w.posted_at && inCur(c, d.firstOrder.get(w.id))).map((w) => daysBetween(w.posted_at!, d.firstOrder.get(w.id)!));
   return (
     <div className="space-y-3">
-      <UsageChart title="Service Requisitions Posted per Day" subtitle={c.label} points={series(c, d.wrs.map((w) => w.posted_at))} />
+      <UsageChart title="Requests Posted per Day" subtitle={c.label} points={series(c, d.wrs.map((w) => w.posted_at))} />
       <Tiles>
         <Tile label="Posted" {...metric(c, d.wrs.map((w) => w.posted_at))} href={listHref(c, "posted")} />
         <Tile label="Active Now" value={d.wrs.filter((w) => w.status === "OPEN").length} href={listHref(c, "active")} />
@@ -43,7 +43,7 @@ export async function Work({ c }: { c: Ctx }) {
         <Tile label="Median Days to Award" value={fmtDays(median(toAward))} />
       </Tiles>
       <Grid2>
-        <Bars title="Status" subtitle="service requisitions now" rows={[
+        <Bars title="Status" subtitle="requests now" rows={[
           { label: "Posted", n: d.wrs.filter((w) => w.status === "OPEN").length, href: listHref(c, "active") },
           { label: "Awarded", n: d.wrs.filter((w) => w.status === "FILLED").length },
           { label: "Canceled", n: d.wrs.filter((w) => w.status === "CANCELED").length, href: listHref(c, "canceled") },

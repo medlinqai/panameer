@@ -7,7 +7,7 @@ import { missingIdentityForPerson } from "@/lib/work-request";
 import { requirementFor } from "@/lib/work-request-identity";
 import { prisma } from "@/lib/prisma";
 
-export const metadata = { title: "Create a Service Requisition · Panameer" };
+export const metadata = { title: "Create a Request · Panameer" };
 
 export default async function Page() {
   await guardPage("canHireTalent");

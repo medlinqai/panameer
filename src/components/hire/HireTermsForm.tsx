@@ -51,7 +51,7 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
           {d.identityShown ? d.providerPhotoUrl && <img src={d.providerPhotoUrl} alt="" className="h-9 w-9 rounded-full object-cover" /> : <NeutralAvatar size={36} />}
           <span>{d.providerCompany ? `${d.providerCompany} · ` : ""}{d.providerName}</span>
         </span>
-        {!d.identityShown && <span className="mt-1 block text-[12.5px] font-normal text-ink-2">Name and company show once the Work Order is released.</span>}
+        {!d.identityShown && <span className="mt-1 block text-[12.5px] font-normal text-ink-2">Name and company show once the Order is released.</span>}
       </p>
       <div className="grid gap-x-3 sm:grid-cols-3">
         <label className={LABEL}>Rate ($)<input inputMode="decimal" value={t.rate} onChange={(e) => set({ rate: e.target.value.replace(/[^0-9.]/g, "") })} className={FIELD} /></label>
@@ -88,7 +88,7 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
         <button type="button" disabled={busy || !t.rate} onClick={submit} data-create-work-order className="inline-flex min-h-11 items-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40">
           {busy ? "Working…" : d.erpOrigin ? "Submit" : `Hire ${d.providerName.replace(/^Provider\s+/, "")}`}
         </button>
-        {!d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">Hiring awards the job and creates the Service Requisition. It is approved, then the Work Order comes to you to accept.</p>}
+        {!d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">Hiring awards the job and creates the Request. It is approved, then the Order comes to you to accept.</p>}
         {d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">This request came from your ERP — Submit returns it there to raise the PO.</p>}
       </div>
       {done && (
@@ -96,14 +96,14 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
           <div className="w-full max-w-md bg-white p-6 text-ink shadow-xl">
             <h2 id="hire-done-title" className="text-[20px] font-extrabold">Confirmation</h2>
             <p className="mt-3 text-[14.5px] leading-relaxed">
-              Service Requisition <b className="whitespace-nowrap">{done.wrNumber ?? "—"}</b>{"\u00a0"}was submitted and approved.
+              Request <b className="whitespace-nowrap">{done.wrNumber ?? "—"}</b>{"\u00a0"}was submitted and approved.
             </p>
             <p className="mt-1 text-[14.5px] leading-relaxed">
-              Work Order <b className="whitespace-nowrap">{done.orderNumber}</b>{"\u00a0"}is ready for your review. We&apos;ve also sent you a link.
+              Order <b className="whitespace-nowrap">{done.orderNumber}</b>{"\u00a0"}is ready for your review. We&apos;ve also sent you a link.
             </p>
             {done.approvalNote && <p className="mt-1 text-[12.5px] text-ink-3">{done.approvalNote}</p>}
             <div className="mt-5 flex flex-wrap items-center gap-3">
-              <Link href={`/work-requests/${d.jobId}?tab=work-order`} className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover" data-review-work-order>Review Work Order</Link>
+              <Link href={`/work-requests/${d.jobId}?tab=work-order`} className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover" data-review-work-order>Review Order</Link>
               <Link href="/hire" className="inline-flex min-h-11 items-center border border-ink px-5 text-[14px] font-bold text-ink">Post Another Job</Link>
               <Link href="/hire/overview" className="text-[14px] font-semibold text-magenta-dark underline underline-offset-4">Done</Link>
             </div>

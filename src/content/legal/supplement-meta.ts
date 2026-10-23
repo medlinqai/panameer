@@ -45,13 +45,13 @@ export const SUPPLEMENT_META: Record<string, SupplementMeta> = {
     },
   },
   "optional-service-contract-terms": {
-    title: "Optional Work Order Terms",
+    title: "Optional Order Terms",
     summary:
-      "Default terms two users can adopt for a Work Order — IP ownership, confidentiality, warranties — if they don't write their own.",
+      "Default terms two users can adopt for an Order — IP ownership, confidentiality, warranties — if they don't write their own.",
     group: "Buying and selling",
   },
   "direct-contracts-terms": {
-    title: "Direct Work Order Terms",
+    title: "Direct Order Terms",
     summary:
       "Bring your own counterparty: pay a supplier you already work with through Panameer. Section 7 of the User Agreement (Non-Circumvention) is the sibling of this one.",
     group: "Buying and selling",
@@ -82,8 +82,8 @@ export const SUPPLEMENT_META: Record<string, SupplementMeta> = {
     },
   },
   "direct-contracts-escrow-instructions": {
-    title: "Direct Work Order Escrow Instructions",
-    summary: "How funds are held and released on a Direct Work Order.",
+    title: "Direct Order Escrow Instructions",
+    summary: "How funds are held and released on a Direct Order.",
     group: "Payments and escrow",
     notice: {
       kind: "stub",
@@ -93,7 +93,7 @@ export const SUPPLEMENT_META: Record<string, SupplementMeta> = {
   },
   "fixed-price-escrow-instructions": {
     title: "Fixed-Price Escrow Instructions",
-    summary: "Milestones, approval, refunds and disputes on a fixed-price Work Order.",
+    summary: "Milestones, approval, refunds and disputes on a fixed-price Order.",
     group: "Payments and escrow",
     notice: {
       kind: "stub",
@@ -103,7 +103,7 @@ export const SUPPLEMENT_META: Record<string, SupplementMeta> = {
   },
   "hourly-bonus-expense-escrow-instructions": {
     title: "Hourly, Bonus and Expense Escrow Instructions",
-    summary: "Weekly billing, bonuses and expenses on an hourly Work Order.",
+    summary: "Weekly billing, bonuses and expenses on an hourly Order.",
     group: "Payments and escrow",
     notice: {
       kind: "stub",

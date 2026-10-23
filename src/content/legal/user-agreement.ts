@@ -146,7 +146,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "Recruiter Member, you represent that: (a) the User is authorized to act on your behalf; and (b) you are fully responsible and liable for what the User does and does not do, including with respect to making payments and entering into Work Orders and the Terms of Service. If any User granted permissions under your Account violates the Terms of Service, it may affect your ability to use our Services. When an Account is closed, Panameer may close any related Accounts as well."
+    "text": "Recruiter Member, you represent that: (a) the User is authorized to act on your behalf; and (b) you are fully responsible and liable for what the User does and does not do, including with respect to making payments and entering into Orders and the Terms of Service. If any User granted permissions under your Account violates the Terms of Service, it may affect your ability to use our Services. When an Account is closed, Panameer may close any related Accounts as well."
   },
   {
     "t": "h3",
@@ -186,7 +186,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "The Panameer Site is a work marketplace where Service Buyers and Providers can identify each other and advertise, buy, and sell Provider Services online. Subject to the Terms of Service, Panameer provides the Services to Users, including hosting and maintaining the Panameer Site, facilitating the formation of Work Orders, and assisting Users in resolving disputes which may arise in connection with those Work Orders. When a User enters a Work Order, the User agrees to use the Services exclusively to invoice, receive, and pay any amounts owed under the Work Order."
+    "text": "The Panameer Site is a work marketplace where Service Buyers and Providers can identify each other and advertise, buy, and sell Provider Services online. Subject to the Terms of Service, Panameer provides the Services to Users, including hosting and maintaining the Panameer Site, facilitating the formation of Orders, and assisting Users in resolving disputes which may arise in connection with those Orders. When a User enters an Order, the User agrees to use the Services exclusively to invoice, receive, and pay any amounts owed under the Order."
   },
   {
     "t": "h3",
@@ -206,11 +206,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "Panameer neither performs nor employs individuals to perform Provider Services. You acknowledge and agree that Panameer does not supervise, direct, control, or monitor Users in the performance of any contractual obligations they may have under a Work Order and agree that: (a) Panameer is not responsible for ensuring the accuracy or legality of any User Content, for which Users are solely responsible; (b) Panameer is not responsible for the offering, performance, or procurement of Provider Services, (c) Panameer does not make any representations about or guarantee any particular User’s offered services, and (d) nothing will create an employment, agency, or joint venture relationship between Panameer and any User offering services. While Panameer may provide certain badges on Provider or Service Buyer profiles, such badges are not guarantees, including of quality or ability or willingness of the badged Provider or Service Buyer to complete a Work Order."
+    "text": "Panameer neither performs nor employs individuals to perform Provider Services. You acknowledge and agree that Panameer does not supervise, direct, control, or monitor Users in the performance of any contractual obligations they may have under an Order and agree that: (a) Panameer is not responsible for ensuring the accuracy or legality of any User Content, for which Users are solely responsible; (b) Panameer is not responsible for the offering, performance, or procurement of Provider Services, (c) Panameer does not make any representations about or guarantee any particular User’s offered services, and (d) nothing will create an employment, agency, or joint venture relationship between Panameer and any User offering services. While Panameer may provide certain badges on Provider or Service Buyer profiles, such badges are not guarantees, including of quality or ability or willingness of the badged Provider or Service Buyer to complete an Order."
   },
   {
     "t": "p",
-    "text": "You further acknowledge and agree that Users, and not Panameer, are solely responsible for (a) evaluating and determining the suitability of any Project, Service Buyer, or Provider; (b) assessing whether to enter into a Work Order with another User and for verifying any information about another User, including Composite Information; (c) deciding whether to enter into a Work Order on Panameer as well as the Work Order terms, and (d) negotiating, agreeing to, and executing any terms or conditions of the Work Orders and for performing and monitoring performance under them. All Work Orders between Users are directly between the Users and Panameer is not a party to those Work Orders."
+    "text": "You further acknowledge and agree that Users, and not Panameer, are solely responsible for (a) evaluating and determining the suitability of any Project, Service Buyer, or Provider; (b) assessing whether to enter into an Order with another User and for verifying any information about another User, including Composite Information; (c) deciding whether to enter into an Order on Panameer as well as the Order terms, and (d) negotiating, agreeing to, and executing any terms or conditions of the Orders and for performing and monitoring performance under them. All Orders between Users are directly between the Users and Panameer is not a party to those Orders."
   },
   {
     "t": "p",
@@ -282,7 +282,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "Unless you opt-out on the Site, you agree to grant Panameer an irrevocable, perpetual, non-exclusive, royalty-free, and worldwide license to use all User Content that you send or receive through the Panameer platform, including Work Product that you own or come to own under a Work Order, to improve AI models exclusively provided to personalize your Panameer experience, for any other AI-related uses consistent with preferences you set or control, or as otherwise outlined in Panameer’s Privacy Policy. This AI-related license only applies to User Content that you send or receive on Panameer while opted into Panameer’s AI user personalization training program or as laid out in the Privacy Policy."
+    "text": "Unless you opt-out on the Site, you agree to grant Panameer an irrevocable, perpetual, non-exclusive, royalty-free, and worldwide license to use all User Content that you send or receive through the Panameer platform, including Work Product that you own or come to own under an Order, to improve AI models exclusively provided to personalize your Panameer experience, for any other AI-related uses consistent with preferences you set or control, or as otherwise outlined in Panameer’s Privacy Policy. This AI-related license only applies to User Content that you send or receive on Panameer while opted into Panameer’s AI user personalization training program or as laid out in the Privacy Policy."
   },
   {
     "t": "p",
@@ -298,11 +298,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "This section discusses the relationships you may decide to enter into with another User, including Work Orders to buy or sell Provider Services with another User."
+    "text": "This section discusses the relationships you may decide to enter into with another User, including Orders to buy or sell Provider Services with another User."
   },
   {
     "t": "h3",
-    "text": "3.1 WORK ORDERS"
+    "text": "3.1 ORDERS"
   },
   {
     "t": "p",
@@ -310,23 +310,23 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "As provided in Section 2.1 above, if a Service Buyer and a Provider decide to enter into a Work Order, the Work Order is a contractual relationship directly between the Service Buyer and the Provider; Panameer is not"
+    "text": "As provided in Section 2.1 above, if a Service Buyer and a Provider decide to enter into an Order, the Order is a contractual relationship directly between the Service Buyer and the Provider; Panameer is not"
   },
   {
     "t": "p",
-    "text": "responsible for and is not a party to any Work Order and under no circumstances will any such Work Order create an employment or any service relationship between Panameer and any User."
+    "text": "responsible for and is not a party to any Order and under no circumstances will any such Order create an employment or any service relationship between Panameer and any User."
   },
   {
     "t": "p",
-    "text": "With respect to any Work Order, Service Buyers and Providers may enter into any agreements that they deem appropriate (e.g., confidentiality agreements, invention assignment agreements, assignment of rights, etc.), provided that those agreements do not conflict with, narrow, or expand Panameer’s rights and obligations under the Terms of Service, including this Agreement and the applicable Escrow Instructions."
+    "text": "With respect to any Order, Service Buyers and Providers may enter into any agreements that they deem appropriate (e.g., confidentiality agreements, invention assignment agreements, assignment of rights, etc.), provided that those agreements do not conflict with, narrow, or expand Panameer’s rights and obligations under the Terms of Service, including this Agreement and the applicable Escrow Instructions."
   },
   {
     "t": "p",
-    "text": "The parties to a Work Order can, if the parties prefer, agree to the Optional Work Order Terms in whole or in part, in addition to or instead of other such agreements. The parties to a Work Order expressly agree that the Optional Work Order Terms will and do apply to their Work Order to the extent that they have not agreed to other terms or agreements that conflict with the Optional Work Order Terms. Users are solely responsible for deciding whether to use the Optional Work Order Terms, and Panameer does not assume any responsibility for any consequence of using the Optional Work Order Terms, which are provided as a sample only and may not be appropriate for all jurisdictions or all Work Orders. The Optional Work Order Terms are not intended to and do not (a) constitute legal advice, (b) create an attorney-client relationship, or (c) constitute advertising or a solicitation of any type. You should seek legal advice from a licensed attorney for your particular needs."
+    "text": "The parties to an Order can, if the parties prefer, agree to the Optional Order Terms in whole or in part, in addition to or instead of other such agreements. The parties to an Order expressly agree that the Optional Order Terms will and do apply to their Order to the extent that they have not agreed to other terms or agreements that conflict with the Optional Order Terms. Users are solely responsible for deciding whether to use the Optional Order Terms, and Panameer does not assume any responsibility for any consequence of using the Optional Order Terms, which are provided as a sample only and may not be appropriate for all jurisdictions or all Orders. The Optional Order Terms are not intended to and do not (a) constitute legal advice, (b) create an attorney-client relationship, or (c) constitute advertising or a solicitation of any type. You should seek legal advice from a licensed attorney for your particular needs."
   },
   {
     "t": "p",
-    "text": "Bidirectional Offers and Acceptance. A Work Order may be initiated by either a Service Buyer or a Provider through the Panameer platform. A binding Work Order is formed when one party affirmatively accepts an offer or counteroffer submitted by the other party through the platform. Acceptance by either party constitutes agreement to: (a) the material terms of the Work Order as presented on the platform at the time of acceptance; (b) the applicable Escrow Instructions (Fixed-Price or Hourly, as applicable); and (c) all applicable provisions of the Terms of Service governing that Work Order type. An offer or counteroffer may be withdrawn before acceptance, subject to applicable law and platform mechanics. Once accepted, the Work Order is binding on both parties and the applicable Escrow Instructions take effect. Users are responsible for reviewing all material terms before accepting any offer or counteroffer."
+    "text": "Bidirectional Offers and Acceptance. An Order may be initiated by either a Service Buyer or a Provider through the Panameer platform. A binding Order is formed when one party affirmatively accepts an offer or counteroffer submitted by the other party through the platform. Acceptance by either party constitutes agreement to: (a) the material terms of the Order as presented on the platform at the time of acceptance; (b) the applicable Escrow Instructions (Fixed-Price or Hourly, as applicable); and (c) all applicable provisions of the Terms of Service governing that Order type. An offer or counteroffer may be withdrawn before acceptance, subject to applicable law and platform mechanics. Once accepted, the Order is binding on both parties and the applicable Escrow Instructions take effect. Users are responsible for reviewing all material terms before accepting any offer or counteroffer."
   },
   {
     "t": "h3",
@@ -334,11 +334,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "You agree to try to resolve your disputes with other Users by following the dispute resolution process in the Escrow Instructions that apply to your Work Order."
+    "text": "You agree to try to resolve your disputes with other Users by following the dispute resolution process in the Escrow Instructions that apply to your Order."
   },
   {
     "t": "p",
-    "text": "For disputes arising between Service Buyers and Providers, you agree to abide by the dispute resolution process that is explained in the Escrow Instructions that apply to your particular Work Order. If that process does not resolve your dispute, you may pursue your dispute independently, but you acknowledge and agree that Panameer will not and is not obligated to provide any further dispute resolution assistance."
+    "text": "For disputes arising between Service Buyers and Providers, you agree to abide by the dispute resolution process that is explained in the Escrow Instructions that apply to your particular Order. If that process does not resolve your dispute, you may pursue your dispute independently, but you acknowledge and agree that Panameer will not and is not obligated to provide any further dispute resolution assistance."
   },
   {
     "t": "p",
@@ -354,11 +354,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "Users may agree to any terms they deem appropriate with respect to confidentiality, including those set forth in the Optional Work Order Terms. If Users do not agree to their own confidentiality terms, this Section 3.3 (Confidential Information) applies."
+    "text": "Users may agree to any terms they deem appropriate with respect to confidentiality, including those set forth in the Optional Order Terms. If Users do not agree to their own confidentiality terms, this Section 3.3 (Confidential Information) applies."
   },
   {
     "t": "p",
-    "text": "To the extent a User provides Confidential Information to another User, the recipient will take reasonable steps to keep that information confidential. On a User’s written request, the party that received Confidential Information will promptly destroy or return the disclosing party’s Confidential Information and any copies of it contained in or on its premises, systems, or any other equipment otherwise under its control. Users specifically agree that this Section 3.3 applies to information exchanged for purposes relating to evaluating whether to enter into a Work Order, even if such Work Order is never agreed to."
+    "text": "To the extent a User provides Confidential Information to another User, the recipient will take reasonable steps to keep that information confidential. On a User’s written request, the party that received Confidential Information will promptly destroy or return the disclosing party’s Confidential Information and any copies of it contained in or on its premises, systems, or any other equipment otherwise under its control. Users specifically agree that this Section 3.3 applies to information exchanged for purposes relating to evaluating whether to enter into an Order, even if such Order is never agreed to."
   },
   {
     "t": "h2",
@@ -442,7 +442,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "This section describes how Panameer’s Escrow Services work and discusses your agreement to pay Provider Service Fees on Work Orders, what happens if a Service Buyer doesn’t pay, and related topics."
+    "text": "This section describes how Panameer’s Escrow Services work and discusses your agreement to pay Provider Service Fees on Orders, what happens if a Service Buyer doesn’t pay, and related topics."
   },
   {
     "t": "h3",
@@ -458,7 +458,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "We follow what is in the applicable Escrow Instructions when we give the money held by us in escrow to the Provider or back to the Service Buyer for a Work Order."
+    "text": "We follow what is in the applicable Escrow Instructions when we give the money held by us in escrow to the Provider or back to the Service Buyer for an Order."
   },
   {
     "t": "p",
@@ -474,11 +474,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "Service Buyer Initiated Direct Work Orders. If Users enter into a Service Buyer Initiated Direct Work Order, then Users agree they will be bound by, and Panameer SA will follow, the Service Buyer Initiated Direct Work Orders Escrow"
+    "text": "Service Buyer Initiated Direct Orders. If Users enter into a Service Buyer Initiated Direct Order, then Users agree they will be bound by, and Panameer SA will follow, the Service Buyer Initiated Direct Orders Escrow"
   },
   {
     "t": "p",
-    "text": "Instructions. Dispute assistance and payment protection are not offered for Service Buyer Initiated Direct Work Orders."
+    "text": "Instructions. Dispute assistance and payment protection are not offered for Service Buyer Initiated Direct Orders."
   },
   {
     "t": "h4",
@@ -490,11 +490,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "Panameer SA will use and release funds deposited in an Escrow Account only in accordance with this Agreement, the applicable Escrow Instructions, and applicable law. Depending on your needs and the applicable Escrow Instructions, Panameer SA will establish and maintain one of two different types of Escrow Accounts: (A) Service Buyer Escrow Account. After entering into a Work Order (hourly or fixed price), the first time a Service Buyer makes a payment for a Project, Panameer SA will establish and maintain a “Service Buyer Escrow Account” to hold funds for the Service Buyer to use to make payments for Projects, to receive refunds in connection with Projects, and to make payments to Panameer."
+    "text": "Panameer SA will use and release funds deposited in an Escrow Account only in accordance with this Agreement, the applicable Escrow Instructions, and applicable law. Depending on your needs and the applicable Escrow Instructions, Panameer SA will establish and maintain one of two different types of Escrow Accounts: (A) Service Buyer Escrow Account. After entering into an Order (hourly or fixed price), the first time a Service Buyer makes a payment for a Project, Panameer SA will establish and maintain a “Service Buyer Escrow Account” to hold funds for the Service Buyer to use to make payments for Projects, to receive refunds in connection with Projects, and to make payments to Panameer."
   },
   {
     "t": "p",
-    "text": "(B) Provider Escrow Account. After entering into a Work Order (hourly or fixed price), the first time a Provider uses the Site to receive payment for a Project, Panameer SA will establish and maintain a “Provider Escrow Account” for Provider to receive payments for Projects, withdraw payments, make payments to Panameer and issue refunds to Service Buyers."
+    "text": "(B) Provider Escrow Account. After entering into an Order (hourly or fixed price), the first time a Provider uses the Site to receive payment for a Project, Panameer SA will establish and maintain a “Provider Escrow Account” for Provider to receive payments for Projects, withdraw payments, make payments to Panameer and issue refunds to Service Buyers."
   },
   {
     "t": "p",
@@ -510,7 +510,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "If you are a Provider and you request payment related to an Hourly Work Order or the release of funds from a Fixed-Price Escrow Account, you hereby appoint Panameer SA as your agent to obtain funds on your behalf and credit them to your Provider Escrow Account as you agree in the applicable Escrow Instructions. Because Panameer SA is Provider’s agent, Provider must, and hereby does, fully discharge and credit Provider’s Service Buyer for all payments and releases of funds that Panameer SA receives on Provider’s behalf from or on behalf of such Service Buyer."
+    "text": "If you are a Provider and you request payment related to an Hourly Order or the release of funds from a Fixed-Price Escrow Account, you hereby appoint Panameer SA as your agent to obtain funds on your behalf and credit them to your Provider Escrow Account as you agree in the applicable Escrow Instructions. Because Panameer SA is Provider’s agent, Provider must, and hereby does, fully discharge and credit Provider’s Service Buyer for all payments and releases of funds that Panameer SA receives on Provider’s behalf from or on behalf of such Service Buyer."
   },
   {
     "t": "h4",
@@ -526,7 +526,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "This Agreement is supplementary to the Work Order and to any other agreement between Service Buyer and Provider concerning the Project, as provided in Title 11 of the United States Code, Section 365(n)."
+    "text": "This Agreement is supplementary to the Order and to any other agreement between Service Buyer and Provider concerning the Project, as provided in Title 11 of the United States Code, Section 365(n)."
   },
   {
     "t": "h4",
@@ -578,19 +578,19 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "h3",
-    "text": "6.2 SERVICE BUYER PAYMENTS ON WORK ORDERS"
+    "text": "6.2 SERVICE BUYER PAYMENTS ON ORDERS"
   },
   {
     "t": "p",
-    "text": "This section describes when and how Service Buyer payments are made on their Work Orders with Providers."
+    "text": "This section describes when and how Service Buyer payments are made on their Orders with Providers."
   },
   {
     "t": "p",
-    "text": "Hourly Work Orders. Provider will invoice Service Buyer for Provider Fees on a weekly basis through Panameer, and Service Buyer will pay invoices consistent with the Hourly, Bonus, and Expense Payment Agreement with Escrow Instructions. When Service Buyer approves an Hourly Invoice for an Hourly Work Order, including an Hourly Work Order initiated through Direct Work Orders, Service Buyer automatically and irrevocably authorizes and instructs Panameer or its affiliates Panameer SA or Panameer SA to charge Service Buyer’s Payment Method for the Provider Fees."
+    "text": "Hourly Orders. Provider will invoice Service Buyer for Provider Fees on a weekly basis through Panameer, and Service Buyer will pay invoices consistent with the Hourly, Bonus, and Expense Payment Agreement with Escrow Instructions. When Service Buyer approves an Hourly Invoice for an Hourly Order, including an Hourly Order initiated through Direct Orders, Service Buyer automatically and irrevocably authorizes and instructs Panameer or its affiliates Panameer SA or Panameer SA to charge Service Buyer’s Payment Method for the Provider Fees."
   },
   {
     "t": "p",
-    "text": "Fixed-Price Work Orders. Service Buyer becomes obligated to pay applicable amounts into the Escrow Account immediately upon sending a Fixed-Price Work Order offer (for the full amount or for the first milestone, if milestones are used), upon activating any additional milestone, or upon accepting a Fixed-Price Work Order via Direct Work Orders. When Service Buyer authorizes the payment of the Provider Fees for a Fixed-Price Work Order under the Fixed Price Work Order Escrow Instructions, Service Buyer automatically and"
+    "text": "Fixed-Price Orders. Service Buyer becomes obligated to pay applicable amounts into the Escrow Account immediately upon sending a Fixed-Price Order offer (for the full amount or for the first milestone, if milestones are used), upon activating any additional milestone, or upon accepting a Fixed-Price Order via Direct Orders. When Service Buyer authorizes the payment of the Provider Fees for a Fixed-Price Order under the Fixed Price Order Escrow Instructions, Service Buyer automatically and"
   },
   {
     "t": "p",
@@ -598,7 +598,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "Service Buyer acknowledges and agrees that for both Hourly Work Orders and Fixed-Price Work Orders, failure by Service Buyer to decline or dispute an Hourly Invoice or request for payment is an authorization and instruction to release payment, as described more fully in the applicable Escrow Instructions."
+    "text": "Service Buyer acknowledges and agrees that for both Hourly Orders and Fixed-Price Orders, failure by Service Buyer to decline or dispute an Hourly Invoice or request for payment is an authorization and instruction to release payment, as described more fully in the applicable Escrow Instructions."
   },
   {
     "t": "h4",
@@ -622,7 +622,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "h3",
-    "text": "6.3 DISBURSEMENTS TO PROVIDERS ON WORK ORDERS"
+    "text": "6.3 DISBURSEMENTS TO PROVIDERS ON ORDERS"
   },
   {
     "t": "p",
@@ -638,11 +638,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "Hourly Work Orders. Provider Fees become available to Providers no later than following the expiration of the five-day security period and dispute period."
+    "text": "Hourly Orders. Provider Fees become available to Providers no later than following the expiration of the five-day security period and dispute period."
   },
   {
     "t": "p",
-    "text": "Fixed-Price Work Orders. Provider Fees become available to Providers no later than following the expiration of the five-day security period. The security period begins after Service Buyer accepts work submitted by Provider and approves payment."
+    "text": "Fixed-Price Orders. Provider Fees become available to Providers no later than following the expiration of the five-day security period. The security period begins after Service Buyer accepts work submitted by Provider and approves payment."
   },
   {
     "t": "p",
@@ -670,7 +670,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "If Service Buyer is in default, we may, without notice, temporarily or permanently close Service Buyer’s Account and revoke Service Buyer’s access to the Services, including Service Buyer’s authority to use the Site to process any additional payments, enter into Work Orders, or obtain any additional Provider Services from other Users through the Site. However, Service Buyer will remain responsible for any amounts that accrue on any open Projects at the time a limitation is put on the Service Buyer’s Account as a result of the default. Without limiting other available remedies, Service Buyer must pay Panameer upon demand for any amounts owed, plus interest on the outstanding amount at the lesser of one and one-half percent (1.5%) per month or the maximum interest allowed by applicable law, plus attorneys’ fees and other costs of collection to the extent permitted by applicable law."
+    "text": "If Service Buyer is in default, we may, without notice, temporarily or permanently close Service Buyer’s Account and revoke Service Buyer’s access to the Services, including Service Buyer’s authority to use the Site to process any additional payments, enter into Orders, or obtain any additional Provider Services from other Users through the Site. However, Service Buyer will remain responsible for any amounts that accrue on any open Projects at the time a limitation is put on the Service Buyer’s Account as a result of the default. Without limiting other available remedies, Service Buyer must pay Panameer upon demand for any amounts owed, plus interest on the outstanding amount at the lesser of one and one-half percent (1.5%) per month or the maximum interest allowed by applicable law, plus attorneys’ fees and other costs of collection to the extent permitted by applicable law."
   },
   {
     "t": "p",
@@ -778,7 +778,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "Prior to entering into a Work Order, you agree to communicate with other Users exclusively through Panameer."
+    "text": "Prior to entering into an Order, you agree to communicate with other Users exclusively through Panameer."
   },
   {
     "t": "p",
@@ -790,7 +790,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "For Users subject to this Section 7.2, Users agree to use the communication services available on the Site to communicate with other Users prior to entering into a Work Order. You agree that prior to entering into a Work Order, you (a) will use Panameer as the sole manner to communicate with other Users; (b) will not provide your Means of Direct Contact (defined below) to any other User or another person that you identified or were identified by through the Site; (c) will not use Means of Direct Contact of another user to attempt to or to communicate with, solicit, contact, or find the contact information of a User outside of Panameer; (d) will not ask for, provide, or attempt to identify through public means the contact information of another User; and (e) will not include any Means of Direct Contact or means by which your contact information could be discovered in any profile, proposal, job posting, invitation, or pre-hire communication through the Site’s communications services (including in each case in any attached file), except as otherwise provided on the Site."
+    "text": "For Users subject to this Section 7.2, Users agree to use the communication services available on the Site to communicate with other Users prior to entering into an Order. You agree that prior to entering into an Order, you (a) will use Panameer as the sole manner to communicate with other Users; (b) will not provide your Means of Direct Contact (defined below) to any other User or another person that you identified or were identified by through the Site; (c) will not use Means of Direct Contact of another user to attempt to or to communicate with, solicit, contact, or find the contact information of a User outside of Panameer; (d) will not ask for, provide, or attempt to identify through public means the contact information of another User; and (e) will not include any Means of Direct Contact or means by which your contact information could be discovered in any profile, proposal, job posting, invitation, or pre-hire communication through the Site’s communications services (including in each case in any attached file), except as otherwise provided on the Site."
   },
   {
     "t": "p",
@@ -830,11 +830,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "You agree that the Conversion Fee is 15.9% of the estimated earnings over a twelve (12) month period, which is calculated by taking the Hourly Rate (defined below) and multiplying it by 2,080. “Hourly Rate” means (a) the highest hourly rate charged by the Provider on any Work Order with the Service Buyer, if any; or (b) if there is no hourly rate on a Work Order, the hourly rate in the Provider’s profile when the conversion is requested. The Conversion Fee includes all applicable taxes and is not subject to a Service Buyer service fee. If Service Buyer and Provider have had a Panameer Relationship for at least two (2) years, the Conversion Fee is a nominal $1 USD for administrative purposes. The Conversion Fee is not refundable."
+    "text": "You agree that the Conversion Fee is 15.9% of the estimated earnings over a twelve (12) month period, which is calculated by taking the Hourly Rate (defined below) and multiplying it by 2,080. “Hourly Rate” means (a) the highest hourly rate charged by the Provider on any Order with the Service Buyer, if any; or (b) if there is no hourly rate on an Order, the hourly rate in the Provider’s profile when the conversion is requested. The Conversion Fee includes all applicable taxes and is not subject to a Service Buyer service fee. If Service Buyer and Provider have had a Panameer Relationship for at least two (2) years, the Conversion Fee is a nominal $1 USD for administrative purposes. The Conversion Fee is not refundable."
   },
   {
     "t": "p",
-    "text": "Panameer will apply a discount on the Conversion Fee that is equal to the total amount of the Service Buyer service fees that Service Buyer has paid to Panameer in the preceding twelve (12) months on each marketplace Work Order between the Service Buyer and the Provider. In no event shall the Conversion Fee be discounted below the minimum of $1,000 USD."
+    "text": "Panameer will apply a discount on the Conversion Fee that is equal to the total amount of the Service Buyer service fees that Service Buyer has paid to Panameer in the preceding twelve (12) months on each marketplace Order between the Service Buyer and the Provider. In no event shall the Conversion Fee be discounted below the minimum of $1,000 USD."
   },
   {
     "t": "h2",
@@ -878,7 +878,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "Additionally, in no event will Panameer, our affiliates, our licensors, or our third-party service providers be liable for any special, consequential, incidental, punitive, exemplary, or indirect costs or damages, including, but not limited to, litigation costs, installation and removal costs, or loss of data, production, profit, or business opportunities. The liability of Panameer, our affiliates, our licensors, and our thirdparty service providers to any User for any claim arising out of or in connection with this Agreement or the other Terms of Service will not exceed the lesser of: (a) $2,500 or (b) any fees retained by Panameer with respect to Work Orders on which User was involved as Service Buyer or Provider during the sixmonth period preceding the date of the claim."
+    "text": "Additionally, in no event will Panameer, our affiliates, our licensors, or our third-party service providers be liable for any special, consequential, incidental, punitive, exemplary, or indirect costs or damages, including, but not limited to, litigation costs, installation and removal costs, or loss of data, production, profit, or business opportunities. The liability of Panameer, our affiliates, our licensors, and our thirdparty service providers to any User for any claim arising out of or in connection with this Agreement or the other Terms of Service will not exceed the lesser of: (a) $2,500 or (b) any fees retained by Panameer with respect to Orders on which User was involved as Service Buyer or Provider during the sixmonth period preceding the date of the claim."
   },
   {
     "t": "p",
@@ -898,7 +898,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "In recognition of the fact that Panameer is not a party to any Work Order between Users, you hereby release Panameer, Panameer SA, our other Affiliates, and our respective officers, directors, agents, subsidiaries, joint ventures, employees and service providers from claims, demands, and damages (actual and consequential) of every kind and nature, known and unknown, arising out of or in any way connected with any dispute you have with another User, whether it be at law or in equity that exist as of the time you enter into this Agreement. This release includes, for example and without limitation, any disputes regarding the performance, functions, and quality of the Provider Services provided to Service Buyer by a Provider and requests for refunds based upon disputes. Procedures regarding the handling of certain disputes between Users are discussed in the Escrow Instructions."
+    "text": "In recognition of the fact that Panameer is not a party to any Order between Users, you hereby release Panameer, Panameer SA, our other Affiliates, and our respective officers, directors, agents, subsidiaries, joint ventures, employees and service providers from claims, demands, and damages (actual and consequential) of every kind and nature, known and unknown, arising out of or in any way connected with any dispute you have with another User, whether it be at law or in equity that exist as of the time you enter into this Agreement. This release includes, for example and without limitation, any disputes regarding the performance, functions, and quality of the Provider Services provided to Service Buyer by a Provider and requests for refunds based upon disputes. Procedures regarding the handling of certain disputes between Users are discussed in the Escrow Instructions."
   },
   {
     "t": "p",
@@ -914,7 +914,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "You will indemnify, defend, and hold harmless Panameer, Panameer SA, our other Affiliates, and our respective directors, officers, employees, representatives, and agents (each an “Indemnified Party”) for all Indemnified Claims (defined below) and Indemnified Liabilities (defined below) relating to or arising out of: (a) your or your agents’ use of the Services, including any payment obligations or default (described in Section 6.4 (Non-Payment or Default)) incurred through use of the Services; (b) any Work Product or User Content related to your use of the Services; (c) any Work Order entered into by you or your agents, including, but not limited to, the classification of a Provider as an independent contractor, any employment-related claims; (d) your or your agents’ failure to comply with the Terms of Service; (e) you or your agents’ failure to comply with applicable law; (f) negligence, willful misconduct, or fraud by you or your agents; and (g) you or your agents’ violation of any third-party right, including without limitation any right of privacy, publicity rights or Intellectual Property Rights. For purposes of this Section 12, your agents include any person who has apparent authority to access or use your account demonstrated by using your username and password."
+    "text": "You will indemnify, defend, and hold harmless Panameer, Panameer SA, our other Affiliates, and our respective directors, officers, employees, representatives, and agents (each an “Indemnified Party”) for all Indemnified Claims (defined below) and Indemnified Liabilities (defined below) relating to or arising out of: (a) your or your agents’ use of the Services, including any payment obligations or default (described in Section 6.4 (Non-Payment or Default)) incurred through use of the Services; (b) any Work Product or User Content related to your use of the Services; (c) any Order entered into by you or your agents, including, but not limited to, the classification of a Provider as an independent contractor, any employment-related claims; (d) your or your agents’ failure to comply with the Terms of Service; (e) you or your agents’ failure to comply with applicable law; (f) negligence, willful misconduct, or fraud by you or your agents; and (g) you or your agents’ violation of any third-party right, including without limitation any right of privacy, publicity rights or Intellectual Property Rights. For purposes of this Section 12, your agents include any person who has apparent authority to access or use your account demonstrated by using your username and password."
   },
   {
     "t": "p",
@@ -946,11 +946,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "You agree that Panameer is not a party to any Work Order between Users. Consequently, you understand and acknowledge that termination of this Agreement (or attempt to terminate this Agreement) does not terminate or otherwise impact any Work Order or Project entered into between Users. If you attempt to terminate this Agreement while having one or more open Projects, you agree that (a) you thereby instruct Panameer to close any open Work Orders; (b) you will continue to be bound by this Agreement and the other Terms of Service until all such Projects have closed on the Site and your access to the Site has been terminated; (c) Panameer will continue to perform those Services"
+    "text": "You agree that Panameer is not a party to any Order between Users. Consequently, you understand and acknowledge that termination of this Agreement (or attempt to terminate this Agreement) does not terminate or otherwise impact any Order or Project entered into between Users. If you attempt to terminate this Agreement while having one or more open Projects, you agree that (a) you thereby instruct Panameer to close any open Orders; (b) you will continue to be bound by this Agreement and the other Terms of Service until all such Projects have closed on the Site and your access to the Site has been terminated; (c) Panameer will continue to perform those Services"
   },
   {
     "t": "p",
-    "text": "necessary to complete any open transaction between you and another User; and (d) you will continue to be obligated to pay any amounts accrued but unpaid as of the date of termination or as of the closure of any open Work Orders, whichever is later, to Panameer for any Services or such other amounts owed under the Terms of Service and to any Providers for any Provider Services."
+    "text": "necessary to complete any open transaction between you and another User; and (d) you will continue to be obligated to pay any amounts accrued but unpaid as of the date of termination or as of the closure of any open Orders, whichever is later, to Panameer for any Services or such other amounts owed under the Terms of Service and to any Providers for any Provider Services."
   },
   {
     "t": "p",
@@ -958,7 +958,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "You acknowledge and agree that the value, reputation, and goodwill of the Site depend on transparency of Users’ Account status to all Users, including you and other Users who have entered into Work Orders with you. You therefore agree that: if Panameer decides to temporarily or permanently close your account, Panameer has the right (but no obligation) where allowed by law to: (y) notify other users that have entered into Work Orders with you of your closed account status, and (z) provide those users with a summary of the reasons for your account closure. You agree that Panameer will have no liability arising from or relating to any notice that it may or may not provide to any user regarding closed account status or the reason(s) for the closure."
+    "text": "You acknowledge and agree that the value, reputation, and goodwill of the Site depend on transparency of Users’ Account status to all Users, including you and other Users who have entered into Orders with you. You therefore agree that: if Panameer decides to temporarily or permanently close your account, Panameer has the right (but no obligation) where allowed by law to: (y) notify other users that have entered into Orders with you of your closed account status, and (z) provide those users with a summary of the reasons for your account closure. You agree that Panameer will have no liability arising from or relating to any notice that it may or may not provide to any user regarding closed account status or the reason(s) for the closure."
   },
   {
     "t": "h3",
@@ -1330,11 +1330,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "“Service Buyer” means any authorized User of the Site or Site Services, including Direct Work Order Services, to seek or obtain Provider Services, including from another User."
+    "text": "“Service Buyer” means any authorized User of the Site or Site Services, including Direct Order Services, to seek or obtain Provider Services, including from another User."
   },
   {
     "t": "p",
-    "text": "“Service Buyer Initiated Direct Work Order” means a Work Order entered into on Panameer between a Service Buyer on Panameer and an eligible provider. An eligible provider is one who was not already or previously registered on Panameer when the Service Buyer sent the Service Buyer Initiated Direct Work Order to the provider. The eligible provider must register for a Panameer Account and accept the Work Order from the Service Buyer. Dispute assistance and payment protection are not offered for Service Buyer Initiated Direct Work Orders."
+    "text": "“Service Buyer Initiated Direct Order” means an Order entered into on Panameer between a Service Buyer on Panameer and an eligible provider. An eligible provider is one who was not already or previously registered on Panameer when the Service Buyer sent the Service Buyer Initiated Direct Order to the provider. The eligible provider must register for a Panameer Account and accept the Order from the Service Buyer. Dispute assistance and payment protection are not offered for Service Buyer Initiated Direct Orders."
   },
   {
     "t": "p",
@@ -1346,11 +1346,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "“Escrow Instructions” means the Escrow Instructions agreement that is relevant to the Work Order."
+    "text": "“Escrow Instructions” means the Escrow Instructions agreement that is relevant to the Order."
   },
   {
     "t": "p",
-    "text": "“Fixed-Price Work Order” means a Work Order for which Service Buyer is charged a fixed fee agreed between a Service Buyer and a Provider, prior to the commencement of a Work Order, for the completion of all Provider Services contracted by Service Buyer for such Work Order."
+    "text": "“Fixed-Price Order” means an Order for which Service Buyer is charged a fixed fee agreed between a Service Buyer and a Provider, prior to the commencement of an Order, for the completion of all Provider Services contracted by Service Buyer for such Order."
   },
   {
     "t": "p",
@@ -1362,11 +1362,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "“Provider Fees” means: (a) for an Hourly Work Order, the amount reflected in the Hourly Invoice (the number of hours invoiced by Provider, multiplied by the hourly rate charged by Provider); (b) for a Fixed-Price Work Order, the fixed fee agreed between a Service Buyer and a Provider; and (c) any bonuses or other payments made by a Service Buyer to a Provider."
+    "text": "“Provider Fees” means: (a) for an Hourly Order, the amount reflected in the Hourly Invoice (the number of hours invoiced by Provider, multiplied by the hourly rate charged by Provider); (b) for a Fixed-Price Order, the fixed fee agreed between a Service Buyer and a Provider; and (c) any bonuses or other payments made by a Service Buyer to a Provider."
   },
   {
     "t": "p",
-    "text": "“Provider Initiated Direct Work Order” means a Work Order entered into on Panameer between a Provider on Panameer and an eligible Service Buyer of the Provider’s. Eligible Service Buyers are those who were not already or previously registered on Panameer when the initial Work Order was sent. The eligible Service Buyer must register for a Panameer Account and accept the Work Order from the Provider. Users with a Direct Work Order enter into the applicable marketplace Work Order Escrow Instructions, depending on whether the Work Order entered is an hourly or a fixed-price Work Order."
+    "text": "“Provider Initiated Direct Order” means an Order entered into on Panameer between a Provider on Panameer and an eligible Service Buyer of the Provider’s. Eligible Service Buyers are those who were not already or previously registered on Panameer when the initial Order was sent. The eligible Service Buyer must register for a Panameer Account and accept the Order from the Provider. Users with a Direct Order enter into the applicable marketplace Order Escrow Instructions, depending on whether the Order entered is an hourly or a fixed-price Order."
   },
   {
     "t": "p",
@@ -1374,7 +1374,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "“Hourly Work Order” means a Work Order for which Service Buyer is charged based on the hourly rate charged by Provider."
+    "text": "“Hourly Order” means an Order for which Service Buyer is charged based on the hourly rate charged by Provider."
   },
   {
     "t": "p",
@@ -1394,11 +1394,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "“Project” means an engagement for Provider Services that a Provider provides to a Service Buyer under a Work Order on the Site."
+    "text": "“Project” means an engagement for Provider Services that a Provider provides to a Service Buyer under an Order on the Site."
   },
   {
     "t": "p",
-    "text": "“Work Order” means, as applicable, (a) the contractual provisions between a marketplace or Direct Work Order Service Buyer and a Provider governing the Provider Services to be performed by a Provider for Service Buyer for a Project; (b) an Any Hire Work Order as defined in the Panameer Any Hire Terms; or (c) if you use Panameer Payroll, the contractual provisions between Provider and the Staffing Provider for the provision of services to Service Buyer, if any."
+    "text": "“Order” means, as applicable, (a) the contractual provisions between a marketplace or Direct Order Service Buyer and a Provider governing the Provider Services to be performed by a Provider for Service Buyer for a Project; (b) an Any Hire Order as defined in the Panameer Any Hire Terms; or (c) if you use Panameer Payroll, the contractual provisions between Provider and the Staffing Provider for the provision of services to Service Buyer, if any."
   },
   {
     "t": "p",

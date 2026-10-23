@@ -168,7 +168,7 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
           </div>
           <div className="space-y-3 bg-white px-4 py-4 text-[#272334]">
             <p className="text-[13.5px]">
-              A work order from {companyName}. <a className="font-semibold underline" style={{ color: t.link }} data-preview-link>View the Response</a>
+              An order from {companyName}. <a className="font-semibold underline" style={{ color: t.link }} data-preview-link>View the Response</a>
             </p>
             <span className="inline-block px-4 py-2 text-[13px] font-bold" style={{ background: t.brand, color: t.brandText }} data-preview-primary>Primary Action</span>
           </div>
@@ -184,7 +184,7 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
         <dl className="mt-3 grid gap-4 sm:grid-cols-2">
           <div className="border-t border-line pt-3">
             <dt className="text-[14px] font-semibold">Your logo and brand color</dt>
-            <dd className="text-[13.5px] text-ink-2">Show to buyers on your company page, responses, work orders and invoices.</dd>
+            <dd className="text-[13.5px] text-ink-2">Show to buyers on your company page, responses, orders and invoices.</dd>
           </div>
           <div className="border-t border-line pt-3">
             <dt className="text-[14px] font-semibold">Dynamic Branding ({on ? "On" : "Off"})</dt>

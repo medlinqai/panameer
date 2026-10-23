@@ -73,7 +73,7 @@ export function EstimateWizard({ initial, customers, workRequests, services, sou
     router.push(`/estimates/${j.id}`);
   };
 
-  const paid = ["Customer accepts", "You accept the work order", `Services: timesheet ${BILLING_CYCLE_LABEL[d.billingCycle as keyof typeof BILLING_CYCLE_LABEL].toLowerCase()}`, `Paid ${PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL].toLowerCase()}`];
+  const paid = ["Customer accepts", "You accept the order", `Services: timesheet ${BILLING_CYCLE_LABEL[d.billingCycle as keyof typeof BILLING_CYCLE_LABEL].toLowerCase()}`, `Paid ${PAYMENT_TERMS_LABEL[d.paymentTerms as keyof typeof PAYMENT_TERMS_LABEL].toLowerCase()}`];
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]" data-estimate-wizard>
@@ -98,7 +98,7 @@ export function EstimateWizard({ initial, customers, workRequests, services, sou
                 {d.toEmail && <input type="email" value={d.customerEmail} onChange={(e) => set("customerEmail", e.target.value)} placeholder="jane@acme.com" className={INPUT} aria-label="Customer email" />}
                 <p className="mt-1 text-[12px] text-ink-3">Only this customer can see it. It doesn&apos;t appear on your profile.</p>
               </fieldset>
-              <label className={LABEL}>For a service requisition? (optional)
+              <label className={LABEL}>For a request? (optional)
                 <select value={d.workRequestId} onChange={(e) => set("workRequestId", e.target.value)} className={INPUT}>
                   <option value="">No — a direct estimate</option>
                   {workRequests.map((w) => <option key={w.id} value={w.id}>{w.label}</option>)}
@@ -176,7 +176,7 @@ export function EstimateWizard({ initial, customers, workRequests, services, sou
                 <dt className="font-semibold text-ink-3">Valid until</dt><dd>{d.validUntil}</dd>
               </dl>
               <label className={LABEL}>Message to customer<textarea value={d.message} onChange={(e) => set("message", e.target.value)} rows={3} className={AREA} /></label>
-              <p className="text-[12.5px] text-ink-2">The customer can Accept (it becomes a work order you both accept), Ask for Changes, or Decline.</p>
+              <p className="text-[12.5px] text-ink-2">The customer can Accept (it becomes an order you both accept), Ask for Changes, or Decline.</p>
             </>
           )}
         </div>

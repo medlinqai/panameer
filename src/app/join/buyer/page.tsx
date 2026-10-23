@@ -325,7 +325,7 @@ export default function JoinBuyerPage() {
             Everything you need to post work and hire your first experts — free.
           </p>
           <ul className="mt-4 grid gap-2 text-[14.5px]">
-            <li>✓ Unlimited service requisitions</li>
+            <li>✓ Unlimited requests</li>
             <li>✓ Browse &amp; invite providers</li>
             <li>✓ Settle by hour or milestone</li>
           </ul>

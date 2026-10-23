@@ -42,7 +42,7 @@ export function RecurringLine({ r }: { r: { orderId: string; next: string; event
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const act = async (action: string) => {
-    if (action === "CLOSE" && !window.confirm("End this recurring Work Order?")) return;
+    if (action === "CLOSE" && !window.confirm("End this recurring Order?")) return;
     setBusy(true);
     await fetch(`/api/orders/${r.orderId}/control`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }).catch(() => null);
     setBusy(false);

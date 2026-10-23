@@ -65,11 +65,11 @@ export async function workRequestSections(viewer: Viewer, jobId: string) {
     ...interviews.map((i) => ({ at: i.created_at, text: `Interview requested with ${who(i.provider_person_id)}` })),
     ...interviews.filter((i) => i.completed_at).map((i) => ({ at: i.completed_at!, text: `Interview with ${who(i.provider_person_id)} completed` })),
     ...tests.map((t) => ({ at: t.created_at, text: `Test request sent to ${who(t.provider_person_id)}` })),
-    ...wrs.filter((w) => w.submitted_at).map((w) => ({ at: w.submitted_at!, text: `Service Requisition ${w.wr_number ?? ""} submitted (Award)` })),
-    ...wrs.filter((w) => w.approved_at).map((w) => ({ at: w.approved_at!, text: `Service Requisition ${w.wr_number ?? ""} approved` })),
-    ...orders.map((o) => ({ at: o.created_at, text: `Work Order ${o.order_number} created` })),
-    ...orders.filter((o) => o.buyer_accepted_at).map((o) => ({ at: o.buyer_accepted_at!, text: `Work Order ${o.order_number} accepted by you` })),
-    ...orders.filter((o) => o.provider_accepted_at).map((o) => ({ at: o.provider_accepted_at!, text: `Work Order ${o.order_number} accepted by the provider` })),
+    ...wrs.filter((w) => w.submitted_at).map((w) => ({ at: w.submitted_at!, text: `Request ${w.wr_number ?? ""} submitted (Award)` })),
+    ...wrs.filter((w) => w.approved_at).map((w) => ({ at: w.approved_at!, text: `Request ${w.wr_number ?? ""} approved` })),
+    ...orders.map((o) => ({ at: o.created_at, text: `Order ${o.order_number} created` })),
+    ...orders.filter((o) => o.buyer_accepted_at).map((o) => ({ at: o.buyer_accepted_at!, text: `Order ${o.order_number} accepted by you` })),
+    ...orders.filter((o) => o.provider_accepted_at).map((o) => ({ at: o.provider_accepted_at!, text: `Order ${o.order_number} accepted by the provider` })),
     ...event.filter((e) => e.others_notified_at).map((e) => ({ at: e.others_notified_at!, text: "Other candidates told (not awarded)" })),
   ].sort((a, b) => b.at.getTime() - a.at.getTime());
 

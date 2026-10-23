@@ -280,7 +280,7 @@ export async function canNotifyOthers(eventId: string) {
 /** Send: one bell + email to every non-awarded proposer; the event closes. */
 export async function notifyOthers(viewer: Viewer, eventId: string, message: string) {
   const ev = await ownEvent(viewer, eventId);
-  if (!(await canNotifyOthers(ev.id))) throw new WorkRequestError("The other candidates can be told once the Work Order is Released.", "INVALID");
+  if (!(await canNotifyOthers(ev.id))) throw new WorkRequestError("The other candidates can be told once the Order is Released.", "INVALID");
   const job = await prisma.job.findUniqueOrThrow({ where: { id: ev.job_id }, select: { title: true } });
   const text = message.trim().slice(0, 2000) || notAwardedMessage(job.title);
   const others = await prisma.proposal.findMany({ where: notAwarded(ev.id), select: { id: true, provider_person_id: true } });

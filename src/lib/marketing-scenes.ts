@@ -181,14 +181,14 @@ export const FULFILLMENT_FLOW: FlowSpec = {
     { y: 472, h: 46, lines: ["Purchase Order", "Acknowledge"] },
   ],
   steps: [
-    { y: 95, actor: "Buyer", label: "Creates Service Requisition" },
+    { y: 95, actor: "Buyer", label: "Creates Request" },
     { y: 140, actor: "Buyer", label: "Invites Providers to Bid", follows: true },
     { y: 185, actor: "Provider", label: "Confirms Availability" },
     { y: 230, actor: "Buyer", label: "Accepts Rate", follows: true },
-    { y: 310, actor: "Panameer", label: "Creates Work Order" },
+    { y: 310, actor: "Panameer", label: "Creates Order" },
     { y: 355, actor: "Panameer", label: "Invites Provider to Accept WO", follows: true },
-    { y: 435, actor: "Provider", label: "Accepts Work Order" },
-    { y: 480, actor: "Panameer", label: "Releases Work Order", follows: true },
+    { y: 435, actor: "Provider", label: "Accepts Order" },
+    { y: 480, actor: "Panameer", label: "Releases Order", follows: true },
   ],
   spine: "M332 164 V210 M332 254 V303",
   connectors: [
@@ -220,7 +220,7 @@ export const SETTLEMENT_FLOW: FlowSpec = {
     { y: 372, h: 46, lines: ["Payment"] },
   ],
   steps: [
-    { y: 95, actor: "Buyer", label: "Manages Work Order" },
+    { y: 95, actor: "Buyer", label: "Manages Order" },
     { y: 140, actor: "Panameer", label: "Manages Timeline via Tracker" },
     { y: 185, actor: "Provider", label: "Creates Settlement Trans." },
     { y: 230, actor: "Buyer", label: "Approves Settlement Trans.", follows: true },

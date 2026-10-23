@@ -94,7 +94,7 @@ export function RecordPayment({ open }: { open: OpenRequest[] }) {
         <table className="w-full min-w-[640px] text-[14px]">
           <thead>
             <tr className="border-b border-ink text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-2">
-              <th className="py-2">Request</th><th className="py-2">Work order</th><th className="py-2">Provider</th>
+              <th className="py-2">Request</th><th className="py-2">Order</th><th className="py-2">Provider</th>
               <th className="py-2 text-right">Owed</th><th className="py-2 text-right">Apply ($)</th>
             </tr>
           </thead>

@@ -34,7 +34,7 @@ export async function WorkOrderStrip({ orderId }: { orderId: string }) {
   const pct = (c: number) => `${Math.min(100, Math.round((c / base) * 100))}%`;
   return (
     <section data-work-order-strip className="mt-5 rounded-brand border border-line bg-white p-4 sm:p-5">
-      <h2 className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Work Order Progress · {o.order_number}</h2>
+      <h2 className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Order Progress · {o.order_number}</h2>
       <div className="-mx-1 overflow-x-auto pb-1">
         <ol className="mt-3 flex min-w-max gap-x-1 px-1">
           {steps.map((s) => {

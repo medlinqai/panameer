@@ -142,14 +142,14 @@ export async function proposeEligibility(
     existing,
   });
 
-  if (!request) return no("NOT_FOUND", "That service requisition isn't available.");
+  if (!request) return no("NOT_FOUND", "That request isn't available.");
 
   // A Sourcing Event invites providers to a job that is not posted publicly (still DRAFT): invited providers may propose.
   const askedInEvent =
     request.status === "DRAFT" &&
     (await prisma.proposalRequest.count({ where: { job_id: request.id, provider_person_id: providerPersonId, sourcing_event_id: { not: null } } })) > 0;
   if (request.status !== "OPEN" && !askedInEvent) {
-    return no("REQUEST_NOT_OPEN", "This service requisition isn't open for responses.");
+    return no("REQUEST_NOT_OPEN", "This request isn't open for responses.");
   }
 
   let inviteId: string | null = null;
@@ -161,7 +161,7 @@ export async function proposeEligibility(
     if (!itb) {
       return no(
         "NOT_INVITED",
-        "This service requisition is invite only, and you haven't been invited."
+        "This request is invite only, and you haven't been invited."
       );
     }
     if (!inviteIsOpen(itb, now)) {

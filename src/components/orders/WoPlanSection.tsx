@@ -40,7 +40,7 @@ export async function WoPlanSection({ orderId, viewer, hoursAuthorized, currency
       )}
       {hoursAuthorized != null && planHours > hoursAuthorized && (
         <p data-testid="wo-plan-hours-warn" className="mt-5 border-l-2 border-magenta py-1 pl-3 text-[13.5px]">
-          The plan adds up to {planHours} hours; this work order authorizes {hoursAuthorized}. The work order&apos;s hours stay the limit.
+          The plan adds up to {planHours} hours; this order authorizes {hoursAuthorized}. The order&apos;s hours stay the limit.
         </p>
       )}
       <PlanView plan={publicPlan(stored!.plan, rows, today)} today={today.toISOString().slice(0, 10)} forOrder />

@@ -15,12 +15,12 @@ export class WoPlanError extends Error {
 /** The viewer must be the order's buyer or provider; both may edit the plan (brief proposal 3). */
 export async function woPlanParty(viewer: Viewer, orderId: string) {
   const person = await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true } });
-  if (!person) throw new WoPlanError("Work order not found", "NOT_FOUND");
+  if (!person) throw new WoPlanError("Order not found", "NOT_FOUND");
   const order = await prisma.workOrder.findFirst({
     where: { id: orderId, OR: [{ buyer_person_id: person.id }, { provider_person_id: person.id }] },
     include: { lines: { orderBy: { line_number: "asc" } } },
   });
-  if (!order) throw new WoPlanError("Work order not found", "NOT_FOUND");
+  if (!order) throw new WoPlanError("Order not found", "NOT_FOUND");
   return { order, personId: person.id, party: order.buyer_person_id === person.id ? ("BUYER" as const) : ("PROVIDER" as const) };
 }
 

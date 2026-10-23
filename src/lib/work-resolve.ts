@@ -5,8 +5,8 @@ import { resolveNotifications } from "@/lib/notifications";
 // New work events add a row here (and a branch in `isDone`); `settleWork` checks open items against the data, so a missed
 // call site or a passed deadline still clears on the next Worklist load and in the backfill script.
 export const WORK_RESOLVERS: Record<string, string> = {
-  "work.order_created": "the buyer accepts / declines / asks for changes, or the Work Order leaves Issued",
-  "work.order_offered": "the provider accepts / declines / asks for changes, or the Work Order leaves Issued",
+  "work.order_created": "the buyer accepts / declines / asks for changes, or the Order leaves Issued",
+  "work.order_offered": "the provider accepts / declines / asks for changes, or the Order leaves Issued",
   "work.invited_to_propose": "the provider responds or declines, the deadline passes, or the job closes",
   "work.sourcing_event_invited": "the provider responds or declines, the deadline passes, or the Sourcing Event closes",
   "work.proposal_received": "the buyer shortlists / declines / awards, or the Sourcing Event is awarded or closed",

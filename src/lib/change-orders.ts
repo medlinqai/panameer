@@ -34,10 +34,10 @@ async function personId(viewer: Viewer) {
 
 /** Why a change order can't be raised right now, or null. */
 export function changeBlocked(o: { status: string; frozen_at: Date | null }, pending: boolean): string | null {
-  if (o.status === "ON_HOLD") return "This work order is on hold.";
-  if (o.status === "CLOSED" || o.status === "FINALLY_CLOSED") return "This work order is closed.";
-  if (!(OPEN as readonly string[]).includes(o.status)) return "Change orders are for open work orders.";
-  if (o.frozen_at) return "This work order is frozen. Unfreeze it to change its terms.";
+  if (o.status === "ON_HOLD") return "This order is on hold.";
+  if (o.status === "CLOSED" || o.status === "FINALLY_CLOSED") return "This order is closed.";
+  if (!(OPEN as readonly string[]).includes(o.status)) return "Change orders are for open orders.";
+  if (o.frozen_at) return "This order is frozen. Unfreeze it to change its terms.";
   if (pending) return "A change order is already waiting on the provider.";
   return null;
 }
@@ -45,7 +45,7 @@ export function changeBlocked(o: { status: string; frozen_at: Date | null }, pen
 /** Builds the before/after diff against the order as it stands. Throws when nothing changed or a change is impossible. */
 async function diffFor(orderId: string, input: ChangeInput): Promise<{ changes: Changes; order: { id: string; order_number: string; status: string; frozen_at: Date | null; buyer_person_id: string; provider_person_id: string; revision_number: number; erp_connection_id: string | null } }> {
   const o = await prisma.workOrder.findUnique({ where: { id: orderId }, include: { lines: { orderBy: { line_number: "asc" } } } });
-  if (!o) throw new OrderError("Work order not found", "NOT_FOUND");
+  if (!o) throw new OrderError("Order not found", "NOT_FOUND");
   const changes: Changes = { header: {}, lines: [] };
   const h = input.header ?? {};
   const cur: Record<HeaderField, Val> = { not_to_exceed_cents: o.not_to_exceed_cents, period_start: day(o.period_start), period_end: day(o.period_end), sow_text: o.sow_text };
@@ -55,7 +55,7 @@ async function diffFor(orderId: string, input: ChangeInput): Promise<{ changes: 
   }
   for (const li of input.lines ?? []) {
     const l = o.lines.find((x) => x.id === li.lineId);
-    if (!l) throw new OrderError("That line is not on this work order", "NOT_FOUND");
+    if (!l) throw new OrderError("That line is not on this order", "NOT_FOUND");
     const byQty = pricedByQuantity(l.transaction_type);
     const now: Record<LineField, Val> = { quantity: num(l.quantity), unit_price_cents: l.unit_price_cents, amount_cents: l.amount_cents, service_start: day(l.service_start), service_end: day(l.service_end) };
     const fields: Partial<Record<LineField, Diff>> = {};

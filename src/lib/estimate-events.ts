@@ -120,7 +120,7 @@ export async function buyerEstimateEvents(personId: string) {
     const list = await eventEstimates(ev.id);
     const totals = list.map((x) => x.rev?.total_cents).filter((c): c is number => c != null).sort((a, b) => a - b);
     const inN = totals.length;
-    const step = ev.work_order_id ? "Work Order Created" : ev.status === "AWARDED" ? "Award" : inN ? "Estimates In" : "Ask Providers";
+    const step = ev.work_order_id ? "Order Created" : ev.status === "AWARDED" ? "Award" : inN ? "Estimates In" : "Ask Providers";
     const reviewable = list.some((x) => x.rev && x.estimate?.status === "SENT");
     out.push({
       id: ev.id, number: ev.event_number, what: ev.job.title, asked: list.length, in: inN,
@@ -147,7 +147,7 @@ export async function estimateEventForBuyer(viewer: Viewer, eventId: string) {
     { key: "in", label: "Estimates In", done: inN > 0, date: null, note: `${inN} of ${list.length} in` },
     { key: "award", label: "Award", done: !!awarded, date: null },
     { key: "approval", label: "Approval", done: !!wo?.workRequest.approved_at, date: wo?.workRequest.approved_at ?? null, note: wo?.workRequest.approved_at ? "Auto-approved" : null },
-    { key: "wo", label: "Work Order Created", done: !!wo, date: wo?.created_at ?? null, href: wo ? `/orders/${wo.id}` : undefined },
+    { key: "wo", label: "Order Created", done: !!wo, date: wo?.created_at ?? null, href: wo ? `/orders/${wo.id}` : undefined },
   ];
   return {
     id: ev.id, number: ev.event_number, status: ev.status, deadlineAt: ev.deadline_at.toISOString(), hours: ev.deadline_hours, job: ev.job, wo, path,

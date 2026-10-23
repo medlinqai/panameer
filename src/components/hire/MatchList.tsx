@@ -81,7 +81,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
       <div className="mt-2 grid gap-3 sm:grid-cols-2" data-two-doors>
         <div className="rounded-[12px] border border-state-border p-4" data-door="direct">
           <h3 className="text-[15px] font-extrabold">Hire Directly</h3>
-          <p className="mt-1 text-[13px] text-state-inactive">You know who you want. Press <b className="text-ink">Hire</b> on their row — terms, then the Work Order.</p>
+          <p className="mt-1 text-[13px] text-state-inactive">You know who you want. Press <b className="text-ink">Hire</b> on their row — terms, then the Order.</p>
           <p className="mt-2 text-[12px] text-state-inactive">Fastest · one provider</p>
         </div>
         <div className="rounded-[12px] border border-magenta p-4" data-door="compare">

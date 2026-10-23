@@ -44,9 +44,9 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
   /** Run one call per ticked row, then one message. */
   const bulk = async (one: (personId: string) => Promise<void>, ok: string) => { for (const id of picked) await one(id); setMsg(ok); setPicked(new Set()); };
   const booked = ev.proposals.filter((p) => p.interview?.status === "SCHEDULED").length;
-  const nextLine = awarded ? "A provider is hired — see the Work Order tab. The others are told when the Work Order is released."
+  const nextLine = awarded ? "A provider is hired — see the Order tab. The others are told when the Order is released."
     : !ev.counts.proposed ? `Waiting for answers — ${ev.counts.requested} asked. Extend the deadline if you need more time.`
-    : booked ? `${ev.counts.proposed} of ${ev.counts.requested} answered and ${booked} interview${booked === 1 ? " is" : "s are"} booked. After the interviews, Hire one — the others are told when the Work Order is released.`
+    : booked ? `${ev.counts.proposed} of ${ev.counts.requested} answered and ${booked} interview${booked === 1 ? " is" : "s are"} booked. After the interviews, Hire one — the others are told when the Order is released.`
     : `${ev.counts.proposed} of ${ev.counts.requested} answered. Tick the ones you like and Interview them, or Hire one now.`;
   const toggle = (id: string) => setPicked((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const withProposal = ev.proposals.filter((p) => p.proposal && p.proposal.status !== "DECLINED");
@@ -72,7 +72,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
       {ev.notifyOthers && (
         <section className="mt-5 rounded-brand border border-magenta-dark bg-[#fbeafb]/40 p-5" data-notify-others>
           <h2 className="text-[16px] font-extrabold">Let the Other Candidates Know</h2>
-          <p className="mt-1 text-[13.5px] text-ink-2">The Work Order is Released. This goes to the {ev.notifyOthers.count} provider{ev.notifyOthers.count === 1 ? "" : "s"} you didn&apos;t award (bell + email).</p>
+          <p className="mt-1 text-[13.5px] text-ink-2">The Order is Released. This goes to the {ev.notifyOthers.count} provider{ev.notifyOthers.count === 1 ? "" : "s"} you didn&apos;t award (bell + email).</p>
           <textarea value={notice} onChange={(e) => setNotice(e.target.value)} rows={4} maxLength={2000} aria-label="Message to the other candidates" className="mt-2 block w-full rounded-[8px] border border-line bg-white px-3 py-2.5 text-[14px]" />
           <button type="button" className={`${BTN} mt-3`} disabled={busy || !notice.trim()} onClick={() => act("/api/sourcing", { action: "notifyOthers", eventId: ev.id, note: notice }, "Sent — the round is closed.")} data-send-not-awarded>Send</button>
         </section>
@@ -142,7 +142,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
           {!ev.proposals.length && <li className="py-4 text-[13.5px] text-ink-3">No requests in this event.</li>}
         </ul>
         {msg && <p role="status" className="mt-3 text-[13.5px] font-semibold text-magenta-dark">{msg}</p>}
-        {ev.workOrderId && <p className="mt-3 text-[13.5px]">Work Order: <Link href={`/orders/${ev.workOrderId}`} className="font-semibold text-magenta-dark underline underline-offset-4">open it</Link></p>}
+        {ev.workOrderId && <p className="mt-3 text-[13.5px]">Order: <Link href={`/orders/${ev.workOrderId}`} className="font-semibold text-magenta-dark underline underline-offset-4">open it</Link></p>}
       </section>
       {interviewing && <InterviewDialog jobId={ev.jobId} providerPersonIds={interviewing} onClose={() => setInterviewing(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
       {comparing && <CompareTable rows={withProposal.filter((p) => picked.has(p.personId)).map((p) => ({ m: p.match, proposed: p.proposal?.rateCents != null ? `${usd(p.proposal.rateCents)}${per}` : null, start: p.proposal?.start ?? null }))} onClose={() => setComparing(false)} />}

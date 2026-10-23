@@ -11,7 +11,7 @@ export async function WorkRequestPath({ jobId }: { jobId: string }) {
     const isCurrent = s.key === current;
     const skipped = s.optional && !s.done && awarded;
     return {
-      key: s.key, label: s.key === "wo" ? "Work Order" : s.label, href: s.href, current: isCurrent, muted: !s.done && !isCurrent,
+      key: s.key, label: s.key === "wo" ? "Order" : s.label, href: s.href, current: isCurrent, muted: !s.done && !isCurrent,
       bar: s.done || isCurrent ? "done" : s.optional ? "dashed" : "todo",
       top: isCurrent
         ? <span className="text-[12px] font-extrabold text-magenta">{s.note ?? "Now"}</span>

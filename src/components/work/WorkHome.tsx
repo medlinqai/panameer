@@ -48,7 +48,7 @@ export function WorkHome({ home, best }: { home: Home; best: WorkCard[] }) {
           { value: matches.length, label: "Best Matches" },
           { value: home.invitations, label: "Availability Requests" },
           { value: home.proposalsOut, label: "Responses Out" },
-          { value: home.openOrders, label: "Open Work Orders" },
+          { value: home.openOrders, label: "Open Orders" },
         ]}
         paragraph={<p>{waiting}</p>}
         actions={
@@ -60,7 +60,7 @@ export function WorkHome({ home, best }: { home: Home; best: WorkCard[] }) {
       />
       <h2 className="mb-2 mt-7 text-[20px] font-bold">Best Matches for Your Skills</h2>
       {matches.length === 0 ? (
-        <p className="border-t border-line py-4 text-[14px] text-ink-2">No posted service requisition matches your skills yet. Add skills to your profile, or see all service requisitions.</p>
+        <p className="border-t border-line py-4 text-[14px] text-ink-2">No posted request matches your skills yet. Add skills to your profile, or see all requests.</p>
       ) : (
         <ul data-best-matches>
           {matches.slice(0, 5).map((c) => (
@@ -79,7 +79,7 @@ export function WorkHome({ home, best }: { home: Home; best: WorkCard[] }) {
           ))}
         </ul>
       )}
-      <Link href="/find-work?tab=recent" className="mt-3 inline-block border-t border-line pt-3 text-[14px] font-bold text-magenta-dark">See All Service Requisitions →</Link>
+      <Link href="/find-work?tab=recent" className="mt-3 inline-block border-t border-line pt-3 text-[14px] font-bold text-magenta-dark">See All Requests →</Link>
     </div>
   );
 }

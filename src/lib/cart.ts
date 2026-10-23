@@ -55,7 +55,7 @@ export async function shopRequest(personId: string): Promise<{ id: string }> {
   const open = await prisma.workRequest.findFirst({ where: shopLines(personId).workRequest, orderBy: { created_at: "desc" }, select: { id: true } });
   if (open) return open;
   const p = await prisma.person.findUnique({ where: { id: personId }, select: { company: { select: { p_account_id: true } } } });
-  if (!p?.company?.p_account_id) throw new CartError("Add your company before you add to a service requisition", "NO_COMPANY");
+  if (!p?.company?.p_account_id) throw new CartError("Add your company before you add to a request", "NO_COMPANY");
   const id = crypto.randomUUID();
   return prisma.workRequest.create({ data: { id, wr_number: await nextNumber(PREFIX.WORK_REQUEST, { pAccountId: p.company.p_account_id }), buyer_person_id: personId, p_account_id: p.company.p_account_id, source: "SHOP", status: "INCOMPLETE", proposal_access: "INVITE_ONLY", sole_sourced: true }, select: { id: true } });
 }
@@ -99,7 +99,7 @@ export async function setQuantity(viewer: Viewer, lineId: string, quantity: numb
   if (!Number.isFinite(quantity) || quantity < 1 || quantity > MAX_QTY) throw new CartError(`Quantity is 1 to ${MAX_QTY}`);
   // MO-E003: an agreed-price (offer) line is for one.
   const line = await prisma.workRequestLine.findFirst({ where: { id: lineId, ...shopLines(p.id), offer_id: null }, select: { id: true, transaction_type: true, unit_price_cents: true } });
-  if (!line) throw new CartError("That line isn't on your service requisition", "NOT_FOUND");
+  if (!line) throw new CartError("That line isn't on your request", "NOT_FOUND");
   const q = Math.floor(quantity);
   await prisma.workRequestLine.update({ where: { id: line.id }, data: { quantity: q, ...(line.transaction_type === "SERVICE_BY_AMT" ? { amount_cents: (line.unit_price_cents ?? 0) * q } : {}) } });
 }
@@ -178,7 +178,7 @@ export async function cartFor(viewer: Viewer): Promise<{ groups: CartGroup[]; to
 export async function setDescription(viewer: Viewer, description: string) {
   const p = await me(viewer);
   const wr = await prisma.workRequest.findFirst({ where: shopLines(p.id).workRequest, select: { id: true } });
-  if (!wr) throw new CartError("Your service requisition is empty", "NOT_FOUND");
+  if (!wr) throw new CartError("Your request is empty", "NOT_FOUND");
   await prisma.workRequest.update({ where: { id: wr.id }, data: { description: description.trim().slice(0, 500) || null } });
 }
 
@@ -192,7 +192,7 @@ export async function placeOrder(viewer: Viewer, input: { description?: string |
   if (waiting) throw new CartError(waitingLine(waiting));
   const pAccountId = p.company.p_account_id;
   const lines = await loadLines(p.id);
-  if (!lines.length) throw new CartError("Your service requisition is empty");
+  if (!lines.length) throw new CartError("Your request is empty");
   const wrId = lines[0].work_request_id;
   const head = await prisma.workRequest.findUniqueOrThrow({ where: { id: wrId }, select: { description: true } });
   const description = input.description !== undefined ? input.description?.trim() || null : head.description;

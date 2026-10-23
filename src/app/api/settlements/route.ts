@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   if (gate instanceof NextResponse) return gate;
   const body = await request.json().catch(() => null);
   if (!body?.orderId)
-    return NextResponse.json({ error: "Which work order?" }, { status: 400 });
+    return NextResponse.json({ error: "Which order?" }, { status: 400 });
   try {
     return NextResponse.json(
       await createSettlement(gate, body.orderId, {

@@ -14,7 +14,7 @@ export default async function Page() {
       <div className="mt-4 overflow-x-auto rounded-brand border border-line bg-white">
         <table className="w-full min-w-[720px] text-[13.5px]" data-integration-events>
           <thead className="bg-bg-soft text-left text-[12px] uppercase tracking-[0.06em] text-ink-3">
-            <tr><th className="p-2.5">Created</th><th className="p-2.5">Type</th><th className="p-2.5">Status</th><th className="p-2.5">Work Order</th><th className="p-2.5">Payload</th></tr>
+            <tr><th className="p-2.5">Created</th><th className="p-2.5">Type</th><th className="p-2.5">Status</th><th className="p-2.5">Order</th><th className="p-2.5">Payload</th></tr>
           </thead>
           <tbody>
             {events.map((e) => {
@@ -32,7 +32,7 @@ export default async function Page() {
                 </tr>
               );
             })}
-            {!events.length && <tr><td colSpan={5} className="p-4 text-ink-3">No events yet — one is written each time a Work Order is Released.</td></tr>}
+            {!events.length && <tr><td colSpan={5} className="p-4 text-ink-3">No events yet — one is written each time an Order is Released.</td></tr>}
           </tbody>
         </table>
       </div>

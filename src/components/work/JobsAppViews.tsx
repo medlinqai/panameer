@@ -28,7 +28,7 @@ export async function JobsOverview({ personId, view }: { personId: string; view:
         kpis={[
           { value: stat("due"), label: "REQUESTS DUE < 24 H" },
           { value: w.todays.length, label: "INTERVIEWS TODAY" },
-          { value: stat("accept"), label: "WORK ORDERS TO ACCEPT" },
+          { value: stat("accept"), label: "ORDERS TO ACCEPT" },
         ]}
         actions={<><Link href="/find-work?tab=best" className={HERO_BTN}>Find Jobs</Link><Link href="/find-work?tab=proposals" className={HERO_BTN_W}>My Responses</Link></>}
       />

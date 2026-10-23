@@ -11,8 +11,8 @@ export function SignGateModal({ gate, onClose }: { gate: SignGate | null; onClos
     <Modal open={!!gate} onClose={onClose} title="Before you sign">
       {gate && (
         <div data-sign-gate>
-          <p className="text-[16px] font-bold">Finish your company details to sign this work order</p>
-          <p className="mt-1 text-[13.5px] text-ink-2">A work order is a contract between two companies: the buyer&apos;s billing details are on file and the provider&apos;s company is linked. No tax forms here — payout details come later, before the provider is paid.</p>
+          <p className="text-[16px] font-bold">Finish your company details to sign this order</p>
+          <p className="mt-1 text-[13.5px] text-ink-2">An order is a contract between two companies: the buyer&apos;s billing details are on file and the provider&apos;s company is linked. No tax forms here — payout details come later, before the provider is paid.</p>
           <ul className="mt-3 border-t border-line">
             {gate.items.map((i) => (
               <li key={`${i.company}-${i.item}`} className="flex items-center justify-between gap-3 border-b border-line/60 py-2 text-[14px]">
@@ -23,7 +23,7 @@ export function SignGateModal({ gate, onClose }: { gate: SignGate | null; onClos
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-[13px] text-ink-2">Your response and this work order are saved. Come back and sign once it&apos;s done.</p>
+          <p className="mt-3 text-[13px] text-ink-2">Your response and this order are saved. Come back and sign once it&apos;s done.</p>
           <div className="mt-4 flex flex-wrap justify-end gap-2">
             <button type="button" onClick={onClose} className="min-h-[42px] border border-ink px-4 text-[13px] font-bold">
               Later

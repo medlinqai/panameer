@@ -7,7 +7,7 @@ import { formatCents } from "@/lib/display";
 import { listOrders, type OrderRow } from "@/lib/orders";
 import { OriginBadge, StatusPill } from "@/components/orders/OrderChrome";
 
-export const metadata = { title: "Work Orders · Panameer" };
+export const metadata = { title: "Orders · Panameer" };
 
 function periodOf(o: OrderRow): string {
   if (o.periodStart && o.periodEnd) return `${o.periodStart} → ${o.periodEnd}`;
@@ -31,16 +31,16 @@ export default async function Page() {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">Work Orders</h1>
+      <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">Orders</h1>
       {/* SH-E001: Estimates and the open cart left the Shop tabs; they're reached from Orders. */}
       <p className="mt-1 flex flex-wrap gap-4 text-[13.5px] font-semibold" data-orders-shop-links>
-        <Link href="/cart" className="text-magenta-dark underline underline-offset-4">Service Requisition (Incomplete)</Link>
+        <Link href="/cart" className="text-magenta-dark underline underline-offset-4">Request (Incomplete)</Link>
         <Link href="/estimates" className="text-magenta-dark underline underline-offset-4">My Estimates</Link>
         <Link href="/agreements" className="text-magenta-dark underline underline-offset-4">Agreements</Link>
       </p>
       <p className="mt-1.5 text-[15px] text-ink-2">
         {orders.length === 0
-          ? "No work orders yet."
+          ? "No orders yet."
           : /* THE SPLIT IS NAMED ONLY WHEN THERE IS ONE. A person who is only a */
             [
               `${orders.length} order${orders.length === 1 ? "" : "s"}`,
@@ -52,7 +52,7 @@ export default async function Page() {
 
       {buys && (
         <p className="mt-2 text-[14px]">
-          <Link href="/orders/work-requests" className="font-semibold underline underline-offset-4 hover:text-magenta">My Service Requisitions</Link>
+          <Link href="/orders/work-requests" className="font-semibold underline underline-offset-4 hover:text-magenta">My Requests</Link>
         </p>
       )}
 
@@ -87,7 +87,7 @@ export default async function Page() {
           {/* IT PROMISED TWO ROUTES THAT DO NOT EXIST ( correction) */}
           {/* THE SECOND SENTENCE WAS FALSE AS OF . It said *"Nothing */}
           <p className="mx-auto mt-2 max-w-lg text-[14.5px] leading-relaxed text-ink-2">
-            A work order is the SOW &mdash; what is to be done, for how long, and
+            An order is the SOW &mdash; what is to be done, for how long, and
             for how much. One arrives here when a buyer hires you, or when a
             purchase order is brought in from their own system.
           </p>

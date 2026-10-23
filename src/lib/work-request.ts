@@ -123,7 +123,7 @@ export async function loadOwned(viewer: Viewer, id: string, pAccountId: string) 
       specializations: true,
     },
   });
-  if (!wr) throw new WorkRequestError("Service requisition not found", "NOT_FOUND");
+  if (!wr) throw new WorkRequestError("Request not found", "NOT_FOUND");
   return wr;
 }
 

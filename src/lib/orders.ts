@@ -83,11 +83,11 @@ export function activationMessage(status: WorkOrderStatus, party: OrderParty, o:
     case "ISSUED":
       if (!o.buyer_accepted_at)
         return party === "BUYER"
-          ? "Review the terms and accept the Work Order — then the provider is asked to accept it. Something wrong? Request changes."
-          : "The buyer is reviewing this Work Order. You'll be asked to accept it once they have.";
+          ? "Review the terms and accept the Order — then the provider is asked to accept it. Something wrong? Request changes."
+          : "The buyer is reviewing this Order. You'll be asked to accept it once they have.";
       return party === "PROVIDER"
         ? "The buyer has accepted. Review the terms and accept — or decline with a reason."
-        : "You've accepted. Waiting for the provider to accept the Work Order.";
+        : "You've accepted. Waiting for the provider to accept the Order.";
     case "ACCEPTED":
       return party === "BUYER"
         ? "The provider has accepted. Review the terms and accept to open the order for settlement."
@@ -483,7 +483,7 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
       OR: [{ buyer_person_id: personId }, { provider_person_id: personId }],
     },
   });
-  if (!o) throw new OrderError("Work order not found", "NOT_FOUND");
+  if (!o) throw new OrderError("Order not found", "NOT_FOUND");
 
   const party = partyFor(o, personId);
   const lines = await prisma.workOrderLine.findMany({
@@ -675,7 +675,7 @@ async function loadParty(viewer: Viewer, id: string) {
       erp_connection_id: true,
     },
   });
-  if (!order) throw new OrderError("Work order not found", "NOT_FOUND");
+  if (!order) throw new OrderError("Order not found", "NOT_FOUND");
   return { order, party: partyFor(order, personId) };
 }
 
@@ -806,11 +806,11 @@ export async function controlOrder(viewer: Viewer, id: string, action: OrderCont
     where: { id, OR: [{ buyer_person_id: personId }, { provider_person_id: personId }] },
     select: { id: true, order_number: true, status: true, frozen_at: true, held_from_status: true, buyer_person_id: true, provider_person_id: true, erp_connection_id: true },
   });
-  if (!o) throw new OrderError("Work order not found", "NOT_FOUND");
+  if (!o) throw new OrderError("Order not found", "NOT_FOUND");
   const party = partyFor(o, personId);
-  if (party !== "BUYER") throw new OrderError("Only the customer can change this work order's status", "FORBIDDEN");
+  if (party !== "BUYER") throw new OrderError("Only the customer can change this order's status", "FORBIDDEN");
   if (o.erp_connection_id) throw new OrderError("This order comes from your ERP. Change its status there.", "INVALID");
-  if (!availableControls(o, party).includes(action)) throw new OrderError(`This work order can't be ${CONTROL_TEXT[action].done.toLowerCase()} from ${o.status.toLowerCase().replace("_", " ")}`, "INVALID");
+  if (!availableControls(o, party).includes(action)) throw new OrderError(`This order can't be ${CONTROL_TEXT[action].done.toLowerCase()} from ${o.status.toLowerCase().replace("_", " ")}`, "INVALID");
 
   let data: Prisma.WorkOrderUpdateManyMutationInput;
   switch (action) {
@@ -828,7 +828,7 @@ export async function controlOrder(viewer: Viewer, id: string, action: OrderCont
     }
   }
   const moved = await prisma.workOrder.updateMany({ where: { id, status: o.status }, data });
-  if (moved.count === 0) throw new OrderError("This work order changed while you were looking at it. Refresh and try again.", "INVALID");
+  if (moved.count === 0) throw new OrderError("This order changed while you were looking at it. Refresh and try again.", "INVALID");
   if (action === "FINALLY_CLOSE")
     await prisma.workOrderLine.updateMany({ where: { work_order_id: id, status: { notIn: ["CANCELLED"] } }, data: { status: "FINALLY_CLOSED" } });
   await prisma.workOrderEvent.create({ data: { work_order_id: id, person_id: personId, kind: `control.${action.toLowerCase()}`, text: CONTROL_TEXT[action].done } });

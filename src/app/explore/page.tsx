@@ -61,7 +61,7 @@ export default async function ExplorePage({
   })}`;
   const loginHref = `/login?callbackUrl=${encodeURIComponent(backHere)}`;
 
-  const noun = "Service Requisition";
+  const noun = "Request";
   const remaining = Math.max(0, total - cards.length);
 
   return (
@@ -130,7 +130,7 @@ export default async function ExplorePage({
             // THE HONEST ZERO. Work mode reaches this for every query today —
             <div className="mt-6 max-w-[680px]">
               <p className="text-[17px] leading-relaxed text-ink-2">
-                No Service Requisitions are open yet — Panameer is pre-launch, and
+                No Requests are open yet — Panameer is pre-launch, and
                 requesters are still arriving. Build your profile now and
                 you&apos;ll be in the pool the day the first one posts.
               </p>

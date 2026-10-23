@@ -4,15 +4,15 @@ import { formatCents } from "@/lib/display";
 import { WORK_ORDER_LABEL } from "@/lib/oracle-status";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Work Orders · Admin · Panameer" };
+export const metadata = { title: "Orders · Admin · Panameer" };
 
 export default async function Page() {
   const rows = await adminWorkOrders();
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <h1 className="mb-4 text-[28px] font-bold">Work Orders</h1>
+      <h1 className="mb-4 text-[28px] font-bold">Orders</h1>
       <Listing
-        title={`Work Orders (${rows.length})`}
+        title={`Orders (${rows.length})`}
         columns={["Order", "Status", "Buyer", "Provider", "Account", "Value", "Approved", "Paid", "Remaining", "Created"]}
         rows={rows.map((r) => [
           r.orderNumber, WORK_ORDER_LABEL[r.status as keyof typeof WORK_ORDER_LABEL] ?? r.status, r.buyerName, r.providerName, r.accountName,
@@ -23,10 +23,10 @@ export default async function Page() {
           text: `${r.orderNumber} ${r.legacyNumber ?? ""} ${r.buyerName} ${r.providerName} ${r.accountName} ${WORK_ORDER_LABEL[r.status as keyof typeof WORK_ORDER_LABEL] ?? r.status}`.toLowerCase(),
           sort: [r.orderNumber, r.status, r.buyerName, r.providerName, r.accountName, r.valueCents, r.approvedCents, r.paidCents, r.nteCents == null ? null : r.nteCents - r.approvedCents, r.createdAt],
         }))}
-        searchPlaceholder="Search work orders"
+        searchPlaceholder="Search orders"
         sortable
         pageSize={25}
-        empty="No work orders yet."
+        empty="No orders yet."
       />
     </div>
   );

@@ -282,7 +282,7 @@ export const TERMS_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "You can’t go around us. In particular, you can’t talk to another user or ask for or share a way to get in touch - a means of direct contact - outside of Panameer before you’ve agreed to a Work Order. This means you can’t add your contact details to a job post, your profile, communications or other content. (There are exceptions to this for Enterprise clients.)"
+    "text": "You can’t go around us. In particular, you can’t talk to another user or ask for or share a way to get in touch - a means of direct contact - outside of Panameer before you’ve agreed to an Order. This means you can’t add your contact details to a job post, your profile, communications or other content. (There are exceptions to this for Enterprise clients.)"
   },
   {
     "t": "p",

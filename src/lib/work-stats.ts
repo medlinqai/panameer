@@ -11,11 +11,11 @@ export async function workHeroStats(): Promise<TalentStat[]> {
   return [
     {
       value: String(workRequests),
-      label: plural(workRequests, "Service Requisition"),
+      label: plural(workRequests, "Request"),
     },
     {
       value: String(workOrders),
-      label: plural(workOrders, "Work Order"),
+      label: plural(workOrders, "Order"),
     },
     {
       value: String(settlementRequests),

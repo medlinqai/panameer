@@ -338,7 +338,7 @@ export const PRIVACY_DOC: LegalNode[] = [
     "rows": [
       [
         "**Panameer Users**",
-        "As part of the Service, Panameer provides a platform that facilitates interactions between users. In order to provide the Services, Panameer shares your information with other users. For example, Panameer may share the jobs you post and your profile data publicly on our platform, return your information in search results, share your information with other Panameer users who might be interested in the content you shared, or share your information with other users as part of a potential or active **Work Order**."
+        "As part of the Service, Panameer provides a platform that facilitates interactions between users. In order to provide the Services, Panameer shares your information with other users. For example, Panameer may share the jobs you post and your profile data publicly on our platform, return your information in search results, share your information with other Panameer users who might be interested in the content you shared, or share your information with other users as part of a potential or active **Order**."
       ],
       [
         "**Service Providers**",
