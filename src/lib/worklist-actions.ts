@@ -64,7 +64,7 @@ export async function actionsFor(rows: Row[]): Promise<Record<string, RowAction>
 
 /** HP-E002: the buttons on a work row (undefined = not a work row). */
 function workAction(r: Row): RowAction | undefined {
-  if (r.resolved) return ["work.invited_to_propose", "work.sourcing_event_invited", "work.order_offered", "work.order_created", "buyer.sourcing.notify_others", "work.interview_requested"].includes(r.eventKey) ? null : undefined;
+  if (r.resolved) return ["work.invited_to_propose", "work.sourcing_event_invited", "work.order_offered", "work.order_created", "buyer.sourcing.notify_others", "work.interview_requested", "work.questions_asked"].includes(r.eventKey) ? null : undefined;
   if (r.eventKey === "work.invited_to_propose" || r.eventKey === "work.sourcing_event_invited") {
     const jobId = r.dedupeKey?.split(":")[1];
     if (!jobId) return undefined;
@@ -74,6 +74,8 @@ function workAction(r: Row): RowAction | undefined {
   if ((r.eventKey === "work.order_offered" || r.eventKey === "work.order_created") && r.entityId) return { kind: "work", primary: { label: "Review & Accept", href: `/orders/${r.entityId}` } };
   // Scott 10-22: the interview invitation needs a button to the booking.
   if (r.eventKey === "work.interview_requested" && r.href) return { kind: "work", primary: { label: "Pick a Time", href: `${r.href}#interview` } };
+  // AQ-E003: "A Buyer Has Questions — Answer".
+  if (r.eventKey === "work.questions_asked" && r.href) return { kind: "work", primary: { label: "Answer", href: r.href } };
   if (r.eventKey === "buyer.sourcing.notify_others" && r.entityId) return { kind: "work", primary: { label: "Review & Send", href: `/hire/sourcing/${r.entityId}` } };
   return undefined;
 }

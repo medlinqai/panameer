@@ -12,6 +12,8 @@ import { InterviewCards } from "@/components/work/InterviewCards";
 import { BookInterview } from "@/components/work/BookInterview";
 import { slotsForInterview } from "@/lib/open-times";
 import { JobStrip } from "@/components/hire/JobFrame";
+import { AnswerQuestions } from "@/components/work/AnswerQuestions";
+import { providerQuestions } from "@/lib/job-questions";
 import type { StripStep } from "@/lib/job-strip";
 import type { InterviewRow } from "@/lib/interviews";
 import { ConfirmAvailability, type AvailabilityView } from "@/components/work/ConfirmAvailability";
@@ -49,6 +51,7 @@ export default async function Page({
   // DB-E008: the provider's interview page — offer times, guidelines, Join.
   const interviews = person ? await listInterviews({ providerPersonId: person.id, jobId: detail.id }) : [];
 
+  const questionSets = person ? await providerQuestions(person.id, detail.id) : [];
   const strip = await providerStrip(person?.id ?? "", detail.id, interviews, !!sourcing);
   const meta = [
     detail.budgetLabel,
@@ -87,6 +90,8 @@ export default async function Page({
               {interviews.some((r) => !(r.slotMinutes && r.status === "REQUESTED")) && <InterviewCards rows={interviews.filter((r) => !(r.slotMinutes && r.status === "REQUESTED"))} side="provider" videoReady={dailyConfigured()} />}
             </section>
           )}
+          {/* AQ-E003: the buyer's written questions sit above Your Answer. */}
+          {questionSets.length > 0 && <div className="mt-5 flex flex-col gap-3">{questionSets.map((q) => <AnswerQuestions key={q.answerId} set={q} />)}</div>}
           {sourcing && (
             <div className="mt-5">
               <ConfirmAvailability jobId={detail.id} v={{ mode: "asked", askedCount: sourcing.askedCount, positions: sourcing.positions, dates: sourcing.dates, range: sourcing.range, rateCardCents: sourcing.rateCardCents, responded: sourcing.proposed ? { rateCents: sourcing.proposed.rateCents, note: sourcing.proposed.note } : null, declined: sourcing.declined, declineReason: sourcing.declineReason, open: sourcing.open, deadlineAt: sourcing.deadlineAt, eventNumber: sourcing.eventNumber }} startDeclining={(await searchParams)?.decline === "1"} />
