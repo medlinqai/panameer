@@ -5,6 +5,8 @@ import { useState, type ReactNode } from "react";
 import type { HireMatch } from "@/lib/hire-questionnaire";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
 import { BTN_MAGENTA, MatchBadges } from "@/components/hire/HireUI";
+import { AskQuestionsDialog } from "@/components/hire/AskQuestionsDialog";
+import type { Question } from "@/lib/question-types";
 
 // SE-E002/E003: one match list for Hire and the Job page — star (Shortlist), quick view, Compare, Request Proposals by a deadline.
 const GHOST = "inline-flex min-h-9 items-center justify-center border border-ink bg-white px-3.5 text-[13px] font-semibold text-ink hover:bg-bg-soft disabled:opacity-40";
@@ -38,6 +40,8 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   const [opened, setOpened] = useState<{ eventId: string; eventNumber: string; count: number } | null>(null);
   const [showWeak, setShowWeak] = useState(false);
   const [minYears, setMinYears] = useState(0);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [composing, setComposing] = useState(false);
   const [minImpl, setMinImpl] = useState(0);
 
   const patch = (personId: string, p: Partial<HireMatch>) => setList((ms) => ms.map((m) => (m.personId === personId ? { ...m, ...p } : m)));
@@ -65,7 +69,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   const request = async () => {
     setBusy(true);
     setError(null);
-    const j = await post({ action: "request", jobId, personIds: starred.map((m) => m.personId), hours: Number(hours) });
+    const j = await post({ action: "request", jobId, personIds: starred.map((m) => m.personId), hours: Number(hours), ...(questions.length ? { questions } : {}) });
     setBusy(false);
     if (j.error) { setError(j.error as string); return; }
     setOpened({ eventId: j.eventId as string, eventNumber: j.eventNumber as string, count: ((j.created as unknown[]) ?? []).length });
@@ -97,6 +101,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
               <label className="flex items-center gap-2 text-[12.5px] font-semibold">Deadline
                 <input inputMode="numeric" value={hours} onChange={(e) => setHours(e.target.value.replace(/\D/g, "").slice(0, 3))} aria-label="Deadline in hours" className="w-14 rounded-[8px] border border-state-border px-2 py-1 text-right" data-deadline-hours /> h
               </label>
+              <button type="button" disabled={!jobId} onClick={() => setComposing(true)} className="text-[12.5px] font-semibold underline underline-offset-4" data-add-questions>{questions.length ? `${questions.length} Question${questions.length === 1 ? "" : "s"} Added · Edit` : "Add Questions"}</button>
               {!starred.length && <span className="w-full text-[12.5px] text-state-inactive" data-request-help>Star who you want to ask first.</span>}
             </div>
           )}
@@ -156,6 +161,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
         </button>
       )}
 
+      {composing && jobId && <AskQuestionsDialog jobId={jobId} providerPersonIds={starred.map((m) => m.personId)} onClose={() => setComposing(false)} compose={{ initial: questions, onDone: setQuestions }} />}
       {cur && <QuickView m={cur} jobId={jobId} onClose={() => setActive(null)} onStar={() => star(cur)} onHide={() => hide(cur, true)} prev={at > 0 ? () => setActive(visible[at - 1].personId) : null} next={at < visible.length - 1 ? () => setActive(visible[at + 1].personId) : null} />}
       {comparing && <CompareTable rows={starred.slice(0, 4).map((m) => ({ m }))} onClose={() => setComparing(false)} jobId={jobId} onRemove={(id) => { const m = list.find((x) => x.personId === id); if (m) star(m); if (starred.length <= 2) setComparing(false); }} />}
     </div>

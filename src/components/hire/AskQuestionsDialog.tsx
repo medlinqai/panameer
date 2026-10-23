@@ -10,9 +10,9 @@ import type { BankRow } from "@/lib/question-banks";
 // AQ-E002 / QB-E001: up to 10 typed questions to one or many providers; Draft With AI fills 3–5 quick ones the buyer edits.
 const FIELD = "mt-1 block w-full rounded-[8px] border border-state-border bg-white px-3 py-2 text-[14px]";
 
-export function AskQuestionsDialog({ jobId, providerPersonIds, providerLabels = [], defaultDue, onClose, onSent }: { jobId: string; providerPersonIds: string[]; providerLabels?: string[]; defaultDue?: string | null; onClose: () => void; onSent?: (msg: string) => void }) {
+export function AskQuestionsDialog({ jobId, providerPersonIds, providerLabels = [], defaultDue, onClose, onSent, compose }: { jobId: string; providerPersonIds: string[]; providerLabels?: string[]; defaultDue?: string | null; onClose: () => void; onSent?: (msg: string) => void; /** QB-E006: hand the questions back (sent with the availability request) instead of sending now. */ compose?: { initial: Question[]; onDone: (qs: Question[]) => void } }) {
   const router = useRouter();
-  const [qs, setQs] = useState<Question[]>([blankQuestion(), blankQuestion(), blankQuestion("NUMBER")]);
+  const [qs, setQs] = useState<Question[]>(compose?.initial.length ? compose.initial : [blankQuestion(), blankQuestion(), blankQuestion("NUMBER")]);
   const [due, setDue] = useState((defaultDue ?? new Date(Date.now() + 48 * 3_600_000).toISOString()).slice(0, 10));
   const [busy, setBusy] = useState<"draft" | "send" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,11 +79,13 @@ export function AskQuestionsDialog({ jobId, providerPersonIds, providerLabels = 
           <button type="button" disabled={!bankName.trim() || !filled} onClick={saveBank} className={`${BTN_OUT} min-h-9 disabled:opacity-40`}>Save as Bank</button>
           {saved && <span className="text-state-accepted">{saved}</span>}
         </div>
-        <label className={`${LABEL} mt-4 block`}>Answer By<input type="date" value={due} onChange={(e) => setDue(e.target.value)} className={`${FIELD} max-w-[200px]`} /></label>
+        {!compose && <label className={`${LABEL} mt-4 block`}>Answer By<input type="date" value={due} onChange={(e) => setDue(e.target.value)} className={`${FIELD} max-w-[200px]`} /></label>}
         {error && <p role="alert" className="mt-3 text-[13px] font-semibold text-state-declined">{error}</p>}
         <div className="mt-5 flex flex-wrap justify-end gap-2">
           <button type="button" onClick={onClose} className={BTN_OUT}>Cancel</button>
+          {compose ? <button type="button" disabled={!filled} onClick={() => { compose.onDone(qs.filter((q) => q.text.trim())); onClose(); }} className={`${BTN} disabled:opacity-40`} data-use-questions>Use These Questions</button> : (
           <button type="button" disabled={!!busy || !filled} onClick={send} className={`${BTN} disabled:opacity-40`} data-send-questions>{busy === "send" ? "Sending…" : (providerLabels.length === 1 ? `Send to ${providerLabels[0]}` : `Send to ${n} Providers`)}</button>
+          )}
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ import { openSourcingEvent, setStar } from "@/lib/sourcing-events";
 export async function POST(request: Request) {
   const gate = await guardApi("canHireTalent");
   if (gate instanceof NextResponse) return gate;
-  const body = (await request.json().catch(() => ({}))) as { action?: string; jobId?: string | null; input?: HireInput; category?: string; title?: string; name?: string; personIds?: string[]; hours?: number; on?: boolean; sourceText?: string; businessTypeId?: string };
+  const body = (await request.json().catch(() => ({}))) as { questions?: unknown; action?: string; jobId?: string | null; input?: HireInput; category?: string; title?: string; name?: string; personIds?: string[]; hours?: number; on?: boolean; sourceText?: string; businessTypeId?: string };
   try {
     switch (body.action) {
       case "suggest":
@@ -49,7 +49,15 @@ export async function POST(request: Request) {
       case "request":
         if (!body.jobId || !body.personIds?.length) return NextResponse.json({ error: "Pick at least one." }, { status: 400 });
         // SE-E003: from the shortlist with a deadline in hours → a Sourcing Event; without hours, the older 7-day request.
-        if (body.hours != null) return NextResponse.json(await openSourcingEvent(gate, body.jobId, body.personIds, Number(body.hours)));
+        if (body.hours != null) {
+          const ev = await openSourcingEvent(gate, body.jobId, body.personIds, Number(body.hours));
+          // QB-E006: the availability request carries the buyer's questions — answered with I'm Available in one go.
+          if (Array.isArray(body.questions) && body.questions.length) {
+            const { sendQuestions } = await import("@/lib/job-questions");
+            await sendQuestions(gate, { jobId: body.jobId, providerPersonIds: body.personIds, questions: body.questions, dueAt: new Date(Date.now() + Number(body.hours) * 3_600_000).toISOString() });
+          }
+          return NextResponse.json(ev);
+        }
         return NextResponse.json(await requestProposals(gate, body.jobId, body.personIds));
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
