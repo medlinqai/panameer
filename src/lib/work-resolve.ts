@@ -15,6 +15,7 @@ export const WORK_RESOLVERS: Record<string, string> = {
   "buyer.sourcing.notify_others": "\"Let the other candidates know\" is sent",
   "work.interview_requested": "the provider offers times (or the interview closes)",
   "work.interview_slots_offered": "the buyer confirms a time (or the interview closes)",
+  "work.questions_asked": "the provider sends their answers",
   "estimate.requested": "the provider sends an estimate or declines",
   "estimate.received": "the buyer accepts, asks for changes or declines",
 };
@@ -91,6 +92,11 @@ async function isDone(n: Open): Promise<boolean> {
       if (!id) return false;
       const iv = await prisma.interviewRequest.findUnique({ where: { id }, select: { status: true } });
       return !iv || iv.status !== (n.event_key === "work.interview_requested" ? "REQUESTED" : "SLOTS_OFFERED");
+    }
+    case "work.questions_asked": {
+      if (!id) return false;
+      const a = await prisma.questionAnswer.findUnique({ where: { id }, select: { submitted_at: true } });
+      return !a || !!a.submitted_at;
     }
     case "estimate.requested": {
       if (!id) return false;

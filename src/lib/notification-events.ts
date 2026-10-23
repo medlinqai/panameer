@@ -783,6 +783,30 @@ export const NOTIFICATION_EVENTS = {
     href: (v) => (str(v, "requestId") ? `/find-work/${str(v, "requestId")}` : "/find-work"),
   },
   // SE-E006: sent only once the awarded Work Order is Released.
+  // AQ-E002: a buyer sent written questions — the provider answers on the job page.
+  "work.questions_asked": {
+    event: "work.questions_asked",
+    recipient: "a provider a buyer sent questions to",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `${str(v, "buyerName", "A Buyer")} Has ${str(v, "count", "")} Questions About ${str(v, "workTitle", "a Job")} — Answer by ${str(v, "due", "Soon")}`.replace("Has  Questions", "Has Questions"),
+    body: () => `Answer Questions on the job page. Interview guidelines: ${INTERVIEW_GUIDELINES}`,
+    href: (v) => `/find-work/${str(v, "jobId", "")}#questions`,
+  },
+  // AQ-E004: the buyer hears when a provider sends their answers.
+  "work.questions_answered": {
+    event: "work.questions_answered",
+    recipient: "the buyer who asked the questions",
+    category: "buyer.proposals.received",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `${str(v, "who", "A Provider")} Answered Your Questions`,
+    body: (v) => (str(v, "workTitle", "") ? str(v, "workTitle", "") : null),
+    href: (v) => `/work-requests/${str(v, "jobId", "")}?tab=responses`,
+  },
   // IW-E006: an interview called off — the other side is told and the slot is free again.
   "work.interview_cancelled": {
     event: "work.interview_cancelled",

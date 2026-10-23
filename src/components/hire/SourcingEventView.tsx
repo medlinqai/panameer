@@ -8,6 +8,7 @@ import { DeadlineTag } from "@/components/hire/Countdown";
 import { CompareTable } from "@/components/hire/MatchList";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
 import { InterviewDialog } from "@/components/hire/InterviewDialog";
+import { AskQuestionsDialog } from "@/components/hire/AskQuestionsDialog";
 
 type Ev = Awaited<ReturnType<typeof eventForBuyer>>;
 const STATUS: Record<string, string> = { DRAFT: "Draft", OPEN: "Open", CLOSED: "Closed", AWARDED: "Awarded" };
@@ -23,6 +24,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [comparing, setComparing] = useState(false);
   const [interviewing, setInterviewing] = useState<string[] | null>(null);
+  const [asking, setAsking] = useState<string[] | null>(null);
   const [extendBy, setExtendBy] = useState("24");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -100,6 +102,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
             <span className="text-[13px] text-state-inactive">{picked.size} selected</span>
             <span className="flex-1" />
             <button type="button" className={GHOST} disabled={picked.size < 2 || picked.size > 4} onClick={() => setComparing(true)} data-compare-proposals title="Tick 2 to 4 responses">Compare{picked.size >= 2 ? ` ${picked.size}` : ""}</button>
+            <button type="button" className={GHOST} disabled={busy || !picked.size} onClick={() => setAsking([...picked])} data-bulk-ask>Ask Questions{picked.size ? ` ${picked.size}` : ""}</button>
             <button type="button" className={GHOST} disabled={busy || !picked.size} onClick={() => setInterviewing([...picked])} data-bulk-interview>Interview{picked.size ? ` ${picked.size}` : ""}</button>
             <button type="button" className={GHOST} disabled={busy || !picked.size || !ev.certificationTestId} title={ev.certificationTestId ? undefined : "No certification test exists for this job's skills yet"} onClick={() => bulk((id) => act(`/api/work-requests/${ev.jobId}/test`, { providerPersonId: id, learnAssessmentId: ev.certificationTestId }), "Tests sent.")} data-bulk-test>Request Test{picked.size ? ` ${picked.size}` : ""}</button>
             <button type="button" className={GHOST} disabled={busy || !picked.size} onClick={() => act("/api/sourcing", { action: "decide", proposalIds: withProposal.filter((p) => picked.has(p.personId)).map((p) => p.proposal!.id), decision: "DECLINED" }, "Declined.").then(() => setPicked(new Set()))} data-bulk-decline>Decline{picked.size ? ` ${picked.size}` : ""}</button>
@@ -132,6 +135,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                   <div className="flex flex-wrap justify-end gap-1.5">
                     <button type="button" className={GHOST} disabled={busy} onClick={() => act("/api/sourcing", { action: "declineProposal", eventId: ev.id, proposalId: pr.id })}>Decline</button>
                     <button type="button" className={GHOST} disabled={busy} onClick={() => setInterviewing([p.personId])} data-request-interview>Interview</button>
+                    <button type="button" className={GHOST} disabled={busy} onClick={() => setAsking([p.personId])} data-row-ask>Ask Questions</button>
                     <button type="button" className={GHOST} disabled={busy || !ev.certificationTestId} title={ev.certificationTestId ? undefined : "No certification test exists for this job's skills yet"} onClick={() => act(`/api/work-requests/${ev.jobId}/test`, { providerPersonId: p.personId, learnAssessmentId: ev.certificationTestId }, "Certification test sent.")} data-request-test>Request Test</button>
                     <Link href={`/hire/terms?job=${ev.jobId}&provider=${p.personId}`} className={BTN} data-award>Hire</Link>
                   </div>
@@ -144,6 +148,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
         {msg && <p role="status" className="mt-3 text-[13.5px] font-semibold text-magenta-dark">{msg}</p>}
         {ev.workOrderId && <p className="mt-3 text-[13.5px]">Order: <Link href={`/orders/${ev.workOrderId}`} className="font-semibold text-magenta-dark underline underline-offset-4">open it</Link></p>}
       </section>
+      {asking && <AskQuestionsDialog jobId={ev.jobId} providerPersonIds={asking} defaultDue={ev.deadlineAt} onClose={() => setAsking(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
       {interviewing && <InterviewDialog jobId={ev.jobId} providerPersonIds={interviewing} onClose={() => setInterviewing(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
       {comparing && <CompareTable rows={withProposal.filter((p) => picked.has(p.personId)).map((p) => ({ m: p.match, proposed: p.proposal?.rateCents != null ? `${usd(p.proposal.rateCents)}${per}` : null, start: p.proposal?.start ?? null }))} onClose={() => setComparing(false)} />}
     </div>
