@@ -209,7 +209,8 @@ export const PROVIDER_NAV: NavItem[] = [
   {
     label: "Jobs",
     heading: "Jobs",
-    href: "/find-work",
+    // Scott 10-23: the provider starts on the jobs themselves, not the Overview.
+    href: "/find-work?tab=best",
     icon: "Briefcase",
     requires: "canProvideServices",
   },
