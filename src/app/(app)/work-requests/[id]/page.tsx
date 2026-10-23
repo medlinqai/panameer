@@ -105,7 +105,9 @@ export default async function Page({
 
   // OJ-E001: one frame for the whole hire — header, the 8-step strip, tabs (?tab=); the default tab follows the current step.
   const strip = await jobStrip(detail.id);
-  const tab: JobTab = (["matches", "responses", "interviews", "tests", "work-order", "details"] as const).find((t) => t === sp.tab) ?? strip?.defaultTab ?? "matches";
+  // Scott 10-23: until a door is chosen (2. Choose Provider), the Job shows the doors and top matches only — no tabs.
+  const doorChosen = strip?.steps.find((x) => x.key === "matches")?.state === "done";
+  const tab: JobTab = !doorChosen ? "matches" : (["matches", "responses", "interviews", "tests", "work-order", "details"] as const).find((t) => t === sp.tab) ?? strip?.defaultTab ?? "matches";
   const meta = [sec.jobNumber, sd?.worksite ? sd.worksite[0] + sd.worksite.slice(1).toLowerCase() : null, sd ? [sd.city, sd.state].filter(Boolean).join(", ") || null : null, rangeText, sd?.startDate && sd?.endDate ? `${fmtDay(sd.startDate)} – ${fmtDay(sd.endDate)}` : null].filter(Boolean).join(" · ");
   // JS-E001: one buyer-facing status and the origin tag (From ERP · Compare Providers · Hire Directly).
   const stageInfo = (await jobStages([detail.id])).get(detail.id);
@@ -133,12 +135,12 @@ export default async function Page({
       </section>
 
       {strip && <div className="my-4 rounded-[14px] border border-state-border bg-white px-6 py-6"><JobStrip steps={strip.steps} jobId={detail.id} title="Job Timeline" /></div>}
-      <JobTabs jobId={detail.id} current={tab} counts={counts} />
+      {doorChosen && <JobTabs jobId={detail.id} current={tab} counts={counts} />}
 
       {tab === "matches" && (
         <>
         {/* OJ-E002: the two doors and the matches; a row's rate is the rate they answered once they have. */}
-        {jobMatches.length ? <MatchList jobId={detail.id} matches={answeredRates(jobMatches, proposals)} state={sdForMatches?.state} published={posted ? { at: detail.postedAt ?? null } : null} /> : empty("No matches yet. Matches show once the job has a Service Description.")}
+        {jobMatches.length ? <MatchList jobId={detail.id} matches={answeredRates(jobMatches, proposals)} state={sdForMatches?.state} published={posted ? { at: detail.postedAt ?? null } : null} chosen={doorChosen} /> : empty("No matches yet. Matches show once the job has a Service Description.")}
         </>
       )}
       {tab === "responses" && (

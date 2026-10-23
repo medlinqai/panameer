@@ -33,7 +33,8 @@ export async function jobStrip(jobId: string) {
   const released = !!wo && REVEALED.has(wo.status);
   const done: Record<StripKey, boolean> = {
     create: true,
-    matches: !!event || awarded || stars > 0,
+    // A door is chosen: providers asked, someone hired, or the job published. Stars alone are still choosing.
+    matches: !!event || awarded || (job.status === "OPEN" && !!job.posted_at),
     ask: !!event && (inN >= asked || event.deadline_at < new Date() || awarded) && inN > 0,
     interview: (!!event && awarded) || answered > 0 || completed > 0,
     hire: awarded,
@@ -45,8 +46,7 @@ export async function jobStrip(jobId: string) {
   // Scott 10-23: the Job Timeline — numbered steps.
   const order: [StripKey, string][] = [["create", "Create Job"], ["matches", "Choose Provider"], ["ask", "Collect Responses"], ["interview", "Interview & Ask"], ["hire", "Hire Provider"], ["approve", "Approve Request"], ["wo", "Create Order"], ["release", "Release Order"]];
   // The current step: the first not done (and not skipped); while answers are in and nobody is hired, the job sits at Interview.
-  let current = order.find(([k]) => !done[k] && !skipped(k))?.[0] ?? null;
-  if (current === "matches" && job.status === "DRAFT") current = "create";
+  const current = order.find(([k]) => !done[k] && !skipped(k))?.[0] ?? null;
   const top: Record<StripKey, string> = {
     create: `✓ ${day(job.created_at)}`,
     matches: done.matches ? `✓ ${day(event?.created_at ?? job.posted_at ?? job.created_at)}` : "Now",

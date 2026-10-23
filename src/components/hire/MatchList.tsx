@@ -5,7 +5,7 @@ import { PostJobButton } from "@/components/hire/PostJobButton";
 import { useState, type ReactNode } from "react";
 import type { HireMatch } from "@/lib/hire-questionnaire";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
-import { BTN_MAGENTA, MatchBadges } from "@/components/hire/HireUI";
+import { BTN_MAGENTA, BTN_OUT, MatchBadges } from "@/components/hire/HireUI";
 import { AskQuestionsDialog } from "@/components/hire/AskQuestionsDialog";
 import type { Question } from "@/lib/question-types";
 
@@ -28,8 +28,9 @@ function Star({ on, onClick, name }: { on: boolean; onClick: () => void; name: s
   );
 }
 
-export function MatchList({ jobId, matches: initial, state, empty, published }: { jobId: string | null; matches: HireMatch[]; state?: string; empty?: ReactNode; /** Scott 10-23: the third door — null = Private, { at } = on the Job Board. */ published?: { at: string | null } | null }) {
+export function MatchList({ jobId, matches: initial, state, empty, published, chosen = true }: { jobId: string | null; matches: HireMatch[]; state?: string; empty?: ReactNode; /** Scott 10-23: the third door — null = Private, { at } = on the Job Board. */ published?: { at: string | null } | null; /** Scott 10-23: before a door is chosen, show the doors and a top-3 preview only. */ chosen?: boolean }) {
   const [list, setList] = useState(initial);
+  const [open, setOpen] = useState(chosen);
   const [showHidden, setShowHidden] = useState(false);
   const [showOutside, setShowOutside] = useState(false);
   const [starredOnly, setStarredOnly] = useState(false);
@@ -103,11 +104,14 @@ export function MatchList({ jobId, matches: initial, state, empty, published }: 
           <h3 className="text-[15px] font-extrabold">Hire Directly</h3>
           <p className="mt-1 text-[13px] text-state-inactive">You know who you want. Press <b className="text-ink">Hire</b> on their row — terms, then the Order.</p>
           <p className="mt-2 text-[12px] text-state-inactive">Fastest · one provider</p>
+          {!open && <button type="button" onClick={() => setOpen(true)} className={`${BTN_OUT} mt-2.5`} data-choose-direct>Choose Hire Directly</button>}
         </div>
         <div className="rounded-[12px] border border-magenta p-4" data-door="compare">
           <h3 className="text-[15px] font-extrabold">Compare Providers</h3>
           <p className="mt-1 text-[13px] text-state-inactive">Star the ones you like. They each answer with their rate by your deadline; interview the best, then Hire.</p>
-          {!opened && allAsked ? (
+          {!open ? (
+            <button type="button" onClick={() => setOpen(true)} className={`${BTN_OUT} mt-2.5`} data-choose-compare>Choose Compare Providers</button>
+          ) : !opened && allAsked ? (
             <p className="mt-2 text-[13.5px]" data-all-asked>All {asked.length} starred were asked. <Link href={`/work-requests/${jobId}?tab=responses`} className="font-semibold">See Their Answers →</Link> <span className="text-state-inactive">Star someone new to ask them too.</span></p>
           ) : opened ? (
             <p className="mt-2 text-[13.5px]"><b>{opened.eventNumber}</b> — {opened.count} asked. <Link href={`/work-requests/${jobId}?tab=responses`} className="font-semibold">See Responses →</Link></p>
@@ -131,16 +135,17 @@ export function MatchList({ jobId, matches: initial, state, empty, published }: 
             : jobId && <div className="mt-2.5"><PostJobButton jobId={jobId} label="Publish Job" outline /></div>}
         </div>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
+      {open && <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
         <button type="button" aria-pressed={!starredOnly} onClick={() => setStarredOnly(false)} className={!starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>All ({list.filter((m) => !m.hidden).length})</button>
         <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({allStarred.length})</button>
         <button type="button" disabled={starred.length < 2 || starred.length > 4} onClick={() => setComparing(true)} className={GHOST} data-compare title="Star 2 to 4 providers to compare them">Compare{starred.length >= 2 ? ` ${Math.min(starred.length, 4)}` : ""}</button>
         <MinChip label="Min Oracle Cloud Years" value={minYears} options={[2, 5, 8, 10]} onChange={setMinYears} />
         <MinChip label="Min Implementations" value={minImpl} options={[1, 3, 5, 10]} onChange={setMinImpl} />
-      </div>
+      </div>}
+      {!open && <p className="mt-4 text-[12px] font-bold uppercase tracking-[0.08em] text-state-inactive" data-top-matches>Top Matches</p>}
 
       <ul className="mt-3 divide-y divide-line border-y border-line">
-        {visible.map((m) => (
+        {(open ? visible : visible.slice(0, 3)).map((m) => (
           <li key={m.personId} className={`flex items-start gap-3 py-3 ${active === m.personId ? "bg-[#fbeafb]/40" : ""}`} data-hire-match={m.name}>
             <Star on={m.starred} onClick={() => star(m)} name={m.name} />
             {(isMaskedName(m.name) || m.photoUrl) && <NeutralAvatar size={36} photoUrl={m.photoUrl} />}
@@ -166,19 +171,20 @@ export function MatchList({ jobId, matches: initial, state, empty, published }: 
         ))}
         {!visible.length && <li className="py-4 text-[13.5px] text-ink-3">{starredOnly ? "Star providers to shortlist them." : "No one to show."}</li>}
       </ul>
-      {weak.length > 0 && (
+      {!open && visible.length > 3 && <button type="button" onClick={() => setOpen(true)} className="mt-3 text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4" data-see-all>See All {visible.length} Matches</button>}
+      {open && weak.length > 0 && (
         <button type="button" onClick={() => setShowWeak((v) => !v)} className="mt-3 flex w-full items-center gap-3 text-[13px] font-semibold text-ink-2" data-weaker-matches>
           <span className="h-px flex-1 bg-line" />{showWeak ? "Hide weaker matches" : `Weaker matches (${weak.length})`}<span className="h-px flex-1 bg-line" />
         </button>
       )}
 
-      {list.some((m) => m.hidden) && (
+      {open && list.some((m) => m.hidden) && (
         <div className="mt-3 text-[13.5px]" data-hidden-matches>
           <button type="button" onClick={() => setShowHidden((v) => !v)} className="font-semibold text-ink-2 underline underline-offset-4">{`Show hidden (${list.filter((m) => m.hidden).length})`}</button>
           {showHidden && <ul className="mt-1">{list.filter((m) => m.hidden).map((m) => <li key={m.personId} className="flex items-center gap-3 py-1">{m.name} <button type="button" onClick={() => hide(m, false)} className="font-semibold text-magenta-dark underline underline-offset-4">Restore</button></li>)}</ul>}
         </div>
       )}
-      {list.some((m) => m.outside) && (
+      {open && list.some((m) => m.outside) && (
         <button type="button" onClick={() => setShowOutside((v) => !v)} className="mt-3 text-[13.5px] font-semibold text-magenta-dark underline underline-offset-4" data-show-outside>
           {showOutside ? `Hide providers outside ${(state ?? "").toUpperCase()}` : `Show providers outside ${(state ?? "").toUpperCase()} (${list.filter((m) => m.outside).length})`}
         </button>
