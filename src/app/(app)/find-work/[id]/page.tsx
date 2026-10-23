@@ -158,12 +158,13 @@ async function providerStrip(personId: string, jobId: string, interviews: Interv
   const answered = !!prop && !["DRAFT", "WITHDRAWN"].includes(prop.status);
   const rate = prop?.lines[0]?.unit_price_cents != null ? `$${Math.round(prop.lines[0].unit_price_cents / 100)}${prop.lines[0].basis === "RATE" ? "/hr" : ""}` : "";
   const iv = interviews.find((r) => r.status === "SCHEDULED") ?? interviews.find((r) => r.status === "COMPLETED") ?? interviews.find((r) => ["REQUESTED", "SLOTS_OFFERED"].includes(r.status));
+  const qaSent = (await prisma.questionAnswer.count({ where: { provider_person_id: personId, questionSet: { job_id: jobId }, submitted_at: { not: null } } })) > 0;
   const decided = prop?.status === "AWARDED" ? "Hired" : prop && ["NOT_SELECTED", "DECLINED"].includes(prop.status) ? "Not Selected" : null;
   const steps: StripStep[] = [
     { key: "create", label: "Asked", state: "done", top: req ? `✓ ${day(req.created_at)}` : "✓ Posted" },
     { key: "matches", label: "Answered", state: answered ? "done" : req?.status === "DECLINED" ? "done" : "current", top: answered ? `✓ ${rate}` : req?.status === "DECLINED" ? "✓ Not This Time" : "Now" },
-    { key: "interview", label: "Interview", state: iv?.status === "COMPLETED" || (decided && iv) ? "done" : iv && answered ? "current" : "later", top: !iv ? "" : iv.status === "COMPLETED" ? "✓ Done" : iv.startsAt ? new Date(iv.startsAt).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit" }) : "Pick a Time" },
-    { key: "hire", label: "Decision", state: decided ? "done" : answered && (!iv || iv.status === "COMPLETED") ? "current" : "later", top: decided ? `✓ ${decided}` : "" },
+    { key: "interview", label: "Interview & Questions", state: iv?.status === "COMPLETED" || qaSent || (decided && iv) ? "done" : iv && answered ? "current" : "later", top: qaSent && !iv ? "✓ Answered" : !iv ? "" : iv.status === "COMPLETED" ? "✓ Done" : iv.startsAt ? new Date(iv.startsAt).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit" }) : "Pick a Time" },
+    { key: "hire", label: "Decision", state: decided ? "done" : answered && (!iv || iv.status === "COMPLETED" || qaSent) ? "current" : "later", top: decided ? `✓ ${decided}` : "" },
     { key: "wo", label: "Order", state: wo ? "done" : decided === "Hired" ? "current" : "later", top: wo ? "✓ Issued" : "" },
   ];
   const pill = decided === "Hired" ? "You're Hired" : decided ? "Not Selected" : prop?.status === "SHORTLISTED" ? "You're Shortlisted" : answered ? "You Answered" : req?.status === "DECLINED" ? "Not This Time" : asked ? "Asked for Your Availability" : null;
