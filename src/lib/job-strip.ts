@@ -45,7 +45,7 @@ export async function jobStrip(jobId: string) {
   const skipped = (k: StripKey) => direct && (k === "ask" || k === "interview");
   // Scott 10-23: the Job Timeline — numbered steps.
   // Scott 10-23: the Job Timeline is the buyer's own job and ends at Hire; the Request and the Order carry their own steps.
-  const order: [StripKey, string][] = [["create", "Create Job"], ["matches", "Choose Provider"], ["ask", "Collect Responses"], ["interview", "Interview & Ask"], ["hire", "Hire Provider"]];
+  const order: [StripKey, string][] = [["create", "Create Job"], ["matches", "Choose Provider(s)"], ["ask", "Collect Responses"], ["interview", "Interview & Ask"], ["hire", "Hire Provider"]];
   // The current step: the first not done (and not skipped); while answers are in and nobody is hired, the job sits at Interview.
   const current = order.find(([k]) => !done[k] && !skipped(k))?.[0] ?? null;
   // Scott 10-23: each step says how it was done, above its date — where we are and how we got here.
