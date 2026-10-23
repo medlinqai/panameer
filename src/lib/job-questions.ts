@@ -99,3 +99,49 @@ export async function buyerAnswers(jobId: string): Promise<Map<string, BuyerQA>>
   }
   return out;
 }
+
+/** QB-E003: Fill From My Profile — the provider's profile, work history, projects, certifications and skills draft every answer.
+ *  Nothing is saved: the provider reviews, edits and Sends (each answer marked prefilled). */
+export async function prefillAnswers(viewer: Viewer, answerId: string): Promise<Answer[]> {
+  const p = await me(viewer);
+  const row = await prisma.questionAnswer.findUnique({ where: { id: answerId }, select: { provider_person_id: true, questionSet: { select: { questions: true } } } });
+  if (!row || row.provider_person_id !== p.id) throw new SourcingError("Those questions aren't yours.", "NOT_FOUND");
+  const qs = normalizeQuestions(row.questionSet.questions);
+  const prof = await prisma.providerProfile.findUnique({ where: { person_id: p.id }, select: { id: true, overview: true, oracle_cloud_years: true, implementations_count: true, person: { select: { title: true } },
+    employers: { select: { role_title: true, description: true, start_date: true, end_date: true, is_current: true, software_suite: true }, take: 12 },
+    projects: { select: { name: true, description: true, start_date: true, end_date: true, is_current: true, software_suite: true }, take: 20 },
+    credentials: { select: { name: true, kind: true }, take: 20 }, skills: { select: { skill: { select: { name: true } } }, take: 40 } } });
+  if (!prof) throw new SourcingError("Add your profile first — there's nothing to fill from.", "INVALID");
+  const { recruiterNumbers } = await import("@/lib/recruiter-numbers");
+  const nums = (await recruiterNumbers([prof.id])).get(prof.id);
+  const yr = (d: Date | null) => d?.getFullYear() ?? "?";
+  const profile = [
+    `Title: ${prof.person.title ?? ""}`, prof.overview ? `Overview: ${prof.overview}` : null,
+    nums?.years ? `Oracle Cloud years: ${nums.years}` : null, nums?.implementations ? `Implementations: ${nums.implementations}` : null,
+    ...prof.employers.map((e) => `Role: ${e.role_title ?? ""} (${yr(e.start_date)}–${e.is_current ? "now" : yr(e.end_date)}${e.software_suite ? `, ${e.software_suite}` : ""}) ${e.description ?? ""}`),
+    ...prof.projects.map((x) => `Project: ${x.name} (${yr(x.start_date)}–${x.is_current ? "now" : yr(x.end_date)}${x.software_suite ? `, ${x.software_suite}` : ""}) ${x.description ?? ""}`),
+    prof.credentials.length ? `Credentials: ${prof.credentials.map((c) => c.name).join("; ")}` : null,
+    prof.skills.length ? `Skills: ${prof.skills.map((s) => s.skill.name).join(", ")}` : null,
+  ].filter(Boolean).join("\n").slice(0, 14_000);
+  const questions = qs.map((q, i) => `${i + 1}. [${q.type}${q.options?.length ? `: ${q.options.map((o) => o.label).join(" | ")}` : ""}] ${q.text}`).join("\n");
+  const { callExtractionModel } = await import("@/lib/resume/ai-provider");
+  const call = await callExtractionModel({
+    timeoutMs: 60_000,
+    system: "You draft a contractor's answers to a buyer's screening questions from their own profile. Answer each question in order. For YES_NO / PICK_ONE give exactly one of the listed options; PICK_SEVERAL a list of listed options; SCALE a number 1–5; NUMBER a number; text questions 1–3 honest sentences. Use only what the profile supports; when unsure pick the most conservative option. Never include names of people or companies, emails, phones or links.",
+    schema: { type: "object", properties: { answers: { type: "array", items: { type: "object", properties: { text: { type: ["string", "null"] }, number: { type: ["number", "null"] }, choices: { type: "array", items: { type: "string" } } } } } }, required: ["answers"] },
+    schemaName: "record_answers",
+    text: `QUESTIONS\n${questions}\n\nPROFILE\n${profile}`,
+    instruction: "Draft the answers.",
+    tag: "answers",
+    toolDescription: "Record one drafted answer per question, in order.",
+    maxOutputTokens: 2_000,
+  });
+  if (!call.ok) throw new SourcingError("We couldn't fill from your profile right now — answer directly or try again.", "AI");
+  const raw = ((call.value as { answers?: { text?: string | null; number?: number | null; choices?: string[] }[] }).answers ?? []);
+  const { stripContacts } = await import("@/lib/work-request/job-import");
+  return qs.map((q, i) => {
+    const r = raw[i] ?? {};
+    const value = q.type === "PICK_SEVERAL" ? r.choices ?? [] : q.type === "YES_NO" || q.type === "PICK_ONE" ? r.choices?.[0] ?? r.text ?? null : q.type === "SCALE" || q.type === "NUMBER" ? r.number ?? (r.text ? Number(r.text) : null) : r.text ?? "";
+    return { ...cleanAnswer(q, { value }, stripContacts), prefilled: true, edited: false };
+  });
+}

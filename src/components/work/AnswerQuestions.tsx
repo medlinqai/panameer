@@ -48,6 +48,15 @@ export function AnswerQuestions({ set }: { set: ProviderQuestions }) {
     if (action === "save") setMsg("Draft saved.");
     router.refresh();
   };
+  const fill = async () => {
+    setBusy("prefill"); setError(null); setMsg(null);
+    const r = await fetch("/api/questions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "prefill", answerId: set.answerId }) }).catch(() => null);
+    const j = (await r?.json().catch(() => ({}))) as { error?: string; answers?: Answer[] };
+    setBusy(null);
+    if (!r?.ok || !j.answers) { setError(j.error ?? "Couldn't fill from your profile — try again."); return; }
+    setAnswers(j.answers);
+    setMsg("Filled from your profile — check each answer, then Send.");
+  };
   const due = set.dueAt ? new Date(set.dueAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
   if (set.submittedAt) {
     return (
@@ -62,6 +71,8 @@ export function AnswerQuestions({ set }: { set: ProviderQuestions }) {
     <section id="questions" className="rounded-brand border border-line bg-white p-5" data-answer-questions>
       <h3 className="text-[16px] font-extrabold">The Buyer Has {set.questions.length} Question{set.questions.length === 1 ? "" : "s"}</h3>
       {due && <p className="mt-0.5 text-[13px] text-ink-2">Answer by {due}</p>}
+      {/* QB-E003: AI drafts every answer from the provider's profile; they review and Send. */}
+      <button type="button" disabled={!!busy} onClick={fill} className={`${BTN_OUT} mt-3 min-h-9`} data-fill-from-profile>{busy === "prefill" ? "Filling…" : "Fill From My Profile"}</button>
       <ol className="mt-3 flex flex-col gap-4">
         {set.questions.map((q, i) => (
           <li key={i}>
