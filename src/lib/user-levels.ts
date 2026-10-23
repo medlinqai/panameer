@@ -179,7 +179,7 @@ export const roadLabelLines = (step: string): [string, string] => {
 
 /** Stop 5's three lanes; each ends in "Work Order Signed". */
 export const ROAD_LANES: { id: string; name: string; steps: string[] }[] = [
-  { id: "5.A", name: "Product Bought", steps: ["Product Located", "Added to Requisition", "Order Placed"] },
+  { id: "5.A", name: "Product Bought", steps: ["Product Located", "Added to Cart", "Order Placed"] },
   { id: "5.B", name: "Rate Accepted", steps: ["Provider Invited", "Available", "Rate Accepted"] },
   { id: "5.C", name: "Estimate Accepted", steps: ["Estimate Requested", "Provider Estimates", "Estimate Accepted"] },
 ];

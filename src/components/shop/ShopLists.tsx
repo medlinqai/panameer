@@ -61,7 +61,7 @@ export function ShopOffers({ rows, side }: { rows: ShopOfferRow[]; side: ShopSid
   );
 }
 
-const STEPS = ["Browse", "Offer", "Requisition", "WO", "Delivered", "Paid"];
+const STEPS = ["Browse", "Offer", "Cart", "Order", "Delivered", "Paid"];
 /** PA-E006: six dots, done = ink, current = magenta, still to come = grey. */
 function StepDots({ at }: { at: number }) {
   return (

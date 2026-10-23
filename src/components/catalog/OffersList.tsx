@@ -7,7 +7,7 @@ import { formatCents } from "@/lib/display";
 
 // MO-E004: offers on Service Products — seller: Accept · Counter (once) · Decline; buyer: status, answer a counter, withdraw.
 export type Offer = { id: string; offerNumber: string; productId: string | null; serviceId: string | null; productTitle: string; listPriceCents: number | null; amountCents: number; counterCents: number | null; deliveryDate: string | null; counterDeliveryDate: string | null; currency: string; status: string; note: string | null; message: string | null; otherName: string };
-const STATUS: Record<string, string> = { OPEN: "Waiting on the seller", COUNTERED: "Countered — your call", ACCEPTED: "Accepted — on your requisition", DENIED: "Declined", WITHDRAWN: "Closed" };
+const STATUS: Record<string, string> = { OPEN: "Waiting on the seller", COUNTERED: "Countered — your call", ACCEPTED: "Accepted — in your cart", DENIED: "Declined", WITHDRAWN: "Closed" };
 const BTN = "min-h-9 border border-ink px-3 text-[13px] font-semibold disabled:opacity-40";
 const PRI = "min-h-9 bg-ink px-3 text-[13px] font-semibold text-surface disabled:opacity-40";
 

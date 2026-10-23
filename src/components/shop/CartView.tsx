@@ -59,7 +59,7 @@ export function CartView({ groups, totalCents, currency, hasCompany, workRequest
   if (!groups.length)
     return (
       <p className="mt-6 border-t border-line pt-5 text-[14.5px] text-ink-2">
-        Your request is empty. <Link href="/shop" className="font-semibold text-ink underline underline-offset-4">Shop Service Products</Link>
+        Your cart is empty. <Link href="/shop" className="font-semibold text-ink underline underline-offset-4">Shop Service Products</Link>
       </p>
     );
 
