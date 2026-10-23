@@ -289,19 +289,19 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     ]);
     const ev = toReview[0]?.proposalRequest?.sourcingEvent;
     const jobs = add("request", toReview.length, "Responses to Review", ev ? `/work-requests/${ev.job_id}?tab=responses` : "/hire/overview?tab=jobs", "Review", ev?.deadline_at)
-      + add("request", closing.length, "Answers due in 24 h", closing[0] ? `/work-requests/${closing[0].job_id}?tab=responses` : "/hire/overview?tab=jobs", "Open", closing[0]?.deadline_at)
-      + add("request", expired, "Deadline passed — pick or extend", "/hire/overview?tab=jobs", "Decide");
+      + add("request", closing.length, "Answers Due in 24 h", closing[0] ? `/work-requests/${closing[0].job_id}?tab=responses` : "/hire/overview?tab=jobs", "Open", closing[0]?.deadline_at)
+      + add("request", expired, "Deadline Passed — Pick or Extend", "/hire/overview?tab=jobs", "Decide");
     // HB-E006: each app lists only its own tasks — Work Orders (accept, release, changes) belong to Orders.
-    const requests = add("request", approvals, "Request approvals", "/hire/overview?tab=requests", "Approve");
-    add("order", woAccept, "Orders to accept", "/orders/overview", "Accept");
-    const interviews = add("request", confirm, "Interview times to confirm", "/hire/overview?tab=interviews", "Confirm") + add("request", todays, "Interviews today", "/hire/overview?tab=interviews", "Join");
-    const tests = add("request", testsIn, "Test results in", "/hire/overview?tab=tests", "See results");
-    add("shop", sc.offers, "Counter-offers waiting on you", "/shop?tab=offers", "Answer");
-    add("shop", sc.purchases, "Purchases needing you", "/shop?tab=purchases", "Open");
-    add("estimate", ec.toReview, "Estimates in to review", "/estimate", "Review");
-    add("settlement", settle, "Settlements to approve", APP_HOME.buyer.settlement, "Approve");
-    add("payment", pay, "Payments due", APP_HOME.buyer.payment, "Pay");
-    add("connect", connect, "Unread messages", "/messages", "Read");
+    const requests = add("request", approvals, "Request Approvals", "/hire/overview?tab=requests", "Approve");
+    add("order", woAccept, "Orders to Accept", "/orders/overview", "Accept");
+    const interviews = add("request", confirm, "Interview Times to Confirm", "/hire/overview?tab=interviews", "Confirm") + add("request", todays, "Interviews Today", "/hire/overview?tab=interviews", "Join");
+    const tests = add("request", testsIn, "Test Results In", "/hire/overview?tab=tests", "See Results");
+    add("shop", sc.offers, "Counter-Offers Waiting on You", "/shop?tab=offers", "Answer");
+    add("shop", sc.purchases, "Purchases Needing You", "/shop?tab=purchases", "Open");
+    add("estimate", ec.toReview, "Estimates In to Review", "/estimate", "Review");
+    add("settlement", settle, "Settlements to Approve", APP_HOME.buyer.settlement, "Approve");
+    add("payment", pay, "Payments Due", APP_HOME.buyer.payment, "Pay");
+    add("connect", connect, "Unread Messages", "/messages", "Read");
     return { side, request: { total: jobs + requests + interviews + tests, jobs, requests, interviews, tests }, shop, estimate, order: { total: woAccept }, settlement: { total: settle }, payment: { total: pay }, connect: { total: connect }, learn: { total: learn }, items };
   }
 
@@ -315,16 +315,19 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     prisma.paymentRequest.count({ where: { provider_person_id: id, status: "APPROVED" } }),
   ]);
   const requests = add("request", dueSoon.length, "Someone Wants to Buy Your Services — Are You Available?", dueSoon[0] ? `/find-work/${dueSoon[0].job_id}` : "/find-work?tab=invitations", "Respond", dueSoon[0]?.responds_by);
-  const interviews = add("request", toOffer.length, toOffer.some((i) => i.slot_minutes) ? "A Buyer Wants to Interview You — Pick a Time" : "Interview Times to Offer", toOffer[0] ? `/find-work/${toOffer[0].job_id}#interview` : "/find-work?tab=interviews", toOffer.some((i) => i.slot_minutes) ? "Pick a Time" : "Offer Times") + add("request", todays, "Interviews today", "/find-work?tab=interviews", "Join");
-  const tests = add("request", testsToTake, "Tests to take", "/find-work?tab=tests", "Take");
+  const interviews = add("request", toOffer.length, toOffer.some((i) => i.slot_minutes) ? "A Buyer Wants to Interview You — Pick a Time" : "Interview Times to Offer", toOffer[0] ? `/find-work/${toOffer[0].job_id}#interview` : "/find-work?tab=interviews", toOffer.some((i) => i.slot_minutes) ? "Pick a Time" : "Offer Times") + add("request", todays, "Interviews Today", "/find-work?tab=interviews", "Join");
+  const tests = add("request", testsToTake, "Tests to Take", "/find-work?tab=tests", "Take");
+  // Scott 10-23: written questions from a buyer wait on the provider too.
+  const qs = await prisma.questionAnswer.findMany({ where: { provider_person_id: id, submitted_at: null }, orderBy: { created_at: "asc" }, select: { questionSet: { select: { job_id: true, due_at: true } } } });
+  const questions = add("request", qs.length, "A Buyer Has Questions for You — Answer", qs[0] ? `/find-work/${qs[0].questionSet.job_id}#questions` : "/find-work", "Answer", qs[0]?.questionSet.due_at);
   const myOrders = (await prisma.workOrder.findMany({ where: { provider_person_id: id }, select: { id: true } })).map((o) => o.id);
   const changes = myOrders.length ? await prisma.workOrderRevision.count({ where: { status: "PENDING", work_order_id: { in: myOrders } } }) : 0;
-  const order = add("order", woAccept.length, "Orders to accept", "/orders/overview", "Accept") + add("order", changes, "Change orders to answer", "/orders/overview", "Answer");
-  add("shop", sc.offers, "Offers to answer", "/shop?tab=offers", "Answer");
-  add("shop", sc.sales, "Product sales needing you", "/shop?tab=sales", "Open");
-  add("estimate", ec.toPrice, "Estimates to price", "/estimate", "Price");
-  add("settlement", drafts, "Payment requests to submit", APP_HOME.provider.settlement, "Submit");
-  add("payment", paidIn, "Payments on the way", APP_HOME.provider.payment, "See");
-  add("connect", connect, "Unread messages", "/messages", "Read");
-  return { side, request: { total: requests + interviews + tests, jobs: 0, requests, interviews, tests }, shop, estimate, order: { total: order }, settlement: { total: drafts }, payment: { total: paidIn }, connect: { total: connect }, learn: { total: learn }, items };
+  const order = add("order", woAccept.length, "Orders to Accept", "/orders/overview", "Accept") + add("order", changes, "Change Orders to Answer", "/orders/overview", "Answer");
+  add("shop", sc.offers, "Offers to Answer", "/shop?tab=offers", "Answer");
+  add("shop", sc.sales, "Product Sales Needing You", "/shop?tab=sales", "Open");
+  add("estimate", ec.toPrice, "Estimates to Price", "/estimate", "Price");
+  add("settlement", drafts, "Payment Requests to Submit", APP_HOME.provider.settlement, "Submit");
+  add("payment", paidIn, "Payments on the Way", APP_HOME.provider.payment, "See");
+  add("connect", connect, "Unread Messages", "/messages", "Read");
+  return { side, request: { total: requests + interviews + tests + questions, jobs: 0, requests, interviews: interviews + questions, tests }, shop, estimate, order: { total: order }, settlement: { total: drafts }, payment: { total: paidIn }, connect: { total: connect }, learn: { total: learn }, items };
 }
