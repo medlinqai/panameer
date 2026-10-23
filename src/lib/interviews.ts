@@ -246,7 +246,7 @@ export async function closeInterview(
   if (iv.status === "SCHEDULED") {
     const job = await prisma.job.findUnique({ where: { id: iv.job_id }, select: { title: true, buyer_person_id: true } });
     const other = how === "CANCELLED" ? iv.provider_person_id : job?.buyer_person_id;
-    if (other) await notify({ event: "work.interview_cancelled", personId: other, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_cancelled:${iv.id}`, vars: { workTitle: job?.title ?? "", href: how === "CANCELLED" ? `/find-work/${iv.job_id}#interview` : `/work-requests/${iv.job_id}#interviews` } });
+    if (other) await notify({ event: "work.interview_cancelled", personId: other, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_cancelled:${iv.id}`, vars: { workTitle: job?.title ?? "", href: how === "CANCELLED" ? `/find-work/${iv.job_id}#interview` : `/work-requests/${iv.job_id}?tab=interviews` } });
   }
 
   /* Whoever owed something no longer does. */
@@ -295,7 +295,7 @@ async function afterConfirm(interviewId: string, startsAt: Date, booked = false)
   if (room) await prisma.interviewRequest.update({ where: { id: iv.id }, data: { room_name: room.name, room_url: room.url } });
   const [label, company] = await Promise.all([providerLabelFor(iv.provider_person_id), buyerCompanyName(iv.requested_by_person_id)]);
   const when = interviewWhen(startsAt);
-  await notify({ event: "work.interview_confirmed", personId: iv.requested_by_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_confirmed:${iv.id}:buyer`, vars: { when, workTitle: iv.job.title, counterpart: label, href: `/work-requests/${iv.job.id}#interviews`, ...(booked ? { booked: "1" } : {}) } });
+  await notify({ event: "work.interview_confirmed", personId: iv.requested_by_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_confirmed:${iv.id}:buyer`, vars: { when, workTitle: iv.job.title, counterpart: label, href: `/work-requests/${iv.job.id}?tab=interviews`, ...(booked ? { booked: "1" } : {}) } });
   // The provider who just booked doesn't need a notice about their own click.
   if (!booked) await notify({ event: "work.interview_confirmed", personId: iv.provider_person_id, entityType: "interview_request", entityId: iv.id, dedupeKey: `work.interview_confirmed:${iv.id}:provider`, vars: { when, workTitle: iv.job.title, counterpart: company, href: `/find-work/${iv.job.id}#interview` } });
   await prisma.notification.updateMany({ where: { dedupe_key: `work.interview_slots_offered:${iv.id}`, resolved_at: null }, data: { resolved_at: new Date() } }).catch(() => {});

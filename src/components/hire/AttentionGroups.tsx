@@ -57,7 +57,7 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
     <div className="flex min-w-0 flex-[1_1_520px] flex-col" data-attention-groups>
       <Group title="Jobs Expiring" n={expiring.length}>
         {expiring.map((g) => (
-          <Row key={g.key} href={`/work-requests/${g.jobId}`} what={g.title} detail={`${g.when} · ${g.inText}`}>
+          <Row key={g.key} href={`/work-requests/${g.jobId}?tab=responses`} what={g.title} detail={`${g.when} · ${g.inText}`}>
             <button type="button" className={BTN_OUT} onClick={() => extend(g.eventId, g.key)}>Extend</button>
             <button type="button" className={BTN_OUT} onClick={() => act(g.key, "Closed — no more answers", { action: "close", eventId: g.eventId })}>Close</button>
           </Row>
@@ -65,7 +65,7 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
       </Group>
       <Group title="Applications" n={apps.length}>
         {apps.map((g) => (
-          <Row key={g.key} href={`/work-requests/${g.jobId}`} what={`${g.proposalIds.length} ${g.proposalIds.length === 1 ? "person" : "people"} applied to ${g.title}`} detail={["Open job", g.providers, g.range].filter(Boolean).join(" · ")}>
+          <Row key={g.key} href={`/work-requests/${g.jobId}?tab=responses`} what={`${g.proposalIds.length} ${g.proposalIds.length === 1 ? "person" : "people"} applied to ${g.title}`} detail={["Open job", g.providers, g.range].filter(Boolean).join(" · ")}>
             <button type="button" className={BTN_OUT} onClick={() => act(g.key, "Shortlisted", { action: "decide", proposalIds: g.proposalIds, decision: "SHORTLISTED" })}>Shortlist</button>
             <button type="button" className={BTN_OUT} onClick={() => act(g.key, "Declined", { action: "decide", proposalIds: g.proposalIds, decision: "DECLINED" })}>Decline</button>
           </Row>
@@ -73,7 +73,7 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
       </Group>
       <Group title="Available Providers" n={rates.length}>
         {rates.map((g) => (
-          <Row key={g.key} href={`/work-requests/${g.jobId}`} what={`${g.who} is available${g.rate ? ` at ${g.rate}` : ""}`} detail={[g.title, g.inRange == null ? null : g.inRange ? "in range" : "over range", g.start, "you asked them"].filter(Boolean).join(" · ")}>
+          <Row key={g.key} href={`/work-requests/${g.jobId}?tab=responses`} what={`${g.who} is available${g.rate ? ` at ${g.rate}` : ""}`} detail={[g.title, g.inRange == null ? null : g.inRange ? "in range" : "over range", g.start, "you asked them"].filter(Boolean).join(" · ")}>
             <button type="button" className={BTN_OUT} onClick={() => act(g.key, "Shortlisted", { action: "decide", proposalIds: [g.proposalId], decision: "SHORTLISTED" })}>Shortlist</button>
             <button type="button" className={BTN_OUT} onClick={() => act(g.key, "Declined", { action: "decide", proposalIds: [g.proposalId], decision: "DECLINED" })}>Decline</button>
           </Row>
@@ -81,15 +81,15 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
       </Group>
       <Group title="Today's Interviews" n={ivs.length} href="/hire/overview?tab=interviews">
         {ivs.map((g) => (
-          <Row key={g.key} href={`/work-requests/${g.jobId}#interviews`} what={`${g.time} · ${g.who} · ${g.minutes} min`} detail={g.title}>
+          <Row key={g.key} href={`/work-requests/${g.jobId}?tab=interviews`} what={`${g.time} · ${g.who} · ${g.minutes} min`} detail={g.title}>
             {g.hasRoom ? <a href={`/api/interviews/${g.id}/join`} target="_blank" rel="noreferrer" className={BTN}>Join</a> : <span className="self-center text-[12.5px] text-state-inactive">Video link not set up yet</span>}
-            <Link href={`/work-requests/${g.jobId}#interviews`} className={BTN_OUT}>Reschedule</Link>
+            <Link href={`/work-requests/${g.jobId}?tab=interviews`} className={BTN_OUT}>Reschedule</Link>
           </Row>
         ))}
       </Group>
       <Group title="Test Results" n={tests.length} last>
         {tests.map((g) => (
-          <Row key={g.key} href={`/work-requests/${g.jobId}`} what={`${g.who} · ${g.skill}`} detail={[g.score != null ? `${g.score}%` : null, g.result].filter(Boolean).join(" · ")}>
+          <Row key={g.key} href={`/work-requests/${g.jobId}?tab=tests`} what={`${g.who} · ${g.skill}`} detail={[g.score != null ? `${g.score}%` : null, g.result].filter(Boolean).join(" · ")}>
             {g.proposalId ? (
               <>
                 <button type="button" className={BTN_OUT} onClick={() => act(g.key, "Shortlisted", { action: "decide", proposalIds: [g.proposalId], decision: "SHORTLISTED" })}>Shortlist</button>

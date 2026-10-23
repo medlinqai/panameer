@@ -216,7 +216,7 @@ function JobArticle({ j }: { j: JobTabRow }) {
           {j.proposalLines.map((p) => (
             <div key={p.personId} className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t border-state-sunken py-2.5" data-proposal-line>
               <NeutralAvatar size={32} photoUrl={p.photoUrl} />
-              <span className="text-[14px] font-bold" data-response-line>{p.who} · {p.available ? <span className="text-state-accepted">Available</span> : <span className="text-state-declined">Not This Time</span>}{p.rate ? ` · ${p.rate}` : ""}</span>
+              <Link href={`/work-requests/${j.id}?tab=responses`} className="text-[14px] font-bold text-ink no-underline hover:underline" data-response-line>{p.who} · {p.available ? <span className="text-state-accepted">Available</span> : <span className="text-state-declined">Not This Time</span>}{p.rate ? ` · ${p.rate}` : ""}</Link>
               <span className="min-w-0 flex-1 text-[13px] text-state-inactive">{p.available ? p.summary : p.reason ? `“${p.reason}”` : ""}</span>
               {p.available && <span className="w-[110px] text-[13px] text-state-inactive">{p.start ?? ""}</span>}
               {p.proposalId && <ProposalActions compact jobId={j.id} providerPersonId={p.personId} proposalId={p.proposalId} status={p.status ?? undefined} testId={null} awarded={p.status === "AWARDED"} interviewStatus={null} testStatus={null} />}
@@ -225,7 +225,7 @@ function JobArticle({ j }: { j: JobTabRow }) {
           ))}
           {j.asked === 1 && (
             <div className="flex items-center gap-3.5 border-t border-state-sunken py-2.5 text-[13px] text-state-disabled">
-              <span className="w-8 shrink-0" />No other providers were asked. <Link href={`/work-requests/${j.id}#matches`}>Request More Availability</Link>
+              <span className="w-8 shrink-0" />No other providers were asked. <Link href={`/work-requests/${j.id}?tab=matches`}>Request More Availability</Link>
             </div>
           )}
         </div>

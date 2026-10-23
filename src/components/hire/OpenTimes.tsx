@@ -81,7 +81,7 @@ export function InvitedNotBooked({ rows }: { rows: { id: string; who: string; jo
         {rows.map((r) => (
           <li key={r.id} className="flex flex-wrap items-center gap-3 py-2 text-[13.5px]">
             <span className="h-2.5 w-2.5 rounded-full bg-state-pending" />
-            <b>{r.who}</b><a href={`/work-requests/${r.jobId}#interviews`} className="min-w-0 flex-1 truncate text-state-inactive">{r.jobTitle}</a>
+            <b>{r.who}</b><a href={`/work-requests/${r.jobId}?tab=interviews`} className="min-w-0 flex-1 truncate text-state-inactive">{r.jobTitle}</a>
             <span className="text-state-inactive">Invited {r.sent}</span>
             <button type="button" disabled={busy} onClick={() => cancel(r.id)} className={`${BTN_OUT} min-h-8 px-2.5 text-[12.5px]`}>Cancel</button>
           </li>

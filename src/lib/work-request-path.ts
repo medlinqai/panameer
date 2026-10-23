@@ -41,8 +41,8 @@ export async function jobPath(jobId: string) {
   const awarded = wrs.length > 0;
   const steps: PathStep[] = [
     { key: "job", label: est ? "Describe" : "Job", done: true, date: job.created_at },
-    { key: "shortlist", hidden: est, label: "Shortlist", done: stars.length > 0 || sourced, date: first(stars.map((s) => s.created_at)) ?? event?.created_at ?? null, href: "#matches" },
-    { key: "request", label: est ? "Ask Providers" : "Request Availability", done: sourced, date: event?.created_at ?? null, note: event ? `${asked} asked · due ${when(event.deadline_at)}` : null, href: "#matches", hidden: !sourced && awarded },
+    { key: "shortlist", hidden: est, label: "Shortlist", done: stars.length > 0 || sourced, date: first(stars.map((s) => s.created_at)) ?? event?.created_at ?? null, href: `/work-requests/${jobId}?tab=matches` },
+    { key: "request", label: est ? "Ask Providers" : "Request Availability", done: sourced, date: event?.created_at ?? null, note: event ? `${asked} asked · due ${when(event.deadline_at)}` : null, href: `/work-requests/${jobId}?tab=matches`, hidden: !sourced && awarded },
     { key: "proposals", label: est ? "Estimates In" : "Responses In", done: bids.length > 0, date: first(bids.map((b) => b.bid?.submitted_at)), note: event ? `${bids.length} of ${asked} in` : null, href: event ? (est ? `/estimate/${event.id}` : `/work-requests/${jobId}?tab=responses`) : undefined, hidden: !sourced && awarded },
     { key: "interview", hidden: est, label: "Interview", done: !!interview, date: interview?.created_at ?? null, optional: true },
     { key: "test", hidden: est, label: "Test", done: !!test, date: test?.created_at ?? null, optional: true },

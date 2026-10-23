@@ -756,7 +756,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: true,
     title: (v) => `${str(v, "providerLabel", "The provider")} Offered Interview Times`,
     body: (v) => `Pick one for ${str(v, "workTitle", "your job")}.`,
-    href: (v) => `/work-requests/${str(v, "requestId", "")}#interviews`,
+    href: (v) => `/work-requests/${str(v, "requestId", "")}?tab=interviews`,
   },
   "work.interview_confirmed": {
     event: "work.interview_confirmed",

@@ -83,7 +83,7 @@ export function WeekSchedule({ start, rows, side, backHref }: { start: Date; row
             <div key={d.toISOString()} className="min-w-0 rounded-[8px] border border-line p-2">
               <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-3">{d.toLocaleDateString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" })}</p>
               {list.length ? list.map((r) => (
-                <Link key={r.id} href={side === "buyer" ? `/work-requests/${r.jobId}#interviews` : `/find-work/${r.jobId}#interview`} className="mt-1.5 block rounded-[6px] bg-[#fbeafb] px-2 py-1 text-[12px] hover:underline">
+                <Link key={r.id} href={side === "buyer" ? `/work-requests/${r.jobId}?tab=interviews` : `/find-work/${r.jobId}#interview`} className="mt-1.5 block rounded-[6px] bg-[#fbeafb] px-2 py-1 text-[12px] hover:underline">
                   <b>{r.startsAt ? time(r.startsAt) : ""}</b> {side === "buyer" ? r.providerLabel : r.buyerCompany}
                 </Link>
               )) : <p className="mt-1 text-[12px] text-ink-3">—</p>}

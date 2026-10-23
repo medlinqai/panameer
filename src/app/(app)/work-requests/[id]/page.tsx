@@ -267,7 +267,7 @@ export default async function Page({
             </div>
           ) : empty("The Service Description shows here once the job has one.")}
         </Section>
-        <Section title="Availability Requests" extra={sec.requestRows.length ? `· ${sec.requestRows.length} asked · ${sec.responded} responded` : null} right={!awarded && (detail.status === "OPEN" || detail.status === "DRAFT") ? <Link href={`/work-requests/${detail.id}#matches`}>Request More</Link> : null}>
+        <Section title="Availability Requests" extra={sec.requestRows.length ? `· ${sec.requestRows.length} asked · ${sec.responded} responded` : null} right={!awarded && (detail.status === "OPEN" || detail.status === "DRAFT") ? <Link href={`/work-requests/${detail.id}?tab=matches`}>Request More</Link> : null}>
           {sec.requestRows.length ? sec.requestRows.map((r) => (
             <div key={r.number} className={`flex flex-wrap items-center gap-3.5 py-3 text-[14px] ${ROW_RULE}`}>
               <span className="w-[70px] font-bold">{r.who.replace(/^Provider /, "")}</span>
