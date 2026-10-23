@@ -1,3 +1,4 @@
+import { PostJobButton } from "@/components/hire/PostJobButton";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import Link from "next/link";
 import { howLongText } from "@/lib/job-dates";
@@ -138,9 +139,9 @@ export default async function Page({
       {tab === "matches" && (
         <>
         {detail.status === "DRAFT" && (
-          <div className="flex flex-wrap items-center gap-3 border border-state-border p-4">
-            <p className="min-w-0 flex-1 text-[14px]"><b>This Job is still a draft.</b> <span className="text-state-inactive">Posting makes it visible to providers.</span></p>
-            <Link href="/hire" className={BTN_OUT}>Open in Hire</Link>
+          <div className="flex flex-wrap items-center gap-3 border border-state-border p-4" data-not-posted>
+            <p className="min-w-0 flex-1 text-[14px]"><b>Not posted.</b> <span className="text-state-inactive">{stage === "COMPARING" ? "Only the providers you asked can see it. Post it and any matching provider can say I Want This Job." : "Post it and any matching provider can see it and say I Want This Job."}</span></p>
+            <PostJobButton jobId={detail.id} />
           </div>
         )}
         {/* OJ-E002: the two doors and the matches; a row's rate is the rate they answered once they have. */}

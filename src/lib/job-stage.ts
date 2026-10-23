@@ -13,7 +13,8 @@ type Facts = { status: string; asked: boolean; awarded: boolean; erpReturned: bo
 
 /** The pure rule. Closed = stopped early; Completed = finished normally (its Order is released). */
 export function jobStage(f: Facts): JobStage {
-  if (f.status === "DRAFT") return "DRAFT";
+  // A job whose providers were asked straight from Create stays DRAFT in data — it is Comparing to the buyer.
+  if (f.status === "DRAFT" && !f.asked) return "DRAFT";
   if (f.status === "ON_HOLD") return "ON_HOLD";
   if (f.status === "CLOSED" || f.status === "CANCELED") return "CLOSED";
   if (f.orderReleased || f.status === "FILLED") return "COMPLETED";

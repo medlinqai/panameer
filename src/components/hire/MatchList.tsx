@@ -81,6 +81,14 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   if (!list.length) return <>{empty}</>;
   return (
     <div data-match-list>
+      {/* Scott 10-23: one line that says what to do here. */}
+      <p className="mt-2 text-[13.5px] text-state-inactive" data-matches-next><b className="text-ink">Next:</b>{" "}
+        {opened || allAsked
+          ? <>You asked {opened?.count ?? asked.length} — their answers arrive on <Link href={`/work-requests/${jobId}?tab=responses`} className="font-semibold">Responses</Link>. Or Hire one directly.</>
+          : starred.length
+            ? <>Ask your {starred.length} starred for availability below — or Hire one directly.</>
+            : <>Hire one directly, or star (☆) the ones you like and ask them all for availability.</>}
+      </p>
       {/* OJ-E002: two doors — Hire Directly (any row's Hire) or Compare Providers (the one magenta button). */}
       <div className="mt-2 grid gap-3 sm:grid-cols-2" data-two-doors>
         <div className="rounded-[12px] border border-state-border p-4" data-door="direct">
