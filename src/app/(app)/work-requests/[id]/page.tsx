@@ -34,6 +34,8 @@ import { hireMatches } from "@/lib/hire-questionnaire";
 import { readServiceDescription } from "@/lib/service-description";
 import { eventForBuyer, latestEventFor } from "@/lib/sourcing-events";
 import { SourcingEventView } from "@/components/hire/SourcingEventView";
+import { OpenTimes } from "@/components/hire/OpenTimes";
+import { myOpenTimes } from "@/lib/open-times";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
 
 export const metadata = { title: "Job · Panameer" };
@@ -105,7 +107,8 @@ export default async function Page({
   const photos = await providerPhotos(proposals.map((p) => p.providerPersonId));
   // CA-E004: providers who answered Not This Time (reason shown).
   const notNow = sec.requestRows.filter((r) => r.status.startsWith("Not This Time")).map((r) => ({ who: r.who, number: r.number, reason: /“(.*)”/.exec(r.status)?.[1] ?? null }));
-  const buyerInterviews = await listInterviews({ jobId: detail.id, buyerPersonId: (await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }))?.id });
+  const buyerPersonId = (await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }))?.id ?? "";
+  const buyerInterviews = await listInterviews({ jobId: detail.id, buyerPersonId });
   const actions = [
     ...(detail.status === "DRAFT" ? [{ label: "Edit the Job", href: `/hire?job=${detail.id}&step=0` }] : []),
     ...(!detail.soleSourced ? [{ label: "Invite Providers", href: `/work-requests/${id}/invite` }] : []),
@@ -200,6 +203,8 @@ export default async function Page({
       )}
       {tab === "interviews" && (
         <>
+          {/* OJ-E004: this job's interviews; the buyer's Open Times (one calendar for every job) sit on top. */}
+          <Section title="Set Interview Times"><OpenTimes windows={await myOpenTimes(buyerPersonId)} /></Section>
         <Section id="interviews" title="Interviews">
           {buyerInterviews.length ? <InterviewCards rows={buyerInterviews} side="buyer" videoReady={dailyConfigured()} /> : empty("None scheduled. Use Interview on a response; ranking and comments land here.")}
           {sec.evalRows.length > 0 && (
@@ -212,7 +217,7 @@ export default async function Page({
       )}
       {tab === "tests" && (
         <>
-        <Section title="Test Requests">
+        <Section title="Tests">
           {sec.testRows.length ? sec.testRows.map((t) => (
             <div key={t.number} className={`flex flex-wrap justify-between gap-2 py-2.5 text-[14px] ${ROW_RULE}`}><span><b>{t.who.replace(/^Provider /, "")}</b> · {t.skill}</span><span className="text-state-inactive">{t.score != null ? `${t.score}% · ` : ""}<b className={t.result === "Pass" ? GREEN : t.result === "Fail" ? "text-state-declined" : "text-ink"}>{t.result}</b></span></div>
           )) : empty("None requested. Scores and pass/fail show here.")}
