@@ -46,7 +46,7 @@ export function JobTabs({ jobId, current, counts }: { jobId: string; current: Jo
         return (
           <Link key={k} href={`/work-requests/${jobId}?tab=${k}`} aria-current={on ? "page" : undefined} scroll={false}
             className={on ? "shrink-0 border-b-[3px] border-magenta pb-2.5 pt-2 text-[14px] font-semibold text-magenta-dark no-underline" : "shrink-0 pb-3 pt-2 text-[14px] font-semibold text-ink no-underline hover:text-magenta-dark"}>
-            {label}{counts[k] ? <span className="ml-1.5 inline-grid h-[20px] min-w-[20px] place-items-center rounded-full bg-state-inactive-bg px-1.5 align-[1px] text-[11px] font-bold text-state-inactive" data-tab-count>{counts[k]}</span> : null}
+            {label}{counts[k] ? <span className="ml-1.5 inline-grid h-[20px] min-w-[20px] place-items-center rounded-full bg-ink px-1.5 align-[1px] text-[11px] font-bold text-surface" data-tab-count>{counts[k]}</span> : null}
           </Link>
         );
       })}
