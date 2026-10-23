@@ -1,23 +1,34 @@
 import Link from "next/link";
+import { BadgeCheck, FilePlus2, FileText, Inbox, Mail, MessagesSquare, Reply, Send, UserCheck, Users, type LucideIcon } from "lucide-react";
 import type { StripStep, JobTab } from "@/lib/job-strip";
 
 // OJ-E001: one header strip and one tab row on every tab of the Job page (Scott's hire_flow_2026-10-22 screens A/B).
-// Scott 10-23: each reached step opens the tab holding its data.
+// Scott 10-23: the Job Timeline — a bigger title, an icon per step, two-word names, centred; reached steps open their tab.
 const STEP_TAB: Record<string, JobTab> = { create: "details", matches: "matches", ask: "responses", interview: "interviews", hire: "work-order", approve: "work-order", wo: "work-order", release: "work-order" };
+const STEP_ICON: Record<string, LucideIcon> = { create: FilePlus2, matches: Users, ask: Inbox, interview: MessagesSquare, hire: UserCheck, approve: BadgeCheck, wo: FileText, release: Send };
+// The provider's strip reuses the keys with its own labels — pick its icons by label.
+const LABEL_ICON: Record<string, LucideIcon> = { Asked: Mail, Answered: Reply, "Interview & Questions": MessagesSquare, Decision: UserCheck, Order: FileText };
 export function JobStrip({ steps, jobId, title }: { steps: StripStep[]; jobId?: string; title?: string }) {
   return (
     <div className="overflow-x-auto" data-job-strip>
-      {title && <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">{title}</p>}
-      <ol className="grid min-w-[640px] gap-1 text-center" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
-        {steps.map((s) => (
-          <li key={s.key} className="flex flex-col items-center gap-1.5" data-strip-step={s.key} data-strip-state={s.state} aria-current={s.state === "current" ? "step" : undefined}>
-            <b className={`min-h-[16px] text-[11px] ${s.state === "done" ? "text-state-accepted" : s.state === "current" ? "text-magenta-dark" : "text-state-inactive"}`}>{s.top || " "}</b>
-            <i className={`block h-1 w-full rounded-sm ${s.state === "done" ? "bg-ink" : s.state === "current" ? "bg-magenta" : "bg-state-sunken"}`} />
-            {jobId && (s.state === "done" || s.state === "current")
-              ? <Link href={`/work-requests/${jobId}?tab=${STEP_TAB[s.key]}`} scroll={false} className={`text-[12px] font-semibold no-underline hover:underline ${s.state === "current" ? "text-magenta-dark" : "text-ink"}`}>{s.label}</Link>
-              : <span className={`text-[12px] font-semibold ${s.state === "current" ? "text-magenta-dark" : s.state === "skipped" ? "text-state-inactive" : s.state === "later" ? "text-state-disabled" : "text-ink"}`}>{s.label}</span>}
-          </li>
-        ))}
+      {title && <h2 className="mb-3 text-[18px] font-extrabold">{title}</h2>}
+      <ol className="grid min-w-[720px] gap-1 text-center" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
+        {steps.map((s, n) => {
+          const Icon = LABEL_ICON[s.label] ?? STEP_ICON[s.key] ?? FileText;
+          const ring = s.state === "done" ? "border-ink bg-ink text-surface" : s.state === "current" ? "border-magenta bg-white text-magenta-dark" : "border-state-border bg-white text-state-disabled";
+          const name = `${n + 1}. ${s.label}`;
+          const label = jobId && (s.state === "done" || s.state === "current")
+            ? <Link href={`/work-requests/${jobId}?tab=${STEP_TAB[s.key]}`} scroll={false} className={`no-underline hover:underline ${s.state === "current" ? "text-magenta-dark" : "text-ink"}`}>{name}</Link>
+            : <span className={s.state === "current" ? "text-magenta-dark" : s.state === "skipped" ? "text-state-inactive" : s.state === "later" ? "text-state-disabled" : "text-ink"}>{name}</span>;
+          return (
+            <li key={s.key} className="flex flex-col items-center gap-1.5" data-strip-step={s.key} data-strip-state={s.state} aria-current={s.state === "current" ? "step" : undefined}>
+              <span className={`grid h-9 w-9 place-items-center rounded-full border-2 ${ring}`} aria-hidden><Icon size={17} strokeWidth={1.9} /></span>
+              <span className="whitespace-nowrap text-[12.5px] font-semibold leading-tight">{label}</span>
+              <i className={`block h-1 w-full rounded-sm ${s.state === "done" ? "bg-ink" : s.state === "current" ? "bg-magenta" : "bg-state-sunken"}`} />
+              <b className={`min-h-[16px] text-[11.5px] ${s.state === "done" ? "text-state-accepted" : s.state === "current" ? "text-magenta-dark" : "text-state-inactive"}`}>{s.top || "\u00a0"}</b>
+            </li>
+          );
+        })}
       </ol>
     </div>
   );
