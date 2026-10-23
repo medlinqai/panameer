@@ -103,7 +103,7 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
             </p>
             {done.approvalNote && <p className="mt-1 text-[12.5px] text-ink-3">{done.approvalNote}</p>}
             <div className="mt-5 flex flex-wrap items-center gap-3">
-              <Link href={`/orders/${done.orderId}`} className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover" data-review-work-order>Review Work Order</Link>
+              <Link href={`/work-requests/${d.jobId}?tab=work-order`} className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover" data-review-work-order>Review Work Order</Link>
               <Link href="/hire" className="inline-flex min-h-11 items-center border border-ink px-5 text-[14px] font-bold text-ink">Post Another Job</Link>
               <Link href="/hire/overview" className="text-[14px] font-semibold text-magenta-dark underline underline-offset-4">Done</Link>
             </div>
