@@ -84,7 +84,7 @@ export function MatchList({ jobId, matches: initial, state, empty, published, ch
   return (
     <div data-match-list>
       {/* Scott 10-23: one line that says what to do here. */}
-      <p className="mt-2 text-[13.5px] text-state-inactive" data-matches-next><b className="text-ink">Next:</b>{" "}
+      <p className="mt-5 text-[13.5px] text-state-inactive" data-matches-next><b className="text-ink">Next:</b>{" "}
         {opened || allAsked
           ? <>You asked {opened?.count ?? asked.length} — their answers arrive on <Link href={`/work-requests/${jobId}?tab=responses`} className="font-semibold">Responses</Link>. Or Hire one directly.</>
           : starred.length
@@ -96,17 +96,17 @@ export function MatchList({ jobId, matches: initial, state, empty, published, ch
         const visible = list.filter((m) => !m.hidden);
         const strong = visible.filter((m) => !m.weak && m.inBudget).length;
         const pick = strong === 0 ? "Publish to Job Board" : strong <= 3 ? "Hire Directly" : "Compare Providers";
-        return <p className="mt-1 text-[13px]" data-match-hint><b>{visible.length} match{visible.length === 1 ? "" : "es"} · {strong} strong</b> <span className="text-state-inactive">(in budget, good skill fit) — suggested: </span><b>{pick}</b></p>;
+        return <p className="mt-1.5 text-[13px]" data-match-hint><b>{visible.length} match{visible.length === 1 ? "" : "es"} · {strong} strong</b> <span className="text-state-inactive">(in budget, good skill fit) — suggested: </span><b>{pick}</b></p>;
       })()}
       {/* OJ-E002: two doors — Hire Directly (any row's Hire) or Compare Providers (the one magenta button). */}
-      <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-two-doors>
-        <div className="rounded-[12px] border border-state-border p-4" data-door="direct">
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-two-doors>
+        <div className="rounded-[12px] border border-state-border p-5" data-door="direct">
           <h3 className="text-[15px] font-extrabold">Hire Directly</h3>
           <p className="mt-1 text-[13px] text-state-inactive">You know who you want. Press <b className="text-ink">Hire</b> on their row — terms, then the Order.</p>
           <p className="mt-2 text-[12px] text-state-inactive">Fastest · one provider</p>
           {!open && <button type="button" onClick={() => setOpen(true)} className={`${BTN_OUT} mt-2.5`} data-choose-direct>Choose Hire Directly</button>}
         </div>
-        <div className="rounded-[12px] border border-magenta p-4" data-door="compare">
+        <div className="rounded-[12px] border border-magenta p-5" data-door="compare">
           <h3 className="text-[15px] font-extrabold">Compare Providers</h3>
           <p className="mt-1 text-[13px] text-state-inactive">Star the ones you like. They each answer with their rate by your deadline; interview the best, then Hire.</p>
           {!open ? (
@@ -127,7 +127,7 @@ export function MatchList({ jobId, matches: initial, state, empty, published, ch
           )}
           {error && <p role="alert" className="mt-2 text-[13px] font-semibold text-state-declined">{error}</p>}
         </div>
-        <div className="rounded-[12px] border border-state-border p-4" data-door="publish">
+        <div className="rounded-[12px] border border-state-border p-5" data-door="publish">
           <h3 className="text-[15px] font-extrabold">Publish to Job Board</h3>
           <p className="mt-1 text-[13px] text-state-inactive">Let any provider see the job and apply with their rate — including ones not in your matches. Applications arrive on Responses.</p>
           {published
@@ -135,7 +135,7 @@ export function MatchList({ jobId, matches: initial, state, empty, published, ch
             : jobId && <div className="mt-2.5"><PostJobButton jobId={jobId} label="Publish Job" outline /></div>}
         </div>
       </div>
-      {open && <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
+      {open && <div className="mt-8 flex flex-wrap items-center gap-2 text-[13px]">
         <button type="button" aria-pressed={!starredOnly} onClick={() => setStarredOnly(false)} className={!starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>All ({list.filter((m) => !m.hidden).length})</button>
         <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({allStarred.length})</button>
         <button type="button" disabled={starred.length < 2 || starred.length > 4} onClick={() => setComparing(true)} className={GHOST} data-compare title="Star 2 to 4 providers to compare them">Compare{starred.length >= 2 ? ` ${Math.min(starred.length, 4)}` : ""}</button>
@@ -144,9 +144,9 @@ export function MatchList({ jobId, matches: initial, state, empty, published, ch
       </div>}
       {!open && <p className="mt-4 text-[12px] font-bold uppercase tracking-[0.08em] text-state-inactive" data-top-matches>Top Matches</p>}
 
-      <ul className="mt-3 divide-y divide-line border-y border-line">
+      <ul className="mt-4 divide-y divide-line border-y border-line">
         {(open ? visible : visible.slice(0, 3)).map((m) => (
-          <li key={m.personId} className={`flex items-start gap-3 py-3 ${active === m.personId ? "bg-[#fbeafb]/40" : ""}`} data-hire-match={m.name}>
+          <li key={m.personId} className={`flex items-start gap-3 py-4 ${active === m.personId ? "bg-[#fbeafb]/40" : ""}`} data-hire-match={m.name}>
             <Star on={m.starred} onClick={() => star(m)} name={m.name} />
             {(isMaskedName(m.name) || m.photoUrl) && <NeutralAvatar size={36} photoUrl={m.photoUrl} />}
             <button type="button" onClick={() => setActive(m.personId)} className="min-w-0 flex-1 text-left" data-quick-view-open>
