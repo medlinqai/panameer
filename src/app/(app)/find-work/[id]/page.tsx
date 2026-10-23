@@ -11,6 +11,9 @@ import { dailyConfigured } from "@/lib/daily";
 import { InterviewCards } from "@/components/work/InterviewCards";
 import { BookInterview } from "@/components/work/BookInterview";
 import { slotsForInterview } from "@/lib/open-times";
+import { JobStrip } from "@/components/hire/JobFrame";
+import type { StripStep } from "@/lib/job-strip";
+import type { InterviewRow } from "@/lib/interviews";
 import { ConfirmAvailability, type AvailabilityView } from "@/components/work/ConfirmAvailability";
 import { ServiceDescriptionView } from "@/components/hire/ServiceDescriptionView";
 
@@ -46,6 +49,7 @@ export default async function Page({
   // DB-E008: the provider's interview page — offer times, guidelines, Join.
   const interviews = person ? await listInterviews({ providerPersonId: person.id, jobId: detail.id }) : [];
 
+  const strip = await providerStrip(person?.id ?? "", detail.id, interviews, !!sourcing);
   const meta = [
     detail.budgetLabel,
     detail.experienceLevel,
@@ -63,45 +67,15 @@ export default async function Page({
         {detail.title}
       </h1>
 
-      {}
       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14px] text-ink-2">
         {detail.postedAgo && <span>Posted {detail.postedAgo}</span>}
-        {detail.stageLabel && (
-          <span className="rounded-full bg-ink/[0.05] px-3 py-0.5 text-[12.5px] font-bold text-ink">
-            {detail.stageLabel}
-          </span>
-        )}
+        {strip.pill && <span className={`rounded-full px-3 py-0.5 text-[12.5px] font-bold ${strip.pillTone === "ok" ? "bg-state-accepted-bg text-state-accepted" : strip.pillTone === "no" ? "bg-state-declined-bg text-state-declined" : "bg-state-pending-bg text-state-pending"}`} data-provider-pill>{strip.pill}</span>}
       </div>
+      {/* OJ-E008: the provider's own strip — Asked · Answered · Interview · Decision · Work Order. */}
+      <div className="mt-5"><JobStrip steps={strip.steps} /></div>
 
       <div className="mt-6 grid gap-5 min-[900px]:grid-cols-[1fr_300px] min-[900px]:items-start">
         <div className="min-w-0">
-          <div className="rounded-brand border border-line bg-white p-5">
-            {meta.length > 0 && (
-              <p className="text-[13.5px] text-ink-2">{meta.join(" · ")}</p>
-            )}
-
-            {/* With an Availability Request, the full Service Description sits below the action card — don't repeat skills/description up here. */}
-            {!sourcing && detail.skills.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {detail.skills.map((s) => (
-                  <span
-                    key={s}
-                    className="rounded-full border border-line px-2.5 py-0.5 text-[12px] text-ink-2"
-                  >
-                    {s}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {}
-            {!sourcing && detail.description && (
-              <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-ink-2">
-                {detail.description}
-              </p>
-            )}
-          </div>
-
           {interviews.length > 0 && (
             <section id="interview" className="mt-5 flex flex-col gap-3">
               <h2 className="text-[17px] font-extrabold">Interview</h2>
@@ -116,7 +90,6 @@ export default async function Page({
           {sourcing && (
             <div className="mt-5">
               <ConfirmAvailability jobId={detail.id} v={{ mode: "asked", askedCount: sourcing.askedCount, positions: sourcing.positions, dates: sourcing.dates, range: sourcing.range, rateCardCents: sourcing.rateCardCents, responded: sourcing.proposed ? { rateCents: sourcing.proposed.rateCents, note: sourcing.proposed.note } : null, declined: sourcing.declined, declineReason: sourcing.declineReason, open: sourcing.open, deadlineAt: sourcing.deadlineAt, eventNumber: sourcing.eventNumber }} startDeclining={(await searchParams)?.decline === "1"} />
-              <ServiceDescriptionView jobId={detail.id} editable={false} />
             </div>
           )}
           {!sourcing && eligibility?.can && (
@@ -139,6 +112,14 @@ export default async function Page({
               )}
             </div>
           )}
+          {/* OJ-E008: The Job last, collapsed — the provider acts on the interview and their answer first. */}
+          <details className="group mt-5 rounded-brand border border-line bg-white p-5" open={!sourcing && !interviews.length} data-the-job>
+            <summary className="flex cursor-pointer list-none items-center justify-between text-[16px] font-extrabold [&::-webkit-details-marker]:hidden">The Job<span aria-hidden className="text-ink-3 transition-transform group-open:rotate-180">▾</span></summary>
+            {meta.length > 0 && <p className="mt-2 text-[13.5px] text-ink-2">{meta.join(" · ")}</p>}
+            {detail.skills.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{detail.skills.map((s) => <span key={s} className="rounded-full border border-line px-2.5 py-0.5 text-[12px] text-ink-2">{s}</span>)}</div>}
+            {detail.description && <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-ink-2">{detail.description}</p>}
+            {sourcing && <div className="mt-4"><ServiceDescriptionView jobId={detail.id} editable={false} /></div>}
+          </details>
         </div>
 
         {}
@@ -159,4 +140,27 @@ async function openAvailability(personId: string, jobId: string, responded: { ra
     range: { type: job?.budget_type ?? "HOURLY", minCents: job?.budget_min_cents ?? null, maxCents: job?.budget_max_cents ?? null },
     rateCardCents: await rateCardFor(personId, jobId),
   };
+}
+
+/** OJ-E008: Asked · Answered · Interview · Decision · Work Order — done = green ✓ with the fact, current = magenta. */
+async function providerStrip(personId: string, jobId: string, interviews: InterviewRow[], asked: boolean) {
+  const [req, prop, wo] = await Promise.all([
+    prisma.proposalRequest.findFirst({ where: { job_id: jobId, provider_person_id: personId }, orderBy: { created_at: "desc" }, select: { created_at: true, status: true } }),
+    prisma.proposal.findUnique({ where: { job_id_provider_person_id: { job_id: jobId, provider_person_id: personId } }, select: { status: true, lines: { take: 1, orderBy: { line_number: "asc" }, select: { unit_price_cents: true, basis: true } } } }).catch(() => null),
+    prisma.workOrder.findFirst({ where: { provider_person_id: personId, workRequest: { job_id: jobId }, status: { not: "CANCELLED" } }, select: { order_number: true } }),
+  ]);
+  const day = (d: Date) => d.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" });
+  const answered = !!prop && !["DRAFT", "WITHDRAWN"].includes(prop.status);
+  const rate = prop?.lines[0]?.unit_price_cents != null ? `$${Math.round(prop.lines[0].unit_price_cents / 100)}${prop.lines[0].basis === "RATE" ? "/hr" : ""}` : "";
+  const iv = interviews.find((r) => r.status === "SCHEDULED") ?? interviews.find((r) => r.status === "COMPLETED") ?? interviews.find((r) => ["REQUESTED", "SLOTS_OFFERED"].includes(r.status));
+  const decided = prop?.status === "AWARDED" ? "Hired" : prop && ["NOT_SELECTED", "DECLINED"].includes(prop.status) ? "Not Selected" : null;
+  const steps: StripStep[] = [
+    { key: "create", label: "Asked", state: "done", top: req ? `✓ ${day(req.created_at)}` : "✓ Posted" },
+    { key: "matches", label: "Answered", state: answered ? "done" : req?.status === "DECLINED" ? "done" : "current", top: answered ? `✓ ${rate}` : req?.status === "DECLINED" ? "✓ Not This Time" : "Now" },
+    { key: "interview", label: "Interview", state: iv?.status === "COMPLETED" || (decided && iv) ? "done" : iv && answered ? "current" : "later", top: !iv ? "" : iv.status === "COMPLETED" ? "✓ Done" : iv.startsAt ? new Date(iv.startsAt).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit" }) : "Pick a Time" },
+    { key: "hire", label: "Decision", state: decided ? "done" : answered && (!iv || iv.status === "COMPLETED") ? "current" : "later", top: decided ? `✓ ${decided}` : "" },
+    { key: "wo", label: "Work Order", state: wo ? "done" : decided === "Hired" ? "current" : "later", top: wo ? "✓ Issued" : "" },
+  ];
+  const pill = decided === "Hired" ? "You're Hired" : decided ? "Not Selected" : prop?.status === "SHORTLISTED" ? "You're Shortlisted" : answered ? "You Answered" : req?.status === "DECLINED" ? "Not This Time" : asked ? "Asked for Your Availability" : null;
+  return { steps, pill, pillTone: decided === "Not Selected" ? "no" : decided || prop?.status === "SHORTLISTED" || answered ? "ok" : "pend" };
 }
