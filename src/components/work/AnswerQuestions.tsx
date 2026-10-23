@@ -68,7 +68,7 @@ export function AnswerQuestions({ set }: { set: ProviderQuestions }) {
   }
   const done = set.questions.every((q, i) => isAnswered(q, answers[i] ?? { value: null }));
   return (
-    <section id="questions" className="rounded-brand border border-line bg-white p-5" data-answer-questions>
+    <section className="rounded-brand border border-line bg-white p-5" data-answer-questions>
       <h3 className="text-[16px] font-extrabold">The Buyer Has {set.questions.length} Question{set.questions.length === 1 ? "" : "s"}</h3>
       {due && <p className="mt-0.5 text-[13px] text-ink-2">Answer by {due}</p>}
       {/* QB-E003: AI drafts every answer from the provider's profile; they review and Send. */}

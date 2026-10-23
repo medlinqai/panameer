@@ -12,6 +12,9 @@ import { InterviewCards } from "@/components/work/InterviewCards";
 import { BookInterview } from "@/components/work/BookInterview";
 import { slotsForInterview } from "@/lib/open-times";
 import { JobStrip } from "@/components/hire/JobFrame";
+import { FoldSection } from "@/components/casing/FoldSection";
+import { GuidelinesLink, InterviewQuickActions } from "@/components/work/InterviewQuickActions";
+import { Countdown } from "@/components/hire/Countdown";
 import { AnswerQuestions } from "@/components/work/AnswerQuestions";
 import { providerQuestions } from "@/lib/job-questions";
 import type { StripStep } from "@/lib/job-strip";
@@ -53,6 +56,20 @@ export default async function Page({
 
   const questionSets = person ? await providerQuestions(person.id, detail.id) : [];
   const strip = await providerStrip(person?.id ?? "", detail.id, interviews, !!sourcing);
+  // PJ-E002: one-line summaries and the one open section (the current step's).
+  const fmtWhen = (iso: string) => new Date(iso).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const ivBooked = interviews.find((r) => r.status === "SCHEDULED") ?? null;
+  const ivInvite = interviews.find((r) => r.slotMinutes && r.status === "REQUESTED") ?? null;
+  const ivSummary = ivBooked?.startsAt ? `Booked · ${fmtWhen(ivBooked.startsAt)}` : ivInvite ? `Invited · ${ivInvite.slotMinutes} min · Pick a Time` : interviews.find((r) => r.status === "COMPLETED") ? "Done" : interviews.find((r) => r.status === "SLOTS_OFFERED") ? "Times offered — waiting for the buyer" : interviews.find((r) => r.status === "REQUESTED") ? "Asked — offer a few times" : "Closed";
+  const qOpen = questionSets.find((q) => !q.submittedAt);
+  const qSummary = qOpen ? `${qOpen.questions.length} Question${qOpen.questions.length === 1 ? "" : "s"}${qOpen.dueAt ? ` · Answer by ${new Date(qOpen.dueAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}` : questionSets[0] ? `${questionSets[0].questions.length} Answers · Sent` : null;
+  const answeredCents = sourcing?.proposed?.rateCents ?? eligibility?.existing?.rate?.unitPriceCents ?? null;
+  const per = (sourcing?.range.type ?? "HOURLY") === "FIXED" ? "" : "/hr";
+  const availSummary = answeredCents != null
+    ? <>${Math.round(answeredCents / 100)}{per}{sourcing?.open && sourcing.deadlineAt ? <> · <Countdown at={sourcing.deadlineAt} plain /> left</> : null}</>
+    : sourcing?.declined ? "Not This Time" : sourcing && !sourcing.open ? "Closed" : "Not answered yet";
+  const jobSummary = [detail.worksite, detail.location, detail.budgetLabel, detail.duration].filter(Boolean).join(" · ");
+  const openKey = qOpen ? "questions" : ivInvite || ivBooked ? "interview" : answeredCents == null && (sourcing?.open || eligibility?.can) && !sourcing?.declined ? "availability" : interviews.length && strip.steps.find((x) => x.state === "current")?.label === "Decision" ? "interview" : "job";
   const meta = [
     detail.budgetLabel,
     detail.experienceLevel,
@@ -78,53 +95,63 @@ export default async function Page({
       <div className="mt-5"><JobStrip steps={strip.steps} /></div>
 
       <div className="mt-6 grid gap-5 min-[900px]:grid-cols-[1fr_300px] min-[900px]:items-start">
-        <div className="min-w-0">
+        <div className="min-w-0 border-b border-line" data-job-sections>
+          {/* PJ-E002: sections in acting order, one line each when closed; only the current step's is open. */}
           {interviews.length > 0 && (
-            <section id="interview" className="mt-5 flex flex-col gap-3">
-              <h2 className="text-[17px] font-extrabold">Interview</h2>
-              {/* IW-E005: Open Times invitations — book a slot (or cancel a booked one); older interviews keep the offer-times cards. */}
-              {await Promise.all(interviews.filter((r) => r.slotMinutes && (r.status === "REQUESTED" || r.status === "SCHEDULED")).map(async (r) => (
-                <BookInterview key={r.id} interviewId={r.id} company={r.buyerCompany} jobTitle={r.jobTitle} minutes={r.slotMinutes!} booked={r.status === "SCHEDULED" ? r.startsAt : null}
-                  slots={r.status === "REQUESTED" ? (await slotsForInterview(viewer, r.id)).map((d) => d.toISOString()) : []} />
-              )))}
-              {interviews.some((r) => !(r.slotMinutes && r.status === "REQUESTED")) && <InterviewCards rows={interviews.filter((r) => !(r.slotMinutes && r.status === "REQUESTED"))} side="provider" videoReady={dailyConfigured()} />}
-            </section>
+            <FoldSection id="interview" storageKey={detail.id} title="Interview" defaultOpen={openKey === "interview"}
+              summary={ivSummary}
+              action={ivBooked && ivBooked.status === "SCHEDULED" ? <InterviewQuickActions interviewId={ivBooked.id} hasRoom={ivBooked.hasRoom} /> : null}>
+              <div className="flex flex-col gap-3">
+                {/* IW-E005: an Open Times invitation books a slot; booked or older interviews show one card (Join, Add to Calendar). */}
+                {await Promise.all(interviews.filter((r) => r.slotMinutes && r.status === "REQUESTED").map(async (r) => (
+                  <BookInterview key={r.id} interviewId={r.id} company={r.buyerCompany} jobTitle={r.jobTitle} minutes={r.slotMinutes!} booked={null}
+                    slots={(await slotsForInterview(viewer, r.id)).map((d) => d.toISOString())} />
+                )))}
+                {interviews.some((r) => !(r.slotMinutes && r.status === "REQUESTED")) && <InterviewCards guidelines={false} rows={interviews.filter((r) => !(r.slotMinutes && r.status === "REQUESTED"))} side="provider" videoReady={dailyConfigured()} />}
+                <GuidelinesLink />
+              </div>
+            </FoldSection>
           )}
-          {/* AQ-E003: the buyer's written questions sit above Your Answer. */}
-          {questionSets.length > 0 && <div className="mt-5 flex flex-col gap-3">{questionSets.map((q) => <AnswerQuestions key={q.answerId} set={q} />)}</div>}
-          {sourcing && (
-            <div className="mt-5">
-              <ConfirmAvailability jobId={detail.id} v={{ mode: "asked", askedCount: sourcing.askedCount, positions: sourcing.positions, dates: sourcing.dates, range: sourcing.range, rateCardCents: sourcing.rateCardCents, responded: sourcing.proposed ? { rateCents: sourcing.proposed.rateCents, note: sourcing.proposed.note } : null, declined: sourcing.declined, declineReason: sourcing.declineReason, open: sourcing.open, deadlineAt: sourcing.deadlineAt, eventNumber: sourcing.eventNumber }} startDeclining={(await searchParams)?.decline === "1"} />
-            </div>
+          {questionSets.length > 0 && (
+            <FoldSection id="questions" storageKey={detail.id} title="Questions" defaultOpen={openKey === "questions"} summary={qSummary}>
+              <div className="flex flex-col gap-3">{questionSets.map((q) => <AnswerQuestions key={q.answerId} set={q} />)}</div>
+            </FoldSection>
           )}
-          {!sourcing && eligibility?.can && (
-            <div className="mt-5">
-              <ConfirmAvailability jobId={detail.id} v={await openAvailability(person!.id, detail.id, eligibility.existing ? { rateCents: eligibility.existing.rate?.unitPriceCents ?? null, note: eligibility.existing.coverNote } : null)} />
-            </div>
-          )}
+          {(sourcing || eligibility) && (
+            <FoldSection id="availability" storageKey={detail.id} title="Your Availability" defaultOpen={openKey === "availability"} summary={availSummary}>
+            {sourcing && (
+              <div className="mt-5">
+                <ConfirmAvailability jobId={detail.id} v={{ mode: "asked", askedCount: sourcing.askedCount, positions: sourcing.positions, dates: sourcing.dates, range: sourcing.range, rateCardCents: sourcing.rateCardCents, responded: sourcing.proposed ? { rateCents: sourcing.proposed.rateCents, note: sourcing.proposed.note } : null, declined: sourcing.declined, declineReason: sourcing.declineReason, open: sourcing.open, deadlineAt: sourcing.deadlineAt, eventNumber: sourcing.eventNumber }} startDeclining={(await searchParams)?.decline === "1"} />
+              </div>
+            )}
+            {!sourcing && eligibility?.can && (
+              <div className="mt-5">
+                <ConfirmAvailability jobId={detail.id} v={await openAvailability(person!.id, detail.id, eligibility.existing ? { rateCents: eligibility.existing.rate?.unitPriceCents ?? null, note: eligibility.existing.coverNote } : null)} />
+              </div>
+            )}
 
-          {}
-          {!sourcing && eligibility && !eligibility.can && eligibility.code !== "REQUEST_NOT_OPEN" && (
-            <div className="mt-5 rounded-brand border border-line bg-white p-5">
-              <p className="text-[15px] text-ink-2">{eligibility.message}</p>
-              {}
-              {eligibility.existing?.rate && (
-                <p className="mt-2 text-[14px] text-ink-2">
-                  You said you&apos;re available at $
-                  {(eligibility.existing.rate.unitPriceCents / 100).toFixed(2)}
-                  {eligibility.existing.rate.basis === "RATE" ? " per hour" : " as a fixed fee"}.
-                </p>
-              )}
-            </div>
+            {}
+            {!sourcing && eligibility && !eligibility.can && eligibility.code !== "REQUEST_NOT_OPEN" && (
+              <div className="mt-5 rounded-brand border border-line bg-white p-5">
+                <p className="text-[15px] text-ink-2">{eligibility.message}</p>
+                {}
+                {eligibility.existing?.rate && (
+                  <p className="mt-2 text-[14px] text-ink-2">
+                    You said you&apos;re available at $
+                    {(eligibility.existing.rate.unitPriceCents / 100).toFixed(2)}
+                    {eligibility.existing.rate.basis === "RATE" ? " per hour" : " as a fixed fee"}.
+                  </p>
+                )}
+              </div>
+            )}
+            </FoldSection>
           )}
-          {/* OJ-E008: The Job last, collapsed — the provider acts on the interview and their answer first. */}
-          <details className="group mt-5 rounded-brand border border-line bg-white p-5" open={!sourcing && !interviews.length} data-the-job>
-            <summary className="flex cursor-pointer list-none items-center justify-between text-[16px] font-extrabold [&::-webkit-details-marker]:hidden">The Job<span aria-hidden className="text-ink-3 transition-transform group-open:rotate-180">▾</span></summary>
-            {meta.length > 0 && <p className="mt-2 text-[13.5px] text-ink-2">{meta.join(" · ")}</p>}
+          <FoldSection id="job" storageKey={detail.id} title="The Job" defaultOpen={openKey === "job"} summary={jobSummary}>
+            {meta.length > 0 && <p className="text-[13.5px] text-ink-2">{meta.join(" · ")}</p>}
             {detail.skills.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{detail.skills.map((s) => <span key={s} className="rounded-full border border-line px-2.5 py-0.5 text-[12px] text-ink-2">{s}</span>)}</div>}
             {detail.description && <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-ink-2">{detail.description}</p>}
             {sourcing && <div className="mt-4"><ServiceDescriptionView jobId={detail.id} editable={false} /></div>}
-          </details>
+          </FoldSection>
         </div>
 
         {}

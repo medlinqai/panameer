@@ -18,7 +18,7 @@ export function InterviewGuidelines() {
   return <p data-interview-guidelines className="rounded-[8px] border border-line bg-bg-soft px-3 py-2.5 text-[12.5px] leading-snug text-ink-2"><b className="text-ink">Interview guidelines:</b> {INTERVIEW_GUIDELINES}</p>;
 }
 
-export function InterviewCards({ rows, side, videoReady }: { rows: InterviewRow[]; side: "buyer" | "provider"; videoReady: boolean }) {
+export function InterviewCards({ rows, side, videoReady, guidelines = true }: { rows: InterviewRow[]; side: "buyer" | "provider"; videoReady: boolean; guidelines?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export function InterviewCards({ rows, side, videoReady }: { rows: InterviewRow[
   const tz = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "America/New_York";
   return (
     <div className="grid gap-3" data-interview-cards>
-      <InterviewGuidelines />
+      {guidelines && <InterviewGuidelines />}
       {rows.map((r) => {
         const t = times[r.id] ?? ["", "", ""];
         return (
