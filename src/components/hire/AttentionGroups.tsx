@@ -59,7 +59,7 @@ export function AttentionGroups({ groups }: { groups: HireGroups }) {
         {expiring.map((g) => (
           <Row key={g.key} href={`/work-requests/${g.jobId}`} what={g.title} detail={`${g.when} · ${g.inText}`}>
             <button type="button" className={BTN_OUT} onClick={() => extend(g.eventId, g.key)}>Extend</button>
-            <button type="button" className={BTN_OUT} onClick={() => act(g.key, "Sourcing Event closed", { action: "close", eventId: g.eventId })}>Close</button>
+            <button type="button" className={BTN_OUT} onClick={() => act(g.key, "Closed — no more answers", { action: "close", eventId: g.eventId })}>Close</button>
           </Row>
         ))}
       </Group>

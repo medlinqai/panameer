@@ -72,8 +72,8 @@ export async function buyerLiveWork(personId: string) {
   ]);
   const tiles: Tile[] = [
     { id: "proposals", label: "Responses to Review", count: proposalsToReview, href: "/dashboard?step=proposals#live-work" },
-    { id: "closing", label: "Sourcing Events closing < 24 h", count: closing, href: "/dashboard?step=proposals#live-work" },
-    { id: "expired", label: "Sourcing Events expired, no award", count: expired, href: "/dashboard?step=proposals#live-work" },
+    { id: "closing", label: "Answers due in 24 h", count: closing, href: "/dashboard?step=proposals#live-work" },
+    { id: "expired", label: "Deadline passed — pick or extend", count: expired, href: "/dashboard?step=proposals#live-work" },
     { id: "interviews", label: "Interviews today", count: todays.length, href: "#todays-interviews" },
     { id: "tests", label: "Test results in", count: testsIn, href: "/dashboard?step=test#live-work" },
     { id: "accept", label: "Work Orders to accept", count: toAccept, href: "/orders" },
@@ -219,7 +219,7 @@ export async function buyerHireTabs(personId: string) {
     jobRows.push({
       draft, draftLine: draft ? `Draft · ${words ? `${words}${(j.description ?? "").trim().split(/\s+/).length > 8 ? "…" : ""}` : "no description"}` : null,
       category: j.commodity_group_id ? groupNames.get(j.commodity_group_id) ?? null : null,
-      origin: p.event ? "Sourcing Event" : p.wrs.length ? "Sole-Sourced" : null,
+      origin: p.event ? "Compare Providers" : p.wrs.length ? "Hire Directly" : null,
       facts: [p.job.job_number, `Posted ${short(postedAt).replace(/, \d.*$/, "")}`, j.worksite ? j.worksite[0] + j.worksite.slice(1).toLowerCase() : null, [j.city, j.state].filter(Boolean).join(", ") || null, contract || null, j.budget_min_cents != null || j.budget_max_cents != null ? `${j.budget_min_cents != null ? usd(j.budget_min_cents) : "…"}–${j.budget_max_cents != null ? usd(j.budget_max_cents) : "…"}${per}` : null].filter(Boolean).join(" · "),
       inRange: rates.length ? rates.every((c) => within(c) !== false) : null,
       wo: firstWo && p.orders[0] ? { id: firstWo.id, number: p.orders[0].order_number, provider: woLine ? p.numberOf(woLine.provider_person_id!).replace(/^Provider /, "") : "—", waiting } : null,

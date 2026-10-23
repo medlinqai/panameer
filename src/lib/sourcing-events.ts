@@ -118,7 +118,7 @@ async function openRequestFor(viewer: Viewer, jobId: string) {
   const me = await myPerson(viewer);
   const req = await prisma.proposalRequest.findFirst({ where: { job_id: jobId, provider_person_id: me, sourcing_event_id: { not: null } }, select: { id: true, status: true, sourcingEvent: { select: { status: true, deadline_at: true } } } });
   if (!req?.sourcingEvent) throw new WorkRequestError("You weren't asked for your availability on this job.", "NOT_FOUND");
-  if (req.sourcingEvent.status !== "OPEN" || req.sourcingEvent.deadline_at.getTime() <= Date.now()) throw new WorkRequestError("This Sourcing Event is closed.", "INVALID");
+  if (req.sourcingEvent.status !== "OPEN" || req.sourcingEvent.deadline_at.getTime() <= Date.now()) throw new WorkRequestError("The deadline for answers has passed.", "INVALID");
   return req;
 }
 
@@ -148,7 +148,7 @@ export async function extendDeadline(viewer: Viewer, eventId: string, hours: num
   const ev = await ownEvent(viewer, eventId);
   const h = Math.round(hours);
   if (!Number.isFinite(h) || h < 1 || h > 720) throw new WorkRequestError("Extend by 1 to 720 hours.", "INVALID");
-  if (ev.status !== "OPEN" && ev.status !== "CLOSED") throw new WorkRequestError("This Sourcing Event can't be extended.", "INVALID");
+  if (ev.status !== "OPEN" && ev.status !== "CLOSED") throw new WorkRequestError("This round can't be extended.", "INVALID");
   const at = new Date(Math.max(Date.now(), ev.deadline_at.getTime()) + h * 3_600_000);
   await prisma.$transaction([
     prisma.sourcingEvent.update({ where: { id: ev.id }, data: { deadline_at: at, deadline_hours: ev.deadline_hours + h, status: "OPEN" } }),
@@ -159,7 +159,7 @@ export async function extendDeadline(viewer: Viewer, eventId: string, hours: num
 
 async function ownEvent(viewer: Viewer, eventId: string) {
   const ev = await prisma.sourcingEvent.findUnique({ where: { id: eventId }, select: { id: true, job_id: true, status: true, deadline_at: true, deadline_hours: true, event_number: true, awarded_proposal_id: true, work_order_id: true, others_notified_at: true } });
-  if (!ev) throw new WorkRequestError("Sourcing Event not found", "NOT_FOUND");
+  if (!ev) throw new WorkRequestError("That round isn't available.", "NOT_FOUND");
   await ownJob(viewer, ev.job_id);
   return ev;
 }
@@ -327,7 +327,7 @@ export async function decideProposals(viewer: Viewer, proposalIds: string[], dec
 /** Close a Sourcing Event without an award (no one is told until a Work Order is Released). */
 export async function closeEvent(viewer: Viewer, eventId: string) {
   const ev = await ownEvent(viewer, eventId);
-  if (ev.status !== "OPEN") throw new WorkRequestError("This Sourcing Event is already closed.", "INVALID");
+  if (ev.status !== "OPEN") throw new WorkRequestError("This round is already closed.", "INVALID");
   await prisma.sourcingEvent.update({ where: { id: ev.id }, data: { status: "CLOSED", deadline_at: new Date(Math.min(Date.now(), ev.deadline_at.getTime())) } });
   await prisma.proposalRequest.updateMany({ where: { sourcing_event_id: ev.id, status: { in: ["ISSUED", "VIEWED"] } }, data: { status: "EXPIRED" } });
   await resolveProposalsReceived(ev.job_id);

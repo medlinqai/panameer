@@ -47,6 +47,6 @@ export function defaultPaymentEvent(t: TransactionType, productEvent?: PaymentEv
   return productEvent === "DOWNLOAD" || productEvent === "INSTALLATION" ? productEvent : "ACCEPTANCE";
 }
 
-/** WS-E004: the Origin label (JOB_HIRE → Sourcing Event when the job had one, else Sole-Sourced). */
-const SOURCE_LABEL: Record<WorkRequestSource, string> = { JOB_HIRE: "Sole-Sourced", SHOP: "Shop", ESTIMATE: "Estimate", OFFER: "Offer", EXTERNALLY_SOURCED: "Externally Sourced", PUNCHOUT: "Punchout" };
-export const originLabel = (source: WorkRequestSource | null | undefined, hadSourcingEvent: boolean) => (source === "JOB_HIRE" && hadSourcingEvent ? "Sourcing Event" : source ? SOURCE_LABEL[source] : "—");
+/** WS-E004 / OJ-E006: the Origin label (JOB_HIRE → Compare Providers when the job had a Sourcing Event, else Hire Directly). */
+const SOURCE_LABEL: Record<WorkRequestSource, string> = { JOB_HIRE: "Hire Directly", SHOP: "Shop", ESTIMATE: "Estimate", OFFER: "Offer", EXTERNALLY_SOURCED: "Externally Sourced", PUNCHOUT: "Punchout" };
+export const originLabel = (source: WorkRequestSource | null | undefined, hadSourcingEvent: boolean) => (source === "JOB_HIRE" && hadSourcingEvent ? "Compare Providers" : source ? SOURCE_LABEL[source] : "—");

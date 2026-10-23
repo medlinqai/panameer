@@ -101,7 +101,7 @@ export async function workRequestSections(viewer: Viewer, jobId: string) {
       created: job.created_at.toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric", year: "numeric" }),
       buyer: buyer ? [`${buyer.first_name} ${buyer.last_name}`.trim(), buyer.company?.name].filter(Boolean).join(" · ") : "—",
       style: lastWr?.style ? STYLE_LABEL[lastWr.style] : null,
-      origin: lastWr?.source ? originLabel(lastWr.source, hadSe) : hadSe ? "Sourcing Event" : null,
+      origin: lastWr?.source ? originLabel(lastWr.source, hadSe) : hadSe ? "Compare Providers" : null,
       workRequest: lastWr?.wr_number ?? null,
     },
     lineRows, proposalExtra,
