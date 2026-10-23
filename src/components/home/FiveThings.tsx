@@ -2,6 +2,7 @@ import { BUYER_ROAD, BUYER_ROAD_TITLE, ROAD_TITLE } from "@/lib/user-levels";
 import { appCounts, APP_HOME, type AppCounts } from "@/lib/attention";
 import type { RoadBadge } from "@/components/lifecycle/RoadGraphic";
 import { BuyerThings } from "@/components/home/BuyerThings";
+import { AttentionList } from "@/components/home/AttentionList";
 import { prisma } from "@/lib/prisma";
 import { sellerRegistration } from "@/lib/seller-registration";
 import { menuFor } from "@/lib/menu-hint";
@@ -180,17 +181,7 @@ function NeedsYourAttention({ c }: { c: AppCounts }) {
       <h2 className="text-[17px] font-extrabold">Needs Your Attention</h2>
       {c.items.length ? (
         <>
-          <ul className="mt-2 divide-y divide-line">
-            {c.items.slice(0, 8).map((i) => (
-              <li key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5">
-                <span className="min-w-0 flex-1">
-                  <b className="block text-[14px]">{i.what}</b>
-                  <span className="text-[12.5px] text-ink-2">{i.appLabel}{i.due ? ` · due ${i.due}` : ""}</span>
-                </span>
-                <Link href={i.href} className="inline-flex min-h-9 items-center bg-ink px-3.5 text-[13px] font-bold text-surface hover:bg-ink-hover">{i.action}</Link>
-              </li>
-            ))}
-          </ul>
+          <AttentionList items={c.items} />
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
             {apps.map((a) => <Link key={a} href={APP_HOME[c.side][a]} className="font-semibold text-magenta-dark underline underline-offset-4">See All In {c.items.find((i) => i.app === a)!.appLabel}</Link>)}
           </p>

@@ -230,7 +230,7 @@ async function countCoursesToWatch(userId: string): Promise<number> {
 
 // ── RA-E001: one counts source — per app and per tab, each item something waiting on THIS person ─────────────
 export type AppKey = "request" | "shop" | "estimate" | "order" | "settlement" | "payment" | "connect" | "learn";
-export type AttentionItem = { id: string; what: string; app: AppKey; appLabel: string; due: string | null; href: string; action: string };
+export type AttentionItem = { id: string; what: string; app: AppKey; appLabel: string; due: string | null; dueAt: string | null; href: string; action: string };
 export type AppCounts = {
   side: "buyer" | "provider";
   request: { total: number; jobs: number; requests: number; interviews: number; tests: number };
@@ -272,7 +272,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   const { estimateCounts } = await import("@/lib/estimate-events");
   const ec = await estimateCounts(id, side === "buyer" ? "buyer" : "seller");
   const estimate = { total: ec.total };
-  const add = (app: AppKey, n: number, what: string, href: string, action: string, due?: Date | null) => { if (n > 0) items.push({ id: `${app}:${what}`, what: n > 1 ? `${what} (${n})` : what, app, appLabel: app === "request" && side === "provider" ? "Jobs" : APP_LABEL[app], due: dueText(due), href, action }); return n; };
+  const add = (app: AppKey, n: number, what: string, href: string, action: string, due?: Date | null) => { if (n > 0) items.push({ id: `${app}:${what}`, what: n > 1 ? `${what} (${n})` : what, app, appLabel: app === "request" && side === "provider" ? "Jobs" : APP_LABEL[app], due: dueText(due), dueAt: due ? due.toISOString() : null, href, action }); return n; };
 
   if (side === "buyer") {
     const [toReview, closing, expired, confirm, todays, testsIn, approvals, woAccept, settle, pay] = await Promise.all([
@@ -319,7 +319,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   const tests = add("request", testsToTake, "Tests to Take", "/find-work?tab=tests", "Take");
   // Scott 10-23: written questions from a buyer wait on the provider too.
   const qs = await prisma.questionAnswer.findMany({ where: { provider_person_id: id, submitted_at: null }, orderBy: { created_at: "asc" }, select: { questionSet: { select: { job_id: true, due_at: true } } } });
-  const questions = add("request", qs.length, "A Buyer Has Questions for You — Answer", qs[0] ? `/find-work/${qs[0].questionSet.job_id}#questions` : "/find-work", "Answer", qs[0]?.questionSet.due_at);
+  const questions = add("request", qs.length, "A Buyer Has Questions for You", qs[0] ? `/find-work/${qs[0].questionSet.job_id}#questions` : "/find-work", "Answer", qs[0]?.questionSet.due_at);
   const myOrders = (await prisma.workOrder.findMany({ where: { provider_person_id: id }, select: { id: true } })).map((o) => o.id);
   const changes = myOrders.length ? await prisma.workOrderRevision.count({ where: { status: "PENDING", work_order_id: { in: myOrders } } }) : 0;
   const order = add("order", woAccept.length, "Orders to Accept", "/orders/overview", "Accept") + add("order", changes, "Change Orders to Answer", "/orders/overview", "Answer");
