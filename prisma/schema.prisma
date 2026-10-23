@@ -9602,3 +9602,33 @@ enum JobKind {
   JOB
   ESTIMATE
 }
+
+/// AQ-E001: written questions a buyer sends to providers on a Job (up to 5) — "Interview & Ask".
+model QuestionSet {
+  id                   String           @id @default(uuid()) @db.Uuid
+  job_id               String           @db.Uuid
+  created_by_person_id String           @db.Uuid
+  /// Up to five question strings.
+  questions            Json
+  due_at               DateTime?
+  created_at           DateTime         @default(now())
+  answers              QuestionAnswer[]
+
+  @@index([job_id])
+  @@map("question_sets")
+}
+
+/// AQ-E001: one provider's answers to a QuestionSet (answers Json = strings in question order; submitted_at null = draft).
+model QuestionAnswer {
+  id                 String      @id @default(uuid()) @db.Uuid
+  question_set_id    String      @db.Uuid
+  provider_person_id String      @db.Uuid
+  answers            Json        @default("[]")
+  submitted_at       DateTime?
+  created_at         DateTime    @default(now())
+  questionSet        QuestionSet @relation(fields: [question_set_id], references: [id], onDelete: Cascade)
+
+  @@unique([question_set_id, provider_person_id])
+  @@index([provider_person_id])
+  @@map("question_answers")
+}
