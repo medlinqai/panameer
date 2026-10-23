@@ -249,7 +249,7 @@ export async function parsePosting(text: string): Promise<ParseResult> {
   // One retry: the model occasionally returns a shape we can't read.
   let out = await aiExtractServiceDescription(text, ctx, catalog);
   if (!out.ok && out.reason === "error") out = await aiExtractServiceDescription(text, ctx, catalog);
-  if (!out.ok) return { ok: false, reason: out.reason };
+  if (!out.ok) { console.error(`[parsePosting] ${out.reason}: ${out.message}`); return { ok: false, reason: out.reason }; }
   const pick = ctx && cls ? { category: ctx.category, businessTypeId: ctx.id, businessType: ctx.name, usesSkills: ctx.usesSkills, confidence: cls.confidence } : null;
   return { ok: true, sd: await fromParsed(out.data, stripContacts(text), pick) };
 }
