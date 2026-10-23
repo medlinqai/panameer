@@ -55,6 +55,7 @@ export default async function Page({
   const interviews = person ? await listInterviews({ providerPersonId: person.id, jobId: detail.id }) : [];
 
   const questionSets = person ? await providerQuestions(person.id, detail.id) : [];
+  const history = person ? await providerHistory(person.id, detail.id) : [];
   const strip = await providerStrip(person?.id ?? "", detail.id, interviews, !!sourcing);
   // PJ-E002: one-line summaries and the one open section (the current step's).
   const fmtWhen = (iso: string) => new Date(iso).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -93,6 +94,22 @@ export default async function Page({
       </div>
       {/* OJ-E008: the provider's own strip — Asked · Answered · Interview · Decision · Work Order. */}
       <div className="mt-5"><JobStrip steps={strip.steps} /></div>
+      {/* PJ-E003: what happened so far, newest first — the Work History dot timeline, collapsed. */}
+      {history.length > 0 && (
+        <div className="mt-3">
+          <FoldSection id="history" storageKey={detail.id} title={`History (${history.length})`} summary={history[0].text}>
+            <ol className="ml-1" data-history>
+              {history.map((h, i) => (
+                <li key={i} className="relative pb-4 pl-7 last:pb-0">
+                  {i < history.length - 1 && <span aria-hidden className="absolute bottom-0 left-[3px] top-[14px] border-l border-dashed border-magenta" />}
+                  <span aria-hidden className="absolute left-0 top-[6px] h-2 w-2 rounded-full bg-magenta" />
+                  <p className="text-[14px]"><b>{h.text}</b> <span className="text-ink-2">· {h.when}</span></p>
+                </li>
+              ))}
+            </ol>
+          </FoldSection>
+        </div>
+      )}
 
       <div className="mt-6 grid gap-5 min-[900px]:grid-cols-[1fr_300px] min-[900px]:items-start">
         <div className="min-w-0 border-b border-line" data-job-sections>
@@ -196,4 +213,31 @@ async function providerStrip(personId: string, jobId: string, interviews: Interv
   ];
   const pill = decided === "Hired" ? "You're Hired" : decided ? "Not Selected" : prop?.status === "SHORTLISTED" ? "You're Shortlisted" : answered ? "You Answered" : req?.status === "DECLINED" ? "Not This Time" : asked ? "Asked for Your Availability" : null;
   return { steps, pill, pillTone: decided === "Not Selected" ? "no" : decided || prop?.status === "SHORTLISTED" || answered ? "ok" : "pend" };
+}
+
+/** PJ-E003: this provider's history on the job, newest first. */
+async function providerHistory(personId: string, jobId: string) {
+  const [req, prop, ivs, qas, wo] = await Promise.all([
+    prisma.proposalRequest.findFirst({ where: { job_id: jobId, provider_person_id: personId }, orderBy: { created_at: "desc" }, select: { created_at: true, declined_at: true } }),
+    prisma.proposal.findUnique({ where: { job_id_provider_person_id: { job_id: jobId, provider_person_id: personId } }, select: { status: true, submitted_at: true, updated_at: true, lines: { take: 1, orderBy: { line_number: "asc" }, select: { unit_price_cents: true, basis: true } } } }).catch(() => null),
+    prisma.interviewRequest.findMany({ where: { job_id: jobId, provider_person_id: personId }, select: { created_at: true, status: true, completed_at: true, confirmed_line_id: true, response: { select: { lines: { select: { id: true, starts_at: true } } } } } }),
+    prisma.questionAnswer.findMany({ where: { provider_person_id: personId, questionSet: { job_id: jobId } }, select: { created_at: true, submitted_at: true } }),
+    prisma.workOrder.findFirst({ where: { provider_person_id: personId, workRequest: { job_id: jobId }, status: { not: "CANCELLED" } }, select: { created_at: true, order_number: true } }),
+  ]);
+  const at = (d: Date) => d.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const ev: { t: Date; text: string }[] = [];
+  if (req) ev.push({ t: req.created_at, text: "Asked for your availability" });
+  if (req?.declined_at) ev.push({ t: req.declined_at, text: "You said Not This Time" });
+  const l = prop?.lines[0];
+  if (prop?.submitted_at) ev.push({ t: prop.submitted_at, text: `Answered${l?.unit_price_cents != null ? ` $${Math.round(l.unit_price_cents / 100)}${l.basis === "RATE" ? "/hr" : ""}` : ""}` });
+  for (const iv of ivs) {
+    ev.push({ t: iv.created_at, text: "Interview requested" });
+    const line = iv.response?.lines.find((x) => x.id === iv.confirmed_line_id);
+    if (line) ev.push({ t: line.starts_at, text: `Interview ${iv.status === "COMPLETED" ? "held" : iv.status === "SCHEDULED" ? "booked" : iv.status.toLowerCase()} ${line.starts_at.toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit" })}` });
+  }
+  for (const q of qas) { ev.push({ t: q.created_at, text: "Questions received" }); if (q.submitted_at) ev.push({ t: q.submitted_at, text: "Questions answered" }); }
+  if (prop?.status === "AWARDED") ev.push({ t: prop.updated_at, text: "You were hired" });
+  if (prop && ["NOT_SELECTED"].includes(prop.status)) ev.push({ t: prop.updated_at, text: "Not selected this time" });
+  if (wo) ev.push({ t: wo.created_at, text: `Order ${wo.order_number} issued` });
+  return ev.sort((a, b) => b.t.getTime() - a.t.getTime()).map((e) => ({ text: e.text, when: at(e.t) }));
 }
