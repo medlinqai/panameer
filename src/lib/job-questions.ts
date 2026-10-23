@@ -26,7 +26,7 @@ export async function draftQuestions(viewer: Viewer, jobId: string): Promise<Que
     job.skills.length ? `Skills: ${job.skills.map((s) => s.skill.name).join(", ")}` : null,
     job.start_date ? `Dates: ${job.start_date.toISOString().slice(0, 10)} to ${job.end_date?.toISOString().slice(0, 10) ?? "open"}` : null].filter(Boolean).join("\n");
   // QB-E002: mostly quick types (Yes/No, Pick One, Number) with sensible options; at most one text question.
-  const call = await callExtractionModel({
+  const ask = () => callExtractionModel({
     timeoutMs: 60_000,
     system: "You help a buyer screen contractors in writing before an interview. Write 3 to 5 short, specific questions that test real experience with this job's work, tools and dates. Make them QUICK to answer: mostly YES_NO, PICK_ONE (3–5 sensible options, e.g. \"Full Oracle Fusion P2P implementations led\": 0 · 1–2 · 3–5 · 6+) or NUMBER; at most one SHORT_TEXT. Never ask for names, company names, email, phone or social profiles.",
     schema: { type: "object", properties: { questions: { type: "array", minItems: 3, maxItems: 5, items: { type: "object", properties: { text: { type: "string" }, type: { type: "string", enum: ["YES_NO", "PICK_ONE", "PICK_SEVERAL", "NUMBER", "SCALE", "SHORT_TEXT"] }, options: { type: "array", items: { type: "string" }, description: "Choices for PICK_ONE / PICK_SEVERAL; empty otherwise." } }, required: ["text", "type"] } } }, required: ["questions"] },
@@ -35,9 +35,12 @@ export async function draftQuestions(viewer: Viewer, jobId: string): Promise<Que
     instruction: "Write the screening questions for this job.",
     tag: "job",
     toolDescription: "Record 3 to 5 quick screening questions.",
-    maxOutputTokens: 1_500,
+    maxOutputTokens: 3_000,
   });
-  if (!call.ok) throw new SourcingError("We couldn't draft questions right now — write your own or try again.", "AI");
+  // One retry on a transient failure; the reason goes to the server log so a failure can be traced.
+  let call = await ask();
+  if (!call.ok && (call.reason === "error" || call.reason === "truncated")) call = await ask();
+  if (!call.ok) { console.error(`[draftQuestions] ${call.reason}: ${call.message}`); throw new SourcingError(call.reason === "no_key" ? "AI isn't set up on this server." : "We couldn't draft questions right now — write your own or try again.", "AI"); }
   const raw = ((call.value as { questions?: { text?: string; type?: string; options?: string[] }[] }).questions ?? []).map((q) => ({ text: q.text ?? "", type: q.type, options: (q.options ?? []).map((label) => ({ label })) }));
   let texts = 0;
   return normalizeQuestions(raw).filter((q) => !(q.type === "SHORT_TEXT" || q.type === "LONG_TEXT") || texts++ < 1).filter((q) => !(q.type === "PICK_ONE" || q.type === "PICK_SEVERAL") || (q.options?.length ?? 0) >= 2).slice(0, 5);
