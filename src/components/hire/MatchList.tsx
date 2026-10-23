@@ -90,6 +90,13 @@ export function MatchList({ jobId, matches: initial, state, empty, published }: 
             ? <>Ask your {starred.length} starred for availability below — or Hire one directly.</>
             : <>Hire one directly, or star (☆) the ones you like and ask them all for availability.</>}
       </p>
+      {/* Scott 10-23: the matches decide the door — say how many are strong and suggest one. */}
+      {(() => {
+        const visible = list.filter((m) => !m.hidden);
+        const strong = visible.filter((m) => !m.weak && m.inBudget).length;
+        const pick = strong === 0 ? "Publish to Job Board" : strong <= 3 ? "Hire Directly" : "Compare Providers";
+        return <p className="mt-1 text-[13px]" data-match-hint><b>{visible.length} match{visible.length === 1 ? "" : "es"} · {strong} strong</b> <span className="text-state-inactive">(in budget, good skill fit) — suggested: </span><b>{pick}</b></p>;
+      })()}
       {/* OJ-E002: two doors — Hire Directly (any row's Hire) or Compare Providers (the one magenta button). */}
       <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-two-doors>
         <div className="rounded-[12px] border border-state-border p-4" data-door="direct">
