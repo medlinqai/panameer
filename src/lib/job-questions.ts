@@ -29,20 +29,25 @@ export async function draftQuestions(viewer: Viewer, jobId: string): Promise<Que
   const ask = () => callExtractionModel({
     timeoutMs: 60_000,
     system: "You help a buyer screen contractors in writing before an interview. Write 3 to 5 short, specific questions that test real experience with this job's work, tools and dates. Make them QUICK to answer: mostly YES_NO, PICK_ONE (3–5 sensible options, e.g. \"Full Oracle Fusion P2P implementations led\": 0 · 1–2 · 3–5 · 6+) or NUMBER; at most one SHORT_TEXT. Never ask for names, company names, email, phone or social profiles.",
-    schema: { type: "object", properties: { questions: { type: "array", minItems: 3, maxItems: 5, items: { type: "object", properties: { text: { type: "string" }, type: { type: "string", enum: ["YES_NO", "PICK_ONE", "PICK_SEVERAL", "NUMBER", "SCALE", "SHORT_TEXT"] }, options: { type: "array", items: { type: "string" }, description: "Choices for PICK_ONE / PICK_SEVERAL; empty otherwise." } }, required: ["text", "type"] } } }, required: ["questions"] },
+    schema: { type: "object", additionalProperties: false, properties: { questions: { type: "array", description: "3 to 5 questions.", items: { type: "object", additionalProperties: false, properties: { text: { type: "string", description: "The question, written for the provider." }, type: { type: "string", enum: ["YES_NO", "PICK_ONE", "PICK_SEVERAL", "NUMBER", "SCALE", "SHORT_TEXT"] }, options: { type: "array", items: { type: "string" }, description: "Choices for PICK_ONE / PICK_SEVERAL; an empty list otherwise." } }, required: ["text", "type", "options"] } } }, required: ["questions"] },
+    strict: true,
     schemaName: "record_questions",
     text,
-    instruction: "Write the screening questions for this job.",
+    instruction: "Write the screening questions for this job. Call the tool with a `questions` list of real questions (text, type, options) — do not repeat the schema.",
     tag: "job",
     toolDescription: "Record 3 to 5 quick screening questions.",
     maxOutputTokens: 3_000,
   });
   // One retry on a transient failure; the reason goes to the server log so a failure can be traced.
+  // 10-23: the model sometimes echoes the schema instead of filling it — treat that like a failure and ask again.
+  const echoed = (c: Awaited<ReturnType<typeof ask>>) => c.ok && !Array.isArray((c.value as { questions?: unknown })?.questions);
   let call = await ask();
-  if (!call.ok && (call.reason === "error" || call.reason === "truncated")) call = await ask();
+  if ((!call.ok && (call.reason === "error" || call.reason === "truncated")) || echoed(call)) call = await ask();
+  if (echoed(call)) { console.error(`[draftQuestions] schema echoed twice`); throw new SourcingError("We couldn't draft questions right now — write your own or try again.", "AI"); }
   if (!call.ok) { console.error(`[draftQuestions] ${call.reason}: ${call.message}`); throw new SourcingError(call.reason === "no_key" ? "AI isn't set up on this server." : "We couldn't draft questions right now — write your own or try again.", "AI"); }
   const raw = ((call.value as { questions?: { text?: string; type?: string; options?: string[] }[] }).questions ?? []).map((q) => ({ text: q.text ?? "", type: q.type, options: (q.options ?? []).map((label) => ({ label })) }));
   let texts = 0;
+  if (!raw.length) console.error(`[draftQuestions] empty result: ${JSON.stringify(call.value).slice(0, 600)}`);
   return normalizeQuestions(raw).filter((q) => !(q.type === "SHORT_TEXT" || q.type === "LONG_TEXT") || texts++ < 1).filter((q) => !(q.type === "PICK_ONE" || q.type === "PICK_SEVERAL") || (q.options?.length ?? 0) >= 2).slice(0, 5);
 }
 
