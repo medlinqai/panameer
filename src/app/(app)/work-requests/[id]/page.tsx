@@ -107,13 +107,16 @@ export default async function Page({
   const strip = await jobStrip(detail.id);
   // Scott 10-23: until a door is chosen (2. Choose Provider), the Job shows the doors and top matches only — no tabs.
   const doorChosen = strip?.steps.find((x) => x.key === "matches")?.state === "done";
-  const tab: JobTab = !doorChosen ? "matches" : (["matches", "responses", "interviews", "tests", "work-order", "details"] as const).find((t) => t === sp.tab) ?? strip?.defaultTab ?? "matches";
+  const tab: JobTab = !doorChosen ? "matches" : (["matches", "responses", "questions", "interviews", "tests", "work-order", "details"] as const).find((t) => t === sp.tab) ?? strip?.defaultTab ?? "matches";
   const meta = [sec.jobNumber, sd?.worksite ? sd.worksite[0] + sd.worksite.slice(1).toLowerCase() : null, sd ? [sd.city, sd.state].filter(Boolean).join(", ") || null : null, rangeText, sd?.startDate && sd?.endDate ? `${fmtDay(sd.startDate)} – ${fmtDay(sd.endDate)}` : null].filter(Boolean).join(" · ");
   // JS-E001: one buyer-facing status and the origin tag (From ERP · Compare Providers · Hire Directly).
   const stageInfo = (await jobStages([detail.id])).get(detail.id);
   const stage = stageInfo?.stage ?? "OPEN";
   const origin = stageInfo?.origin ?? (strip?.event ? "Compare Providers" : strip?.direct ? "Hire Directly" : null);
-  const counts = { matches: jobMatches.length, responses: (event ? event.proposals.filter((p) => p.proposal || p.requestStatus === "DECLINED").length : notNow.length) + shownProps.length, interviews: buyerInterviews.length, tests: sec.testRows.length };
+  // Scott 10-23: step 4, Ask Questions — the sets sent on this job and who has answered.
+  const qSets = await prisma.questionSet.findMany({ where: { job_id: detail.id }, orderBy: { created_at: "desc" }, select: { id: true, questions: true, due_at: true, created_at: true, answers: { select: { provider_person_id: true, submitted_at: true } } } });
+  const qNums = new Map((await prisma.providerProfile.findMany({ where: { person_id: { in: [...new Set(qSets.flatMap((q) => q.answers.map((a) => a.provider_person_id)))] } }, select: { person_id: true, provider_number: true } })).map((x) => [x.person_id, x.provider_number ?? "Provider"]));
+  const counts = { questions: qSets.reduce((n, q) => n + q.answers.length, 0), matches: jobMatches.length, responses: (event ? event.proposals.filter((p) => p.proposal || p.requestStatus === "DECLINED").length : notNow.length) + shownProps.length, interviews: buyerInterviews.length, tests: sec.testRows.length };
 
   return (
     <div className="pm-white-page mx-auto flex w-full min-w-0 max-w-[1120px] flex-col gap-[18px] pb-16" data-work-request-page>
@@ -202,6 +205,23 @@ export default async function Page({
           )}
         </Section>
         </>
+      )}
+      {tab === "questions" && (
+        <section className="mt-5 flex flex-col gap-4" data-questions-tab>
+          <p className="text-[13.5px] text-state-inactive"><b className="text-ink">Next:</b> {qSets.length ? "Read the answers on Request Availability (Read Answers on each row), or ask more." : "Optional. Send written questions to the providers who are available — quick answers often replace an interview."} <Link href={`/work-requests/${detail.id}?tab=responses`} className="font-semibold">Ask Questions on Request Availability →</Link></p>
+          {qSets.map((q) => {
+            const n = Array.isArray(q.questions) ? q.questions.length : 0;
+            const inN = q.answers.filter((a) => a.submitted_at).length;
+            return (
+              <div key={q.id} className="rounded-[12px] border border-state-border p-5">
+                <p className="text-[14.5px] font-bold">{n} Question{n === 1 ? "" : "s"} · sent {q.created_at.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" })}{q.due_at ? ` · answer by ${q.due_at.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" })}` : ""} · <span className={inN === q.answers.length ? "text-state-accepted" : "text-state-pending"}>{inN} of {q.answers.length} Answered</span></p>
+                <ul className="mt-3 flex flex-wrap gap-2 text-[13px]">
+                  {q.answers.map((a) => <li key={a.provider_person_id} className={`rounded-full px-3 py-1 font-semibold ${a.submitted_at ? "bg-state-accepted-bg text-state-accepted" : "bg-state-pending-bg text-state-pending"}`}>{qNums.get(a.provider_person_id)} · {a.submitted_at ? "Answered" : "Waiting"}</li>)}
+                </ul>
+              </div>
+            );
+          })}
+        </section>
       )}
       {(tab === "interviews" || tab === "tests") && (
         <>

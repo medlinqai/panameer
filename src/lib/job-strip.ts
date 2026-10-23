@@ -3,9 +3,9 @@ import { jobPath } from "@/lib/work-request-path";
 
 // OJ-E001: the Job page's one process strip — Create · Matches · Ask · Interview · Hire · Approve · Work Order · Release.
 // done = ink bar + green "✓ fact", current = magenta, later = grey; Hire Directly jobs skip Ask and Interview.
-export type StripKey = "create" | "matches" | "ask" | "interview" | "hire" | "approve" | "wo" | "release";
+export type StripKey = "create" | "matches" | "ask" | "questions" | "interview" | "hire" | "approve" | "wo" | "release";
 export type StripStep = { key: StripKey; label: string; state: "done" | "current" | "later" | "skipped"; top: string; /** Scott 10-23: what was done, in two or three words ("Used AI", "Compare + Published"). */ note?: string };
-export type JobTab = "matches" | "responses" | "interviews" | "tests" | "work-order" | "details";
+export type JobTab = "matches" | "responses" | "questions" | "interviews" | "tests" | "work-order" | "details";
 
 const day = (d: Date | null | undefined) => (d ? d.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" }) : "");
 const REVEALED = new Set(["RELEASED", "ACTIVE", "ON_HOLD", "CLOSED", "FINALLY_CLOSED"]);
@@ -21,9 +21,10 @@ export async function jobStrip(jobId: string) {
     prisma.shortlistLine.count({ where: { shortlist: { job_id: jobId }, source: { in: ["SHORTLISTED", "ADDED"] } } }),
   ]);
   // AQ-E005: written answers count as the Interview step too.
-  const [answered, completed] = await Promise.all([
+  const [answered, completed, qSent] = await Promise.all([
     prisma.questionAnswer.count({ where: { questionSet: { job_id: jobId }, submitted_at: { not: null } } }),
     prisma.interviewRequest.count({ where: { job_id: jobId, status: "COMPLETED" } }),
+    prisma.questionAnswer.count({ where: { questionSet: { job_id: jobId } } }),
   ]);
   const asked = event?.proposalRequests.length ?? 0;
   const inN = event?.proposalRequests.filter((r) => r.bid && !["DRAFT", "WITHDRAWN"].includes(r.bid.status)).length ?? 0;
@@ -31,23 +32,27 @@ export async function jobStrip(jobId: string) {
   const approvedAt = wrs.map((w) => w.approved_at).find(Boolean) ?? null;
   const accepted = !!wo?.buyer_accepted_at && !!wo?.provider_accepted_at;
   const released = !!wo && REVEALED.has(wo.status);
+  // Scott 10-23: 1 Create Job · 2 Choose Provider(s) · 3 Request Availability · 4 Ask Questions · 5 Interview Provider(s) · 6 Hire Provider.
+  // 4 and 5 are optional: they never block Hire; they are current only while something is waiting in them.
+  const qPending = qSent > answered;
+  const ivPending = invited > completed;
   const done: Record<StripKey, boolean> = {
     create: true,
     // A door is chosen: providers asked, someone hired, or the job published. Stars alone are still choosing.
     matches: !!event || awarded || (job.status === "OPEN" && !!job.posted_at),
     ask: !!event && (inN >= asked || event.deadline_at < new Date() || awarded) && inN > 0,
-    interview: (!!event && awarded) || answered > 0 || completed > 0,
+    questions: qSent > 0 && !qPending,
+    interview: invited > 0 && !ivPending,
     hire: awarded,
     approve: !!approvedAt,
     wo: accepted,
     release: released,
   };
-  const skipped = (k: StripKey) => direct && (k === "ask" || k === "interview");
-  // Scott 10-23: the Job Timeline — numbered steps.
-  // Scott 10-23: the Job Timeline is the buyer's own job and ends at Hire; the Request and the Order carry their own steps.
-  const order: [StripKey, string][] = [["create", "Create Job"], ["matches", "Choose Provider(s)"], ["ask", "Collect Responses"], ["interview", "Interview & Ask"], ["hire", "Hire Provider"]];
-  // The current step: the first not done (and not skipped); while answers are in and nobody is hired, the job sits at Interview.
-  const current = order.find(([k]) => !done[k] && !skipped(k))?.[0] ?? null;
+  const optional = (k: StripKey) => k === "questions" || k === "interview";
+  const skipped = (k: StripKey) => (direct && (k === "ask" || k === "questions" || k === "interview")) || (awarded && optional(k) && !done[k] && !(k === "questions" ? qSent : invited));
+  const order: [StripKey, string][] = [["create", "Create Job"], ["matches", "Choose Provider(s)"], ["ask", "Request Availability"], ["questions", "Ask Questions"], ["interview", "Interview Provider(s)"], ["hire", "Hire Provider"]];
+  const busyOptional: StripKey | null = !awarded && qPending ? "questions" : !awarded && ivPending ? "interview" : null;
+  const current: StripKey | null = busyOptional ?? order.find(([k]) => !done[k] && !skipped(k) && !optional(k))?.[0] ?? null;
   // Scott 10-23: each step says how it was done, above its date — where we are and how we got here.
   const [jobX, origin] = await Promise.all([
     prisma.job.findUnique({ where: { id: jobId }, select: { source_text: true, posted_at: true, status: true } }),
@@ -58,15 +63,17 @@ export async function jobStrip(jobId: string) {
   const note: Partial<Record<StripKey, string>> = {
     create: String(origin ?? "").includes("ERP") ? "From ERP" : jobX?.source_text ? "Used AI" : "Manual",
     matches: [event ? "Compare" : null, direct ? "Hire Directly" : null, published ? "Published" : null].filter(Boolean).join(" + "),
-    ask: event ? `${inN} of ${asked} In` : "",
-    interview: [booked ? `${booked} Booked` : invited ? `${invited} Invited` : null, answered ? `${answered} Answered` : null].filter(Boolean).join(" · "),
+    ask: event ? `${asked} Asked · ${inN} Available` : "",
+    questions: qSent ? `${answered} of ${qSent} Answered` : "",
+    interview: invited ? [booked ? `${booked} Booked` : `${invited} Invited`, completed ? `${completed} Done` : null].filter(Boolean).join(" · ") : "",
     hire: awarded ? (hiredWho || "Hired") : "",
   };
   const top: Record<StripKey, string> = {
     create: `✓ ${day(job.created_at)}`,
     matches: done.matches ? `✓ ${day(event?.created_at ?? job.posted_at ?? job.created_at)}` : "Now",
     ask: done.ask ? `✓ ${inN} of ${asked} in` : event ? `${inN} of ${asked} in` : "",
-    interview: [booked ? `${booked} booked` : invited ? `${invited} invited` : null, answered ? `${answered} answered` : null].filter(Boolean).join(" · ") || (current === "interview" ? "Optional" : ""),
+    questions: "",
+    interview: "",
     hire: awarded ? `✓ ${day(wrs[0]?.submitted_at ?? wrs[0]?.created_at)}` : "",
     approve: approvedAt ? "✓ Auto" : "",
     wo: accepted ? "✓ Accepted" : wo ? "Waiting" : "",
@@ -77,6 +84,7 @@ export async function jobStrip(jobId: string) {
     create: `✓ ${day(job.created_at)}`,
     matches: `✓ ${day(event?.created_at ?? jobX?.posted_at ?? wrs[0]?.created_at ?? job.created_at)}`,
     ask: `✓ ${day(event?.deadline_at && event.deadline_at < new Date() ? event.deadline_at : new Date())}`,
+    questions: "✓",
     interview: "✓",
     hire: `✓ ${day(wrs[0]?.submitted_at ?? wrs[0]?.created_at)}`,
     approve: "", wo: "", release: "",
@@ -84,9 +92,9 @@ export async function jobStrip(jobId: string) {
   const steps: StripStep[] = order.map(([key, label]) => ({
     key, label,
     state: skipped(key) ? "skipped" : done[key] && key !== current ? "done" : key === current ? "current" : "later",
-    top: skipped(key) ? "Skipped" : done[key] && key !== current ? dateOf[key] : key === current ? (note[key] ? "" : "Now") : "",
+    top: skipped(key) ? "Skipped" : done[key] && key !== current ? dateOf[key] : key === current ? (note[key] ? "" : "Now") : optional(key) && !note[key] ? "Optional" : "",
     note: skipped(key) ? "" : note[key] ?? "",
   }));
-  const tab: JobTab = !current ? "work-order" : current === "interview" ? "interviews" : current === "ask" || current === "hire" ? (direct ? "work-order" : "responses") : "matches";
+  const tab: JobTab = !current ? "work-order" : current === "interview" ? "interviews" : current === "questions" ? "questions" : current === "ask" || current === "hire" ? (direct ? "work-order" : "responses") : "matches";
   return { steps, current, defaultTab: tab, event, direct, wo, path, approvedAt, accepted, released };
 }

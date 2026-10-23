@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { BadgeCheck, FilePlus2, FileText, Inbox, Mail, MessagesSquare, Reply, Send, UserCheck, Users, type LucideIcon } from "lucide-react";
+import { BadgeCheck, CircleHelp, FilePlus2, FileText, Inbox, Mail, MessagesSquare, Reply, Send, UserCheck, Users, Video, type LucideIcon } from "lucide-react";
 import type { StripStep, JobTab } from "@/lib/job-strip";
 
 // OJ-E001: one header strip and one tab row on every tab of the Job page (Scott's hire_flow_2026-10-22 screens A/B).
 // Scott 10-23: the Job Timeline — a bigger title, an icon per step, two-word names, centred; reached steps open their tab.
-const STEP_TAB: Record<string, JobTab> = { create: "details", matches: "matches", ask: "responses", interview: "interviews", hire: "work-order" };
-const STEP_ICON: Record<string, LucideIcon> = { create: FilePlus2, matches: Users, ask: Inbox, interview: MessagesSquare, hire: UserCheck, approve: BadgeCheck, wo: FileText, release: Send };
+const STEP_TAB: Record<string, JobTab> = { create: "details", matches: "matches", ask: "responses", questions: "questions", interview: "interviews", hire: "work-order" };
+const STEP_ICON: Record<string, LucideIcon> = { create: FilePlus2, matches: Users, ask: Inbox, questions: CircleHelp, interview: Video, hire: UserCheck, approve: BadgeCheck, wo: FileText, release: Send };
 // The provider's strip reuses the keys with its own labels — pick its icons by label.
 const LABEL_ICON: Record<string, LucideIcon> = { Asked: Mail, Answered: Reply, "Interview & Questions": MessagesSquare, Decision: UserCheck, Order: FileText };
 export function JobStrip({ steps, jobId, title }: { steps: StripStep[]; jobId?: string; title?: string }) {
@@ -41,7 +41,7 @@ export function JobStrip({ steps, jobId, title }: { steps: StripStep[]; jobId?: 
 
 export function JobTabs({ jobId, current, counts }: { jobId: string; current: JobTab; counts: Partial<Record<JobTab, number>> }) {
   // Scott 10-23: one tab per Timeline step, numbered the same, so progress and sequence read together.
-  const tabs: [JobTab, string][] = [["details", "1. Create Job"], ["matches", "2. Choose Provider(s)"], ["responses", "3. Collect Responses"], ["interviews", "4. Interview & Ask"], ["work-order", "5. Hire Provider"]];
+  const tabs: [JobTab, string][] = [["details", "1. Create Job"], ["matches", "2. Choose Provider(s)"], ["responses", "3. Request Availability"], ["questions", "4. Ask Questions"], ["interviews", "5. Interview Provider(s)"], ["work-order", "6. Hire Provider"]];
   return (
     <nav aria-label="Job" className="flex gap-6 overflow-x-auto border-b border-state-border" data-job-tabs>
       {tabs.map(([k, label]) => {
