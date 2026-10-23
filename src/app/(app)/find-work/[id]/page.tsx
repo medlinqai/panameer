@@ -13,6 +13,8 @@ import { BookInterview } from "@/components/work/BookInterview";
 import { slotsForInterview } from "@/lib/open-times";
 import { JobStrip } from "@/components/hire/JobFrame";
 import { FoldSection } from "@/components/casing/FoldSection";
+import { ReconfirmButton } from "@/components/hire/AmendJob";
+import { amendmentsFor } from "@/lib/job-actions";
 import { GuidelinesLink, InterviewQuickActions } from "@/components/work/InterviewQuickActions";
 import { Countdown } from "@/components/hire/Countdown";
 import { AnswerQuestions } from "@/components/work/AnswerQuestions";
@@ -55,6 +57,8 @@ export default async function Page({
   const interviews = person ? await listInterviews({ providerPersonId: person.id, jobId: detail.id }) : [];
 
   const questionSets = person ? await providerQuestions(person.id, detail.id) : [];
+  const amendments = await amendmentsFor(detail.id);
+  const reconfirmNeeded = !!person && (await prisma.proposal.count({ where: { job_id: detail.id, provider_person_id: person.id, reconfirm_needed_at: { not: null }, reconfirmed_at: null } })) > 0;
   const history = person ? await providerHistory(person.id, detail.id) : [];
   const strip = await providerStrip(person?.id ?? "", detail.id, interviews, !!sourcing);
   // PJ-E002: one-line summaries and the one open section (the current step's).
@@ -113,6 +117,19 @@ export default async function Page({
 
       <div className="mt-4 grid gap-5 min-[900px]:grid-cols-[1fr_280px] min-[900px]:items-start">
         <div className="min-w-0 border-b border-line" data-job-sections>
+          {/* JS-E005: an Amendment after you answered — review the changes and re-confirm (or change your answer). */}
+          {amendments.length > 0 && (
+            <FoldSection id="amendment" storageKey={detail.id} title={`Amendment ${amendments[0].number}`} defaultOpen={reconfirmNeeded}
+              summary={reconfirmNeeded ? "Review the changes and re-confirm" : "Re-confirmed"} action={reconfirmNeeded ? <ReconfirmButton jobId={detail.id} /> : null}>
+              {amendments.map((a) => (
+                <div key={a.number} className="mb-3" data-amendment={a.number}>
+                  <p className="text-[13.5px]"><b>Amendment {a.number}</b> · <span className="text-ink-2">{new Date(a.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · “{a.reason}”</span></p>
+                  <ul className="mt-1.5 text-[13.5px]">{a.changes.map((c) => <li key={c.field}><b>{c.label}:</b> <span className="text-ink-3 line-through">{c.before || "—"}</span> → <b>{c.after || "—"}</b></li>)}</ul>
+                </div>
+              ))}
+              {reconfirmNeeded && <p className="text-[12.5px] text-ink-2">Re-Confirm keeps your rate and answers. To change them, open Your Availability or Questions.</p>}
+            </FoldSection>
+          )}
           {/* PJ-E002: sections in acting order, one line each when closed; only the current step's is open. */}
           {interviews.length > 0 && (
             <FoldSection id="interview" storageKey={detail.id} title="Interview" defaultOpen={openKey === "interview"}

@@ -46,6 +46,7 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "work.questions_asked",
   "work.questions_answered",
   "work.job_update",
+  "work.job_amended",
   "work.interview_requested",
   "work.test_requested",
   "work.order_offered",

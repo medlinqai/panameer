@@ -16,6 +16,7 @@ export const WORK_RESOLVERS: Record<string, string> = {
   "work.interview_requested": "the provider offers times (or the interview closes)",
   "work.interview_slots_offered": "the buyer confirms a time (or the interview closes)",
   "work.questions_asked": "the provider sends their answers",
+  "work.job_amended": "the provider re-confirms (or changes) their answer",
   "estimate.requested": "the provider sends an estimate or declines",
   "estimate.received": "the buyer accepts, asks for changes or declines",
 };
@@ -92,6 +93,11 @@ async function isDone(n: Open): Promise<boolean> {
       if (!id) return false;
       const iv = await prisma.interviewRequest.findUnique({ where: { id }, select: { status: true } });
       return !iv || iv.status !== (n.event_key === "work.interview_requested" ? "REQUESTED" : "SLOTS_OFFERED");
+    }
+    case "work.job_amended": {
+      if (!id) return false;
+      const p = await prisma.proposal.findFirst({ where: { job_id: id, provider_person_id: n.person_id, reconfirm_needed_at: { not: null } }, select: { reconfirmed_at: true } });
+      return !p || !!p.reconfirmed_at;
     }
     case "work.questions_asked": {
       if (!id) return false;

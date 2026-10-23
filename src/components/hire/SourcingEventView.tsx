@@ -136,7 +136,9 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                     <button type="button" className={GHOST} disabled={busy} onClick={() => setInterviewing([p.personId])} data-request-interview>Interview</button>
                     <button type="button" className={GHOST} disabled={busy} onClick={() => setAsking([p.personId])} data-row-ask>Ask Questions</button>
                     <button type="button" className={GHOST} disabled={busy || !ev.certificationTestId} title={ev.certificationTestId ? undefined : "No certification test exists for this job's skills yet"} onClick={() => act(`/api/work-requests/${ev.jobId}/test`, { providerPersonId: p.personId, learnAssessmentId: ev.certificationTestId }, "Certification test sent.")} data-request-test>Request Test</button>
-                    <Link href={`/hire/terms?job=${ev.jobId}&provider=${p.personId}`} className={BTN} data-award>Hire</Link>
+                    {pr.reconfirm === "needed"
+                      ? <span className={`${BTN} cursor-not-allowed opacity-40`} title="Waiting for this provider to re-confirm after your Amendment" aria-disabled data-award>Hire</span>
+                      : <Link href={`/hire/terms?job=${ev.jobId}&provider=${p.personId}`} className={BTN} data-award>Hire</Link>}
                   </div>
                 )}
               </li>
@@ -164,6 +166,7 @@ function RowPills({ p }: { p: Ev["proposals"][number] }) {
         : iv.status === "COMPLETED" ? <span className={`${PILL} bg-state-inactive-bg text-state-inactive`} data-interview-state="done">Interview Done</span>
         : <span className={`${PILL} bg-state-pending-bg text-state-pending`} data-interview-state="invited">Invited, Not Booked</span>)}
       {p.qa && <span className={`${PILL} ${p.qa.status === "in" ? "bg-state-accepted-bg text-state-accepted" : "bg-state-pending-bg text-state-pending"}`} data-qa-state={p.qa.status}>{p.qa.status === "in" ? "Answers In" : "Questions Sent"}</span>}
+      {p.proposal?.reconfirm && <span className={`${PILL} ${p.proposal.reconfirm === "done" ? "bg-state-accepted-bg text-state-accepted" : "bg-state-pending-bg text-state-pending"}`} data-reconfirm={p.proposal.reconfirm}>{p.proposal.reconfirm === "done" ? "Re-Confirmed" : "Re-Confirm Needed"}</span>}
       {p.qa?.score && <span className={`${PILL} ${scoreTone(p.qa.score) === "ok" ? "bg-state-accepted-bg text-state-accepted" : scoreTone(p.qa.score) === "pend" ? "bg-state-pending-bg text-state-pending" : "bg-state-declined-bg text-state-declined"}`} title={p.qa.score.knockedOut ?? undefined} data-score>{p.qa.score.knockedOut ? `Knocked Out · ${p.qa.score.score} / ${p.qa.score.max}` : `Score ${p.qa.score.score} / ${p.qa.score.max}`}</span>}
       {p.test && <span className={`${PILL} ${p.test === "PASSED" ? "bg-state-accepted-bg text-state-accepted" : p.test === "FAILED" ? "bg-state-declined-bg text-state-declined" : "bg-state-pending-bg text-state-pending"}`} data-test-state={p.test}>{p.test === "PASSED" ? "Test Passed" : p.test === "FAILED" ? "Test Failed" : "Test Sent"}</span>}
     </span>

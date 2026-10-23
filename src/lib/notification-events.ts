@@ -807,6 +807,18 @@ export const NOTIFICATION_EVENTS = {
     body: (v) => (str(v, "workTitle", "") ? str(v, "workTitle", "") : null),
     href: (v) => `/work-requests/${str(v, "jobId", "")}?tab=responses`,
   },
+  // JS-E005: the job changed after the provider answered — review and re-confirm.
+  "work.job_amended": {
+    event: "work.job_amended",
+    recipient: "every provider asked on an amended job",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `${str(v, "workTitle", "A Job")} Was Amended — Review and Re-Confirm`,
+    body: (v) => `Amendment ${str(v, "number", "1")}: see what changed, then Re-Confirm My Answer or change it.`,
+    href: (v) => `/find-work/${str(v, "jobId", "")}#amendment`,
+  },
   // JS-E004: the buyer closed, paused or reopened a job — everyone asked is told.
   "work.job_update": {
     event: "work.job_update",

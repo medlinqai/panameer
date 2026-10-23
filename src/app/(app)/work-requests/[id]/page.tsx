@@ -13,6 +13,7 @@ import { listInterviews } from "@/lib/interviews";
 import { dailyConfigured } from "@/lib/daily";
 import { InterviewCards } from "@/components/work/InterviewCards";
 import { JobActionsMenu, type JobMenuItem } from "@/components/hire/JobActionsMenu";
+import { AmendJob } from "@/components/hire/AmendJob";
 import type { JobStage } from "@/lib/job-stage";
 import { NeutralAvatar } from "@/components/Avatar";
 import { providerPhotos } from "@/lib/provider-number";
@@ -43,7 +44,7 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; amend?: string }>;
 }) {
   const sp = await searchParams;
   await guardPage("canHireTalent");
@@ -247,6 +248,10 @@ export default async function Page({
       )}
       {tab === "details" && (
         <>
+          {/* JS-E005: Edit while Comparing is an Amendment. */}
+          {sp.amend === "1" && stage === "COMPARING" && sd && (
+            <AmendJob jobId={detail.id} asked={event?.proposals.length ?? 0} initial={{ title: sd.title, summary: sd.summary, budgetMin: sd.budgetMin != null ? String(sd.budgetMin) : "", budgetMax: sd.budgetMax != null ? String(sd.budgetMax) : "", startDate: sd.startDate, endDate: sd.endDate, worksite: sd.worksite ?? "OFFSITE", city: sd.city, state: sd.state, required: sd.required, niceToHave: sd.niceToHave }} />
+          )}
         <Section title="Job Details" right={detail.status === "DRAFT" ? <Link href={`/hire?job=${detail.id}&step=0`}>Edit</Link> : null}>
           {sd ? (
             <div className="grid grid-cols-1 gap-x-6 gap-y-[18px] sm:grid-cols-3" data-job-facts>

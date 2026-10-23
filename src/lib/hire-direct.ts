@@ -65,6 +65,9 @@ export async function hireDefaults(viewer: Viewer, jobId: string, providerPerson
 
 /** Route B with the buyer's rate: the Job gets its dates, then the requisition line is assigned to this provider. */
 export async function hireAssign(viewer: Viewer, input: { jobId: string; providerPersonId: string; unitPriceCents: number; uom: string; start: string; end: string }) {
+  // JS-E005: after an Amendment, Hire waits until this provider re-confirms.
+  const pending = await prisma.proposal.findFirst({ where: { job_id: input.jobId, provider_person_id: input.providerPersonId, reconfirm_needed_at: { not: null }, reconfirmed_at: null }, select: { id: true } });
+  if (pending) throw new HireTermsError("This provider hasn't re-confirmed since the last Amendment.");
   const { assignProviderDirectly } = await import("@/lib/selection");
   const start = new Date(input.start), end = new Date(input.end);
   if (!(start.getTime() > 0) || !(end.getTime() > start.getTime())) throw new HireTermsError("Pick a start date and an end date after it.");

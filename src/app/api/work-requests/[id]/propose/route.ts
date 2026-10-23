@@ -52,6 +52,7 @@ export async function POST(
       rate: parsed.data.rate ?? null,
     });
     // CA-E006: the dates are the job's — the response starts on the job's Start Date.
+    await prisma.proposal.updateMany({ where: { id: result.id, reconfirm_needed_at: { not: null } }, data: { reconfirmed_at: new Date() } });
     const job = await prisma.job.findUnique({ where: { id }, select: { start_date: true } });
     if (job?.start_date) await prisma.proposalLine.updateMany({ where: { proposal_id: result.id, available_from: null }, data: { available_from: job.start_date } });
     return NextResponse.json(result);

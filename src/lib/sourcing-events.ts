@@ -133,6 +133,8 @@ export async function proposeInEvent(viewer: Viewer, jobId: string, input: { rat
   await prisma.proposalLine.updateMany({ where: { proposal_id: out.id }, data: { available_from: start } });
   await prisma.proposalRequest.update({ where: { id: req.id }, data: { status: "RESPONDED", declined_at: null, decline_reason: null } });
   if ((await starredOn(jobId)).has(await myPerson(viewer))) await prisma.proposal.updateMany({ where: { id: out.id, status: "SUBMITTED" }, data: { status: "SHORTLISTED" } });
+  // JS-E005: changing the answer after an Amendment counts as re-confirming.
+  await prisma.proposal.updateMany({ where: { id: out.id, reconfirm_needed_at: { not: null } }, data: { reconfirmed_at: new Date() } });
   return out;
 }
 
@@ -167,7 +169,7 @@ async function ownEvent(viewer: Viewer, eventId: string) {
 // ── SE-E005: the buyer's Sourcing Event page ─────────────────────────────────────────────────────────────────
 export type EventProposal = {
   personId: string; requestStatus: string; declineReason: string | null;
-  proposal: { id: string; status: string; rateCents: number | null; start: string | null; note: string | null } | null;
+  proposal: { id: string; status: string; rateCents: number | null; start: string | null; note: string | null; /** JS-E005 */ reconfirm: "needed" | "done" | null } | null;
   match: import("@/lib/hire-questionnaire").HireMatch;
   /** IW-E006: this provider's latest interview on the job — booked (with when) or invited and not booked yet. */
   interview: { id: string; status: string; startsAt: string | null; openTimes: boolean } | null;
@@ -188,7 +190,7 @@ export async function eventForBuyer(viewer: Viewer, eventId: string) {
   const sd = await readServiceDescription(ev.job_id);
   const requests = await prisma.proposalRequest.findMany({
     where: { sourcing_event_id: ev.id }, orderBy: { created_at: "asc" },
-    select: { provider_person_id: true, status: true, decline_reason: true, bid: { select: { id: true, status: true, cover_note: true, lines: { take: 1, orderBy: { line_number: "asc" }, select: { unit_price_cents: true, available_from: true } } } } },
+    select: { provider_person_id: true, status: true, decline_reason: true, bid: { select: { id: true, status: true, reconfirm_needed_at: true, reconfirmed_at: true, cover_note: true, lines: { take: 1, orderBy: { line_number: "asc" }, select: { unit_price_cents: true, available_from: true } } } } },
   });
   const matches = sd ? await hireMatches(sd, await seesTestAccounts(viewer), ev.job_id, viewer) : [];
   const byPerson = new Map(matches.map((m) => [m.personId, m]));
@@ -206,7 +208,7 @@ export async function eventForBuyer(viewer: Viewer, eventId: string) {
     const iv = ivs.find((x) => x.provider_person_id === r.provider_person_id);
     return {
       personId: r.provider_person_id, requestStatus: r.status, declineReason: r.decline_reason,
-      proposal: r.bid && r.bid.status !== "DRAFT" && r.bid.status !== "WITHDRAWN" ? { id: r.bid.id, status: r.bid.status, rateCents: line?.unit_price_cents ?? null, start: line?.available_from?.toISOString().slice(0, 10) ?? null, note: r.bid.cover_note } : null,
+      proposal: r.bid && r.bid.status !== "DRAFT" && r.bid.status !== "WITHDRAWN" ? { id: r.bid.id, status: r.bid.status, rateCents: line?.unit_price_cents ?? null, start: line?.available_from?.toISOString().slice(0, 10) ?? null, note: r.bid.cover_note, reconfirm: r.bid.reconfirm_needed_at ? (r.bid.reconfirmed_at ? "done" : "needed") : null } : null,
       match: byPerson.get(r.provider_person_id)!,
       qa: qaBy.get(r.provider_person_id) ?? null,
       test: ((t) => (!t ? null : t.response?.lines[0]?.passed === true ? "PASSED" : t.response?.lines[0]?.passed === false ? "FAILED" : "SENT"))(tests.find((t) => t.provider_person_id === r.provider_person_id)),
