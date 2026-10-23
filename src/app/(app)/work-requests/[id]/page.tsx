@@ -281,7 +281,7 @@ export default async function Page({
             </div>
           ) : empty("No attachments or notes. Files you upload with the posting show here.")}
         </Section>
-        <Section title="Activity">
+        <Section title="History">
           <div className="flex flex-col text-[13px]">
             {sec.log.map((e, k) => <div key={k} className={`flex gap-4 py-2 ${ROW_RULE}`}><span className="w-[130px] shrink-0 text-state-inactive">{e.at}</span><span className="min-w-0">{e.text}</span></div>)}
           </div>

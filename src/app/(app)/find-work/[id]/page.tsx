@@ -256,5 +256,13 @@ async function providerHistory(personId: string, jobId: string) {
   if (prop?.status === "AWARDED") ev.push({ t: prop.updated_at, text: "You were hired" });
   if (prop && ["NOT_SELECTED"].includes(prop.status)) ev.push({ t: prop.updated_at, text: "Not selected this time" });
   if (wo) ev.push({ t: wo.created_at, text: `Order ${wo.order_number} issued` });
+  // JS-E006: the buyer's Amendments, Holds, Extensions and Close.
+  const [jobEvents, amendments] = await Promise.all([
+    prisma.jobEvent.findMany({ where: { job_id: jobId, kind: { in: ["CLOSED", "ON_HOLD", "RESUMED", "EXTENDED", "REOPENED"] } }, select: { kind: true, note: true, created_at: true } }),
+    prisma.jobAmendment.findMany({ where: { job_id: jobId }, select: { number: true, reason: true, created_at: true } }),
+  ]);
+  const JE: Record<string, string> = { CLOSED: "Job closed by the buyer", ON_HOLD: "Job put on hold", RESUMED: "Job back open", EXTENDED: "Answer deadline extended", REOPENED: "Job reopened" };
+  for (const e of jobEvents) ev.push({ t: e.created_at, text: `${JE[e.kind]}${e.note && e.kind !== "CLOSED" ? ` — ${e.note}` : ""}` });
+  for (const a of amendments) ev.push({ t: a.created_at, text: `Amendment ${a.number} — ${a.reason}` });
   return ev.sort((a, b) => b.t.getTime() - a.t.getTime()).map((e) => ({ text: e.text, when: at(e.t) }));
 }

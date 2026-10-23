@@ -55,7 +55,15 @@ export async function workRequestSections(viewer: Viewer, jobId: string) {
   const approval = wrs.find((w) => w.approved_at || w.submitted_at) ?? null;
 
   type Ev = { at: Date; text: string };
+  // JS-E006: Amendments, Holds, Resumes, Extensions, Close and Reopen with date and reason.
+  const [jobEvents, amendments] = await Promise.all([
+    prisma.jobEvent.findMany({ where: { job_id: jobId }, select: { kind: true, note: true, created_at: true } }),
+    prisma.jobAmendment.findMany({ where: { job_id: jobId }, select: { number: true, reason: true, created_at: true } }),
+  ]);
+  const JE: Record<string, string> = { CLOSED: "Job closed", ON_HOLD: "Put on hold", RESUMED: "Resumed", EXTENDED: "Deadline extended", REOPENED: "Reopened" };
   const log: Ev[] = [
+    ...jobEvents.filter((e) => e.kind !== "AMENDED").map((e) => ({ at: e.created_at, text: `${JE[e.kind] ?? e.kind}${e.note ? ` — ${e.note}` : ""}` })),
+    ...amendments.map((a) => ({ at: a.created_at, text: `Amendment ${a.number} — ${a.reason}` })),
     { at: job.created_at, text: "Job created" },
     ...(job.posted_at ? [{ at: job.posted_at, text: "Job posted" }] : []),
     ...event.map((e) => ({ at: e.created_at, text: `Sourcing Event ${e.event_number} opened · due ${when(e.deadline_at)}` })),
