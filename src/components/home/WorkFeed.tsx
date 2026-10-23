@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { FilterBar, type FilterDef } from "@/components/casing/FilterBar";
 import { relativeDay } from "@/lib/relative-day";
 import { WhoIsAsking } from "@/components/work/WhoIsAsking";
-import { TypeArt } from "@/components/shop/TypeArt";
+import { JobCover } from "@/components/home/JobCover";
 import { WantThisJob } from "@/components/work/WantThisJob";
 import {
   UNBACKED_TABS,
@@ -100,7 +100,7 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
       <div className="flex flex-col sm:flex-row">
         <div className="relative h-40 w-full shrink-0 bg-bg-soft sm:h-auto sm:w-44 sm:self-stretch">
           {/* PA-E004: the job's Category art (same family as Shop), not a stock photo. */}
-          <TypeArt category={card.category} size="band" className="h-full rounded-none sm:aspect-auto" />
+          <JobCover category={card.category} title={card.title} />
         </div>
 
         <div className="min-w-0 flex-1 p-5">
