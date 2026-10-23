@@ -154,8 +154,8 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
         {msg && <p role="status" className="mt-3 text-[13.5px] font-semibold text-magenta-dark">{msg}</p>}
         {ev.workOrderId && <p className="mt-3 text-[13.5px]">Order: <Link href={`/orders/${ev.workOrderId}`} className="font-semibold text-magenta-dark underline underline-offset-4">open it</Link></p>}
       </section>
-      {asking && <AskQuestionsDialog jobId={ev.jobId} providerPersonIds={asking} defaultDue={ev.deadlineAt} onClose={() => setAsking(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
-      {interviewing && <InterviewDialog jobId={ev.jobId} providerPersonIds={interviewing} onClose={() => setInterviewing(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
+      {asking && <AskQuestionsDialog jobId={ev.jobId} providerPersonIds={asking} providerLabels={asking.map((id) => (ev.proposals.find((p) => p.personId === id)?.match.name ?? "").replace(/^Provider /, "")).filter(Boolean)} defaultDue={ev.deadlineAt} onClose={() => setAsking(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
+      {interviewing && <InterviewDialog jobId={ev.jobId} providerPersonIds={interviewing} providerLabels={interviewing.map((id) => (ev.proposals.find((p) => p.personId === id)?.match.name ?? "").replace(/^Provider /, "")).filter(Boolean)} onClose={() => setInterviewing(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
       {comparing && <CompareTable rows={withProposal.filter((p) => picked.has(p.personId)).map((p) => ({ m: p.match, proposed: p.proposal?.rateCents != null ? `${usd(p.proposal.rateCents)}${per}` : null, start: p.proposal?.start ?? null, qa: p.qa?.status === "in" ? p.qa.qa : null }))} onClose={() => setComparing(false)} />}
     </div>
   );

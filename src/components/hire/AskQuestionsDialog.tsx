@@ -7,7 +7,7 @@ import { BTN, BTN_OUT, LABEL } from "@/components/hire/HireUI";
 // AQ-E002: up to 5 written questions to one or many providers; Draft With AI fills 3–5 the buyer edits before sending.
 const FIELD = "mt-1 block w-full rounded-[8px] border border-state-border bg-white px-3 py-2 text-[14px]";
 
-export function AskQuestionsDialog({ jobId, providerPersonIds, defaultDue, onClose, onSent }: { jobId: string; providerPersonIds: string[]; defaultDue?: string | null; onClose: () => void; onSent?: (msg: string) => void }) {
+export function AskQuestionsDialog({ jobId, providerPersonIds, providerLabels = [], defaultDue, onClose, onSent }: { jobId: string; providerPersonIds: string[]; providerLabels?: string[]; defaultDue?: string | null; onClose: () => void; onSent?: (msg: string) => void }) {
   const router = useRouter();
   const [qs, setQs] = useState<string[]>(["", "", ""]);
   const [due, setDue] = useState((defaultDue ?? new Date(Date.now() + 48 * 3_600_000).toISOString()).slice(0, 10));
@@ -43,6 +43,8 @@ export function AskQuestionsDialog({ jobId, providerPersonIds, defaultDue, onClo
           <h2 className="text-[18px] font-extrabold">Ask Questions</h2>
           <button type="button" onClick={onClose} aria-label="Close" className="text-[22px] leading-none text-state-inactive hover:text-ink">×</button>
         </div>
+        {/* Scott 10-23: say who it goes to. */}
+        {providerLabels.length > 0 && <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[13px]" data-ask-to><b>To:</b>{providerLabels.map((l) => <span key={l} className="rounded-full border border-state-border px-2 py-0.5 font-semibold">{l}</span>)}</p>}
         <p className="mt-1 text-[13px] text-state-inactive">Written answers often replace an interview. Up to 5 questions; no names, companies or contact details.</p>
         <button type="button" disabled={!!busy} onClick={draft} className={`${BTN_OUT} mt-3 min-h-9`} data-draft-ai>{busy === "draft" ? "Drafting…" : "Draft With AI"}</button>
         <ol className="mt-3 flex flex-col gap-2">
@@ -59,7 +61,7 @@ export function AskQuestionsDialog({ jobId, providerPersonIds, defaultDue, onClo
         {error && <p role="alert" className="mt-3 text-[13px] font-semibold text-state-declined">{error}</p>}
         <div className="mt-5 flex flex-wrap justify-end gap-2">
           <button type="button" onClick={onClose} className={BTN_OUT}>Cancel</button>
-          <button type="button" disabled={!!busy || !filled} onClick={send} className={`${BTN} disabled:opacity-40`} data-send-questions>{busy === "send" ? "Sending…" : `Send to ${n}`}</button>
+          <button type="button" disabled={!!busy || !filled} onClick={send} className={`${BTN} disabled:opacity-40`} data-send-questions>{busy === "send" ? "Sending…" : (providerLabels.length === 1 ? `Send to ${providerLabels[0]}` : `Send to ${n} Providers`)}</button>
         </div>
       </div>
     </div>
