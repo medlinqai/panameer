@@ -32,7 +32,8 @@ import { WorkRequestError } from "@/lib/work-request";
 import { MatchList } from "@/components/hire/MatchList";
 import { hireMatches } from "@/lib/hire-questionnaire";
 import { readServiceDescription } from "@/lib/service-description";
-import { latestEventFor } from "@/lib/sourcing-events";
+import { eventForBuyer, latestEventFor } from "@/lib/sourcing-events";
+import { SourcingEventView } from "@/components/hire/SourcingEventView";
 import { seesTestAccounts } from "@/lib/admin/test-accounts";
 
 export const metadata = { title: "Job · Panameer" };
@@ -98,13 +99,15 @@ export default async function Page({
   const awarded = detail.completeness.complete && !["ORDERED", "CANCELLED"].includes(detail.workRequestStatus) && detail.status !== "FILLED";
 
   const sec = await workRequestSections(viewer, detail.id);
+  const event = sourcing ? await eventForBuyer(viewer, sourcing.id).catch(() => null) : null;
+  const inEvent = new Set(event?.proposals.map((p) => p.personId) ?? []);
+  const shownProps = proposals.filter((p) => !inEvent.has(p.providerPersonId));
   const photos = await providerPhotos(proposals.map((p) => p.providerPersonId));
   // CA-E004: providers who answered Not This Time (reason shown).
   const notNow = sec.requestRows.filter((r) => r.status.startsWith("Not This Time")).map((r) => ({ who: r.who, number: r.number, reason: /“(.*)”/.exec(r.status)?.[1] ?? null }));
   const buyerInterviews = await listInterviews({ jobId: detail.id, buyerPersonId: (await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }))?.id });
   const actions = [
     ...(detail.status === "DRAFT" ? [{ label: "Edit the Job", href: `/hire?job=${detail.id}&step=0` }] : []),
-    ...(sourcing ? [{ label: `Open Sourcing Event ${sourcing.event_number}`, href: `/hire/sourcing/${sourcing.id}` }] : []),
     ...(!detail.soleSourced ? [{ label: "Invite Providers", href: `/work-requests/${id}/invite` }] : []),
     ...(posted ? [{ label: "Share with Providers", href: `/work-requests/${id}/share` }] : []),
     ...sec.orders.map((o) => ({ label: `Open Work Order ${o.order_number}`, href: `/orders/${o.id}` })),
@@ -130,7 +133,7 @@ export default async function Page({
   const tab: JobTab = (["matches", "responses", "interviews", "tests", "work-order", "details"] as const).find((t) => t === sp.tab) ?? strip?.defaultTab ?? "matches";
   const meta = [sec.jobNumber, sd?.worksite ? sd.worksite[0] + sd.worksite.slice(1).toLowerCase() : null, sd ? [sd.city, sd.state].filter(Boolean).join(", ") || null : null, rangeText, sd?.startDate && sd?.endDate ? `${fmtDay(sd.startDate)} – ${fmtDay(sd.endDate)}` : null].filter(Boolean).join(" · ");
   const origin = strip?.event ? "Compare Providers" : strip?.direct ? "Hire Directly" : null;
-  const counts = { matches: jobMatches.length, responses: proposals.length + notNow.length, interviews: buyerInterviews.length, tests: sec.testRows.length };
+  const counts = { matches: jobMatches.length, responses: (event ? event.proposals.filter((p) => p.proposal || p.requestStatus === "DECLINED").length : notNow.length) + shownProps.length, interviews: buyerInterviews.length, tests: sec.testRows.length };
 
   return (
     <div className="pm-white-page mx-auto flex w-full min-w-0 max-w-[1120px] flex-col gap-[18px] pb-16" data-work-request-page>
@@ -168,27 +171,31 @@ export default async function Page({
       )}
       {tab === "responses" && (
         <>
-        <Section title="Responses" right={sourcing ? <Link href={`/hire/sourcing/${sourcing.id}`}>Compare</Link> : null}>
-          {proposals.length || notNow.length ? [...proposals].sort((a, b) => Number(a.status === "DECLINED") - Number(b.status === "DECLINED") || (a.rate?.unitPriceCents ?? Infinity) - (b.rate?.unitPriceCents ?? Infinity)).map((p) => {
-            const primary = p.id === topProposalId;
-            const x = sec.proposalExtra(p.providerPersonId);
-            return (
-              <div key={p.id} className={`flex flex-wrap items-center gap-3.5 py-3.5 ${ROW_RULE}`} data-proposal-row>
-                <NeutralAvatar size={36} photoUrl={photos.get(p.providerPersonId)} />
-                <div className="min-w-0 flex-[1_1_260px]">
-                  <div className="text-[15px] font-bold" data-response-line>{p.providerName.replace(/^Provider /, "")} · {p.status === "DECLINED" ? <span className="text-state-declined">Declined</span> : <span className="text-state-accepted">Available</span>} · {p.rate ? `${formatCents(p.rate.unitPriceCents)}${p.rate.basis === "RATE" ? "/hr" : " fixed"}` : "no rate"}{x.start ? ` · start ${x.start}` : ""}</div>
-                  <div className="mt-0.5 text-[13px] text-state-inactive">{[x.summary || null, p.coverNote ? `“${p.coverNote.slice(0, 120)}”` : "no note"].filter(Boolean).join(" · ")}</div>
+          {/* OJ-E003: responses live here, once — the Compare Providers round, then anyone who applied to the posting. */}
+          {event && <SourcingEventView ev={event} />}
+          {(!event || shownProps.length > 0) && (
+          <Section title={event ? "Applications" : "Responses"}>
+            {shownProps.length || (!event && notNow.length) ? [...shownProps].sort((a, b) => Number(a.status === "DECLINED") - Number(b.status === "DECLINED") || (a.rate?.unitPriceCents ?? Infinity) - (b.rate?.unitPriceCents ?? Infinity)).map((p) => {
+              const primary = p.id === topProposalId;
+              const x = sec.proposalExtra(p.providerPersonId);
+              return (
+                <div key={p.id} className={`flex flex-wrap items-center gap-3.5 py-3.5 ${ROW_RULE}`} data-proposal-row>
+                  <NeutralAvatar size={36} photoUrl={photos.get(p.providerPersonId)} />
+                  <div className="min-w-0 flex-[1_1_260px]">
+                    <div className="text-[15px] font-bold" data-response-line>{p.providerName.replace(/^Provider /, "")} · {p.status === "DECLINED" ? <span className="text-state-declined">Declined</span> : <span className="text-state-accepted">Available</span>} · {p.rate ? `${formatCents(p.rate.unitPriceCents)}${p.rate.basis === "RATE" ? "/hr" : " fixed"}` : "no rate"}{x.start ? ` · start ${x.start}` : ""}</div>
+                    <div className="mt-0.5 text-[13px] text-state-inactive">{[x.summary || null, p.coverNote ? `“${p.coverNote.slice(0, 120)}”` : "no note"].filter(Boolean).join(" · ")}</div>
+                  </div>
+                  <ProposalActions jobId={detail.id} providerPersonId={p.providerPersonId} testId={testId} awarded={p.status === "AWARDED"} interviewStatus={p.interviewStatus} testStatus={p.testStatus} primary={primary} proposalId={p.id} status={p.status} />
                 </div>
-                <ProposalActions jobId={detail.id} providerPersonId={p.providerPersonId} testId={testId} awarded={p.status === "AWARDED"} interviewStatus={p.interviewStatus} testStatus={p.testStatus} primary={primary} proposalId={p.id} status={p.status} />
+              );
+            }).concat((event ? [] : notNow).map((r) => (
+              <div key={`n-${r.number}`} className={`flex flex-wrap items-center gap-3.5 py-3.5 ${ROW_RULE}`} data-not-this-time-row>
+                <NeutralAvatar size={36} />
+                <div className="min-w-0 flex-1 text-[15px] font-bold">{r.who.replace(/^Provider /, "")} · <span className="text-state-declined">Not This Time</span>{r.reason && <span className="font-normal text-state-inactive"> · “{r.reason}”</span>}</div>
               </div>
-            );
-          }).concat(notNow.map((r) => (
-            <div key={`n-${r.number}`} className={`flex flex-wrap items-center gap-3.5 py-3.5 ${ROW_RULE}`} data-not-this-time-row>
-              <NeutralAvatar size={36} />
-              <div className="min-w-0 flex-1 text-[15px] font-bold">{r.who.replace(/^Provider /, "")} · <span className="text-state-declined">Not This Time</span>{r.reason && <span className="font-normal text-state-inactive"> · “{r.reason}”</span>}</div>
-            </div>
-          ))) : empty(posted ? "No responses yet. They show here as providers answer." : "No responses yet — a Job takes responses once it is posted.")}
-        </Section>
+            ))) : empty(posted ? "No responses yet. They show here as providers answer." : "No responses yet — a Job takes responses once it is posted.")}
+          </Section>
+          )}
         </>
       )}
       {tab === "interviews" && (

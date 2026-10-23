@@ -276,8 +276,8 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
 
   if (side === "buyer") {
     const [toReview, closing, expired, confirm, todays, testsIn, approvals, woAccept, settle, pay] = await Promise.all([
-      prisma.proposal.findMany({ where: { status: "SUBMITTED", job: { buyer_person_id: id }, proposalRequest: { sourcingEvent: { status: { in: ["OPEN", "CLOSED"] } } } }, orderBy: { submitted_at: "desc" }, select: { proposalRequest: { select: { sourcingEvent: { select: { id: true, deadline_at: true } } } } } }),
-      prisma.sourcingEvent.findMany({ where: { created_by_person_id: id, status: "OPEN", deadline_at: { gt: now, lte: soon } }, select: { id: true, deadline_at: true } }),
+      prisma.proposal.findMany({ where: { status: "SUBMITTED", job: { buyer_person_id: id }, proposalRequest: { sourcingEvent: { status: { in: ["OPEN", "CLOSED"] } } } }, orderBy: { submitted_at: "desc" }, select: { proposalRequest: { select: { sourcingEvent: { select: { id: true, job_id: true, deadline_at: true } } } } } }),
+      prisma.sourcingEvent.findMany({ where: { created_by_person_id: id, status: "OPEN", deadline_at: { gt: now, lte: soon } }, select: { id: true, job_id: true, deadline_at: true } }),
       prisma.sourcingEvent.count({ where: { created_by_person_id: id, status: "OPEN", deadline_at: { lte: now } } }),
       prisma.interviewRequest.count({ where: { requested_by_person_id: id, status: "SLOTS_OFFERED" } }),
       prisma.interviewRequest.count({ where: { requested_by_person_id: id, status: "SCHEDULED", response: { lines: { some: { starts_at: today } } } } }),
@@ -288,8 +288,8 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
       prisma.workOrder.findMany({ where: { buyer_person_id: id }, select: { id: true } }).then((os) => prisma.paymentRequest.count({ where: { status: "APPROVED", work_order_id: { in: os.map((o) => o.id) } } })),
     ]);
     const ev = toReview[0]?.proposalRequest?.sourcingEvent;
-    const jobs = add("request", toReview.length, "Responses to Review", ev ? `/hire/sourcing/${ev.id}` : "/hire/overview?tab=jobs", "Review", ev?.deadline_at)
-      + add("request", closing.length, "Sourcing Event closing in 24 h", `/hire/sourcing/${closing[0]?.id ?? ""}`, "Open", closing[0]?.deadline_at)
+    const jobs = add("request", toReview.length, "Responses to Review", ev ? `/work-requests/${ev.job_id}?tab=responses` : "/hire/overview?tab=jobs", "Review", ev?.deadline_at)
+      + add("request", closing.length, "Sourcing Event closing in 24 h", closing[0] ? `/work-requests/${closing[0].job_id}?tab=responses` : "/hire/overview?tab=jobs", "Open", closing[0]?.deadline_at)
       + add("request", expired, "Sourcing Event expired, no award", "/hire/overview?tab=jobs", "Decide");
     // HB-E006: each app lists only its own tasks — Work Orders (accept, release, changes) belong to Orders.
     const requests = add("request", approvals, "Service Requisition approvals", "/hire/overview?tab=requests", "Approve");

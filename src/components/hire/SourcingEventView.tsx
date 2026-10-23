@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { eventForBuyer } from "@/lib/sourcing-events";
-import { Countdown, DeadlineBadge } from "@/components/hire/Countdown";
+import { DeadlineTag } from "@/components/hire/Countdown";
 import { CompareTable } from "@/components/hire/MatchList";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
 import { InterviewDialog } from "@/components/hire/InterviewDialog";
@@ -43,34 +43,31 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
   };
   /** Run one call per ticked row, then one message. */
   const bulk = async (one: (personId: string) => Promise<void>, ok: string) => { for (const id of picked) await one(id); setMsg(ok); setPicked(new Set()); };
+  const booked = ev.proposals.filter((p) => p.interview?.status === "SCHEDULED").length;
+  const nextLine = awarded ? "A provider is hired — see the Work Order tab. The others are told when the Work Order is released."
+    : !ev.counts.proposed ? `Waiting for answers — ${ev.counts.requested} asked. Extend the deadline if you need more time.`
+    : booked ? `${ev.counts.proposed} of ${ev.counts.requested} answered and ${booked} interview${booked === 1 ? " is" : "s are"} booked. After the interviews, Hire one — the others are told when the Work Order is released.`
+    : `${ev.counts.proposed} of ${ev.counts.requested} answered. Tick the ones you like and Interview them, or Hire one now.`;
   const toggle = (id: string) => setPicked((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const withProposal = ev.proposals.filter((p) => p.proposal && p.proposal.status !== "DECLINED");
 
   return (
     <div data-sourcing-event>
-      <header className="mt-3 rounded-brand border border-line bg-white p-5">
-        <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">Sourcing Event</p>
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h1 className="text-[24px] font-extrabold">{ev.number}</h1>
-          {ev.status === "OPEN"
-            ? <DeadlineBadge at={ev.deadlineAt} />
-            : <span className="rounded-full border border-ink px-3 py-0.5 text-[12.5px] font-bold" data-event-status>{STATUS[ev.status]}</span>}
-        </div>
-        <p className="text-[14.5px] font-semibold"><Link href={`/work-requests/${ev.jobId}`} className="hover:underline">{ev.job.title}</Link></p>
-        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-ink-2">
-          <span>Deadline {new Date(ev.deadlineAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · <Countdown at={ev.deadlineAt} /></span>
-          <span data-event-counts>{ev.counts.requested} requested · {ev.counts.proposed} responded · {ev.counts.declined} declined</span>
-          {range && <span>Your range {range}</span>}
-        </p>
+      {/* OJ-E003: on the Job's Responses tab — the page owns the header; this is the deadline, Extend and the Next line. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px]" data-responses-head>
+        {ev.status === "OPEN" ? <span className="text-[12.5px] font-bold"><DeadlineTag at={ev.deadlineAt} prefix={`Answers due ${new Date(ev.deadlineAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ·`} /></span>
+          : <span className="rounded-full border border-ink px-3 py-0.5 text-[12.5px] font-bold" data-event-status>{STATUS[ev.status]}</span>}
+        <span className="text-state-inactive" data-event-counts>{ev.number} · {ev.counts.requested} asked · {ev.counts.proposed} answered · {ev.counts.declined} not this time{range ? ` · your range ${range}` : ""}</span>
         {!awarded && (
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px]">
-            <span className="font-semibold">Extend the deadline by</span>
-            <input inputMode="numeric" value={extendBy} onChange={(e) => setExtendBy(e.target.value.replace(/\D/g, "").slice(0, 3))} aria-label="Hours to extend" className="w-14 rounded-[8px] border border-line px-2 py-1.5 text-right" />
-            <span>hours</span>
+          <span className="flex items-center gap-2">
+            <span className="font-semibold">Extend by</span>
+            <input inputMode="numeric" value={extendBy} onChange={(e) => setExtendBy(e.target.value.replace(/\D/g, "").slice(0, 3))} aria-label="Hours to extend" className="w-14 rounded-[8px] border border-line px-2 py-1 text-right" />
+            <span>h</span>
             <button type="button" className={GHOST} disabled={busy || !Number(extendBy)} onClick={() => act("/api/sourcing", { action: "extend", eventId: ev.id, hours: Number(extendBy) }, "Deadline extended.")} data-extend>Extend</button>
-          </div>
+          </span>
         )}
-      </header>
+      </div>
+      <p className="mt-3 text-[13.5px] text-state-inactive" data-next-line><b className="text-ink">Next:</b> {nextLine}</p>
 
       {ev.notifyOthers && (
         <section className="mt-5 rounded-brand border border-magenta-dark bg-[#fbeafb]/40 p-5" data-notify-others>
@@ -117,7 +114,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                 {pr && pr.status !== "DECLINED" ? <input type="checkbox" checked={picked.has(p.personId)} onChange={() => toggle(p.personId)} aria-label={`Compare ${p.match.name}`} className="mt-1 h-4 w-4" /> : <span className="w-4" />}
                 {isMaskedName(p.match.name) && <NeutralAvatar size={36} photoUrl={p.match.photoUrl} />}
                 <div className="min-w-0 flex-1">
-                  <p className="text-[15px] font-bold">{p.match.name}{pr?.status === "SHORTLISTED" && <span className="ml-2 text-magenta-dark">★</span>}{pr?.status === "AWARDED" && <span className="ml-2 rounded-full bg-ink px-2 py-0.5 text-[11px] text-surface">Awarded</span>}</p>
+                  <p className="text-[15px] font-bold">{p.match.name}{pr && pr.status !== "DECLINED" && !awarded ? <button type="button" disabled={busy} onClick={() => act("/api/sourcing", { action: pr.status === "SHORTLISTED" ? "unshortlist" : "shortlist", eventId: ev.id, proposalId: pr.id })} aria-label={pr.status === "SHORTLISTED" ? "Remove from Shortlist" : "Shortlist"} className={`ml-2 ${pr.status === "SHORTLISTED" ? "text-magenta-dark" : "text-state-border"}`} data-star>{pr.status === "SHORTLISTED" ? "★" : "☆"}</button> : pr?.status === "SHORTLISTED" && <span className="ml-2 text-magenta-dark">★</span>}{pr?.status === "AWARDED" && <span className="ml-2 rounded-full bg-ink px-2 py-0.5 text-[11px] text-surface">Awarded</span>}</p>
                   <p className="text-[13px] text-ink-2">{p.match.line}</p>
                   {pr ? (
                     <p className="mt-1 text-[13.5px]" data-response-line>{pr.status === "DECLINED" ? <b className="text-state-declined">Declined</b> : <b className="text-state-accepted">Available</b>} · <b className={over ? "text-state-declined" : ""}>{usd(pr.rateCents)}{per}</b>{range && <span className="text-ink-2"> vs {range}</span>}{pr.start && <span className="text-ink-2"> · start {pr.start}</span>}</p>
@@ -125,7 +122,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                     <p className="mt-1 text-[13.5px] text-ink-3">{p.requestStatus === "DECLINED" ? <><b className="text-state-declined">Not This Time</b>{p.declineReason ? ` — “${p.declineReason}”` : ""}</> : "No response yet"}</p>
                   )}
                   {pr?.note && <p className="mt-1 whitespace-pre-line text-[13px] text-ink-2">{pr.note}</p>}
-                  {p.interview && <InterviewState iv={p.interview} />}
+                  <RowPills p={p} />
                   <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]">
                     {p.match.why.map((k) => <span key={k} className="rounded-full border border-magenta-dark bg-[#fbeafb] px-2 font-semibold text-magenta-dark">{k}</span>)}
                     {p.match.matched.map((k) => <span key={k} className="rounded-full border border-line bg-bg-soft px-2">{k}</span>)}
@@ -133,10 +130,9 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                 </div>
                 {pr && pr.status !== "DECLINED" && !awarded && (
                   <div className="flex flex-wrap justify-end gap-1.5">
-                    <button type="button" className={GHOST} disabled={busy} onClick={() => act("/api/sourcing", { action: pr.status === "SHORTLISTED" ? "unshortlist" : "shortlist", eventId: ev.id, proposalId: pr.id })}>{pr.status === "SHORTLISTED" ? "★ Shortlisted" : "☆ Shortlist"}</button>
+                    <button type="button" className={GHOST} disabled={busy} onClick={() => act("/api/sourcing", { action: "declineProposal", eventId: ev.id, proposalId: pr.id })}>Decline</button>
                     <button type="button" className={GHOST} disabled={busy} onClick={() => setInterviewing([p.personId])} data-request-interview>Interview</button>
                     <button type="button" className={GHOST} disabled={busy || !ev.certificationTestId} title={ev.certificationTestId ? undefined : "No certification test exists for this job's skills yet"} onClick={() => act(`/api/work-requests/${ev.jobId}/test`, { providerPersonId: p.personId, learnAssessmentId: ev.certificationTestId }, "Certification test sent.")} data-request-test>Request Test</button>
-                    <button type="button" className={GHOST} disabled={busy} onClick={() => act("/api/sourcing", { action: "declineProposal", eventId: ev.id, proposalId: pr.id })}>Decline</button>
                     <Link href={`/hire/terms?job=${ev.jobId}&provider=${p.personId}`} className={BTN} data-award>Hire</Link>
                   </div>
                 )}
@@ -154,9 +150,16 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
   );
 }
 
-/** IW-E006: "Interview Booked · Tue 2:00 PM" (green) or "Interview Invited · Not Booked" (amber). */
-function InterviewState({ iv }: { iv: NonNullable<Ev["proposals"][number]["interview"]> }) {
-  if (iv.status === "SCHEDULED" && iv.startsAt) return <p className="mt-1 text-[13px] font-semibold text-state-accepted" data-interview-state="booked">Interview Booked · {new Date(iv.startsAt).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })}</p>;
-  if (iv.status === "COMPLETED") return <p className="mt-1 text-[13px] font-semibold text-state-inactive" data-interview-state="done">Interview Done</p>;
-  return <p className="mt-1 text-[13px] font-semibold text-state-pending" data-interview-state="invited">Interview Invited · Not Booked</p>;
+/** IW-E006 / OJ-E003: the row's interview and test state as pills. */
+function RowPills({ p }: { p: Ev["proposals"][number] }) {
+  const iv = p.interview;
+  const PILL = "rounded-full px-2.5 py-0.5 text-[11.5px] font-bold";
+  return (
+    <span className="mt-1.5 flex flex-wrap gap-1.5" data-row-pills>
+      {iv && (iv.status === "SCHEDULED" && iv.startsAt ? <span className={`${PILL} bg-state-accepted-bg text-state-accepted`} data-interview-state="booked">Interview {new Date(iv.startsAt).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })}</span>
+        : iv.status === "COMPLETED" ? <span className={`${PILL} bg-state-inactive-bg text-state-inactive`} data-interview-state="done">Interview Done</span>
+        : <span className={`${PILL} bg-state-pending-bg text-state-pending`} data-interview-state="invited">Invited, Not Booked</span>)}
+      {p.test && <span className={`${PILL} ${p.test === "PASSED" ? "bg-state-accepted-bg text-state-accepted" : p.test === "FAILED" ? "bg-state-declined-bg text-state-declined" : "bg-state-pending-bg text-state-pending"}`} data-test-state={p.test}>{p.test === "PASSED" ? "Test Passed" : p.test === "FAILED" ? "Test Failed" : "Test Sent"}</span>}
+    </span>
+  );
 }

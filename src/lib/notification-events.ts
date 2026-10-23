@@ -728,7 +728,7 @@ export const NOTIFICATION_EVENTS = {
     },
     body: () => "Open it to compare, shortlist or award.",
     // A proposal in a Sourcing Event opens the event (where the buyer compares and awards); otherwise the work request.
-    href: (v) => (str(v, "eventId", "") ? `/hire/sourcing/${str(v, "eventId", "")}` : `/work-requests/${str(v, "requestId", "")}`),
+    href: (v) => `/work-requests/${str(v, "requestId", "")}${str(v, "eventId", "") ? "?tab=responses" : ""}`,
   },
   // THE ONE WORK-CHAIN EVENT WITH A LIVE WRITER
   "work.invited_to_propose": {

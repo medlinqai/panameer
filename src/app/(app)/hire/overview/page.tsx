@@ -220,7 +220,7 @@ function JobArticle({ j }: { j: JobTabRow }) {
               <span className="min-w-0 flex-1 text-[13px] text-state-inactive">{p.available ? p.summary : p.reason ? `“${p.reason}”` : ""}</span>
               {p.available && <span className="w-[110px] text-[13px] text-state-inactive">{p.start ?? ""}</span>}
               {p.proposalId && <ProposalActions compact jobId={j.id} providerPersonId={p.personId} proposalId={p.proposalId} status={p.status ?? undefined} testId={null} awarded={p.status === "AWARDED"} interviewStatus={null} testStatus={null} />}
-              {j.eventId && <Link href={`/hire/sourcing/${j.eventId}`} className="text-[13px] font-semibold">Compare</Link>}
+              {j.eventId && <Link href={`/work-requests/${j.id}?tab=responses`} className="text-[13px] font-semibold">Compare</Link>}
             </div>
           ))}
           {j.asked === 1 && (

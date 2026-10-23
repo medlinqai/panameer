@@ -38,7 +38,7 @@ export async function buyerLiveWork(personId: string) {
     if (!p.awarded) {
       const step = p.current ?? "shortlist";
       const lastDone = [...p.shown].reverse().find((s) => s.done)?.date ?? postedAt;
-      const href = step === "proposals" && p.event ? `/hire/sourcing/${p.event.id}` : step === "shortlist" || step === "request" ? `/work-requests/${p.job.id}#matches` : `/work-requests/${p.job.id}`;
+      const href = step === "proposals" && p.event ? `/work-requests/${p.job.id}?tab=responses` : step === "shortlist" || step === "request" ? `/work-requests/${p.job.id}#matches` : `/work-requests/${p.job.id}`;
       rows.push({
         id: p.job.id, step, title: p.job.title || "Untitled job", ref: p.job.job_number, who: null, posted: postedAt.toISOString(), days: daysSince(lastDone),
         due: p.event && step === "proposals" ? short(p.event.deadline_at) : null,
@@ -179,9 +179,9 @@ export async function buyerHireTabs(personId: string) {
     const lastDone = [...p.shown].reverse().find((s) => s.done)?.date ?? postedAt;
     const submitted = mine.filter((x) => x.status === "SUBMITTED").length;
     const expired = !!p.event && p.event.deadline_at < now && !p.awarded;
-    const action = step === "proposals" && p.event ? { label: "Review Responses", href: `/hire/sourcing/${p.event.id}` }
+    const action = step === "proposals" && p.event ? { label: "Review Responses", href: `/work-requests/${p.job.id}?tab=responses` }
       : step === "shortlist" || step === "request" ? { label: "Request Availability", href: `/work-requests/${p.job.id}#matches` }
-      : step === "award" || (step === "interview" || step === "test") ? { label: "Award", href: p.event ? `/hire/sourcing/${p.event.id}` : `/work-requests/${p.job.id}` }
+      : step === "award" || (step === "interview" || step === "test") ? { label: "Award", href: `/work-requests/${p.job.id}?tab=responses` }
       : p.orders[0] ? { label: "Open Work Order", href: `/orders/${p.orders[0].id}` } : { label: "Open", href: `/work-requests/${p.job.id}` };
     const iv = ivs.find((x) => x.job_id === p.job.id)?._count._all ?? 0;
     const ts = tests.find((x) => x.job_id === p.job.id)?._count._all ?? 0;
@@ -283,7 +283,7 @@ export async function hireToday(personId: string): Promise<{ items: TodayItem[];
   const items: TodayItem[] = [];
   const usd0 = (c: number) => `$${Math.round(c / 100).toLocaleString("en-US")}`;
   const [events, orders, ivConfirm, ivToday, testsIn, approvals] = await Promise.all([
-    prisma.sourcingEvent.findMany({ where: { created_by_person_id: personId, type: "PROPOSALS", status: "OPEN" }, select: { id: true, event_number: true, deadline_at: true, job: { select: { title: true, budget_type: true } }, proposalRequests: { select: { bid: { select: { status: true, lines: { take: 1, select: { unit_price_cents: true } } } } } } } }),
+    prisma.sourcingEvent.findMany({ where: { created_by_person_id: personId, type: "PROPOSALS", status: "OPEN" }, select: { id: true, job_id: true, event_number: true, deadline_at: true, job: { select: { title: true, budget_type: true } }, proposalRequests: { select: { bid: { select: { status: true, lines: { take: 1, select: { unit_price_cents: true } } } } } } } }),
     prisma.workOrder.findMany({ where: { buyer_person_id: personId, status: "ISSUED", buyer_accepted_at: null }, select: { id: true, order_number: true } }),
     prisma.interviewRequest.findMany({ where: { requested_by_person_id: personId, status: "SLOTS_OFFERED" }, select: { id: true, job_id: true } }),
     listInterviews({ buyerPersonId: personId, from: nyDayStart(now), to: nyDayStart(now, 1) }),
@@ -294,9 +294,9 @@ export async function hireToday(personId: string): Promise<{ items: TodayItem[];
     const subs = ev.proposalRequests.filter((r) => r.bid?.status === "SUBMITTED");
     const per = ev.job.budget_type === "FIXED" ? "" : "/hr";
     const rates = subs.map((r) => r.bid!.lines[0]?.unit_price_cents).filter((c): c is number => c != null).sort((a, b) => a - b);
-    if (subs.length) items.push({ id: `p-${ev.id}`, kind: "proposals", what: `Review ${subs.length} proposal${subs.length === 1 ? "" : "s"}`, detail: [ev.job.title, rates.length ? (rates[0] === rates.at(-1) ? `${usd0(rates[0])}${per}` : `${usd0(rates[0])}–${usd0(rates.at(-1)!)}${per}`) : null, `due ${short(ev.deadline_at)}`].filter(Boolean).join(" · "), href: `/hire/sourcing/${ev.id}`, action: "Review" });
-    else if (ev.deadline_at <= now) items.push({ id: `x-${ev.id}`, kind: "expired", what: `${ev.event_number} closed with no responses`, detail: `${ev.job.title} · extend the deadline or ask more providers`, href: `/hire/sourcing/${ev.id}`, action: "Open" });
-    else if (ev.deadline_at.getTime() - now.getTime() < DAY) items.push({ id: `c-${ev.id}`, kind: "closing", what: `${ev.event_number} closes in under 24 hours`, detail: `${ev.job.title} · due ${short(ev.deadline_at)}`, href: `/hire/sourcing/${ev.id}`, action: "Open" });
+    if (subs.length) items.push({ id: `p-${ev.id}`, kind: "proposals", what: `Review ${subs.length} proposal${subs.length === 1 ? "" : "s"}`, detail: [ev.job.title, rates.length ? (rates[0] === rates.at(-1) ? `${usd0(rates[0])}${per}` : `${usd0(rates[0])}–${usd0(rates.at(-1)!)}${per}`) : null, `due ${short(ev.deadline_at)}`].filter(Boolean).join(" · "), href: `/work-requests/${ev.job_id}?tab=responses`, action: "Review" });
+    else if (ev.deadline_at <= now) items.push({ id: `x-${ev.id}`, kind: "expired", what: `${ev.event_number} closed with no responses`, detail: `${ev.job.title} · extend the deadline or ask more providers`, href: `/work-requests/${ev.job_id}?tab=responses`, action: "Open" });
+    else if (ev.deadline_at.getTime() - now.getTime() < DAY) items.push({ id: `c-${ev.id}`, kind: "closing", what: `${ev.event_number} closes in under 24 hours`, detail: `${ev.job.title} · due ${short(ev.deadline_at)}`, href: `/work-requests/${ev.job_id}?tab=responses`, action: "Open" });
   }
   for (const o of orders) items.push({ id: `a-${o.id}`, kind: "accept", what: `Accept Work Order ${o.order_number}`, detail: "The provider accepts once you have", href: `/orders/${o.id}`, action: "Review & Accept" });
   for (const iv of ivConfirm) items.push({ id: `i-${iv.id}`, kind: "confirm", what: "Confirm an interview time", detail: "The provider offered times", href: `/work-requests/${iv.job_id}#interviews`, action: "Confirm" });
