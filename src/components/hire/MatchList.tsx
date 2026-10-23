@@ -84,6 +84,7 @@ export function MatchList({ jobId, matches: initial, state, empty, published, ch
   return (
     <div data-match-list>
       {/* Scott 10-23: one line that says what to do here. */}
+      {!chosen && <>
       <p className="mt-5 text-[13.5px] text-state-inactive" data-matches-next><b className="text-ink">Next:</b>{" "}
         {opened || allAsked
           ? <>You asked {opened?.count ?? asked.length} — their answers arrive on <Link href={`/work-requests/${jobId}?tab=responses`} className="font-semibold">Responses</Link>. Or Hire one directly.</>
@@ -98,6 +99,7 @@ export function MatchList({ jobId, matches: initial, state, empty, published, ch
         const pick = strong === 0 ? "Publish to Job Board" : strong <= 3 ? "Hire Directly" : "Compare Providers";
         return <p className="mt-1.5 text-[13px]" data-match-hint><b>{visible.length} match{visible.length === 1 ? "" : "es"} · {strong} strong</b> <span className="text-state-inactive">(in budget, good skill fit) — suggested: </span><b>{pick}</b></p>;
       })()}
+      </>}
       {/* OJ-E002: two doors — Hire Directly (any row's Hire) or Compare Providers (the one magenta button). */}
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-two-doors>
         <div className="rounded-[12px] border border-state-border p-5" data-door="direct">
