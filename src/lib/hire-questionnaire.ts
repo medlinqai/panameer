@@ -64,7 +64,8 @@ export async function saveHireJob(viewer: Viewer, jobId: string | null, input: H
   if (id) {
     const { pAccountId } = await resolveBuyer(viewer);
     const job = await loadOwned(viewer, id, pAccountId);
-    if (job.status !== "DRAFT") throw new HireError("This job is already posted.");
+    // JS-E003: an Open job nobody was asked on edits normally; once providers are asked it takes an Amendment.
+    if (job.status !== "DRAFT" && (job.status !== "OPEN" || (await prisma.sourcingEvent.count({ where: { job_id: id, status: { not: "DRAFT" } } })))) throw new HireError("Providers were asked on this job — use Edit (Amendment).");
   } else {
     id = (await createDraft(viewer)).id;
   }

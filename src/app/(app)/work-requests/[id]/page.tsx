@@ -12,7 +12,8 @@ import { workRequestSections } from "@/lib/work-request-sections";
 import { listInterviews } from "@/lib/interviews";
 import { dailyConfigured } from "@/lib/daily";
 import { InterviewCards } from "@/components/work/InterviewCards";
-import { ActionsMenu } from "@/components/casing/ActionsMenu";
+import { JobActionsMenu, type JobMenuItem } from "@/components/hire/JobActionsMenu";
+import type { JobStage } from "@/lib/job-stage";
 import { NeutralAvatar } from "@/components/Avatar";
 import { providerPhotos } from "@/lib/provider-number";
 import { PENDING_ON_LABEL, WORK_ORDER_LABEL, waitingOn } from "@/lib/oracle-status";
@@ -88,13 +89,6 @@ export default async function Page({
   const orders = await jobOrders(detail.id);
   const buyerPersonId = (await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } }))?.id ?? "";
   const buyerInterviews = await listInterviews({ jobId: detail.id, buyerPersonId });
-  const actions = [
-    ...(detail.status === "DRAFT" ? [{ label: "Edit the Job", href: `/hire?job=${detail.id}&step=0` }] : []),
-    ...(!detail.soleSourced ? [{ label: "Invite Providers", href: `/work-requests/${id}/invite` }] : []),
-    ...(posted ? [{ label: "Share with Providers", href: `/work-requests/${id}/share` }] : []),
-    ...sec.orders.map((o) => ({ label: `Open Order ${o.order_number}`, href: `/orders/${o.id}` })),
-    { label: "My Jobs", href: "/hire/jobs" },
-  ];
 
   // HL-E003: the page as Scott's approved mockup — header, one fact row, the progress band, then sections over an ink rule.
   let testId: string | null = null;
@@ -133,7 +127,7 @@ export default async function Page({
         </div>
         <div className="flex items-center gap-2.5">
           <StatePill state={JOB_STAGE_STATE[stage]}>{JOB_STAGE_LABEL[stage]}</StatePill>
-          <ActionsMenu items={actions} />
+          <JobActionsMenu jobId={detail.id} items={menuFor(stage, detail.id, sec.orders[0]?.id ?? null)} />
         </div>
       </section>
 
@@ -304,4 +298,21 @@ async function jobOrders(jobId: string) {
 function answeredRates<M extends { personId: string; rate: string | null }>(matches: M[], proposals: { providerPersonId: string; rate: { unitPriceCents: number; basis: string } | null }[]): M[] {
   const by = new Map(proposals.filter((p) => p.rate).map((p) => [p.providerPersonId, p.rate!]));
   return matches.map((m) => { const r = by.get(m.personId); return r ? { ...m, rate: `$${Math.round(r.unitPriceCents / 100)}${r.basis === "RATE" ? "/hr" : ""} answered` } : m; });
+}
+
+/** JS-E003: the Actions menu fits the job's status. */
+function menuFor(stage: JobStage, id: string, orderId: string | null): JobMenuItem[] {
+  const edit = { label: "Edit", href: `/hire?job=${id}&step=0` };
+  const dup: JobMenuItem = { label: "Duplicate", act: "duplicate" };
+  const hold: JobMenuItem = { label: "Put On Hold", act: "hold", confirm: "Put this job on hold? The answer deadline pauses and everyone asked is told." };
+  const close: JobMenuItem = { label: "Close Job", act: "close" };
+  switch (stage) {
+    case "DRAFT": return [edit, dup, { label: "Discard", act: "discard", confirm: "Discard this draft?" }];
+    case "OPEN": return [edit, { label: "Invite Providers", href: `/work-requests/${id}/invite` }, dup, hold, close];
+    case "COMPARING": return [{ label: "Edit (Amendment)", href: `/work-requests/${id}?tab=details&amend=1` }, { label: "Extend Deadline", act: "extend" }, { label: "Invite More", href: `/work-requests/${id}?tab=matches` }, hold, close, dup];
+    case "HIRED": case "WAITING_ERP": return [{ label: "View Order", href: orderId ? `/orders/${orderId}` : `/work-requests/${id}?tab=work-order` }, dup];
+    case "ON_HOLD": return [{ label: "Resume", act: "resume" }, close];
+    case "CLOSED": return [dup, { label: "Reopen", act: "reopen", confirm: "Reopen this job? It goes back to Open." }];
+    default: return [dup];
+  }
 }

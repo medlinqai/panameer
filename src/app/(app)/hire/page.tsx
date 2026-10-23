@@ -21,7 +21,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
     const job = await loadOwned(viewer, sp.job, pAccountId).catch(() => null);
     // OJ-E002: matches live on the Job page now — a posted job's matches step (or any step ≥ 5) opens its Matches tab.
     if (job && (Number(sp.step) >= 5 || (Number(sp.step) === 4 && job.status !== "DRAFT"))) redirect(`/work-requests/${job.id}?tab=matches`);
-    const read = job && job.status === "DRAFT" ? await readServiceDescription(job.id) : null;
+    const read = job && (job.status === "DRAFT" || (job.status === "OPEN" && !(await prisma.sourcingEvent.count({ where: { job_id: job.id, status: { not: "DRAFT" } } })))) ? await readServiceDescription(job.id) : null;
     if (read) { jobId = sp.job; sd = read; }
   }
   const defaults = await lastJobDefaults(viewer, jobId);
