@@ -245,13 +245,14 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
             ) : (
               <>
                 {f.classConfidence === "low" && <p className="mt-4 text-[13.5px] font-semibold text-magenta-dark">We weren&apos;t sure — pick the closest.</p>}
-                <p className="mb-1.5 mt-4 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">Category</p>
+                <p className="mb-1.5 mt-4 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">What Kind of Work Do You Need?</p>
+                <p className="-mt-1 mb-2 text-[12.5px] text-ink-2">The work you're buying — not your company's industry. A trucking company hiring an Oracle consultant picks ERP &amp; Oracle.</p>
                 <div className="flex flex-wrap gap-2">
                   {categories.map((c) => <button key={c} type="button" aria-pressed={f.category === c} onClick={() => set({ category: c, ...(c !== f.category ? { businessTypeId: null, businessType: "" } : {}) })} className={f.category === c ? CHIP_ON : CHIP_OFF}>{c}</button>)}
                 </div>
                 {f.category && (
                   <>
-                    <p className="mb-1.5 mt-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">Business Type</p>
+                    <p className="mb-1.5 mt-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">Type of Work</p>
                     <div className="flex flex-wrap gap-2" data-business-types>
                       {(hierarchy.find((h) => h.name === f.category)?.businessTypes ?? []).map((b) => (
                         <button key={b.id} type="button" aria-pressed={f.businessTypeId === b.id} onClick={() => pickBusinessType(b)} className={f.businessTypeId === b.id ? CHIP_ON : CHIP_OFF}>{b.name}</button>
