@@ -86,19 +86,6 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
       {ev.othersNotifiedAt && <p className="mt-4 text-[13.5px] text-ink-2">The other candidates were told on {new Date(ev.othersNotifiedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.</p>}
 
       <section className="mt-5">
-        <h2 className="text-[18px] font-extrabold">Responses</h2>
-        {/* Scott 10-22 ("what do I do now?"): one line that says the next move. */}
-        {!awarded && (() => {
-          const { requested: req, proposed: yes, declined: no } = ev.counts;
-          const waiting = Math.max(0, req - yes - no);
-          const passed = new Date(ev.deadlineAt).getTime() <= Date.now();
-          const next = yes === 0
-            ? (passed ? "No one answered. Extend the deadline above, or Create a Job again with more providers." : `Waiting on ${req} of ${req}. Their answers appear here as they come in.`)
-            : waiting > 0 && !passed
-              ? `${yes} of ${req} answered, waiting on ${waiting}. You can act on those who answered now: Decline who you don't want, Interview, then Hire.`
-              : `${yes} of ${req} answered. Decline who you don't want, Interview the rest, then Hire.`;
-          return <p className="mt-1 text-[13.5px] text-ink-2" data-next-step><b className="text-ink">Next:</b> {next}</p>;
-        })()}
         {/* IW-E003: joint actions on the ticked rows; the row buttons stay as they are. */}
         {!awarded && (
           <div className="mt-2 flex flex-wrap items-center gap-2 border-y border-state-border bg-bg-soft px-3 py-2" data-bulk-bar>
