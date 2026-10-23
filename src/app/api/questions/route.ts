@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       case "send": {
         const transact = await checkTransact(gate);
         if (!transact.ok) return NextResponse.json({ error: TRANSACT_MESSAGE[transact.reason], code: transact.reason }, { status: 403 });
-        return NextResponse.json(await sendQuestions(gate, { jobId: String(body.jobId ?? ""), providerPersonIds: (body.providerPersonIds ?? []).map(String), questions: (body.questions ?? []).map(String), dueAt: body.dueAt ?? null }));
+        return NextResponse.json(await sendQuestions(gate, { jobId: String(body.jobId ?? ""), providerPersonIds: (body.providerPersonIds ?? []).map(String), questions: Array.isArray(body.questions) ? body.questions : [], dueAt: body.dueAt ?? null }));
       }
       case "prefill":
         return NextResponse.json({ answers: await prefillAnswers(gate, String(body.answerId ?? "")) });
