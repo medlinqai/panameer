@@ -85,6 +85,11 @@ function money(cents: number | null, currency: string): string | null {
 }
 
 const TITLE_CASE: Record<string, string> = {
+  // Durations read as words, never enum text ("gt 6 months").
+  LT_1_MONTH: "Less Than 1 Month",
+  ONE_TO_3_MONTHS: "1 to 3 Months",
+  THREE_TO_6_MONTHS: "3 to 6 Months",
+  GT_6_MONTHS: "6+ Months",
   ENTRY: "Entry",
   INTERMEDIATE: "Intermediate",
   EXPERT: "Expert",
