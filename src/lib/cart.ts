@@ -235,7 +235,7 @@ export async function placeOrder(viewer: Viewer, input: { description?: string |
     const order = await prisma.$transaction(async (tx) => {
       const o = await tx.workOrder.create({
         data: {
-          order_number: await nextNumber("WO", { pAccountId }, { tx }),
+          order_number: await nextNumber(PREFIX.WORK_ORDER, { pAccountId }, { tx }),
           agreement_id: msaId,
           origin: "DIRECT", work_request_id: wrId, description, buyer_person_id: p.id, p_account_id: pAccountId, provider_person_id: providerPersonId, currency: group[0].currency,
           status: "RELEASED", buyer_accepted_at: now, provider_accepted_at: now, style,

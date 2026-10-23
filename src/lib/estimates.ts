@@ -266,7 +266,7 @@ async function orderFromEstimate(estimateId: string): Promise<string> {
       const cap = group.reduce((n, m) => n + (m.l.kind === "NOT_TO_EXCEED" ? m.l.amount_cents ?? 0 : m.amount ?? Math.round((m.quantity ?? 0) * (m.unit ?? 0))), 0);
       const o = await tx.workOrder.create({
         data: {
-          order_number: await nextNumber("WO", { pAccountId }, { tx }), style, agreement_id: msaId,
+          order_number: await nextNumber(PREFIX.WORK_ORDER, { pAccountId }, { tx }), style, agreement_id: msaId,
           origin: "INDIRECT", work_request_id: wrId, description, buyer_person_id: buyer.id, p_account_id: pAccountId, provider_person_id: e.provider_person_id,
           currency: e.currency, status: "ISSUED", buyer_accepted_at: now, fee_bps: distinct.length === 1 ? distinct[0] : null, not_to_exceed_cents: cap,
           external_ref: e.estimate_number, sow_text: sow,

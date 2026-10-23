@@ -4,11 +4,14 @@ import { ensureCompanyCode } from "@/lib/company-code";
 
 // NB-E001: every transaction number = PREFIX-COMPANY-YY-######## (RQ-STRAT-26-00000001) — the BUYER company's code,
 // the calendar year of creation (America/New_York), one sequence per prefix per buyer account that never resets.
-export const PREFIX = { JOB: "JB", WORK_REQUEST: "RQ", WORK_ORDER: "WO", SETTLEMENT: "ST", PAYMENT: "PY", CHANGE_ORDER: "CO", ESTIMATE: "ES", AGREEMENT: "MS", SOURCING_EVENT: "SE" } as const;
+export const PREFIX = { JOB: "JB", WORK_REQUEST: "RQ", WORK_ORDER: "OR", SETTLEMENT: "ST", PAYMENT: "PY", CHANGE_ORDER: "CO", ESTIMATE: "ES", AGREEMENT: "MS", SOURCING_EVENT: "SE" } as const;
 export type NumberPrefix = (typeof PREFIX)[keyof typeof PREFIX];
 // SQ-E002: Service Requisitions print RQ but keep counting on the WR sequence (no reset); old WR- numbers stay as issued.
-const SEQUENCE_KEY: Partial<Record<NumberPrefix, string>> = { RQ: "WR" };
+// RO-E003: Orders print OR on the WO sequence (no reset); WO-… numbers already issued stay.
+const SEQUENCE_KEY: Partial<Record<NumberPrefix, string>> = { RQ: "WR", OR: "WO" };
 /** A requisition number in either form — RQ-… (from 2026-10-22) or WR-… (issued before). */
+/** An order number in either form — OR-… (from 2026-10-23) or WO-… (issued before). */
+export const ORDER_NUMBER = /^(OR|WO)-[A-Z0-9]+-\d{2}-\d{8}$/i;
 export const REQUISITION_NUMBER = /^(RQ|WR)-[A-Z0-9]+-\d{2}-\d{8}$/i;
 
 type Tx = Prisma.TransactionClient | typeof prisma;

@@ -2,7 +2,7 @@ import { activeMsa } from "@/lib/agreements";
 import { resolveOrderItems } from "@/lib/work-resolve";
 import { assertLineAllowed, defaultPaymentEvent, styleForLine, styleForLines, StyleError } from "@/lib/work-order-styles";
 import type { WorkOrderStyle } from "@prisma/client";
-import { nextNumber } from "@/lib/numbering";
+import { nextNumber, PREFIX } from "@/lib/numbering";
 import { assertCanSign } from "@/lib/your-path";
 import { TransactionType, WorkOrderOrigin } from "@prisma/client";
 import { defaultTerms, type LineTerms } from "@/lib/billing-terms";
@@ -202,7 +202,7 @@ async function buildOne(wr: ReqForOrder, lines: ReqLine[], providerPersonId: str
       : l.amount_cents ?? 0;
   }
 
-  const orderNumber = await nextNumber("WO", { pAccountId: wr.p_account_id });
+  const orderNumber = await nextNumber(PREFIX.WORK_ORDER, { pAccountId: wr.p_account_id });
   const msaId = (await activeMsa()).id;
 
   // THE ORDER, ITS LINES AND THE REQUISITION'S STATUS MOVE IN ONE
