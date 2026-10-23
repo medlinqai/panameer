@@ -12,7 +12,7 @@ export function JobStrip({ steps, jobId, title }: { steps: StripStep[]; jobId?: 
   return (
     <div className="overflow-x-auto" data-job-strip>
       {title && <h2 className="mb-5 text-[22px] font-extrabold">{title}</h2>}
-      <ol className="grid min-w-[760px] gap-x-2 text-center" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
+      <ol className="grid min-w-[760px] gap-x-3 text-center" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
         {steps.map((s, n) => {
           const Icon = LABEL_ICON[s.label] ?? STEP_ICON[s.key] ?? FileText;
           const ring = s.state === "done" ? "border-ink bg-ink text-surface" : s.state === "current" ? "border-magenta bg-white text-magenta-dark" : "border-state-border bg-white text-state-disabled";
@@ -23,13 +23,13 @@ export function JobStrip({ steps, jobId, title }: { steps: StripStep[]; jobId?: 
             ? <Link href={`/work-requests/${jobId}?tab=${STEP_TAB[s.key]}`} scroll={false} className={`no-underline hover:underline ${s.state === "current" ? "text-magenta-dark" : "text-ink"}`}>{name}</Link>
             : <span className={s.state === "current" ? "text-magenta-dark" : s.state === "skipped" ? "text-state-inactive" : s.state === "later" ? "text-state-disabled" : "text-ink"}>{name}</span>;
           return (
-            <li key={s.key} className="flex flex-col items-center gap-2.5" data-strip-step={s.key} data-strip-state={s.state} aria-current={s.state === "current" ? "step" : undefined}>
+            <li key={s.key} className="flex flex-col items-center gap-3" data-strip-step={s.key} data-strip-state={s.state} aria-current={s.state === "current" ? "step" : undefined}>
               <span className={`grid h-11 w-11 place-items-center rounded-full border-2 ${ring}`} aria-hidden><Icon size={20} strokeWidth={1.9} /></span>
-              <span className="min-h-[34px] text-[13px] font-semibold leading-[1.3]">{label}</span>
+              <span className="min-h-[38px] text-[13px] font-semibold leading-[1.45]">{label}</span>
               <i className={`block h-1.5 w-full rounded-sm ${s.state === "done" ? "bg-ink" : s.state === "current" ? "bg-magenta" : "bg-state-sunken"}`} />
-              <span className="flex min-h-[34px] flex-col items-center leading-tight">
-                {s.note ? <b className={`text-[12px] ${s.state === "current" ? "text-magenta-dark" : "text-ink"}`} data-step-note>{s.note}</b> : null}
-                <span className={`text-[11.5px] font-semibold ${s.state === "done" ? "text-state-accepted" : s.state === "current" ? "text-magenta-dark" : "text-state-inactive"}`}>{s.top || (s.note ? "" : "\u00a0")}</span>
+              <span className="mt-1 flex min-h-[44px] flex-col items-center gap-1 leading-snug">
+                {s.note ? <b className={`text-[13px] ${s.state === "current" ? "text-magenta-dark" : "text-ink"}`} data-step-note>{s.note}</b> : null}
+                <span className={`text-[12px] font-semibold ${s.state === "done" ? "text-state-accepted" : s.state === "current" ? "text-magenta-dark" : "text-state-inactive"}`}>{s.top || (s.note ? "" : "\u00a0")}</span>
               </span>
             </li>
           );
