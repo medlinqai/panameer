@@ -9,7 +9,7 @@ import { CompareTable } from "@/components/hire/MatchList";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
 import { InterviewDialog } from "@/components/hire/InterviewDialog";
 import { AskQuestionsDialog } from "@/components/hire/AskQuestionsDialog";
-import { answerText } from "@/lib/question-types";
+import { answerText, scoreTone } from "@/lib/question-types";
 
 type Ev = Awaited<ReturnType<typeof eventForBuyer>>;
 const STATUS: Record<string, string> = { DRAFT: "Draft", OPEN: "Open", CLOSED: "Closed", AWARDED: "Awarded" };
@@ -17,6 +17,8 @@ const BTN = "inline-flex min-h-9 items-center justify-center bg-ink px-4 text-[1
 const GHOST = "inline-flex min-h-9 items-center justify-center border border-ink bg-white px-3.5 text-[13px] font-semibold text-ink hover:bg-bg-soft disabled:cursor-not-allowed disabled:opacity-40";
 const usd = (c: number | null) => (c == null ? null : `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}`);
 
+// QB-E005: a knockout sorts last; never auto-declines — the buyer decides.
+const scoreOf = (p: { qa: { score: { score: number; max: number; knockedOut: string | null } | null } | null }) => (!p.qa?.score ? -1 : p.qa.score.knockedOut ? -0.5 : p.qa.score.max ? p.qa.score.score / p.qa.score.max : 0);
 // CA-E004: Available first, then Declined, then no answer, then Not This Time.
 const rank = (p: { proposal: { status: string } | null; requestStatus: string }) => (p.proposal ? (p.proposal.status === "DECLINED" ? 1 : 0) : p.requestStatus === "DECLINED" ? 3 : 2);
 
@@ -26,6 +28,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
   const [comparing, setComparing] = useState(false);
   const [interviewing, setInterviewing] = useState<string[] | null>(null);
   const [asking, setAsking] = useState<string[] | null>(null);
+  const [byScore, setByScore] = useState(false);
   const [extendBy, setExtendBy] = useState("24");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -101,6 +104,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
           <div className="mt-2 flex flex-wrap items-center gap-2 border-y border-state-border bg-bg-soft px-3 py-2" data-bulk-bar>
             <button type="button" className={GHOST} onClick={() => setPicked(new Set(withProposal.filter((p) => p.proposal?.status === "SHORTLISTED").map((p) => p.personId)))} data-select-shortlisted>Select All Shortlisted</button>
             <span className="text-[13px] text-state-inactive">{picked.size} selected</span>
+            {ev.proposals.some((p) => p.qa?.score) && <label className="flex items-center gap-1.5 text-[13px] font-semibold"><input type="checkbox" checked={byScore} onChange={(e) => setByScore(e.target.checked)} data-sort-score />Sort by Score</label>}
             <span className="flex-1" />
             <button type="button" className={GHOST} disabled={picked.size < 2 || picked.size > 4} onClick={() => setComparing(true)} data-compare-proposals title="Tick 2 to 4 responses">Compare{picked.size >= 2 ? ` ${picked.size}` : ""}</button>
             <button type="button" className={GHOST} disabled={busy || !picked.size} onClick={() => setAsking([...picked])} data-bulk-ask>Ask Questions{picked.size ? ` ${picked.size}` : ""}</button>
@@ -110,7 +114,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
           </div>
         )}
         <ul className="mt-2 divide-y divide-line border-y border-line">
-          {[...ev.proposals].sort((a, b) => rank(a) - rank(b) || (a.proposal?.rateCents ?? Infinity) - (b.proposal?.rateCents ?? Infinity)).map((p) => {
+          {[...ev.proposals].sort((a, b) => (byScore ? scoreOf(b) - scoreOf(a) : 0) || rank(a) - rank(b) || (a.proposal?.rateCents ?? Infinity) - (b.proposal?.rateCents ?? Infinity)).map((p) => {
             const pr = p.proposal;
             const over = pr?.rateCents != null && ev.job.budget_max_cents != null && pr.rateCents > ev.job.budget_max_cents;
             return (
@@ -127,6 +131,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                   )}
                   {pr?.note && <p className="mt-1 whitespace-pre-line text-[13px] text-ink-2">{pr.note}</p>}
                   <RowPills p={p} />
+                  {p.qa?.score?.knockedOut && <p className="mt-1 text-[12.5px] text-state-declined" data-knockout-reason>Knocked Out: {p.qa.score.knockedOut}</p>}
                   {p.qa?.status === "in" && (
                     <details className="mt-2 text-[13px]" data-qa>
                       <summary className="cursor-pointer font-semibold">Read Answers ({p.qa.questions.length})</summary>
@@ -157,7 +162,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
       </section>
       {asking && <AskQuestionsDialog jobId={ev.jobId} providerPersonIds={asking} providerLabels={asking.map((id) => (ev.proposals.find((p) => p.personId === id)?.match.name ?? "").replace(/^Provider /, "")).filter(Boolean)} defaultDue={ev.deadlineAt} onClose={() => setAsking(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
       {interviewing && <InterviewDialog jobId={ev.jobId} providerPersonIds={interviewing} providerLabels={interviewing.map((id) => (ev.proposals.find((p) => p.personId === id)?.match.name ?? "").replace(/^Provider /, "")).filter(Boolean)} onClose={() => setInterviewing(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
-      {comparing && <CompareTable rows={withProposal.filter((p) => picked.has(p.personId)).map((p) => ({ m: p.match, proposed: p.proposal?.rateCents != null ? `${usd(p.proposal.rateCents)}${per}` : null, start: p.proposal?.start ?? null, qa: p.qa?.status === "in" ? p.qa.questions.map((q, i) => ({ q: q.text, a: answerText(p.qa!.answers[i]) })) : null }))} onClose={() => setComparing(false)} />}
+      {comparing && <CompareTable rows={withProposal.filter((p) => picked.has(p.personId)).map((p) => ({ m: p.match, proposed: p.proposal?.rateCents != null ? `${usd(p.proposal.rateCents)}${per}` : null, start: p.proposal?.start ?? null, qa: p.qa?.status === "in" ? [...p.qa.questions.map((q, i) => ({ q: q.text, a: answerText(p.qa!.answers[i]) })), ...(p.qa.score ? [{ q: "Score", a: p.qa.score.knockedOut ? `Knocked Out · ${p.qa.score.score} / ${p.qa.score.max}` : `${p.qa.score.score} / ${p.qa.score.max}` }] : [])] : null }))} onClose={() => setComparing(false)} />}
     </div>
   );
 }
@@ -172,6 +177,7 @@ function RowPills({ p }: { p: Ev["proposals"][number] }) {
         : iv.status === "COMPLETED" ? <span className={`${PILL} bg-state-inactive-bg text-state-inactive`} data-interview-state="done">Interview Done</span>
         : <span className={`${PILL} bg-state-pending-bg text-state-pending`} data-interview-state="invited">Invited, Not Booked</span>)}
       {p.qa && <span className={`${PILL} ${p.qa.status === "in" ? "bg-state-accepted-bg text-state-accepted" : "bg-state-pending-bg text-state-pending"}`} data-qa-state={p.qa.status}>{p.qa.status === "in" ? "Answers In" : "Questions Sent"}</span>}
+      {p.qa?.score && <span className={`${PILL} ${scoreTone(p.qa.score) === "ok" ? "bg-state-accepted-bg text-state-accepted" : scoreTone(p.qa.score) === "pend" ? "bg-state-pending-bg text-state-pending" : "bg-state-declined-bg text-state-declined"}`} title={p.qa.score.knockedOut ?? undefined} data-score>{p.qa.score.knockedOut ? `Knocked Out · ${p.qa.score.score} / ${p.qa.score.max}` : `Score ${p.qa.score.score} / ${p.qa.score.max}`}</span>}
       {p.test && <span className={`${PILL} ${p.test === "PASSED" ? "bg-state-accepted-bg text-state-accepted" : p.test === "FAILED" ? "bg-state-declined-bg text-state-declined" : "bg-state-pending-bg text-state-pending"}`} data-test-state={p.test}>{p.test === "PASSED" ? "Test Passed" : p.test === "FAILED" ? "Test Failed" : "Test Sent"}</span>}
     </span>
   );

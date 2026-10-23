@@ -237,7 +237,7 @@ export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: Hi
     ["Location", (r) => r.m.detail.location ?? "—"],
     ["Products", (r) => r.m.detail.products.map((p) => p.title).join(" · ") || "—"],
     // AQ-E004: a row per written question, answers side by side.
-    ...((rows.find((r) => r.qa?.length)?.qa ?? []).map((x, i) => [`Q${i + 1}: ${x.q}`, (r: (typeof rows)[number]) => <span className="whitespace-pre-wrap text-[13px]">{r.qa?.[i]?.a || "—"}</span>] as [string, (r: (typeof rows)[number]) => ReactNode])),
+    ...((rows.find((r) => r.qa?.length)?.qa ?? []).map((x, i) => [x.q === "Score" ? "Score" : `Q${i + 1}: ${x.q}`, (r: (typeof rows)[number]) => <span className="whitespace-pre-wrap text-[13px]">{r.qa?.[i]?.a || "—"}</span>] as [string, (r: (typeof rows)[number]) => ReactNode])),
   ];
   return (
     <div role="dialog" aria-label="Compare" data-compare-table className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4" onClick={onClose}>
