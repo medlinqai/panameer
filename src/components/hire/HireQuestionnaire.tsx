@@ -143,10 +143,8 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
   const loadMatches = async () => {
     const j = await call({ action: "matches", jobId, input: { ...f, budgetType: f.budgetType ?? "HOURLY" } });
     if (!j) return;
-    setJobId(j.jobId as string);
-    const m = (j.matches as HireMatch[]) ?? [];
-    setMatches(m);
-    setStep(5);
+    // OJ-E002: Create Job & Show Matches lands on the Job page's Matches tab.
+    router.push(`/work-requests/${j.jobId as string}?tab=matches`);
   };
 
   // Back from a profile returns to the same job and step: the address carries ?job=&step=. router.replace (not

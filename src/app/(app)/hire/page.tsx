@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
@@ -18,6 +19,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ j
   if (sp.job) {
     const { pAccountId } = await resolveBuyer(viewer);
     const job = await loadOwned(viewer, sp.job, pAccountId).catch(() => null);
+    // OJ-E002: matches live on the Job page now — a posted job's matches step (or any step ≥ 5) opens its Matches tab.
+    if (job && (Number(sp.step) >= 5 || (Number(sp.step) === 4 && job.status !== "DRAFT"))) redirect(`/work-requests/${job.id}?tab=matches`);
     const read = job && job.status === "DRAFT" ? await readServiceDescription(job.id) : null;
     if (read) { jobId = sp.job; sd = read; }
   }

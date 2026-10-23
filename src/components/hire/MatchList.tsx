@@ -4,10 +4,9 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import type { HireMatch } from "@/lib/hire-questionnaire";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
-import { MatchBadges } from "@/components/hire/HireUI";
+import { BTN_MAGENTA, MatchBadges } from "@/components/hire/HireUI";
 
 // SE-E002/E003: one match list for Hire and the Job page — star (Shortlist), quick view, Compare, Request Proposals by a deadline.
-const BTN = "inline-flex min-h-10 items-center justify-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover disabled:opacity-50";
 const GHOST = "inline-flex min-h-9 items-center justify-center border border-ink bg-white px-3.5 text-[13px] font-semibold text-ink hover:bg-bg-soft disabled:opacity-40";
 const CHIP = "rounded-full border border-line bg-bg-soft px-2";
 const WHY = "rounded-full border border-magenta-dark bg-[#fbeafb] px-2 font-semibold text-magenta-dark";
@@ -37,7 +36,6 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [opened, setOpened] = useState<{ eventId: string; eventNumber: string; count: number } | null>(null);
-  const [compared, setCompared] = useState(false);
   const [showWeak, setShowWeak] = useState(false);
   const [minYears, setMinYears] = useState(0);
   const [minImpl, setMinImpl] = useState(0);
@@ -61,7 +59,6 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   const allStarred = list.filter((m) => m.starred && !m.hidden);
   const asked = allStarred.filter((m) => m.requested);
   const allAsked = asked.length > 0 && !starred.length;
-  const shortlistStep = allAsked ? 5 : !starred.length ? 2 : compared || starred.length === 1 ? 4 : 3;
   const at = visible.findIndex((m) => m.personId === active);
   const cur = at >= 0 ? visible[at] : null;
 
@@ -80,20 +77,36 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
   if (!list.length) return <>{empty}</>;
   return (
     <div data-match-list>
-      <p className="mt-2 text-[13.5px]"><b>Two ways to go:</b> <b>Hire</b> one provider directly from their row, or <b>Shortlist</b> several and request availability from them all at once:</p>
-      {/* HP-E003: how the shortlist works. */}
-      <ol className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]" data-shortlist-steps>
-        {["Hide Who You Don't Want", "Star Who You Like", "Compare (Optional)", "Request Availability from All Starred"].map((t, i) => (
-          <li key={t} className="flex items-center gap-2">
-            {i > 0 && <span aria-hidden className="text-ink-3">→</span>}
-            <span className={shortlistStep === i + 1 ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-2.5 py-0.5 font-bold text-magenta-dark" : shortlistStep > i + 1 ? "rounded-full border border-ink px-2.5 py-0.5 font-semibold" : "rounded-full border border-line px-2.5 py-0.5 font-semibold text-ink-3"} aria-current={shortlistStep === i + 1 ? "step" : undefined}>{i + 1} {t}</span>
-          </li>
-        ))}
-      </ol>
+      {/* OJ-E002: two doors — Hire Directly (any row's Hire) or Compare Providers (the one magenta button). */}
+      <div className="mt-2 grid gap-3 sm:grid-cols-2" data-two-doors>
+        <div className="rounded-[12px] border border-state-border p-4" data-door="direct">
+          <h3 className="text-[15px] font-extrabold">Hire Directly</h3>
+          <p className="mt-1 text-[13px] text-state-inactive">You know who you want. Press <b className="text-ink">Hire</b> on their row — terms, then the Work Order.</p>
+          <p className="mt-2 text-[12px] text-state-inactive">Fastest · one provider</p>
+        </div>
+        <div className="rounded-[12px] border border-magenta p-4" data-door="compare">
+          <h3 className="text-[15px] font-extrabold">Compare Providers</h3>
+          <p className="mt-1 text-[13px] text-state-inactive">Star the ones you like. They each answer with their rate by your deadline; interview the best, then Hire.</p>
+          {!opened && allAsked ? (
+            <p className="mt-2 text-[13.5px]" data-all-asked>All {asked.length} starred were asked. <Link href={`/work-requests/${jobId}?tab=responses`} className="font-semibold">See Their Answers →</Link> <span className="text-state-inactive">Star someone new to ask them too.</span></p>
+          ) : opened ? (
+            <p className="mt-2 text-[13.5px]"><b>{opened.eventNumber}</b> — {opened.count} asked. <Link href={`/work-requests/${jobId}?tab=responses`} className="font-semibold">See Responses →</Link></p>
+          ) : (
+            <div className="mt-2.5 flex flex-wrap items-center gap-3" data-proposals-bar>
+              <button type="button" className={`${BTN_MAGENTA} disabled:opacity-40`} disabled={busy || !starred.length || !jobId} onClick={request} data-request-proposals>{`Ask ${starred.length} Starred for Availability`}</button>
+              <label className="flex items-center gap-2 text-[12.5px] font-semibold">Deadline
+                <input inputMode="numeric" value={hours} onChange={(e) => setHours(e.target.value.replace(/\D/g, "").slice(0, 3))} aria-label="Deadline in hours" className="w-14 rounded-[8px] border border-state-border px-2 py-1 text-right" data-deadline-hours /> h
+              </label>
+              {!starred.length && <span className="w-full text-[12.5px] text-state-inactive" data-request-help>Star who you want to ask first.</span>}
+            </div>
+          )}
+          {error && <p role="alert" className="mt-2 text-[13px] font-semibold text-state-declined">{error}</p>}
+        </div>
+      </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
         <button type="button" aria-pressed={!starredOnly} onClick={() => setStarredOnly(false)} className={!starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>All ({list.filter((m) => !m.hidden).length})</button>
         <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({allStarred.length})</button>
-        <button type="button" disabled={starred.length < 2 || starred.length > 4} onClick={() => { setComparing(true); setCompared(true); }} className={GHOST} data-compare title="Star 2 to 4 providers to compare them">Compare{starred.length >= 2 ? ` ${Math.min(starred.length, 4)}` : ""}</button>
+        <button type="button" disabled={starred.length < 2 || starred.length > 4} onClick={() => setComparing(true)} className={GHOST} data-compare title="Star 2 to 4 providers to compare them">Compare{starred.length >= 2 ? ` ${Math.min(starred.length, 4)}` : ""}</button>
         <MinChip label="Min Oracle Cloud Years" value={minYears} options={[2, 5, 8, 10]} onChange={setMinYears} />
         <MinChip label="Min Implementations" value={minImpl} options={[1, 3, 5, 10]} onChange={setMinImpl} />
       </div>
@@ -117,7 +130,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
             </button>
             <div className="flex flex-col items-end gap-1 text-right text-[13px]">
               {m.rate && <b className="block">{m.rate}</b>}
-              {m.requested && <Link href={`/hire/sourcing/${m.requested.eventId}`} className="text-[12.5px] font-semibold text-magenta-dark underline underline-offset-4">Sourcing Event</Link>}
+              {m.requested && <Link href={`/work-requests/${jobId}?tab=responses`} className="text-[12.5px] font-semibold text-magenta-dark underline underline-offset-4">Responses</Link>}
               <Link href={`/hire/terms?job=${jobId}&provider=${m.personId}`} data-hire-provider className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Hire</Link>
               <button type="button" onClick={() => hide(m, true)} className="text-[12.5px] text-ink-3 underline underline-offset-4 hover:text-ink" data-hide-match aria-label={`Hide ${m.name}`}>Hide ×</button>
             </div>
@@ -142,23 +155,6 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
           {showOutside ? `Hide providers outside ${(state ?? "").toUpperCase()}` : `Show providers outside ${(state ?? "").toUpperCase()} (${list.filter((m) => m.outside).length})`}
         </button>
       )}
-
-      <div className="sticky bottom-0 z-10 mt-4 flex flex-wrap items-center gap-3 border-t border-line bg-white py-3" data-proposals-bar>
-        {!opened && allAsked ? (
-          <p className="text-[14px]" data-all-asked>All {asked.length} on your shortlist were asked. <Link href={`/hire/sourcing/${asked[0].requested!.eventId}`} className="font-semibold text-magenta-dark underline underline-offset-4">See their answers on the Sourcing Event →</Link> <span className="text-ink-2">Star someone new to ask them too.</span></p>
-        ) : opened ? (
-          <p className="text-[14px]"><b>{opened.eventNumber}</b> is open — {opened.count} request{opened.count === 1 ? "" : "s"} sent. <Link href={`/hire/sourcing/${opened.eventId}`} className="font-semibold text-magenta-dark underline underline-offset-4">View the Sourcing Event →</Link></p>
-        ) : (
-          <>
-            <button type="button" className={BTN} disabled={busy || !starred.length || !jobId} onClick={request} data-request-proposals>{`Request Availability from Your Shortlist (${starred.length})`}</button>
-            <label className="flex items-center gap-2 text-[13px] font-semibold">Deadline
-              <input inputMode="numeric" value={hours} onChange={(e) => setHours(e.target.value.replace(/\D/g, "").slice(0, 3))} aria-label="Deadline in hours" className="w-16 rounded-[8px] border border-line px-2 py-1.5 text-right" data-deadline-hours /> hours
-            </label>
-            <span className="w-full text-[12.5px] text-ink-2" data-request-help>{starred.length ? `Each gets the job, your rate range and a ${Number(hours) || 48}-hour deadline. You'll see who is available on the Sourcing Event.` : "Star who you want to ask — or Hire one directly."}</span>
-          </>
-        )}
-        {error && <p role="alert" className="w-full text-[13.5px] font-semibold text-magenta-dark">{error}</p>}
-      </div>
 
       {cur && <QuickView m={cur} jobId={jobId} onClose={() => setActive(null)} onStar={() => star(cur)} onHide={() => hide(cur, true)} prev={at > 0 ? () => setActive(visible[at - 1].personId) : null} next={at < visible.length - 1 ? () => setActive(visible[at + 1].personId) : null} />}
       {comparing && <CompareTable rows={starred.slice(0, 4).map((m) => ({ m }))} onClose={() => setComparing(false)} jobId={jobId} onRemove={(id) => { const m = list.find((x) => x.personId === id); if (m) star(m); if (starred.length <= 2) setComparing(false); }} />}

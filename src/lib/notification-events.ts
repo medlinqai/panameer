@@ -541,7 +541,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: false,
     title: (v) => `Your job ${str(v, "title", "")} is posted — see your matches.`.replace("job  is", "job is"),
     body: () => "Pick who to hire, or ask a few if they are available.",
-    href: (v) => `/hire?job=${str(v, "jobId", "")}&step=4`,
+    href: (v) => `/work-requests/${str(v, "jobId", "")}?tab=matches`,
   },
   // PB-E005: a join request has waited 2 business days — one reminder to the company's admins.
   "company.join_reminder": {

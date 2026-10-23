@@ -162,11 +162,8 @@ export default async function Page({
             <Link href="/hire" className={BTN_OUT}>Open in Hire</Link>
           </div>
         )}
-        {(detail.status === "DRAFT" || detail.status === "OPEN") && !awarded && jobMatches.length > 0 && (
-          <Section id="matches" title="Matches" extra={sourcing ? <>· <Link href={`/hire/sourcing/${sourcing.id}`}>{sourcing.event_number}</Link></> : null}>
-            <MatchList jobId={detail.id} matches={jobMatches} state={sdForMatches?.state} />
-          </Section>
-        )}
+        {/* OJ-E002: the two doors and the matches; a row's rate is the rate they answered once they have. */}
+        {jobMatches.length ? <MatchList jobId={detail.id} matches={answeredRates(jobMatches, proposals)} state={sdForMatches?.state} /> : empty("No matches yet. Matches show once the job has a Service Description.")}
         </>
       )}
       {tab === "responses" && (
@@ -293,4 +290,10 @@ export default async function Page({
 async function jobOrders(jobId: string) {
   const rows = await prisma.workOrder.findMany({ where: { workRequest: { job_id: jobId }, status: { not: "CANCELLED" } }, orderBy: { created_at: "desc" }, select: { id: true, order_number: true, status: true, buyer_accepted_at: true, provider_accepted_at: true } });
   return rows.map((r) => { const w = waitingOn(r); return { ...r, label: w ? PENDING_ON_LABEL[w] : WORK_ORDER_LABEL[r.status] }; });
+}
+
+/** OJ-E002: after a provider answers, their Matches row shows the rate they answered (else their rate card). */
+function answeredRates<M extends { personId: string; rate: string | null }>(matches: M[], proposals: { providerPersonId: string; rate: { unitPriceCents: number; basis: string } | null }[]): M[] {
+  const by = new Map(proposals.filter((p) => p.rate).map((p) => [p.providerPersonId, p.rate!]));
+  return matches.map((m) => { const r = by.get(m.personId); return r ? { ...m, rate: `$${Math.round(r.unitPriceCents / 100)}${r.basis === "RATE" ? "/hr" : ""} answered` } : m; });
 }
