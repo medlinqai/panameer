@@ -807,6 +807,18 @@ export const NOTIFICATION_EVENTS = {
     body: (v) => (str(v, "workTitle", "") ? str(v, "workTitle", "") : null),
     href: (v) => `/work-requests/${str(v, "jobId", "")}?tab=responses`,
   },
+  // JS-E004: the buyer closed, paused or reopened a job — everyone asked is told.
+  "work.job_update": {
+    event: "work.job_update",
+    recipient: "every provider asked on the job",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `${str(v, "label", "Job Update")}: ${str(v, "workTitle", "a Job")}`,
+    body: (v) => (str(v, "message", "") ? str(v, "message", "") : null),
+    href: (v) => `/find-work/${str(v, "jobId", "")}`,
+  },
   // IW-E006: an interview called off — the other side is told and the slot is free again.
   "work.interview_cancelled": {
     event: "work.interview_cancelled",
