@@ -132,7 +132,7 @@ export default async function Page({
         </div>
       </section>
 
-      {strip && <JobStrip steps={strip.steps} jobId={detail.id} title="Job Timeline" />}
+      {strip && <div className="my-4 rounded-[14px] border border-state-border bg-white px-6 py-6"><JobStrip steps={strip.steps} jobId={detail.id} title="Job Timeline" /></div>}
       <JobTabs jobId={detail.id} current={tab} counts={counts} />
 
       {tab === "matches" && (
