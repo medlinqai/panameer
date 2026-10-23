@@ -1,4 +1,3 @@
-import { PostJobButton } from "@/components/hire/PostJobButton";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import Link from "next/link";
 import { howLongText } from "@/lib/job-dates";
@@ -123,7 +122,7 @@ export default async function Page({
         <div className="min-w-0 flex-[1_1_520px]">
           <h1 className="text-[24px] font-extrabold leading-tight sm:text-[28px]">{detail.title.trim() || "Untitled job"}</h1>
           <p className="mt-1 text-[13px] text-state-inactive" data-job-meta>
-            {meta}{origin && <> · <b className="font-semibold text-ink">{origin}</b></>}{origin === "Compare Providers" && sourcing && <> · {sourcing.event_number}</>}
+            {meta}{origin && <> · <b className="font-semibold text-ink">{origin}</b></>}{origin === "Compare Providers" && sourcing && <> · {sourcing.event_number}</>} · <span data-visibility>{posted ? `On Job Board${detail.postedAt ? ` since ${new Date(detail.postedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}` : "Private"}</span>
           </p>
           {awarded && erpReturned && <p className="mt-1 text-[12.5px] text-state-inactive">Returned to ERP — waiting for the PO</p>}
         </div>
@@ -138,14 +137,8 @@ export default async function Page({
 
       {tab === "matches" && (
         <>
-        {detail.status === "DRAFT" && (
-          <div className="flex flex-wrap items-center gap-3 border border-state-border p-4" data-not-posted>
-            <p className="min-w-0 flex-1 text-[14px]"><b>Not posted.</b> <span className="text-state-inactive">{stage === "COMPARING" ? "Only the providers you asked can see it. Post it and any matching provider can say I Want This Job." : "Post it and any matching provider can see it and say I Want This Job."}</span></p>
-            <PostJobButton jobId={detail.id} />
-          </div>
-        )}
         {/* OJ-E002: the two doors and the matches; a row's rate is the rate they answered once they have. */}
-        {jobMatches.length ? <MatchList jobId={detail.id} matches={answeredRates(jobMatches, proposals)} state={sdForMatches?.state} /> : empty("No matches yet. Matches show once the job has a Service Description.")}
+        {jobMatches.length ? <MatchList jobId={detail.id} matches={answeredRates(jobMatches, proposals)} state={sdForMatches?.state} published={posted ? { at: detail.postedAt ?? null } : null} /> : empty("No matches yet. Matches show once the job has a Service Description.")}
         </>
       )}
       {tab === "responses" && (

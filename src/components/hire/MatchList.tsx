@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PostJobButton } from "@/components/hire/PostJobButton";
 import { useState, type ReactNode } from "react";
 import type { HireMatch } from "@/lib/hire-questionnaire";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
@@ -27,7 +28,7 @@ function Star({ on, onClick, name }: { on: boolean; onClick: () => void; name: s
   );
 }
 
-export function MatchList({ jobId, matches: initial, state, empty }: { jobId: string | null; matches: HireMatch[]; state?: string; empty?: ReactNode }) {
+export function MatchList({ jobId, matches: initial, state, empty, published }: { jobId: string | null; matches: HireMatch[]; state?: string; empty?: ReactNode; /** Scott 10-23: the third door — null = Private, { at } = on the Job Board. */ published?: { at: string | null } | null }) {
   const [list, setList] = useState(initial);
   const [showHidden, setShowHidden] = useState(false);
   const [showOutside, setShowOutside] = useState(false);
@@ -90,7 +91,7 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
             : <>Hire one directly, or star (☆) the ones you like and ask them all for availability.</>}
       </p>
       {/* OJ-E002: two doors — Hire Directly (any row's Hire) or Compare Providers (the one magenta button). */}
-      <div className="mt-2 grid gap-3 sm:grid-cols-2" data-two-doors>
+      <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-two-doors>
         <div className="rounded-[12px] border border-state-border p-4" data-door="direct">
           <h3 className="text-[15px] font-extrabold">Hire Directly</h3>
           <p className="mt-1 text-[13px] text-state-inactive">You know who you want. Press <b className="text-ink">Hire</b> on their row — terms, then the Order.</p>
@@ -114,6 +115,13 @@ export function MatchList({ jobId, matches: initial, state, empty }: { jobId: st
             </div>
           )}
           {error && <p role="alert" className="mt-2 text-[13px] font-semibold text-state-declined">{error}</p>}
+        </div>
+        <div className="rounded-[12px] border border-state-border p-4" data-door="publish">
+          <h3 className="text-[15px] font-extrabold">Publish to Job Board</h3>
+          <p className="mt-1 text-[13px] text-state-inactive">Let any provider see the job and apply with their rate — including ones not in your matches. Applications arrive on Responses.</p>
+          {published
+            ? <p className="mt-2 text-[13px]"><b>Published</b>{published.at ? ` ${new Date(published.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}. <Link href={`/work-requests/${jobId}?tab=responses`} className="font-semibold">See Applications →</Link></p>
+            : jobId && <div className="mt-2.5"><PostJobButton jobId={jobId} label="Publish Job" outline /></div>}
         </div>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
