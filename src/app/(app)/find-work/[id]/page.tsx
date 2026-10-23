@@ -111,7 +111,7 @@ export default async function Page({
         </div>
       )}
 
-      <div className="mt-6 grid gap-5 min-[900px]:grid-cols-[1fr_300px] min-[900px]:items-start">
+      <div className="mt-4 grid gap-5 min-[900px]:grid-cols-[1fr_280px] min-[900px]:items-start">
         <div className="min-w-0 border-b border-line" data-job-sections>
           {/* PJ-E002: sections in acting order, one line each when closed; only the current step's is open. */}
           {interviews.length > 0 && (
@@ -172,7 +172,7 @@ export default async function Page({
         </div>
 
         {}
-        <div className="min-w-0 rounded-brand border border-line bg-white p-5">
+        <div className="min-w-0">
           <WhoIsAsking identity={detail.identity} />
         </div>
       </div>

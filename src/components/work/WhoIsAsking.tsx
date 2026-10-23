@@ -67,28 +67,24 @@ export function WhoIsAsking({ identity }: { identity: BuyerIdentity }) {
       </div>
 
       {/* 3 — standing */}
-      <p className="mt-3 text-[12.5px] text-ink-2">{standingLine(standing)}</p>
-
-      {}
-      <ul className="mt-3 grid gap-2 border-t border-line pt-3">
+      {/* PJ-E004: compact — verification as small chips and the track record as one line; the full text behind More. */}
+      <div className="mt-3 flex flex-wrap gap-1.5" data-who-chips>
         {verification.map((v) => {
           const ok = v.state === "verified";
-          const Icon = ok ? BadgeCheck : CircleDashed;
-          return (
-            <li key={v.key} className="flex gap-2">
-              <Icon
-                className={`mt-[1px] h-4 w-4 shrink-0 ${ok ? "text-state-accepted" : "text-ink-2/70"}`}
-                aria-hidden
-              />
-              <span className="min-w-0 text-[12.5px] leading-relaxed">
-                <b className={ok ? "text-state-accepted" : "text-ink"}>{v.label}</b>
-                <span className="text-ink-2"> — {v.detail}</span>
-              </span>
-            </li>
-          );
+          return <span key={v.key} title={v.detail} className={ok ? "inline-flex items-center gap-1 rounded-full bg-state-accepted-bg px-2 py-0.5 text-[11.5px] font-bold text-state-accepted" : "inline-flex items-center gap-1 rounded-full bg-state-inactive-bg px-2 py-0.5 text-[11.5px] font-bold text-state-inactive"}>{ok ? <BadgeCheck className="h-3.5 w-3.5" aria-hidden /> : <CircleDashed className="h-3.5 w-3.5" aria-hidden />}{v.label}</span>;
         })}
-      </ul>
-      {identity.track && <BuyerTrackRecord t={identity.track} compact />}
+      </div>
+      {identity.track && <p className="mt-2 text-[12.5px] text-ink-2" data-track-line>{identity.track.issued} Order{identity.track.issued === 1 ? "" : "s"} · {identity.track.completed} Completed{identity.track.paidOnTimePct != null ? ` · ${identity.track.paidOnTimePct}% paid on time` : ""}</p>}
+      <details className="group mt-2 text-[12.5px]" data-who-more>
+        <summary className="cursor-pointer list-none font-semibold text-ink-2 underline underline-offset-4 [&::-webkit-details-marker]:hidden"><span className="group-open:hidden">More</span><span className="hidden group-open:inline">Less</span></summary>
+        <p className="mt-2 text-ink-2">{standingLine(standing)}</p>
+        <ul className="mt-2 grid gap-2 border-t border-line pt-2">
+          {verification.map((v) => (
+            <li key={v.key} className="leading-relaxed"><b className={v.state === "verified" ? "text-state-accepted" : "text-ink"}>{v.label}</b><span className="text-ink-2"> — {v.detail}</span></li>
+          ))}
+        </ul>
+        {identity.track && <BuyerTrackRecord t={identity.track} compact />}
+      </details>
     </section>
   );
 }
