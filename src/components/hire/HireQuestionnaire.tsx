@@ -144,7 +144,7 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
     const j = await call({ action: "matches", jobId, input: { ...f, budgetType: f.budgetType ?? "HOURLY" } });
     if (!j) return;
     // OJ-E002: Create Job & Show Matches lands on the Job page's Matches tab.
-    router.push(`/work-requests/${j.jobId as string}?tab=matches`);
+    router.push(`/work-requests/${j.jobId as string}`); // opens on the current step's tab
   };
 
   // Back from a profile returns to the same job and step: the address carries ?job=&step=. router.replace (not
