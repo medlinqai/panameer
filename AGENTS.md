@@ -28,6 +28,6 @@ Key reminders:
   page/section headings, tabs, step names, chips and column headers: "Your Matches", "Star the Ones You Like",
   "Request Availability from Your Shortlist". Sentences (help text, descriptions) stay sentence case. Full rule:
   `../2. Claude Sub-Files/conventions.md` › "UI copy — Title Case for all labels". Check every string you add.
-- **Service Requisition, not Work Request (Scott 2026-10-22):** the buying document's screen name is
-  Service Requisition ("Requisition" where space is tight), numbered RQ-…; code names (`WorkRequest`, `wr_number`,
-  `/work-requests`) stay. Work chain: Job → Service Requisition → Work Order.
+- **Job → Request → Order (Scott 2026-10-23; Shop: Cart → Request → Order):** screen words only — never "Work Request",
+  "Service Requisition" or "Work Order" on screen ("Change Order" stays). Numbers RQ-… and OR-… (older WR-/WO- stay). Code names
+  (`WorkRequest`, `WorkOrder`, `/work-requests`) stay. ERP payloads and admin ERP screens keep Requisition / Purchase Order.
