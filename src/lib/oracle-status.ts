@@ -17,7 +17,7 @@ export const WORK_REQUEST_LABEL: Record<WorkRequestStatus, string> = {
   ASSIGNED: "Incomplete",
 };
 
-export const JOB_LABEL: Record<JobStatus, string> = { DRAFT: "Draft", OPEN: "Active", CLOSED: "Closed", FILLED: "Hired", CANCELED: "Canceled" };
+export const JOB_LABEL: Record<JobStatus, string> = { DRAFT: "Draft", OPEN: "Active", CLOSED: "Closed", FILLED: "Hired", CANCELED: "Canceled", ON_HOLD: "On Hold" };
 
 export const PROPOSAL_LABEL: Record<ProposalStatus, string> = {
   DRAFT: "Draft",
@@ -80,6 +80,6 @@ const WAIT = "bg-state-pending-bg text-state-pending";
 const LIVE = "bg-state-accepted-bg text-state-accepted";
 
 export const WORK_REQUEST_TONE: Record<WorkRequestStatus, string> = { INCOMPLETE: QUIET, SUBMITTED: WAIT, PENDING_APPROVAL: WAIT, APPROVED: LIVE, ORDERED: LIVE, RETURNED: WAIT, REJECTED: QUIET, WITHDRAWN: QUIET, CANCELLED: QUIET, DRAFT: QUIET, POSTED: QUIET, ASSIGNED: QUIET };
-export const JOB_TONE: Record<JobStatus, string> = { DRAFT: QUIET, OPEN: LIVE, CLOSED: QUIET, FILLED: LIVE, CANCELED: QUIET };
+export const JOB_TONE: Record<JobStatus, string> = { DRAFT: QUIET, OPEN: LIVE, CLOSED: QUIET, FILLED: LIVE, CANCELED: QUIET, ON_HOLD: QUIET };
 export const WORK_ORDER_TONE: Record<WorkOrderStatus, string> = { DRAFT: QUIET, ISSUED: WAIT, ACCEPTED: WAIT, RELEASED: LIVE, ACTIVE: LIVE, CLOSED: QUIET, CANCELLED: QUIET, ON_HOLD: WAIT, FINALLY_CLOSED: QUIET };
 export const SETTLEMENT_TONE: Record<PaymentRequestStatus, string> = { DRAFT: QUIET, SUBMITTED: WAIT, APPROVED: LIVE, REJECTED: "bg-state-declined-bg text-state-declined", PAID: LIVE };

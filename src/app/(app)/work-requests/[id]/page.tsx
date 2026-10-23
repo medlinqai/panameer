@@ -3,9 +3,9 @@ import Link from "next/link";
 import { howLongText } from "@/lib/job-dates";
 import { JobStrip, JobTabs } from "@/components/hire/JobFrame";
 import { jobStrip, type JobTab } from "@/lib/job-strip";
-import { Fact, GREEN, MUTED, ROW_RULE, Section, BTN_OUT, StatePill, stepState } from "@/components/hire/HireUI";
+import { JOB_STAGE_LABEL, JOB_STAGE_STATE, jobStages } from "@/lib/job-stage";
+import { Fact, GREEN, MUTED, ROW_RULE, Section, BTN_OUT, StatePill } from "@/components/hire/HireUI";
 import { ProposalActions } from "@/components/work/ProposalActions";
-import { jobPath } from "@/lib/work-request-path";
 import { certificationTestForSkill } from "@/lib/certification-tests";
 import { HOW_LONG } from "@/lib/hire-questionnaire";
 import { workRequestSections } from "@/lib/work-request-sections";
@@ -24,9 +24,6 @@ import { formatCents } from "@/lib/display";
 import { getWorkRequestDetail } from "@/lib/work-request-lines";
 import { proposalsOn } from "@/lib/proposals";
 import { CreateOrder } from "@/components/work/HireControls";
-import {
-  JOB_STATUS_LABEL,
-} from "@/lib/work-request-status";
 import { WorkRequestError } from "@/lib/work-request";
 import { MatchList } from "@/components/hire/MatchList";
 import { hireMatches } from "@/lib/hire-questionnaire";
@@ -100,8 +97,6 @@ export default async function Page({
   ];
 
   // HL-E003: the page as Scott's approved mockup — header, one fact row, the progress band, then sections over an ink rule.
-  const path = await jobPath(detail.id);
-  const currentLabel = path?.shown.find((x) => x.key === path.current)?.label ?? JOB_STATUS_LABEL[detail.status];
   let testId: string | null = null;
   for (const sk of sdForMatches?.skills ?? []) { const t = await certificationTestForSkill(sk.id); if (t) { testId = t.assessmentId; break; } }
   const sd = sdForMatches;
@@ -117,7 +112,10 @@ export default async function Page({
   const strip = await jobStrip(detail.id);
   const tab: JobTab = (["matches", "responses", "interviews", "tests", "work-order", "details"] as const).find((t) => t === sp.tab) ?? strip?.defaultTab ?? "matches";
   const meta = [sec.jobNumber, sd?.worksite ? sd.worksite[0] + sd.worksite.slice(1).toLowerCase() : null, sd ? [sd.city, sd.state].filter(Boolean).join(", ") || null : null, rangeText, sd?.startDate && sd?.endDate ? `${fmtDay(sd.startDate)} – ${fmtDay(sd.endDate)}` : null].filter(Boolean).join(" · ");
-  const origin = strip?.event ? "Compare Providers" : strip?.direct ? "Hire Directly" : null;
+  // JS-E001: one buyer-facing status and the origin tag (From ERP · Compare Providers · Hire Directly).
+  const stageInfo = (await jobStages([detail.id])).get(detail.id);
+  const stage = stageInfo?.stage ?? "OPEN";
+  const origin = stageInfo?.origin ?? (strip?.event ? "Compare Providers" : strip?.direct ? "Hire Directly" : null);
   const counts = { matches: jobMatches.length, responses: (event ? event.proposals.filter((p) => p.proposal || p.requestStatus === "DECLINED").length : notNow.length) + shownProps.length, interviews: buyerInterviews.length, tests: sec.testRows.length };
 
   return (
@@ -134,7 +132,7 @@ export default async function Page({
           {awarded && erpReturned && <p className="mt-1 text-[12.5px] text-state-inactive">Returned to ERP — waiting for the PO</p>}
         </div>
         <div className="flex items-center gap-2.5">
-          <StatePill state={stepState(path?.current, { draft: detail.status === "DRAFT", closed: ["CLOSED", "CANCELED"].includes(detail.status), completed: detail.status === "FILLED" })}>{currentLabel}</StatePill>
+          <StatePill state={JOB_STAGE_STATE[stage]}>{JOB_STAGE_LABEL[stage]}</StatePill>
           <ActionsMenu items={actions} />
         </div>
       </section>

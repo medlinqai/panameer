@@ -6859,9 +6859,12 @@ model Proposal {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  lines           ProposalLine[]
-  proposalRequest ProposalRequest? @relation(fields: [proposal_request_id], references: [id], onDelete: Cascade)
-  job             Job              @relation(fields: [job_id], references: [id], onDelete: Cascade)
+  lines               ProposalLine[]
+  proposalRequest     ProposalRequest? @relation(fields: [proposal_request_id], references: [id], onDelete: Cascade)
+  job                 Job              @relation(fields: [job_id], references: [id], onDelete: Cascade)
+  /// JS-E005: an Amendment asks everyone who answered to review and re-confirm; Hire waits until they do.
+  reconfirm_needed_at DateTime?
+  reconfirmed_at      DateTime?
 
   /// ── ⚠⚠⚠ ONE PROPOSAL PER PROVIDER PER REQUEST, BY CONSTRUCTION ─────────
   /// ⚠ WS-A item 3: *"One proposal per provider per request. Idempotent;
@@ -9381,6 +9384,10 @@ model Job {
   credentials     JobCredential[]
   hiddenProviders JobHiddenProvider[]
   workRequests    WorkRequest[]
+  /// JS-E004: why the buyer closed the job early (No Longer Needed · Filled Elsewhere · Budget · Other: note).
+  closed_reason   String?
+  /// JS-E004: when an On Hold job is meant to come back (optional).
+  hold_until      DateTime?
 
   @@index([p_account_id])
   @@index([buyer_person_id])
@@ -9394,6 +9401,8 @@ enum JobStatus {
   CLOSED
   FILLED
   CANCELED
+  /// JS-E001: paused by the buyer; the answer deadline's remaining time is saved on the Sourcing Event.
+  ON_HOLD
 }
 
 /// JW-E003: where a Work Request came from.
@@ -9552,8 +9561,10 @@ model SourcingEvent {
   created_at           DateTime            @default(now())
   updated_at           DateTime            @updatedAt
 
-  job              Job               @relation(fields: [job_id], references: [id], onDelete: Cascade)
-  proposalRequests ProposalRequest[]
+  job                      Job               @relation(fields: [job_id], references: [id], onDelete: Cascade)
+  proposalRequests         ProposalRequest[]
+  /// JS-E004: seconds left on the deadline when the job went On Hold (restored on Resume).
+  paused_remaining_seconds Int?
 
   @@index([job_id])
   @@index([work_order_id])
@@ -9647,4 +9658,32 @@ model QuestionBank {
   @@index([owner_person_id])
   @@index([p_account_id, shared])
   @@map("question_banks")
+}
+
+/// JS-E005: a change to a Job after providers were asked (fair sourcing) — everyone who answered re-confirms.
+model JobAmendment {
+  id                   String   @id @default(uuid()) @db.Uuid
+  job_id               String   @db.Uuid
+  number               Int
+  /// [{ field, label, before, after }]
+  changes              Json
+  reason               String
+  created_by_person_id String   @db.Uuid
+  created_at           DateTime @default(now())
+
+  @@unique([job_id, number])
+  @@map("job_amendments")
+}
+
+/// JS-E006: a buyer action on a Job worth a line in its History (hold, resume, extend, close, reopen).
+model JobEvent {
+  id                   String   @id @default(uuid()) @db.Uuid
+  job_id               String   @db.Uuid
+  kind                 String
+  note                 String?
+  created_by_person_id String?  @db.Uuid
+  created_at           DateTime @default(now())
+
+  @@index([job_id])
+  @@map("job_events")
 }

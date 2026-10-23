@@ -142,7 +142,7 @@ export async function weekInterviews(side: "buyer" | "provider", personId: strin
 export type ProposalLine = { personId: string; who: string; photoUrl: string | null;
   /** CA-E004: the response — Available (with its id and status) or Not This Time (with the provider's reason). */
   proposalId: string | null; status: string | null; available: boolean; reason: string | null; rateCents: number | null; summary: string; rate: string | null; start: string | null; inRange: boolean | null };
-export type JobTabRow = WorkRow & { draft: boolean; draftLine: string | null; category: string | null; origin: string | null; facts: string; inRange: boolean | null; wo: { id: string; number: string; provider: string; waiting: string } | null; proposalLines: ProposalLine[]; asked: number; eventId: string | null; deadlineAt: string | null; completed: boolean; recurring: import("@/lib/slices").Recurring | null; proposals: string | null; rates: string | null; range: string | null; booked: string | null; needsAction: boolean };
+export type JobTabRow = WorkRow & { /** JS-E001: the one buyer-facing status. */ stage: import("@/lib/job-stage").JobStage; closedReason: string | null; draft: boolean; draftLine: string | null; category: string | null; origin: string | null; facts: string; inRange: boolean | null; wo: { id: string; number: string; provider: string; waiting: string } | null; proposalLines: ProposalLine[]; asked: number; eventId: string | null; deadlineAt: string | null; completed: boolean; recurring: import("@/lib/slices").Recurring | null; proposals: string | null; rates: string | null; range: string | null; booked: string | null; needsAction: boolean };
 const usd = (c: number) => `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
 export async function buyerHireTabs(personId: string) {
@@ -216,7 +216,7 @@ export async function buyerHireTabs(personId: string) {
     // HB-E004: drafts sit apart — "Draft · first words", Finish posting / Discard.
     const draft = p.job.status === "DRAFT" && !p.event && !p.awarded;
     const words = (j.description ?? "").trim().split(/\s+/).slice(0, 8).join(" ");
-    jobRows.push({
+    jobRows.push({ stage: "OPEN", closedReason: null,
       draft, draftLine: draft ? `Draft · ${words ? `${words}${(j.description ?? "").trim().split(/\s+/).length > 8 ? "…" : ""}` : "no description"}` : null,
       category: j.commodity_group_id ? groupNames.get(j.commodity_group_id) ?? null : null,
       origin: p.event ? "Compare Providers" : p.wrs.length ? "Hire Directly" : null,
@@ -243,9 +243,13 @@ export async function buyerHireTabs(personId: string) {
       requestRows.push({ completed: !!sl?.completed, recurring: sl?.recurring ?? null, providerPersonId: l.provider_person_id!, id: `${w.id}:${l.provider_person_id}`, jobId: p.job.id, title: p.job.title, wr: w.wr_number, who: p.numberOf(l.provider_person_id!), step: wo ? "Order Created" : w.approved_at ? "Approval" : "Award", approval: w.approved_at ? "Auto-approved" : w.status === "PENDING_APPROVAL" ? "Waiting" : "—", wo: wo ? { id: wo.id, number: wo.order_number } : null });
     }
   }
-  // Discarded drafts (Canceled, no Work Order) leave the lists entirely — they are not "Filled".
-  const discarded = new Set((await prisma.job.findMany({ where: { id: { in: jobRows.map((j) => j.id) }, status: { in: ["CANCELED", "CLOSED"] } }, select: { id: true } })).map((j) => j.id));
+  // Discarded drafts (Canceled, no Order) leave the lists entirely; Closed jobs stay, under Closed (JS-E002).
+  const discarded = new Set((await prisma.job.findMany({ where: { id: { in: jobRows.map((j) => j.id) }, status: "CANCELED" }, select: { id: true } })).map((j) => j.id));
   const kept = jobRows.filter((j) => !(discarded.has(j.id) && !j.wo));
+  const { jobStages } = await import("@/lib/job-stage");
+  const stages = await jobStages(kept.map((j) => j.id));
+  const reasons = new Map((await prisma.job.findMany({ where: { id: { in: kept.map((j) => j.id) } }, select: { id: true, closed_reason: true } })).map((j) => [j.id, j.closed_reason]));
+  for (const j of kept) { const st = stages.get(j.id); if (st) { j.stage = st.stage; j.origin = st.origin ?? j.origin; } j.closedReason = reasons.get(j.id) ?? null; }
   return { jobRows: kept, requestRows };
 }
 
