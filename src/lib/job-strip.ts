@@ -44,7 +44,8 @@ export async function jobStrip(jobId: string) {
   };
   const skipped = (k: StripKey) => direct && (k === "ask" || k === "interview");
   // Scott 10-23: the Job Timeline — numbered steps.
-  const order: [StripKey, string][] = [["create", "Create Job"], ["matches", "Choose Provider"], ["ask", "Collect Responses"], ["interview", "Interview & Ask"], ["hire", "Hire Provider"], ["approve", "Approve Request"], ["wo", "Create Order"], ["release", "Release Order"]];
+  // Scott 10-23: the Job Timeline is the buyer's own job and ends at Hire; the Request and the Order carry their own steps.
+  const order: [StripKey, string][] = [["create", "Create Job"], ["matches", "Choose Provider"], ["ask", "Collect Responses"], ["interview", "Interview & Ask"], ["hire", "Hire Provider"]];
   // The current step: the first not done (and not skipped); while answers are in and nobody is hired, the job sits at Interview.
   const current = order.find(([k]) => !done[k] && !skipped(k))?.[0] ?? null;
   const top: Record<StripKey, string> = {
@@ -62,6 +63,6 @@ export async function jobStrip(jobId: string) {
     state: skipped(key) ? "skipped" : done[key] && key !== current ? "done" : key === current ? "current" : "later",
     top: skipped(key) ? "Skipped" : key === current && !top[key] ? "Now" : top[key],
   }));
-  const tab: JobTab = !current || ["approve", "wo", "release"].includes(current) ? "work-order" : current === "ask" || current === "interview" || current === "hire" ? (direct ? "work-order" : "responses") : "matches";
-  return { steps, current, defaultTab: tab, event, direct, wo, path };
+  const tab: JobTab = !current ? "work-order" : current === "interview" ? "interviews" : current === "ask" || current === "hire" ? (direct ? "work-order" : "responses") : "matches";
+  return { steps, current, defaultTab: tab, event, direct, wo, path, approvedAt, accepted, released };
 }

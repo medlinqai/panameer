@@ -134,7 +134,24 @@ export default async function Page({
         </div>
       </section>
 
-      {strip && <div className="my-4 rounded-[14px] border border-state-border bg-white px-6 py-6"><JobStrip steps={strip.steps} jobId={detail.id} title="Job Timeline" /></div>}
+      {strip && (
+        <div className="my-4 rounded-[14px] border border-state-border bg-white px-6 py-6">
+          <JobStrip steps={strip.steps} jobId={detail.id} title="Job Timeline" />
+          {/* Scott 10-23: after Hire the Job hands over — the Request and the Order carry their own steps. */}
+          {strip.path.wrs[0] && strip.steps.find((x) => x.key === "hire")?.state === "done" && (
+            <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-state-border pt-4 text-[13.5px]" data-handover>
+              <span className="font-semibold text-state-inactive">Then:</span>
+              <Link href={`/work-requests/${detail.id}?tab=work-order`} className="font-semibold">Request {strip.path.wrs[0].wr_number}</Link>
+              <span className={strip.approvedAt ? "text-state-accepted" : "text-state-pending"}>{strip.approvedAt ? "Approved" : "Waiting for Approval"}</span>
+              {strip.wo && <>
+                <span aria-hidden className="text-state-inactive">→</span>
+                <Link href={`/orders/${strip.wo.id}`} className="font-semibold">Order {strip.wo.order_number}</Link>
+                <span className={strip.released ? "text-state-accepted" : "text-state-pending"}>{strip.released ? "Released" : strip.accepted ? "Accepted — Ready to Release" : !strip.wo.buyer_accepted_at ? "Waiting on You" : "Waiting on Provider"}</span>
+              </>}
+            </p>
+          )}
+        </div>
+      )}
       {doorChosen && <JobTabs jobId={detail.id} current={tab} counts={counts} />}
 
       {tab === "matches" && (
@@ -186,7 +203,7 @@ export default async function Page({
         </Section>
         </>
       )}
-      {tab === "tests" && (
+      {(tab === "interviews" || tab === "tests") && (
         <>
         <Section title="Tests">
           {sec.testRows.length ? sec.testRows.map((t) => (

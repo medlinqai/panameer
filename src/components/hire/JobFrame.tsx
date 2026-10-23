@@ -4,7 +4,7 @@ import type { StripStep, JobTab } from "@/lib/job-strip";
 
 // OJ-E001: one header strip and one tab row on every tab of the Job page (Scott's hire_flow_2026-10-22 screens A/B).
 // Scott 10-23: the Job Timeline — a bigger title, an icon per step, two-word names, centred; reached steps open their tab.
-const STEP_TAB: Record<string, JobTab> = { create: "details", matches: "matches", ask: "responses", interview: "interviews", hire: "work-order", approve: "work-order", wo: "work-order", release: "work-order" };
+const STEP_TAB: Record<string, JobTab> = { create: "details", matches: "matches", ask: "responses", interview: "interviews", hire: "work-order" };
 const STEP_ICON: Record<string, LucideIcon> = { create: FilePlus2, matches: Users, ask: Inbox, interview: MessagesSquare, hire: UserCheck, approve: BadgeCheck, wo: FileText, release: Send };
 // The provider's strip reuses the keys with its own labels — pick its icons by label.
 const LABEL_ICON: Record<string, LucideIcon> = { Asked: Mail, Answered: Reply, "Interview & Questions": MessagesSquare, Decision: UserCheck, Order: FileText };
@@ -37,7 +37,8 @@ export function JobStrip({ steps, jobId, title }: { steps: StripStep[]; jobId?: 
 }
 
 export function JobTabs({ jobId, current, counts }: { jobId: string; current: JobTab; counts: Partial<Record<JobTab, number>> }) {
-  const tabs: [JobTab, string][] = [["matches", "Matches"], ["responses", "Responses"], ["interviews", "Interviews"], ["tests", "Tests"], ["work-order", "Order"], ["details", "Details"]];
+  // Scott 10-23: one tab per Timeline step, numbered the same, so progress and sequence read together.
+  const tabs: [JobTab, string][] = [["details", "1. Job"], ["matches", "2. Matches"], ["responses", "3. Responses"], ["interviews", "4. Interview & Ask"], ["work-order", "5. Hire"]];
   return (
     <nav aria-label="Job" className="flex gap-6 overflow-x-auto border-b border-state-border" data-job-tabs>
       {tabs.map(([k, label]) => {
