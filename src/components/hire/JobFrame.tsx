@@ -27,7 +27,10 @@ export function JobStrip({ steps, jobId, title }: { steps: StripStep[]; jobId?: 
               <span className={`grid h-11 w-11 place-items-center rounded-full border-2 ${ring}`} aria-hidden><Icon size={20} strokeWidth={1.9} /></span>
               <span className="min-h-[34px] text-[13px] font-semibold leading-[1.3]">{label}</span>
               <i className={`block h-1.5 w-full rounded-sm ${s.state === "done" ? "bg-ink" : s.state === "current" ? "bg-magenta" : "bg-state-sunken"}`} />
-              <b className={`min-h-[18px] text-[12px] ${s.state === "done" ? "text-state-accepted" : s.state === "current" ? "text-magenta-dark" : "text-state-inactive"}`}>{s.top || "\u00a0"}</b>
+              <span className="flex min-h-[34px] flex-col items-center leading-tight">
+                {s.note ? <b className={`text-[12px] ${s.state === "current" ? "text-magenta-dark" : "text-ink"}`} data-step-note>{s.note}</b> : null}
+                <span className={`text-[11.5px] font-semibold ${s.state === "done" ? "text-state-accepted" : s.state === "current" ? "text-magenta-dark" : "text-state-inactive"}`}>{s.top || (s.note ? "" : "\u00a0")}</span>
+              </span>
             </li>
           );
         })}

@@ -4,7 +4,7 @@ import { jobPath } from "@/lib/work-request-path";
 // OJ-E001: the Job page's one process strip — Create · Matches · Ask · Interview · Hire · Approve · Work Order · Release.
 // done = ink bar + green "✓ fact", current = magenta, later = grey; Hire Directly jobs skip Ask and Interview.
 export type StripKey = "create" | "matches" | "ask" | "interview" | "hire" | "approve" | "wo" | "release";
-export type StripStep = { key: StripKey; label: string; state: "done" | "current" | "later" | "skipped"; top: string };
+export type StripStep = { key: StripKey; label: string; state: "done" | "current" | "later" | "skipped"; top: string; /** Scott 10-23: what was done, in two or three words ("Used AI", "Compare + Published"). */ note?: string };
 export type JobTab = "matches" | "responses" | "interviews" | "tests" | "work-order" | "details";
 
 const day = (d: Date | null | undefined) => (d ? d.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" }) : "");
@@ -48,6 +48,20 @@ export async function jobStrip(jobId: string) {
   const order: [StripKey, string][] = [["create", "Create Job"], ["matches", "Choose Provider"], ["ask", "Collect Responses"], ["interview", "Interview & Ask"], ["hire", "Hire Provider"]];
   // The current step: the first not done (and not skipped); while answers are in and nobody is hired, the job sits at Interview.
   const current = order.find(([k]) => !done[k] && !skipped(k))?.[0] ?? null;
+  // Scott 10-23: each step says how it was done, above its date — where we are and how we got here.
+  const [jobX, origin] = await Promise.all([
+    prisma.job.findUnique({ where: { id: jobId }, select: { source_text: true, posted_at: true, status: true } }),
+    import("@/lib/job-stage").then(({ jobStages }) => jobStages([jobId])).then((m) => m.get(jobId)?.origin ?? null).catch(() => null),
+  ]);
+  const published = !!jobX?.posted_at && jobX.status !== "DRAFT";
+  const hiredWho = wrs[0]?.lines[0]?.provider_person_id ? path.numberOf(wrs[0].lines[0].provider_person_id).replace(/^Provider /, "") : "";
+  const note: Partial<Record<StripKey, string>> = {
+    create: String(origin ?? "").includes("ERP") ? "From ERP" : jobX?.source_text ? "Used AI" : "Manual",
+    matches: [event ? "Compare" : null, direct ? "Hire Directly" : null, published ? "Published" : null].filter(Boolean).join(" + "),
+    ask: event ? `${inN} of ${asked} In` : "",
+    interview: [booked ? `${booked} Booked` : invited ? `${invited} Invited` : null, answered ? `${answered} Answered` : null].filter(Boolean).join(" · "),
+    hire: awarded ? (hiredWho || "Hired") : "",
+  };
   const top: Record<StripKey, string> = {
     create: `✓ ${day(job.created_at)}`,
     matches: done.matches ? `✓ ${day(event?.created_at ?? job.posted_at ?? job.created_at)}` : "Now",
@@ -58,10 +72,20 @@ export async function jobStrip(jobId: string) {
     wo: accepted ? "✓ Accepted" : wo ? "Waiting" : "",
     release: released ? "✓ Released" : "",
   };
+  void top;
+  const dateOf: Record<StripKey, string> = {
+    create: `✓ ${day(job.created_at)}`,
+    matches: `✓ ${day(event?.created_at ?? jobX?.posted_at ?? wrs[0]?.created_at ?? job.created_at)}`,
+    ask: `✓ ${day(event?.deadline_at && event.deadline_at < new Date() ? event.deadline_at : new Date())}`,
+    interview: "✓",
+    hire: `✓ ${day(wrs[0]?.submitted_at ?? wrs[0]?.created_at)}`,
+    approve: "", wo: "", release: "",
+  };
   const steps: StripStep[] = order.map(([key, label]) => ({
     key, label,
     state: skipped(key) ? "skipped" : done[key] && key !== current ? "done" : key === current ? "current" : "later",
-    top: skipped(key) ? "Skipped" : key === current && !top[key] ? "Now" : top[key],
+    top: skipped(key) ? "Skipped" : done[key] && key !== current ? dateOf[key] : key === current ? (note[key] ? "" : "Now") : "",
+    note: skipped(key) ? "" : note[key] ?? "",
   }));
   const tab: JobTab = !current ? "work-order" : current === "interview" ? "interviews" : current === "ask" || current === "hire" ? (direct ? "work-order" : "responses") : "matches";
   return { steps, current, defaultTab: tab, event, direct, wo, path, approvedAt, accepted, released };
