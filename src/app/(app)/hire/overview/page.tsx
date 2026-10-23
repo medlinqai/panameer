@@ -12,7 +12,7 @@ import { gridDay, interviewGrid, rowsOn } from "@/lib/interview-grid";
 import { invitedNotBooked, myOpenTimes } from "@/lib/open-times";
 import { InvitedNotBooked, OpenTimesButton } from "@/components/hire/OpenTimes";
 import { QuestionBanks } from "@/components/hire/QuestionBanks";
-import { JOB_STAGE_LABEL, JOB_STAGE_STATE } from "@/lib/job-stage";
+import { JOB_STAGE_LABEL, JOB_STAGE_STATE, type JobStage } from "@/lib/job-stage";
 import { listBanks } from "@/lib/question-banks";
 import { NeutralAvatar } from "@/components/Avatar";
 import { TypeArt } from "@/components/shop/TypeArt";
@@ -66,8 +66,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
 
 // ── HL-E001 + HB-E003/E004/E006/E007: one source for everything on the Overview ───────────────────────────────
 /** HB-E004: In Process excludes drafts; Drafts is its own chip. */
-const jobSlice = (rows: JobTabRow[], slice?: string) => (slice === "drafts" ? rows.filter((j) => j.draft) : rows.filter((j) => inSlice(j, sliceOf(slice)) && (sliceOf(slice) !== "process" || !j.draft)));
-const jobSliceCounts = (rows: JobTabRow[]) => ({ ...sliceCounts(rows.filter((j) => !j.draft)), all: rows.length, drafts: rows.filter((j) => j.draft).length });
+// JS-E002: Jobs by status — Open · Comparing · Hired · Waiting on ERP · On Hold · Completed · Closed · Drafts · All.
+const STAGE_CHIPS: [string, string][] = [["open", "Open"], ["comparing", "Comparing"], ["hired", "Hired"], ["waiting_erp", "Waiting on ERP"], ["on_hold", "On Hold"], ["completed", "Completed"], ["closed", "Closed"], ["drafts", "Drafts"], ["all", "All"]];
+const CHIP_STAGE: Record<string, JobStage> = { open: "OPEN", comparing: "COMPARING", hired: "HIRED", waiting_erp: "WAITING_ERP", on_hold: "ON_HOLD", completed: "COMPLETED", closed: "CLOSED", drafts: "DRAFT" };
+const DONE: JobStage[] = ["COMPLETED", "CLOSED"];
+const jobSlice = (rows: JobTabRow[], slice?: string) => {
+  const st = CHIP_STAGE[slice ?? "all"];
+  return st ? rows.filter((j) => j.stage === st) : [...rows].sort((a, b) => Number(DONE.includes(a.stage)) - Number(DONE.includes(b.stage)));
+};
+const jobSliceCounts = (rows: JobTabRow[]) => ({ ...Object.fromEntries(Object.entries(CHIP_STAGE).map(([k, st]) => [k, rows.filter((j) => j.stage === st).length])), all: rows.length });
 
 async function Overview({ personId, slice }: { personId: string; slice?: string }) {
   const [d, w] = await Promise.all([hireOverviewData(personId), buyerLiveWork(personId)]);
@@ -101,7 +108,7 @@ async function Overview({ personId, slice }: { personId: string; slice?: string 
 
       {/* IW-E004: My Jobs takes the full width; Today's Interviews moved to the Interviews tab (the attention group links there). */}
       <section className="min-w-0" data-my-jobs>
-        <HeadRow title="My Jobs"><SliceChips labels={{ completed: "Filled" }} tabKey="hire-overview-jobs" counts={jobSliceCounts(d.jobRows)} base="/hire/overview" extra={[["drafts", "Drafts"]]} /></HeadRow>
+        <HeadRow title="My Jobs"><SliceChips chips={STAGE_CHIPS} defaultKey="all" tabKey="hire-overview-jobs-stage" counts={jobSliceCounts(d.jobRows)} base="/hire/overview" /></HeadRow>
         {recent.length ? recent.map((j) => <CompactJob key={j.id} j={j} />) : <p className="py-5 text-[14px] text-state-inactive">No jobs here. <Link href="/hire">Create a Job</Link> and it shows here with its next step.</p>}
         <p className="mt-3.5 text-[13px] text-state-inactive">Older than 5 days ({older}) · <Link href="/hire/overview?tab=jobs" className="font-semibold">See All Jobs</Link></p>
       </section>
@@ -125,7 +132,7 @@ const stepLabel = (j: JobTabRow) => {
 
 function CompactJob({ j }: { j: JobTabRow }) {
   return (
-    <div className="flex flex-wrap items-center gap-4 border-b border-state-border py-[18px] sm:flex-nowrap" data-compact-job>
+    <div className={`flex flex-wrap items-center gap-4 border-b border-state-border py-[18px] sm:flex-nowrap ${DONE.includes(j.stage) ? "opacity-60" : ""}`} data-compact-job>
       <TypeArt category={j.category} size={52} />
       <div className="min-w-0 flex-1">
         <Link href={`/work-requests/${j.id}`} className="block text-[15px] font-bold text-ink hover:underline">{j.title}</Link>
@@ -164,7 +171,7 @@ async function JobsTab({ personId, step, slice, q }: { personId: string; step: s
         </form>
       </div>
       <div className="flex flex-wrap items-center gap-2 border-b border-ink pb-3">
-        <SliceChips labels={{ completed: "Filled" }} tabKey="hire-jobs" counts={jobSliceCounts(jobRows)} base={step ? `/hire/overview?tab=jobs&step=${step}` : "/hire/overview?tab=jobs"} extra={[["drafts", "Drafts"]]} />
+        <SliceChips chips={STAGE_CHIPS} defaultKey="all" tabKey="hire-jobs-stage" counts={jobSliceCounts(jobRows)} base={step ? `/hire/overview?tab=jobs&step=${step}` : "/hire/overview?tab=jobs"} />
         <span className="flex-1" />
         <span className="text-[12px] text-state-inactive">Sorted by what needs you first</span>
       </div>
@@ -182,7 +189,7 @@ async function JobsTab({ personId, step, slice, q }: { personId: string; step: s
 function JobArticle({ j }: { j: JobTabRow }) {
   const woStep = j.step === "wo" || j.step === "award" || j.step === "approval";
   return (
-    <article className="flex flex-col gap-3.5 border-b border-state-border pb-[22px] pt-1" data-job-article>
+    <article className={`flex flex-col gap-3.5 border-b border-state-border pb-[22px] pt-1 ${DONE.includes(j.stage) ? "opacity-60" : ""}`} data-job-article>
       <div className="flex flex-wrap items-start gap-4 sm:flex-nowrap">
         <TypeArt category={j.category} size={52} />
         <div className="min-w-0 flex-1">
