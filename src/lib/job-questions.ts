@@ -2,10 +2,9 @@ import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { SourcingError } from "@/lib/sourcing";
 import { notify, resolveNotifications } from "@/lib/notifications";
+import { cleanAnswer, isAnswered, normalizeAnswers, normalizeQuestions, scoreAnswers, type Answer, type Question } from "@/lib/question-types";
 
 // AQ: written questions to the shortlist — "Interview & Ask". Same identity rule as interviews (no names, companies or contacts).
-const MAX_Q = 5, MAX_A = 1000;
-const asStrings = (v: unknown) => (Array.isArray(v) ? v.map((x) => String(x ?? "")) : []);
 
 async function me(viewer: Viewer) {
   const p = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, first_name: true, last_name: true } });
@@ -20,7 +19,7 @@ async function ownJob(viewer: Viewer, jobId: string) {
 }
 
 /** AQ-E002: Draft With AI — 3 to 5 questions from the job's description, skills and dates (the buyer edits before sending). */
-export async function draftQuestions(viewer: Viewer, jobId: string): Promise<string[]> {
+export async function draftQuestions(viewer: Viewer, jobId: string): Promise<Question[]> {
   const { job } = await ownJob(viewer, jobId);
   const { callExtractionModel } = await import("@/lib/resume/ai-provider");
   const text = [`Title: ${job.title}`, job.description ? `Description: ${job.description}` : null, job.required ? `Required: ${job.required}` : null,
@@ -38,13 +37,13 @@ export async function draftQuestions(viewer: Viewer, jobId: string): Promise<str
     maxOutputTokens: 1_200,
   });
   if (!call.ok) throw new SourcingError("We couldn't draft questions right now — write your own or try again.", "AI");
-  return asStrings((call.value as { questions?: unknown }).questions).map((q) => q.trim()).filter(Boolean).slice(0, MAX_Q);
+  return normalizeQuestions((call.value as { questions?: unknown }).questions);
 }
 
 /** AQ-E002: Send to {n} — one QuestionAnswer per provider, a notice and an email each. */
-export async function sendQuestions(viewer: Viewer, input: { jobId: string; providerPersonIds: string[]; questions: string[]; dueAt?: string | null }) {
+export async function sendQuestions(viewer: Viewer, input: { jobId: string; providerPersonIds: string[]; questions: unknown; dueAt?: string | null }) {
   const { p, job } = await ownJob(viewer, input.jobId);
-  const questions = input.questions.map((q) => q.trim().slice(0, 500)).filter(Boolean).slice(0, MAX_Q);
+  const questions = normalizeQuestions(input.questions).map((q) => ({ ...q, text: q.text.trim().slice(0, 500) }));
   if (!questions.length) throw new SourcingError("Write at least one question.", "INVALID");
   const ids = [...new Set(input.providerPersonIds)].filter(Boolean).slice(0, 50);
   if (!ids.length) throw new SourcingError("Pick at least one provider.", "INVALID");
@@ -60,23 +59,23 @@ export async function sendQuestions(viewer: Viewer, input: { jobId: string; prov
   return { sent: ids.length };
 }
 
-export type ProviderQuestions = { answerId: string; questions: string[]; answers: string[]; dueAt: string | null; submittedAt: string | null };
+export type ProviderQuestions = { answerId: string; questions: Question[]; answers: Answer[]; dueAt: string | null; submittedAt: string | null };
 /** AQ-E003: this provider's question sets on a job (newest first). */
 export async function providerQuestions(personId: string, jobId: string): Promise<ProviderQuestions[]> {
   const rows = await prisma.questionAnswer.findMany({ where: { provider_person_id: personId, questionSet: { job_id: jobId } }, orderBy: { created_at: "desc" }, select: { id: true, answers: true, submitted_at: true, questionSet: { select: { questions: true, due_at: true } } } });
-  return rows.map((r) => ({ answerId: r.id, questions: asStrings(r.questionSet.questions), answers: asStrings(r.answers), dueAt: r.questionSet.due_at?.toISOString() ?? null, submittedAt: r.submitted_at?.toISOString() ?? null }));
+  return rows.map((r) => { const questions = normalizeQuestions(r.questionSet.questions); return { answerId: r.id, questions, answers: normalizeAnswers(r.answers, questions.length), dueAt: r.questionSet.due_at?.toISOString() ?? null, submittedAt: r.submitted_at?.toISOString() ?? null }; });
 }
 
 /** AQ-E003: Save Draft or Send Answers (contacts stripped; 1,000 characters each). */
-export async function saveAnswers(viewer: Viewer, answerId: string, answers: string[], send: boolean) {
+export async function saveAnswers(viewer: Viewer, answerId: string, answers: unknown, send: boolean) {
   const p = await me(viewer);
   const row = await prisma.questionAnswer.findUnique({ where: { id: answerId }, select: { id: true, provider_person_id: true, submitted_at: true, questionSet: { select: { job_id: true, created_by_person_id: true, questions: true } } } });
   if (!row || row.provider_person_id !== p.id) throw new SourcingError("Those questions aren't yours.", "NOT_FOUND");
   if (row.submitted_at) throw new SourcingError("You've already sent these answers.", "INVALID");
   const { stripContacts } = await import("@/lib/work-request/job-import");
-  const n = asStrings(row.questionSet.questions).length;
-  const clean = Array.from({ length: n }, (_, i) => stripContacts(String(answers[i] ?? "")).slice(0, MAX_A));
-  if (send && clean.some((a) => !a.trim())) throw new SourcingError("Answer every question before sending.", "INVALID");
+  const qs = normalizeQuestions(row.questionSet.questions);
+  const clean = normalizeAnswers(answers, qs.length).map((a, i) => cleanAnswer(qs[i], a, stripContacts));
+  if (send && clean.some((a, i) => !isAnswered(qs[i], a))) throw new SourcingError("Answer every question before sending.", "INVALID");
   await prisma.questionAnswer.update({ where: { id: row.id }, data: { answers: clean, ...(send ? { submitted_at: new Date() } : {}) } });
   if (!send) return;
   await resolveNotifications({ dedupe_key: `work.questions_asked:${row.id}` });
@@ -86,14 +85,14 @@ export async function saveAnswers(viewer: Viewer, answerId: string, answers: str
   await notify({ event: "work.questions_answered", personId: row.questionSet.created_by_person_id, entityType: "question_answer", entityId: row.id, dedupeKey: `work.questions_answered:${row.id}`, vars: { who: who.replace(/^Provider /, ""), workTitle: job?.title ?? "", jobId: row.questionSet.job_id } });
 }
 
-export type BuyerQA = { status: "sent" | "in"; qa: { q: string; a: string }[] };
+export type BuyerQA = { status: "sent" | "in"; questions: Question[]; answers: Answer[]; score: { score: number; max: number; knockedOut: string | null } | null };
 /** AQ-E004: per provider on a job — Answers In (with the Q&A) or Questions Sent. Latest set wins. */
 export async function buyerAnswers(jobId: string): Promise<Map<string, BuyerQA>> {
   const rows = await prisma.questionAnswer.findMany({ where: { questionSet: { job_id: jobId } }, orderBy: { created_at: "asc" }, select: { provider_person_id: true, answers: true, submitted_at: true, questionSet: { select: { questions: true } } } });
   const out = new Map<string, BuyerQA>();
   for (const r of rows) {
-    const qs = asStrings(r.questionSet.questions), as = asStrings(r.answers);
-    out.set(r.provider_person_id, { status: r.submitted_at ? "in" : "sent", qa: r.submitted_at ? qs.map((q, i) => ({ q, a: as[i] ?? "" })) : qs.map((q) => ({ q, a: "" })) });
+    const qs = normalizeQuestions(r.questionSet.questions), as = normalizeAnswers(r.answers, qs.length);
+    out.set(r.provider_person_id, r.submitted_at ? { status: "in", questions: qs, answers: as, score: scoreAnswers(qs, as) } : { status: "sent", questions: qs, answers: qs.map(() => ({ value: null })), score: null });
   }
   return out;
 }

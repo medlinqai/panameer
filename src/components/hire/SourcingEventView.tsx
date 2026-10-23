@@ -9,6 +9,7 @@ import { CompareTable } from "@/components/hire/MatchList";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
 import { InterviewDialog } from "@/components/hire/InterviewDialog";
 import { AskQuestionsDialog } from "@/components/hire/AskQuestionsDialog";
+import { answerText } from "@/lib/question-types";
 
 type Ev = Awaited<ReturnType<typeof eventForBuyer>>;
 const STATUS: Record<string, string> = { DRAFT: "Draft", OPEN: "Open", CLOSED: "Closed", AWARDED: "Awarded" };
@@ -128,8 +129,8 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                   <RowPills p={p} />
                   {p.qa?.status === "in" && (
                     <details className="mt-2 text-[13px]" data-qa>
-                      <summary className="cursor-pointer font-semibold">Read Answers ({p.qa.qa.length})</summary>
-                      <ol className="mt-1.5 flex flex-col gap-1.5">{p.qa.qa.map((x, i) => <li key={i}><b>{x.q}</b><p className="whitespace-pre-wrap text-ink-2">{x.a}</p></li>)}</ol>
+                      <summary className="cursor-pointer font-semibold">Read Answers ({p.qa.questions.length})</summary>
+                      <ol className="mt-1.5 flex flex-col gap-1.5">{p.qa.questions.map((q, i) => { const a = p.qa!.answers[i]; return <li key={i}><b>{q.text}</b><p className="whitespace-pre-wrap text-ink-2">{answerText(a)}{a?.prefilled && <span className="ml-2 rounded-full bg-state-inactive-bg px-2 py-0.5 text-[11px] font-bold text-state-inactive">{a.edited ? "Edited" : "From Profile"}</span>}</p></li>; })}</ol>
                     </details>
                   )}
                   <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]">
@@ -156,7 +157,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
       </section>
       {asking && <AskQuestionsDialog jobId={ev.jobId} providerPersonIds={asking} providerLabels={asking.map((id) => (ev.proposals.find((p) => p.personId === id)?.match.name ?? "").replace(/^Provider /, "")).filter(Boolean)} defaultDue={ev.deadlineAt} onClose={() => setAsking(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
       {interviewing && <InterviewDialog jobId={ev.jobId} providerPersonIds={interviewing} providerLabels={interviewing.map((id) => (ev.proposals.find((p) => p.personId === id)?.match.name ?? "").replace(/^Provider /, "")).filter(Boolean)} onClose={() => setInterviewing(null)} onSent={(m) => { setMsg(m); setPicked(new Set()); }} />}
-      {comparing && <CompareTable rows={withProposal.filter((p) => picked.has(p.personId)).map((p) => ({ m: p.match, proposed: p.proposal?.rateCents != null ? `${usd(p.proposal.rateCents)}${per}` : null, start: p.proposal?.start ?? null, qa: p.qa?.status === "in" ? p.qa.qa : null }))} onClose={() => setComparing(false)} />}
+      {comparing && <CompareTable rows={withProposal.filter((p) => picked.has(p.personId)).map((p) => ({ m: p.match, proposed: p.proposal?.rateCents != null ? `${usd(p.proposal.rateCents)}${per}` : null, start: p.proposal?.start ?? null, qa: p.qa?.status === "in" ? p.qa.questions.map((q, i) => ({ q: q.text, a: answerText(p.qa!.answers[i]) })) : null }))} onClose={() => setComparing(false)} />}
     </div>
   );
 }
