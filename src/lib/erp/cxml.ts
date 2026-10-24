@@ -48,9 +48,10 @@ export function cxmlDoc(header: { fromDomain: string; fromIdentity: string; toDo
 /** Panameer UOM → cXML (UN/ECE) unit code. */
 export function cxmlUom(uom: string | null | undefined): string {
   const u = (uom ?? "").toUpperCase();
-  if (u.startsWith("HOUR") || u === "HUR") return "HUR";
+  // Scott 10-24: Oracle Cloud (Vision) has HUR/EA disabled; its active codes are Hr and Ea. A per-connection map comes later.
+  if (u.startsWith("HOUR") || u === "HUR" || u === "HR") return "Hr";
   if (u.startsWith("DAY")) return "DAY";
   if (u.startsWith("WEEK") || u === "WEE") return "WEE";
   if (u.startsWith("MONTH") || u === "MON") return "MON";
-  return "EA";
+  return "Ea";
 }

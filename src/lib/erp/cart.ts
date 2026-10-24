@@ -144,7 +144,7 @@ export function orderMessageXml(
         <ItemDetail>
           <UnitPrice><Money currency="${esc(currency)}">${money(unit)}</Money></UnitPrice>
           <Description xml:lang="en-US">${esc(l.description)}</Description>
-          <UnitOfMeasure>${byQty ? cxmlUom(l.uom) : "EA"}</UnitOfMeasure>
+          <UnitOfMeasure>${byQty ? cxmlUom(l.uom) : cxmlUom(null)}</UnitOfMeasure>
           <Classification domain="UNSPSC">${esc(l.unspsc_code ?? DEFAULT_UNSPSC)}</Classification>
         </ItemDetail>
       </ItemIn>`;
