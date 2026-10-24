@@ -1,3 +1,4 @@
+import { providerNumbers } from "@/lib/provider-number";
 import { nextNumber, PREFIX } from "@/lib/numbering";
 import { searchVariants } from "@/lib/search-synonyms";
 import { prisma } from "@/lib/prisma";
@@ -23,10 +24,12 @@ export async function searchServices(q: string): Promise<CartService[]> {
   });
   const profiles = await prisma.providerProfile.findMany({ where: { id: { in: raw.map((r) => r.provider_profile_id) } }, select: { id: true, person: { select: { id: true, first_name: true, last_name: true } } } });
   const byId = new Map(profiles.map((p) => [p.id, p.person]));
+  // Scott 10-24: provider numbers, never names, until an Order is released — on this page and in the ERP line.
+  const nums = await providerNumbers(profiles.map((p) => p.id));
   const rows = (await Promise.all(raw.map((r) => effectiveRates(byId.get(r.provider_profile_id)?.id ?? null, [r])))).flat();
   return rows.flatMap((r) => {
     const p = byId.get(r.provider_profile_id);
-    return p ? [{ id: r.id, name: r.name, providerName: `${p.first_name} ${p.last_name}`.trim(), providerPersonId: p.id, type: r.service_type === "SERVICE_BY_AMT" ? ("SERVICE_BY_AMT" as const) : ("SERVICE_BY_QTY" as const), uom: r.uom, rateCents: r.rate_cents ?? 0, expenses: r.expenses }] : [];
+    return p ? [{ id: r.id, name: r.name, providerName: nums.get(r.provider_profile_id) ?? "Provider", providerPersonId: p.id, type: r.service_type === "SERVICE_BY_AMT" ? ("SERVICE_BY_AMT" as const) : ("SERVICE_BY_QTY" as const), uom: r.uom, rateCents: r.rate_cents ?? 0, expenses: r.expenses }] : [];
   });
 }
 
@@ -66,7 +69,7 @@ export async function addToCart(s: PunchoutSessionLive, input: { serviceId: stri
   const n = await prisma.workRequestLine.count({ where: { work_request_id: wrId } });
   await prisma.workRequestLine.create({
     data: {
-      work_request_id: wrId, line_number: n + 1, transaction_type: svc.service_type, description: `${svc.name} — ${profile.person.first_name} ${profile.person.last_name}`.trim(),
+      work_request_id: wrId, line_number: n + 1, transaction_type: svc.service_type, description: `${svc.name} — ${(await providerNumbers([svc.provider_profile_id])).get(svc.provider_profile_id) ?? "Provider"}`,
       unspsc_code: typeCode ?? svc.unspsc_code ?? DEFAULT_UNSPSC, uom: byQty ? svc.uom ?? "HOUR" : null, quantity: qty, unit_price_cents: byQty ? svc.rate_cents : null, amount_cents: byQty ? null : svc.rate_cents,
       provider_person_id: profile.person.id, provider_service_id: svc.id, status: "ASSIGNED",
       service_start: input.start ? new Date(input.start) : null, service_end: input.end ? new Date(input.end) : null,
@@ -83,13 +86,14 @@ export async function searchProducts(q: string): Promise<CartProduct[]> {
     where: { status: "PUBLISHED", price_cents: { not: null }, ...(term ? { OR: [...searchVariants(term).map((v) => ({ title: { contains: v, mode: "insensitive" as const } })), { providerProfile: { person: { OR: [{ first_name: { contains: term, mode: "insensitive" } }, { last_name: { contains: term, mode: "insensitive" } }] } } }] } : {}) },
     orderBy: { sort_order: "asc" },
     take: 50,
-    select: { id: true, title: true, price_cents: true, pricing_type: true, providerProfile: { select: { person: { select: { first_name: true, last_name: true } } } } },
+    select: { id: true, title: true, price_cents: true, pricing_type: true, providerProfile: { select: { id: true } } },
   });
-  return rows.map((r) => ({ id: r.id, title: r.title, providerName: `${r.providerProfile.person.first_name} ${r.providerProfile.person.last_name}`.trim(), priceCents: r.price_cents ?? 0, byQty: r.pricing_type === "HOURLY" || r.pricing_type === "TM" }));
+  const nums = await providerNumbers(rows.map((r) => r.providerProfile.id));
+  return rows.map((r) => ({ id: r.id, title: r.title, providerName: nums.get(r.providerProfile.id) ?? "Provider", priceCents: r.price_cents ?? 0, byQty: r.pricing_type === "HOURLY" || r.pricing_type === "TM" }));
 }
 
 export async function addProductToCart(s: PunchoutSessionLive, input: { productId: string; quantity?: number | null }) {
-  const p = await prisma.serviceProduct.findFirst({ where: { id: input.productId, status: "PUBLISHED", price_cents: { not: null } }, select: { id: true, title: true, price_cents: true, pricing_type: true, serviceType: { select: { commodity_code: true } }, providerProfile: { select: { person: { select: { id: true, first_name: true, last_name: true } } } } } });
+  const p = await prisma.serviceProduct.findFirst({ where: { id: input.productId, status: "PUBLISHED", price_cents: { not: null } }, select: { id: true, title: true, price_cents: true, pricing_type: true, serviceType: { select: { commodity_code: true } }, providerProfile: { select: { id: true, person: { select: { id: true, first_name: true, last_name: true } } } } } });
   if (!p?.price_cents) throw new Error("That service product isn't available");
   const qty = Math.floor(Number(input.quantity ?? 1));
   if (!qty || qty < 1 || qty > 10000) throw new Error("Enter a quantity");
@@ -100,7 +104,7 @@ export async function addProductToCart(s: PunchoutSessionLive, input: { productI
   // An amount line carries only its amount; the quantity is amount ÷ the product's price when returned.
   await prisma.workRequestLine.create({
     data: {
-      work_request_id: wrId, line_number: n + 1, transaction_type: byQty ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", description: `${p.title} — ${person.first_name} ${person.last_name}`.trim(),
+      work_request_id: wrId, line_number: n + 1, transaction_type: byQty ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT", description: `${p.title} — ${(await providerNumbers([p.providerProfile.id])).get(p.providerProfile.id) ?? "Provider"}`,
       unspsc_code: p.serviceType?.commodity_code ?? DEFAULT_UNSPSC, uom: byQty ? "HOUR" : null, quantity: byQty ? qty : null, unit_price_cents: byQty ? p.price_cents : null, amount_cents: byQty ? null : p.price_cents * qty,
       provider_person_id: person.id, service_product_id: p.id, status: "ASSIGNED",
     },
