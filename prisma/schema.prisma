@@ -8626,6 +8626,8 @@ model ErpConnection {
   created_at                DateTime            @default(now())
   updated_at                DateTime            @updatedAt
   /// EO-E001: self-onboarding — a first punch-in from an unknown ERP creates the connection (SELF, SELF_PENDING until confirmed).
+  /// ES-E001: SETUP = the one public setup credential (can never transact); ERP = a customer's real connection.
+  kind                      ErpConnectionKind   @default(ERP)
   status                    ErpConnectionStatus @default(ACTIVE)
   created_via               ErpConnectionOrigin @default(ADMIN)
   confirmed_at              DateTime?
@@ -8674,7 +8676,9 @@ model PunchoutSession {
   start_token_hash      String    @unique
   /// sha256 of the cookie value issued at /punchout/start.
   cookie_hash           String?   @unique
-  requester_person_id   String    @db.Uuid
+  /// Null on a setup session (ES-E001) — nobody exists yet; the cXML requester details sit in setup_data.
+  requester_person_id   String?   @db.Uuid
+  setup_data            Json?
   buyer_cookie          String
   browser_form_post_url String
   operation             String    @default("create")
@@ -9701,6 +9705,12 @@ enum ErpConnectionStatus {
   SELF_PENDING
   ACTIVE
   SUSPENDED
+}
+
+/// ES-E001
+enum ErpConnectionKind {
+  ERP
+  SETUP
 }
 
 enum ErpConnectionOrigin {

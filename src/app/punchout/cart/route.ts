@@ -9,6 +9,8 @@ export async function POST(req: Request) {
   const s = await sessionFor((await cookies()).get(PUNCHOUT_COOKIE)?.value);
   const back = (err?: string, added = false) => NextResponse.redirect(new URL(`/punchout${err ? `?error=${encodeURIComponent(err)}` : added ? "?added=1" : ""}`, req.url), 303);
   if (!s) return back("Your punch-out session ended — start again from your ERP.");
+  // ES-E001: the setup credential can't shop — refused server-side.
+  if (s.connection.kind === "SETUP") return NextResponse.json({ error: "Setup only — finish setup to shop." }, { status: 403 });
   const f = await req.formData();
   const action = String(f.get("action") ?? "");
   try {

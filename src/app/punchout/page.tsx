@@ -1,5 +1,6 @@
 import { expensesSuffix } from "@/lib/rate-display";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { PUNCHOUT_COOKIE, sessionFor } from "@/lib/erp/punchout";
 import { cartLines, searchProducts, searchServices } from "@/lib/erp/cart";
@@ -22,6 +23,8 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
         <p className="mt-2 text-[15px] text-ink-2">Start again from your ERP requisition to find a provider on Panameer.</p>
       </main>
     );
+  // ES-E001: a setup session goes to Set Up Panameer, never the shop.
+  if (s.connection.kind === "SETUP" || !s.requester_person_id) redirect("/punchout/setup");
   const [me, results, products, lines] = await Promise.all([
     prisma.person.findUnique({ where: { id: s.requester_person_id }, select: { first_name: true } }),
     searchServices(sp.q ?? ""),

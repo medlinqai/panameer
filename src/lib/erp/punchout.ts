@@ -11,7 +11,8 @@ const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 /** Finds the connection by From + Sender identity and checks the shared secret. */
 export async function authenticate(doc: Document) {
   const h = headerCredentials(doc);
-  const c = await prisma.erpConnection.findFirst({ where: { active: true, status: { not: "SUSPENDED" }, sender_identity: h.sender.identity, from_identity: h.from.identity } });
+  // ES-E001: only real ERP connections authenticate orders and shopping — never the setup credential.
+  const c = await prisma.erpConnection.findFirst({ where: { kind: "ERP", active: true, status: { not: "SUSPENDED" }, sender_identity: h.sender.identity, from_identity: h.from.identity } });
   if (!c || !verifySecret(h.sender.secret, c.shared_secret_hash)) return null;
   return c;
 }
@@ -57,7 +58,22 @@ export async function handlePosr(xml: string, origin: string, ip = "unknown"): P
   // EO-E002/E003: a known identity must bring its locked secret; an unknown one onboards itself (rate-limited).
   const h = headerCredentials(doc);
   if (!h.from.identity || !h.sender.identity || !h.sender.secret) return { status: 401, body: statusResponse(401, "Unauthorized") };
-  const known = await prisma.erpConnection.findFirst({ where: { OR: [{ sender_identity: h.sender.identity, from_identity: h.from.identity }, { from_identity: h.from.identity }] }, orderBy: { created_at: "asc" } });
+  // ES-E001: the public setup credential opens a setup session only (rate-limited); StartPage → Set Up Panameer.
+  const { SETUP_IDENTITY, ensureSetupConnection } = await import("@/lib/erp/setup");
+  if (h.from.identity === SETUP_IDENTITY || h.sender.identity === SETUP_IDENTITY) {
+    const { overSelfOnboardLimit } = await import("@/lib/erp/self-onboard");
+    if (await overSelfOnboardLimit(ip, SETUP_IDENTITY)) return { status: 429, body: statusResponse(429, "Too Many Requests") };
+    const setup = await ensureSetupConnection();
+    if (!setup || !verifySecret(h.sender.secret, setup.shared_secret_hash)) return { status: 401, body: statusResponse(401, "Unauthorized") };
+    const userId = extrinsic(req, "UserId") || extrinsic(req, "UniqueName");
+    const email = (extrinsic(req, "UserEmail") || text(first(first(req, "Contact"), "Email"))).trim().toLowerCase();
+    const name = text(first(first(req, "Contact"), "Name")) || [extrinsic(req, "FirstName"), extrinsic(req, "LastName")].filter(Boolean).join(" ");
+    const token = randomBytes(32).toString("base64url");
+    await prisma.punchoutSession.create({ data: { connection_id: setup.id, start_token_hash: sha(token), requester_person_id: null, setup_data: { name, email, employeeId: userId, companyName: extrinsic(req, "CompanyName") || extrinsic(req, "OrganizationName") || "" }, buyer_cookie: buyerCookie, browser_form_post_url: formPost, operation: "create", expires_at: new Date(Date.now() + SESSION_HOURS * 3_600_000) } });
+    await logMessage({ connectionId: setup.id, direction: "IN", type: "POSR", payloadId: pid, status: "PROCESSED", body: xml }).catch(() => null);
+    return { status: 200, body: statusResponse(200, "success", `<PunchOutSetupResponse><StartPage><URL>${esc(`${origin}/punchout/start?t=${token}`)}</URL></StartPage></PunchOutSetupResponse>`) };
+  }
+  const known = await prisma.erpConnection.findFirst({ where: { kind: "ERP", OR: [{ sender_identity: h.sender.identity, from_identity: h.from.identity }, { from_identity: h.from.identity }] }, orderBy: { created_at: "asc" } });
   let conn: Awaited<ReturnType<typeof authenticate>>;
   if (known) {
     if (!verifySecret(h.sender.secret, known.shared_secret_hash)) return { status: 401, body: statusResponse(401, "Unauthorized") };

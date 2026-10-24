@@ -30,7 +30,13 @@ export async function searchServices(q: string): Promise<CartService[]> {
   });
 }
 
+/** ES-E001: a setup session can never shop, return a cart or create a Request. */
+function assertShopping(s: PunchoutSessionLive): asserts s is PunchoutSessionLive & { requester_person_id: string } {
+  if (s.connection.kind === "SETUP" || !s.requester_person_id) throw new Error("Setup only — finish setup to shop.");
+}
+
 async function cartRequest(s: PunchoutSessionLive): Promise<string> {
+  assertShopping(s);
   if (s.work_request_id) return s.work_request_id;
   const id = crypto.randomUUID();
   const wr = await prisma.workRequest.create({
@@ -102,6 +108,7 @@ export async function addProductToCart(s: PunchoutSessionLive, input: { productI
 }
 
 export async function removeFromCart(s: PunchoutSessionLive, lineId: string) {
+  assertShopping(s);
   if (!s.work_request_id) return;
   await prisma.workRequestLine.deleteMany({ where: { id: lineId, work_request_id: s.work_request_id, work_order_id: null } });
 }
@@ -158,6 +165,7 @@ ${items.join("\n")}
 
 /** Return to ERP: closes the session, marks the request Awarded, logs the message, and hands back what the browser posts. */
 export async function returnCart(s: PunchoutSessionLive): Promise<{ url: string; xml: string }> {
+  assertShopping(s);
   const lines = await cartLines(s);
   if (!lines.length) throw new Error("Add something to the cart before returning it to your ERP");
   const xml = orderMessageXml(s, lines);
