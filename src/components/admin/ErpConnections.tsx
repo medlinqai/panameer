@@ -27,28 +27,40 @@ export function ErpConnections({ initial, accounts }: { initial: ConnectionRow[]
     setRows(j.connections ?? rows);
     setD(null);
   };
+  const setStatus = async (id: string, action: "suspend" | "resume") => {
+    if (action === "suspend" && !window.confirm("Suspend this connection? Punch-ins will show a 'paused' page.")) return;
+    setBusy(true); setError(null);
+    const r = await fetch("/api/admin/erp/status", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action }) });
+    const j = (await r.json().catch(() => ({}))) as { error?: string; connections?: ConnectionRow[] };
+    setBusy(false);
+    if (!r.ok) return setError(j.error ?? "Could not change the status");
+    setRows(j.connections ?? rows);
+  };
+  const STATUS: Record<string, [string, string]> = { SELF_PENDING: ["Waiting for Confirmation", "bg-state-pending-bg text-state-pending"], ACTIVE: ["Active", "bg-state-accepted-bg text-state-accepted"], SUSPENDED: ["Suspended", "bg-state-declined-bg text-state-declined"] };
+  const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—");
   const field = (k: keyof Draft, label: string, ph = "") => (
     <label className="text-[12px] font-bold">{label}<input value={String(d![k])} onChange={(e) => setD({ ...d!, [k]: e.target.value })} placeholder={ph} className={INPUT} /></label>
   );
   return (
     <section>
       <table className="w-full text-left text-[13px]">
-        <thead><tr className="border-b border-line text-ink-2"><th className="py-2">Connection</th><th>Customer</th><th>From / Sender</th><th>Secret</th><th>Credentials</th><th>Status</th><th /></tr></thead>
+        <thead><tr className="border-b border-line text-ink-2"><th className="py-2">Connection</th><th>Customer · First Requester</th><th>From / Sender</th><th>Punch-Ins</th><th>Secret · Credentials</th><th>Status</th><th /></tr></thead>
         <tbody>
           {rows.map((c) => (
             <tr key={c.id} className="border-b border-line">
-              <td className="py-2 font-semibold">{c.name} <span className="font-normal text-ink-3">· {c.erpKind}</span></td>
-              <td>{c.accountName}</td>
+              <td className="py-2 font-semibold">{c.name} <span className="font-normal text-ink-3">· {c.erpKind}</span>{c.createdVia === "SELF" && <span className="ml-1.5 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-bold text-magenta-dark" data-self-connected>Self-Connected</span>}{c.flag && <span className="ml-1.5 rounded-full bg-state-pending-bg px-2 py-0.5 text-[11px] font-bold text-state-pending">{c.flag}</span>}</td>
+              <td>{c.accountName}{c.firstRequester && <span className="block text-ink-3">{c.firstRequester}{c.firstContactEmail ? ` · ${c.firstContactEmail}` : ""}</span>}</td>
               <td>{c.fromIdentity} / {c.senderIdentity}</td>
-              <td>{c.hasSecret ? "Set (hashed)" : "Not set"}</td>
-              <td>{c.credentialEnvName ? `${c.credentialEnvName} · ${c.credentialSet ? "present" : "missing"}` : "—"}</td>
-              <td>{c.active ? "Active" : "Off"}</td>
-              <td><button type="button" onClick={() => setD({ id: c.id, pAccountId: c.pAccountId, name: c.name, fromIdentity: c.fromIdentity, senderIdentity: c.senderIdentity, toIdentity: c.toIdentity, outboundCxmlUrl: c.outboundCxmlUrl ?? "", oracleRestBaseUrl: c.oracleRestBaseUrl ?? "", credentialEnvName: c.credentialEnvName ?? "", active: c.active, newSecret: "" })} className="font-semibold underline">Edit</button></td>
+              <td>{c.punchins}<span className="block text-ink-3">{day(c.firstPunchin)} → {day(c.lastPunchin)}</span></td>
+              <td>{c.hasSecret ? "Set (hashed)" : "Not set"}<span className="block text-ink-3">{c.credentialEnvName ? `${c.credentialEnvName} · ${c.credentialSet ? "present" : "missing"}` : "—"}</span></td>
+              <td>{c.active ? <span className={`rounded-full px-2 py-0.5 text-[11.5px] font-bold ${STATUS[c.status][1]}`}>{STATUS[c.status][0]}</span> : "Off"}</td>
+              <td className="whitespace-nowrap">{c.status === "SUSPENDED" ? <button type="button" disabled={busy} onClick={() => setStatus(c.id, "resume")} className="mr-3 font-semibold underline">Resume</button> : <button type="button" disabled={busy} onClick={() => setStatus(c.id, "suspend")} className="mr-3 font-semibold text-state-declined underline">Suspend</button>}<button type="button" onClick={() => setD({ id: c.id, pAccountId: c.pAccountId, name: c.name, fromIdentity: c.fromIdentity, senderIdentity: c.senderIdentity, toIdentity: c.toIdentity, outboundCxmlUrl: c.outboundCxmlUrl ?? "", oracleRestBaseUrl: c.oracleRestBaseUrl ?? "", credentialEnvName: c.credentialEnvName ?? "", active: c.active, newSecret: "" })} className="font-semibold underline">Edit</button></td>
             </tr>
           ))}
           {rows.length === 0 && <tr><td colSpan={7} className="py-4 text-ink-2">No ERP connections yet.</td></tr>}
         </tbody>
       </table>
+      {!d && error && <p role="alert" className="mt-3 text-[13px] font-semibold text-state-declined">{error}</p>}
       {!d && <button type="button" onClick={() => setD(blank())} className={`${BTN_K} mt-4`}>Add a Connection</button>}
       {d && (
         <div data-erp-form className="mt-4 grid gap-3 border border-line bg-white p-4 sm:grid-cols-3">

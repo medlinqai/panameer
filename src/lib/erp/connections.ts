@@ -62,9 +62,17 @@ export async function saveConnection(id: string | null, input: ConnectionInput) 
 }
 
 export async function listConnections() {
-  const rows = await prisma.erpConnection.findMany({ orderBy: { created_at: "asc" } });
+  // EO-E005: self-connected first (newest first), then the hand-made ones.
+  const rows = await prisma.erpConnection.findMany({ orderBy: [{ created_via: "desc" }, { created_at: "desc" }] });
   const accts = new Map((await prisma.pAccount.findMany({ where: { id: { in: rows.map((r) => r.p_account_id) } }, select: { id: true, name: true } })).map((a) => [a.id, a.name]));
+  const reqs = await prisma.person.findMany({ where: { id: { in: rows.map((r) => r.first_requester_person_id).filter((x): x is string => !!x) } }, select: { id: true, first_name: true, last_name: true } });
+  const posr = await prisma.erpMessage.groupBy({ by: ["connection_id"], where: { connection_id: { in: rows.map((r) => r.id) }, type: "POSR" }, _count: { _all: true }, _min: { created_at: true }, _max: { created_at: true } });
   return rows.map((r) => ({
+    status: r.status, createdVia: r.created_via, flag: r.flag, confirmedAt: r.confirmed_at?.toISOString() ?? null,
+    firstRequester: ((p) => (p ? `${p.first_name} ${p.last_name}`.trim() : null))(reqs.find((p) => p.id === r.first_requester_person_id)), firstContactEmail: r.first_contact_email,
+    punchins: posr.find((x) => x.connection_id === r.id)?._count._all ?? 0,
+    firstPunchin: posr.find((x) => x.connection_id === r.id)?._min.created_at?.toISOString() ?? null,
+    lastPunchin: posr.find((x) => x.connection_id === r.id)?._max.created_at?.toISOString() ?? null,
     id: r.id, pAccountId: r.p_account_id, accountName: accts.get(r.p_account_id) ?? "—", name: r.name, erpKind: r.erp_kind,
     fromDomain: r.from_domain, fromIdentity: r.from_identity, toIdentity: r.to_identity, senderDomain: r.sender_domain, senderIdentity: r.sender_identity,
     hasSecret: !!r.shared_secret_hash, outboundCxmlUrl: r.outbound_cxml_url, oracleRestBaseUrl: r.oracle_rest_base_url,
