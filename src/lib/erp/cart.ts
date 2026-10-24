@@ -184,7 +184,8 @@ export async function returnCart(s: PunchoutSessionLive): Promise<{ url: string;
 
 /** PI-E004: Hire while punched in → a Service – Rate line (provider number, rate, hours from the job's dates at 40 h/week
  *  unless the buyer gave hours, UOM Hr) in the punch-in cart, tagged with the job so the Job reads "In your ERP cart". */
-export const jobRef = (jobId: string) => `job:${jobId}`;
+/** Tag in punchout_line_ref (text): job:{jobId}:{providerPersonId}:{requestId}. Not supplier_part_id — that column is a uuid. */
+export const jobRef = (jobId: string, providerPersonId: string, wrId: string) => `job:${jobId}:${providerPersonId}:${wrId}`;
 export async function addHireToCart(s: PunchoutSessionLive, input: { jobId: string; providerPersonId: string; unitPriceCents: number; start: string; end: string; hours?: number | null; paymentEvent?: string | null }) {
   assertShopping(s);
   if (!(input.unitPriceCents > 0)) throw new Error("Enter the rate.");
@@ -198,14 +199,14 @@ export async function addHireToCart(s: PunchoutSessionLive, input: { jobId: stri
   const prof = await prisma.providerProfile.findUnique({ where: { person_id: input.providerPersonId }, select: { id: true } });
   const num = prof ? (await providerNumbers([prof.id])).get(prof.id) : null;
   const wrId = await cartRequest(s);
-  const already = await prisma.workRequestLine.findFirst({ where: { work_request_id: wrId, provider_person_id: input.providerPersonId, supplier_part_id: jobRef(job.id) }, select: { id: true } });
+  const already = await prisma.workRequestLine.findFirst({ where: { punchout_line_ref: jobRef(job.id, input.providerPersonId, wrId) }, select: { id: true } });
   if (already) throw new Error("That provider is already in your cart for this job.");
   const n = await prisma.workRequestLine.count({ where: { work_request_id: wrId } });
   await prisma.workRequestLine.create({
     data: {
       work_request_id: wrId, line_number: n + 1, transaction_type: "SERVICE_BY_QTY", description: `${job.title} — ${num ?? "Provider"} (Service – Rate)`,
       unspsc_code: DEFAULT_UNSPSC, uom: "HOUR", quantity: hours, unit_price_cents: input.unitPriceCents,
-      provider_person_id: input.providerPersonId, supplier_part_id: jobRef(job.id), service_start: start, service_end: end, status: "ASSIGNED",
+      provider_person_id: input.providerPersonId, punchout_line_ref: jobRef(job.id, input.providerPersonId, wrId), service_start: start, service_end: end, status: "ASSIGNED",
     },
   });
   // The punch-in Request remembers the first job hired into it.

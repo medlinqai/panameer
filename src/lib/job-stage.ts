@@ -33,8 +33,8 @@ export async function jobStages(jobIds: string[]): Promise<Map<string, { stage: 
     prisma.sourcingEvent.findMany({ where: { job_id: { in: ids }, status: { not: "DRAFT" } }, select: { job_id: true } }),
     prisma.workRequest.findMany({ where: { job_id: { in: ids } }, select: { job_id: true, erp_connection_id: true, erp_returned_at: true, lines: { where: { provider_person_id: { not: null }, status: { in: ["ASSIGNED", "ORDERED"] } }, select: { id: true } } } }),
     prisma.workOrder.findMany({ where: { workRequest: { job_id: { in: ids } }, status: { not: "CANCELLED" } }, select: { status: true, workRequest: { select: { job_id: true } } } }),
-    // PI-E004: a hire sitting in a punch-in cart (tagged job:{id}) — the Job waits on the ERP.
-    prisma.workRequestLine.findMany({ where: { supplier_part_id: { in: ids.map((i) => `job:${i}`) }, work_order_id: null, workRequest: { erp_connection_id: { not: null }, status: { in: ["INCOMPLETE", "PENDING_APPROVAL"] } } }, select: { supplier_part_id: true } }),
+    // PI-E004: a hire sitting in a punch-in cart (punchout_line_ref job:{id}:…) — the Job waits on the ERP.
+    prisma.workRequestLine.findMany({ where: { OR: ids.map((i) => ({ punchout_line_ref: { startsWith: `job:${i}:` } })), work_order_id: null, workRequest: { erp_connection_id: { not: null }, status: { in: ["INCOMPLETE", "PENDING_APPROVAL"] } } }, select: { punchout_line_ref: true } }),
   ]);
   const out = new Map<string, { stage: JobStage; origin: JobOrigin }>();
   for (const j of jobs) {
@@ -44,7 +44,7 @@ export async function jobStages(jobIds: string[]): Promise<Map<string, { stage: 
     const awarded = w.some((x) => x.lines.length > 0);
     const erpOrigin = w.some((x) => !!x.erp_connection_id);
     out.set(j.id, {
-      stage: jobStage({ status: j.status, asked, awarded, erpReturned: w.some((x) => !!x.erp_returned_at), erpOrigin, orderReleased: o.some((x) => RELEASED.has(x.status)), orderExists: o.length > 0, inErpCart: cartLines.some((l) => l.supplier_part_id === `job:${j.id}`) }),
+      stage: jobStage({ status: j.status, asked, awarded, erpReturned: w.some((x) => !!x.erp_returned_at), erpOrigin, orderReleased: o.some((x) => RELEASED.has(x.status)), orderExists: o.length > 0, inErpCart: cartLines.some((l) => !!l.punchout_line_ref?.startsWith(`job:${j.id}:`)) }),
       origin: erpOrigin ? "From ERP" : asked ? "Compare Providers" : awarded ? "Hire Directly" : null,
     });
   }
