@@ -1,3 +1,4 @@
+import { AddForm } from "./AddForm";
 import { expensesSuffix } from "@/lib/rate-display";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -52,7 +53,7 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
       <ul className="mt-2 grid gap-2">
         {products.map((p) => (
           <li key={p.id} data-punchout-product className="border border-line bg-white p-4">
-            <form method="post" action="/punchout/cart" className="flex flex-wrap items-end justify-between gap-3">
+            <AddForm className="flex flex-wrap items-end justify-between gap-3">
               <input type="hidden" name="action" value="addProduct" />
               <input type="hidden" name="productId" value={p.id} />
               <div className="min-w-0">
@@ -61,9 +62,9 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
               </div>
               <div className="flex flex-wrap items-end gap-2">
                 <label className="text-[12px] font-bold">{p.byQty ? "Hours" : "Quantity"}<input name="quantity" inputMode="numeric" defaultValue={p.byQty ? "" : "1"} required className={`${INPUT} block w-24`} /></label>
-                <button className="inline-flex min-h-10 items-center border border-ink px-4 text-[14px] font-semibold">Add to Cart</button>
+                <button className="inline-flex min-h-10 cursor-pointer items-center border border-ink px-4 text-[14px] font-semibold hover:bg-ink hover:text-surface">Add to Cart</button>
               </div>
-            </form>
+            </AddForm>
           </li>
         ))}
       </ul>
@@ -71,7 +72,7 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
       <ul className="mt-2 grid gap-2">
         {results.map((r) => (
           <li key={r.id} data-punchout-service className="border border-line bg-white p-4">
-            <form method="post" action="/punchout/cart" className="flex flex-wrap items-end justify-between gap-3">
+            <AddForm className="flex flex-wrap items-end justify-between gap-3">
               <input type="hidden" name="action" value="add" />
               <input type="hidden" name="serviceId" value={r.id} />
               <div className="min-w-0">
@@ -82,9 +83,9 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
                 {r.type === "SERVICE_BY_QTY" && <label className="text-[12px] font-bold">Quantity<input name="quantity" inputMode="decimal" required className={`${INPUT} block w-24`} /></label>}
                 <label className="text-[12px] font-bold">Starts<input name="start" type="date" className={`${INPUT} block`} /></label>
                 <label className="text-[12px] font-bold">Ends<input name="end" type="date" className={`${INPUT} block`} /></label>
-                <button className="inline-flex min-h-10 items-center border border-ink px-4 text-[14px] font-semibold">Add to Cart</button>
+                <button className="inline-flex min-h-10 cursor-pointer items-center border border-ink px-4 text-[14px] font-semibold hover:bg-ink hover:text-surface">Add to Cart</button>
               </div>
-            </form>
+            </AddForm>
           </li>
         ))}
         {results.length === 0 && products.length === 0 && <li className="text-[14px] text-ink-2">Nothing matches. Try another word.</li>}

@@ -300,3 +300,9 @@ main:has(:is(.pm-white-page, .account-surface)) {
 
 /* Scott 10-17: inside the locked casing, the onboarding slim bar is replaced by the app band. */
 .pm-in-casing [data-onboarding-bar]{display:none}
+
+/* Scott 10-24: buttons and links show the hand cursor (Tailwind's reset leaves buttons on the arrow). */
+@layer base {
+  button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, label[for], select { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+}
