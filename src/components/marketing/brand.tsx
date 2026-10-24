@@ -73,6 +73,7 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
       { label: "About Us" },
       { label: "Contact Us" },
       { label: "AIP Integration", href: "/integrate" },
+      { label: "Connect Your ERP", href: "/erp/connect" },
       { label: "Why Panameer", href: "/why-panameer" },
       { label: "Pricing" },
     ],
@@ -81,7 +82,7 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
     title: "AI Platform Solutions",
     entries: [
       { label: "Processes-Specific Agent Suites" },
-      { label: 'Services Procurement "Punchout"' },
+      { label: 'Services Procurement "Punchout"', href: "/erp/connect" },
       { label: "Dynamic Analytics (Data-Driven Reports)" },
       { label: "Assessment-Integrated Deployables" },
       { label: "AI Method-Based Provider Work Tracker" },

@@ -64,7 +64,7 @@ export async function handlePosr(xml: string, origin: string, ip = "unknown"): P
     if (!known.active || known.status === "SUSPENDED") return { status: 200, body: statusResponse(200, "success", `<PunchOutSetupResponse><StartPage><URL>${esc(`${origin}/punchout/paused`)}</URL></StartPage></PunchOutSetupResponse>`) };
     conn = known;
   } else {
-    if (h.sender.secret.length < 8) return { status: 401, body: statusResponse(401, "Unauthorized") };
+    if (h.sender.secret.length < 16) return { status: 401, body: statusResponse(401, "Unauthorized") };
     const { overSelfOnboardLimit, selfOnboard } = await import("@/lib/erp/self-onboard");
     if (await overSelfOnboardLimit(ip, h.from.identity)) return { status: 429, body: statusResponse(429, "Too Many Requests") };
     const made = await selfOnboard(h, req);
