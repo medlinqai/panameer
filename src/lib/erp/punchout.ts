@@ -32,8 +32,9 @@ async function resolveRequester(pAccountId: string, req: Element | null) {
   const co = await prisma.company.findFirst({ where: { p_account_id: pAccountId }, orderBy: { created_at: "asc" }, select: { id: true } });
   if (!co) throw new Error("This connection's customer account has no company");
   const name = text(first(first(req, "Contact"), "Name")) || [extrinsic(req, "FirstName"), extrinsic(req, "LastName")].filter(Boolean).join(" ") || email || userId || "ERP requester";
-  const [firstName, ...rest] = name.split(/\s+/);
-  const p = await prisma.person.create({ data: { company_id: co.id, first_name: firstName.slice(0, 100), last_name: rest.join(" ").slice(0, 100) || "—" }, select: { id: true } });
+  // Oracle sends "Last, First" — read it the right way round.
+  const [firstName, lastName] = name.includes(",") ? [name.split(",").slice(1).join(",").trim(), name.split(",")[0].trim()] : [name.split(/\s+/)[0], name.split(/\s+/).slice(1).join(" ")];
+  const p = await prisma.person.create({ data: { company_id: co.id, first_name: (firstName || name).slice(0, 100), last_name: lastName.slice(0, 100) || "—" }, select: { id: true } });
   await prisma.requesterProfile.create({ data: { person_id: p.id, employee_id: userId || null, buyer_email: email || null, buyer_name: name.slice(0, 200) } });
   return p.id;
 }

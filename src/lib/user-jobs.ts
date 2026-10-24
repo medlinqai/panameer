@@ -4,6 +4,8 @@ export type UserJobInput = {
   is_service_provider: boolean;
   requesterProfile: object | null | undefined;
   buyerProfile: object | null | undefined;
+  /** A person with no sign-in who only punches in from their ERP reads as ERP Requester. */
+  user?: object | null;
 };
 
 /** Every job this person holds, in the order the grid prints them. */
@@ -11,7 +13,7 @@ export function jobsFor(p: UserJobInput): string[] {
   return [
     p.is_service_coordinator ? "Recruiter" : null,
     p.is_service_provider ? "Provider" : null,
-    p.buyerProfile ? "Buyer Admin" : p.requesterProfile ? "Buyer" : null,
+    p.buyerProfile ? "Buyer Admin" : p.requesterProfile ? (p.user === null ? "ERP Requester" : "Buyer") : null,
   ].filter((j): j is string => j !== null);
 }
 
