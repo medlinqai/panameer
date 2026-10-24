@@ -11,7 +11,7 @@ const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 /** Finds the connection by From + Sender identity and checks the shared secret. */
 export async function authenticate(doc: Document) {
   const h = headerCredentials(doc);
-  const c = await prisma.erpConnection.findFirst({ where: { active: true, sender_identity: h.sender.identity, from_identity: h.from.identity } });
+  const c = await prisma.erpConnection.findFirst({ where: { active: true, status: { not: "SUSPENDED" }, sender_identity: h.sender.identity, from_identity: h.from.identity } });
   if (!c || !verifySecret(h.sender.secret, c.shared_secret_hash)) return null;
   return c;
 }
@@ -40,20 +40,37 @@ async function resolveRequester(pAccountId: string, req: Element | null) {
 }
 
 /** Handles one PunchOutSetupRequest. Returns the cXML reply and HTTP status. */
-export async function handlePosr(xml: string, origin: string): Promise<{ status: number; body: string }> {
+export async function handlePosr(xml: string, origin: string, ip = "unknown"): Promise<{ status: number; body: string }> {
   let doc: Document;
   try {
     doc = parseCxml(xml);
   } catch {
     return { status: 400, body: statusResponse(400, "Bad Request") };
   }
-  const conn = await authenticate(doc);
-  if (!conn) return { status: 401, body: statusResponse(401, "Unauthorized") };
   const pid = attr(doc.documentElement, "payloadID") || `posr-${Date.now()}`;
   const req = first(doc, "PunchOutSetupRequest");
   const formPost = text(first(first(req, "BrowserFormPost"), "URL"));
   const buyerCookie = text(first(req, "BuyerCookie"));
   if (!req || !formPost || !buyerCookie) return { status: 400, body: statusResponse(400, "Missing BrowserFormPost or BuyerCookie") };
+  // EO-E002/E003: a known identity must bring its locked secret; an unknown one onboards itself (rate-limited).
+  const h = headerCredentials(doc);
+  if (!h.from.identity || !h.sender.identity || !h.sender.secret) return { status: 401, body: statusResponse(401, "Unauthorized") };
+  const known = await prisma.erpConnection.findFirst({ where: { OR: [{ sender_identity: h.sender.identity, from_identity: h.from.identity }, { from_identity: h.from.identity }] }, orderBy: { created_at: "asc" } });
+  let conn: Awaited<ReturnType<typeof authenticate>>;
+  if (known) {
+    if (!verifySecret(h.sender.secret, known.shared_secret_hash)) return { status: 401, body: statusResponse(401, "Unauthorized") };
+    if (!known.active || known.status === "SUSPENDED") return { status: 200, body: statusResponse(200, "success", `<PunchOutSetupResponse><StartPage><URL>${esc(`${origin}/punchout/paused`)}</URL></StartPage></PunchOutSetupResponse>`) };
+    conn = known;
+  } else {
+    if (h.sender.secret.length < 8) return { status: 401, body: statusResponse(401, "Unauthorized") };
+    const { overSelfOnboardLimit, selfOnboard } = await import("@/lib/erp/self-onboard");
+    if (await overSelfOnboardLimit(ip, h.from.identity)) return { status: 429, body: statusResponse(429, "Too Many Requests") };
+    const made = await selfOnboard(h, req);
+    conn = made.conn;
+    const { afterSelfOnboard } = await import("@/lib/erp/self-onboard-notify");
+    await afterSelfOnboard(made, origin).catch((e) => console.error("[cxml] self-onboard notices failed:", e));
+  }
+  if (!conn) return { status: 401, body: statusResponse(401, "Unauthorized") };
 
   const seen = await findMessage(conn.id, pid);
   if (seen) await prisma.punchoutSession.updateMany({ where: { connection_id: conn.id, buyer_cookie: buyerCookie, started_at: null }, data: { expires_at: new Date() } });
@@ -83,7 +100,7 @@ export async function sessionFor(cookie: string | undefined | null) {
   const s = await prisma.punchoutSession.findUnique({ where: { cookie_hash: sha(cookie) } });
   if (!s || s.returned_at || s.expires_at < new Date()) return null;
   const conn = await prisma.erpConnection.findUnique({ where: { id: s.connection_id } });
-  if (!conn?.active) return null;
+  if (!conn?.active || conn.status === "SUSPENDED") return null;
   return { ...s, connection: conn };
 }
 export type PunchoutSessionLive = NonNullable<Awaited<ReturnType<typeof sessionFor>>>;

@@ -5,7 +5,8 @@ export async function POST(req: Request) {
   const xml = await req.text();
   const origin = process.env.NEXTAUTH_URL?.replace(/\/$/, "") || new URL(req.url).origin;
   try {
-    const r = await handlePosr(xml, origin);
+    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || req.headers.get("x-real-ip") || "unknown";
+    const r = await handlePosr(xml, origin, ip);
     return new Response(r.body, { status: r.status, headers: { "Content-Type": "text/xml; charset=utf-8" } });
   } catch (e) {
     console.error("[cxml] punchout setup failed:", e);
