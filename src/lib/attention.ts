@@ -310,6 +310,9 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     add("payment", pay, "Payments Due", APP_HOME.buyer.payment, "Pay");
     add("connect", connect, "Unread Messages", "/messages", "Read");
     await titled();
+    // PI-E007: punched in → the punch-in cart comes first.
+    const p = await (await import("@/lib/erp/punchin-live")).currentPunchin().catch(() => null);
+    if (p?.state === "live") items.unshift({ id: "punchin:cart", what: `Punch-in Cart · ${p.count} item${p.count === 1 ? "" : "s"}`, app: "shop", appLabel: APP_LABEL.shop, due: null, dueAt: null, href: "/shop?tab=cart", action: `Return to ${p.erpName}` });
     return { side, request: { total: jobs + requests + interviews + tests, jobs, requests, interviews, tests }, shop, estimate, order: { total: woAccept }, settlement: { total: settle }, payment: { total: pay }, connect: { total: connect }, learn: { total: learn }, items };
   }
 
