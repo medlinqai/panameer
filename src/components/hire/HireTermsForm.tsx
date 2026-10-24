@@ -88,14 +88,28 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
       </fieldset>
       {error && <p role="alert" className="mt-3 text-[13.5px] font-semibold text-magenta-dark">{error}</p>}
       <div className="mt-5 border-t border-line pt-4">
-        <button type="button" disabled={busy || !t.rate} onClick={submit} data-create-work-order className="inline-flex min-h-11 items-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40">
+        <button type="button" disabled={busy || !t.rate || !!inCart} onClick={submit} data-create-work-order className="inline-flex min-h-11 items-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40">
           {busy ? "Working…" : d.erpOrigin ? "Submit" : `Hire ${d.providerName.replace(/^Provider\s+/, "")}`}
         </button>
         {!d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">Hiring awards the job and creates the Request. It is approved, then the Order comes to you to accept.</p>}
         {d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">This request came from your ERP — Submit returns it there to raise the PO.</p>}
       </div>
+      {/* Scott 10-24: after Add to cart, a confirmation (like the Order one) — not the same form with Submit still live. */}
       {inCart && (
-        <p className="mt-4 rounded-[10px] bg-state-pending-bg px-4 py-3 text-[14.5px] font-semibold text-state-pending" data-hire-in-erp-cart>Added to your {inCart.erpName} cart — {inCart.hours} hours. Return the cart from the bar at the top when you&apos;re done; {inCart.erpName} approves it and sends the PO.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(20,18,30,0.45)] px-4" role="dialog" aria-modal="true" aria-labelledby="hire-cart-title" data-hire-in-erp-cart>
+          <div className="w-full max-w-md bg-white p-6 text-ink shadow-xl">
+            <h2 id="hire-cart-title" className="text-[20px] font-extrabold">Added to Your {inCart.erpName} Cart</h2>
+            <p className="mt-3 text-[14.5px] leading-relaxed">
+              {d.providerName} · {inCart.hours.toLocaleString("en-US")} hours × ${t.rate} = <b>${(inCart.hours * Number(t.rate || 0)).toLocaleString("en-US", { maximumFractionDigits: 2 })}</b>
+            </p>
+            <p className="mt-1 text-[13px] text-ink-2">When you return the cart, {inCart.erpName} approves it and sends the PO. The Order is created then.</p>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <form method="post" action="/punchout/cart"><input type="hidden" name="action" value="return" /><button type="submit" className="inline-flex min-h-11 items-center bg-magenta px-5 text-[14px] font-bold text-white hover:bg-magenta-dark">Return Cart to {inCart.erpName}</button></form>
+              <Link href={`/work-requests/${d.jobId}`} className="inline-flex min-h-11 items-center border border-ink px-5 text-[14px] font-bold text-ink">Back to Job</Link>
+              <Link href="/shop" className="text-[14px] font-semibold text-magenta-dark underline underline-offset-4">Keep Shopping</Link>
+            </div>
+          </div>
+        </div>
       )}
       {done && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(20,18,30,0.45)] px-4" role="dialog" aria-modal="true" aria-labelledby="hire-done-title" data-wr-submitted>
