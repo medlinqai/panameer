@@ -1,3 +1,4 @@
+import { cxmlUom } from "@/lib/erp/cxml";
 import { AddForm } from "./AddForm";
 import { expensesSuffix } from "@/lib/rate-display";
 import { cookies } from "next/headers";
@@ -100,6 +101,7 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
             {lines.map((l) => (
               <li key={l.id} data-cart-line className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2 text-[14px]">
                 <span><b>{l.description}</b> · {l.eaQuantity ? `${l.eaQuantity} × ${formatCents((l.amount_cents ?? 0) / l.eaQuantity, "USD")} each` : l.transaction_type === "SERVICE_BY_AMT" ? `up to ${formatCents(l.amount_cents ?? 0, "USD")}` : `${Number(l.quantity)} ${(l.uom ?? "hour").toLowerCase()} × ${formatCents(l.unit_price_cents ?? 0, "USD")}`}</span>
+                <span className="w-full text-[12px] text-state-inactive" data-cart-line-detail>Sent to your ERP as: UOM <b className="text-ink">{l.transaction_type === "SERVICE_BY_QTY" && l.uom ? cxmlUom(l.uom) : cxmlUom(null)}</b> · UNSPSC {l.unspsc_code ?? "—"} · line {l.line_number}</span>
                 <form method="post" action="/punchout/cart"><input type="hidden" name="action" value="remove" /><input type="hidden" name="lineId" value={l.id} /><button className="text-[13px] font-semibold underline">Remove</button></form>
               </li>
             ))}
