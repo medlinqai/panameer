@@ -120,7 +120,8 @@ export default async function Page({
 
   return (
     <div className="pm-white-page mx-auto flex w-full min-w-0 max-w-[1120px] flex-col gap-[18px] pb-16" data-work-request-page>
-      <LiveRefresh />
+      {/* Only while answers can still arrive. */}
+      {stage === "COMPARING" && <LiveRefresh />}
       <Link href="/hire/overview?tab=jobs" className="text-[13px] font-semibold">‹ Jobs</Link>
 
       <section aria-label="Header" className="flex flex-wrap items-start justify-between gap-4" data-wr-header>
