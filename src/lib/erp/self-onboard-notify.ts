@@ -59,3 +59,21 @@ export async function confirmOnboarding(token: string, input: { password: string
   });
   return { email: ob.person.user!.email };
 }
+
+/** ES-E005: after Create My Company — the values (and a set-password link) to the requester and the ERP admin; the Panameer admin notice. */
+export async function afterSetup(r: { values: import("@/lib/erp/setup-create").SetupValues; personId: string; connectionId: string; userId: string; email: string; erpAdminEmail: string; firstName: string }, origin: string): Promise<void> {
+  const base = (process.env.NEXTAUTH_URL ?? origin).replace(/\/$/, "");
+  const token = randomBytes(32).toString("base64url");
+  await prisma.erpOnboardingToken.create({ data: { connection_id: r.connectionId, person_id: r.personId, token_hash: sha(token), expires_at: new Date(Date.now() + 7 * 86_400_000) } });
+  const { erpSetupTemplate } = await import("@/lib/email/templates/erp-connected");
+  const { sendEmail } = await import("@/lib/resend");
+  const to = [...new Set([r.email, r.erpAdminEmail].filter(Boolean))];
+  for (const addr of to) {
+    const t = erpSetupTemplate({ firstName: addr === r.email ? r.firstName : "", companyName: r.values.companyName, values: r.values, passwordUrl: addr === r.email ? `${base}/erp/confirm?t=${token}` : null, connectUrl: `${APP}/erp/connect`, logoUrl: `${base}/brand/panameer-lockup-ink.png` });
+    await sendEmail({ to: addr, ...t, template: "erp-setup", category: "account.registration", userId: addr === r.email ? r.userId : null, subjectType: "erp_connection", subjectId: r.connectionId });
+  }
+  const admins = await prisma.person.findMany({ where: { user: { is_system_admin: true, is_active: true } }, select: { id: true } });
+  for (const a of admins) {
+    await notify({ event: "admin.erp_connected", personId: a.id, entityType: "erp_connection", entityId: r.connectionId, dedupeKey: `admin.erp_connected:${r.connectionId}:${a.id}`, vars: { company: r.values.companyName, identity: r.values.identity, requester: r.firstName, email: r.email, flag: "", setup: "1" } });
+  }
+}

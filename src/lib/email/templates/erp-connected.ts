@@ -25,3 +25,28 @@ Notes and videos: ${connectUrl}
 `;
   return { subject, html, text };
 }
+
+/** ES-E005: after Set Up Panameer — the replacement Identity and Password, a set-password link (requester only), the guide and videos. */
+export function erpSetupTemplate({ firstName, companyName, values, passwordUrl, connectUrl, logoUrl }: { firstName: string; companyName: string; values: { identity: string; secret: string; punchoutUrl: string; supplierId: string; domain: string }; passwordUrl: string | null; connectUrl: string; logoUrl?: string }): { subject: string; html: string; text: string } {
+  const subject = `${companyName} Is Set Up on Panameer — Your Punchout Values`;
+  const rows: [string, string][] = [["Identity", values.identity], ["Password", values.secret], ["Punchout URL", values.punchoutUrl], ["Supplier ID", values.supplierId], ["Domain", values.domain]];
+  const table = rows.map(([k, v]) => `<tr><td style="padding:6px 12px 6px 0;font-weight:700;">${k}</td><td style="padding:6px 0;font-family:monospace;">${escapeHtml(v)}</td></tr>`).join("");
+  const html = emailShell({
+    logoUrl,
+    bodyHtml: `
+      <h1 style="margin:0 0 14px;font-size:24px;line-height:1.2;">${escapeHtml(companyName)} is set up on Panameer</h1>
+      <p style="margin:0 0 12px;font-size:15px;line-height:1.55;">${firstName ? `Hi ${escapeHtml(firstName)}, r` : "R"}eplace the setup credential in your Panameer punchout catalog in Oracle (Manage Punchout Catalogs) with these values, Save, then Test Connection:</p>
+      <table style="margin:0 0 18px;font-size:14px;border-collapse:collapse;">${table}</table>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.55;">Keep the password safe — it's how Panameer knows your ERP. Your Panameer admin can rotate it.</p>
+      ${passwordUrl ? `<p style="margin:0 0 22px;">${primaryButton(passwordUrl, "Set Your Panameer Password")}</p>` : ""}
+      <p style="margin:0;font-size:14px;line-height:1.55;">The setup guide and short videos (catalog setup · show it on the shopping pages · add it to a Content Zone): <a href="${escapeHtml(connectUrl)}">${escapeHtml(connectUrl)}</a>.</p>`,
+  });
+  const text = `${companyName} is set up on Panameer
+
+Replace the setup credential in your Panameer punchout catalog in Oracle (Manage Punchout Catalogs), Save, then Test Connection:
+${rows.map(([k, v]) => `${k}: ${v}`).join("\n")}
+${passwordUrl ? `\nSet your Panameer password: ${passwordUrl}\n` : ""}
+Setup guide and videos: ${connectUrl}
+`;
+  return { subject, html, text };
+}
