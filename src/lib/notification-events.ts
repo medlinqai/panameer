@@ -473,6 +473,18 @@ export const NOTIFICATION_EVENTS = {
     href: (v) => `/admin/skill-catalog?tab=compare&q=${encodeURIComponent(str(v, "term", ""))}`,
   },
   // SO-E008: someone stopped partway through registration, 8 days idle after two reminders.
+  // EO-E004: a new ERP customer connected itself on its first punch-in — nothing waits for this; Review is optional.
+  "admin.erp_connected": {
+    event: "admin.erp_connected",
+    recipient: "Panameer admins",
+    category: "account.registration",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `New ERP Customer Connected: ${str(v, "company", "A Company")} via ${str(v, "identity", "Its ERP")}`,
+    body: (v) => `First requester ${str(v, "requester", "")} (${str(v, "email", "no email")})${str(v, "flag", "") ? ` · ${str(v, "flag", "")}` : ""}. Review in Admin › ERP.`,
+    href: () => "/admin/erp",
+  },
   "admin.registration_stopped": {
     event: "admin.registration_stopped",
     recipient: "Panameer admins",

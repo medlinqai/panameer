@@ -66,6 +66,9 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/estimates/[id]", category: 4 },
   // X-E002: punchout pages, addressed by a one-time token then a punchout-only cookie (not a Panameer sign-in).
   { route: "/punchout", category: 4, subtree: true },
+  // EO-E004/E007: the self-connected ERP's one-time confirm link, and the public "Connect Your ERP" page.
+  { route: "/erp/confirm", category: 4 },
+  { route: "/erp/connect", category: 1 },
 
   { route: "/assess", category: 5 },
   { route: "/explore", category: 5 },
