@@ -473,6 +473,18 @@ export const NOTIFICATION_EVENTS = {
     href: (v) => `/admin/skill-catalog?tab=compare&q=${encodeURIComponent(str(v, "term", ""))}`,
   },
   // SO-E008: someone stopped partway through registration, 8 days idle after two reminders.
+  // ES-E003: someone tried to set up an ERP for a company already on Panameer — they were told to ask an admin.
+  "company.erp_setup_existing": {
+    event: "company.erp_setup_existing",
+    recipient: "the company's admins",
+    category: "account.registration",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `${str(v, "name", "Someone")} Tried to Connect an ERP to ${str(v, "companyName", "Your Company")}`,
+    body: (v) => `${str(v, "email", "")} started Panameer setup from their ERP. Your company is already here — add them in People, or set up the ERP connection with Panameer.`,
+    href: () => "/company?tab=people",
+  },
   // EO-E004: a new ERP customer connected itself on its first punch-in — nothing waits for this; Review is optional.
   "admin.erp_connected": {
     event: "admin.erp_connected",
@@ -481,7 +493,7 @@ export const NOTIFICATION_EVENTS = {
     aiMode: "DO_IT",
     visibility: "FEED",
     requiresAction: false,
-    title: (v) => `New ERP Customer Connected: ${str(v, "company", "A Company")} via ${str(v, "identity", "Its ERP")}`,
+    title: (v) => (str(v, "setup", "") ? `New ERP Customer Set Up: ${str(v, "company", "A Company")}` : `New ERP Customer Connected: ${str(v, "company", "A Company")} via ${str(v, "identity", "Its ERP")}`),
     body: (v) => `First requester ${str(v, "requester", "")} (${str(v, "email", "no email")})${str(v, "flag", "") ? ` · ${str(v, "flag", "")}` : ""}. Review in Admin › ERP.`,
     href: () => "/admin/erp",
   },

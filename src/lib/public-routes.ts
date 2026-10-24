@@ -68,6 +68,8 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/punchout", category: 4, subtree: true },
   // EO-E004/E007: the self-connected ERP's one-time confirm link, and the public "Connect Your ERP" page.
   { route: "/erp/confirm", category: 4 },
+  // ES-E003: /erp/setup forwards to /punchout/setup (inside the punch-out cookie path).
+  { route: "/erp/setup", category: 4 },
   { route: "/erp/connect", category: 1 },
 
   { route: "/assess", category: 5 },
