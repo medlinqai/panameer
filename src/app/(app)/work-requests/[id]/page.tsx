@@ -235,6 +235,9 @@ export default async function Page({
       {tab === "work-order" && (
         <>
           {/* OJ-E005: before Hire, a pointer; after, the Service Requisition and the Work Order cards with their buttons. */}
+          {stage === "WAITING_ERP" && !orders.length && (
+            <p className="rounded-[12px] bg-state-pending-bg px-4 py-3 text-[14px] font-semibold text-state-pending" data-in-erp-cart>Waiting on your ERP — the hire is in your ERP cart (or returned there for approval). The Order arrives with the ERP&apos;s purchase order.</p>
+          )}
           {!sec.awardRows.length && !orders.length ? (
             <div className="rounded-[12px] border border-state-border p-5" data-work-order-empty>
               <p className="text-[15px] font-bold">No one is hired yet.</p>

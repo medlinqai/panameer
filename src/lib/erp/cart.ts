@@ -181,3 +181,34 @@ export async function returnCart(s: PunchoutSessionLive): Promise<{ url: string;
   await logMessage({ connectionId: s.connection_id, direction: "OUT", type: "PUNCHOUT_ORDER", payloadId: pid, status: "PROCESSED", body: xml, workRequestId: s.work_request_id, response: "Posted by the requester's browser to BrowserFormPost" });
   return { url: s.browser_form_post_url, xml };
 }
+
+/** PI-E004: Hire while punched in → a Service – Rate line (provider number, rate, hours from the job's dates at 40 h/week
+ *  unless the buyer gave hours, UOM Hr) in the punch-in cart, tagged with the job so the Job reads "In your ERP cart". */
+export const jobRef = (jobId: string) => `job:${jobId}`;
+export async function addHireToCart(s: PunchoutSessionLive, input: { jobId: string; providerPersonId: string; unitPriceCents: number; start: string; end: string; hours?: number | null; paymentEvent?: string | null }) {
+  assertShopping(s);
+  if (!(input.unitPriceCents > 0)) throw new Error("Enter the rate.");
+  const job = await prisma.job.findUnique({ where: { id: input.jobId }, select: { id: true, title: true, buyer_person_id: true } });
+  if (!job || job.buyer_person_id !== s.requester_person_id) throw new Error("Only the job's buyer can hire on it.");
+  const start = new Date(input.start), end = new Date(input.end);
+  if (!(end > start)) throw new Error("Pick a start date and an end date after it.");
+  let weekdays = 0;
+  for (let d = new Date(start); d <= end; d = new Date(d.getTime() + 86_400_000)) if (d.getUTCDay() % 6 !== 0) weekdays++;
+  const hours = input.hours && input.hours > 0 ? Math.round(input.hours) : Math.max(1, weekdays * 8);
+  const prof = await prisma.providerProfile.findUnique({ where: { person_id: input.providerPersonId }, select: { id: true } });
+  const num = prof ? (await providerNumbers([prof.id])).get(prof.id) : null;
+  const wrId = await cartRequest(s);
+  const already = await prisma.workRequestLine.findFirst({ where: { work_request_id: wrId, provider_person_id: input.providerPersonId, supplier_part_id: jobRef(job.id) }, select: { id: true } });
+  if (already) throw new Error("That provider is already in your cart for this job.");
+  const n = await prisma.workRequestLine.count({ where: { work_request_id: wrId } });
+  await prisma.workRequestLine.create({
+    data: {
+      work_request_id: wrId, line_number: n + 1, transaction_type: "SERVICE_BY_QTY", description: `${job.title} — ${num ?? "Provider"} (Service – Rate)`,
+      unspsc_code: DEFAULT_UNSPSC, uom: "HOUR", quantity: hours, unit_price_cents: input.unitPriceCents,
+      provider_person_id: input.providerPersonId, supplier_part_id: jobRef(job.id), service_start: start, service_end: end, status: "ASSIGNED",
+    },
+  });
+  // The punch-in Request remembers the first job hired into it.
+  await prisma.workRequest.updateMany({ where: { id: wrId, job_id: null }, data: { job_id: job.id } });
+  return { hours };
+}

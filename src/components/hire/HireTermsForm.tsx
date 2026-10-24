@@ -22,6 +22,8 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ orderId: string; orderNumber: string; wrNumber: string | null; approvalNote: string | null } | null>(null);
   const set = (p: Partial<typeof t>) => setT((x) => ({ ...x, ...p }));
+  // PI-E004: punched in — the hire went into the ERP cart.
+  const [inCart, setInCart] = useState<{ erpName: string; hours: number } | null>(null);
   const submit = async () => {
     setBusy(true);
     setError(null);
@@ -34,9 +36,10 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
         expensesAllowed: t.expensesAllowed, expensesCapCents: t.expensesAllowed && t.expensesCap ? Math.round(Number(t.expensesCap) * 100) : null,
       }),
     }).catch(() => null);
-    const j = (await r?.json().catch(() => ({}))) as { orderId?: string | null; orderNumber?: string | null; wrNumber?: string | null; approvalNote?: string | null; erp?: boolean; error?: string };
+    const j = (await r?.json().catch(() => ({}))) as { orderId?: string | null; orderNumber?: string | null; wrNumber?: string | null; approvalNote?: string | null; erp?: boolean; error?: string; punchin?: boolean; erpName?: string; hours?: number };
     setBusy(false);
     if (!r?.ok) { setError(j.error ?? "That didn't work."); return; }
+    if (j.punchin) { setInCart({ erpName: j.erpName ?? "your ERP", hours: j.hours ?? 0 }); router.refresh(); return; }
     if (j.erp) router.push("/punchout");
     // WA-E001: Submit stays on a confirmation — the buyer opens the Work Order from there (or from the link we send).
     // Oracle-style confirmation: a dialog with the numbers just created, then review it or go on.
@@ -91,6 +94,9 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
         {!d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">Hiring awards the job and creates the Request. It is approved, then the Order comes to you to accept.</p>}
         {d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">This request came from your ERP — Submit returns it there to raise the PO.</p>}
       </div>
+      {inCart && (
+        <p className="mt-4 rounded-[10px] bg-state-pending-bg px-4 py-3 text-[14.5px] font-semibold text-state-pending" data-hire-in-erp-cart>Added to your {inCart.erpName} cart — {inCart.hours} hours. Return the cart from the bar at the top when you&apos;re done; {inCart.erpName} approves it and sends the PO.</p>
+      )}
       {done && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(20,18,30,0.45)] px-4" role="dialog" aria-modal="true" aria-labelledby="hire-done-title" data-wr-submitted>
           <div className="w-full max-w-md bg-white p-6 text-ink shadow-xl">
