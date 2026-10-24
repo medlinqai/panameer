@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { PendingJoinBanner } from "@/components/casing/PendingJoinBanner";
 import { HiddenProfileBanner } from "@/components/casing/HiddenProfileBanner";
 import { AppBand } from "@/components/casing/AppBand";
+import { PunchinBar } from "@/components/casing/PunchinBar";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { themeVars } from "@/lib/dynamic-branding";
@@ -37,6 +38,7 @@ export async function AppShell({ children, locked = false }: { children: ReactNo
       {viewer && <UsageBeacon />}
       <div className="flex min-w-0 flex-1 flex-col">
         <AppBand locked={locked} />
+        {!locked && <PunchinBar />}
 
         {}
         {!locked && <HiddenProfileBanner />}

@@ -3,11 +3,15 @@ import { cookies } from "next/headers";
 import { PUNCHOUT_COOKIE, sessionFor } from "@/lib/erp/punchout";
 import { addProductToCart, addToCart, removeFromCart, returnCart } from "@/lib/erp/cart";
 import { esc } from "@/lib/erp/cxml";
+import { currentPunchinId, sessionById } from "@/lib/erp/punchin-live";
 
 // X-E003: cart actions inside a punchout session. "return" answers with a page that posts the cart to the ERP.
 export async function POST(req: Request) {
-  const s = await sessionFor((await cookies()).get(PUNCHOUT_COOKIE)?.value);
-  const back = (err?: string, added = false) => NextResponse.redirect(new URL(`/punchout${err ? `?error=${encodeURIComponent(err)}` : added ? "?added=1" : ""}`, req.url), 303);
+  // PI-E002: the punch-in cookie, or the signed-in visitor's punch-in (the bar posts here from any app page).
+  const s = (await sessionFor((await cookies()).get(PUNCHOUT_COOKIE)?.value)) ?? (await sessionById(await currentPunchinId()));
+  const ref = req.headers.get("referer");
+  const home = ref && new URL(ref).origin === new URL(req.url).origin ? new URL(ref).pathname + new URL(ref).search.replace(/[?&](error|added)=[^&]*/g, "") : "/shop?tab=cart";
+  const back = (err?: string, added = false) => NextResponse.redirect(new URL(`${home}${home.includes("?") ? "&" : "?"}${err ? `error=${encodeURIComponent(err)}` : added ? "added=1" : "ok=1"}`, req.url), 303);
   if (!s) return back("Your punch-out session ended — start again from your ERP.");
   // ES-E001: the setup credential can't shop — refused server-side.
   if (s.connection.kind === "SETUP") return NextResponse.json({ error: "Setup only — finish setup to shop." }, { status: 403 });
