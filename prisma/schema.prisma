@@ -8607,24 +8607,32 @@ enum ErpMessageStatus {
 
 /// X-E001: one customer company's ERP link. No credentials here — `credential_env_name` names a Vercel env var.
 model ErpConnection {
-  id                   String   @id @default(uuid()) @db.Uuid
-  p_account_id         String   @db.Uuid
-  name                 String
-  erp_kind             ErpKind  @default(ORACLE_CLOUD)
-  from_domain          String   @default("NetworkID")
-  from_identity        String
-  to_domain            String   @default("NetworkID")
-  to_identity          String   @default("PANAMEER")
-  sender_domain        String   @default("NetworkID")
-  sender_identity      String
+  id                        String              @id @default(uuid()) @db.Uuid
+  p_account_id              String              @db.Uuid
+  name                      String
+  erp_kind                  ErpKind             @default(ORACLE_CLOUD)
+  from_domain               String              @default("NetworkID")
+  from_identity             String
+  to_domain                 String              @default("NetworkID")
+  to_identity               String              @default("PANAMEER")
+  sender_domain             String              @default("NetworkID")
+  sender_identity           String
   /// scrypt hash of the inbound shared secret; the secret itself is never stored.
-  shared_secret_hash   String?
-  outbound_cxml_url    String?
-  oracle_rest_base_url String?
-  credential_env_name  String?
-  active               Boolean  @default(true)
-  created_at           DateTime @default(now())
-  updated_at           DateTime @updatedAt
+  shared_secret_hash        String?
+  outbound_cxml_url         String?
+  oracle_rest_base_url      String?
+  credential_env_name       String?
+  active                    Boolean             @default(true)
+  created_at                DateTime            @default(now())
+  updated_at                DateTime            @updatedAt
+  /// EO-E001: self-onboarding — a first punch-in from an unknown ERP creates the connection (SELF, SELF_PENDING until confirmed).
+  status                    ErpConnectionStatus @default(ACTIVE)
+  created_via               ErpConnectionOrigin @default(ADMIN)
+  confirmed_at              DateTime?
+  first_contact_email       String?
+  first_requester_person_id String?             @db.Uuid
+  /// "Check Company" (free-mail domain) or "Email Missing" — for Panameer to look at; nothing waits on it.
+  flag                      String?
 
   @@index([p_account_id])
   @@index([sender_identity])
@@ -9686,4 +9694,42 @@ model JobEvent {
 
   @@index([job_id])
   @@map("job_events")
+}
+
+/// EO-E001: where an ERP connection came from, and its state.
+enum ErpConnectionStatus {
+  SELF_PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum ErpConnectionOrigin {
+  ADMIN
+  SELF
+}
+
+/// EO-E001/E004: the one-time "Confirm Your Company & Set a Password" link for a self-connected ERP's first requester.
+model ErpOnboardingToken {
+  id            String    @id @default(uuid()) @db.Uuid
+  connection_id String    @db.Uuid
+  person_id     String    @db.Uuid
+  token_hash    String    @unique
+  expires_at    DateTime
+  used_at       DateTime?
+  created_at    DateTime  @default(now())
+
+  @@index([connection_id])
+  @@map("erp_onboarding_tokens")
+}
+
+/// EO-E003: unknown-identity punch-in attempts, for the rate limit (5 per hour per IP and per identity).
+model ErpPunchinAttempt {
+  id         String   @id @default(uuid()) @db.Uuid
+  ip         String
+  identity   String
+  created_at DateTime @default(now())
+
+  @@index([ip, created_at])
+  @@index([identity, created_at])
+  @@map("erp_punchin_attempts")
 }
