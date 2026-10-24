@@ -1,118 +1,21 @@
-import { cxmlUom } from "@/lib/erp/cxml";
-import { AddForm } from "./AddForm";
-import { expensesSuffix } from "@/lib/rate-display";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { PUNCHOUT_COOKIE, sessionFor } from "@/lib/erp/punchout";
-import { cartLines, searchProducts, searchServices } from "@/lib/erp/cart";
-import { formatCents } from "@/lib/display";
+import { currentPunchinId } from "@/lib/erp/punchin-live";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Punchout · Panameer" };
+export const metadata = { title: "Punch-In · Panameer" };
 
-const BTN_K = "inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover";
-const INPUT = "h-10 border border-line bg-surface px-2.5 text-[14px]";
-
-// X-E003: the punchout shop — find a provider, attach their service to the work request, return the cart to the ERP.
-export default async function PunchoutPage({ searchParams }: { searchParams: Promise<{ q?: string; expired?: string; error?: string; added?: string }> }) {
+// PI-E006: the bare punch-out product list is retired — a punch-in is a sign-in, so it shops in the real Shop.
+export default async function PunchoutPage({ searchParams }: { searchParams: Promise<{ expired?: string }> }) {
   const sp = await searchParams;
   const s = await sessionFor((await cookies()).get(PUNCHOUT_COOKIE)?.value);
-  if (!s)
-    return (
-      <main className="mx-auto max-w-xl px-4 py-16 text-center">
-        <h1 className="text-[24px] font-bold">This punchout session has ended</h1>
-        <p className="mt-2 text-[15px] text-ink-2">Start again from your ERP requisition to find a provider on Panameer.</p>
-      </main>
-    );
-  // ES-E001: a setup session goes to Set Up Panameer, never the shop.
-  if (s.connection.kind === "SETUP" || !s.requester_person_id) redirect("/punchout/setup");
-  const [me, results, products, lines] = await Promise.all([
-    prisma.person.findUnique({ where: { id: s.requester_person_id }, select: { first_name: true } }),
-    searchServices(sp.q ?? ""),
-    searchProducts(sp.q ?? ""),
-    cartLines(s),
-  ]);
-  const total = lines.reduce((n, l) => n + (l.transaction_type === "SERVICE_BY_AMT" ? l.amount_cents ?? 0 : Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0))), 0);
+  if (s?.connection.kind === "SETUP") redirect("/punchout/setup");
+  if (!sp.expired && (s || (await currentPunchinId()))) redirect("/shop");
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-8">
-      <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">PUNCHOUT · {s.connection.name.toUpperCase()}</p>
-      <h1 className="mt-1 text-[28px] font-bold">Find a Provider{me?.first_name ? `, ${me.first_name}` : ""}</h1>
-      <p className="mt-1 text-[14.5px] text-ink-2">Add a service product or a provider&apos;s service, set the quantity, then return the cart to your ERP. Your ERP approves it and sends the purchase order.</p>
-      {sp.error && <p role="alert" className="mt-3 text-[14px] font-semibold text-magenta-dark">{sp.error}</p>}
-      {/* Scott 10-24: the cart sat at the bottom, so Add to Cart looked like it did nothing — show it up top. */}
-      <div className="sticky top-0 z-10 mt-4 flex flex-wrap items-center justify-between gap-3 border border-ink bg-white px-4 py-3" data-punchout-cart-bar>
-        <span className="text-[14px]">{sp.added ? <b className="text-state-accepted">Added to your cart. </b> : null}<b>Cart: {lines.length} item{lines.length === 1 ? "" : "s"}</b> · {formatCents(total, "USD")} · <a href="#cart" className="font-semibold underline">See Cart</a></span>
-        <form method="post" action="/punchout/cart"><input type="hidden" name="action" value="return" /><button disabled={!lines.length} className={`${BTN_K} disabled:opacity-40`}>Return Cart to {s.connection.name}</button></form>
-      </div>
-
-      <form method="get" className="mt-5 flex gap-2">
-        <input name="q" defaultValue={sp.q ?? ""} placeholder="Search services or providers" aria-label="Search" className={`${INPUT} flex-1`} />
-        <button className={BTN_K}>Search</button>
-      </form>
-      {products.length > 0 && <h2 className="mt-6 text-[18px] font-bold">Service Products</h2>}
-      <ul className="mt-2 grid gap-2">
-        {products.map((p) => (
-          <li key={p.id} data-punchout-product className="border border-line bg-white p-4">
-            <AddForm className="flex flex-wrap items-end justify-between gap-3">
-              <input type="hidden" name="action" value="addProduct" />
-              <input type="hidden" name="productId" value={p.id} />
-              <div className="min-w-0">
-                <p className="text-[15px] font-bold">{p.title}</p>
-                <p className="text-[13.5px] text-ink-2">{p.providerName} · {formatCents(p.priceCents, "USD")}{p.byQty ? " / hour" : " each"}</p>
-              </div>
-              <div className="flex flex-wrap items-end gap-2">
-                <label className="text-[12px] font-bold">{p.byQty ? "Hours" : "Quantity"}<input name="quantity" inputMode="numeric" defaultValue={p.byQty ? "" : "1"} required className={`${INPUT} block w-24`} /></label>
-                <button className="inline-flex min-h-10 cursor-pointer items-center border border-ink px-4 text-[14px] font-semibold hover:bg-ink hover:text-surface">Add to Cart</button>
-              </div>
-            </AddForm>
-          </li>
-        ))}
-      </ul>
-      {results.length > 0 && <h2 className="mt-6 text-[18px] font-bold">Services</h2>}
-      <ul className="mt-2 grid gap-2">
-        {results.map((r) => (
-          <li key={r.id} data-punchout-service className="border border-line bg-white p-4">
-            <AddForm className="flex flex-wrap items-end justify-between gap-3">
-              <input type="hidden" name="action" value="add" />
-              <input type="hidden" name="serviceId" value={r.id} />
-              <div className="min-w-0">
-                <p className="text-[15px] font-bold">{r.name}</p>
-                <p className="text-[13.5px] text-ink-2">{r.providerName} · {r.type === "SERVICE_BY_QTY" ? `${formatCents(r.rateCents, "USD")} / ${(r.uom ?? "hour").toLowerCase()}${expensesSuffix(r.expenses)}` : `up to ${formatCents(r.rateCents, "USD")}`}</p>
-              </div>
-              <div className="flex flex-wrap items-end gap-2">
-                {r.type === "SERVICE_BY_QTY" && <label className="text-[12px] font-bold">Quantity<input name="quantity" inputMode="decimal" required className={`${INPUT} block w-24`} /></label>}
-                <label className="text-[12px] font-bold">Starts<input name="start" type="date" className={`${INPUT} block`} /></label>
-                <label className="text-[12px] font-bold">Ends<input name="end" type="date" className={`${INPUT} block`} /></label>
-                <button className="inline-flex min-h-10 cursor-pointer items-center border border-ink px-4 text-[14px] font-semibold hover:bg-ink hover:text-surface">Add to Cart</button>
-              </div>
-            </AddForm>
-          </li>
-        ))}
-        {results.length === 0 && products.length === 0 && <li className="text-[14px] text-ink-2">Nothing matches. Try another word.</li>}
-      </ul>
-
-      <section id="cart" className="mt-8 border-t border-line pt-5">
-        <h2 className="text-[20px] font-bold">Cart</h2>
-        {lines.length === 0 ? (
-          <p className="mt-2 text-[14px] text-ink-2">Nothing yet.</p>
-        ) : (
-          <ul className="mt-3 grid gap-2">
-            {lines.map((l) => (
-              <li key={l.id} data-cart-line className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2 text-[14px]">
-                <span><b>{l.description}</b> · {l.eaQuantity ? `${l.eaQuantity} × ${formatCents((l.amount_cents ?? 0) / l.eaQuantity, "USD")} each` : l.transaction_type === "SERVICE_BY_AMT" ? `up to ${formatCents(l.amount_cents ?? 0, "USD")}` : `${Number(l.quantity)} ${(l.uom ?? "hour").toLowerCase()} × ${formatCents(l.unit_price_cents ?? 0, "USD")}`}</span>
-                <span className="w-full text-[12px] text-state-inactive" data-cart-line-detail>Sent to your ERP as: UOM <b className="text-ink">{l.transaction_type === "SERVICE_BY_QTY" && l.uom ? cxmlUom(l.uom) : cxmlUom(null)}</b> · UNSPSC {l.unspsc_code ?? "—"} · line {l.line_number}</span>
-                <form method="post" action="/punchout/cart"><input type="hidden" name="action" value="remove" /><input type="hidden" name="lineId" value={l.id} /><button className="text-[13px] font-semibold underline">Remove</button></form>
-              </li>
-            ))}
-          </ul>
-        )}
-        <form method="post" action="/punchout/cart" className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <input type="hidden" name="action" value="return" />
-          <span className="text-[16px] font-bold">Total {formatCents(total, "USD")}</span>
-          <button disabled={!lines.length} className={`${BTN_K} disabled:opacity-40`}>Return Cart to {s.connection.name}</button>
-        </form>
-      </section>
+    <main className="mx-auto max-w-xl px-4 py-16 text-center">
+      <h1 className="text-[24px] font-bold">This Punch-In Has Ended</h1>
+      <p className="mt-2 text-[15px] text-ink-2">Start again from your ERP requisition to shop Panameer.</p>
     </main>
   );
 }

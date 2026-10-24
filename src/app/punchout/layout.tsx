@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { PUNCHOUT_COOKIE, sessionFor } from "@/lib/erp/punchout";
 
 // Scott 10-24: the punch-in pages get Panameer's casing — the same dark band and logo as the app, labelled
-// "Punch-in Console", with the ERP it came from. No app menus: a punch-in shopper has no Panameer sign-in.
+// "Punch-in Console" — now only on setup / paused / ended pages (PI-E006: a real punch-in opens the app itself).
 export default async function PunchoutLayout({ children }: { children: ReactNode }) {
   const s = await sessionFor((await cookies()).get(PUNCHOUT_COOKIE)?.value).catch(() => null);
   return (
