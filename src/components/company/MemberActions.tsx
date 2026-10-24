@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Action = "make_admin" | "remove" | "hand_over" | "step_down";
+type Action = "make_admin" | "remove" | "hand_over" | "step_down" | "remove_admin";
 
 // People: Make Admin / Hand Over Admin / Remove on a member row, Step Down on your own admin row (admins only). Remove and hand-over ask first.
-export function MemberActions({ membershipId, name, self = false, canStepDown = false }: { membershipId: string; name: string; self?: boolean; canStepDown?: boolean }) {
+export function MemberActions({ membershipId, name, self = false, canStepDown = false, otherAdmin = false }: { membershipId: string; name: string; self?: boolean; canStepDown?: boolean; /** EO-E006: another admin's row — only Remove Admin. */ otherAdmin?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<Action | null>(null);
@@ -25,7 +25,9 @@ export function MemberActions({ membershipId, name, self = false, canStepDown = 
   const BTN_K = "border border-ink bg-ink px-3 py-[7px] text-[12.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-50";
   return (
     <span className="flex flex-wrap items-center justify-end gap-2" data-member-actions>
-      {self ? (
+      {otherAdmin ? (
+        <button type="button" disabled={busy} onClick={() => act("remove_admin")} className={BTN} data-remove-admin>Remove Admin</button>
+      ) : self ? (
         canStepDown && <button type="button" disabled={busy} onClick={() => act("step_down")} className={BTN} data-step-down>Step Down</button>
       ) : confirm ? (
         <>

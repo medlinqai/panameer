@@ -4,7 +4,7 @@ import { guardApi } from "@/lib/guard";
 import { changeMember } from "@/lib/company";
 import { OnboardingError } from "@/lib/onboarding";
 
-const Body = z.object({ membershipId: z.string().uuid(), action: z.enum(["make_admin", "remove", "hand_over", "step_down"]) });
+const Body = z.object({ membershipId: z.string().uuid(), action: z.enum(["make_admin", "remove", "hand_over", "step_down", "remove_admin"]) });
 
 export async function POST(request: Request) {
   const viewer = await guardApi("authenticated");
