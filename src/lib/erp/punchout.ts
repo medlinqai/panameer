@@ -36,6 +36,8 @@ async function resolveRequester(pAccountId: string, req: Element | null) {
   const [firstName, lastName] = name.includes(",") ? [name.split(",").slice(1).join(",").trim(), name.split(",")[0].trim()] : [name.split(/\s+/)[0], name.split(/\s+/).slice(1).join(" ")];
   const p = await prisma.person.create({ data: { company_id: co.id, first_name: (firstName || name).slice(0, 100), last_name: lastName.slice(0, 100) || "—" }, select: { id: true } });
   await prisma.requesterProfile.create({ data: { person_id: p.id, employee_id: userId || null, buyer_email: email || null, buyer_name: name.slice(0, 200) } });
+  // EO-E006: later requesters join the company as members (the first one, from self-onboarding, is its admin).
+  await prisma.companyMembership.create({ data: { person_id: p.id, company_id: co.id, role: "MEMBER", status: "APPROVED", decided_at: new Date(), auto_approved: true, matched_on: "ERP_PUNCHIN" } }).catch(() => null);
   return p.id;
 }
 
