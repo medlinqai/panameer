@@ -24,6 +24,8 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
   const set = (p: Partial<typeof t>) => setT((x) => ({ ...x, ...p }));
   // PI-E004: punched in — the hire went into the ERP cart.
   const [inCart, setInCart] = useState<{ erpName: string; hours: number } | null>(null);
+  // Scott 10-24: once this provider is in the punch-in cart, Submit gives way to Return Cart.
+  const [alreadyIn, setAlreadyIn] = useState<string | null>(null);
   const submit = async () => {
     setBusy(true);
     setError(null);
@@ -38,7 +40,7 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
     }).catch(() => null);
     const j = (await r?.json().catch(() => ({}))) as { orderId?: string | null; orderNumber?: string | null; wrNumber?: string | null; approvalNote?: string | null; erp?: boolean; error?: string; punchin?: boolean; erpName?: string; hours?: number };
     setBusy(false);
-    if (!r?.ok) { setError(j.error ?? "That didn't work."); return; }
+    if (!r?.ok) { if (/already in your cart/i.test(j.error ?? "")) { setAlreadyIn(j.erpName ?? "Your ERP"); return; } setError(j.error ?? "That didn't work."); return; }
     if (j.punchin) { setInCart({ erpName: j.erpName ?? "your ERP", hours: j.hours ?? 0 }); router.refresh(); return; }
     if (j.erp) router.push("/punchout");
     // WA-E001: Submit stays on a confirmation — the buyer opens the Work Order from there (or from the link we send).
@@ -88,11 +90,18 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
       </fieldset>
       {error && <p role="alert" className="mt-3 text-[13.5px] font-semibold text-magenta-dark">{error}</p>}
       <div className="mt-5 border-t border-line pt-4">
-        <button type="button" disabled={busy || !t.rate || !!inCart} onClick={submit} data-create-work-order className="inline-flex min-h-11 items-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40">
+        {alreadyIn || inCart ? (
+          <>
+            <form method="post" action="/punchout/cart"><input type="hidden" name="action" value="return" /><button type="submit" className="inline-flex min-h-11 items-center bg-magenta px-6 text-[14.5px] font-bold text-white hover:bg-magenta-dark">Return Cart to {inCart?.erpName ?? alreadyIn}</button></form>
+            <p className="mt-2 text-[12.5px] text-ink-2">{d.providerName} is in your cart for this job. Return the cart to raise the PO.</p>
+          </>
+        ) : (<>
+        <button type="button" disabled={busy || !t.rate} onClick={submit} data-create-work-order className="inline-flex min-h-11 items-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40">
           {busy ? "Working…" : d.erpOrigin ? "Submit" : `Hire ${d.providerName.replace(/^Provider\s+/, "")}`}
         </button>
         {!d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">Hiring awards the job and creates the Request. It is approved, then the Order comes to you to accept.</p>}
         {d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">This request came from your ERP — Submit returns it there to raise the PO.</p>}
+        </>)}
       </div>
       {/* Scott 10-24: after Add to cart, a confirmation (like the Order one) — not the same form with Submit still live. */}
       {inCart && (

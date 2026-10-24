@@ -20,7 +20,7 @@ export async function POST(request: Request) {
         const r = await addHireToCart(p.session, { jobId: t.jobId, providerPersonId: t.providerPersonId, unitPriceCents: t.unitPriceCents, start: t.start, end: t.end, hours: (t as { hours?: number | null }).hours ?? null });
         return NextResponse.json({ punchin: true, erpName: p.erpName, hours: r.hours });
       } catch (e) {
-        return NextResponse.json({ error: e instanceof Error ? e.message : "Couldn't add to your cart." }, { status: 400 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : "Couldn't add to your cart.", erpName: p.erpName }, { status: 400 });
       }
     }
     return NextResponse.json(await confirmTerms(gate, t));
