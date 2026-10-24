@@ -270,6 +270,8 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, user, account, trigger }) {
+      // PI-E001: a punch-in sign-in lasts as long as its punch-in session (4 h); then the visitor is signed out.
+      if (!user && typeof token.punchoutUntil === "number" && Date.now() > token.punchoutUntil) return {};
       if (
         user &&
         account &&
@@ -330,6 +332,8 @@ export const authOptions: NextAuthOptions = {
         session.user.isServiceCoordinator =
           token.isServiceCoordinator ?? NO_ACTOR_FLAGS.isServiceCoordinator;
         session.user.isSupport = token.isSupport ?? NO_ACTOR_FLAGS.isSupport;
+        // PI-E002: the live punch-in (if any) travels with the session.
+        (session.user as { punchoutSessionId?: string | null }).punchoutSessionId = (token.punchoutSessionId as string | undefined) ?? null;
       }
       return session;
     },

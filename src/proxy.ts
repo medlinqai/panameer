@@ -26,9 +26,16 @@ export async function proxy(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  if (!token) {
+  if (!token?.sub) {
     const url = new URL("/login", request.url);
     url.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(url);
+  }
+  // PI-E001: a punch-in sign-in can't open admin pages — they need a password sign-in.
+  if (token.punchoutSessionId && (pathname.startsWith("/admin") || pathname.startsWith("/settings"))) {
+    const url = new URL("/login", request.url);
+    url.searchParams.set("callbackUrl", pathname);
+    url.searchParams.set("reauth", "1");
     return NextResponse.redirect(url);
   }
 

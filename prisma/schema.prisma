@@ -83,6 +83,8 @@ model User {
   /// When the user's email was verified (null = unverified). Set by the
   /// tokenized verify link during onboarding (brief_E).
   email_verified        DateTime?
+  /// PI-E001: created by an ERP punch-in (no password yet; the ERP vouched for them).
+  via_punchout          Boolean   @default(false)
   /// When the user accepted the Terms of Service (buyer signup, brief_G).
   tos_accepted_at       DateTime?
   /// WHICH user terms they accepted (brief_company_model WS6). We recorded the
