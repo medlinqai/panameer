@@ -7,18 +7,18 @@ import { esc } from "@/lib/erp/cxml";
 // X-E003: cart actions inside a punchout session. "return" answers with a page that posts the cart to the ERP.
 export async function POST(req: Request) {
   const s = await sessionFor((await cookies()).get(PUNCHOUT_COOKIE)?.value);
-  const back = (err?: string) => NextResponse.redirect(new URL(`/punchout${err ? `?error=${encodeURIComponent(err)}` : ""}`, req.url), 303);
-  if (!s) return back();
+  const back = (err?: string, added = false) => NextResponse.redirect(new URL(`/punchout${err ? `?error=${encodeURIComponent(err)}` : added ? "?added=1" : ""}`, req.url), 303);
+  if (!s) return back("Your punch-out session ended — start again from your ERP.");
   const f = await req.formData();
   const action = String(f.get("action") ?? "");
   try {
     if (action === "add") {
       await addToCart(s, { serviceId: String(f.get("serviceId") ?? ""), quantity: f.get("quantity") ? Number(f.get("quantity")) : null, start: (f.get("start") as string) || null, end: (f.get("end") as string) || null });
-      return back();
+      return back(undefined, true);
     }
     if (action === "addProduct") {
       await addProductToCart(s, { productId: String(f.get("productId") ?? ""), quantity: f.get("quantity") ? Number(f.get("quantity")) : 1 });
-      return back();
+      return back(undefined, true);
     }
     if (action === "remove") {
       await removeFromCart(s, String(f.get("lineId") ?? ""));

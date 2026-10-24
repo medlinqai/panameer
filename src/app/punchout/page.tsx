@@ -12,7 +12,7 @@ const BTN_K = "inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-se
 const INPUT = "h-10 border border-line bg-surface px-2.5 text-[14px]";
 
 // X-E003: the punchout shop — find a provider, attach their service to the work request, return the cart to the ERP.
-export default async function PunchoutPage({ searchParams }: { searchParams: Promise<{ q?: string; expired?: string; error?: string }> }) {
+export default async function PunchoutPage({ searchParams }: { searchParams: Promise<{ q?: string; expired?: string; error?: string; added?: string }> }) {
   const sp = await searchParams;
   const s = await sessionFor((await cookies()).get(PUNCHOUT_COOKIE)?.value);
   if (!s)
@@ -35,6 +35,11 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
       <h1 className="mt-1 text-[28px] font-bold">Find a Provider{me?.first_name ? `, ${me.first_name}` : ""}</h1>
       <p className="mt-1 text-[14.5px] text-ink-2">Add a service product or a provider&apos;s service, set the quantity, then return the cart to your ERP. Your ERP approves it and sends the purchase order.</p>
       {sp.error && <p role="alert" className="mt-3 text-[14px] font-semibold text-magenta-dark">{sp.error}</p>}
+      {/* Scott 10-24: the cart sat at the bottom, so Add to Cart looked like it did nothing — show it up top. */}
+      <div className="sticky top-0 z-10 mt-4 flex flex-wrap items-center justify-between gap-3 border border-ink bg-white px-4 py-3" data-punchout-cart-bar>
+        <span className="text-[14px]">{sp.added ? <b className="text-state-accepted">Added to your cart. </b> : null}<b>Cart: {lines.length} item{lines.length === 1 ? "" : "s"}</b> · {formatCents(total, "USD")} · <a href="#cart" className="font-semibold underline">See Cart</a></span>
+        <form method="post" action="/punchout/cart"><input type="hidden" name="action" value="return" /><button disabled={!lines.length} className={`${BTN_K} disabled:opacity-40`}>Return Cart to {s.connection.name}</button></form>
+      </div>
 
       <form method="get" className="mt-5 flex gap-2">
         <input name="q" defaultValue={sp.q ?? ""} placeholder="Search services or providers" aria-label="Search" className={`${INPUT} flex-1`} />
@@ -82,7 +87,7 @@ export default async function PunchoutPage({ searchParams }: { searchParams: Pro
         {results.length === 0 && products.length === 0 && <li className="text-[14px] text-ink-2">Nothing matches. Try another word.</li>}
       </ul>
 
-      <section className="mt-8 border-t border-line pt-5">
+      <section id="cart" className="mt-8 border-t border-line pt-5">
         <h2 className="text-[20px] font-bold">Cart</h2>
         {lines.length === 0 ? (
           <p className="mt-2 text-[14px] text-ink-2">Nothing yet.</p>
