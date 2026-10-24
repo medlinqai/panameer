@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { currentPunchin } from "@/lib/erp/punchin-live";
 import { guardPage } from "@/lib/guard";
 import { addToCart, cartFor, CartError } from "@/lib/cart";
 import { CartView } from "@/components/shop/CartView";
@@ -11,6 +12,12 @@ export const metadata = { title: "Cart · Panameer" };
 export default async function CartPage({ searchParams }: { searchParams: Promise<{ add?: string; error?: string }> }) {
   const viewer = await guardPage("authenticated");
   const sp = await searchParams;
+  // PI-E003: punched in → the punch-in cart (Shop › Cart), and Add lands there too.
+  const p = await currentPunchin();
+  if (p?.state === "live" && p.session) {
+    if (sp.add) await (await import("@/lib/erp/cart")).addProductToCart(p.session, { productId: sp.add, quantity: 1 }).catch(() => null);
+    redirect("/shop?tab=cart");
+  }
   if (sp.add) {
     let error = "";
     try {

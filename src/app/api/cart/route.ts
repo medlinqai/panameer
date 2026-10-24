@@ -3,6 +3,7 @@ import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { addToCart, CartError, placeOrder, removeLine, setQuantity } from "@/lib/cart";
 import { SignGateError } from "@/lib/your-path";
+import { currentPunchin } from "@/lib/erp/punchin-live";
 
 const BODY = z.discriminatedUnion("action", [
   z.object({ action: z.literal("add"), productId: z.string().uuid(), quantity: z.number().int().min(1).max(99).optional() }),
@@ -19,6 +20,15 @@ export async function POST(req: Request) {
   if (!b.success) return NextResponse.json({ error: "Bad request" }, { status: 400 });
   try {
     const d = b.data;
+    // PI-E003: while punched in, Shop fills the punch-in cart (it goes back to the ERP), not the Panameer Cart.
+    const p = await currentPunchin();
+    if (p?.state === "live" && p.session) {
+      const { addProductToCart, removeFromCart } = await import("@/lib/erp/cart");
+      if (d.action === "add") await addProductToCart(p.session, { productId: d.productId, quantity: d.quantity ?? 1 });
+      else if (d.action === "remove") await removeFromCart(p.session, d.lineId);
+      else return NextResponse.json({ error: `You're punched in from ${p.erpName} — use Return Cart to send it there for approval.` }, { status: 400 });
+      return NextResponse.json({ ok: true, punchin: true });
+    }
     if (d.action === "add") await addToCart(viewer, d.productId, d.quantity);
     else if (d.action === "qty") await setQuantity(viewer, d.lineId, d.quantity);
     else if (d.action === "remove") await removeLine(viewer, d.lineId);

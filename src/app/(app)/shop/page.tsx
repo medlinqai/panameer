@@ -1,3 +1,5 @@
+import { PunchinCart } from "@/components/shop/PunchinCart";
+import { currentPunchinId } from "@/lib/erp/punchin-live";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { memberOrPublicTwin } from "@/lib/public-twin";
@@ -204,6 +206,8 @@ async function CompareTab({ viewer, ids }: { viewer: Viewer; ids: string[] }) {
 }
 
 async function CartTab({ viewer }: { viewer: Viewer }) {
+  // PI-E003: punched in → the punch-in cart instead of the Panameer Cart.
+  if (await currentPunchinId()) return <PunchinCart />;
   const c = await cartFor(viewer);
   return <section className="py-4"><CartView groups={c.groups} totalCents={c.totalCents} currency={c.currency} hasCompany={c.hasCompany} workRequest={c.workRequest} /></section>;
 }
