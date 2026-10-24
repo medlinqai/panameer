@@ -25,10 +25,13 @@ async function ensureUser(sessionId: string): Promise<{ userId: string } | { rea
       if (taken.person?.company?.p_account_id !== conn.p_account_id) return { reason: "That email belongs to a Panameer account in another company." };
       userId = taken.id;
     } else {
-      userId = (await prisma.user.create({ data: { email, first_name: person.first_name, last_name: person.last_name === "—" ? "" : person.last_name, role: "MEMBER", via_punchout: true }, select: { id: true } })).id;
+      userId = (await prisma.user.create({ data: { email, first_name: person.first_name, last_name: person.last_name === "—" ? "" : person.last_name, role: "MEMBER", via_punchout: true, email_verified: new Date() }, select: { id: true } })).id;
       await prisma.person.update({ where: { id: person.id }, data: { user_id: userId, is_service_buyer: true } });
     }
   }
+  // The ERP vouched for this person: no email check and no requester wizard (the ERP owns approval and deliver-to).
+  await prisma.user.updateMany({ where: { id: userId, email_verified: null }, data: { email_verified: new Date() } });
+  await prisma.requesterProfile.updateMany({ where: { person_id: person.id, completed_at: null }, data: { completed_at: new Date() } });
   if (person.company_id) {
     await prisma.companyMembership.upsert({
       where: { person_id_company_id: { person_id: person.id, company_id: person.company_id } },

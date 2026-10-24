@@ -61,7 +61,7 @@ export async function createFromSetup(s: PunchoutSessionLive, input: SetupInput)
     }
     const user = await tx.user.create({ data: { email, first_name: input.firstName.trim().slice(0, 100), last_name: input.lastName.trim().slice(0, 100), role: "MEMBER", tos_accepted_at: now, tos_version: USER_TOS_VERSION } });
     const person = await tx.person.create({ data: { company_id: company.id, user_id: user.id, first_name: input.firstName.trim().slice(0, 100), last_name: input.lastName.trim().slice(0, 100) || "—", status: "ACTIVE", is_service_buyer: true } });
-    await tx.requesterProfile.create({ data: { person_id: person.id, employee_id: pre.employeeId || null, buyer_email: email, buyer_name: `${input.firstName} ${input.lastName}`.trim().slice(0, 200) } });
+    await tx.requesterProfile.create({ data: { person_id: person.id, employee_id: pre.employeeId || null, buyer_email: email, buyer_name: `${input.firstName} ${input.lastName}`.trim().slice(0, 200) , completed_at: new Date() /* ERP requester: the ERP owns approval and deliver-to, so no wizard */ } });
     await tx.companyMembership.create({ data: { person_id: person.id, company_id: company.id, role: "ADMIN", status: "APPROVED", decided_at: now, auto_approved: true, matched_on: "ERP_SETUP" } });
     const conn = await tx.erpConnection.create({
       data: { p_account_id: acct.id, name: companyName, kind: "ERP", from_identity: identity, sender_identity: identity, to_identity: "PANAMEER", shared_secret_hash: hashSecret(secret), created_via: "SELF", status: "ACTIVE", confirmed_at: now, first_contact_email: email, first_requester_person_id: person.id, flag: FREE_MAIL.has(domain) ? "Check Company" : null },
