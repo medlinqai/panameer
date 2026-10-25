@@ -9783,3 +9783,23 @@ enum ErpPoEmailStatus {
   NEEDS_REVIEW
   FAILED
 }
+
+/// MD-E002: a Panameer Target for one My Progress metric — used as the group marker until 20 people are in the group.
+model PerformanceTarget {
+  id         String          @id @default(uuid()) @db.Uuid
+  role       PerformanceRole
+  /// Stage-level key, e.g. seller.courses.certified
+  metric     String
+  value      Decimal         @db.Decimal(14, 2)
+  label      String?
+  updated_by String?         @db.Uuid
+  updated_at DateTime        @updatedAt
+
+  @@unique([role, metric])
+  @@map("performance_targets")
+}
+
+enum PerformanceRole {
+  BUYER
+  SELLER
+}
