@@ -28,7 +28,7 @@ export function AppRail() {
     persona === "PANAMEER"
       ? "Platform Console"
       : persona === "SELLER"
-        ? "Provider Console"
+        ? "Seller Console"
         : "Buyer Console";
   const EXACT = new Set(["/dashboard", "/admin"]);
   const isActive = (href: string) =>

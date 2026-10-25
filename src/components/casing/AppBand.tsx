@@ -36,7 +36,7 @@ export function AppBand({ locked = false }: { locked?: boolean } = {}) {
     persona === "PANAMEER"
       ? "Platform Console"
       : persona === "SELLER"
-        ? "Provider Console"
+        ? "Seller Console"
         : persona === "BUYER"
           ? "Buyer Console"
           : null;

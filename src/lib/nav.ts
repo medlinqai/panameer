@@ -40,11 +40,14 @@ export const BAND_CONTROL_HREFS = [
 
 const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   "/connect": ["/connect/community", "/providers", "/companies", "/connect/invite", "/coordinator"],
-  "/shop": ["/my-services", "/services"],
+  // MD-E001: Estimate lives inside Shop (Get an Estimate); Sell = My Catalog + today's Jobs pages.
+  "/shop": ["/estimate", "/cart"],
   "/estimate": ["/estimates", "/catalog/estimates"],
+  "/catalog": ["/find-work", "/my-services", "/services", "/catalog"],
+  "/payments": ["/pay", "/finances", "/manage-money"],
   "/hire": ["/create-work", "/work-requests", "/search", "/consultations"],
   "/hire/overview": ["/hire", "/create-work", "/work-requests", "/search", "/consultations"],
-  "/orders": ["/payments", "/pay", "/finances", "/manage-money", "/deliver-work"],
+  "/orders": ["/deliver-work"],
   [ACCOUNT_BAND_HREF]: [
     "/profile",
     "/company",
@@ -58,8 +61,7 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
     "/messages",
     "/notifications",
     "/worklist",
-    // My Catalog + My Estimates live in the My menu (MC-E001, 2026-10-12).
-    "/catalog",
+    // My Estimates stays in the My menu; My Catalog moved to Sell (MD-E001).
     "/estimates",
   ],
   [MESSAGES_BAND_HREF]: [],
@@ -109,11 +111,10 @@ export function bandPrefixesFor(href: string): readonly string[] {
   return [href, ...(BAND_EXTRA_PREFIXES[href] ?? [])];
 }
 
+// MD-E001: five items per console (mobile). Buyer Console: Connect · Hire · Shop · Orders · Payments.
 export const REQUESTER_NAV: NavItem[] = [
   { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
-  { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
-    // DC-E003: buyers see this section as Hire (sellers see Jobs).
     label: "Hire",
     heading: "Hire",
     // RA-E004: the Hire menu lands on the app home (Overview); Post a Job opens the questionnaire at /hire.
@@ -121,21 +122,10 @@ export const REQUESTER_NAV: NavItem[] = [
     icon: "ClipboardList",
     requires: "canHireTalent",
   },
-  {
-    label: "Shop",
-    heading: "Shop",
-    href: "/shop",
-    icon: "Package",
-  },
-  // HB-E008: Estimate is its own app — an outcome to be priced (Hire = a person at a rate, Shop = a product at a price).
-  { label: "Estimate", heading: "Estimate", href: "/estimate", icon: "ReceiptText" },
-  {
-    label: "Orders",
-    heading: "Orders",
-    href: "/orders",
-    icon: "ClipboardCheck",
-    requires: "canHireTalent",
-  },
+  // Estimate is inside Shop (Get an Estimate).
+  { label: "Shop", heading: "Shop", href: "/shop", icon: "Package" },
+  { label: "Orders", heading: "Orders", href: "/orders", icon: "ClipboardCheck", requires: "canHireTalent" },
+  { label: "Payments", heading: "Payments", href: "/payments", icon: "CreditCard", tooltip: "Invoices and payments" },
 ];
 
 export type PageTabItem = NavItem & {
@@ -147,12 +137,13 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
   // WS-E002: the Work area (providers); tabs are views of /find-work.
   // JW-E008: Jobs — Find Jobs · My Jobs · My Proposals.
   // RA-E006: JOBS | Overview · Find Jobs (Best Matches / All Jobs / Saved as filters) · Proposal Requests · My Proposals · Interviews · Tests.
+  // MD-E001: SELL | My Catalog · Jobs for You · Requests · Interviews · Tests (today's Jobs pages fold in here).
   "/find-work": [
-    { label: "Overview", href: "/find-work" },
-    { label: "Jobs", href: "/find-work?tab=best" },
-    { label: "Availability Requests", href: "/find-work?tab=invitations" },
-    { label: "Interview Requests", href: "/find-work?tab=interviews" },
-    { label: "Test Requests", href: "/find-work?tab=tests" },
+    { label: "My Catalog", href: "/catalog" },
+    { label: "Jobs for You", href: "/find-work?tab=best" },
+    { label: "Requests", href: "/find-work?tab=invitations" },
+    { label: "Interviews", href: "/find-work?tab=interviews" },
+    { label: "Tests", href: "/find-work?tab=tests" },
   ],
   "/learn": [
     { label: "Home", href: "/learn" },
@@ -186,6 +177,8 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Mentors", href: ROUTES.connect.mentors },
     { label: "Groups", href: ROUTES.connect.groups, state: "live" },
     { label: "Recommendations", href: ROUTES.connect.recommendations },
+    // MD-E001: Learn isn't in the buyer five — reachable from Connect (and the dashboard).
+    { label: "Learn", href: "/learn" },
   ],
 };
 
@@ -203,25 +196,14 @@ export const COMPANY_NAV: NavItem[] = [
   { label: "Company Settings", href: "/company/settings" },
 ];
 
+// MD-E001: Seller Console — Connect · Learn · Sell · Orders · Payments. Sell opens My Catalog; Jobs for You,
+// Requests, Interviews and Tests (today's Jobs pages) are its tabs. A seller who buys registers as a buyer.
 export const PROVIDER_NAV: NavItem[] = [
   { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
-  {
-    label: "Jobs",
-    heading: "Jobs",
-    // Scott 10-23: the provider starts on the jobs themselves, not the Overview.
-    href: "/find-work?tab=best",
-    icon: "Briefcase",
-    requires: "canProvideServices",
-  },
-  {
-    label: "Shop",
-    heading: "Shop",
-    href: "/shop",
-    icon: "Tag",
-  },
-  { label: "Estimate", heading: "Estimate", href: "/estimate", icon: "ReceiptText" },
+  { label: "Sell", heading: "Sell", href: "/catalog", icon: "Tag", requires: "canProvideServices" },
   { label: "Orders", heading: "Orders", href: "/orders", icon: "ClipboardCheck" },
+  { label: "Payments", heading: "Payments", href: "/payments", icon: "CreditCard", tooltip: "Paid to you" },
 ];
 
 // export const PERSONA_NAV_PRIMARY: NavItem[] = [
@@ -234,7 +216,8 @@ export const PERSONA_NAV: NavItem[] = [
 export const COMPANY_PERSONA_ITEM: NavItem = { label: "My Company", heading: "Company", href: "/company" };
 /** Providers' catalog in the My menu, after Profile and Company (Scott 2026-10-10). */
 // MC-E001: sellers get one My Catalog (Home · Services · Service Products · Estimates) in place of three rows.
-export const SELLER_PERSONA_ITEMS: NavItem[] = [{ label: "My Catalog", heading: "My Catalog", href: "/catalog" }];
+// MD-E001: My Catalog left the My menu — it is Sell now.
+export const SELLER_PERSONA_ITEMS: NavItem[] = [];
 /** EST-E004: every member — buyers ask for estimates, providers send them. */
 export const ESTIMATES_PERSONA_ITEM: NavItem = { label: "My Estimates", heading: "Estimates", href: "/estimates" };
 

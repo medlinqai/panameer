@@ -49,11 +49,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
 
   const tabs = side === "buyer"
     ? [
+        // MD-E001: SHOP | Browse · Get an Estimate · Cart · Purchases (Compare and Offers show when they hold something).
         { label: "Overview", href: "/shop", badge: counts?.total },
         { label: "Browse", href: "/shop?tab=browse" },
-        { label: `Compare (${compareIds.length})`, href: "/shop?tab=compare" },
+        { label: "Get an Estimate", href: "/estimate" },
+        ...(compareIds.length ? [{ label: `Compare (${compareIds.length})`, href: "/shop?tab=compare" }] : []),
         { label: `Cart (${counts?.cart ?? 0})`, href: "/shop?tab=cart" },
-        { label: "Offers", href: "/shop?tab=offers", badge: counts?.offers },
+        ...(counts?.offers ? [{ label: "Offers", href: "/shop?tab=offers", badge: counts.offers }] : []),
         { label: "Purchases", href: "/shop?tab=purchases", badge: counts?.purchases },
       ]
     : [
@@ -152,6 +154,7 @@ async function Browse({ viewer, f, browsing, compareIds }: { viewer: Viewer; f: 
   return (
     <section className="py-2" data-shop-browse>
       <ShopBar q={f.q ?? ""} category={f.category ?? ""} type={f.type ?? ""} categories={names} types={types} />
+      <p className="mt-2"><Link href="/estimate" className="inline-flex min-h-9 items-center border border-ink px-4 text-[13px] font-semibold text-ink no-underline hover:bg-bg-soft" data-get-estimate>Get an Estimate</Link></p>
       <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-ink-2"><span>Looking to hire someone for a job? <Link href="/hire" className="font-bold text-magenta-dark">Hire →</Link></span><span>Need something custom? <Link href="/estimate/new" className="font-bold text-magenta-dark" data-shop-estimates-button>Request an Estimate →</Link></span></p>
       {!browsing ? (
         <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3" data-category-tiles>
