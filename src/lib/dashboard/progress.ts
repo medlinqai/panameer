@@ -118,8 +118,11 @@ export async function groupMarkers(role: "BUYER" | "SELLER", from: Date, to: Dat
       ])]
     : [...new Set((await prisma.workOrder.findMany({ where: { created_at: { gte: from, lte: to }, status: { notIn: ["DRAFT", "CANCELLED"] } }, select: { buyer_person_id: true } })).map((o) => o.buyer_person_id))];
   if (members.length < GROUP_MIN) {
-    const t = await prisma.performanceTarget.findMany({ where: { role }, select: { metric: true, value: true } });
-    return { size: members.length, usesTarget: true, values: Object.fromEntries(t.map((r) => [r.metric, Number(r.value)])) };
+    // Saved Targets win; the rest use the defaults (MD-E005). Courses Published is the platform count, not a target.
+    const { targetRows } = await import("@/lib/dashboard/targets");
+    const values = Object.fromEntries((await targetRows(role)).map((r) => [r.metric, r.value]));
+    if (role === "SELLER") values["seller.courses.published"] = await prisma.learningPath.count({ where: { status: "PUBLISHED" } });
+    return { size: members.length, usesTarget: true, values };
   }
   const per = role === "SELLER" ? await sellerMetrics(members, from, to) : await buyerMetrics(members, from, to);
   const keys = role === "SELLER" ? SELLER_KEYS : BUYER_KEYS;

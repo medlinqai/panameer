@@ -331,6 +331,7 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: "Settlements", href: "/admin/settlements", icon: "Scale" },
       { label: "Payments", href: "/admin/payments", icon: "CreditCard" },
       { label: "ERP Connections", href: "/admin/erp", icon: "ArrowLeftRight" },
+      { label: "Performance Targets", href: "/admin/performance-targets", icon: "Percent" },
       { label: "Integrations", href: "/admin/integrations", icon: "ArrowLeftRight" },
       { label: "Messages", href: "/admin/messages", icon: "MessageSquare" },
       { label: "Community", href: "/admin/community", icon: "Users" },
