@@ -27,7 +27,8 @@ export function ErpConnections({ initial, accounts }: { initial: ConnectionRow[]
     setRows(j.connections ?? rows);
     setD(null);
   };
-  const setStatus = async (id: string, action: "suspend" | "resume") => {
+  const setStatus = async (id: string, action: "suspend" | "resume" | "rotatePo") => {
+    if (action === "rotatePo" && !window.confirm("Rotate the PO email address? The old address stops working — update it in the ERP.")) return;
     if (action === "suspend" && !window.confirm("Suspend this connection? Punch-ins will show a 'paused' page.")) return;
     setBusy(true); setError(null);
     const r = await fetch("/api/admin/erp/status", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action }) });
@@ -60,7 +61,7 @@ export function ErpConnections({ initial, accounts }: { initial: ConnectionRow[]
             <tr key={c.id} className="border-b border-line">
               <td className="py-2 font-semibold">{c.name} <span className="font-normal text-ink-3">· {c.erpKind}</span>{c.kind === "SETUP" && <span className="ml-1.5 rounded-full bg-ink px-2 py-0.5 text-[11px] font-bold text-surface" data-setup-credential>Setup Credential</span>}{c.createdVia === "SELF" && <span className="ml-1.5 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-bold text-magenta-dark" data-self-connected>{c.fromIdentity.startsWith("PNM-") ? "Self-Connected" : "Self-Connected (Old)"}</span>}{c.flag && <span className="ml-1.5 rounded-full bg-state-pending-bg px-2 py-0.5 text-[11px] font-bold text-state-pending">{c.flag}</span>}</td>
               <td>{c.accountName}{c.firstRequester && <span className="block text-ink-3">{c.firstRequester}{c.firstContactEmail ? ` · ${c.firstContactEmail}` : ""}</span>}</td>
-              <td>{c.fromIdentity} / {c.senderIdentity}</td>
+              <td>{c.fromIdentity} / {c.senderIdentity}{c.poEmail && <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-ink-3" data-po-email>PO Email: <span className="font-mono text-[12px]">{c.poEmail}</span><button type="button" onClick={() => void navigator.clipboard?.writeText(c.poEmail!)} className="font-semibold underline">Copy</button><button type="button" disabled={busy} onClick={() => setStatus(c.id, "rotatePo")} className="font-semibold underline">Rotate</button></span>}</td>
               <td>{c.punchins}<span className="block text-ink-3">{day(c.firstPunchin)} → {day(c.lastPunchin)}</span></td>
               <td>{c.hasSecret ? "Set (hashed)" : "Not set"}<span className="block text-ink-3">{c.credentialEnvName ? `${c.credentialEnvName} · ${c.credentialSet ? "present" : "missing"}` : "—"}</span></td>
               <td>{c.active ? <span className={`rounded-full px-2 py-0.5 text-[11.5px] font-bold ${STATUS[c.status][1]}`}>{STATUS[c.status][0]}</span> : "Off"}</td>

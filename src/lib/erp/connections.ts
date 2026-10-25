@@ -65,12 +65,15 @@ export async function listConnections() {
   // EO-E005: self-connected first (newest first), then the hand-made ones.
   // ES-E001: make sure the Setup Credential row exists (from ERP_SETUP_SECRET) so it lists here.
   await (await import("@/lib/erp/setup")).ensureSetupConnection().catch(() => null);
+  // PE-E002: every ERP connection gets its PO inbox token on first view.
+  const { ensurePoToken, poAddress } = await import("@/lib/erp/po-email");
+  for (const c of await prisma.erpConnection.findMany({ where: { kind: "ERP", po_email_token: null }, select: { id: true } })) await ensurePoToken(c.id).catch(() => null);
   const rows = await prisma.erpConnection.findMany({ orderBy: [{ kind: "desc" }, { created_via: "desc" }, { created_at: "desc" }] });
   const accts = new Map((await prisma.pAccount.findMany({ where: { id: { in: rows.map((r) => r.p_account_id) } }, select: { id: true, name: true } })).map((a) => [a.id, a.name]));
   const reqs = await prisma.person.findMany({ where: { id: { in: rows.map((r) => r.first_requester_person_id).filter((x): x is string => !!x) } }, select: { id: true, first_name: true, last_name: true } });
   const posr = await prisma.erpMessage.groupBy({ by: ["connection_id"], where: { connection_id: { in: rows.map((r) => r.id) }, type: "POSR" }, _count: { _all: true }, _min: { created_at: true }, _max: { created_at: true } });
   return rows.map((r) => ({
-    kind: r.kind, status: r.status, createdVia: r.created_via, flag: r.flag, confirmedAt: r.confirmed_at?.toISOString() ?? null,
+    kind: r.kind, poEmail: poAddress(r.po_email_token), status: r.status, createdVia: r.created_via, flag: r.flag, confirmedAt: r.confirmed_at?.toISOString() ?? null,
     firstRequester: ((p) => (p ? `${p.first_name} ${p.last_name}`.trim() : null))(reqs.find((p) => p.id === r.first_requester_person_id)), firstContactEmail: r.first_contact_email,
     punchins: posr.find((x) => x.connection_id === r.id)?._count._all ?? 0,
     firstPunchin: posr.find((x) => x.connection_id === r.id)?._min.created_at?.toISOString() ?? null,
