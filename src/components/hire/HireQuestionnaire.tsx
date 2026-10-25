@@ -172,6 +172,14 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
     const who = j?.who as Partial<ServiceDescription> | undefined;
     if (who) setF((x) => ({ ...x, ...who, fromPosting: [...x.fromPosting.filter((k) => !["roleId", "specificRole", "domains", "product", "skills", "customSkills", "years", "education", "credentials", "specialties", "responsibilities", "required", "niceToHave"].includes(k)), ...(who.fromPosting ?? [])] }));
   };
+  // Scott 10-24: a Category with a single Type of Work picks it — nothing to choose.
+  useEffect(() => {
+    if (!f.category || f.businessTypeId) return;
+    const only = hierarchy.find((h) => h.name === f.category)?.businessTypes ?? [];
+    if (only.length === 1) void pickBusinessType(only[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.category, f.businessTypeId]);
+
 
   const addSkill = async (name: string) => {
     const n = name.trim();

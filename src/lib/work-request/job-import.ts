@@ -291,6 +291,8 @@ export async function aiClassifyPosting(text: string, hierarchy: HierarchyOption
     system: `You classify a job posting into Panameer's Category Hierarchy. Pick exactly one Category and one of ITS Business Types, using the names exactly as listed.
 Classify the WORK being bought, never the hiring company's own industry: a transportation, healthcare or manufacturing company hiring an Oracle consultant is "ERP & Oracle", not "Transportation" or "Facilities". Ignore the company's description, benefits and location when choosing.
 Oracle / ERP / Fusion / EBS / PeopleSoft / EPM / Workday implementation or support work is "ERP & Oracle" › "Corporate Systems".
+Work whose main job is AI — AI/ML engineering, LLMs, agents, copilots, Azure AI / OpenAI / Bedrock, AI solution architecture, intelligent automation — is "AI & Automation", even when it sits in an IT team. ERP work that only mentions AI stays "ERP & Oracle".
+Use each Business Type's description to choose; prefer medium over low when one Category clearly fits.
 confidence: high = clearly this one; medium = probably; low = none fits well (then you may return nulls).
 
 ${menu}`,
