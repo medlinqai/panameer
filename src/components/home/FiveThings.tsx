@@ -1,3 +1,4 @@
+import { Dashboard } from "@/components/dashboard/Dashboard";
 import { BUYER_ROAD, BUYER_ROAD_TITLE, ROAD_TITLE } from "@/lib/user-levels";
 import { appCounts, APP_HOME, type AppCounts } from "@/lib/attention";
 import type { RoadBadge } from "@/components/lifecycle/RoadGraphic";
@@ -54,6 +55,11 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
   if (path?.road === "buyer") {
     const bc = await appCounts(viewer, "buyer");
     const setUp = path.current >= 2 && !path.waiting;
+    // MD-E003: a set-up buyer gets the dashboard (Things You Need to Do + My Progress) instead of the road.
+    if (setUp) {
+      const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+      if (me) return <Dashboard viewer={viewer} side="buyer" personId={me.id} firstName={firstName} />;
+    }
     return (
       <section data-five-things data-buyer-dashboard className="mb-8 font-body text-ink">
         <h1 className="text-[28px] font-extrabold leading-tight sm:text-[32px]">Welcome{firstName ? `, ${firstName}` : ""}.</h1>
@@ -99,6 +105,8 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
   // RA-E002: one graphic for providers too (the 8 stops), with red counts once live.
   const onRoad = !!path && path.road === "provider";
   const pc = live ? await appCounts(viewer, "provider") : null;
+  // MD-E003: a live seller gets the dashboard instead of the road.
+  if (pc && me) return <Dashboard viewer={viewer} side="provider" personId={me.id} firstName={firstName} />;
   return (
     <section data-five-things className="mb-8 font-body text-ink">
       <h1 className="text-[26px] font-extrabold leading-tight sm:text-[30px]">Welcome{firstName ? `, ${firstName}` : ""}.</h1>

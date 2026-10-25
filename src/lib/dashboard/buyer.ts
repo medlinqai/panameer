@@ -1,0 +1,63 @@
+import { prisma } from "@/lib/prisma";
+import type { Viewer } from "@/lib/access";
+import { jobStages, JOB_STAGE_LABEL, type JobStage } from "@/lib/job-stage";
+import { C, quarterStart, slicesFrom, usd, type DashData, type DashRow, type Tone } from "@/lib/dashboard/types";
+
+// MD-E003: the buyer's Things You Need to Do — Jobs, Requests, Orders and Shop from one set of rows.
+const RELEASED = new Set(["RELEASED", "ACTIVE", "ON_HOLD"]);
+const DONE = new Set(["CLOSED", "FINALLY_CLOSED"]);
+
+export async function buyerDashboard(viewer: Viewer, personId: string): Promise<DashData> {
+  const [jobs, wrs, orders] = await Promise.all([
+    prisma.job.findMany({ where: { buyer_person_id: personId, kind: "JOB", status: { not: "CANCELED" } }, orderBy: { updated_at: "desc" }, take: 200, select: { id: true, title: true, job_number: true, updated_at: true, budget_min_cents: true, budget_max_cents: true, budget_type: true } }),
+    prisma.workRequest.findMany({ where: { buyer_person_id: personId, status: { not: "INCOMPLETE" } }, orderBy: { updated_at: "desc" }, take: 200, select: { id: true, wr_number: true, title: true, description: true, status: true, source: true, erp_returned_at: true, job_id: true, updated_at: true, lines: { select: { unit_price_cents: true, quantity: true, amount_cents: true } } } }),
+    prisma.workOrder.findMany({ where: { buyer_person_id: personId, status: { notIn: ["CANCELLED", "DRAFT"] } }, orderBy: { updated_at: "desc" }, take: 200, select: { id: true, order_number: true, description: true, status: true, provider_accepted_at: true, buyer_accepted_at: true, not_to_exceed_cents: true, provider_person_id: true, created_at: true, updated_at: true, workRequest: { select: { source: true } } } }),
+  ]);
+  const cart = await prisma.workRequestLine.count({ where: { workRequest: { buyer_person_id: personId, source: "SHOP", status: "INCOMPLETE" } } });
+  const toApprove = new Set((await prisma.paymentRequest.findMany({ where: { work_order_id: { in: orders.map((o) => o.id) }, status: "SUBMITTED" }, select: { work_order_id: true } })).map((p) => p.work_order_id));
+  const stages = await jobStages(jobs.map((j) => j.id));
+  const { identityVisibleTo, providerLabel, providerNumbers } = await import("@/lib/provider-number");
+  const provIds = [...new Set(orders.map((o) => o.provider_person_id))];
+  const profiles = await prisma.providerProfile.findMany({ where: { person_id: { in: provIds } }, select: { id: true, person_id: true, person: { select: { first_name: true, last_name: true } } } });
+  const nums = await providerNumbers(profiles.map((p) => p.id));
+  const seen = await identityVisibleTo(viewer, provIds).catch(() => new Set<string>());
+  const who = (pid: string) => { const p = profiles.find((x) => x.person_id === pid); return p ? (seen.has(pid) ? `${p.person.first_name} ${p.person.last_name}`.trim() : providerLabel(nums.get(p.id)).replace(/^Provider /, "")) : "—"; };
+
+  const rows: DashRow[] = [];
+  const JOB_TONE: Record<JobStage, Tone> = { DRAFT: "st", OPEN: "st", COMPARING: "pend", HIRED: "ok", WAITING_ERP: "pend", ON_HOLD: "st", CLOSED: "st", COMPLETED: "ok" };
+  const JOB_NEXT: Record<JobStage, [string, boolean]> = { DRAFT: ["Finish and post", true], OPEN: ["Ask providers for availability", true], COMPARING: ["Compare and choose", true], HIRED: ["Waiting on the Order", false], WAITING_ERP: ["Approve it in your ERP", true], ON_HOLD: ["Resume or close", true], CLOSED: ["—", false], COMPLETED: ["—", false] };
+  for (const j of jobs) {
+    const st = stages.get(j.id)?.stage ?? "OPEN";
+    const range = j.budget_min_cents != null || j.budget_max_cents != null ? `${usd(j.budget_min_cents)}–${usd(j.budget_max_cents)}${j.budget_type === "FIXED" ? "" : "/hr"}` : "—";
+    rows.push({ key: `j-${j.id}`, type: "Job", what: j.title || "Untitled job", number: j.job_number, who: "—", status: JOB_STAGE_LABEL[st], tone: JOB_TONE[st], next: JOB_NEXT[st][0], waitingOnYou: JOB_NEXT[st][1], waitingOn: JOB_NEXT[st][1] ? "You" : "—", amount: range, updatedAt: j.updated_at.toISOString(), href: `/work-requests/${j.id}`, donut: "jobs", slice: JOB_STAGE_LABEL[st] });
+  }
+  for (const w of wrs.filter((w) => w.source !== "SHOP")) {
+    const slice = w.status === "REJECTED" ? "Declined" : w.status === "PENDING_APPROVAL" ? "Waiting on Approval" : w.erp_returned_at && !["ORDERED", "APPROVED"].includes(w.status) ? "Waiting on ERP" : ["APPROVED", "ORDERED"].includes(w.status) ? "Approved" : null;
+    if (!slice) continue;
+    const total = w.lines.reduce((n, l) => n + (l.amount_cents ?? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0))), 0);
+    rows.push({ key: `r-${w.id}`, type: "Request", what: w.title || w.description || "Request", number: w.wr_number, who: "—", status: slice, tone: slice === "Approved" ? "ok" : slice === "Declined" ? "no" : "pend", next: slice === "Waiting on Approval" ? "Approval" : slice === "Waiting on ERP" ? "PO from your ERP" : "—", waitingOnYou: false, waitingOn: slice === "Waiting on Approval" ? "Approver" : slice === "Waiting on ERP" ? "Your ERP" : "—", amount: usd(total), updatedAt: w.updated_at.toISOString(), href: w.job_id ? `/work-requests/${w.job_id}?tab=work-order` : "/orders", donut: "requests", slice });
+  }
+  for (const o of orders) {
+    const shop = o.workRequest?.source === "SHOP";
+    const slice = shop ? (DONE.has(o.status) ? "Delivered" : "Ordered") : toApprove.has(o.id) ? "Approve Delivery" : DONE.has(o.status) ? "Completed" : RELEASED.has(o.status) ? "Active" : "Waiting on Provider";
+    const mine = slice === "Approve Delivery" || (o.status === "ISSUED" && !o.buyer_accepted_at);
+    rows.push({ key: `o-${o.id}`, type: shop ? "Shop" : "Order", what: o.description || "Order", number: o.order_number, who: who(o.provider_person_id), status: slice, tone: slice === "Active" || slice === "Completed" || slice === "Delivered" ? "ok" : "pend", next: mine ? (slice === "Approve Delivery" ? "Approve the delivery" : "Review and accept") : slice === "Waiting on Provider" ? "Provider accepts" : "—", waitingOnYou: mine, waitingOn: mine ? "You" : slice === "Waiting on Provider" ? who(o.provider_person_id) : "—", amount: usd(o.not_to_exceed_cents), updatedAt: o.updated_at.toISOString(), href: `/orders/${o.id}`, donut: shop ? "shop" : "orders", slice });
+  }
+  rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const q = quarterStart();
+  const committed = orders.filter((o) => o.created_at >= q).reduce((n, o) => n + (o.not_to_exceed_cents ?? 0), 0);
+  const open = rows.filter((r) => r.type === "Job" && ["Open", "Comparing", "Waiting on ERP"].includes(r.status)).length;
+  const active = orders.filter((o) => RELEASED.has(o.status)).length;
+  const shopSlices = slicesFrom(rows, "shop", [{ label: "Ordered", color: C.steel }, { label: "Delivered", color: C.ok }]);
+  return {
+    summary: `${open} job${open === 1 ? "" : "s"} open · ${active} Order${active === 1 ? "" : "s"} active · ${usd(committed)} committed this quarter`,
+    donuts: [
+      { key: "jobs", title: "Jobs", sub: "Hire", slices: slicesFrom(rows, "jobs", [{ label: "Draft", color: C.grey, mine: true }, { label: "Open", color: C.ink }, { label: "Comparing", color: C.steel, mine: true }, { label: "Waiting on ERP", color: C.pendSoft }, { label: "On Hold", color: C.grey }, { label: "Hired", color: C.ok }, { label: "Completed", color: C.okSoft }, { label: "Closed", color: "#c9cddc" }]) },
+      { key: "requests", title: "Requests", sub: "Approval before an Order", slices: slicesFrom(rows, "requests", [{ label: "Waiting on Approval", color: C.pend }, { label: "Waiting on ERP", color: C.pendSoft }, { label: "Approved", color: C.ok }, { label: "Declined", color: C.no }]) },
+      { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "Waiting on Provider", color: C.pend }, { label: "Active", color: C.ok }, { label: "Approve Delivery", color: C.no, mine: true }, { label: "Completed", color: C.okSoft }]) },
+      { key: "shop", title: "Shop", sub: "Service products", slices: [{ label: "In Cart", n: cart, color: C.grey, mine: true }, ...shopSlices] },
+    ],
+    rows,
+    filters: [["all", "All"], ["mine", "Waiting on Me"], ["Job", "Jobs"], ["Request", "Requests"], ["Order", "Orders"], ["Shop", "Shop"]],
+  };
+}
