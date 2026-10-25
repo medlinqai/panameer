@@ -2,11 +2,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { getSessionViewer } from "@/lib/session";
 import { PublishedDialog } from "@/components/home/PublishedDialog";
-import { AttentionStrip } from "@/components/home/AttentionStrip";
-import { WorkFeed } from "@/components/home/WorkFeed";
-import { getAttentionCards } from "@/lib/attention";
-// import { getCreditsSummary } from "@/lib/credits";
-import { getWorkFeed, WORK_FEED_TABS, type WorkFeedTab } from "@/lib/work-feed";
 import { Card } from "@/components/Card";
 import { prisma } from "@/lib/prisma";
 import { displayFirstName } from "@/lib/display";
@@ -52,22 +47,6 @@ export default async function DashboardPage({
   const first = facts.seller || facts.buyer ? <FiveThings viewer={viewer} firstName={facts.firstName} firstVisit={firstVisit} step={sp0.step ?? null} view={sp0.view ?? null} period={sp0.period ?? null} /> : null;
 
   if (providerProfile) {
-    const sp = await searchParams;
-    const tab: WorkFeedTab = WORK_FEED_TABS.some((t) => t.id === sp.tab)
-      ? (sp.tab as WorkFeedTab)
-      : "best";
-    const query = (sp.q ?? "").trim();
-
-    const [attention, cards] = await Promise.all([
-      getAttentionCards({
-        personId: providerProfile.person_id,
-        profileId: providerProfile.id,
-        userId: viewer.userId,
-      }),
-      // getCreditsSummary(providerProfile.person_id),
-      getWorkFeed({ tab, profileId: providerProfile.id, query: query || undefined }),
-    ]);
-
     await prisma.providerProfile.update({
       where: { id: providerProfile.id },
       data: { dashboard_seen_at: new Date() },
@@ -84,7 +63,6 @@ export default async function DashboardPage({
         {/* Scott 10-15: nothing below the cards (same as the buyer dashboard). */}
 
         {/* Find Work feed hidden here (lives at /find-work). */}
-        {false && <WorkFeed tab={tab} query={query} cards={cards} />}
       </div>
     );
   }
@@ -131,12 +109,6 @@ export default async function DashboardPage({
   });
 
   const firstName = displayFirstName(person?.first_name ?? "");
-  const requesterAddress = person?.requesterProfile?.workSite?.addresses[0];
-  const requesterWhere = requesterAddress
-    ? [requesterAddress.city, requesterAddress.state, requesterAddress.country]
-        .filter(Boolean)
-        .join(", ")
-    : null;
 
   // BR-E005: a buyer's dashboard ends at Waiting on You — nothing below it.
   if (first) return <div className="mx-auto w-full max-w-6xl">{first}</div>;
@@ -154,49 +126,16 @@ export default async function DashboardPage({
       </header>
 
       {/* THE REQUESTER'S HOME (P1-J1.2 WS5). */}
+      {/* MD-E007: the old Post Work / What Comes Next cards are gone — Hire and Shop are the way in. */}
       {person?.requesterProfile?.completed_at ? (
-        <>
-          <Card>
-            <h2 className="text-lg">Post Work</h2>
-            <p className="mt-2 text-black/70 dark:text-white/70">
-              Describe what you need and match with validated experts across the
-              enterprise-application catalog.
-              {requesterWhere ? (
-                <>
-                  {" "}
-                  Work is delivered to <b>{requesterWhere}</b>
-                  {person.requesterProfile.approver_name ? (
-                    <>
-                      {" "}
-                      and approved by{" "}
-                      <b>{person.requesterProfile.approver_name}</b>
-                    </>
-                  ) : null}
-                  .
-                </>
-              ) : null}
-            </p>
-            <Link
-              href="/find-work/new"
-              className="mt-5 inline-flex bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
-            >
-              Create Request
-            </Link>
-          </Card>
-
-          <Card>
-            <h2 className="text-lg">What Comes Next</h2>
-            <p className="mt-2 text-black/70 dark:text-white/70">
-              These arrive with the fulfillment thread — none of them are built
-              yet, so there is nothing here to miss.
-            </p>
-            <ul className="mt-4 grid gap-2 text-sm text-black/70 dark:text-white/70">
-              <li>· Responses from providers on your requests</li>
-              <li>· Orders, once your company&apos;s payment method is set up</li>
-              <li>· Milestones and settlement</li>
-            </ul>
-          </Card>
-        </>
+        <Card>
+          <h2 className="text-lg">Get Work Done</h2>
+          <p className="mt-2 text-black/70 dark:text-white/70">Create a Job and choose a provider, or buy a service product in Shop.</p>
+          <div className="mt-5 flex gap-2">
+            <Link href="/hire" className="inline-flex bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90">Create a Job</Link>
+            <Link href="/shop" className="inline-flex border border-foreground px-4 py-2 text-sm font-medium">Shop</Link>
+          </div>
+        </Card>
       ) : person?.requesterProfile ? (
         // THE HALF-FINISHED REQUESTER , 2026-08-30).
         <Card>

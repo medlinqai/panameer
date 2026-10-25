@@ -3,7 +3,6 @@ import { BUYER_ROAD, BUYER_ROAD_TITLE, ROAD_TITLE } from "@/lib/user-levels";
 import { appCounts, APP_HOME, type AppCounts } from "@/lib/attention";
 import type { RoadBadge } from "@/components/lifecycle/RoadGraphic";
 import { BuyerThings } from "@/components/home/BuyerThings";
-import { AttentionList } from "@/components/home/AttentionList";
 import { prisma } from "@/lib/prisma";
 import { sellerRegistration } from "@/lib/seller-registration";
 import { menuFor } from "@/lib/menu-hint";
@@ -76,7 +75,6 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
           {path.waiting && <p className="mt-3 text-[13.5px] text-ink-2">Your company&apos;s admin has your request. Everything below is open while you wait.</p>}
         </div>
         {/* Scott 10-16: the seller is told "Not live yet"; the buyer is told they're live and ready. Same card shape. */}
-        {setUp && <NeedsYourAttention c={bc} />}
         {!path.waiting && !setUp && (
           <Link href="/shop" data-buyer-live className="group mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[14px] border-2 border-ink bg-surface p-5 transition-colors hover:border-magenta-dark sm:p-6">
             <span className="min-w-0">
@@ -132,9 +130,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
           <span className="inline-flex min-h-[44px] items-center bg-ink px-6 text-[14.5px] font-bold text-surface group-hover:bg-magenta-dark">{reg.registered ? "Start" : "Continue"}</span>
         </Link>
       )}
-      {pc ? (
-        <NeedsYourAttention c={pc} />
-      ) : onRoad ? (
+      {onRoad ? (
         <>
           <h2 className="mt-9 text-[19px] font-extrabold">What Do You Want to Do{firstVisit ? " First" : ""}?</h2>
           <BuyerThings seller />
@@ -183,19 +179,3 @@ function AppChips({ c }: { c: AppCounts }) {
   );
 }
 
-function NeedsYourAttention({ c }: { c: AppCounts }) {
-  const apps = [...new Set(c.items.map((i) => i.app))];
-  return (
-    <section className="mt-6 rounded-[14px] border border-line bg-white p-4 sm:p-5" data-needs-attention>
-      <h2 className="text-[17px] font-extrabold">Needs Your Attention</h2>
-      {c.items.length ? (
-        <>
-          <AttentionList items={c.items} />
-          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
-            {apps.map((a) => <Link key={a} href={APP_HOME[c.side][a]} className="font-semibold text-magenta-dark underline underline-offset-4">See All In {c.items.find((i) => i.app === a)!.appLabel}</Link>)}
-          </p>
-        </>
-      ) : <p className="mt-1 text-[13.5px] text-ink-3">Nothing is waiting on you right now.</p>}
-    </section>
-  );
-}
