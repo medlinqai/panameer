@@ -410,3 +410,28 @@ export async function removePersonPhotos(personIds: string[]): Promise<void> {
     if (data?.length) await bucket.remove(data.map((f) => `${id}/${f.name}`));
   }
 }
+
+/** PE-E003: purchase-order PDFs emailed by ERPs (private bucket, created on first use). */
+export const PO_EMAIL_BUCKET = "erp-po-email";
+export async function uploadPoEmailPdf(connectionId: string, emailId: string, bytes: ArrayBuffer): Promise<string> {
+  const objectPath = `${connectionId}/${emailId.replace(/[^A-Za-z0-9-]/g, "")}.pdf`;
+  const client = getStorageClient();
+  const put = () => client.from(PO_EMAIL_BUCKET).upload(objectPath, bytes, { contentType: "application/pdf", upsert: true });
+  let { error } = await put();
+  if (error && /not.?found/i.test(error.message)) {
+    await client.createBucket(PO_EMAIL_BUCKET, { public: false, fileSizeLimit: 20 * 1024 * 1024, allowedMimeTypes: ["application/pdf"] });
+    ({ error } = await put());
+  }
+  if (error) throw new StorageError("Could not store the PO PDF.", "UPLOAD_FAILED");
+  return objectPath;
+}
+export async function poEmailPdfBytes(objectPath: string): Promise<Buffer | null> {
+  const { data, error } = await getStorageClient().from(PO_EMAIL_BUCKET).download(objectPath);
+  if (error || !data) return null;
+  return Buffer.from(await data.arrayBuffer());
+}
+export async function signedPoEmailPdfUrl(objectPath: string, expiresInSeconds = 300): Promise<string | null> {
+  const { data, error } = await getStorageClient().from(PO_EMAIL_BUCKET).createSignedUrl(objectPath, expiresInSeconds);
+  if (error) return null;
+  return data?.signedUrl ?? null;
+}

@@ -485,6 +485,30 @@ export const NOTIFICATION_EVENTS = {
     body: (v) => `${str(v, "email", "")} started Panameer setup from their ERP. Your company is already here — add them in People, or set up the ERP connection with Panameer.`,
     href: () => "/company?tab=people",
   },
+  // PE-E004: an Order made from a PO the ERP emailed — FYI (the ERP approval was the buyer's acceptance).
+  "work.order_from_po": {
+    event: "work.order_from_po",
+    recipient: "the buyer on an ERP order",
+    category: "buyer.proposals.received",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `Order ${str(v, "orderNumber", "")} Created From PO ${str(v, "poNumber", "")}`,
+    body: () => "Your ERP's purchase order arrived by email and matched your cart.",
+    href: (v) => `/orders/${str(v, "orderId", "")}`,
+  },
+  // PE-E005: a PO email that couldn't be matched automatically.
+  "admin.po_email_review": {
+    event: "admin.po_email_review",
+    recipient: "Panameer admins",
+    category: "account.registration",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `PO Email Needs Review: ${str(v, "po", "")}${str(v, "company", "") ? ` · ${str(v, "company", "")}` : ""}`,
+    body: (v) => `${str(v, "note", "")} — from ${str(v, "from", "")}`,
+    href: () => "/admin/erp?tab=po-emails",
+  },
   // EO-E004: a new ERP customer connected itself on its first punch-in — nothing waits for this; Review is optional.
   "admin.erp_connected": {
     event: "admin.erp_connected",

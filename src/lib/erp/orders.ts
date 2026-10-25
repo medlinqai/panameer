@@ -13,7 +13,7 @@ import { authenticate } from "@/lib/erp/punchout";
 import { findMessage, logMessage } from "@/lib/erp/connections";
 
 // X-E004: cXML OrderRequest in. new → work order(s) (one per provider), update → change order, delete → Canceled.
-type PoItem = { lineNumber: string; auxId: string; quantity: number; unitPriceCents: number };
+export type PoItem = { lineNumber: string; auxId: string; quantity: number; unitPriceCents: number };
 
 const cents = (s: string) => Math.round(Number(s || "0") * 100);
 
@@ -63,7 +63,8 @@ export async function handleOrderRequest(xml: string): Promise<{ status: number;
 }
 
 /** new: fan out by provider. Customer acceptance is set on arrival — the ERP approval is the acceptance. */
-async function createOrders(connectionId: string, pAccountId: string, poNumber: string, items: PoItem[]) {
+/** PE-E004: shared by the cXML OrderRequest and the PO-by-email route — the same Order either way. */
+export async function createOrders(connectionId: string, pAccountId: string, poNumber: string, items: PoItem[]) {
   if (!items.length) throw new Error("The purchase order has no lines");
   const reqLines = await prisma.workRequestLine.findMany({ where: { id: { in: items.map((i) => i.auxId) } } });
   if (reqLines.length !== items.length) throw new Error("A line doesn't match a Panameer cart line (SupplierPartAuxiliaryID)");

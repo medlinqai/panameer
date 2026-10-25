@@ -49,6 +49,8 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "work.job_amended",
   "admin.erp_connected",
   "company.erp_setup_existing",
+  "work.order_from_po",
+  "admin.po_email_review",
   "work.interview_requested",
   "work.test_requested",
   "work.order_offered",
