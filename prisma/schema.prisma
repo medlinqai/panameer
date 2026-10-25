@@ -8596,6 +8596,8 @@ enum ErpMessageType {
   CONFIRMATION
   WORK_CONFIRMATION
   STATUS_POLL
+  /// PE-E004: a PO PDF received by email.
+  PO_EMAIL
 }
 
 enum ErpMessageStatus {
@@ -8637,9 +8639,13 @@ model ErpConnection {
   first_requester_person_id String?             @db.Uuid
   /// "Check Company" (free-mail domain) or "Email Missing" — for Panameer to look at; nothing waits on it.
   flag                      String?
+  /// PE-E001: the token in this connection's PO inbox address (po+{token}@PO_INBOUND_DOMAIN); Rotate replaces it.
+  /// Unique in practice: generated randomly and checked before saving (no DB unique — keeps the push additive-only).
+  po_email_token            String?
 
   @@index([p_account_id])
   @@index([sender_identity])
+  @@index([po_email_token])
   @@map("erp_connections")
 }
 
@@ -9744,4 +9750,36 @@ model ErpPunchinAttempt {
   @@index([ip, created_at])
   @@index([identity, created_at])
   @@map("erp_punchin_attempts")
+}
+
+/// PE-E001: a purchase order PDF emailed by an ERP to the connection's PO inbox — read by AI and matched to cart lines.
+model ErpPoEmail {
+  id               String           @id @default(uuid()) @db.Uuid
+  connection_id    String           @db.Uuid
+  from_address     String
+  subject          String?
+  received_at      DateTime         @default(now())
+  /// Resend's email id — the idempotency key.
+  resend_email_id  String           @unique
+  pdf_storage_path String?
+  status           ErpPoEmailStatus @default(RECEIVED)
+  po_number        String?
+  revision         Int?
+  parsed           Json?
+  work_request_id  String?          @db.Uuid
+  order_ids        String[]
+  note             String?
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+
+  @@index([connection_id, received_at])
+  @@index([connection_id, po_number])
+  @@map("erp_po_emails")
+}
+
+enum ErpPoEmailStatus {
+  RECEIVED
+  PROCESSED
+  NEEDS_REVIEW
+  FAILED
 }
