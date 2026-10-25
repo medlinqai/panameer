@@ -179,10 +179,12 @@ export async function moneyExtras(personId: string, role: "BUYER" | "SELLER", fr
   const toApprove = await prisma.paymentRequest.findMany({ where: { work_order_id: { in: orders.map((o) => o.id) }, status: "SUBMITTED" }, select: { lines: { select: { amount_cents: true, quantity: true, unit_price_cents: true } } } });
   // Savings on hires = (top of the job's range − the hired rate) × the Order's hours, for hires in the period.
   const hires = orders.filter((o) => o.created_at >= from && o.created_at <= to && o.workRequest?.job_id && o.workRequest.source !== "SHOP");
-  const jobs = await prisma.job.findMany({ where: { id: { in: hires.map((o) => o.workRequest!.job_id!) } }, select: { id: true, budget_max_cents: true } });
+  const jobs = await prisma.job.findMany({ where: { id: { in: hires.map((o) => o.workRequest!.job_id!) } }, select: { id: true, budget_max_cents: true, budget_type: true } });
   let savings = 0;
   for (const o of hires) {
-    const top = jobs.find((j) => j.id === o.workRequest!.job_id)?.budget_max_cents;
+    // Hourly ranges only: a FIXED budget's max is a total, not a rate.
+    const job = jobs.find((j) => j.id === o.workRequest!.job_id);
+    const top = job?.budget_type === "HOURLY" ? job.budget_max_cents : null;
     if (top == null) continue;
     for (const l of o.lines) if (l.uom === "HOUR" && l.unit_price_cents != null && l.unit_price_cents < top) savings += Math.round((top - l.unit_price_cents) * Number(l.quantity ?? 0));
   }
