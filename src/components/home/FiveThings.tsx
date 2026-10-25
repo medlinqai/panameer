@@ -48,7 +48,8 @@ function Card({ t, i }: { t: Thing; i: number }) {
   );
 }
 
-export async function FiveThings({ viewer, firstName, firstVisit = false, step = null, view = null }: { viewer: Viewer; firstName: string; firstVisit?: boolean; step?: string | null; view?: string | null }) {
+export async function FiveThings({ viewer, firstName, firstVisit = false, step = null, view = null, period = null }: { viewer: Viewer; firstName: string; firstVisit?: boolean; step?: string | null; view?: string | null; period?: string | null }) {
+  const per = (["quarter", "90d", "year"] as const).find((p) => p === period) ?? "quarter";
   void step; void view;
   const path = await lifecycleForUser(viewer.userId);
   // BD-E002/E005: a buyer's dashboard = greeting · their road · the five cards. Nothing else.
@@ -58,7 +59,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
     // MD-E003: a set-up buyer gets the dashboard (Things You Need to Do + My Progress) instead of the road.
     if (setUp) {
       const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
-      if (me) return <Dashboard viewer={viewer} side="buyer" personId={me.id} firstName={firstName} />;
+      if (me) return <Dashboard viewer={viewer} side="buyer" personId={me.id} firstName={firstName} period={per} />;
     }
     return (
       <section data-five-things data-buyer-dashboard className="mb-8 font-body text-ink">
@@ -106,7 +107,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
   const onRoad = !!path && path.road === "provider";
   const pc = live ? await appCounts(viewer, "provider") : null;
   // MD-E003: a live seller gets the dashboard instead of the road.
-  if (pc && me) return <Dashboard viewer={viewer} side="provider" personId={me.id} firstName={firstName} />;
+  if (pc && me) return <Dashboard viewer={viewer} side="provider" personId={me.id} firstName={firstName} period={per} />;
   return (
     <section data-five-things className="mb-8 font-body text-ink">
       <h1 className="text-[26px] font-extrabold leading-tight sm:text-[30px]">Welcome{firstName ? `, ${firstName}` : ""}.</h1>
