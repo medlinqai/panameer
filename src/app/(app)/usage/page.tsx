@@ -1,4 +1,4 @@
-import { PageTabs } from "@/components/casing/PageTabs";
+import { ProfileCrumb } from "@/components/profile/ProfileHome";
 import { PatternHeader } from "@/components/casing/PatternHeader";
 import { BuyerStatistics } from "@/components/console/StatisticsCards";
 import { getStatistics } from "@/lib/statistics";
@@ -15,8 +15,7 @@ import {
 } from "@/lib/account-standing";
 import { type Figure } from "@/lib/figure";
 import type { TrendPeriod } from "@/components/console/StatCardBacks";
-import { tabSequenceFor } from "@/lib/nav";
-import { profileTabs, profileTabLabel, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
+import { profileTabLabel } from "@/lib/profile-tabs";
 import { prisma } from "@/lib/prisma";
 import { CommunitySignalBlock } from "@/components/profile/CommunitySignal";
 import { getCommunitySignal } from "@/lib/community-signal";
@@ -92,13 +91,7 @@ export default async function MyStatsPage({
     const s = await getStatistics(person.id, viewer.userId, null, "all", trendOf(sp));
     return (
       <>
-        <PageTabs
-          wrap
-          eyebrow={ACCOUNT_MENU_NAME}
-          sequence={tabSequenceFor("/profile")}
-          tabs={profileTabs(viewer)}
-          current="/usage"
-        />
+        <ProfileCrumb page="Usage" />
         <div className="mx-auto max-w-5xl space-y-4">
           {}
           <PatternHeader
@@ -196,13 +189,7 @@ export default async function MyStatsPage({
   return (
     <>
       {}
-      <PageTabs
-        wrap
-        eyebrow={ACCOUNT_MENU_NAME}
-        sequence={tabSequenceFor("/profile")}
-        tabs={profileTabs(viewer)}
-        current="/usage"
-      />
+      <ProfileCrumb page="Usage" />
     {}
     {}
     <div className="account-surface pm-usage -mx-4 bg-surface px-4 pb-10 sm:-mx-6 sm:px-6">

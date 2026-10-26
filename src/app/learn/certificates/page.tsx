@@ -2,7 +2,6 @@ import Link from "next/link";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { viewerTeaches } from "@/lib/learn-home";
 import { learnCatalog } from "@/lib/learn-catalog";
-import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { CertificateCard } from "@/components/certificates/CertificateCard";
 import { CertificateActions } from "@/components/certificates/CertificateActions";
 import { myCertificates } from "@/lib/certificates";
@@ -38,7 +37,6 @@ export default async function CertificatesPage() {
   const BTN = "inline-flex min-h-9 items-center border border-ink px-3.5 text-[13px] font-semibold hover:bg-black/[0.04]";
   return (
     <>
-      <LearnTabs active="certificates" teaches={teaches} />
       <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-learn-certificates>
         <AccountHero
           testId="certificates-hero"

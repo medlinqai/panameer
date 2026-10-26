@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { teachingData } from "@/lib/learn-teaching";
-import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN } from "@/components/casing/AccountHero";
 import { BubbleField } from "@/components/casing/BubbleField";
 import { Avatar } from "@/components/Avatar";
@@ -22,7 +21,6 @@ export default async function TeachingPage() {
   const firstQ = paths.flatMap((p) => p.questions)[0];
   return (
     <>
-      <LearnTabs active="teaching" teaches />
       <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-learn-teaching>
         <AccountHero
           testId="teaching-hero"

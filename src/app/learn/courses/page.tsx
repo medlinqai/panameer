@@ -5,7 +5,6 @@ import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
 import { learnCatalog, timeLabel } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
-import { LearnTabs } from "@/components/learn/app/LearnTabs";
 
 export const metadata = {
   title: "Courses — Panameer Learn",
@@ -41,7 +40,6 @@ export default async function CoursesPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      {viewer && <LearnTabs active="courses" teaches={teaches} />}
       <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-courses>
         <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">EVERY COURSE</p>
         <h1 className="mt-1.5 text-[30px] font-bold leading-tight">Courses</h1>

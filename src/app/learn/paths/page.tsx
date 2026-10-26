@@ -4,7 +4,6 @@ import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
 import { nextPathSuggestion, learnCatalog, START_AREA, START_AREA_LABEL } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
-import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { LearnPathCard } from "@/components/learn/LearnPathCard";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { BubbleField } from "@/components/casing/BubbleField";
@@ -65,7 +64,6 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
 
   return (
     <>
-      {viewer && <LearnTabs active="paths" teaches={teaches} />}
       <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-learning-paths>
         <AccountHero
           wide

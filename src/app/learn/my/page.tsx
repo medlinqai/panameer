@@ -6,7 +6,6 @@ import { learnCatalog } from "@/lib/learn-catalog";
 import { recommendNext, testOutPicks } from "@/lib/learn-next";
 import { WhatsNext } from "@/components/learn/WhatsNext";
 import { getSkillAreas } from "@/lib/skill-area-store";
-import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { BubbleField } from "@/components/casing/BubbleField";
 import { UpNextCard } from "@/components/learn/UpNextCard";
@@ -66,7 +65,6 @@ export default async function MyLearningPage() {
 
   return (
     <>
-      <LearnTabs active="my-learning" teaches={teaches} />
       <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-my-learning>
         <AccountHero
           testId="my-learning-hero"

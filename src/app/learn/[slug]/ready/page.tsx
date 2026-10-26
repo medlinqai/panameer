@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { learnCatalog } from "@/lib/learn-catalog";
 import { viewerTeaches } from "@/lib/learn-home";
-import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { NotifyMe } from "@/components/learn/NotifyMe";
 import { pathState, PICK_NEXT_HREF } from "@/lib/learn-state";
 import { recommendNext } from "@/lib/learn-next";
@@ -26,7 +25,6 @@ export default async function ReadyPage({ params }: { params: Promise<{ slug: st
   const top = (await recommendNext(viewer.userId, { after: p.id })).picks[0] ?? null;
   return (
     <>
-      <LearnTabs active="paths" teaches={teaches} />
       <main className="mx-auto w-full max-w-xl px-4 py-12 text-center" data-ready-to-test>
         <span aria-hidden className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-ink text-[40px] font-bold text-surface">✓</span>
         <p className="mt-5 text-[11px] font-semibold tracking-[0.12em] text-magenta">{p.title.toUpperCase()}</p>

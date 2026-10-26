@@ -5,7 +5,6 @@ import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
 import { learnCatalog, nextPathSuggestion, timeLabel } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
-import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { ProgressRing } from "@/components/learn/ProgressRing";
 import { WhatsInside } from "@/components/learn/WhatsInside";
@@ -62,7 +61,6 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
 
   return (
     <>
-      {viewer && <LearnTabs active="paths" teaches={teaches} />}
       <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-learning-path={p.slug}>
         <Link href={p.area ? `/learn/paths?area=${p.area}` : "/learn/paths"} className="text-[13px] font-bold text-ink-2 hover:text-magenta">‹ Learning Paths{areaLabel ? ` · ${areaLabel}` : ""}</Link>
         <div className="mt-4">

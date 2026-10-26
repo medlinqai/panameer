@@ -7,9 +7,7 @@ import { myEstimates } from "@/lib/estimates";
 import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
 import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
+import { ProfileHome } from "@/components/profile/ProfileHome";
 import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
 import { ensureSlug } from "@/lib/public-slug";
@@ -72,13 +70,8 @@ export default async function MyProfilePage() {
       {/* IT IS THE PAGE'S `<h1>`, NOT A DECORATIVE `<p>`. Shipping it as a */}
       {/* THE CRUMB BECAME THE TAB ROW WS-A) */}
       {/* THE MENU NAME IS `Account Information` (ruling 31b, WS-A item 1) */}
-      <PageTabs
-        wrap
-        eyebrow={ACCOUNT_MENU_NAME}
-        sequence={tabSequenceFor("/profile")}
-        tabs={profileTabs(viewer)}
-        current="/profile"
-      />
+      {/* WK-E005: no tab row — tiles and What You Can Do. */}
+      <ProfileHome personId={profile.person.personId} profileId={profile.id} />
       {/* THE PROFILE LEAD LINE . IT IS ON `/profile` AND NOT INSIDE */}
       {/* is only legal in CHILDREN position, never between attributes, which */}
       {/* The comb is OWNER-ONLY, so it is computed here — on the owner's own */}

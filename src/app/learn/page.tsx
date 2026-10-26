@@ -5,7 +5,6 @@ import { finishes, rankLearners, topTeachers } from "@/lib/learn-homepage";
 import { recommendNext } from "@/lib/learn-next";
 import { learnCatalog } from "@/lib/learn-catalog";
 import { viewerTeaches } from "@/lib/learn-home";
-import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { HubHome, RankList, VsGroup, type RankRow } from "@/components/home/HubHome";
 import { displayFirstName } from "@/lib/display";
 import { C, type Donut } from "@/lib/dashboard/types";
@@ -21,7 +20,7 @@ const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const SW_ON = "rounded-full bg-ink px-3 py-1 text-surface";
 const SW_OFF = "rounded-full px-3 py-1 text-ink-2 hover:text-ink";
 
-// HT-E008: Learn › Home follows the dashboard — At a Glance (My Learning · My Teaching) beside Things You Need to Do, then Who's Learning Most.
+// HT-E008 / WK-E005: Learn › Home (no tab row) follows the dashboard — At a Glance (My Learning · My Teaching) beside Things You Need to Do, then Who's Learning Most.
 export default async function LearnHomePage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const viewer = await memberOrPublicTwin("/learn");
   const { view: rawView } = await searchParams;
@@ -95,7 +94,6 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
   const next = inProgress[0] ?? matched[0]?.path ?? null;
   return (
     <>
-      <LearnTabs active="home" teaches={teaches} />
       <div className="px-4 py-6 sm:px-6">
         <HubHome
           eyebrow="LEARN" title={`Keep Learning${first ? `, ${first}` : ""}`}
@@ -104,6 +102,12 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
           secondary={next ? { label: "Browse Learning Paths", href: "/learn/paths" } : { label: "My Learning", href: "/learn/my" }}
           donuts={view === "teaching" ? teaching : learning} viewSwitch={switcher} todo={todo}
           section2Title="Who's Learning Most" section2Right="This Month"
+          actions={[
+            { label: "Browse Learning Paths", detail: `${catalog.length} paths on Panameer`, href: "/learn/paths" },
+            { label: "Continue Learning", detail: inProgress[0] ? `${inProgress[0].title} · lesson ${(inProgress[0].mine?.done ?? 0) + 1} of ${inProgress[0].mine?.total ?? 0}` : "Pick up where you left off", href: inProgress[0]?.mine?.next ? `/learn/${inProgress[0].slug}/${inProgress[0].mine.next.id}` : "/learn/my" },
+            { label: "Take a Test", detail: readyToTest.length ? `${readyToTest.length} ready for you` : "Prove a skill and earn a certificate", href: readyToTest[0] ? `/learn/${readyToTest[0].slug}/test` : "/learn/certificates" },
+            { label: "Teach on Panameer", detail: teaches ? "Your paths, learners and finishes" : "Share what you know as a learning path", href: teaches ? "/learn/teaching" : "/support" },
+          ]}
           section2={<>
             <RankList eyebrow="PATHS FINISHED" title="Top Learners" rows={month.slice(0, 3).map((r, i) => rr(r, i, r.userId === viewer.userId))}
               me={myIdx >= 0 ? rr(month[myIdx], myIdx, true) : { rank: null, name: "You", photoUrl: null, line: "0 paths this month", value: 0, me: true }} />

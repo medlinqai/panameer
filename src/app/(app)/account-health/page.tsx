@@ -1,8 +1,6 @@
+import { ProfileCrumb } from "@/components/profile/ProfileHome";
 import Link from "next/link";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { prisma } from "@/lib/prisma";
 import { guardPage } from "@/lib/guard";
 import { ownedProviderProfile } from "@/lib/access";
@@ -46,13 +44,7 @@ export default async function AccountHealthPage() {
 
   return (
     <div className="pm-white-page">
-      <PageTabs
-        wrap
-        eyebrow={ACCOUNT_MENU_NAME}
-        sequence={tabSequenceFor("/profile")}
-        tabs={profileTabs(viewer)}
-        current="/account-health"
-      />
+      <ProfileCrumb page="Health" />
       <div className="mx-auto max-w-[1010px]">
 
         <AccountHero

@@ -1,9 +1,7 @@
+import { ProfileCrumb } from "@/components/profile/ProfileHome";
 import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { ownedProviderProfile } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { buildCompletenessInput } from "@/lib/onboarding";
@@ -28,13 +26,7 @@ export default async function ProfileScorePage() {
 
   return (
     <div className="pm-white-page">
-      <PageTabs
-        wrap
-        eyebrow={ACCOUNT_MENU_NAME}
-        sequence={tabSequenceFor("/profile")}
-        tabs={profileTabs(viewer)}
-        current="/connect/score"
-      />
+      <ProfileCrumb page="Score" />
       <ProfileScoreView score={computeProfileScore(input)} profileId={profile.id} />
     </div>
   );

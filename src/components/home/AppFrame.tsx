@@ -5,10 +5,12 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 // WK-E004/E005: an app without a tab row — "← {App} › {Page}" on top, "Also in {App}: …" at the bottom; the home shows neither.
-export function AppFrame({ app, home, pages, children }: { app: string; home: string; pages: [string, string][]; children: ReactNode }) {
+export function AppFrame({ app, home, base, pages, children }: { app: string; home: string; /** The app's URL root, e.g. /connect. */ base: string; pages: [string, string][]; children: ReactNode }) {
   const path = usePathname() ?? "";
   const here = pages.find(([, h]) => path === h || path.startsWith(`${h}/`));
-  if (path === home || !here) return <>{children}</>;
+  if (path === home) return <>{children}</>;
+  // Any other page inside the app (a record, a path, a sub-page) still gets ← {App}.
+  if (!here) return path.startsWith(`${base}/`) ? <><p className="mx-auto w-full max-w-6xl px-4 pt-4 text-[13px] font-semibold text-ink-2 sm:px-6" data-app-crumb><Link href={home} className="hover:text-ink">← {app}</Link></p>{children}</> : <>{children}</>;
   const others = pages.filter(([, h]) => h !== here[1]);
   return (
     <>

@@ -9,7 +9,6 @@ import { vimeoEmbedUrl } from "@/lib/learn";
 import { learnCatalog } from "@/lib/learn-catalog";
 import { ensurePathBoard } from "@/lib/forums";
 import { LessonPlayer } from "@/components/learn/LessonPlayer";
-import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { StatusMark } from "@/components/learn/StatusMark";
 import { LessonStep } from "@/components/learn/LessonStep";
 import { ConnectControls, type Relation } from "@/components/community/ConnectControls";
@@ -125,7 +124,6 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
 
   return (
     <>
-      <LearnTabs active="paths" teaches={teaches} />
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6" data-lesson={lessonId}>
         <Link href={`/learn/${p.slug}#course-${here.course.slug}`} className="text-[13px] font-bold text-ink-2 hover:text-magenta">‹ {p.title} · Course {here.ci + 1} · {here.course.title}</Link>
         <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_300px]">
