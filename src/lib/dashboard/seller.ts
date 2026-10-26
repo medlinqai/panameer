@@ -47,7 +47,8 @@ export async function sellerDashboard(personId: string): Promise<DashData> {
   const matches = profile ? (await getWorkFeed({ tab: "best", profileId: profile.id }).catch(() => [])).length : 0;
   const active = orders.filter((o) => RELEASED.has(o.status)).length;
   return {
-    summary: [profile?.provider_number, `${matches} job${matches === 1 ? "" : "s"} match you`, `${active} Order${active === 1 ? "" : "s"} active`, `${usd(earned)} earned this quarter`].filter(Boolean).join(" · "),
+    providerNumber: profile?.provider_number ?? null,
+    summary: [`${matches} job${matches === 1 ? "" : "s"} match you`, `${active} Order${active === 1 ? "" : "s"} active`, `${usd(earned)} earned this quarter`].filter(Boolean).join(" · "),
     donuts: [
       { key: "jobs", title: "Jobs", sub: "Asked, answered, chosen", slices: slicesFrom(rows, "jobs", [{ label: "Asked", color: C.pend, mine: true }, { label: "Said Available", color: C.steel }, { label: "Interview", color: C.ink, mine: true }, { label: "Chosen", color: C.ok }, { label: "Not Chosen", color: C.grey }]) },
       { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "To Accept", color: C.pend, mine: true }, { label: "Active", color: C.ok }, { label: "Delivered", color: C.okSoft }]) },

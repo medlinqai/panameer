@@ -17,7 +17,17 @@ export async function DashboardTop({ viewer, side, firstName, data }: { viewer: 
         <div>
           <p className="text-[12px] font-bold tracking-[0.12em] text-magenta">{date}</p>
           <h1 className="mt-1 text-[28px] font-extrabold leading-tight sm:text-[32px]">Welcome Back{firstName ? `, ${firstName}` : ""}</h1>
-          <p className="mt-1 text-[14px] text-ink-2" data-dash-summary>{data.summary}</p>
+          <p className="mt-1 text-[14px] text-ink-2" data-dash-summary>
+            {data.providerNumber && <>
+              Provider Number <b className="text-ink">{data.providerNumber}</b>{" "}
+              <details className="relative inline-block align-middle [&_summary::-webkit-details-marker]:hidden" data-provider-number-help>
+                <summary className="grid h-4 w-4 cursor-pointer list-none place-items-center rounded-full border border-ink-3 text-[10px] font-bold text-ink-2" aria-label="What is a Provider Number?">?</summary>
+                <span className="absolute left-0 z-30 mt-1 block w-64 rounded-[10px] border border-line bg-white p-3 text-[12.5px] text-ink shadow-lg">What buyers see instead of your name until an Order is released. <Link href="/glossary?q=Provider%20Number" className="font-semibold underline underline-offset-2">See the Glossary of Terms →</Link></span>
+              </details>
+              {" · "}
+            </>}
+            {data.summary}
+          </p>
         </div>
         <div className="flex gap-2.5">
           {side === "buyer"

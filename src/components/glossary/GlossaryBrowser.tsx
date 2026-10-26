@@ -6,8 +6,8 @@ import { useMemo, useState } from "react";
 type Term = { id: string; term: string; category: string | null; type: string | null; definition: string; alsoCalled: string | null };
 const letterOf = (t: string) => (/^[a-z]/i.test(t) ? t[0].toUpperCase() : "#");
 
-export function GlossaryBrowser({ terms }: { terms: Term[] }) {
-  const [q, setQ] = useState("");
+export function GlossaryBrowser({ terms, initialQuery }: { terms: Term[]; initialQuery?: string }) {
+  const [q, setQ] = useState(initialQuery ?? "");
   const [cat, setCat] = useState("");
   const cats = useMemo(() => [...new Set(terms.map((t) => t.category).filter((c): c is string => !!c))].sort(), [terms]);
   const shown = useMemo(() => {
