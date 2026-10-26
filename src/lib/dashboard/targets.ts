@@ -8,7 +8,7 @@ export const DEFAULT_TARGETS: Record<string, { value: number; label: string }> =
   "seller.orders.offered": { value: 6, label: "Offered" }, "seller.orders.accepted": { value: 5, label: "Accepted" }, "seller.orders.delivered": { value: 4, label: "Delivered" }, "seller.orders.on_time": { value: 4, label: "On Time (90% of delivered)" },
   "seller.payments.earned": { value: 15000, label: "Earned ($)" },
   "buyer.connect.invited": { value: 15, label: "Invited" }, "buyer.connect.connected": { value: 25, label: "Connected" }, "buyer.connect.mentors": { value: 1, label: "Mentors" },
-  "buyer.jobs.published": { value: 4, label: "Published" }, "buyer.jobs.availability": { value: 4, label: "Availability Requested" }, "buyer.jobs.interviewed": { value: 2, label: "Interviewed" }, "buyer.jobs.hired": { value: 2, label: "Hired" },
+  "buyer.jobs.published": { value: 4, label: "Published" }, "buyer.jobs.availability": { value: 4, label: "Availability Requested" }, "buyer.jobs.interviewed": { value: 2, label: "Interviewed" }, "buyer.jobs.hired": { value: 2, label: "Filled" },
   "buyer.shop.viewed": { value: 18, label: "Viewed (days in Shop)" }, "buyer.shop.ordered": { value: 3, label: "Ordered" }, "buyer.shop.delivered": { value: 3, label: "Delivered" },
   "buyer.orders.created": { value: 6, label: "Created" }, "buyer.orders.active": { value: 2, label: "Active" }, "buyer.orders.approved": { value: 4, label: "Approved Delivery" }, "buyer.orders.on_time": { value: 5, label: "On Time" },
   "buyer.payments.paid": { value: 30000, label: "Paid ($)" },

@@ -17,7 +17,7 @@ export const WORK_REQUEST_LABEL: Record<WorkRequestStatus, string> = {
   ASSIGNED: "Incomplete",
 };
 
-export const JOB_LABEL: Record<JobStatus, string> = { DRAFT: "Draft", OPEN: "Active", CLOSED: "Closed", FILLED: "Hired", CANCELED: "Canceled", ON_HOLD: "On Hold" };
+export const JOB_LABEL: Record<JobStatus, string> = { DRAFT: "Draft", OPEN: "Active", CLOSED: "Closed", FILLED: "Filled", CANCELED: "Canceled", ON_HOLD: "On Hold" };
 
 export const PROPOSAL_LABEL: Record<ProposalStatus, string> = {
   DRAFT: "Draft",
