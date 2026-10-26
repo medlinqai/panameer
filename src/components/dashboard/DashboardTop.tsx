@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Viewer } from "@/lib/access";
 import { appCounts } from "@/lib/attention";
 import { AttentionList } from "@/components/home/AttentionList";
-import { DashPies, txHref } from "@/components/dashboard/DashGlance";
+import { DashPies } from "@/components/dashboard/DashGlance";
+import { txHref } from "@/lib/dashboard/tx-href";
 import { BTN, BTN_MAGENTA } from "@/components/hire/HireUI";
 import type { DashData } from "@/lib/dashboard/types";
 

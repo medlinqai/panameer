@@ -7,7 +7,7 @@ import type { DashRow, Donut } from "@/lib/dashboard/types";
 // MD-E003 / JR-E007/E009: At a Glance pies (each with See All →) on the dashboard; the table on My Transactions (Active by default, 5 rows, Show 10 More).
 const PILL: Record<DashRow["tone"], string> = { ok: "bg-state-accepted-bg text-state-accepted", pend: "bg-state-pending-bg text-state-pending", no: "bg-state-declined-bg text-state-declined", st: "bg-state-inactive-bg text-state-inactive" };
 const DAY = 86_400_000;
-export const txHref = (side: string, q: Record<string, string> = {}) => `/dashboard/transactions?${new URLSearchParams({ side, ...q }).toString()}`;
+import { txHref } from "@/lib/dashboard/tx-href";
 
 function Ring({ d, size }: { d: Donut; size: number }) {
   const total = d.slices.reduce((n, s) => n + s.n, 0);
