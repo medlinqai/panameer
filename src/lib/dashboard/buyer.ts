@@ -43,7 +43,7 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
   }
   for (const o of orders) {
     // JR-E007: Shop orders are Orders too — the Shop pie is gone.
-    const slice = toApprove.has(o.id) ? "Approve Delivery" : DONE.has(o.status) ? "Completed" : RELEASED.has(o.status) ? "Active" : "Waiting on Provider";
+    const slice = toApprove.has(o.id) ? "Approve Delivery" : DONE.has(o.status) ? "Completed" : RELEASED.has(o.status) ? "Active" : o.status === "ISSUED" && !o.buyer_accepted_at ? "Waiting on You" : "Waiting on Provider";
     const mine = slice === "Approve Delivery" || (o.status === "ISSUED" && !o.buyer_accepted_at);
     rows.push({ key: `o-${o.id}`, type: "Order", what: o.description || "Order", number: o.order_number, who: who(o.provider_person_id), status: slice, tone: slice === "Active" || slice === "Completed" ? "ok" : "pend", next: mine ? (slice === "Approve Delivery" ? "Approve the delivery" : "Review and accept") : slice === "Waiting on Provider" ? "Provider accepts" : "—", waitingOnYou: mine, waitingOn: mine ? "You" : slice === "Waiting on Provider" ? who(o.provider_person_id) : "—", amount: usd(o.not_to_exceed_cents), updatedAt: o.updated_at.toISOString(), href: `/orders/${o.id}`, donut: "orders", slice, done: slice === "Completed" });
   }
@@ -58,7 +58,7 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
       await connectDonut(viewer.userId, personId),
       { key: "jobs", title: "Jobs", sub: "Hire", slices: slicesFrom(rows, "jobs", [{ label: "Draft", color: C.grey, mine: true }, { label: "Active", color: C.ink }, { label: "Comparing", color: C.steel, mine: true }, { label: "Request to Hire", color: C.pendSoft }, { label: "On Hold", color: C.grey }, { label: "Filled", color: C.ok }, { label: "Closed", color: "#c9cddc" }]) },
       { key: "requests", title: "Requests", sub: "Approval before an Order", slices: slicesFrom(rows, "requests", [{ label: "Pending Approval", color: C.pend }, { label: "Waiting on ERP", color: C.pendSoft }, { label: "Approved", color: C.ok }, { label: "Declined", color: C.no }]) },
-      { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "Waiting on Provider", color: C.pend }, { label: "Active", color: C.ok }, { label: "Approve Delivery", color: C.no, mine: true }, { label: "Completed", color: C.okSoft }]) },
+      { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "Waiting on You", color: C.pend, mine: true }, { label: "Waiting on Provider", color: C.pendSoft }, { label: "Active", color: C.ok }, { label: "Approve Delivery", color: C.no, mine: true }, { label: "Completed", color: C.okSoft }]) },
     ],
     rows,
     filters: [["active", "Active"], ["mine", "Waiting on Me"], ["Job", "Jobs"], ["Request", "Requests"], ["Order", "Orders"], ["closed", "Closed"]],
