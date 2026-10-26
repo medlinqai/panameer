@@ -5,7 +5,8 @@ import { ownedProviderProfile } from "@/lib/access";
 import { WorkFeed } from "@/components/home/WorkFeed";
 import { getWorkFeed, WORK_FEED_TABS, type WorkFeedTab } from "@/lib/work-feed";
 import { workFilterDefs, type WorkFilters } from "@/lib/work-filters";
-import { FindJobsFilters, JobsInterviews, JobsOverview, JobsTests } from "@/components/work/JobsAppViews";
+import { redirect } from "next/navigation";
+import { FindJobsFilters } from "@/components/work/JobsAppViews";
 
 export const metadata = { title: "Find Work · Panameer" };
 
@@ -37,10 +38,13 @@ export default async function FindWorkPage({
     </p>
   ) : null;
 
-  // RA-E006: no tab = the JOBS Overview; Interviews and Tests are their own views.
-  if (profile && !sp.tab && !query && (!Object.keys(sp).length || sp.view)) return <>{notLive}<JobsOverview personId={profile.person_id} view={sp.view ?? null} /></>;
-  if (profile && sp.tab === "interviews") return <JobsInterviews personId={profile.person_id} userId={viewer!.userId} view={sp.view ?? null} show={sp.show ?? null} date={sp.date ?? null} />;
-  if (profile && sp.tab === "tests") return <JobsTests personId={profile.person_id} slice={sp.slice} />;
+  // WK-E003: the old Sell tabs moved into Work — their URLs keep working.
+  const keep = (extra: Record<string, string | undefined>) => { const q = new URLSearchParams(Object.entries(extra).filter((e): e is [string, string] => !!e[1])).toString(); return q ? `?${q}` : ""; };
+  if (!sp.tab && !query && (!Object.keys(sp).length || sp.view)) redirect("/work/home");
+  if (sp.tab === "interviews") redirect(`/work/interviews${keep({ view: sp.view, show: sp.show, date: sp.date })}`);
+  if (sp.tab === "tests") redirect(`/work/interviews${keep({ stage: "tests", slice: sp.slice })}`);
+  if (sp.tab === "invitations") redirect("/work/jobs?stage=They%20Requested");
+  if (sp.tab === "proposals") redirect("/work/jobs?stage=You%20Applied");
 
   const cards = await getWorkFeed({
     tab,

@@ -2,22 +2,24 @@ import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { ensureDefaultRates } from "@/lib/build-catalog";
 import { catalogHome } from "@/lib/catalog-home";
-import { CatalogTabs } from "@/components/catalog/CatalogTabs";
+import { AppCrumb, AlsoIn } from "@/components/home/AppNav";
+import { ServicesSection, ProductsSection } from "@/components/catalog/CatalogSections";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "My Catalog · Panameer" };
 
 const K = "text-[11px] font-bold tracking-[0.14em]";
 
-// MC-E003: My Catalog › Home (mockup B).
-export default async function Page() {
+// MC-E003 / WK-E003: My Catalog — overview, then Services and Service Products as sections (no tabs).
+export default async function Page({ searchParams }: { searchParams: Promise<{ edit?: string; type?: string }> }) {
+  const { edit, type } = await searchParams;
   const viewer = await guardPage("canProvideServices");
   await ensureDefaultRates(viewer).catch(() => null);
   const h = await catalogHome(viewer);
   const done = h.steps.filter((s) => s.done).length;
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl" data-catalog-home>
-      <CatalogTabs current="home" />
+      <AppCrumb app="Work" href="/work/home" page="My Catalog" />
       {h.eyebrow && <p className={`${K} text-magenta`}>{h.eyebrow}</p>}
       <h1 className="mt-2 text-[28px] font-extrabold">Your Catalog</h1>
       <p className="max-w-[760px] text-[14px] leading-relaxed text-ink-2">The rates for the services you offer and the prices for the service products you provide.</p>
@@ -58,11 +60,11 @@ export default async function Page() {
       <div className="mt-7 flex items-baseline justify-between border-t border-line pt-4"><h2 className="text-[17px] font-bold">What&apos;s Live</h2></div>
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         <section className="border border-line p-3.5" data-tile="services">
-          <h3 className="mb-2 flex justify-between text-[14px] font-bold">Services <Link href="/catalog/services" className="text-[12px] text-magenta-dark underline">Edit</Link></h3>
+          <h3 className="mb-2 flex justify-between text-[14px] font-bold">Services <Link href="#services" className="text-[12px] text-magenta-dark underline">Edit</Link></h3>
           <ul className="text-[13px]">{h.rates.map((r) => <li key={r.name} className="flex justify-between gap-2 border-t border-[#ECEEF4] py-1.5"><span>{r.name}</span><span className={r.line === "Off" ? "text-ink-3" : ""}>{r.line}</span></li>)}</ul>
         </section>
         <section className="border border-line p-3.5" data-tile="products">
-          <h3 className="mb-2 flex justify-between text-[14px] font-bold">Service Products <Link href="/catalog/products#create" className="text-[12px] text-magenta-dark underline">Add</Link></h3>
+          <h3 className="mb-2 flex justify-between text-[14px] font-bold">Service Products <Link href="#products" className="text-[12px] text-magenta-dark underline">Add</Link></h3>
           {h.products.length ? (
             <ul className="text-[13px]">{h.products.slice(0, 5).map((x) => <li key={x.id} className="flex justify-between gap-2 border-t border-[#ECEEF4] py-1.5"><span className="truncate">{x.title}</span><span className={x.live ? "" : "text-ink-3"}>{x.live ? x.price : "Draft"}</span></li>)}</ul>
           ) : (
@@ -70,13 +72,16 @@ export default async function Page() {
           )}
         </section>
         <section className="border border-line p-3.5" data-tile="estimates">
-          <h3 className="mb-2 flex justify-between text-[14px] font-bold">Estimates <Link href="/catalog/estimates" className="text-[12px] text-magenta-dark underline">Open</Link></h3>
+          <h3 className="mb-2 flex justify-between text-[14px] font-bold">Estimates <Link href="/work/estimates" className="text-[12px] text-magenta-dark underline">Open</Link></h3>
           <ul className="text-[13px]">
             {([["Received", h.estimates.received], ["Sent", h.estimates.sent], ["Accepted", h.estimates.accepted]] as const).map(([l, n]) => <li key={l} className="flex justify-between border-t border-[#ECEEF4] py-1.5"><span>{l}</span><span>{n}</span></li>)}
           </ul>
         </section>
       </div>
       <p className="mt-6 border-l-2 border-magenta py-1.5 pl-3 text-[13.5px] text-ink-2"><b className="text-ink">Skills</b> tell buyers what you do; your catalog tells them what it costs. Edit skills in <Link href="/profile/edit/skills" className="font-bold text-magenta-dark underline">My Profile › Skills</Link>.</p>
+      <ServicesSection viewer={viewer} />
+      <ProductsSection viewer={viewer} edit={edit} type={type} />
+      <AlsoIn app="Work" links={[["Jobs for You", "/work/jobs"], ["Estimates", "/work/estimates"], ["Interviews & Tests", "/work/interviews"]]} />
     </div>
   );
 }

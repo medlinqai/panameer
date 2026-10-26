@@ -86,7 +86,7 @@ export default async function Page({
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <BackLink href="/find-work" label="Jobs" />
+      <BackLink href="/work/home" label="Work" />
 
       <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
         {detail.title}

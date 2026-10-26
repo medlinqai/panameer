@@ -1,11 +1,6 @@
-import { guardPage } from "@/lib/guard";
-import { CatalogTabs } from "@/components/catalog/CatalogTabs";
-import { EstimatesBody } from "@/components/catalog/EstimatesBody";
+import { redirect } from "next/navigation";
 
-export const metadata = { title: "Estimates · My Catalog · Panameer" };
-export const dynamic = "force-dynamic";
-
-export default async function Page() {
-  const viewer = await guardPage("canProvideServices");
-  return <EstimatesBody viewer={viewer} side="seller" tabs={<CatalogTabs current="estimates" />} />;
+// WK-E003: Estimates moved to Work › Estimates.
+export default function Page() {
+  redirect("/work/estimates");
 }
