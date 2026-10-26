@@ -5,6 +5,8 @@ import { JobStrip, JobTabs } from "@/components/hire/JobFrame";
 import { jobStrip, type JobTab } from "@/lib/job-strip";
 import { JOB_STAGE_LABEL, JOB_STAGE_STATE, jobStages } from "@/lib/job-stage";
 import { REQUEST_STATUS_LABEL, requestStatus } from "@/lib/request-status";
+import { erpWaitDay } from "@/lib/request-approval";
+import { RequestApproval } from "@/components/hire/RequestApproval";
 import { Fact, GREEN, MUTED, ROW_RULE, Section, BTN_OUT, StatePill } from "@/components/hire/HireUI";
 import { ProposalActions } from "@/components/work/ProposalActions";
 import { certificationTestForSkill } from "@/lib/certification-tests";
@@ -45,7 +47,7 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string; amend?: string }>;
+  searchParams: Promise<{ tab?: string; amend?: string; po?: string }>;
 }) {
   const sp = await searchParams;
   await guardPage("canHireTalent");
@@ -113,6 +115,7 @@ export default async function Page({
   // JS-E001: one buyer-facing status and the origin tag (From ERP · Compare Providers · Hire Directly).
   const stageInfo = (await jobStages([detail.id])).get(detail.id);
   const stage = stageInfo?.stage ?? "ACTIVE";
+  const rq = await prisma.workRequest.findFirst({ where: { job_id: detail.id, OR: [{ lines: { some: { provider_person_id: { not: null } } } }, { erp_returned_at: { not: null } }] }, orderBy: { created_at: "desc" }, select: { id: true, status: true, erp_connection_id: true, erp_returned_at: true, approval_status: true, approval_channel: true, declined_reason: true, erp_wait_started_at: true, erp_wait_reset_at: true, submitted_at: true } });
   const origin = stageInfo?.origin ?? (strip?.event ? "Compare Providers" : strip?.direct ? "Hire Directly" : null);
   // Scott 10-23: step 4, Ask Questions — the sets sent on this job and who has answered.
   const qSets = await prisma.questionSet.findMany({ where: { job_id: detail.id }, orderBy: { created_at: "desc" }, select: { id: true, questions: true, due_at: true, created_at: true, answers: { select: { provider_person_id: true, submitted_at: true } } } });
@@ -253,7 +256,14 @@ export default async function Page({
                 <h2 className="mt-1 text-[18px] font-extrabold">{sec.header.workRequest ?? "Created on Request to Hire"}</h2>
                 {sec.jobNumber && <p className="mt-0.5 text-[13px] text-state-inactive" data-for-job>For Job <Link href={`/work-requests/${detail.id}`} className="font-semibold text-ink">{sec.jobNumber}</Link></p>}
                 {sec.awardRows.map((a, k) => <p key={k} className="mt-2 text-[14px]"><b>{a.who.replace(/^Provider /, "")}</b><span className="text-state-inactive"> · {a.rate != null ? `${formatCents(a.rate)}${a.uom === "HOUR" ? "/hr" : ""} · ` : ""}{a.when}</span></p>)}
-                <p className="mt-2 text-[14px]">Approval: {sec.approval?.at ? <b className="text-state-accepted">Auto-approved · {sec.approval.at}</b> : <span className="text-state-pending">Waiting</span>}</p>
+                {(() => {
+                  const rs = rq ? requestStatus(rq) : null;
+                  return <>
+                    <p className="mt-2 text-[14px]" data-request-status>Status: {rs ? <b className={rs === "APPROVED" ? "text-state-accepted" : rs === "DECLINED" ? "text-state-declined" : "text-state-pending"}>{REQUEST_STATUS_LABEL[rs]}</b> : <span className="text-state-inactive">Not Requested Yet</span>}{rs === "APPROVED" && sec.approval?.at ? <span className="text-state-inactive"> · {sec.approval.at}</span> : null}</p>
+                    {rs === "DECLINED" && rq?.declined_reason && <p className="mt-1 text-[13px] text-state-inactive">{rq.declined_reason}</p>}
+                    {rs === "WAITING_ERP" && rq && <RequestApproval id={rq.id} day={erpWaitDay(rq)} canReset={!rq.erp_wait_reset_at} focus={sp.po} />}
+                  </>;
+                })()}
                 {awarded && <div className="mt-3"><CreateOrder workRequestId={detail.id} description={detail.workRequestDescription} /></div>}
               </section>
               {orders.map((wo) => (

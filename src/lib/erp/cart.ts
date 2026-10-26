@@ -175,7 +175,7 @@ export async function returnCart(s: PunchoutSessionLive): Promise<{ url: string;
   const xml = orderMessageXml(s, lines);
   const pid = /payloadID="([^"]+)"/.exec(xml)?.[1] ?? `pom-${Date.now()}`;
   await prisma.$transaction([
-    prisma.workRequest.update({ where: { id: s.work_request_id! }, data: { status: "PENDING_APPROVAL", submitted_at: new Date(), erp_returned_at: new Date() } }),
+    prisma.workRequest.update({ where: { id: s.work_request_id! }, data: { status: "PENDING_APPROVAL", submitted_at: new Date(), erp_returned_at: new Date(), approval_status: "PENDING", approval_channel: "ERP", erp_wait_started_at: new Date() } }),
     prisma.punchoutSession.update({ where: { id: s.id }, data: { returned_at: new Date() } }),
   ]);
   await logMessage({ connectionId: s.connection_id, direction: "OUT", type: "PUNCHOUT_ORDER", payloadId: pid, status: "PROCESSED", body: xml, workRequestId: s.work_request_id, response: "Posted by the requester's browser to BrowserFormPost" });

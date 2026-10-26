@@ -64,7 +64,9 @@ export async function actionsFor(rows: Row[]): Promise<Record<string, RowAction>
 
 /** HP-E002: the buttons on a work row (undefined = not a work row). */
 function workAction(r: Row): RowAction | undefined {
-  if (r.resolved) return ["work.invited_to_propose", "work.sourcing_event_invited", "work.order_offered", "work.order_created", "buyer.sourcing.notify_others", "work.interview_requested", "work.questions_asked"].includes(r.eventKey) ? null : undefined;
+  if (r.resolved) return ["work.invited_to_propose", "work.sourcing_event_invited", "work.order_offered", "work.order_created", "buyer.sourcing.notify_others", "work.interview_requested", "work.questions_asked", "work.request_po_check"].includes(r.eventKey) ? null : undefined;
+  // JR-E004: No PO Yet — Still Waiting · It Was Declined, both on the Request.
+  if (r.eventKey === "work.request_po_check" && r.href) return { kind: "work", primary: { label: "Still Waiting", href: `${r.href}&po=wait` }, secondary: { label: "It Was Declined", href: `${r.href}&po=declined` } };
   if (r.eventKey === "work.invited_to_propose" || r.eventKey === "work.sourcing_event_invited") {
     const jobId = r.dedupeKey?.split(":")[1];
     if (!jobId) return undefined;

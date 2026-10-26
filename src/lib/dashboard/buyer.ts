@@ -1,3 +1,5 @@
+import { REQUEST_STATUS_LABEL, requestStatus } from "@/lib/request-status";
+import { erpWaitDay } from "@/lib/request-approval";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { jobStages, JOB_STAGE_LABEL, type JobStage } from "@/lib/job-stage";
@@ -10,7 +12,7 @@ const DONE = new Set(["CLOSED", "FINALLY_CLOSED"]);
 export async function buyerDashboard(viewer: Viewer, personId: string): Promise<DashData> {
   const [jobs, wrs, orders] = await Promise.all([
     prisma.job.findMany({ where: { buyer_person_id: personId, kind: "JOB", status: { not: "CANCELED" } }, orderBy: { updated_at: "desc" }, take: 200, select: { id: true, title: true, job_number: true, updated_at: true, budget_min_cents: true, budget_max_cents: true, budget_type: true } }),
-    prisma.workRequest.findMany({ where: { buyer_person_id: personId, status: { not: "INCOMPLETE" } }, orderBy: { updated_at: "desc" }, take: 200, select: { id: true, wr_number: true, title: true, description: true, status: true, source: true, erp_returned_at: true, job_id: true, updated_at: true, lines: { select: { unit_price_cents: true, quantity: true, amount_cents: true } } } }),
+    prisma.workRequest.findMany({ where: { buyer_person_id: personId, status: { not: "INCOMPLETE" } }, orderBy: { updated_at: "desc" }, take: 200, select: { id: true, wr_number: true, title: true, description: true, status: true, source: true, erp_connection_id: true, erp_returned_at: true, approval_status: true, approval_channel: true, erp_wait_started_at: true, erp_wait_reset_at: true, submitted_at: true, job_id: true, updated_at: true, lines: { select: { unit_price_cents: true, quantity: true, amount_cents: true } } } }),
     prisma.workOrder.findMany({ where: { buyer_person_id: personId, status: { notIn: ["CANCELLED", "DRAFT"] } }, orderBy: { updated_at: "desc" }, take: 200, select: { id: true, order_number: true, description: true, status: true, provider_accepted_at: true, buyer_accepted_at: true, not_to_exceed_cents: true, provider_person_id: true, created_at: true, updated_at: true, workRequest: { select: { source: true } } } }),
   ]);
   const cart = await prisma.workRequestLine.count({ where: { workRequest: { buyer_person_id: personId, source: "SHOP", status: "INCOMPLETE" } } });
@@ -32,10 +34,11 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
     rows.push({ key: `j-${j.id}`, type: "Job", what: j.title || "Untitled job", number: j.job_number, who: "—", status: JOB_STAGE_LABEL[st], tone: JOB_TONE[st], next: JOB_NEXT[st][0], waitingOnYou: JOB_NEXT[st][1], waitingOn: JOB_NEXT[st][1] ? "You" : "—", amount: range, updatedAt: j.updated_at.toISOString(), href: `/work-requests/${j.id}`, donut: "jobs", slice: JOB_STAGE_LABEL[st] });
   }
   for (const w of wrs.filter((w) => w.source !== "SHOP")) {
-    const slice = w.status === "REJECTED" ? "Declined" : w.status === "PENDING_APPROVAL" ? "Waiting on Approval" : w.erp_returned_at && !["ORDERED", "APPROVED"].includes(w.status) ? "Waiting on ERP" : ["APPROVED", "ORDERED"].includes(w.status) ? "Approved" : null;
+    const rs = requestStatus(w);
+    const slice = rs ? REQUEST_STATUS_LABEL[rs] : null;
     if (!slice) continue;
     const total = w.lines.reduce((n, l) => n + (l.amount_cents ?? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0))), 0);
-    rows.push({ key: `r-${w.id}`, type: "Request", what: w.title || w.description || "Request", number: w.wr_number, who: "—", status: slice, tone: slice === "Approved" ? "ok" : slice === "Declined" ? "no" : "pend", next: slice === "Waiting on Approval" ? "Approval" : slice === "Waiting on ERP" ? "PO from your ERP" : "—", waitingOnYou: false, waitingOn: slice === "Waiting on Approval" ? "Approver" : slice === "Waiting on ERP" ? "Your ERP" : "—", amount: usd(total), updatedAt: w.updated_at.toISOString(), href: w.job_id ? `/work-requests/${w.job_id}?tab=work-order` : "/orders", donut: "requests", slice });
+    rows.push({ key: `r-${w.id}`, type: "Request", what: w.title || w.description || "Request", number: w.wr_number, who: "—", status: slice, tone: slice === "Approved" ? "ok" : slice === "Declined" ? "no" : "pend", next: slice === "Pending Approval" ? "Approval" : slice === "Waiting on ERP" ? `PO from your ERP · Day ${erpWaitDay(w) ?? 1} of 60` : "—", waitingOnYou: false, waitingOn: slice === "Pending Approval" ? "Approver" : slice === "Waiting on ERP" ? "Your ERP" : "—", amount: usd(total), updatedAt: w.updated_at.toISOString(), href: w.job_id ? `/work-requests/${w.job_id}?tab=work-order` : "/orders", donut: "requests", slice });
   }
   for (const o of orders) {
     const shop = o.workRequest?.source === "SHOP";
@@ -53,7 +56,7 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
     summary: `${open} job${open === 1 ? "" : "s"} open · ${active} Order${active === 1 ? "" : "s"} active · ${usd(committed)} committed this quarter`,
     donuts: [
       { key: "jobs", title: "Jobs", sub: "Hire", slices: slicesFrom(rows, "jobs", [{ label: "Draft", color: C.grey, mine: true }, { label: "Active", color: C.ink }, { label: "Comparing", color: C.steel, mine: true }, { label: "Request to Hire", color: C.pendSoft }, { label: "On Hold", color: C.grey }, { label: "Filled", color: C.ok }, { label: "Closed", color: "#c9cddc" }]) },
-      { key: "requests", title: "Requests", sub: "Approval before an Order", slices: slicesFrom(rows, "requests", [{ label: "Waiting on Approval", color: C.pend }, { label: "Waiting on ERP", color: C.pendSoft }, { label: "Approved", color: C.ok }, { label: "Declined", color: C.no }]) },
+      { key: "requests", title: "Requests", sub: "Approval before an Order", slices: slicesFrom(rows, "requests", [{ label: "Pending Approval", color: C.pend }, { label: "Waiting on ERP", color: C.pendSoft }, { label: "Approved", color: C.ok }, { label: "Declined", color: C.no }]) },
       { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "Waiting on Provider", color: C.pend }, { label: "Active", color: C.ok }, { label: "Approve Delivery", color: C.no, mine: true }, { label: "Completed", color: C.okSoft }]) },
       { key: "shop", title: "Shop", sub: "Service products", slices: [{ label: "In Cart", n: cart, color: C.grey, mine: true }, ...shopSlices] },
     ],

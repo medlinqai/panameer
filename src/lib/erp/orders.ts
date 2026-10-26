@@ -126,7 +126,8 @@ export async function createOrders(connectionId: string, pAccountId: string, poN
     // HP-E007: an ERP-origin award completes when the PO comes back — the Sourcing Event is Awarded with this Work Order.
     if (wr.job_id) await (await import("@/lib/sourcing-events")).markAwarded(wr.job_id, providerId, order.id);
   }
-  await prisma.workRequest.updateMany({ where: { id: { in: wrIds } }, data: { status: "ORDERED", approved_at: now } });
+  // JR-E004: a PO = Approved, even after a decline (a late PO still creates the Order).
+  await prisma.workRequest.updateMany({ where: { id: { in: wrIds } }, data: { status: "ORDERED", approved_at: now, approval_status: "APPROVED", approval_channel: "ERP", declined_reason: null } });
   return { workRequestId: wrIds[0] ?? null, orderIds };
 }
 

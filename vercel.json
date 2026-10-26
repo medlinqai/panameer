@@ -9,6 +9,10 @@
       "schedule": "0 15 * * *"
     },
     {
+      "path": "/api/cron/po-wait",
+      "schedule": "0 13 * * *"
+    },
+    {
       "path": "/api/cron/join-reminders",
       "schedule": "0 14 * * *"
     }

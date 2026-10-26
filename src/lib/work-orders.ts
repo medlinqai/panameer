@@ -70,7 +70,7 @@ export async function submitWorkRequest(
 
 /** WA-E001: the approval hook. No approval rules yet, so a submitted Work Request is approved at once — routing goes here later. */
 export async function approveWorkRequest(workRequestId: string) {
-  await prisma.workRequest.update({ where: { id: workRequestId }, data: { status: "APPROVED", approved_at: new Date(), approval_note: "Auto-approved (no approval rules)" } });
+  await prisma.workRequest.update({ where: { id: workRequestId }, data: { status: "APPROVED", approved_at: new Date(), approval_note: "Auto-approved (no approval rules)", approval_status: "APPROVED", approval_channel: "PANAMEER" } });
 }
 
 async function buildWorkOrders(
