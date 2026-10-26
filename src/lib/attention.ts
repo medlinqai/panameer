@@ -232,7 +232,7 @@ async function countCoursesToWatch(userId: string): Promise<number> {
 export type AppKey = "request" | "shop" | "estimate" | "order" | "settlement" | "payment" | "connect" | "learn";
 /** JR-E006: one line per thing to act on — title + number, detail (P-number until the Order is released, amount, start), due, its own button. */
 export type AttentionLine = { key: string; what: string; detail: string; dueAt: string | null; href: string; action: string };
-export type AttentionItem = { id: string; what: string; app: AppKey; appLabel: string; due: string | null; dueAt: string | null; href: string; action: string; /** Scott 10-23: which job(s) — "Oracle Application Manager + 2 more". */ sub?: string; jobIds?: string[]; /** JR-E006 */ title?: string; n?: number; lines?: AttentionLine[] };
+export type AttentionItem = { id: string; what: string; app: AppKey; appLabel: string; due: string | null; dueAt: string | null; href: string; action: string; /** Scott 10-23: which job(s) — "Oracle Application Manager + 2 more". */ sub?: string; jobIds?: string[]; /** JR-E006 */ title?: string; n?: number; lines?: AttentionLine[]; /** HT-E006: sort tier override (Profile / Set-Up / Connect follow the stage). */ tier?: number };
 export type AppCounts = {
   side: "buyer" | "provider";
   request: { total: number; jobs: number; requests: number; interviews: number; tests: number };
@@ -294,6 +294,34 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     const who = side2 === "buyer" ? await whoOf(os.map((o) => o.provider_person_id)) : null;
     return os.map((o) => ({ key: o.id, what: `${o.order_number} · ${o.description || "Order"}`, detail: [who ? who(o.provider_person_id) : null, money(o.not_to_exceed_cents), startText(o.period_start)].filter(Boolean).join(" · "), dueAt: null, href: `/orders/${o.id}`, action: "Review" }));
   };
+  // HT-E006: Profile (seller) or Set-Up (buyer) and Connect — high before the first released Order, below Orders after.
+  const stageGroups = async () => {
+    const { dashView, profileChecklist, accountChecklist } = await import("@/lib/dashboard/views");
+    const { firstOrder } = await dashView(id, side);
+    const tierOf = firstOrder ? 3 : 1.5;
+    const list = side === "buyer" ? await accountChecklist(id) : await profileChecklist(id);
+    const missing = list.filter((i) => i.n === 0);
+    const groupName = side === "buyer" ? "Set-Up" : "Profile";
+    if (missing.length) items.push({ id: `setup:${groupName}`, title: groupName, n: missing.length, what: groupName, app: "connect", appLabel: groupName, due: null, dueAt: null, href: side === "buyer" ? "/company" : "/profile", action: "Open", tier: tierOf,
+      lines: missing.map((i) => ({ key: i.label, what: i.action === "Ask" ? "Ask for a Recommendation" : i.action === "Connect" ? `Connect Your ${i.label.replace(" Connection", "")}` : `Add Your ${i.label}`, detail: i.why, dueAt: null, href: i.href, action: i.action })) });
+    const u = await prisma.user.findUnique({ where: { id: viewer.userId }, select: { email: true } });
+    const [conns, mentors, recs, groups] = await Promise.all([
+      prisma.connection.findMany({ where: { to_user_id: viewer.userId, status: "PENDING", kind: "COLLEAGUE" }, orderBy: { created_at: "desc" }, take: 20, select: { id: true, from_user_id: true, created_at: true } }),
+      prisma.connection.findMany({ where: { to_user_id: viewer.userId, status: "PENDING", kind: "MENTOR" }, orderBy: { created_at: "desc" }, take: 20, select: { id: true, from_user_id: true, created_at: true } }),
+      u?.email ? prisma.recommendationRequest.findMany({ where: { contact_email: { equals: u.email, mode: "insensitive" }, status: "SENT", expires_at: { gt: now } }, take: 20, select: { id: true, sent_at: true, providerProfile: { select: { person: { select: { first_name: true, last_name: true } } } } } }) : [],
+      prisma.groupMembership.findMany({ where: { person_id: id, route: "INVITED", state: "PENDING" }, take: 20, select: { id: true, board: { select: { slug: true, title: true } } } }),
+    ]);
+    const people = new Map((await prisma.person.findMany({ where: { user_id: { in: [...conns, ...mentors].map((c) => c.from_user_id) } }, select: { user_id: true, first_name: true, last_name: true, title: true, company: { select: { name: true } } } })).map((p) => [p.user_id, p]));
+    const nameOf = (uid: string) => { const p = people.get(uid); return p ? `${p.first_name} ${p.last_name}`.trim() : "Someone"; };
+    const ago = (d: Date) => { const n = Math.floor((now.getTime() - d.getTime()) / DAY_MS); return n <= 0 ? "Today" : `${n} day${n === 1 ? "" : "s"} ago`; };
+    const lines: AttentionLine[] = [
+      ...conns.map((c) => { const p = people.get(c.from_user_id); return { key: c.id, what: `${nameOf(c.from_user_id)} Wants to Connect`, detail: [p?.title, p?.company?.name].filter(Boolean).join(" · "), dueAt: null, href: "/connect/connections", action: "Accept" }; }),
+      ...recs.map((r) => ({ key: r.id, what: `Recommend ${`${r.providerProfile.person.first_name} ${r.providerProfile.person.last_name}`.trim()}`, detail: `Asked ${ago(r.sent_at)}`, dueAt: null, href: "/connect/recommendations", action: "Write" })),
+      ...mentors.map((c) => ({ key: c.id, what: `${nameOf(c.from_user_id)} Asked You to Mentor Them`, detail: `Asked ${ago(c.created_at)}`, dueAt: null, href: "/connect/mentors", action: "Reply" })),
+      ...groups.map((g) => ({ key: g.id, what: `Join ${g.board.title}`, detail: "Group invitation", dueAt: null, href: "/connect/groups", action: "Join" })),
+    ];
+    if (lines.length) items.push({ id: "connect:stage", title: "Connect", n: lines.length, what: "Connect", app: "connect", appLabel: "Connect", due: null, dueAt: null, href: "/connect/connections", action: "Open", tier: tierOf + 0.1, lines });
+  };
   const ORDER_SEL = { id: true, order_number: true, description: true, not_to_exceed_cents: true, period_start: true, provider_person_id: true, buyer_person_id: true, created_at: true } as const;
   // Name the job(s) each item is about — one query for all of them.
   const titled = async () => {
@@ -342,7 +370,8 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     add("settlement", settle, "Settlements to Approve", APP_HOME.buyer.settlement, "Approve");
     add("payment", pay, "Payments Due", APP_HOME.buyer.payment, "Pay");
     add("connect", connect, "Unread Messages", "/messages", "Read");
-    await titled();
+    await stageGroups();
+  await titled();
     // PI-E007: punched in → the punch-in cart comes first.
     const p = await (await import("@/lib/erp/punchin-live")).currentPunchin().catch(() => null);
     if (p?.state === "live") items.unshift({ id: "punchin:cart", what: `Punch-in Cart · ${p.count} item${p.count === 1 ? "" : "s"}`, app: "shop", appLabel: APP_LABEL.shop, due: null, dueAt: null, href: "/shop?tab=cart", action: `Return to ${p.erpName}` });
@@ -382,6 +411,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   add("settlement", drafts, "Payment Requests to Submit", APP_HOME.provider.settlement, "Submit");
   add("payment", paidIn, "Payments on the Way", APP_HOME.provider.payment, "See");
   add("connect", connect, "Unread Messages", "/messages", "Read");
+  await stageGroups();
   await titled();
   return { side, request: { total: requests + interviews + tests + questions, jobs: 0, requests, interviews: interviews + questions, tests }, shop, estimate, order: { total: order }, settlement: { total: drafts }, payment: { total: paidIn }, connect: { total: connect }, learn: { total: learn }, items };
 }

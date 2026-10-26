@@ -8,6 +8,7 @@ import type { AttentionItem } from "@/lib/attention";
 const HOUR = 3_600_000;
 const MONEY = new Set(["order", "settlement", "payment"]);
 function tier(i: AttentionItem, now: number): number {
+  if (i.tier != null) return i.tier;
   const ms = i.dueAt ? new Date(i.dueAt).getTime() - now : null;
   if (/today/i.test(i.what) || (ms != null && ms < HOUR)) return 0; // happening now or today
   if (ms != null) return 1; // has a due date
