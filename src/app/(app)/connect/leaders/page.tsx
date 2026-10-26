@@ -7,10 +7,6 @@ import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { connectTabs } from "@/lib/connect-tabs";
-import { unreadCount } from "@/lib/messages";
 import {
   BOARD_MIN_SCORERS,
   GROWTH_WEIGHTS,
@@ -51,7 +47,6 @@ export default async function LeadersPage({
   const { tab: rawTab } = await searchParams;
   const tab = TABS.find((t) => t.key === rawTab) ?? TABS[0];
 
-  const unread = await unreadCount(viewer);
   const [me, board, network, monthBoard] = await Promise.all([
     growthScore(personId, "month"),
     growthBoard(tab.window),
@@ -80,14 +75,6 @@ export default async function LeadersPage({
   return (
     <>
       {}
-      {}
-      <PageTabs
-        wrap
-        eyebrow="CONNECT"
-        sequence={tabSequenceFor("/connect")}
-        tabs={connectTabs(viewer, unread)}
-        current="/connect/leaders"
-      />
       <div className="mx-auto w-full max-w-[1010px]">
         <AccountHero
           testId="leaders-hero"

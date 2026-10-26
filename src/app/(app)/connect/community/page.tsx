@@ -3,9 +3,6 @@ import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { connectTabs } from "@/lib/connect-tabs";
 import { unreadCount } from "@/lib/messages";
 import { Avatar } from "@/components/Avatar";
 import { ConnectControls } from "@/components/community/ConnectControls";
@@ -38,7 +35,6 @@ export default async function CommunityPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <PageTabs wrap eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/connect/community" />
       <div className="mx-auto max-w-5xl">
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">Community</h1>
         {/* Scott 10-17 (like LinkedIn): Community is people you're not connected to yet — say so, and link to your connections. */}

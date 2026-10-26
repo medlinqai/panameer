@@ -2,10 +2,6 @@ import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { connectTabs } from "@/lib/connect-tabs";
-import { unreadCount } from "@/lib/messages";
 import { displayFirstName } from "@/lib/display";
 import { connectLines, type AttentionItem } from "@/lib/attention";
 import { GROWTH_WEIGHTS, growthBoard, growthScore } from "@/lib/growth-score";
@@ -14,7 +10,7 @@ import { C, type Donut } from "@/lib/dashboard/types";
 
 export const metadata = { title: "Connect · Panameer" };
 
-// HT-E007: Connect › Home — At a Glance (Connections · Recommendations · Mentors · Groups) beside Things You Need to Do, then How You Rank.
+// HT-E007 / WK-E004: Connect › Home (no tab row) — At a Glance (Connections · Recommendations · Mentors · Groups) beside Things You Need to Do, then How You Rank.
 export default async function ConnectHome() {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
@@ -72,12 +68,18 @@ export default async function ConnectHome() {
   const first = displayFirstName(person.first_name);
   return (
     <>
-      <PageTabs wrap eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, await unreadCount(viewer))} current="/connect/home" />
       <HubHome
         eyebrow="CONNECT" title={`Your Network${first ? `, ${first}` : ""}`}
         summary={`${connected} connection${connected === 1 ? "" : "s"} · ${waiting} ${waiting === 1 ? "person" : "people"} waiting on you · ${mine && me.points > 0 ? `rank #${mine.rank} this month` : "not ranked yet this month"}`}
         primary={{ label: "Invite to Panameer", href: "/connect/invite" }} secondary={{ label: "Find People", href: "/connect/community" }}
         donuts={donuts} todo={todo} section2Title="How You Rank" section2Right="This Month"
+        actions={[
+          { label: "Invite to Panameer", detail: `Every colleague who joins adds ${GROWTH_WEIGHTS.JOINED} points`, href: "/connect/invite" },
+          { label: "Find People", detail: "Buyers and providers you're not connected to yet", href: "/connect/community" },
+          { label: "Ask for a Recommendation", detail: "Profiles with one get picked more often", href: "/connect/recommendations" },
+          { label: "Join a Group", detail: "Talk shop with people in your field", href: "/connect/groups" },
+          { label: "See the Leaders", detail: "Who's growing the community this month", href: "/connect/leaders" },
+        ]}
         section2={<>
           <RankList eyebrow="LEADERS" title="Who's Growing the Community" rows={board.slice(0, 3).map((r) => ({ rank: r.rank, name: r.name, photoUrl: r.photoUrl, line: `${r.invited} invited · ${r.joined} joined`, value: r.points, me: r.personId === pid }))}
             me={{ rank: mine && me.points > 0 ? mine.rank : null, name: "You", photoUrl: null, line: `${me.invited} invited · ${me.joined} joined`, value: me.points, me: true }} />

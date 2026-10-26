@@ -3,10 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { outgoingRequests } from "@/lib/connections";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { connectTabs } from "@/lib/connect-tabs";
-import { unreadCount } from "@/lib/messages";
 import { connectionsView, parseFilters, appliedChips } from "@/lib/connections-filter";
 import { getProviderFieldTree } from "@/lib/catalog";
 import { ConnectionsControls } from "@/components/community/ConnectionsControls";
@@ -23,7 +19,6 @@ import { ColleagueRoster } from "@/components/community/ColleagueRoster";
 export default async function ConnectionsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
-  const unread = viewer ? await unreadCount(viewer) : 0;
   const sp = await searchParams;
   const f = parseFilters(sp);
   const reqs = viewer ? await listRequests(viewer) : { received: [], sent: [] };
@@ -65,14 +60,6 @@ export default async function ConnectionsPage({ searchParams }: { searchParams: 
 
   return (
     <>
-      {}
-      <PageTabs
-        wrap
-        eyebrow="CONNECT"
-        sequence={tabSequenceFor("/connect")}
-        tabs={connectTabs(viewer, unread)}
-        current="/connect/connections"
-      />
       <div className="mx-auto max-w-5xl">
         <h1 className="sr-only">Connections</h1>
         <ConnectionsHero web={web} hero={hero} standing={standing} invitations={pendingCount} requests={reqs.received.length} />

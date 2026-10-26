@@ -9,11 +9,7 @@ import {
   type DiscoverTrack,
   type GroupCard,
 } from "@/lib/groups-home";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { connectTabs } from "@/lib/connect-tabs";
 import { getSessionViewer } from "@/lib/session";
-import { unreadCount } from "@/lib/messages";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { BubbleField } from "@/components/casing/BubbleField";
 import { StartGroup } from "@/components/community/StartGroup";
@@ -38,7 +34,6 @@ const TAG = "border px-1.5 text-[10.5px] font-bold tracking-[0.06em]";
 export default async function GroupsPage({ searchParams }: { searchParams: Promise<{ all?: string; view?: string; q?: string; area?: string; asked?: string }> }) {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
-  const unread = viewer ? await unreadCount(viewer) : 0;
   const sp = await searchParams;
   const view = VIEWS.some((v) => v.key === sp.view) ? sp.view! : "my";
 
@@ -78,7 +73,6 @@ export default async function GroupsPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <PageTabs wrap eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/connect/groups" />
       <div className="mx-auto w-full max-w-[1010px]">
         <AccountHero
           wide

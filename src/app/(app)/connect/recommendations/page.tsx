@@ -3,9 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile } from "@/lib/access";
 import { defaultMessage, listRecommendations } from "@/lib/recommendations";
 import { RecommendationsClient } from "@/components/console/RecommendationsClient";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { connectTabs } from "@/lib/connect-tabs";
 import { unreadCount } from "@/lib/messages";
 import { getMyCommunity } from "@/lib/connections";
 import { Avatar } from "@/components/Avatar";
@@ -34,7 +31,6 @@ export default async function RecommendationsPage() {
 
   return (
     <>
-      <PageTabs wrap eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/connect/recommendations" />
       <div className="mx-auto max-w-3xl">
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">Recommendations</h1>
         <p className="mb-5 mt-1.5 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">

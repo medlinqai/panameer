@@ -7,9 +7,6 @@ import { getSessionViewer } from "@/lib/session";
 import { getMyCommunity, type PersonCard } from "@/lib/connections";
 import { helpfulAnswersByPerson } from "@/lib/mentoring-home";
 import { getSkillAreas } from "@/lib/skill-area-store";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { connectTabs } from "@/lib/connect-tabs";
 import { unreadCount } from "@/lib/messages";
 import { AccountHero, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { Avatar } from "@/components/Avatar";
@@ -74,7 +71,6 @@ export default async function MentorsPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <PageTabs wrap eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/connect/mentors" />
       <div className="mx-auto w-full max-w-[1010px]">
         <AccountHero
           testId="mentors-hero"
