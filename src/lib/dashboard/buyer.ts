@@ -1,10 +1,10 @@
 import { REQUEST_STATUS_LABEL, requestStatus } from "@/lib/request-status";
 import { erpWaitDay } from "@/lib/request-approval";
 import { prisma } from "@/lib/prisma";
-import { connectDonut } from "@/lib/dashboard/connect";
+import { accountChecklist, dashView, getStartedDonuts } from "@/lib/dashboard/views";
 import type { Viewer } from "@/lib/access";
 import { jobStages, JOB_STAGE_LABEL, type JobStage } from "@/lib/job-stage";
-import { C, quarterStart, slicesFrom, usd, type DashData, type DashRow, type Tone } from "@/lib/dashboard/types";
+import { C, quarterStart, slicesFrom, usd, type DashData, type DashRow, type Donut, type Tone } from "@/lib/dashboard/types";
 
 // MD-E003: the buyer's Things You Need to Do — Jobs, Requests, Orders and Shop from one set of rows.
 const RELEASED = new Set(["RELEASED", "ACTIVE", "ON_HOLD"]);
@@ -52,14 +52,22 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
   const committed = orders.filter((o) => o.created_at >= q).reduce((n, o) => n + (o.not_to_exceed_cents ?? 0), 0);
   const open = rows.filter((r) => r.type === "Job" && ["Active", "Comparing", "Request to Hire"].includes(r.status)).length;
   const active = orders.filter((o) => RELEASED.has(o.status)).length;
-  return {
-    summary: `${open} job${open === 1 ? "" : "s"} open · ${active} Order${active === 1 ? "" : "s"} active · ${usd(committed)} committed this quarter`,
-    donuts: [
-      await connectDonut(viewer.userId, personId),
+  const paid = await prisma.paymentRequest.count({ where: { work_order_id: { in: orders.map((o) => o.id) }, status: "PAID" } });
+  const work: Donut[] = [
       { key: "jobs", title: "Jobs", sub: "Hire", slices: slicesFrom(rows, "jobs", [{ label: "Draft", color: C.grey, mine: true }, { label: "Active", color: C.ink }, { label: "Comparing", color: C.steel, mine: true }, { label: "Request to Hire", color: C.pendSoft }, { label: "On Hold", color: C.grey }, { label: "Filled", color: C.ok }, { label: "Closed", color: "#c9cddc" }]) },
       { key: "requests", title: "Requests", sub: "Approval before an Order", slices: slicesFrom(rows, "requests", [{ label: "Pending Approval", color: C.pend }, { label: "Waiting on ERP", color: C.pendSoft }, { label: "Approved", color: C.ok }, { label: "Declined", color: C.no }]) },
       { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "Waiting on You", color: C.pend, mine: true }, { label: "Waiting on Provider", color: C.pendSoft }, { label: "Active", color: C.ok }, { label: "Approve Delivery", color: C.no, mine: true }, { label: "Completed", color: C.okSoft }]) },
-    ],
+      { key: "payments", title: "Payments", sub: "From you", href: "/payments", slices: [{ label: "Invoices to Approve", n: toApprove.size, color: C.pend, mine: true }, { label: "Paid", n: paid, color: C.ok }] },
+  ];
+  // HT-E005: Get Started (Account · Connect · Learn · Jobs) until the first Order is released; Get Work Done after. The person's pick wins.
+  const { view } = await dashView(personId, "buyer");
+  const checklist = await accountChecklist(personId);
+  const done = checklist.filter((i) => i.n > 0).length;
+  const providers = view === "start" ? await prisma.providerProfile.count() : 0;
+  return {
+    summary: view === "start" ? `Account set-up ${done} of ${checklist.length} · ${providers.toLocaleString("en-US")} providers on Panameer` : `${open} job${open === 1 ? "" : "s"} open · ${active} Order${active === 1 ? "" : "s"} active · ${usd(committed)} committed this quarter`,
+    view, viewLabels: ["Get Started", "Get Work Done"], setupDone: done === checklist.length, checklist,
+    donuts: view === "start" ? await getStartedDonuts(viewer, personId, "buyer", work.find((d) => d.key === "jobs"), checklist) : work,
     rows,
     filters: [["active", "Active"], ["mine", "Waiting on Me"], ["Job", "Jobs"], ["Request", "Requests"], ["Order", "Orders"], ["closed", "Closed"]],
   };
