@@ -24,10 +24,10 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
   const who = (pid: string) => { const p = profiles.find((x) => x.person_id === pid); return p ? (seen.has(pid) ? `${p.person.first_name} ${p.person.last_name}`.trim() : providerLabel(nums.get(p.id)).replace(/^Provider /, "")) : "—"; };
 
   const rows: DashRow[] = [];
-  const JOB_TONE: Record<JobStage, Tone> = { DRAFT: "st", OPEN: "st", COMPARING: "pend", HIRED: "ok", WAITING_ERP: "pend", ON_HOLD: "st", CLOSED: "st", COMPLETED: "ok" };
-  const JOB_NEXT: Record<JobStage, [string, boolean]> = { DRAFT: ["Finish and post", true], OPEN: ["Ask providers for availability", true], COMPARING: ["Compare and choose", true], HIRED: ["Waiting on the Order", false], WAITING_ERP: ["Approve it in your ERP", true], ON_HOLD: ["Resume or close", true], CLOSED: ["—", false], COMPLETED: ["—", false] };
+  const JOB_TONE: Record<JobStage, Tone> = { DRAFT: "st", ACTIVE: "st", COMPARING: "pend", REQUEST_TO_HIRE: "pend", FILLED: "ok", ON_HOLD: "st", CLOSED: "st" };
+  const JOB_NEXT: Record<JobStage, [string, boolean]> = { DRAFT: ["Finish and post", true], ACTIVE: ["Ask providers for availability", true], COMPARING: ["Compare and choose", true], REQUEST_TO_HIRE: ["Approval of the Request", false], FILLED: ["—", false], ON_HOLD: ["Resume or close", true], CLOSED: ["—", false] };
   for (const j of jobs) {
-    const st = stages.get(j.id)?.stage ?? "OPEN";
+    const st = stages.get(j.id)?.stage ?? "ACTIVE";
     const range = j.budget_min_cents != null || j.budget_max_cents != null ? `${usd(j.budget_min_cents)}–${usd(j.budget_max_cents)}${j.budget_type === "FIXED" ? "" : "/hr"}` : "—";
     rows.push({ key: `j-${j.id}`, type: "Job", what: j.title || "Untitled job", number: j.job_number, who: "—", status: JOB_STAGE_LABEL[st], tone: JOB_TONE[st], next: JOB_NEXT[st][0], waitingOnYou: JOB_NEXT[st][1], waitingOn: JOB_NEXT[st][1] ? "You" : "—", amount: range, updatedAt: j.updated_at.toISOString(), href: `/work-requests/${j.id}`, donut: "jobs", slice: JOB_STAGE_LABEL[st] });
   }
@@ -46,13 +46,13 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
   rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   const q = quarterStart();
   const committed = orders.filter((o) => o.created_at >= q).reduce((n, o) => n + (o.not_to_exceed_cents ?? 0), 0);
-  const open = rows.filter((r) => r.type === "Job" && ["Open", "Comparing", "Waiting on ERP"].includes(r.status)).length;
+  const open = rows.filter((r) => r.type === "Job" && ["Active", "Comparing", "Request to Hire"].includes(r.status)).length;
   const active = orders.filter((o) => RELEASED.has(o.status)).length;
   const shopSlices = slicesFrom(rows, "shop", [{ label: "Ordered", color: C.steel }, { label: "Delivered", color: C.ok }]);
   return {
     summary: `${open} job${open === 1 ? "" : "s"} open · ${active} Order${active === 1 ? "" : "s"} active · ${usd(committed)} committed this quarter`,
     donuts: [
-      { key: "jobs", title: "Jobs", sub: "Hire", slices: slicesFrom(rows, "jobs", [{ label: "Draft", color: C.grey, mine: true }, { label: "Open", color: C.ink }, { label: "Comparing", color: C.steel, mine: true }, { label: "Waiting on ERP", color: C.pendSoft }, { label: "On Hold", color: C.grey }, { label: "Hired", color: C.ok }, { label: "Completed", color: C.okSoft }, { label: "Closed", color: "#c9cddc" }]) },
+      { key: "jobs", title: "Jobs", sub: "Hire", slices: slicesFrom(rows, "jobs", [{ label: "Draft", color: C.grey, mine: true }, { label: "Active", color: C.ink }, { label: "Comparing", color: C.steel, mine: true }, { label: "Request to Hire", color: C.pendSoft }, { label: "On Hold", color: C.grey }, { label: "Filled", color: C.ok }, { label: "Closed", color: "#c9cddc" }]) },
       { key: "requests", title: "Requests", sub: "Approval before an Order", slices: slicesFrom(rows, "requests", [{ label: "Waiting on Approval", color: C.pend }, { label: "Waiting on ERP", color: C.pendSoft }, { label: "Approved", color: C.ok }, { label: "Declined", color: C.no }]) },
       { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "Waiting on Provider", color: C.pend }, { label: "Active", color: C.ok }, { label: "Approve Delivery", color: C.no, mine: true }, { label: "Completed", color: C.okSoft }]) },
       { key: "shop", title: "Shop", sub: "Service products", slices: [{ label: "In Cart", n: cart, color: C.grey, mine: true }, ...shopSlices] },

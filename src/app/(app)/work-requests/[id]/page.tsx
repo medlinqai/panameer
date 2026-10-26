@@ -111,7 +111,7 @@ export default async function Page({
   const meta = [sec.jobNumber, sd?.worksite ? sd.worksite[0] + sd.worksite.slice(1).toLowerCase() : null, sd ? [sd.city, sd.state].filter(Boolean).join(", ") || null : null, rangeText, sd?.startDate && sd?.endDate ? `${fmtDay(sd.startDate)} – ${fmtDay(sd.endDate)}` : null].filter(Boolean).join(" · ");
   // JS-E001: one buyer-facing status and the origin tag (From ERP · Compare Providers · Hire Directly).
   const stageInfo = (await jobStages([detail.id])).get(detail.id);
-  const stage = stageInfo?.stage ?? "OPEN";
+  const stage = stageInfo?.stage ?? "ACTIVE";
   const origin = stageInfo?.origin ?? (strip?.event ? "Compare Providers" : strip?.direct ? "Hire Directly" : null);
   // Scott 10-23: step 4, Ask Questions — the sets sent on this job and who has answered.
   const qSets = await prisma.questionSet.findMany({ where: { job_id: detail.id }, orderBy: { created_at: "desc" }, select: { id: true, questions: true, due_at: true, created_at: true, answers: { select: { provider_person_id: true, submitted_at: true } } } });
@@ -236,8 +236,8 @@ export default async function Page({
       {tab === "work-order" && (
         <>
           {/* OJ-E005: before Hire, a pointer; after, the Service Requisition and the Work Order cards with their buttons. */}
-          {stage === "WAITING_ERP" && !orders.length && (
-            <p className="rounded-[12px] bg-state-pending-bg px-4 py-3 text-[14px] font-semibold text-state-pending" data-in-erp-cart>Waiting on your ERP — the hire is in your ERP cart (or returned there for approval). The Order arrives with the ERP&apos;s purchase order.</p>
+          {stage === "REQUEST_TO_HIRE" && origin === "From ERP" && !orders.length && (
+            <p className="rounded-[12px] bg-state-pending-bg px-4 py-3 text-[14px] font-semibold text-state-pending" data-in-erp-cart>Request to Hire — waiting on your ERP. The Order arrives with the ERP&apos;s purchase order.</p>
           )}
           {!sec.awardRows.length && !orders.length ? (
             <div className="rounded-[12px] border border-state-border p-5" data-work-order-empty>
@@ -346,15 +346,15 @@ function answeredRates<M extends { personId: string; rate: string | null }>(matc
 function menuFor(stage: JobStage, id: string, orderId: string | null): JobMenuItem[] {
   const edit = { label: "Edit", href: `/hire?job=${id}&step=0` };
   const dup: JobMenuItem = { label: "Duplicate", act: "duplicate" };
-  const hold: JobMenuItem = { label: "Put On Hold", act: "hold", confirm: "Put this job on hold? The answer deadline pauses and everyone asked is told." };
+  const hold: JobMenuItem = { label: "Put On Hold", act: "hold" };
   const close: JobMenuItem = { label: "Close Job", act: "close" };
   switch (stage) {
     case "DRAFT": return [edit, dup, { label: "Discard", act: "discard", confirm: "Discard this draft?" }];
-    case "OPEN": return [edit, { label: "Invite Providers", href: `/work-requests/${id}/invite` }, dup, hold, close];
+    case "ACTIVE": return [edit, { label: "Invite Providers", href: `/work-requests/${id}/invite` }, dup, hold, close];
     case "COMPARING": return [{ label: "Edit (Amendment)", href: `/work-requests/${id}?tab=details&amend=1` }, { label: "Extend Deadline", act: "extend" }, { label: "Invite More", href: `/work-requests/${id}?tab=matches` }, hold, close, dup];
-    case "HIRED": case "WAITING_ERP": return [{ label: "View Order", href: orderId ? `/orders/${orderId}` : `/work-requests/${id}?tab=work-order` }, dup];
+    case "REQUEST_TO_HIRE": case "FILLED": return [{ label: "View Order", href: orderId ? `/orders/${orderId}` : `/work-requests/${id}?tab=work-order` }, dup];
     case "ON_HOLD": return [{ label: "Resume", act: "resume" }, close];
-    case "CLOSED": return [dup, { label: "Reopen", act: "reopen", confirm: "Reopen this job? It goes back to Open." }];
+    case "CLOSED": return [dup, { label: "Reopen", act: "reopen", confirm: "Reopen this job? It goes back to Active." }];
     default: return [dup];
   }
 }

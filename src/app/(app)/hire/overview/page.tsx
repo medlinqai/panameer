@@ -66,10 +66,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
 
 // ── HL-E001 + HB-E003/E004/E006/E007: one source for everything on the Overview ───────────────────────────────
 /** HB-E004: In Process excludes drafts; Drafts is its own chip. */
-// JS-E002: Jobs by status — Open · Comparing · Hired · Waiting on ERP · On Hold · Completed · Closed · Drafts · All.
-const STAGE_CHIPS: [string, string][] = [["open", "Open"], ["comparing", "Comparing"], ["hired", "Hired"], ["waiting_erp", "Waiting on ERP"], ["on_hold", "On Hold"], ["completed", "Completed"], ["closed", "Closed"], ["drafts", "Drafts"], ["all", "All"]];
-const CHIP_STAGE: Record<string, JobStage> = { open: "OPEN", comparing: "COMPARING", hired: "HIRED", waiting_erp: "WAITING_ERP", on_hold: "ON_HOLD", completed: "COMPLETED", closed: "CLOSED", drafts: "DRAFT" };
-const DONE: JobStage[] = ["COMPLETED", "CLOSED"];
+// JR-E001: Jobs by status — Active · Comparing · Request to Hire · Filled · On Hold · Closed · Drafts · All.
+const STAGE_CHIPS: [string, string][] = [["active", "Active"], ["comparing", "Comparing"], ["request_to_hire", "Request to Hire"], ["filled", "Filled"], ["on_hold", "On Hold"], ["closed", "Closed"], ["drafts", "Drafts"], ["all", "All"]];
+const CHIP_STAGE: Record<string, JobStage> = { active: "ACTIVE", comparing: "COMPARING", request_to_hire: "REQUEST_TO_HIRE", filled: "FILLED", on_hold: "ON_HOLD", closed: "CLOSED", drafts: "DRAFT" };
+const DONE: JobStage[] = ["FILLED", "CLOSED"];
 const jobSlice = (rows: JobTabRow[], slice?: string) => {
   const st = CHIP_STAGE[slice ?? "all"];
   return st ? rows.filter((j) => j.stage === st) : [...rows].sort((a, b) => Number(DONE.includes(a.stage)) - Number(DONE.includes(b.stage)));
@@ -137,7 +137,7 @@ async function Overview({ personId, slice }: { personId: string; slice?: string 
 }
 
 /** JS-E001: the status word, then the step while the job is live (or the reason it was closed). */
-const stageLine = (j: JobTabRow) => j.stage === "OPEN" || j.stage === "COMPARING" ? `${JOB_STAGE_LABEL[j.stage]} · ${stepLabel(j)}` : j.stage === "CLOSED" && j.closedReason ? `Closed · ${j.closedReason}` : JOB_STAGE_LABEL[j.stage];
+const stageLine = (j: JobTabRow) => j.stage === "ACTIVE" || j.stage === "COMPARING" ? `${JOB_STAGE_LABEL[j.stage]} · ${stepLabel(j)}` : (j.stage === "CLOSED" || j.stage === "ON_HOLD") && j.closedReason ? `${JOB_STAGE_LABEL[j.stage]} · ${j.closedReason}` : JOB_STAGE_LABEL[j.stage];
 const stepLabel = (j: JobTabRow) => {
   if (j.draft) return j.draftLine ?? "Draft";
   const base = PATH_STEPS.find((p) => p.key === j.step)?.label ?? j.step;

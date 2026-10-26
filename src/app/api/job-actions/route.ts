@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   try {
     switch (b.action) {
       case "close": await closeJob(gate, jobId, String(b.reason ?? ""), b.note ?? null); return NextResponse.json({ ok: true });
-      case "hold": await holdJob(gate, jobId, b.until ?? null); return NextResponse.json({ ok: true });
+      case "hold": await holdJob(gate, jobId, b.until ?? null, String(b.reason ?? ""), b.note ?? null); return NextResponse.json({ ok: true });
       case "resume": await resumeJob(gate, jobId); return NextResponse.json({ ok: true });
       case "amend": return NextResponse.json(await amendJob(gate, jobId, b.patch ?? {}, String(b.reason ?? "")));
       case "reconfirm": await reconfirmAnswer(gate, jobId); return NextResponse.json({ ok: true });

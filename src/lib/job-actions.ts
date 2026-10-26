@@ -47,15 +47,18 @@ export async function closeJob(viewer: Viewer, jobId: string, reason: string, no
   await tellAsked(jobId, job.title, "closed", `${job.title} was closed by the buyer — thank you.`, "Job Closed");
 }
 
-export async function holdJob(viewer: Viewer, jobId: string, until?: string | null) {
+export async function holdJob(viewer: Viewer, jobId: string, until?: string | null, reason = "", note: string | null = null) {
   const { me, job } = await ownJob(viewer, jobId);
-  if (!["OPEN"].includes(job.status)) throw new SourcingError("Only an open job can be put on hold.", "INVALID");
+  if (!["OPEN"].includes(job.status)) throw new SourcingError("Only an active job can be put on hold.", "INVALID");
+  // JR-E001: On Hold needs a reason (kept in closed_reason, cleared on Resume).
+  const why = reason === "Other" ? (note ?? "").trim() : [reason, note?.trim()].filter(Boolean).join(": ");
+  if (!why) throw new SourcingError("Pick a reason for putting the job on hold.", "INVALID");
   const ev = await prisma.sourcingEvent.findFirst({ where: { job_id: jobId, status: "OPEN" }, orderBy: { created_at: "desc" }, select: { id: true, deadline_at: true } });
   await prisma.$transaction([
-    prisma.job.update({ where: { id: jobId }, data: { status: "ON_HOLD", hold_until: until && Date.parse(until) > Date.now() ? new Date(until) : null } }),
+    prisma.job.update({ where: { id: jobId }, data: { status: "ON_HOLD", closed_reason: why.slice(0, 300), hold_until: until && Date.parse(until) > Date.now() ? new Date(until) : null } }),
     ...(ev ? [prisma.sourcingEvent.update({ where: { id: ev.id }, data: { status: "CLOSED", paused_remaining_seconds: Math.max(0, Math.round((ev.deadline_at.getTime() - Date.now()) / 1000)) } })] : []),
   ]);
-  await log(jobId, "ON_HOLD", until ? `until ${until.slice(0, 10)}` : null, me);
+  await log(jobId, "ON_HOLD", [why, until ? `until ${until.slice(0, 10)}` : null].filter(Boolean).join(" · "), me);
   await tellAsked(jobId, job.title, "hold", `${job.title} is On Hold — the buyer paused it. Booked interviews stay booked unless they cancel.`, "Job On Hold");
 }
 
@@ -65,14 +68,14 @@ export async function resumeJob(viewer: Viewer, jobId: string) {
   const ev = await prisma.sourcingEvent.findFirst({ where: { job_id: jobId, paused_remaining_seconds: { not: null } }, orderBy: { created_at: "desc" }, select: { id: true, paused_remaining_seconds: true } });
   const at = ev ? new Date(Date.now() + Math.max(ev.paused_remaining_seconds ?? 0, 3600) * 1000) : null;
   await prisma.$transaction([
-    prisma.job.update({ where: { id: jobId }, data: { status: "OPEN", hold_until: null } }),
+    prisma.job.update({ where: { id: jobId }, data: { status: "OPEN", hold_until: null, closed_reason: null } }),
     ...(ev && at ? [
       prisma.sourcingEvent.update({ where: { id: ev.id }, data: { status: "OPEN", deadline_at: at, paused_remaining_seconds: null } }),
       prisma.proposalRequest.updateMany({ where: { sourcing_event_id: ev.id, status: { in: ["ISSUED", "VIEWED", "EXPIRED"] } }, data: { responds_by: at, status: "ISSUED" } }),
     ] : []),
   ]);
   await log(jobId, "RESUMED", at ? `answers due ${at.toISOString().slice(0, 16).replace("T", " ")} UTC` : null, me);
-  await tellAsked(jobId, job.title, "resume", `${job.title} is Back Open.`, "Job Back Open");
+  await tellAsked(jobId, job.title, "resume", `${job.title} is Active Again.`, "Job Active Again");
 }
 
 export async function reopenJob(viewer: Viewer, jobId: string) {

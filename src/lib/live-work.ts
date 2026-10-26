@@ -147,7 +147,7 @@ const usd = (c: number) => `$${(c / 100).toLocaleString("en-US", { maximumFracti
 
 export async function buyerHireTabs(personId: string) {
   const now = new Date();
-  const jobs = await prisma.job.findMany({ where: { buyer_person_id: personId, kind: "JOB", status: { in: ["DRAFT", "OPEN", "FILLED", "CLOSED", "CANCELED"] }, updated_at: { gte: new Date(now.getTime() - 180 * DAY) } }, orderBy: { created_at: "desc" }, take: 80, select: { id: true, description: true, budget_min_cents: true, budget_max_cents: true, budget_type: true, worksite: true, city: true, state: true, contract_types: true, domains: true, commodity_group_id: true, skills: { select: { skill_id: true } } } });
+  const jobs = await prisma.job.findMany({ where: { buyer_person_id: personId, kind: "JOB", status: { in: ["DRAFT", "OPEN", "FILLED", "ON_HOLD", "CLOSED", "CANCELED"] }, updated_at: { gte: new Date(now.getTime() - 180 * DAY) } }, orderBy: { created_at: "desc" }, take: 80, select: { id: true, description: true, budget_min_cents: true, budget_max_cents: true, budget_type: true, worksite: true, city: true, state: true, contract_types: true, domains: true, commodity_group_id: true, skills: { select: { skill_id: true } } } });
   const groupNames = new Map((await prisma.commodityGroup.findMany({ where: { id: { in: jobs.map((j) => j.commodity_group_id).filter((x): x is string => !!x) } }, select: { id: true, name: true } })).map((g) => [g.id, g.name]));
   const paths = (await Promise.all(jobs.map((j) => jobPath(j.id)))).filter((p): p is NonNullable<typeof p> => !!p);
   // HL-E002: proposal lines (provider number · role · domain · years · skills matched · rate · start) and WO waiting-on.
@@ -216,7 +216,7 @@ export async function buyerHireTabs(personId: string) {
     // HB-E004: drafts sit apart — "Draft · first words", Finish posting / Discard.
     const draft = p.job.status === "DRAFT" && !p.event && !p.awarded;
     const words = (j.description ?? "").trim().split(/\s+/).slice(0, 8).join(" ");
-    jobRows.push({ stage: "OPEN", closedReason: null,
+    jobRows.push({ stage: "ACTIVE", closedReason: null,
       draft, draftLine: draft ? `Draft · ${words ? `${words}${(j.description ?? "").trim().split(/\s+/).length > 8 ? "…" : ""}` : "no description"}` : null,
       category: j.commodity_group_id ? groupNames.get(j.commodity_group_id) ?? null : null,
       origin: p.event ? "Compare Providers" : p.wrs.length ? "Hire Directly" : null,
