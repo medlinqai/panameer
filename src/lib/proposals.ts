@@ -152,6 +152,15 @@ export async function proposeEligibility(
     return no("REQUEST_NOT_OPEN", "This request isn't open for responses.");
   }
 
+  // Scott 10-26: every job is on the board, but only an ACTIVE job takes proposals from the board.
+  // Providers the buyer asked (a Proposal Request) can still answer while the job is Comparing.
+  const asked = (await prisma.proposalRequest.count({ where: { job_id: request.id, provider_person_id: providerPersonId } })) > 0;
+  if (!asked) {
+    const { jobStages } = await import("@/lib/job-stage");
+    const stage = (await jobStages([request.id])).get(request.id)?.stage;
+    if (stage && stage !== "ACTIVE") return no("NOT_TAKING_PROPOSALS", "This job is no longer taking proposals.");
+  }
+
   let inviteId: string | null = null;
   if (request.proposal_access === "INVITE_ONLY" || askedInEvent) {
     const itb = await prisma.proposalRequest.findFirst({
