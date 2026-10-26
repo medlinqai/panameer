@@ -9,7 +9,7 @@ export type DashRow = {
   done: boolean;
 };
 export type DonutSlice = { label: string; n: number; color: string; mine?: boolean; /** A slice that isn't in the table opens its own page. */ href?: string };
-export type Donut = { key: string; title: string; sub: string; slices: DonutSlice[]; note?: string; /** JR-E007: See All → (default: My Transactions filtered to this pie). */ href?: string };
+export type Donut = { key: string; title: string; sub: string; slices: DonutSlice[]; note?: string; /** JR-E007: See All → (default: My Transactions filtered to this pie). */ href?: string; /** HT-E003: a line under the title so the pie is never empty ("38 open jobs on Panameer · Browse the Job Board →"). */ lead?: { text: string; href: string; label: string } };
 export type DashData = { summary: string; /** HT-E002: shown as "Provider Number P-… (?)" before the summary. */ providerNumber?: string | null; donuts: Donut[]; rows: DashRow[]; filters: [string, string][] };
 
 export const C = { ok: "#1F7A4D", okSoft: "#9bc4ad", pend: "#C98A00", pendSoft: "#e0b44d", no: "#B3261E", steel: "#5C6485", grey: "#9aa0b8", ink: "#272334" };

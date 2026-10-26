@@ -36,6 +36,7 @@ export function DashPies({ donuts, side, size = 88, cols = "sm:grid-cols-2 lg:gr
       {donuts.map((d) => (
         <div key={d.key} className="flex flex-col rounded-[12px] border border-line bg-white p-3.5" data-donut={d.key}>
           <h4 className="text-[14px] font-extrabold">{d.title}<span className="ml-1.5 text-[11.5px] font-medium text-ink-3">{d.sub}</span></h4>
+          {d.lead && <p className="mt-0.5 text-[11.5px] text-ink-2" data-donut-lead>{d.lead.text} · <Link href={d.lead.href} className="font-semibold text-ink hover:underline">{d.lead.label} →</Link></p>}
           <div className="mt-2 flex items-center gap-3">
             <Ring d={d} size={size} />
             <div className="min-w-0 flex-1 space-y-0.5 text-[12px]">
