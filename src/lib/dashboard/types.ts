@@ -5,9 +5,11 @@ export type DashRow = {
   status: string; tone: Tone; next: string; waitingOnYou: boolean; waitingOn: string; amount: string; updatedAt: string; href: string;
   /** Which donut and slice this row counts in (for click-to-filter). */
   donut: string; slice: string;
+  /** JR-E007: finished (Filled, Closed, Completed, Approved/Declined Request) — out of Active; gone from other views after 30 days. */
+  done: boolean;
 };
-export type DonutSlice = { label: string; n: number; color: string; mine?: boolean };
-export type Donut = { key: string; title: string; sub: string; slices: DonutSlice[]; note?: string };
+export type DonutSlice = { label: string; n: number; color: string; mine?: boolean; /** A slice that isn't in the table opens its own page. */ href?: string };
+export type Donut = { key: string; title: string; sub: string; slices: DonutSlice[]; note?: string; /** JR-E007: See All → (default: My Transactions filtered to this pie). */ href?: string };
 export type DashData = { summary: string; donuts: Donut[]; rows: DashRow[]; filters: [string, string][] };
 
 export const C = { ok: "#1F7A4D", okSoft: "#9bc4ad", pend: "#C98A00", pendSoft: "#e0b44d", no: "#B3261E", steel: "#5C6485", grey: "#9aa0b8", ink: "#272334" };

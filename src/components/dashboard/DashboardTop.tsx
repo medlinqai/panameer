@@ -20,7 +20,7 @@ export async function DashboardTop({ viewer, side, firstName, data }: { viewer: 
         </div>
         <div className="flex gap-2.5">
           {side === "buyer"
-            ? <><Link href="/hire" className={BTN_MAGENTA}>Create a Job</Link><Link href="/shop" className={BTN}>Shop</Link></>
+            ? <><Link href="/hire" className={BTN_MAGENTA}>Create a Job</Link><Link href="/shop" className={BTN}>Buy Service Products</Link></>
             : <><Link href="/catalog" className={BTN_MAGENTA}>Add to My Catalog</Link><Link href="/find-work?tab=best" className={BTN}>Jobs for You</Link></>}
         </div>
       </div>
@@ -30,7 +30,7 @@ export async function DashboardTop({ viewer, side, firstName, data }: { viewer: 
         <div><h2 className="text-[20px] font-extrabold">Things You Need to Do</h2><p className="text-[13px] text-ink-3">What needs you now, and where everything stands</p></div>
       </div>
       <div className="mt-3">{c.items.length ? <AttentionList items={c.items} /> : <p className="py-3 text-[14px] text-ink-3">Nothing is waiting on you right now.</p>}</div>
-      <DashGlance donuts={data.donuts} rows={data.rows} filters={data.filters} tableTitle={side === "buyer" ? "My Transactions" : "My Work"} whoLabel={side === "buyer" ? "Provider" : "Buyer"} />
+      <DashGlance donuts={data.donuts} rows={data.rows} filters={data.filters} tableTitle={side === "buyer" ? "My Transactions" : "My Work"} whoLabel={side === "buyer" ? "Provider" : "Buyer"} side={side} />
       {side === "buyer" && <p className="mt-6 text-[13px] text-ink-2">Learning something new? <Link href="/learn" className="font-semibold">Learn on Panameer →</Link></p>}
     </section>
   );

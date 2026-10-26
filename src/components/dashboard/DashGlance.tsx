@@ -4,64 +4,76 @@ import Link from "next/link";
 import { useState } from "react";
 import type { DashRow, Donut } from "@/lib/dashboard/types";
 
-// MD-E003: At a Glance (four donuts) + the one table; clicking a slice or legend row filters the table to that type + status.
+// MD-E003 / JR-E007: At a Glance (donuts, each with See All →) + My Transactions (Active by default, 5 rows, Show 10 More).
 const PILL: Record<DashRow["tone"], string> = { ok: "bg-state-accepted-bg text-state-accepted", pend: "bg-state-pending-bg text-state-pending", no: "bg-state-declined-bg text-state-declined", st: "bg-state-inactive-bg text-state-inactive" };
+const DAY = 86_400_000;
+export const txHref = (side: string, q: Record<string, string> = {}) => `/dashboard/transactions?${new URLSearchParams({ side, ...q }).toString()}`;
 
-function Ring({ d, onPick }: { d: Donut; onPick: (slice: string) => void }) {
+function Ring({ d, size }: { d: Donut; size: number }) {
   const total = d.slices.reduce((n, s) => n + s.n, 0);
-  const r = 36, cx = 44, cy = 44;
+  const sw = size > 70 ? 13 : 10, r = size / 2 - sw / 2 - 1, c = size / 2;
   let a = -Math.PI / 2;
   const arcs = total ? d.slices.filter((s) => s.n > 0).map((s) => {
     const f = s.n / total;
-    if (f >= 0.999) return <circle key={s.label} cx={cx} cy={cy} r={r} stroke={s.color} strokeWidth={13} fill="none" onClick={() => onPick(s.label)} className="cursor-pointer" />;
+    if (f >= 0.999) return <circle key={s.label} cx={c} cy={c} r={r} stroke={s.color} strokeWidth={sw} fill="none" />;
     const b = a + f * 2 * Math.PI, large = f > 0.5 ? 1 : 0;
-    const path = `M${cx + r * Math.cos(a)} ${cy + r * Math.sin(a)} A${r} ${r} 0 ${large} 1 ${cx + r * Math.cos(b)} ${cy + r * Math.sin(b)}`;
+    const path = `M${c + r * Math.cos(a)} ${c + r * Math.sin(a)} A${r} ${r} 0 ${large} 1 ${c + r * Math.cos(b)} ${c + r * Math.sin(b)}`;
     a = b;
-    return <path key={s.label} d={path} stroke={s.color} strokeWidth={13} fill="none" onClick={() => onPick(s.label)} className="cursor-pointer"><title>{`${s.label}: ${s.n}`}</title></path>;
-  }) : [<circle key="none" cx={cx} cy={cy} r={r} stroke="#C9CDDC" strokeWidth={13} fill="none" />];
+    return <path key={s.label} d={path} stroke={s.color} strokeWidth={sw} fill="none"><title>{`${s.label}: ${s.n}`}</title></path>;
+  }) : [<circle key="none" cx={c} cy={c} r={r} stroke="#C9CDDC" strokeWidth={sw} fill="none" />];
   return (
-    <svg width="88" height="88" viewBox="0 0 88 88" aria-label={`${d.title}: ${total}`}>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label={`${d.title}: ${total}`} className="shrink-0">
       {arcs}
-      <text x="44" y={total ? 49 : 47} textAnchor="middle" className="fill-ink" style={{ fontWeight: 700, fontSize: total ? 16 : 9.5 }}>{total || "None Yet"}</text>
+      <text x={c} y={c + (total ? 5 : 3)} textAnchor="middle" className="fill-ink" style={{ fontWeight: 700, fontSize: total ? (size > 70 ? 16 : 14) : 8.5 }}>{total || "None Yet"}</text>
     </svg>
   );
 }
 
-export function DashGlance({ donuts, rows, filters, tableTitle, whoLabel }: { donuts: Donut[]; rows: DashRow[]; filters: [string, string][]; tableTitle: string; whoLabel: string }) {
-  const [filter, setFilter] = useState<string>("all");
-  const [pick, setPick] = useState<{ donut: string; slice: string } | null>(null);
-  const [all, setAll] = useState(false);
-  const shown = rows.filter((r) => (pick ? r.donut === pick.donut && r.slice === pick.slice : filter === "all" ? true : filter === "mine" ? r.waitingOnYou : r.type === filter));
-  const list = all ? shown : shown.slice(0, 10);
-  const choose = (donut: string, slice: string) => { setPick({ donut, slice }); setFilter("all"); };
+/** The pies; a slice or See All opens My Transactions filtered (or the slice's own page). */
+export function DashPies({ donuts, side, size = 88, cols = "sm:grid-cols-2 lg:grid-cols-4" }: { donuts: Donut[]; side: string; size?: number; cols?: string }) {
   return (
-    <>
-      <h3 className="mt-8 text-[16px] font-extrabold">At a Glance</h3>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-donuts>
-        {donuts.map((d) => (
-          <div key={d.key} className="rounded-[12px] border border-line bg-white p-4" data-donut={d.key}>
-            <h4 className="text-[14px] font-extrabold">{d.title}<span className="ml-1.5 text-[11.5px] font-medium text-ink-3">{d.sub}</span></h4>
-            <div className="mt-2 flex items-center gap-3">
-              <Ring d={d} onPick={(s) => choose(d.key, s)} />
-              <div className="min-w-0 flex-1 space-y-0.5 text-[12px]">
-                {d.slices.map((s) => (
-                  <button key={s.label} type="button" onClick={() => choose(d.key, s.label)} className={`flex w-full items-center gap-1.5 text-left ${s.mine && s.n ? "font-bold text-state-pending" : "text-ink-2"} ${pick?.donut === d.key && pick.slice === s.label ? "underline" : ""}`}>
-                    <i className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
-                    <span className="min-w-0 flex-1 truncate">{s.label}</span><em className="not-italic tabular-nums">{s.n}</em>
-                  </button>
-                ))}
-                {d.note && <p className="pt-1 text-[11px] text-ink-3">{d.note}</p>}
-              </div>
+    <div className={`grid gap-3 ${cols}`} data-donuts>
+      {donuts.map((d) => (
+        <div key={d.key} className="flex flex-col rounded-[12px] border border-line bg-white p-3.5" data-donut={d.key}>
+          <h4 className="text-[14px] font-extrabold">{d.title}<span className="ml-1.5 text-[11.5px] font-medium text-ink-3">{d.sub}</span></h4>
+          <div className="mt-2 flex items-center gap-3">
+            <Ring d={d} size={size} />
+            <div className="min-w-0 flex-1 space-y-0.5 text-[12px]">
+              {d.slices.map((s) => (
+                <Link key={s.label} href={s.href ?? txHref(side, { donut: d.key, slice: s.label })} className={`flex w-full items-center gap-1.5 text-left hover:underline ${s.mine && s.n ? "font-bold text-state-pending" : "text-ink-2"}`}>
+                  <i className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
+                  <span className="min-w-0 flex-1 truncate">{s.label}</span><em className="not-italic tabular-nums">{s.n}</em>
+                </Link>
+              ))}
+              {d.note && <p className="pt-1 text-[11px] text-ink-3">{d.note}</p>}
             </div>
           </div>
-        ))}
-      </div>
+          <Link href={d.href ?? txHref(side, { donut: d.key })} className="mt-auto self-end pt-1.5 text-[12px] font-semibold text-ink-2 hover:text-ink" data-see-all>See All →</Link>
+        </div>
+      ))}
+    </div>
+  );
+}
 
+/** Active = not finished; finished rows (Filled, Closed, Completed) older than 30 days drop out of every view but Closed. */
+export function DashTable({ rows, filters, title, whoLabel, side, initial, pick: pick0, seeAll = true }: { rows: DashRow[]; filters: [string, string][]; title: string; whoLabel: string; side: string; initial?: string; pick?: { donut: string; slice?: string } | null; seeAll?: boolean }) {
+  const [filter, setFilter] = useState<string>(initial ?? "active");
+  const [pick, setPick] = useState(pick0 ?? null);
+  const [count, setCount] = useState(5);
+  const [now] = useState(() => Date.now());
+  const fresh = (r: DashRow) => !r.done || now - Date.parse(r.updatedAt) <= 30 * DAY;
+  const shown = rows.filter((r) => (pick ? r.donut === pick.donut && (!pick.slice || r.slice === pick.slice)
+    : filter === "closed" ? r.done
+    : !fresh(r) ? false
+    : filter === "active" ? !r.done : filter === "mine" ? r.waitingOnYou : r.type === filter));
+  const list = shown.slice(0, count);
+  return (
+    <>
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-[16px] font-extrabold">{tableTitle}</h3>
+        <h3 className="text-[16px] font-extrabold">{title}{seeAll && <Link href={txHref(side)} className="ml-3 text-[12.5px] font-semibold text-ink-2 hover:text-ink">See All →</Link>}</h3>
         <div className="flex flex-wrap gap-1.5 text-[12.5px]" data-dash-filters>
-          {pick && <button type="button" onClick={() => setPick(null)} className="rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark">{pick.slice} ×</button>}
-          {filters.map(([k, l]) => <button key={k} type="button" onClick={() => { setFilter(k); setPick(null); }} className={!pick && filter === k ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>{l}</button>)}
+          {pick && <button type="button" onClick={() => setPick(null)} className="rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark">{pick.slice ?? pick.donut} ×</button>}
+          {filters.map(([k, l]) => <button key={k} type="button" onClick={() => { setFilter(k); setPick(null); setCount(5); }} className={!pick && filter === k ? "rounded-full border border-ink bg-ink px-3 py-1 font-semibold text-surface" : "rounded-full border border-line px-3 py-1 font-semibold"}>{l}</button>)}
         </div>
       </div>
       <div className="mt-2 overflow-x-auto">
@@ -84,7 +96,17 @@ export function DashGlance({ donuts, rows, filters, tableTitle, whoLabel }: { do
           </tbody>
         </table>
       </div>
-      {!all && shown.length > 10 && <button type="button" onClick={() => setAll(true)} className="mt-2 text-[13px] font-semibold underline">See All ({shown.length})</button>}
+      {shown.length > count && <button type="button" onClick={() => setCount((c) => c + 10)} className="mt-2 text-[13px] font-semibold underline">Show {Math.min(10, shown.length - count)} More</button>}
+    </>
+  );
+}
+
+export function DashGlance({ donuts, rows, filters, tableTitle, whoLabel, side }: { donuts: Donut[]; rows: DashRow[]; filters: [string, string][]; tableTitle: string; whoLabel: string; side: string }) {
+  return (
+    <>
+      <h3 className="mt-8 mb-3 text-[16px] font-extrabold">At a Glance</h3>
+      <DashPies donuts={donuts} side={side} />
+      <DashTable rows={rows} filters={filters} title={tableTitle} whoLabel={whoLabel} side={side} />
     </>
   );
 }
