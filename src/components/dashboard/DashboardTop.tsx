@@ -2,11 +2,11 @@ import Link from "next/link";
 import type { Viewer } from "@/lib/access";
 import { appCounts } from "@/lib/attention";
 import { AttentionList } from "@/components/home/AttentionList";
-import { DashGlance } from "@/components/dashboard/DashGlance";
+import { DashPies, txHref } from "@/components/dashboard/DashGlance";
 import { BTN, BTN_MAGENTA } from "@/components/hire/HireUI";
 import type { DashData } from "@/lib/dashboard/types";
 
-// MD-E003: the dashboard's top half — Welcome Back + summary + two buttons, then 1 · Things You Need to Do.
+// MD-E003 / JR-E009: the dashboard's top half — Welcome Back + summary + two buttons, then At a Glance beside Things You Need to Do.
 export async function DashboardTop({ viewer, side, firstName, data }: { viewer: Viewer; side: "buyer" | "provider"; firstName: string; data: DashData }) {
   const c = await appCounts(viewer, side);
   const date = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }).toUpperCase();
@@ -25,13 +25,24 @@ export async function DashboardTop({ viewer, side, firstName, data }: { viewer: 
         </div>
       </div>
 
-      <div className="mt-8 flex items-baseline gap-3 border-b border-ink pb-2">
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-ink text-[13px] font-bold text-surface">1</span>
-        <div><h2 className="text-[20px] font-extrabold">Things You Need to Do</h2><p className="text-[13px] text-ink-3">What needs you now, and where everything stands</p></div>
+      {/* JR-E009: one screen — 1 · At a Glance (2×2 pies) beside ! Things You Need to Do; the table lives on My Transactions. */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div>
+          <div className="flex flex-wrap items-baseline gap-3 border-b border-ink pb-2">
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-ink text-[13px] font-bold text-surface">1</span>
+            <h2 className="text-[20px] font-extrabold">At a Glance</h2>
+            <Link href={txHref(side)} className="ml-auto text-[13px] font-semibold text-ink-2 hover:text-ink" data-see-all-transactions>{side === "buyer" ? "See All My Transactions →" : "See All My Work →"}</Link>
+          </div>
+          <div className="mt-3"><DashPies donuts={data.donuts} side={side} size={64} cols="sm:grid-cols-2" /></div>
+        </div>
+        <div>
+          <div className="flex items-baseline gap-3 border-b border-ink pb-2">
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-state-declined text-[13px] font-bold text-surface">!</span>
+            <h2 className="text-[20px] font-extrabold">Things You Need to Do</h2>
+          </div>
+          <div className="mt-2">{c.items.length ? <AttentionList items={c.items} /> : <p className="py-3 text-[14px] text-ink-3">Nothing is waiting on you right now.</p>}</div>
+        </div>
       </div>
-      <div className="mt-3">{c.items.length ? <AttentionList items={c.items} /> : <p className="py-3 text-[14px] text-ink-3">Nothing is waiting on you right now.</p>}</div>
-      <DashGlance donuts={data.donuts} rows={data.rows} filters={data.filters} tableTitle={side === "buyer" ? "My Transactions" : "My Work"} whoLabel={side === "buyer" ? "Provider" : "Buyer"} side={side} />
-      {side === "buyer" && <p className="mt-6 text-[13px] text-ink-2">Learning something new? <Link href="/learn" className="font-semibold">Learn on Panameer →</Link></p>}
     </section>
   );
 }

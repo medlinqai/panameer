@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { DashRow, Donut } from "@/lib/dashboard/types";
 
-// MD-E003 / JR-E007: At a Glance (donuts, each with See All →) + My Transactions (Active by default, 5 rows, Show 10 More).
+// MD-E003 / JR-E007/E009: At a Glance pies (each with See All →) on the dashboard; the table on My Transactions (Active by default, 5 rows, Show 10 More).
 const PILL: Record<DashRow["tone"], string> = { ok: "bg-state-accepted-bg text-state-accepted", pend: "bg-state-pending-bg text-state-pending", no: "bg-state-declined-bg text-state-declined", st: "bg-state-inactive-bg text-state-inactive" };
 const DAY = 86_400_000;
 export const txHref = (side: string, q: Record<string, string> = {}) => `/dashboard/transactions?${new URLSearchParams({ side, ...q }).toString()}`;
@@ -97,16 +97,6 @@ export function DashTable({ rows, filters, title, whoLabel, side, initial, pick:
         </table>
       </div>
       {shown.length > count && <button type="button" onClick={() => setCount((c) => c + 10)} className="mt-2 text-[13px] font-semibold underline">Show {Math.min(10, shown.length - count)} More</button>}
-    </>
-  );
-}
-
-export function DashGlance({ donuts, rows, filters, tableTitle, whoLabel, side }: { donuts: Donut[]; rows: DashRow[]; filters: [string, string][]; tableTitle: string; whoLabel: string; side: string }) {
-  return (
-    <>
-      <h3 className="mt-8 mb-3 text-[16px] font-extrabold">At a Glance</h3>
-      <DashPies donuts={donuts} side={side} />
-      <DashTable rows={rows} filters={filters} title={tableTitle} whoLabel={whoLabel} side={side} />
     </>
   );
 }

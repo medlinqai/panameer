@@ -91,7 +91,7 @@ export async function MyProgress({ side, personId, period }: { side: "buyer" | "
   const label = period === "quarter" ? "This Quarter" : period === "90d" ? "Last 90 Days" : "This Year";
   const foot = group.usesTarget ? "Target" : side === "buyer" ? `Group: ${group.size} active buyers` : `Group: ${group.size} sellers earning`;
   return (
-    <section className="mt-12" data-my-progress>
+    <section className="mt-8" data-my-progress>
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-ink pb-2">
         <div className="flex items-baseline gap-3">
           <span className="grid h-7 w-7 place-items-center rounded-full bg-ink text-[13px] font-bold text-surface">2</span>
@@ -103,7 +103,7 @@ export async function MyProgress({ side, personId, period }: { side: "buyer" | "
           <PeriodSelect value={period} />
         </div>
       </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+      <div className={`mt-4 grid gap-3 md:grid-cols-2 ${side === "buyer" ? "lg:grid-cols-5" : "lg:grid-cols-3"}`}>
         {side === "provider" ? (
           <>
             <Tile app="CONNECT" title="Connections" period={label} foot="Find People" footHref="/connect/community" group={foot}><Funnel you={you} grp={g} stages={[["Invited", "seller.connect.invited"], ["Connected", "seller.connect.connected"], ["Mentoring", "seller.connect.mentoring"], ["Introduced You", "seller.connect.introduced"]]} /></Tile>
