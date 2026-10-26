@@ -304,22 +304,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     const groupName = side === "buyer" ? "Set-Up" : "Profile";
     if (missing.length) items.push({ id: `setup:${groupName}`, title: groupName, n: missing.length, what: groupName, app: "connect", appLabel: groupName, due: null, dueAt: null, href: side === "buyer" ? "/company" : "/profile", action: "Open", tier: tierOf,
       lines: missing.map((i) => ({ key: i.label, what: i.action === "Ask" ? "Ask for a Recommendation" : i.action === "Connect" ? `Connect Your ${i.label.replace(" Connection", "")}` : `Add Your ${i.label}`, detail: i.why, dueAt: null, href: i.href, action: i.action })) });
-    const u = await prisma.user.findUnique({ where: { id: viewer.userId }, select: { email: true } });
-    const [conns, mentors, recs, groups] = await Promise.all([
-      prisma.connection.findMany({ where: { to_user_id: viewer.userId, status: "PENDING", kind: "COLLEAGUE" }, orderBy: { created_at: "desc" }, take: 20, select: { id: true, from_user_id: true, created_at: true } }),
-      prisma.connection.findMany({ where: { to_user_id: viewer.userId, status: "PENDING", kind: "MENTOR" }, orderBy: { created_at: "desc" }, take: 20, select: { id: true, from_user_id: true, created_at: true } }),
-      u?.email ? prisma.recommendationRequest.findMany({ where: { contact_email: { equals: u.email, mode: "insensitive" }, status: "SENT", expires_at: { gt: now } }, take: 20, select: { id: true, sent_at: true, providerProfile: { select: { person: { select: { first_name: true, last_name: true } } } } } }) : [],
-      prisma.groupMembership.findMany({ where: { person_id: id, route: "INVITED", state: "PENDING" }, take: 20, select: { id: true, board: { select: { slug: true, title: true } } } }),
-    ]);
-    const people = new Map((await prisma.person.findMany({ where: { user_id: { in: [...conns, ...mentors].map((c) => c.from_user_id) } }, select: { user_id: true, first_name: true, last_name: true, title: true, company: { select: { name: true } } } })).map((p) => [p.user_id, p]));
-    const nameOf = (uid: string) => { const p = people.get(uid); return p ? `${p.first_name} ${p.last_name}`.trim() : "Someone"; };
-    const ago = (d: Date) => { const n = Math.floor((now.getTime() - d.getTime()) / DAY_MS); return n <= 0 ? "Today" : `${n} day${n === 1 ? "" : "s"} ago`; };
-    const lines: AttentionLine[] = [
-      ...conns.map((c) => { const p = people.get(c.from_user_id); return { key: c.id, what: `${nameOf(c.from_user_id)} Wants to Connect`, detail: [p?.title, p?.company?.name].filter(Boolean).join(" · "), dueAt: null, href: "/connect/connections", action: "Accept" }; }),
-      ...recs.map((r) => ({ key: r.id, what: `Recommend ${`${r.providerProfile.person.first_name} ${r.providerProfile.person.last_name}`.trim()}`, detail: `Asked ${ago(r.sent_at)}`, dueAt: null, href: "/connect/recommendations", action: "Write" })),
-      ...mentors.map((c) => ({ key: c.id, what: `${nameOf(c.from_user_id)} Asked You to Mentor Them`, detail: `Asked ${ago(c.created_at)}`, dueAt: null, href: "/connect/mentors", action: "Reply" })),
-      ...groups.map((g) => ({ key: g.id, what: `Join ${g.board.title}`, detail: "Group invitation", dueAt: null, href: "/connect/groups", action: "Join" })),
-    ];
+    const lines = (await connectLines(viewer.userId, id)).map((x) => x.line);
     if (lines.length) items.push({ id: "connect:stage", title: "Connect", n: lines.length, what: "Connect", app: "connect", appLabel: "Connect", due: null, dueAt: null, href: "/connect/connections", action: "Open", tier: tierOf + 0.1, lines });
   };
   const ORDER_SEL = { id: true, order_number: true, description: true, not_to_exceed_cents: true, period_start: true, provider_person_id: true, buyer_person_id: true, created_at: true } as const;
@@ -414,4 +399,25 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   await stageGroups();
   await titled();
   return { side, request: { total: requests + interviews + tests + questions, jobs: 0, requests, interviews: interviews + questions, tests }, shop, estimate, order: { total: order }, settlement: { total: drafts }, payment: { total: paidIn }, connect: { total: connect }, learn: { total: learn }, items };
+}
+
+/** HT-E006/E007: everything in Connect that waits on this person — one line each, with its group. */
+export async function connectLines(userId: string, personId: string): Promise<{ group: "Requests to Connect" | "Recommendations" | "Mentors & Groups"; line: AttentionLine }[]> {
+  const now = new Date();
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+  const [conns, mentors, recs, groups] = await Promise.all([
+    prisma.connection.findMany({ where: { to_user_id: userId, status: "PENDING", kind: "COLLEAGUE" }, orderBy: { created_at: "desc" }, take: 20, select: { id: true, from_user_id: true, created_at: true } }),
+    prisma.connection.findMany({ where: { to_user_id: userId, status: "PENDING", kind: "MENTOR" }, orderBy: { created_at: "desc" }, take: 20, select: { id: true, from_user_id: true, created_at: true } }),
+    u?.email ? prisma.recommendationRequest.findMany({ where: { contact_email: { equals: u.email, mode: "insensitive" }, status: "SENT", expires_at: { gt: now } }, take: 20, select: { id: true, sent_at: true, providerProfile: { select: { person: { select: { first_name: true, last_name: true } } } } } }) : [],
+    prisma.groupMembership.findMany({ where: { person_id: personId, route: "INVITED", state: "PENDING" }, take: 20, select: { id: true, board: { select: { title: true } } } }),
+  ]);
+  const people = new Map((await prisma.person.findMany({ where: { user_id: { in: [...conns, ...mentors].map((c) => c.from_user_id) } }, select: { user_id: true, first_name: true, last_name: true, title: true, company: { select: { name: true } } } })).map((p) => [p.user_id, p]));
+  const nameOf = (uid: string) => { const p = people.get(uid); return p ? `${p.first_name} ${p.last_name}`.trim() : "Someone"; };
+  const ago = (d: Date) => { const n = Math.floor((now.getTime() - d.getTime()) / DAY_MS); return n <= 0 ? "Today" : `${n} day${n === 1 ? "" : "s"} ago`; };
+  return [
+    ...conns.map((c) => { const p = people.get(c.from_user_id); return { group: "Requests to Connect" as const, line: { key: c.id, what: `${nameOf(c.from_user_id)} Wants to Connect`, detail: [p?.title, p?.company?.name].filter(Boolean).join(" · "), dueAt: null, href: "/connect/connections", action: "Accept" } }; }),
+    ...recs.map((r) => ({ group: "Recommendations" as const, line: { key: r.id, what: `Recommend ${`${r.providerProfile.person.first_name} ${r.providerProfile.person.last_name}`.trim()}`, detail: `Asked ${ago(r.sent_at)}`, dueAt: null, href: "/connect/recommendations", action: "Write" } })),
+    ...mentors.map((c) => ({ group: "Mentors & Groups" as const, line: { key: c.id, what: `${nameOf(c.from_user_id)} Asked You to Mentor Them`, detail: `Asked ${ago(c.created_at)}`, dueAt: null, href: "/connect/mentors", action: "Reply" } })),
+    ...groups.map((g) => ({ group: "Mentors & Groups" as const, line: { key: g.id, what: `Join ${g.board.title}`, detail: "Group invitation", dueAt: null, href: "/connect/groups", action: "Join" } })),
+  ];
 }

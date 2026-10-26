@@ -171,7 +171,8 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Health", href: "/account-health" },
   ],
   "/connect": [
-    { label: "Leaders", href: ROUTES.connect.leaders },
+    // HT-E007: Home first, Leaders last.
+    { label: "Home", href: "/connect/home" },
     { label: "Community", href: ROUTES.connect.community },
     { label: "Connections", href: ROUTES.connect.connections },
     { label: "Mentors", href: ROUTES.connect.mentors },
@@ -179,6 +180,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Recommendations", href: ROUTES.connect.recommendations },
     // MD-E001: Learn isn't in the buyer five — reachable from Connect (and the dashboard).
     { label: "Learn", href: "/learn" },
+    { label: "Leaders", href: ROUTES.connect.leaders },
   ],
 };
 
