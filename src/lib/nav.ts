@@ -43,7 +43,7 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   // MD-E001 / WK-E001: Estimate lives inside Shop (Get an Estimate); Work = Jobs for You, Estimates, Interviews & Tests, My Catalog.
   "/shop": ["/estimate", "/cart"],
   "/estimate": ["/estimates", "/catalog/estimates"],
-  "/work": ["/work", "/find-work", "/my-services", "/services", "/catalog"],
+  "/work/home": ["/work/jobs", "/work/estimates", "/work/interviews", "/find-work", "/my-services", "/services", "/catalog"],
   "/payments": ["/pay", "/finances", "/manage-money"],
   "/hire": ["/create-work", "/work-requests", "/search", "/consultations"],
   "/hire/overview": ["/hire", "/create-work", "/work-requests", "/search", "/consultations"],
@@ -202,7 +202,7 @@ export const COMPANY_NAV: NavItem[] = [
 export const PROVIDER_NAV: NavItem[] = [
   { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
-  { label: "Work", heading: "Work", href: "/work", icon: "Tag", requires: "canProvideServices" },
+  { label: "Work", heading: "Work", href: "/work/home", icon: "Tag", requires: "canProvideServices" },
   { label: "Orders", heading: "Orders", href: "/orders", icon: "ClipboardCheck" },
   { label: "Payments", heading: "Payments", href: "/payments", icon: "CreditCard", tooltip: "Paid to you" },
 ];

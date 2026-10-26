@@ -5,15 +5,17 @@ import { AttentionList } from "@/components/home/AttentionList";
 import { DashPies } from "@/components/dashboard/DashGlance";
 import { BTN, BTN_MAGENTA } from "@/components/hire/HireUI";
 import { singular } from "@/components/dashboard/MyProgress";
+import { ActionCards, type ActionCard } from "@/components/home/AppNav";
 import type { AttentionItem } from "@/lib/attention";
 import type { Donut } from "@/lib/dashboard/types";
 
 // HT-E007/E008: the Connect and Learn homes follow the dashboard — 1 · At a Glance beside Things You Need to Do, then section 2.
 const NUM = "grid h-7 w-7 place-items-center rounded-full bg-ink text-[13px] font-bold text-surface";
-export function HubHome({ eyebrow, title, summary, primary, secondary, donuts, viewSwitch, todo, section2, section2Title, section2Right }: {
+export function HubHome({ eyebrow, title, summary, primary, secondary, donuts, viewSwitch, todo, actions, section2, section2Title, section2Right, glanceHint }: {
   eyebrow: string; title: string; summary: string; primary: { label: string; href: string }; secondary: { label: string; href: string };
-  donuts: Donut[]; viewSwitch?: ReactNode; todo: AttentionItem[]; section2: ReactNode; section2Title: string; section2Right?: ReactNode;
+  donuts: Donut[]; viewSwitch?: ReactNode; todo: AttentionItem[]; /** WK-E002: 2 · What You Can Do. */ actions?: ActionCard[]; section2?: ReactNode; section2Title?: string; section2Right?: ReactNode; glanceHint?: string;
 }) {
+  const rankNo = actions?.length ? "3" : "2";
   return (
     <section className="mx-auto mb-10 w-full max-w-6xl font-body text-ink" data-app-home={eyebrow}>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -26,7 +28,7 @@ export function HubHome({ eyebrow, title, summary, primary, secondary, donuts, v
       </div>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div>
-          <div className="flex flex-wrap items-baseline gap-3 border-b border-ink pb-2"><span className={NUM}>1</span><h2 className="text-[20px] font-extrabold">At a Glance</h2>{viewSwitch}</div>
+          <div className="flex flex-wrap items-baseline gap-3 border-b border-ink pb-2"><span className={NUM}>1</span><h2 className="text-[20px] font-extrabold">At a Glance</h2>{viewSwitch}{glanceHint && <span className="text-[12px] text-ink-3">{glanceHint}</span>}</div>
           <div className="mt-3"><DashPies donuts={donuts} side="home" size={64} cols="sm:grid-cols-2" /></div>
         </div>
         <div>
@@ -34,8 +36,14 @@ export function HubHome({ eyebrow, title, summary, primary, secondary, donuts, v
           <div className="mt-2">{todo.length ? <AttentionList items={todo} /> : <p className="py-3 text-[14px] text-ink-3">Nothing is waiting on you right now.</p>}</div>
         </div>
       </div>
-      <div className="mt-8 flex flex-wrap items-baseline gap-3 border-b border-ink pb-2"><span className={NUM}>2</span><h2 className="text-[20px] font-extrabold">{section2Title}</h2><span className="ml-auto text-[13px] text-ink-2">{section2Right}</span></div>
-      <div className="mt-4 grid gap-4 md:grid-cols-3">{section2}</div>
+      {actions?.length ? <>
+        <div className="mt-8 flex items-baseline gap-3 border-b border-ink pb-2"><span className={NUM}>2</span><h2 className="text-[20px] font-extrabold">What You Can Do</h2></div>
+        <div className="mt-4"><ActionCards cards={actions} /></div>
+      </> : null}
+      {section2 && <>
+        <div className="mt-8 flex flex-wrap items-baseline gap-3 border-b border-ink pb-2"><span className={NUM}>{rankNo}</span><h2 className="text-[20px] font-extrabold">{section2Title}</h2><span className="ml-auto text-[13px] text-ink-2">{section2Right}</span></div>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">{section2}</div>
+      </>}
     </section>
   );
 }
