@@ -156,6 +156,7 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-ink-2">
             {/* THE COMPANY NAME CAME OUT OF THIS ROW . It is in */}
             {card.postedAt && <span>Posted {relativeDay(card.postedAt)}</span>}
+            {card.activity && <span data-job-activity>{card.activity.asked} asked · {card.activity.available} available</span>}
             {/* THE PER-CARD EARN HOOK, PARKED 2026-09-03 . */}
             {/* <span className="ml-auto font-semibold text-magenta"> */}
           </div>

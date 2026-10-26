@@ -41,6 +41,8 @@ export type WorkCard = {
   companyLogoUrl: string | null;
   skills: string[];
   postedAt: string | null;
+  /** JR-E002: activity on the job — how many providers were asked and how many said they're available. */
+  activity?: { asked: number; available: number };
   identity: BuyerIdentity;
   /** How many of the viewer's skills the request asks for. */
   matched: number;
@@ -294,8 +296,14 @@ export async function getWorkFeed(input: {
   const mineMap = input.personId ? await myProposals(input.personId, cards.map((c) => c.id)) : null;
   const card$ = input.personId ? await prisma.providerProfile.findUnique({ where: { person_id: input.personId }, select: { onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true } }) : null;
   const iso = (d: Date | null) => d?.toISOString().slice(0, 10) ?? null;
+  const jobIds = cards.map((c) => c.id);
+  const [askedBy, availBy] = jobIds.length ? await Promise.all([
+    prisma.proposalRequest.groupBy({ by: ["job_id"], where: { job_id: { in: jobIds }, status: { not: "DRAFT" } }, _count: { _all: true } }),
+    prisma.proposal.groupBy({ by: ["job_id"], where: { job_id: { in: jobIds }, status: { notIn: ["DRAFT", "WITHDRAWN"] } }, _count: { _all: true } }),
+  ]) : [[], []];
+  const nOf = (rows: { job_id: string; _count: { _all: number } }[], id: string) => rows.find((r) => r.job_id === id)?._count._all ?? 0;
   return cards.map(({ _overlap, _raw, ...card }) => ({
-    ...card, matched: _overlap, myProposal: mine ? mineMap?.get(card.id) ?? null : null,
+    ...card, matched: _overlap, activity: { asked: nOf(askedBy, card.id), available: nOf(availBy, card.id) }, myProposal: mine ? mineMap?.get(card.id) ?? null : null,
     oneClick: card$ && !mineMap?.has(card.id) ? { rateCents: (_raw.worksite === "OFFSITE" ? card$.remote_rate_cents ?? card$.onsite_rate_cents : card$.onsite_rate_cents ?? card$.remote_rate_cents) ?? card$.hourly_rate_cents ?? null, per: _raw.fixed ? "" : "/hr", start: iso(_raw.start), end: iso(_raw.end) } : null,
   }));
 }

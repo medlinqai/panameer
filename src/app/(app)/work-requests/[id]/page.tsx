@@ -128,7 +128,7 @@ export default async function Page({
         <div className="min-w-0 flex-[1_1_520px]">
           <h1 className="text-[24px] font-extrabold leading-tight sm:text-[28px]">{detail.title.trim() || "Untitled job"}</h1>
           <p className="mt-1 text-[13px] text-state-inactive" data-job-meta>
-            {meta}{origin && <> · <b className="font-semibold text-ink">{origin}</b></>}{origin === "Compare Providers" && sourcing && <> · {sourcing.event_number}</>} · <span data-visibility>{posted ? `On Job Board${detail.postedAt ? ` since ${new Date(detail.postedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}` : "Private"}</span>
+            {meta}{origin && <> · <b className="font-semibold text-ink">{origin}</b></>}{origin === "Compare Providers" && sourcing && <> · {sourcing.event_number}</>}{posted && <> · <span data-visibility>{`On Job Board${detail.postedAt ? ` since ${new Date(detail.postedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}`}</span></>}
           </p>
           {awarded && erpReturned && <p className="mt-1 text-[12.5px] text-state-inactive">Returned to ERP — waiting for the PO</p>}
         </div>
@@ -161,7 +161,7 @@ export default async function Page({
       {tab === "matches" && (
         <>
         {/* OJ-E002: the two doors and the matches; a row's rate is the rate they answered once they have. */}
-        {jobMatches.length ? <MatchList jobId={detail.id} matches={answeredRates(jobMatches, proposals)} state={sdForMatches?.state} published={posted ? { at: detail.postedAt ?? null } : null} chosen={doorChosen} /> : empty("No matches yet. Matches show once the job has a Service Description.")}
+        {jobMatches.length ? <MatchList jobId={detail.id} matches={answeredRates(jobMatches, proposals)} state={sdForMatches?.state} chosen={doorChosen} /> : empty("No matches yet. Matches show once the job has a Service Description.")}
         </>
       )}
       {tab === "responses" && (

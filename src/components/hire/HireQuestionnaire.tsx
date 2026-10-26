@@ -362,6 +362,10 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
             {f.budgetMin != null && f.budgetMax != null && f.budgetMin > f.budgetMax ? (
               <p role="alert" className="mt-1 text-[12.5px] font-semibold text-[#B3261E]">&quot;From&quot; is higher than &quot;To&quot;. <button type="button" className="underline underline-offset-2" onClick={() => set({ budgetMin: f.budgetMax, budgetMax: f.budgetMin })}>Swap them</button></p>
             ) : (<p className="mt-1 text-[12.5px] text-ink-3">{(f.budgetType === "FIXED" ? "Required. For the whole job." : "Required. Per hour; providers see this range.") + (rangeHint ? ` ${rangeHint}` : "")}</p>)}
+            <label className="mt-5 flex items-center gap-2 text-[14px] font-semibold" data-publish-locked>
+              <input type="checkbox" checked disabled readOnly className="accent-ink" />
+              Publish on the Job Board <span className="font-normal text-ink-3">(every job is published)</span>
+            </label>
           </>
         )}
         {step === 5 && matches && (

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { PostJobButton } from "@/components/hire/PostJobButton";
 import { useState, type ReactNode } from "react";
 import type { HireMatch } from "@/lib/hire-questionnaire";
 import { NeutralAvatar, isMaskedName } from "@/components/Avatar";
@@ -28,7 +27,7 @@ function Star({ on, onClick, name }: { on: boolean; onClick: () => void; name: s
   );
 }
 
-export function MatchList({ jobId, matches: initial, state, empty, published, chosen = true }: { jobId: string | null; matches: HireMatch[]; state?: string; empty?: ReactNode; /** Scott 10-23: the third door — null = Private, { at } = on the Job Board. */ published?: { at: string | null } | null; /** Scott 10-23: before a door is chosen, show the doors and a top-3 preview only. */ chosen?: boolean }) {
+export function MatchList({ jobId, matches: initial, state, empty, chosen = true }: { jobId: string | null; matches: HireMatch[]; state?: string; empty?: ReactNode; /** Scott 10-23: before a door is chosen, show the doors and a top-3 preview only. */ chosen?: boolean }) {
   const [list, setList] = useState(initial);
   const [open, setOpen] = useState(chosen);
   const [showHidden, setShowHidden] = useState(false);
@@ -96,12 +95,12 @@ export function MatchList({ jobId, matches: initial, state, empty, published, ch
       {(() => {
         const visible = list.filter((m) => !m.hidden);
         const strong = visible.filter((m) => !m.weak && m.inBudget).length;
-        const pick = strong === 0 ? "Publish to Job Board" : strong <= 3 ? "Hire Directly" : "Compare Providers";
+        const pick = strong === 0 ? "Compare Providers (the Job Board brings more)" : strong <= 3 ? "Hire Directly" : "Compare Providers";
         return <p className="mt-1.5 text-[13px]" data-match-hint><b>{visible.length} match{visible.length === 1 ? "" : "es"} · {strong} strong</b> <span className="text-state-inactive">(in budget, good skill fit) — suggested: </span><b>{pick}</b></p>;
       })()}
       </>}
       {/* OJ-E002: two doors — Hire Directly (any row's Hire) or Compare Providers (the one magenta button). */}
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-two-doors>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2" data-two-doors>
         <div className="rounded-[12px] border border-state-border p-5" data-door="direct">
           <h3 className="text-[15px] font-extrabold">Hire Directly</h3>
           <p className="mt-1 text-[13px] text-state-inactive">You know who you want. Press <b className="text-ink">Hire</b> on their row — terms, then the Order.</p>
@@ -128,13 +127,6 @@ export function MatchList({ jobId, matches: initial, state, empty, published, ch
             </div>
           )}
           {error && <p role="alert" className="mt-2 text-[13px] font-semibold text-state-declined">{error}</p>}
-        </div>
-        <div className="rounded-[12px] border border-state-border p-5" data-door="publish">
-          <h3 className="text-[15px] font-extrabold">Publish to Job Board</h3>
-          <p className="mt-1 text-[13px] text-state-inactive">Let any provider see the job and apply with their rate — including ones not in your matches. Applications arrive on Responses.</p>
-          {published
-            ? <p className="mt-2 text-[13px]"><b>Published</b>{published.at ? ` ${new Date(published.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}. <Link href={`/work-requests/${jobId}?tab=responses`} className="font-semibold">See Applications →</Link></p>
-            : jobId && <div className="mt-2.5"><PostJobButton jobId={jobId} label="Publish Job" outline /></div>}
         </div>
       </div>
       {open && <div className="mt-8 flex flex-wrap items-center gap-2 text-[13px]">

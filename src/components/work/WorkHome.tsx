@@ -70,7 +70,7 @@ export function WorkHome({ home, best }: { home: Home; best: WorkCard[] }) {
                 <span className="min-w-0">
                   <Link href={`/find-work/${c.id}`} className="block truncate text-[14.5px] font-bold hover:text-magenta">{c.title}</Link>
                   <span className="block text-[12px] text-ink-3">
-                    {[c.identity.companyName ?? c.identity.personName, c.worksite, c.duration, `matches ${c.matched} of your skills`, c.budgetLabel].filter(Boolean).join(" · ")}
+                    {[c.identity.companyName ?? c.identity.personName, c.worksite, c.duration, `matches ${c.matched} of your skills`, c.budgetLabel, c.activity ? `${c.activity.asked} asked · ${c.activity.available} available` : null].filter(Boolean).join(" · ")}
                   </span>
                 </span>
               </span>

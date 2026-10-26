@@ -9,6 +9,9 @@ import { buyerCanSeeIdentity, ensureProviderNumber, providerLabel } from "@/lib/
 export async function jobPosted(viewer: Viewer, jobId: string, title: string) {
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   if (!me) return;
+  // JR-E002: every job is published — it goes on the Job Board as soon as it is created (unless the company admin hasn't approved the buyer yet).
+  const { pendingJoin } = await import("@/lib/pending-join");
+  if (!(await pendingJoin(me.id))) await prisma.job.updateMany({ where: { id: jobId, buyer_person_id: me.id, status: "DRAFT" }, data: { status: "OPEN", posted_at: new Date() } });
   await notify({ event: "work.job_posted", personId: me.id, entityType: "job", entityId: jobId, dedupeKey: `work.job_posted:${jobId}`, vars: { title: title.trim(), jobId } });
 }
 
