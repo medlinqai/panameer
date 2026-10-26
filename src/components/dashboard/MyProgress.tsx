@@ -7,6 +7,9 @@ import { prisma } from "@/lib/prisma";
 type Stage = [label: string, key: string];
 const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 
+/** HT-E009: "1 Mentor behind the group", not "1 Mentors". */
+export const singular = (label: string) => (/[^s]s$/.test(label) ? label.slice(0, -1) : label);
+
 function Tile({ app, title, period, children, foot, footHref, group }: { app: string; title: string; period: string; children: React.ReactNode; foot: string; footHref: string; group?: string }) {
   return (
     <div className="flex flex-col rounded-[12px] border border-line bg-white p-4" data-progress-tile={title}>
@@ -32,14 +35,14 @@ function Funnel({ stages, you, grp }: { stages: Stage[]; you: Record<string, num
       <div className="grid grid-cols-[1fr_44px_44px] gap-x-2 text-[10.5px] font-bold uppercase tracking-[0.06em] text-ink-3"><span /><span className="text-right">You</span><span className="text-right">Group</span></div>
       {stages.map(([label, k]) => (
         <div key={k} className="mt-1.5" data-funnel-stage={k}>
-          <div className="grid grid-cols-[1fr_44px_44px] items-baseline gap-x-2 text-[12.5px]"><span className="truncate text-ink-2">{label}</span><b className="text-right tabular-nums">{you[k] ?? 0}</b><em className="text-right not-italic tabular-nums text-ink-3">{grp[k] ?? 0}</em></div>
+          <div className="grid grid-cols-[1fr_44px_44px] items-baseline gap-x-2 text-[12.5px]"><span className="min-w-0 break-words text-ink-2">{label}</span><b className="text-right tabular-nums">{you[k] ?? 0}</b><em className="text-right not-italic tabular-nums text-ink-3">{grp[k] ?? 0}</em></div>
           <div className="relative mt-0.5 h-2 rounded-full bg-state-sunken">
             <span className="absolute inset-y-0 left-0 rounded-full bg-ink" style={{ width: `${Math.max(2, ((you[k] ?? 0) / max) * 100)}%` }} />
             <span className="absolute -top-0.5 h-3 w-[3px] rounded-sm bg-magenta" style={{ left: `calc(${((grp[k] ?? 0) / max) * 100}% - 1px)` }} />
           </div>
         </div>
       ))}
-      <p className={`mt-2.5 text-[12.5px] font-semibold ${good ? "text-state-accepted" : "text-state-pending"}`} data-read>{good ? `▲ At or above the group on ${lastLabel}` : `▼ ${diff} ${lastLabel} behind the group`}</p>
+      <p className={`mt-2.5 text-[12.5px] font-semibold ${good ? "text-state-accepted" : "text-state-pending"}`} data-read>{good ? `▲ At or above the group on ${lastLabel}` : `▼ ${diff} ${diff === 1 ? singular(lastLabel) : lastLabel} behind the group`}</p>
     </>
   );
 }
@@ -53,7 +56,7 @@ function Demand({ rows, empty }: { rows: DemandRow[]; empty: string }) {
           <span className="text-[10.5px] font-bold uppercase text-ink-3">What You Offer</span><span className="text-[10.5px] font-bold uppercase text-ink-3">Asked For</span><span className="text-[10.5px] font-bold uppercase text-ink-3">Demand</span>
           {rows.map((r) => (
             <span key={r.name} className="contents">
-              <span className="truncate">{r.name}</span><b className="text-right tabular-nums">{r.asks}</b>
+              <span className="min-w-0 break-words">{r.name}</span><b className="text-right tabular-nums">{r.asks}</b>
               <span className={`rounded-full px-2 text-center text-[11px] font-bold ${r.level === "High" ? "bg-state-accepted-bg text-state-accepted" : r.level === "Medium" ? "bg-state-pending-bg text-state-pending" : "bg-state-inactive-bg text-state-inactive"}`}>{r.level}</span>
             </span>
           ))}

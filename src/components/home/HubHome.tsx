@@ -4,6 +4,7 @@ import { Avatar } from "@/components/Avatar";
 import { AttentionList } from "@/components/home/AttentionList";
 import { DashPies } from "@/components/dashboard/DashGlance";
 import { BTN, BTN_MAGENTA } from "@/components/hire/HireUI";
+import { singular } from "@/components/dashboard/MyProgress";
 import type { AttentionItem } from "@/lib/attention";
 import type { Donut } from "@/lib/dashboard/types";
 
@@ -69,7 +70,7 @@ export function VsGroup({ title, rows }: { title: string; rows: [string, number,
       <h3 className="text-[15px] font-extrabold">{title}</h3>
       <div className="mt-2 grid grid-cols-[1fr_44px_44px] gap-x-2 text-[10.5px] font-bold uppercase tracking-[0.06em] text-ink-3"><span /><span className="text-right">You</span><span className="text-right">Group</span></div>
       {rows.map(([l, you, g]) => <div key={l} className="mt-1 grid grid-cols-[1fr_44px_44px] gap-x-2 text-[13px]"><span className="text-ink-2">{l}</span><b className="text-right tabular-nums">{you}</b><em className="text-right not-italic tabular-nums text-ink-3">{g}</em></div>)}
-      {gap && <p className="mt-2 text-[12.5px] text-state-pending">▼ {gap.d} {gap.l} behind the group</p>}
+      {gap && <p className="mt-2 text-[12.5px] text-state-pending">▼ {gap.d} {gap.d === 1 ? singular(gap.l) : gap.l} behind the group</p>}
     </div>
   );
 }
