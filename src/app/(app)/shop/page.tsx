@@ -13,7 +13,9 @@ import { shopCategories } from "@/lib/shop-category-list";
 import { byPopular, filterStore, storeHref, STORE_DELIVERY, STORE_LEAD, STORE_PRICE, type StoreQuery } from "@/lib/shop-filters";
 import { HELP_TYPES, searchHelpLinks } from "@/lib/help-links";
 import { HelpTypeIcon } from "@/components/help/HelpTypeIcon";
-import { PageTabs } from "@/components/casing/PageTabs";
+import { AppBar, ActionCards } from "@/components/home/AppNav";
+import { DashPies } from "@/components/dashboard/DashGlance";
+import { shopTiles } from "@/lib/hire-app";
 import { ShopBar } from "@/components/shop/ShopBar";
 import { ShopResults } from "@/components/shop/ShopResults";
 import { ShopCompare } from "@/components/shop/ShopCompare";
@@ -65,14 +67,23 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
         { label: "Offers", href: "/shop?tab=offers", badge: counts?.offers },
         { label: "Sales", href: "/shop?tab=sales", badge: counts?.sales },
       ];
-  const current = tab === "overview" ? "/shop" : `/shop?tab=${tab}`;
 
   return (
     <div className="pm-white-page">
-      <PageTabs wrap eyebrow="SHOP" sequence="none" tabs={tabs} current={current}>
-        <span className="ml-2 hidden shrink-0 sm:block"><SellOnPanameer /></span>
-      </PageTabs>
+      {/* WK-E006: no tab row — the home has tiles + What You Can Do; inner pages say ← Shop and Also in Shop. */}
+      <AppBar app="Shop" home="/shop" current={tab === "overview" ? null : tab} pages={tabs.filter((t) => t.href !== "/shop").map((t) => [t.href.includes("tab=") ? t.href.split("tab=")[1] : t.href, t.label, t.href] as [string, string, string])} right={<span className="hidden shrink-0 sm:block"><SellOnPanameer /></span>} />
       <div className="mx-auto w-full max-w-[1010px]">
+        {tab === "overview" && person && side === "buyer" && <div className="mb-8 mt-4">
+          <h2 className="mb-3 text-[20px] font-extrabold">At a Glance</h2>
+          <DashPies donuts={await shopTiles(person.id)} side="buyer" size={64} />
+          <h2 className="mb-3 mt-8 text-[20px] font-extrabold">What You Can Do</h2>
+          <ActionCards cards={[
+            { label: "Browse Service Products", detail: "Fixed-price offers you can order now", href: "/shop?tab=browse" },
+            { label: "Get an Estimate", detail: "Ask sellers to price your work", href: "/estimate/new" },
+            { label: "Open Your Cart", detail: `${counts?.cart ?? 0} in your cart · Request to Buy`, href: "/shop?tab=cart" },
+            { label: "See Your Purchases", detail: "What you bought and where it stands", href: "/shop?tab=purchases" },
+          ]} />
+        </div>}
         {tab === "overview" && person && <Overview viewer={viewer} personId={person.id} side={side} counts={counts!} />}
         {tab === "browse" && <Browse viewer={viewer} f={f} browsing={browsing} compareIds={compareIds} />}
         {tab === "compare" && <CompareTab viewer={viewer} ids={compareIds} />}

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ProposalActions } from "@/components/work/ProposalActions";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
-import { appCounts } from "@/lib/attention";
 import { buyerHireTabs, buyerLiveWork, buyerTests, hireOverviewData, type JobTabRow } from "@/lib/live-work";
 import { AttentionGroups } from "@/components/hire/AttentionGroups";
 import { DiscardDraft } from "@/components/hire/DiscardDraft";
@@ -19,7 +18,10 @@ import { TypeArt } from "@/components/shop/TypeArt";
 import { RecurringLine, SliceChips } from "@/components/casing/SliceChips";
 import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
 import { PATH_STEPS } from "@/lib/work-request-path";
-import { BTN, BTN_OUT, Fact, GREEN, HeadRow, STATE_TEXT, stepState, HireTabBar, LABEL, PathBand, RedDot, shortDate, shortWhen, type BandStep } from "@/components/hire/HireUI";
+import { AppBar, ActionCards } from "@/components/home/AppNav";
+import { DashPies } from "@/components/dashboard/DashGlance";
+import { hireTiles } from "@/lib/hire-app";
+import { BTN, BTN_OUT, Fact, GREEN, HeadRow, STATE_TEXT, stepState, LABEL, PathBand, RedDot, shortDate, shortWhen, type BandStep } from "@/components/hire/HireUI";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Hire · Panameer" };
@@ -35,25 +37,29 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
   const tab: Tab = (TABS as readonly string[]).includes(sp.tab ?? "") ? (sp.tab as Tab) : "overview";
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   if (!me) return null;
-  const r = (await appCounts(viewer, "buyer")).request;
-  const tabs = [
-    { key: "overview", label: "Overview", href: "/hire/overview" },
-    { key: "jobs", label: "Jobs", href: "/hire/overview?tab=jobs", n: r.jobs },
-    { key: "requests", label: "Requests", href: "/hire/overview?tab=requests", n: r.requests },
-    { key: "interviews", label: "Interviews", href: "/hire/overview?tab=interviews", n: r.interviews },
-    { key: "tests", label: "Tests", href: "/hire/overview?tab=tests", n: r.tests },
-    { key: "questions", label: "Questions", href: "/hire/overview?tab=questions" },
-  ];
+  // WK-E006: no tab row — the home has tiles + What You Can Do; inner pages say ← Hire and Also in Hire.
+  const pages: [string, string, string][] = [["jobs", "Jobs", "/hire/overview?tab=jobs"], ["requests", "Requests to Hire", "/hire/overview?tab=requests"], ["interviews", "Interviews", "/hire/overview?tab=interviews"], ["tests", "Tests", "/hire/overview?tab=tests"], ["questions", "Questions", "/hire/overview?tab=questions"]];
   return (
     <div className="pm-white-page">
       <LiveRefresh />
-      <HireTabBar tabs={tabs} current={tab} right={
+      <AppBar app="Hire" home="/hire/overview" current={tab === "overview" ? null : tab} pages={pages} right={
         <span className="flex shrink-0 gap-2">
           <Link href="/hire" className={`${BTN} shrink-0 px-3 text-[13px] sm:px-5 sm:text-[14px]`} data-post-job>Create a Job</Link>
         </span>
       } />
       <div className="mx-auto w-full max-w-[1120px] pb-14 pt-8">
-        {tab === "overview" && <Overview personId={me.id} slice={sp.slice} />}
+        {tab === "overview" && <>
+          <h2 className="mb-3 text-[20px] font-extrabold">At a Glance</h2>
+          <DashPies donuts={await hireTiles(viewer, me.id)} side="buyer" size={64} />
+          <h2 className="mb-3 mt-8 text-[20px] font-extrabold">What You Can Do</h2>
+          <ActionCards cards={[
+            { label: "Create a Job", detail: "Describe the work; matches show at once", href: "/hire" },
+            { label: "Find People", detail: "Providers on Panameer, masked until an Order is released", href: "/connect/community" },
+            { label: "Compare Providers", detail: "Jobs with answers to compare", href: "/hire/overview?tab=jobs&slice=comparing" },
+            { label: "Write Interview Questions", detail: "Question banks you can reuse", href: "/hire/overview?tab=questions" },
+          ]} />
+          <div className="mt-10"><Overview personId={me.id} slice={sp.slice} /></div>
+        </>}
         {tab === "jobs" && <JobsTab personId={me.id} step={sp.step ?? null} slice={sp.slice} q={sp.q ?? ""} />}
         {tab === "requests" && <RequestsTab personId={me.id} slice={sp.slice} />}
         {tab === "interviews" && <InterviewsTab personId={me.id} userId={viewer.userId} view={sp.view ?? null} show={sp.show ?? null} date={sp.date ?? null} />}

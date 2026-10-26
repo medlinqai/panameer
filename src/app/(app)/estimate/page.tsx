@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { AppCrumb, StageChips } from "@/components/home/AppNav";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { appCounts } from "@/lib/attention";
 import { estimateOverview } from "@/lib/app-overviews";
 import { buyerEstimateEvents, sellerEstimateRequests } from "@/lib/estimate-events";
 import { AppOverview } from "@/components/hire/AppOverview";
-import { BTN, BTN_OUT, HeadRow, HireTabBar, RedDot, STATE_TEXT } from "@/components/hire/HireUI";
+import { BTN, BTN_OUT, HeadRow, RedDot, STATE_TEXT } from "@/components/hire/HireUI";
 import { SliceChips } from "@/components/casing/SliceChips";
 import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
 
@@ -29,8 +30,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
   const tab = tabs.some((t) => t.key === sp.tab) ? sp.tab! : "overview";
   return (
     <div className="pm-white-page">
-      <HireTabBar eyebrow="ESTIMATE" tabs={tabs} current={tab} right={<Link href="/estimate/new" className={`${BTN} shrink-0 px-3 text-[13px] sm:px-5 sm:text-[14px]`} data-request-estimate>Request an Estimate</Link>} />
-      <div className="mx-auto w-full max-w-[1120px] pb-14 pt-8">
+      {/* WK-E006: no tab row — ← Shop (buyer) or ← Work (seller), then the stages as chips. */}
+      <div className="mx-auto w-full max-w-[1120px] px-4 pt-4 sm:px-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <AppCrumb app={side === "buyer" ? "Shop" : "Work"} href={side === "buyer" ? "/shop" : "/work/home"} page="Estimates" />
+          {side === "buyer" && <Link href="/estimate/new" className={`${BTN} shrink-0 px-3 text-[13px] sm:px-5 sm:text-[14px]`} data-request-estimate>Request an Estimate</Link>}
+        </div>
+        <StageChips base="/estimate" param="tab" current={tab === "overview" ? "all" : tab} stages={tabs.map((t) => [t.key === "overview" ? "all" : t.key, t.key === "overview" ? "Overview" : t.label, t.n ?? null] as [string, string, number | null])} />
+      </div>
+      <div className="mx-auto w-full max-w-[1120px] pb-14 pt-4">
         {tab === "overview" && <Overview viewer={viewer} personId={me.id} side={side} />}
         {side === "buyer" && (tab === "requests" || tab === "in" || tab === "awarded") && <BuyerList personId={me.id} tab={tab} slice={sp.slice} />}
         {side === "seller" && (tab === "to-price" || tab === "sent" || tab === "won") && <SellerList personId={me.id} tab={tab} slice={sp.slice} />}

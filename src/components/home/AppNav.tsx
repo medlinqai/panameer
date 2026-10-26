@@ -46,3 +46,20 @@ export function ActionCards({ cards }: { cards: ActionCard[] }) {
     </div>
   );
 }
+
+/** WK-E006: the bar that replaces an app's tab row — the app name on its home; "← {App} › {Page}" and "Also in {App}" inside. */
+export function AppBar({ app, home, current, pages, right }: { app: string; home: string; current: string | null; pages: [string, string, string][]; right?: React.ReactNode }) {
+  const here = pages.find(([k]) => k === current);
+  const others = pages.filter(([k]) => k !== current);
+  return (
+    <div className="mx-auto mb-2 flex w-full max-w-[1120px] flex-wrap items-center justify-between gap-3 border-b border-state-border px-4 py-3 sm:px-2" data-app-bar={app}>
+      {here ? (
+        <p className="text-[13px] font-semibold text-ink-2" data-app-crumb>
+          <Link href={home} className="hover:text-ink">← {app}</Link><span className="text-ink-3"> › {here[1]}</span>
+          <span className="ml-3 font-normal" data-also-in>Also in {app}: {others.map(([k, l, h], i) => <span key={k}>{i > 0 && " · "}<Link href={h} className="font-semibold text-ink hover:underline">{l}</Link></span>)}</span>
+        </p>
+      ) : <p className="text-[12px] font-extrabold tracking-[0.12em]">{app.toUpperCase()}</p>}
+      {right}
+    </div>
+  );
+}
