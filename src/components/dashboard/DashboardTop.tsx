@@ -3,6 +3,7 @@ import type { Viewer } from "@/lib/access";
 import { appCounts } from "@/lib/attention";
 import { AttentionList } from "@/components/home/AttentionList";
 import { DashPies } from "@/components/dashboard/DashGlance";
+import { ViewSwitch } from "@/components/dashboard/ViewSwitch";
 import { txHref } from "@/lib/dashboard/tx-href";
 import { BTN, BTN_MAGENTA } from "@/components/hire/HireUI";
 import type { DashData } from "@/lib/dashboard/types";
@@ -30,9 +31,12 @@ export async function DashboardTop({ viewer, side, firstName, data }: { viewer: 
           </p>
         </div>
         <div className="flex gap-2.5">
+          {/* HT-E004/E005: the main button follows the view. */}
           {side === "buyer"
-            ? <><Link href="/hire" className={BTN_MAGENTA}>Create a Job</Link><Link href="/shop" className={BTN}>Buy Service Products</Link></>
-            : <><Link href="/catalog" className={BTN_MAGENTA}>Add to My Catalog</Link><Link href="/find-work?tab=best" className={BTN}>Jobs for You</Link></>}
+            ? (data.view === "start" && !data.setupDone
+              ? <><Link href={data.checklist?.find((i) => i.n === 0)?.href ?? "/company"} className={BTN_MAGENTA}>Finish Set-Up</Link><Link href="/hire" className={BTN}>Create a Job</Link></>
+              : <><Link href="/hire" className={BTN_MAGENTA}>Create a Job</Link><Link href="/shop" className={BTN}>Buy Service Products</Link></>)
+            : <>{data.view === "start" && !data.setupDone ? <Link href={data.checklist?.find((i) => i.n === 0)?.href ?? "/profile"} className={BTN_MAGENTA}>Complete My Profile</Link> : <Link href="/catalog" className={BTN_MAGENTA}>Add to My Catalog</Link>}<Link href="/find-work?tab=best" className={BTN}>Jobs for You</Link></>}
         </div>
       </div>
 
@@ -42,6 +46,7 @@ export async function DashboardTop({ viewer, side, firstName, data }: { viewer: 
           <div className="flex flex-wrap items-baseline gap-3 border-b border-ink pb-2">
             <span className="grid h-7 w-7 place-items-center rounded-full bg-ink text-[13px] font-bold text-surface">1</span>
             <h2 className="text-[20px] font-extrabold">At a Glance</h2>
+            {data.view && data.viewLabels && <ViewSwitch view={data.view} labels={data.viewLabels} />}
             <Link href={txHref(side)} className="ml-auto text-[13px] font-semibold text-ink-2 hover:text-ink" data-see-all-transactions>{side === "buyer" ? "See All My Transactions →" : "See All My Work →"}</Link>
           </div>
           <div className="mt-3"><DashPies donuts={data.donuts} side={side} size={64} cols="sm:grid-cols-2" /></div>

@@ -536,6 +536,8 @@ model Address {
 model Person {
   id                String       @id @default(uuid()) @db.Uuid
   company_id        String       @db.Uuid
+  /// HT-E004/E005: the person's pick for At a Glance — "start" (Get Sold / Get Started) or "work" (Make Money / Get Work Done); null = follow their stage.
+  dashboard_view    String?
   site_id           String?      @db.Uuid
   user_id           String?      @unique @db.Uuid
   first_name        String

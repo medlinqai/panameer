@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { C, quarterStart, slicesFrom, usd, type DashData, type DashRow } from "@/lib/dashboard/types";
+import { dashView, getStartedDonuts, profileChecklist } from "@/lib/dashboard/views";
+import { C, quarterStart, slicesFrom, usd, type DashData, type DashRow, type Donut } from "@/lib/dashboard/types";
 
 // MD-E003: the seller's Things You Need to Do — Jobs, Orders, My Catalog and Payments from one set of rows.
 const RELEASED = new Set(["RELEASED", "ACTIVE", "ON_HOLD"]);
 const DONE = new Set(["CLOSED", "FINALLY_CLOSED"]);
 const lineTotal = (l: { amount_cents: number | null; quantity: unknown; unit_price_cents: number | null }) => l.amount_cents ?? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0));
 
-export async function sellerDashboard(personId: string): Promise<DashData> {
+export async function sellerDashboard(personId: string, viewer: { userId: string }): Promise<DashData> {
   const profile = await prisma.providerProfile.findUnique({ where: { person_id: personId }, select: { id: true, provider_number: true } });
   const [reqs, props, ivs, orders, services, products, prs] = await Promise.all([
     prisma.proposalRequest.findMany({ where: { provider_person_id: personId }, select: { job_id: true, status: true, updated_at: true } }),
@@ -52,15 +53,21 @@ export async function sellerDashboard(personId: string): Promise<DashData> {
   rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   const openJobs = await prisma.job.count({ where: { kind: "JOB", status: "OPEN" } });
   const active = orders.filter((o) => RELEASED.has(o.status)).length;
-  return {
-    providerNumber: profile?.provider_number ?? null,
-    summary: [`${matches} job${matches === 1 ? "" : "s"} match you`, `${active} Order${active === 1 ? "" : "s"} active`, `${usd(earned)} earned this quarter`].filter(Boolean).join(" · "),
-    donuts: [
+  const work: Donut[] = [
       { key: "jobs", title: "Jobs", sub: "Matched, applied, chosen", lead: { text: `${openJobs.toLocaleString("en-US")} open job${openJobs === 1 ? "" : "s"} on Panameer`, href: "/find-work", label: "Browse the Job Board" }, slices: slicesFrom(rows, "jobs", [{ label: "You Matched", color: C.grey, mine: true }, { label: "You Applied", color: C.steel }, { label: "They Requested", color: C.pend, mine: true }, { label: "You Interviewed", color: C.ink }, { label: "They Chose You", color: C.ok }]) },
       { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "To Accept", color: C.pend, mine: true }, { label: "Active", color: C.ok }, { label: "Delivered", color: C.okSoft }]) },
       { key: "catalog", title: "My Catalog", sub: "What you list", href: "/catalog", slices: slicesFrom(rows, "catalog", [{ label: "Listed", color: C.ok }, { label: "Draft", color: C.grey, mine: true }]) },
       { key: "payments", title: "Payments", sub: "To you", href: "/payments", slices: [{ label: "Billed", n: billed, color: C.pend }, { label: "Paid", n: paid, color: C.ok }], ...(billed + paid === 0 ? { note: "Comes With Settlement" } : {}) },
-    ],
+  ];
+  // HT-E004: Get Sold (Profile · Connect · Learn · Jobs) until the first Order is released; Make Money after. The person's pick wins.
+  const { view } = await dashView(personId, "provider");
+  const checklist = await profileChecklist(personId);
+  const done = checklist.filter((i) => i.n > 0).length;
+  return {
+    providerNumber: profile?.provider_number ?? null,
+    summary: view === "start" ? [`${matches} job${matches === 1 ? "" : "s"} match you`, `Profile ${done} of ${checklist.length} complete`].join(" · ") : [`${matches} job${matches === 1 ? "" : "s"} match you`, `${active} Order${active === 1 ? "" : "s"} active`, `${usd(earned)} earned this quarter`].filter(Boolean).join(" · "),
+    view, viewLabels: ["Get Sold", "Make Money"], setupDone: done === checklist.length, checklist,
+    donuts: view === "start" ? await getStartedDonuts(viewer, personId, "provider", work.find((d) => d.key === "jobs"), checklist) : work,
     rows,
     filters: [["active", "Active"], ["mine", "Waiting on Me"], ["Job", "Jobs"], ["Order", "Orders"], ["Product", "Products"], ["closed", "Closed"]],
   };

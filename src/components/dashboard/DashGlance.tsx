@@ -24,7 +24,7 @@ function Ring({ d, size }: { d: Donut; size: number }) {
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label={`${d.title}: ${total}`} className="shrink-0">
       {arcs}
-      <text x={c} y={c + (total ? 5 : 3)} textAnchor="middle" className="fill-ink" style={{ fontWeight: 700, fontSize: total ? (size > 70 ? 16 : 14) : 8.5 }}>{total || "None Yet"}</text>
+      <text x={c} y={c + (total ? 5 : 3)} textAnchor="middle" className="fill-ink" style={{ fontWeight: 700, fontSize: total ? (size > 70 ? 16 : 14) : 8.5 }}>{d.center ?? (total || "None Yet")}</text>
     </svg>
   );
 }
@@ -40,16 +40,28 @@ export function DashPies({ donuts, side, size = 88, cols = "sm:grid-cols-2 lg:gr
           <div className="mt-2 flex items-center gap-3">
             <Ring d={d} size={size} />
             <div className="min-w-0 flex-1 space-y-0.5 text-[12px]">
-              {d.slices.map((s) => (
+              {d.checklist?.map((i) => (
+                <Link key={i.label} href={i.href} className="flex w-full items-center gap-1.5 text-ink-2 hover:underline" data-checklist-item={i.label}>
+                  <i className={`inline-block h-2 w-2 shrink-0 rounded-full ${i.n > 0 ? "bg-ink" : "bg-[#C9CDDC]"}`} />
+                  <span className="min-w-0 flex-1 truncate">{i.label}</span>{i.n > 0 ? <em className="not-italic tabular-nums">{i.n}</em> : <em className="not-italic font-semibold text-ink">{i.action}</em>}
+                </Link>
+              ))}
+              {!d.checklist && d.slices.map((s) => s.untracked ? (
+                <span key={s.label} className="flex w-full items-center gap-1.5 text-ink-3" title="Not tracked yet" data-untracked>
+                  <i className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
+                  <span className="min-w-0 flex-1 truncate">{s.label}</span><em className="not-italic">—</em>
+                </span>
+              ) : (
                 <Link key={s.label} href={s.href ?? txHref(side, { donut: d.key, slice: s.label })} className={`flex w-full items-center gap-1.5 text-left hover:underline ${s.mine && s.n ? "font-bold text-state-pending" : "text-ink-2"}`}>
                   <i className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
                   <span className="min-w-0 flex-1 truncate">{s.label}</span><em className="not-italic tabular-nums">{s.n}</em>
                 </Link>
               ))}
+              {d.slices.some((s) => s.untracked) && <p className="pt-0.5 text-[10.5px] text-ink-3">— Not tracked yet</p>}
               {d.note && <p className="pt-1 text-[11px] text-ink-3">{d.note}</p>}
             </div>
           </div>
-          <Link href={d.href ?? txHref(side, { donut: d.key })} className="mt-auto self-end pt-1.5 text-[12px] font-semibold text-ink-2 hover:text-ink" data-see-all>See All →</Link>
+          <Link href={d.href ?? txHref(side, { donut: d.key })} className="mt-auto self-end pt-1.5 text-[12px] font-semibold text-ink-2 hover:text-ink" data-see-all>{d.seeAllLabel ?? "See All"} →</Link>
         </div>
       ))}
     </div>

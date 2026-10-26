@@ -23,7 +23,7 @@ const count = <T,>(rows: T[], key: (r: T) => string | null | undefined) => { con
 const prTotal = (lines: { amount_cents: number | null; quantity: unknown; unit_price_cents: number | null }[]) => lines.reduce((n, l) => n + (l.amount_cents ?? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0))), 0);
 
 /** Shared Connect + Learn numbers for a set of people. */
-async function connectLearn(personIds: string[], from: Date, to: Date) {
+export async function connectLearn(personIds: string[], from: Date, to: Date) {
   const users = await usersOf(personIds);
   const uids = [...users.values()];
   const inPeriod = { gte: from, lte: to };

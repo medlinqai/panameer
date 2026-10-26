@@ -16,7 +16,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   if (!me) redirect("/dashboard");
   const side = sp.side === "provider" ? "provider" : "buyer";
-  const data = side === "buyer" ? await buyerDashboard(viewer, me.id) : await sellerDashboard(me.id);
+  const data = side === "buyer" ? await buyerDashboard(viewer, me.id) : await sellerDashboard(me.id, viewer);
   const title = side === "buyer" ? "My Transactions" : "My Work";
   return (
     <div className="mx-auto mb-10 w-full max-w-6xl font-body text-ink" data-transactions={side}>
