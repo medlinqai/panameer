@@ -4,6 +4,7 @@ import { howLongText } from "@/lib/job-dates";
 import { JobStrip, JobTabs } from "@/components/hire/JobFrame";
 import { jobStrip, type JobTab } from "@/lib/job-strip";
 import { JOB_STAGE_LABEL, JOB_STAGE_STATE, jobStages } from "@/lib/job-stage";
+import { REQUEST_STATUS_LABEL, requestStatus } from "@/lib/request-status";
 import { Fact, GREEN, MUTED, ROW_RULE, Section, BTN_OUT, StatePill } from "@/components/hire/HireUI";
 import { ProposalActions } from "@/components/work/ProposalActions";
 import { certificationTestForSkill } from "@/lib/certification-tests";
@@ -134,6 +135,7 @@ export default async function Page({
         </div>
         <div className="flex items-center gap-2.5">
           <StatePill state={JOB_STAGE_STATE[stage]}>{JOB_STAGE_LABEL[stage]}</StatePill>
+          {stage === "REQUEST_TO_HIRE" && strip?.path.wrs[0]?.wr_number && <Link href={`/work-requests/${detail.id}?tab=work-order`} className="text-[13px] font-semibold" data-request-link>{strip.path.wrs[0].wr_number}</Link>}
           <JobActionsMenu jobId={detail.id} items={menuFor(stage, detail.id, sec.orders[0]?.id ?? null)} />
         </div>
       </section>
@@ -146,7 +148,7 @@ export default async function Page({
             <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-state-border pt-4 text-[13.5px]" data-handover>
               <span className="font-semibold text-state-inactive">Then:</span>
               <Link href={`/work-requests/${detail.id}?tab=work-order`} className="font-semibold">Request {strip.path.wrs[0].wr_number}</Link>
-              <span className={strip.approvedAt ? "text-state-accepted" : "text-state-pending"}>{strip.approvedAt ? "Approved" : "Waiting for Approval"}</span>
+              {(() => { const rs = requestStatus(strip.path.wrs[0]); return <span className={rs === "APPROVED" ? "text-state-accepted" : rs === "DECLINED" ? "text-state-declined" : "text-state-pending"}>{rs ? REQUEST_STATUS_LABEL[rs] : "Pending Approval"}</span>; })()}
               {strip.wo && <>
                 <span aria-hidden className="text-state-inactive">→</span>
                 <Link href={`/orders/${strip.wo.id}`} className="font-semibold">Order {strip.wo.order_number}</Link>
@@ -242,13 +244,14 @@ export default async function Page({
           {!sec.awardRows.length && !orders.length ? (
             <div className="rounded-[12px] border border-state-border p-5" data-work-order-empty>
               <p className="text-[15px] font-bold">No one is hired yet.</p>
-              <p className="mt-1 text-[14px] text-state-inactive">Pick a provider on <Link href={`/work-requests/${detail.id}?tab=responses`}>Responses</Link> (or <Link href={`/work-requests/${detail.id}?tab=matches`}>Matches</Link>) and press Hire.</p>
+              <p className="mt-1 text-[14px] text-state-inactive">Pick a provider on <Link href={`/work-requests/${detail.id}?tab=responses`}>Responses</Link> (or <Link href={`/work-requests/${detail.id}?tab=matches`}>Matches</Link>) and press Request to Hire.</p>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               <section className="rounded-[12px] border border-state-border p-5" data-requisition-card>
                 <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-state-inactive">Request</p>
-                <h2 className="mt-1 text-[18px] font-extrabold">{sec.header.workRequest ?? "Created on Hire"}</h2>
+                <h2 className="mt-1 text-[18px] font-extrabold">{sec.header.workRequest ?? "Created on Request to Hire"}</h2>
+                {sec.jobNumber && <p className="mt-0.5 text-[13px] text-state-inactive" data-for-job>For Job <Link href={`/work-requests/${detail.id}`} className="font-semibold text-ink">{sec.jobNumber}</Link></p>}
                 {sec.awardRows.map((a, k) => <p key={k} className="mt-2 text-[14px]"><b>{a.who.replace(/^Provider /, "")}</b><span className="text-state-inactive"> · {a.rate != null ? `${formatCents(a.rate)}${a.uom === "HOUR" ? "/hr" : ""} · ` : ""}{a.when}</span></p>)}
                 <p className="mt-2 text-[14px]">Approval: {sec.approval?.at ? <b className="text-state-accepted">Auto-approved · {sec.approval.at}</b> : <span className="text-state-pending">Waiting</span>}</p>
                 {awarded && <div className="mt-3"><CreateOrder workRequestId={detail.id} description={detail.workRequestDescription} /></div>}

@@ -97,10 +97,10 @@ export function HireTermsForm({ d }: { d: HireDefaults }) {
           </>
         ) : (<>
         <button type="button" disabled={busy || !t.rate} onClick={submit} data-create-work-order className="inline-flex min-h-11 items-center bg-ink px-6 text-[14.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40">
-          {busy ? "Working…" : d.erpOrigin ? "Submit" : `Hire ${d.providerName.replace(/^Provider\s+/, "")}`}
+          {busy ? "Working…" : "Request to Hire"}
         </button>
-        {!d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">Hiring awards the job and creates the Request. It is approved, then the Order comes to you to accept.</p>}
-        {d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">This request came from your ERP — Submit returns it there to raise the PO.</p>}
+        {!d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">Request to Hire creates the Request and sends it for approval. Once approved, the Order comes to you to accept.</p>}
+        {d.erpOrigin && <p className="mt-2 text-[12.5px] text-ink-2">This request came from your ERP — Request to Hire returns it there to raise the PO.</p>}
         </>)}
       </div>
       {/* Scott 10-24: after Add to cart, a confirmation (like the Order one) — not the same form with Submit still live. */}

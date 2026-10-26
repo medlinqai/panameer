@@ -87,7 +87,7 @@ async function Overview({ personId, slice }: { personId: string; slice?: string 
     { key: "availability", label: "3. Request Availability", steps: ["request", "proposals"], step: "proposals" },
     { key: "questions", label: "4. Ask Questions", steps: [], step: "proposals" },
     { key: "interview", label: "5. Interview Provider(s)", steps: ["interview", "test"], step: "interview" },
-    { key: "hire", label: "6. Hire Provider", steps: ["award", "approval"], step: "award" },
+    { key: "hire", label: "6. Request to Hire", steps: ["award", "approval"], step: "award" },
     { key: "wo", label: "Order Created", steps: ["wo"], step: "wo" },
   ];
   const live = d.jobRows.filter((j) => !j.draft && !j.completed);

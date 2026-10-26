@@ -137,8 +137,8 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                     <button type="button" className={GHOST} disabled={busy} onClick={() => setAsking([p.personId])} data-row-ask>Ask Questions</button>
                     <button type="button" className={GHOST} disabled={busy || !ev.certificationTestId} title={ev.certificationTestId ? undefined : "No certification test exists for this job's skills yet"} onClick={() => act(`/api/work-requests/${ev.jobId}/test`, { providerPersonId: p.personId, learnAssessmentId: ev.certificationTestId }, "Certification test sent.")} data-request-test>Request Test</button>
                     {pr.reconfirm === "needed"
-                      ? <span className={`${BTN} cursor-not-allowed opacity-40`} title="Waiting for this provider to re-confirm after your Amendment" aria-disabled data-award>Hire</span>
-                      : <Link href={`/hire/terms?job=${ev.jobId}&provider=${p.personId}`} className={BTN} data-award>Hire</Link>}
+                      ? <span className={`${BTN} cursor-not-allowed opacity-40`} title="Waiting for this provider to re-confirm after your Amendment" aria-disabled data-award>Request to Hire</span>
+                      : <Link href={`/hire/terms?job=${ev.jobId}&provider=${p.personId}`} className={BTN} data-award>Request to Hire</Link>}
                   </div>
                 )}
               </li>

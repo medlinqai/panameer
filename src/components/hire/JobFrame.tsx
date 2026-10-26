@@ -41,7 +41,7 @@ export function JobStrip({ steps, jobId, title }: { steps: StripStep[]; jobId?: 
 
 export function JobTabs({ jobId, current, counts }: { jobId: string; current: JobTab; counts: Partial<Record<JobTab, number>> }) {
   // Scott 10-23: one tab per Timeline step, numbered the same, so progress and sequence read together.
-  const tabs: [JobTab, string][] = [["details", "1. Create Job"], ["matches", "2. Choose Provider(s)"], ["responses", "3. Request Availability"], ["questions", "4. Ask Questions"], ["interviews", "5. Interview Provider(s)"], ["work-order", "6. Hire Provider"]];
+  const tabs: [JobTab, string][] = [["details", "1. Create Job"], ["matches", "2. Choose Provider(s)"], ["responses", "3. Request Availability"], ["questions", "4. Ask Questions"], ["interviews", "5. Interview Provider(s)"], ["work-order", "6. Request to Hire"]];
   return (
     <nav aria-label="Job" className="flex gap-6 overflow-x-auto border-b border-state-border" data-job-tabs>
       {tabs.map(([k, label]) => {

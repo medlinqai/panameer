@@ -103,7 +103,7 @@ export function MatchList({ jobId, matches: initial, state, empty, chosen = true
       <div className="mt-5 grid gap-4 sm:grid-cols-2" data-two-doors>
         <div className="rounded-[12px] border border-state-border p-5" data-door="direct">
           <h3 className="text-[15px] font-extrabold">Hire Directly</h3>
-          <p className="mt-1 text-[13px] text-state-inactive">You know who you want. Press <b className="text-ink">Hire</b> on their row — terms, then the Order.</p>
+          <p className="mt-1 text-[13px] text-state-inactive">You know who you want. Press <b className="text-ink">Request to Hire</b> on their row — terms, then the Request.</p>
           <p className="mt-2 text-[12px] text-state-inactive">Fastest · one provider</p>
           {!open && <button type="button" onClick={() => setOpen(true)} className={`${BTN_OUT} mt-2.5`} data-choose-direct>Choose Hire Directly</button>}
         </div>
@@ -158,7 +158,7 @@ export function MatchList({ jobId, matches: initial, state, empty, chosen = true
             <div className="flex flex-col items-end gap-1 text-right text-[13px]">
               {m.rate && <b className="block">{m.rate}</b>}
               {m.requested && <Link href={`/work-requests/${jobId}?tab=responses`} className="text-[12.5px] font-semibold text-magenta-dark underline underline-offset-4">Responses</Link>}
-              <Link href={`/hire/terms?job=${jobId}&provider=${m.personId}`} data-hire-provider className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Hire</Link>
+              <Link href={`/hire/terms?job=${jobId}&provider=${m.personId}`} data-hire-provider className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Request to Hire</Link>
               <button type="button" onClick={() => hide(m, true)} className="text-[12.5px] text-ink-3 underline underline-offset-4 hover:text-ink" data-hide-match aria-label={`Hide ${m.name}`}>Hide ×</button>
             </div>
           </li>
@@ -216,7 +216,7 @@ function QuickView({ m, jobId, onClose, onStar, onHide, prev, next }: { m: HireM
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button type="button" onClick={onStar} className={GHOST} data-quick-star>{m.starred ? "★ Shortlisted" : "☆ Shortlist"}</button>
         <button type="button" onClick={onHide} className={GHOST}>Hide</button>
-        <Link href={`/hire/terms?job=${jobId}&provider=${m.personId}`} className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Hire</Link>
+        <Link href={`/hire/terms?job=${jobId}&provider=${m.personId}`} className="inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover">Request to Hire</Link>
       </div>
       {d.summary && <Section title="Summary"><p className="whitespace-pre-line text-ink-2">{d.summary}</p></Section>}
       <Section title="Role">{d.role ?? "—"}</Section>
@@ -286,7 +286,7 @@ export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: Hi
                     <span className="flex items-center gap-2">{isMaskedName(r.m.name) || r.m.photoUrl ? <NeutralAvatar size={32} photoUrl={r.m.photoUrl} /> : null}<span className="min-w-0 truncate text-[14px] font-extrabold">{r.m.name}</span></span>
                     <MatchBadges badges={r.m.badges} className="mt-1.5 font-normal" />
                     <span className="mt-2 flex flex-wrap gap-1.5">
-                      {jobId && <Link href={`/hire/terms?job=${jobId}&provider=${r.m.personId}`} className="inline-flex min-h-8 items-center bg-ink px-3 text-[12.5px] font-bold text-surface hover:bg-ink-hover">Hire</Link>}
+                      {jobId && <Link href={`/hire/terms?job=${jobId}&provider=${r.m.personId}`} className="inline-flex min-h-8 items-center bg-ink px-3 text-[12.5px] font-bold text-surface hover:bg-ink-hover">Request to Hire</Link>}
                       {onRemove && <button type="button" onClick={() => onRemove(r.m.personId)} className="inline-flex min-h-8 items-center border border-ink px-2.5 text-[12.5px] font-semibold">Remove</button>}
                     </span>
                   </th>

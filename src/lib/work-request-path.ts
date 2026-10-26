@@ -21,7 +21,7 @@ export async function jobPath(jobId: string) {
     prisma.testRequest.findFirst({ where: { job_id: jobId }, orderBy: { created_at: "asc" }, select: { created_at: true } }),
     prisma.workRequest.findMany({
       where: { job_id: jobId, lines: { some: { provider_person_id: { not: null }, status: { in: ["ASSIGNED", "ORDERED"] } } } }, orderBy: { created_at: "asc" },
-      select: { id: true, wr_number: true, status: true, submitted_at: true, approved_at: true, created_at: true, lines: { where: { provider_person_id: { not: null } }, select: { provider_person_id: true, updated_at: true, work_order_id: true } } },
+      select: { id: true, wr_number: true, status: true, erp_connection_id: true, erp_returned_at: true, submitted_at: true, approved_at: true, created_at: true, lines: { where: { provider_person_id: { not: null } }, select: { provider_person_id: true, updated_at: true, work_order_id: true } } },
     }),
   ]);
   const orders = wrs.length ? await prisma.workOrder.findMany({ where: { work_request_id: { in: wrs.map((w) => w.id) }, status: { not: "CANCELLED" } }, orderBy: { created_at: "asc" }, select: { id: true, order_number: true, created_at: true } }) : [];

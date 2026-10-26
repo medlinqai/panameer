@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { jobPath } from "@/lib/work-request-path";
+import { REQUEST_STATUS_LABEL, requestStatus } from "@/lib/request-status";
 
 // OJ-E001: the Job page's one process strip — Create · Matches · Ask · Interview · Hire · Approve · Work Order · Release.
 // done = ink bar + green "✓ fact", current = magenta, later = grey; Hire Directly jobs skip Ask and Interview.
@@ -50,7 +51,7 @@ export async function jobStrip(jobId: string) {
   };
   const optional = (k: StripKey) => k === "questions" || k === "interview";
   const skipped = (k: StripKey) => (direct && (k === "ask" || k === "questions" || k === "interview")) || (awarded && optional(k) && !done[k] && !(k === "questions" ? qSent : invited));
-  const order: [StripKey, string][] = [["create", "Create Job"], ["matches", "Choose Provider(s)"], ["ask", "Request Availability"], ["questions", "Ask Questions"], ["interview", "Interview Provider(s)"], ["hire", "Hire Provider"]];
+  const order: [StripKey, string][] = [["create", "Create Job"], ["matches", "Choose Provider(s)"], ["ask", "Request Availability"], ["questions", "Ask Questions"], ["interview", "Interview Provider(s)"], ["hire", "Request to Hire"]];
   const busyOptional: StripKey | null = !awarded && qPending ? "questions" : !awarded && ivPending ? "interview" : null;
   const current: StripKey | null = busyOptional ?? order.find(([k]) => !done[k] && !skipped(k) && !optional(k))?.[0] ?? null;
   // Scott 10-23: each step says how it was done, above its date — where we are and how we got here.
@@ -66,7 +67,8 @@ export async function jobStrip(jobId: string) {
     ask: event ? `${asked} Asked · ${inN} Available` : "",
     questions: qSent ? `${answered} of ${qSent} Answered` : "",
     interview: invited ? [booked ? `${booked} Booked` : `${invited} Invited`, completed ? `${completed} Done` : null].filter(Boolean).join(" · ") : "",
-    hire: awarded ? (hiredWho || "Hired") : "",
+    // JR-E003: step 6 notes the Request number and its status.
+    hire: awarded && wrs[0] ? [wrs[0].wr_number, (() => { const s = requestStatus(wrs[0]); return s ? REQUEST_STATUS_LABEL[s] : null; })()].filter(Boolean).join(" · ") || hiredWho : "",
   };
   const top: Record<StripKey, string> = {
     create: `✓ ${day(job.created_at)}`,
