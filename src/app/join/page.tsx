@@ -128,8 +128,8 @@ function JoinRouter() {
           },
           {
             id: "seller" as const,
-            title: "Sell",
-            description: "Sell your services or service products through your company.",
+            title: "Work",
+            description: "Find jobs, send estimates and sell your services or service products through your company.",
           },
         ]
       : JOBS[userType!];

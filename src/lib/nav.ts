@@ -40,10 +40,10 @@ export const BAND_CONTROL_HREFS = [
 
 const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   "/connect": ["/connect/community", "/providers", "/companies", "/connect/invite", "/coordinator"],
-  // MD-E001: Estimate lives inside Shop (Get an Estimate); Sell = My Catalog + today's Jobs pages.
+  // MD-E001 / WK-E001: Estimate lives inside Shop (Get an Estimate); Work = Jobs for You, Estimates, Interviews & Tests, My Catalog.
   "/shop": ["/estimate", "/cart"],
   "/estimate": ["/estimates", "/catalog/estimates"],
-  "/catalog": ["/find-work", "/my-services", "/services", "/catalog"],
+  "/work": ["/work", "/find-work", "/my-services", "/services", "/catalog"],
   "/payments": ["/pay", "/finances", "/manage-money"],
   "/hire": ["/create-work", "/work-requests", "/search", "/consultations"],
   "/hire/overview": ["/hire", "/create-work", "/work-requests", "/search", "/consultations"],
@@ -198,12 +198,11 @@ export const COMPANY_NAV: NavItem[] = [
   { label: "Company Settings", href: "/company/settings" },
 ];
 
-// MD-E001: Seller Console — Connect · Learn · Sell · Orders · Payments. Sell opens My Catalog; Jobs for You,
-// Requests, Interviews and Tests (today's Jobs pages) are its tabs. A seller who buys registers as a buyer.
+// WK-E001: Seller Console — Connect · Learn · Work · Orders · Payments. Work opens the Work home (no tabs). A seller who buys registers as a buyer.
 export const PROVIDER_NAV: NavItem[] = [
   { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
-  { label: "Sell", heading: "Sell", href: "/catalog", icon: "Tag", requires: "canProvideServices" },
+  { label: "Work", heading: "Work", href: "/work", icon: "Tag", requires: "canProvideServices" },
   { label: "Orders", heading: "Orders", href: "/orders", icon: "ClipboardCheck" },
   { label: "Payments", heading: "Payments", href: "/payments", icon: "CreditCard", tooltip: "Paid to you" },
 ];
