@@ -20,7 +20,7 @@ const VIEWS = [
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; q?: string; status?: string; cat?: string }>;
+  searchParams: Promise<{ view?: string; q?: string; status?: string; cat?: string; group?: string }>;
 }) {
   const viewer = await guardPage("authenticated");
   const person = await prisma.person.findUnique({
@@ -38,8 +38,11 @@ export default async function Page({
   const q = sp.q ?? "";
 
   await settleStale(person.id);
+  // WK-E008: bring the Things You Need to Do lines up to date first, so both places agree.
+  const pp = await prisma.providerProfile.findUnique({ where: { person_id: person.id }, select: { id: true } });
+  await (await import("@/lib/attention")).appCounts(viewer, pp ? "provider" : "buyer").catch(() => null);
   const [all, counts] = await Promise.all([
-    getActList(person.id, { status, q, category: sp.cat }),
+    getActList(person.id, { status, q, category: sp.cat, group: sp.group }),
     getActCounts(person.id),
   ]);
 

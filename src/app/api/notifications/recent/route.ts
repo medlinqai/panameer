@@ -22,7 +22,7 @@ export async function GET() {
 
   const rows = await prisma.notification.findMany({
     // N-E001: the quick view shows only what hasn't been dismissed.
-    where: { person_id: person.id, delivered_in_app_at: { not: null }, dismissed_at: null },
+    where: { person_id: person.id, delivered_in_app_at: { not: null }, dismissed_at: null, NOT: { event_key: "todo.item" } },
     orderBy: { created_at: "desc" },
     take: TAKE,
     select: {

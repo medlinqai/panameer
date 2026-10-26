@@ -83,6 +83,8 @@ export function triageWhere(personId: string) {
   return {
     person_id: personId,
     delivered_in_app_at: { not: null },
+    // WK-E008: Things You Need to Do lines live in the Worklist, not the Notifications feed.
+    event_key: { not: "todo.item" },
   };
 }
 
@@ -119,6 +121,8 @@ export type TriageRow = {
   dedupeKey: string | null;
   resolved: boolean;
   dismissed: boolean;
+  /** WK-E008: a Things You Need to Do line's own button word. */
+  action?: string | null;
 };
 
 const TRIAGE_SELECT = {
@@ -136,13 +140,14 @@ const TRIAGE_SELECT = {
   entity_id: true,
   dedupe_key: true,
   dismissed_at: true,
+  todo_action: true,
 } as const;
 
 function toTriage(n: {
   id: string; title: string; body: string | null; href: string | null;
   category: string; event_key: string; created_at: Date; read_at: Date | null;
   requires_action: boolean; resolved_at: Date | null; delivered_in_app_at: Date | null;
-  entity_id: string | null; dedupe_key: string | null; dismissed_at: Date | null;
+  entity_id: string | null; dedupe_key: string | null; dismissed_at: Date | null; todo_action?: string | null;
 }): TriageRow {
   return {
     id: n.id,
@@ -158,6 +163,7 @@ function toTriage(n: {
     dedupeKey: n.dedupe_key,
     resolved: n.resolved_at !== null,
     dismissed: n.dismissed_at !== null,
+    action: n.todo_action ?? null,
   };
 }
 
@@ -234,7 +240,7 @@ export async function settleStale(personId: string): Promise<void> {
 
 export async function getActList(
   personId: string,
-  opts: { status?: "open" | "completed" | "any"; q?: string; category?: string } = {}
+  opts: { status?: "open" | "completed" | "any"; q?: string; category?: string; group?: string } = {}
 ): Promise<ActRow[]> {
   const status = opts.status ?? "open";
   const where: Record<string, unknown> = {
@@ -245,6 +251,7 @@ export async function getActList(
   if (status === "open") where.resolved_at = null;
   else if (status === "completed") where.resolved_at = { not: null };
   if (opts.category) where.category = opts.category;
+  if (opts.group) where.todo_group = opts.group;
   const term = opts.q?.trim();
   if (term && term.length >= 2) {
     where.OR = [

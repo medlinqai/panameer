@@ -967,6 +967,16 @@ export const NOTIFICATION_EVENTS = {
     body: (v) => str(v, "requestTitle", "") || null,
     href: (v) => `/orders/${str(v, "orderId", "")}`,
   },
+  // WK-E008: a Things You Need to Do line kept in the Worklist (written by lib/todo.ts, never sent).
+  "todo.item": {
+    event: "todo.item",
+    recipient: "the person the to-do is for",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "DIGEST",
+    requiresAction: true,
+    title: (v) => str(v, "title", "To Do"),
+  },
   // JR-E004: the 60-day PO rule — day 45 asks the buyer, day 60 declines (Assumed).
   "work.request_po_check": {
     event: "work.request_po_check",

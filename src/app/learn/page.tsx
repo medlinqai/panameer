@@ -8,7 +8,8 @@ import { viewerTeaches } from "@/lib/learn-home";
 import { HubHome, RankList, VsGroup, type RankRow } from "@/components/home/HubHome";
 import { displayFirstName } from "@/lib/display";
 import { C, type Donut } from "@/lib/dashboard/types";
-import type { AttentionItem, AttentionLine } from "@/lib/attention";
+import { appCounts } from "@/lib/attention";
+import { todoGroups } from "@/lib/todo";
 
 export const metadata = {
   title: "Learn — Panameer",
@@ -34,7 +35,6 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
   const inProgress = enrolled.filter((p) => p.mine && p.mine.done > 0 && p.mine.done < p.mine.total);
   const earned = catalog.filter((p) => p.certificate);
   const onProfile = me?.providerProfile ? await prisma.credential.count({ where: { provider_profile_id: me.providerProfile.id, learning_path_id: { not: null } } }) : 0;
-  const onProfileIds = me?.providerProfile ? new Set((await prisma.credential.findMany({ where: { provider_profile_id: me.providerProfile.id, learning_path_id: { not: null } }, select: { learning_path_id: true } })).map((c) => c.learning_path_id)) : new Set<string | null>();
   const readyToTest = catalog.filter((p) => p.tag === "READY_TO_TEST");
   const passed = catalog.filter((p) => p.test.passed);
   const available = catalog.filter((p) => p.test.ready && !p.test.passed && p.test.used === 0);
@@ -67,17 +67,10 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
     { label: "Paths I Teach", n: myPaths.length, color: C.ink, href: "/learn/teaching" }, { label: "Learners", n: myLearners, color: C.steel, href: "/learn/teaching" },
     { label: "Finished", n: myFinished, color: C.ok, href: "/learn/teaching" }, { label: "Rating", n: 0, color: C.grey, untracked: true }] }];
 
-  // Things You Need to Do.
-  const group = (title: string, lines: AttentionLine[], href: string): AttentionItem[] => (lines.length ? [{ id: `learn:${title}`, title, n: lines.length, what: title, app: "learn", appLabel: "Learn", due: null, dueAt: null, href, action: "Open", lines }] : []);
-  const todo = [
-    ...group("Continue", inProgress.map((p) => ({ key: p.id, what: p.title, detail: p.mine?.next ? `Lesson ${p.mine.done + 1} of ${p.mine.total}` : `${p.mine?.done} of ${p.mine?.total} lessons`, dueAt: null, href: p.mine?.next ? `/learn/${p.slug}/${p.mine.next.id}` : `/learn/${p.slug}`, action: "Resume" })), "/learn/my"),
-    ...group("Certificates", [
-      ...(me?.providerProfile ? earned.filter((p) => !onProfileIds.has(p.id)).map((p) => ({ key: `c-${p.id}`, what: `Add ${p.title} to Your Profile`, detail: `Earned ${p.certificate!.earnedOn}`, dueAt: null, href: "/learn/certificates", action: "Add" })) : []),
-      ...readyToTest.map((p) => ({ key: `t-${p.id}`, what: `Take the ${p.title} Test`, detail: "You finished the path", dueAt: null, href: `/learn/${p.slug}/test`, action: "Start" })),
-    ], "/learn/certificates"),
-    ...group("Matched to You", matched.map((m) => ({ key: m.path.id, what: m.path.title, detail: m.reason, dueAt: null, href: `/learn/${m.path.slug}`, action: "Enroll" })), "/learn/paths"),
-  ];
-
+  // WK-E008: Things You Need to Do = the Worklist's Learn items (appCounts keeps it current).
+  const side = me?.providerProfile ? "provider" : "buyer";
+  if (me) await appCounts(viewer, side);
+  const todo = me ? await todoGroups(me.id, side, ["learn"]) : [];
   // 2 · Who's Learning Most: top 3 + your row; you vs the group.
   const myIdx = month.findIndex((r) => r.userId === viewer.userId);
   const tIdx = me ? teachers.findIndex((r) => r.personId === me.id) : -1;

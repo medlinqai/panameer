@@ -3,7 +3,8 @@ import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
 import { displayFirstName } from "@/lib/display";
-import { connectLines, type AttentionItem } from "@/lib/attention";
+import { appCounts } from "@/lib/attention";
+import { todoGroups } from "@/lib/todo";
 import { GROWTH_WEIGHTS, growthBoard, growthScore } from "@/lib/growth-score";
 import { HubHome, RankList, VsGroup } from "@/components/home/HubHome";
 import { C, type Donut } from "@/lib/dashboard/types";
@@ -51,14 +52,10 @@ export default async function ConnectHome() {
       { label: "Joined", n: groupsJoined, color: C.ok, href: "/connect/groups" }, { label: "New Posts", n: 0, color: C.steel, untracked: true },
       { label: "Invites", n: groupInvites, color: C.pend, mine: true, href: "/connect/groups" }]),
   ];
-  // Things You Need to Do — one line each, grouped.
-  const lines = await connectLines(uid, pid);
-  const todo: AttentionItem[] = [];
-  for (const g of ["Requests to Connect", "Recommendations", "Mentors & Groups"] as const) {
-    const ls = lines.filter((x) => x.group === g).map((x) => x.line);
-    if (g === "Recommendations" && ppId && received === 0) ls.push({ key: "ask", what: "Ask a Past Client for One", detail: "Profiles with one get picked more often", dueAt: null, href: "/connect/recommendations", action: "Ask" });
-    if (ls.length) todo.push({ id: `connect:${g}`, title: g, n: ls.length, what: g, app: "connect", appLabel: "Connect", due: null, dueAt: null, href: ls[0].href, action: "Open", lines: ls });
-  }
+  // WK-E008: Things You Need to Do = the Worklist's Connect items (appCounts keeps it current).
+  const side = ppId ? "provider" : "buyer";
+  await appCounts(viewer, side);
+  const todo = await todoGroups(pid, side, ["connect"]);
   // 2 · How You Rank: Leaders top 3 + your row, How It Adds Up, you vs the group.
   const [me, board, groupAvg] = await Promise.all([growthScore(pid, "month"), growthBoard("month"), groupAverages()]);
   const mine = board.find((r) => r.personId === pid);

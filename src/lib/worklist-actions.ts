@@ -14,7 +14,7 @@ export type RowAction =
   // HP-E002: work rows act from the row — View & Propose · Decline, Review & Accept, Review & Send.
   | { kind: "work"; primary: { label: string; href: string }; secondary?: { label: string; href: string } }
   | null;
-type Row = { id: string; eventKey: string; entityId: string | null; dedupeKey: string | null; needsAction: boolean; resolved: boolean; href: string | null };
+type Row = { id: string; eventKey: string; entityId: string | null; dedupeKey: string | null; needsAction: boolean; resolved: boolean; href: string | null; action?: string | null };
 
 const joinParts = (key: string | null) => {
   const m = key?.match(/^company\.join_requested:([0-9a-f-]{36}):([0-9a-f-]{36}):/i);
@@ -64,6 +64,8 @@ export async function actionsFor(rows: Row[]): Promise<Record<string, RowAction>
 
 /** HP-E002: the buttons on a work row (undefined = not a work row). */
 function workAction(r: Row): RowAction | undefined {
+  // WK-E008: a Things You Need to Do line — same words, same button as on the panel.
+  if (r.eventKey === "todo.item") return r.resolved || !r.href ? null : { kind: "work", primary: { label: r.action || "Open", href: r.href } };
   if (r.resolved) return ["work.invited_to_propose", "work.sourcing_event_invited", "work.order_offered", "work.order_created", "buyer.sourcing.notify_others", "work.interview_requested", "work.questions_asked", "work.request_po_check"].includes(r.eventKey) ? null : undefined;
   // JR-E004: No PO Yet — Still Waiting · It Was Declined, both on the Request.
   if (r.eventKey === "work.request_po_check" && r.href) return { kind: "work", primary: { label: "Still Waiting", href: `${r.href}&po=wait` }, secondary: { label: "It Was Declined", href: `${r.href}&po=declined` } };

@@ -45,22 +45,27 @@ export async function workApp(personId: string, viewer: { userId: string }) {
       { label: "Rates Live", n: ratesLive, color: C.ok, href: "/catalog#services" }, { label: "Products Live", n: productsLive, color: C.ink, href: "/catalog#products" },
       { label: "Draft", n: drafts, color: C.grey, mine: true, href: "/catalog#products" }] },
   ];
-  // Things You Need to Do — estimates to send, interviews to pick, tests to take, requests to answer, matched jobs to apply for.
-  const jobs = new Map((await prisma.job.findMany({ where: { id: { in: [...toSchedule, ...testsReq].map((x) => x.job_id) } }, select: { id: true, title: true, job_number: true } })).map((j) => [j.id, j]));
-  const group = (title: string, lines: AttentionLine[], href: string): AttentionItem[] => (lines.length ? [{ id: `work:${title}`, title, n: lines.length, what: title, app: "request", appLabel: "Work", due: null, dueAt: null, href, action: "Open", lines }] : []);
-  const requesters = new Map((await prisma.person.findMany({ where: { id: { in: asked.map((r) => r.requester_person_id) } }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } } } })).map((p) => [p.id, p]));
-  const who = (r: (typeof asked)[number]) => { const p = requesters.get(r.requester_person_id); return p ? p.company?.name ?? `${p.first_name} ${p.last_name}`.trim() : "A buyer"; };
-  const todo: AttentionItem[] = [
-    ...group("Estimates", asked.map((r) => ({ key: r.id, what: `${who(r)} Asked for an Estimate`, detail: r.description.slice(0, 80), dueAt: r.start_by?.toISOString() ?? null, href: "/estimate", action: "Send" })), "/work/estimates"),
-    ...group("Interviews & Tests", [
-      ...toSchedule.map((i) => ({ key: i.id, what: "Pick an Interview Time", detail: [jobs.get(i.job_id)?.title, jobs.get(i.job_id)?.job_number].filter(Boolean).join(" · "), dueAt: null, href: `/find-work/${i.job_id}#interview`, action: "Pick" })),
-      ...testsReq.map((t) => ({ key: t.id, what: "Take the Test", detail: [jobs.get(t.job_id)?.title, t.request_number].filter(Boolean).join(" · "), dueAt: null, href: "/work/interviews?stage=tests", action: "Start" })),
-    ], "/work/interviews"),
-    ...group("Jobs for You", [
-      ...rows.filter((r) => r.slice === "They Requested").map((r) => ({ key: r.key, what: r.what, detail: `They requested · ${r.amount}`, dueAt: null, href: r.href, action: "Respond" })),
-      ...rows.filter((r) => r.slice === "You Matched").map((r) => ({ key: r.key, what: r.what, detail: `You matched · ${r.amount}`, dueAt: null, href: r.href, action: "Apply" })),
-    ], jobsHref()),
+  return { donuts, openJobs, estimatesWaiting: asked.length, rows };
+}
+
+/** WK-E008: Work's own Things You Need to Do lines (estimates to send, tests to take, matched jobs to apply for) — appCounts writes them into the Worklist. */
+export async function workLines(personId: string, profileId: string | null): Promise<AttentionItem[]> {
+  const [asked, testsReq] = await Promise.all([
+    prisma.estimateRequest.findMany({ where: { provider_person_id: personId, status: "OPEN" }, orderBy: { created_at: "asc" }, take: 50, select: { id: true, description: true, start_by: true, requester_person_id: true } }),
+    prisma.testRequest.findMany({ where: { provider_person_id: personId, status: { in: ["ISSUED", "IN_PROGRESS"] } }, select: { id: true, request_number: true, job_id: true, responds_by: true } }),
+  ]);
+  const [requesters, jobs] = await Promise.all([
+    prisma.person.findMany({ where: { id: { in: asked.map((r) => r.requester_person_id) } }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } } } }),
+    prisma.job.findMany({ where: { id: { in: testsReq.map((t) => t.job_id) } }, select: { id: true, title: true } }),
+  ]);
+  const who = (pid: string) => { const p = requesters.find((x) => x.id === pid); return p ? p.company?.name ?? `${p.first_name} ${p.last_name}`.trim() : "A buyer"; };
+  const touched = new Set((await prisma.proposalRequest.findMany({ where: { provider_person_id: personId }, select: { job_id: true } })).map((r) => r.job_id).concat((await prisma.proposal.findMany({ where: { provider_person_id: personId }, select: { job_id: true } })).map((p) => p.job_id)));
+  const { getWorkFeed } = await import("@/lib/work-feed");
+  const feed = profileId ? (await getWorkFeed({ tab: "best", profileId }).catch(() => [])).filter((c) => c.matched > 0 && !touched.has(c.id)).slice(0, 10) : [];
+  const group = (title: string, app: "request" | "estimate", lines: AttentionLine[], href: string): AttentionItem[] => (lines.length ? [{ id: `work:${title}`, title, n: lines.length, what: title, app, appLabel: "Work", due: null, dueAt: null, href, action: "Open", lines }] : []);
+  return [
+    ...group("Estimates", "estimate", asked.map((r) => ({ key: r.id, what: `${who(r.requester_person_id)} Asked for an Estimate`, detail: r.description.slice(0, 80), dueAt: r.start_by?.toISOString() ?? null, href: "/estimate", action: "Send" })), "/work/estimates"),
+    ...group("Tests to Take", "request", testsReq.map((t) => ({ key: t.id, what: "Take the Test", detail: [jobs.find((j) => j.id === t.job_id)?.title, t.request_number].filter(Boolean).join(" · "), dueAt: t.responds_by?.toISOString() ?? null, href: "/work/interviews?stage=tests", action: "Start" })), "/work/interviews?stage=tests"),
+    ...group("Jobs for You", "request", feed.map((c) => ({ key: c.id, what: c.title, detail: ["You matched", c.budgetLabel].filter(Boolean).join(" · "), dueAt: null, href: `/find-work/${c.id}`, action: "Apply" })), jobsHref("You Matched")),
   ];
-  const needYou = todo.reduce((s, g) => s + (g.n ?? 0), 0);
-  return { donuts, todo, needYou, openJobs, estimatesWaiting: asked.length, rows };
 }

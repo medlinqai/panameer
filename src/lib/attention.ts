@@ -229,7 +229,7 @@ async function countCoursesToWatch(userId: string): Promise<number> {
 }
 
 // ── RA-E001: one counts source — per app and per tab, each item something waiting on THIS person ─────────────
-export type AppKey = "request" | "shop" | "estimate" | "order" | "settlement" | "payment" | "connect" | "learn";
+export type AppKey = "request" | "shop" | "estimate" | "order" | "settlement" | "payment" | "connect" | "learn" | "profile";
 /** JR-E006: one line per thing to act on — title + number, detail (P-number until the Order is released, amount, start), due, its own button. */
 export type AttentionLine = { key: string; what: string; detail: string; dueAt: string | null; href: string; action: string };
 export type AttentionItem = { id: string; what: string; app: AppKey; appLabel: string; due: string | null; dueAt: string | null; href: string; action: string; /** Scott 10-23: which job(s) — "Oracle Application Manager + 2 more". */ sub?: string; jobIds?: string[]; /** JR-E006 */ title?: string; n?: number; lines?: AttentionLine[]; /** HT-E006: sort tier override (Profile / Set-Up / Connect follow the stage). */ tier?: number };
@@ -248,10 +248,10 @@ export type AppCounts = {
   items: AttentionItem[];
 };
 export const APP_HOME: Record<"buyer" | "provider", Record<AppKey, string>> = {
-  buyer: { request: "/hire/overview", shop: "/shop", estimate: "/estimate", order: "/orders/overview", settlement: "/payments/payment-requests", payment: "/pay", connect: "/connect", learn: "/learn?tab=mine" },
-  provider: { request: "/find-work", shop: "/shop", estimate: "/estimate", order: "/orders/overview", settlement: "/payments/payment-requests", payment: "/payments", connect: "/connect", learn: "/learn?tab=mine" },
+  buyer: { request: "/hire/overview", shop: "/shop", estimate: "/estimate", order: "/orders/overview", settlement: "/payments/payment-requests", payment: "/pay", connect: "/connect", learn: "/learn?tab=mine", profile: "/company" },
+  provider: { request: "/work/home", shop: "/shop", estimate: "/work/estimates", order: "/orders/overview", settlement: "/payments/payment-requests", payment: "/payments", connect: "/connect", learn: "/learn?tab=mine", profile: "/profile" },
 };
-const APP_LABEL: Record<AppKey, string> = { request: "Hire", shop: "Shop", estimate: "Estimate", order: "Orders", settlement: "Settlements", payment: "Payments", connect: "Connect", learn: "Learn" };
+const APP_LABEL: Record<AppKey, string> = { request: "Hire", shop: "Shop", estimate: "Estimate", order: "Orders", settlement: "Settlements", payment: "Payments", connect: "Connect", learn: "Learn", profile: "Profile" };
 const DAY_MS = 86_400_000;
 const dueText = (d: Date | null | undefined) => (d ? d.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null);
 
@@ -302,10 +302,13 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     const list = side === "buyer" ? await accountChecklist(id) : await profileChecklist(id);
     const missing = list.filter((i) => i.n === 0);
     const groupName = side === "buyer" ? "Set-Up" : "Profile";
-    if (missing.length) items.push({ id: `setup:${groupName}`, title: groupName, n: missing.length, what: groupName, app: "connect", appLabel: groupName, due: null, dueAt: null, href: side === "buyer" ? "/company" : "/profile", action: "Open", tier: tierOf,
+    if (missing.length) items.push({ id: `setup:${groupName}`, title: groupName, n: missing.length, what: groupName, app: "profile", appLabel: groupName, due: null, dueAt: null, href: side === "buyer" ? "/company" : "/profile", action: "Open", tier: tierOf,
       lines: missing.map((i) => ({ key: i.label, what: i.action === "Ask" ? "Ask for a Recommendation" : i.action === "Connect" ? `Connect Your ${i.label.replace(" Connection", "")}` : `Add Your ${i.label}`, detail: i.why, dueAt: null, href: i.href, action: i.action })) });
-    const lines = (await connectLines(viewer.userId, id)).map((x) => x.line);
-    if (lines.length) items.push({ id: "connect:stage", title: "Connect", n: lines.length, what: "Connect", app: "connect", appLabel: "Connect", due: null, dueAt: null, href: "/connect/connections", action: "Open", tier: tierOf + 0.1, lines });
+    const cl = await connectLines(viewer.userId, id);
+    for (const g of ["Requests to Connect", "Recommendations", "Mentors & Groups"] as const) {
+      const ls = cl.filter((x) => x.group === g).map((x) => x.line);
+      if (ls.length) items.push({ id: `connect:${g}`, title: g, n: ls.length, what: g, app: "connect", appLabel: "Connect", due: null, dueAt: null, href: ls[0].href, action: "Open", tier: tierOf + 0.1, lines: ls });
+    }
   };
   // WK-E007: a Completed Order (last 30 days) — the buyer recommends the seller; the seller asks the buyer for a recommendation.
   const afterCompleted = async () => {
@@ -378,8 +381,15 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     add("payment", pay, "Payments Due", APP_HOME.buyer.payment, "Pay");
     add("connect", connect, "Unread Messages", "/messages", "Read");
     await stageGroups();
-  await afterCompleted();
-  await titled();
+    await afterCompleted();
+    items.push(...(await (await import("@/lib/learn-todo")).learnLines(viewer.userId, null).catch(() => [])));
+    await titled();
+    // WK-E008: the Worklist is the one source — write these lines into it, then read the panel back from it.
+    const { syncTodo, todoGroups } = await import("@/lib/todo");
+    await syncTodo(id, "buyer", items);
+    const wl = await todoGroups(id, "buyer");
+    items.length = 0;
+    items.push(...wl);
     // PI-E007: punched in → the punch-in cart comes first.
     const p = await (await import("@/lib/erp/punchin-live")).currentPunchin().catch(() => null);
     if (p?.state === "live") items.unshift({ id: "punchin:cart", what: `Punch-in Cart · ${p.count} item${p.count === 1 ? "" : "s"}`, app: "shop", appLabel: APP_LABEL.shop, due: null, dueAt: null, href: "/shop?tab=cart", action: `Return to ${p.erpName}` });
@@ -421,7 +431,16 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   add("connect", connect, "Unread Messages", "/messages", "Read");
   await stageGroups();
   await afterCompleted();
+  const pp = await prisma.providerProfile.findUnique({ where: { person_id: id }, select: { id: true } });
+  items.push(...(await (await import("@/lib/work-app")).workLines(id, pp?.id ?? null).catch(() => [])));
+  items.push(...(await (await import("@/lib/learn-todo")).learnLines(viewer.userId, pp?.id ?? null).catch(() => [])));
   await titled();
+  // WK-E008: the Worklist is the one source — write these lines into it, then read the panel back from it.
+  const { syncTodo, todoGroups } = await import("@/lib/todo");
+  await syncTodo(id, "provider", items);
+  const wl = await todoGroups(id, "provider");
+  items.length = 0;
+  items.push(...wl);
   return { side, request: { total: requests + interviews + tests + questions, jobs: 0, requests, interviews: interviews + questions, tests }, shop, estimate, order: { total: order }, settlement: { total: drafts }, payment: { total: paidIn }, connect: { total: connect }, learn: { total: learn }, items };
 }
 

@@ -3,6 +3,8 @@ import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { displayFirstName } from "@/lib/display";
 import { workApp } from "@/lib/work-app";
+import { appCounts } from "@/lib/attention";
+import { todoGroups } from "@/lib/todo";
 import { HubHome } from "@/components/home/HubHome";
 
 export const metadata = { title: "Work · Panameer" };
@@ -13,15 +15,19 @@ export default async function WorkHomePage() {
   const me = await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true, first_name: true } });
   if (!me) redirect("/dashboard");
   const w = await workApp(me.id, viewer);
+  // WK-E008: Things You Need to Do = the Worklist's Work items (appCounts keeps it current).
+  await appCounts(viewer, "provider");
+  const todo = await todoGroups(me.id, "provider", ["request", "estimate"]);
+  const needYou = todo.reduce((n, g) => n + (g.n ?? 0), 0);
   const first = displayFirstName(me.first_name);
   const n = (k: number, word: string) => `${k.toLocaleString("en-US")} ${word}${k === 1 ? "" : "s"}`;
   return (
     <div className="px-4 py-6 sm:px-6">
       <HubHome
         eyebrow="WORK" title={`Your Work${first ? `, ${first}` : ""}`}
-        summary={`${n(w.needYou, "thing")} need you · ${n(w.openJobs, "open job")} · ${n(w.estimatesWaiting, "estimate")} waiting`}
+        summary={`${n(needYou, "thing")} need you · ${n(w.openJobs, "open job")} · ${n(w.estimatesWaiting, "estimate")} waiting`}
         primary={{ label: "Browse the Job Board", href: "/find-work?tab=best" }} secondary={{ label: "Send an Estimate", href: "/estimate" }}
-        donuts={w.donuts} todo={w.todo} glanceHint="Click a tile to open it, or a line to jump to that stage"
+        donuts={w.donuts} todo={todo} glanceHint="Click a tile to open it, or a line to jump to that stage"
         actions={[
           { label: "Browse the Job Board", detail: `${n(w.openJobs, "open job")}, filter by skill and rate`, href: "/find-work?tab=best" },
           { label: "Send an Estimate", detail: "Quote a buyer without waiting to be asked", href: "/estimate" },

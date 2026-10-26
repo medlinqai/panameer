@@ -65,7 +65,7 @@ export async function getMe(viewer: Viewer) {
 
   // Messages have their own count, so message notifications are left out of the notification counts.
   // Same rule as the Notifications list (allWhere): an action item that's been done no longer counts, read or not.
-  const notMessages = { person_id: person.id, delivered_in_app_at: { not: null }, read_at: null, dismissed_at: null, AND: [{ NOT: { event_key: "message.received" } }, { NOT: { requires_action: true, resolved_at: { not: null } } }] };
+  const notMessages = { person_id: person.id, delivered_in_app_at: { not: null }, read_at: null, dismissed_at: null, AND: [{ NOT: { event_key: "message.received" } }, { NOT: { event_key: "todo.item" } }, { NOT: { requires_action: true, resolved_at: { not: null } } }] };
   const [notificationsUnread, notificationsNeedAction, messagesUnread, cartCount] = await Promise.all([
     prisma.notification.count({ where: notMessages }),
     prisma.notification.count({ where: { ...notMessages, requires_action: true, resolved_at: null } }),

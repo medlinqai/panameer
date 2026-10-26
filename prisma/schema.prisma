@@ -4771,6 +4771,11 @@ model Notification {
   /// every preview and production). A default would have written a claim about history
   /// onto all 102 existing rows.
   dismissed_at DateTime?
+  /// WK-E008: a Things You Need to Do line kept in the Worklist — its app, group, button word and due date.
+  todo_app     String?
+  todo_group   String?
+  todo_action  String?
+  due_at       DateTime?
 
   created_at DateTime @default(now())
 
