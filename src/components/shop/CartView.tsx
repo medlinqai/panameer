@@ -13,7 +13,7 @@ const BTN_K = "inline-flex min-h-11 items-center justify-center bg-ink px-6 text
 
 type WR = { id: string; wrNumber: string | null; description: string; descriptionRequired: boolean } | null;
 
-// JW-E008: the buyer's Work Request (Incomplete) — lines by provider, a description, then Submit (one work order per seller).
+// JW-E008 / JR-E005: the buyer's cart — lines by provider, a description, then Request to Buy (a Request; one Order per seller once approved).
 export function CartView({ groups, totalCents, currency, hasCompany, workRequest }: { groups: CartGroup[]; totalCents: number; currency: string; hasCompany: boolean; workRequest?: WR }) {
   const router = useRouter();
   const { me, refresh } = useMe();
@@ -103,9 +103,9 @@ export function CartView({ groups, totalCents, currency, hasCompany, workRequest
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink pt-4">
         <span className="text-[18px] font-bold">Total {formatCents(totalCents, currency)}</span>
         {hasCompany ? (
-          <button type="button" data-place-order disabled={busy || needsDescription || !!waiting} title={needsDescription ? "Add a description first" : undefined} onClick={() => post({ action: "place", description })} className={BTN_K}>{busy ? "Submitting…" : "Submit"}</button>
+          <button type="button" data-place-order disabled={busy || needsDescription || !!waiting} title={needsDescription ? "Add a description first" : undefined} onClick={() => post({ action: "place", description })} className={BTN_K}>{busy ? "Sending…" : "Request to Buy"}</button>
         ) : (
-          <Link href="/company" className={BTN_K}>Add Your Company to Submit</Link>
+          <Link href="/company" className={BTN_K}>Add Your Company to Request to Buy</Link>
         )}
       </div>
       {waiting && <p data-waiting-line className="mt-2 text-right text-[13px] text-ink-2">{waitingText(waiting)}</p>}

@@ -197,9 +197,9 @@ export async function placeOrder(viewer: Viewer, input: { description?: string |
   const head = await prisma.workRequest.findUniqueOrThrow({ where: { id: wrId }, select: { description: true } });
   const description = input.description !== undefined ? input.description?.trim() || null : head.description;
   if (!description && (await descriptionRequired(pAccountId))) throw new CartError("Add a description before you submit");
-  // JW-E005: Submit → APPROVED (automatic in R1); ORDERED once its work orders exist.
+  // JW-E005 / JR-E005: Request to Buy → the Request is Approved (automatic in R1); ORDERED once its Orders exist.
   const now0 = new Date();
-  await prisma.workRequest.update({ where: { id: wrId }, data: { description, status: "APPROVED", submitted_at: now0, approved_at: now0 } });
+  await prisma.workRequest.update({ where: { id: wrId }, data: { description, status: "APPROVED", submitted_at: now0, approved_at: now0, approval_status: "APPROVED", approval_channel: "PANAMEER", approval_note: "Auto-approved (no approval rules)" } });
   const items = await resolveItems(lines);
   if (lines.some((l) => !items.get(l.id)?.available)) throw new CartError("Something in your cart is no longer available. Remove it to continue.");
   // WS-E002: one Work Order per seller per style (Product · Time & Materials · Fixed Price).

@@ -33,7 +33,7 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
     const range = j.budget_min_cents != null || j.budget_max_cents != null ? `${usd(j.budget_min_cents)}–${usd(j.budget_max_cents)}${j.budget_type === "FIXED" ? "" : "/hr"}` : "—";
     rows.push({ key: `j-${j.id}`, type: "Job", what: j.title || "Untitled job", number: j.job_number, who: "—", status: JOB_STAGE_LABEL[st], tone: JOB_TONE[st], next: JOB_NEXT[st][0], waitingOnYou: JOB_NEXT[st][1], waitingOn: JOB_NEXT[st][1] ? "You" : "—", amount: range, updatedAt: j.updated_at.toISOString(), href: `/work-requests/${j.id}`, donut: "jobs", slice: JOB_STAGE_LABEL[st] });
   }
-  for (const w of wrs.filter((w) => w.source !== "SHOP")) {
+  for (const w of wrs) {
     const rs = requestStatus(w);
     const slice = rs ? REQUEST_STATUS_LABEL[rs] : null;
     if (!slice) continue;
