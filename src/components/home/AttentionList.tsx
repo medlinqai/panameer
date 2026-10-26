@@ -16,6 +16,20 @@ function tier(i: AttentionItem, now: number): number {
 }
 const STATE = (ms: number | null) => (ms == null ? "text-ink-2" : ms < HOUR ? "text-state-declined font-semibold" : ms < 8 * HOUR ? "text-state-pending font-semibold" : "text-state-accepted font-semibold");
 
+const GO = "inline-flex min-h-9 items-center bg-ink px-3.5 text-[13px] font-bold text-surface hover:bg-ink-hover";
+/** Today · Tomorrow · Wed · Ends in 52 min · Passed. */
+function dueShort(at: string, now: number): string {
+  const t = Date.parse(at);
+  const ms = t - now;
+  if (ms < 0) return "Passed";
+  if (ms < 3_600_000) return `Ends in ${Math.max(1, Math.round(ms / 60_000))} min`;
+  const day = (x: number) => new Date(x).toLocaleDateString("en-US", { timeZone: "America/New_York" });
+  if (day(t) === day(now)) return "Today";
+  if (day(t) === day(now + 86_400_000)) return "Tomorrow";
+  if (ms < 6 * 86_400_000) return new Date(t).toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "short" });
+  return new Date(t).toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" });
+}
+
 export function AttentionList({ items }: { items: AttentionItem[] }) {
   const [mode, setMode] = useState<"priority" | "date">("priority");
   const [now, setNow] = useState(() => Date.now());
@@ -36,20 +50,43 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
   return (
     <>
       <div className="mt-1 flex items-center gap-2" data-attention-sort><span className="text-[12px] text-ink-3">Sort</span>{chip("priority", "Priority")}{chip("date", "By Date")}</div>
-      <ul className="mt-2 divide-y divide-line">
+      {/* JR-E006: one line per thing to act on, its own button; a group shows 3, then See All n. */}
+      <div className="mt-2" data-attention-groups>
         {list.slice(0, 8).map((i) => {
           const ms = i.dueAt ? new Date(i.dueAt).getTime() - now : null;
-          return (
-            <li key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5">
+          const lines = i.lines?.length ? [...i.lines].sort((x, y) => (mode === "date" ? (x.dueAt ? Date.parse(x.dueAt) : Infinity) - (y.dueAt ? Date.parse(y.dueAt) : Infinity) : 0)) : null;
+          const n = i.n ?? 1;
+          if (!lines && n <= 1) return (
+            <div key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-line py-2.5" data-attention-line>
               <span className="min-w-0 flex-1">
-                <b className="block text-[14px]">{i.what}</b>
-                <span className="text-[12.5px] text-ink-2">{i.appLabel}{i.sub ? <> · <span className="font-semibold text-ink">{i.sub}</span></> : null}{i.due ? <> · <span className={STATE(ms)}>due {i.due}</span></> : ""}</span>
+                <b className="block text-[14px]">{i.title ?? i.what}</b>
+                <span className="text-[12.5px] text-ink-2">{i.appLabel}{i.sub ? <> · <span className="font-semibold text-ink">{i.sub}</span></> : null}</span>
               </span>
-              <Link href={i.href} className="inline-flex min-h-9 items-center bg-ink px-3.5 text-[13px] font-bold text-surface hover:bg-ink-hover">{i.action}</Link>
-            </li>
+              {i.dueAt && <span className={`text-[12.5px] ${STATE(ms)}`}>{dueShort(i.dueAt, now)}</span>}
+              <Link href={i.href} className={GO}>{i.action}</Link>
+            </div>
+          );
+          return (
+            <div key={i.id} className="border-b border-line pb-1.5 pt-2.5" data-attention-group={i.title ?? i.what}>
+              <p className="flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-[0.08em] text-ink-2">{i.title ?? i.what}<span className="text-state-declined">{n}</span></p>
+              {(lines ?? []).slice(0, 3).map((l) => {
+                const lm = l.dueAt ? new Date(l.dueAt).getTime() - now : null;
+                return (
+                  <div key={l.key} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5" data-attention-line>
+                    <span className="min-w-0 flex-1">
+                      <b className="block truncate text-[14px]">{l.what}</b>
+                      {l.detail && <span className="block truncate text-[12.5px] text-ink-2">{l.detail}</span>}
+                    </span>
+                    {l.dueAt && <span className={`text-[12.5px] ${STATE(lm)}`}>{dueShort(l.dueAt, now)}</span>}
+                    <Link href={l.href} className={GO}>{l.action}</Link>
+                  </div>
+                );
+              })}
+              {(!lines || n > 3) && <Link href={i.href} className="mt-0.5 inline-block text-[12.5px] font-semibold text-ink-2 underline underline-offset-4 hover:text-ink" data-see-all>{`See All ${n} ${i.title ?? ""} →`.replace("  ", " ")}</Link>}
+            </div>
           );
         })}
-      </ul>
+      </div>
     </>
   );
 }
