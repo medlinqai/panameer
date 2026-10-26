@@ -1,3 +1,5 @@
+import { NextStep } from "@/components/home/NextStep";
+import { paymentStep } from "@/lib/your-next-step";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
@@ -52,6 +54,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
         <SettlementStatusPill status={s.status} paidOut={s.party === "PROVIDER" ? !!s.paidOut : undefined} erp={s.erp} held={s.held} />
       </div>
+      <NextStep step={s.held ? null : paymentStep({ status: s.status, party: s.party, providerName: s.providerName, total: formatCents(s.totalCents, s.currency) })} />
       {s.held && (
         <p data-held-note className="mt-4 border-l-2 border-magenta py-1 pl-3 text-[14px]">
           {s.party === "PROVIDER" ? (

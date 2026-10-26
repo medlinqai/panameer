@@ -1,3 +1,5 @@
+import { NextStep } from "@/components/home/NextStep";
+import { jobStep } from "@/lib/your-next-step";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import Link from "next/link";
 import { howLongText } from "@/lib/job-dates";
@@ -142,6 +144,7 @@ export default async function Page({
           <JobActionsMenu jobId={detail.id} items={menuFor(stage, detail.id, sec.orders[0]?.id ?? null)} />
         </div>
       </section>
+      <NextStep step={jobStep({ id: detail.id, stage, asked: sec.requestRows.length, answered: sec.responded })} />
 
       {strip && (
         <div className="my-4 rounded-[14px] border border-state-border bg-white px-6 py-6">

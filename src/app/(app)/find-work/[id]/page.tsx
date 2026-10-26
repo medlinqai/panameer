@@ -1,3 +1,5 @@
+import { NextStep } from "@/components/home/NextStep";
+import { sellerJobStep } from "@/lib/your-next-step";
 import { notFound } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
@@ -96,6 +98,7 @@ export default async function Page({
         {detail.postedAgo && <span>Posted {detail.postedAgo}</span>}
         {strip.pill && <span className={`rounded-full px-3 py-0.5 text-[12.5px] font-bold ${strip.pillTone === "ok" ? "bg-state-accepted-bg text-state-accepted" : strip.pillTone === "no" ? "bg-state-declined-bg text-state-declined" : "bg-state-pending-bg text-state-pending"}`} data-provider-pill>{strip.pill}</span>}
       </div>
+      {strip.stage && <NextStep step={sellerJobStep(strip.stage, detail.id)} />}
       {/* OJ-E008: the provider's own strip — Asked · Answered · Interview · Decision · Work Order. */}
       <div className="mt-5"><JobStrip steps={strip.steps} /></div>
       {/* PJ-E003: what happened so far, newest first — the Work History dot timeline, collapsed. */}
@@ -229,7 +232,10 @@ async function providerStrip(personId: string, jobId: string, interviews: Interv
     { key: "wo", label: "Order", state: wo ? "done" : decided === "Hired" ? "current" : "later", top: wo ? "✓ Issued" : "" },
   ];
   const pill = decided === "Hired" ? "You're Hired" : decided ? "Not Selected" : prop?.status === "SHORTLISTED" ? "You're Shortlisted" : answered ? "You Answered" : req?.status === "DECLINED" ? "Not This Time" : asked ? "Asked for Your Availability" : null;
-  return { steps, pill, pillTone: decided === "Not Selected" ? "no" : decided || prop?.status === "SHORTLISTED" || answered ? "ok" : "pend" };
+  // WK-E007: the seller's stage words (same as Jobs for You) — a Request to Hire waiting on approval shows as such.
+  const rq = !decided ? await prisma.workRequest.findFirst({ where: { job_id: jobId, lines: { some: { provider_person_id: personId } }, status: { in: ["SUBMITTED", "PENDING_APPROVAL", "INCOMPLETE"] } }, select: { id: true } }) : null;
+  const stage = decided === "Hired" ? "They Chose You" : decided ? null : rq ? "Buyer Requested to Hire You · Awaiting Approval" : iv ? "You Interviewed" : answered ? (req ? "You Answered" : "You Applied") : asked ? "They Requested" : "You Matched";
+  return { steps, pill: stage && stage !== "You Matched" ? stage : pill, stage, pillTone: decided === "Not Selected" ? "no" : decided || prop?.status === "SHORTLISTED" || answered ? "ok" : "pend" };
 }
 
 /** PJ-E003: this provider's history on the job, newest first. */

@@ -307,6 +307,28 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     const lines = (await connectLines(viewer.userId, id)).map((x) => x.line);
     if (lines.length) items.push({ id: "connect:stage", title: "Connect", n: lines.length, what: "Connect", app: "connect", appLabel: "Connect", due: null, dueAt: null, href: "/connect/connections", action: "Open", tier: tierOf + 0.1, lines });
   };
+  // WK-E007: a Completed Order (last 30 days) — the buyer recommends the seller; the seller asks the buyer for a recommendation.
+  const afterCompleted = async () => {
+    const since = new Date(now.getTime() - 30 * DAY_MS);
+    const done = await prisma.workOrder.findMany({ where: { ...(side === "buyer" ? { buyer_person_id: id } : { provider_person_id: id }), status: { in: ["CLOSED", "FINALLY_CLOSED"] }, updated_at: { gte: since } }, orderBy: { updated_at: "desc" }, take: 10, select: { id: true, order_number: true, provider_person_id: true, buyer_person_id: true } });
+    if (!done.length) return;
+    const people = new Map((await prisma.person.findMany({ where: { id: { in: done.flatMap((o) => [o.provider_person_id, o.buyer_person_id]) } }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } }, user: { select: { email: true } }, providerProfile: { select: { id: true } } } })).map((p) => [p.id, p]));
+    const me = people.get(id) ?? (await prisma.person.findUnique({ where: { id }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } }, user: { select: { email: true } }, providerProfile: { select: { id: true } } } }));
+    const lines: AttentionLine[] = [];
+    for (const o of done) {
+      const other = people.get(side === "buyer" ? o.provider_person_id : o.buyer_person_id);
+      if (!other) continue;
+      const name = `${other.first_name} ${other.last_name}`.trim();
+      // Skip when it already happened: the buyer gave one to this seller, or the seller already asked this buyer.
+      const ppId = side === "buyer" ? other.providerProfile?.id : me?.providerProfile?.id;
+      const email = side === "buyer" ? me?.user?.email : other.user?.email;
+      if (ppId && email && (await prisma.recommendationRequest.count({ where: { provider_profile_id: ppId, contact_email: { equals: email, mode: "insensitive" }, status: side === "buyer" ? "SUBMITTED" : { in: ["SENT", "SUBMITTED"] } } }))) continue;
+      lines.push(side === "buyer"
+        ? { key: o.id, what: `Recommend ${name}`, detail: `${o.order_number} is complete`, dueAt: null, href: "/connect/recommendations", action: "Recommend" }
+        : { key: o.id, what: `Ask ${other.company?.name ?? name} for a Recommendation`, detail: `${o.order_number} is complete`, dueAt: null, href: "/connect/recommendations", action: "Ask" });
+    }
+    if (lines.length) items.push({ id: "order:recommend", title: side === "buyer" ? "Recommend Your Provider" : "Ask for a Recommendation", n: lines.length, what: "Recommendations", app: "order", appLabel: "Orders", due: null, dueAt: null, href: "/connect/recommendations", action: "Open", tier: 3, lines });
+  };
   const ORDER_SEL = { id: true, order_number: true, description: true, not_to_exceed_cents: true, period_start: true, provider_person_id: true, buyer_person_id: true, created_at: true } as const;
   // Name the job(s) each item is about — one query for all of them.
   const titled = async () => {
@@ -356,6 +378,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     add("payment", pay, "Payments Due", APP_HOME.buyer.payment, "Pay");
     add("connect", connect, "Unread Messages", "/messages", "Read");
     await stageGroups();
+  await afterCompleted();
   await titled();
     // PI-E007: punched in → the punch-in cart comes first.
     const p = await (await import("@/lib/erp/punchin-live")).currentPunchin().catch(() => null);
@@ -368,7 +391,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     prisma.interviewRequest.findMany({ where: { provider_person_id: id, status: "REQUESTED" }, select: { id: true, job_id: true, slot_minutes: true } }),
     prisma.interviewRequest.count({ where: { provider_person_id: id, status: "SCHEDULED", response: { lines: { some: { starts_at: today } } } } }),
     prisma.testRequest.count({ where: { provider_person_id: id, status: { in: ["ISSUED", "IN_PROGRESS"] } } }),
-    prisma.workOrder.findMany({ where: { provider_person_id: id, status: "ISSUED", provider_accepted_at: null }, orderBy: { created_at: "asc" }, select: ORDER_SEL }),
+    prisma.workOrder.findMany({ where: { provider_person_id: id, status: "ISSUED", provider_accepted_at: null, buyer_accepted_at: { not: null } }, orderBy: { created_at: "asc" }, select: ORDER_SEL }),
     prisma.paymentRequest.count({ where: { provider_person_id: id, status: { in: ["DRAFT", "REJECTED"] } } }),
     prisma.paymentRequest.count({ where: { provider_person_id: id, status: "APPROVED" } }),
   ]);
@@ -397,6 +420,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   add("payment", paidIn, "Payments on the Way", APP_HOME.provider.payment, "See");
   add("connect", connect, "Unread Messages", "/messages", "Read");
   await stageGroups();
+  await afterCompleted();
   await titled();
   return { side, request: { total: requests + interviews + tests + questions, jobs: 0, requests, interviews: interviews + questions, tests }, shop, estimate, order: { total: order }, settlement: { total: drafts }, payment: { total: paidIn }, connect: { total: connect }, learn: { total: learn }, items };
 }

@@ -1,3 +1,5 @@
+import { NextStep } from "@/components/home/NextStep";
+import { orderStep } from "@/lib/your-next-step";
 import Link from "next/link";
 import { orderSlices } from "@/lib/slices";
 import { LINE_TYPE_LABEL, STYLE_LABEL, TAX_FLAG, originLabel } from "@/lib/work-order-styles";
@@ -113,6 +115,7 @@ export default async function Page({
           </div>
         )}
       </header>
+      <NextStep step={orderStep(o)} />
 
       {/* DB-E007: the Work Order's progress strip, directly under the header. */}
       <WorkOrderStrip orderId={o.id} />
