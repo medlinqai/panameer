@@ -26,6 +26,8 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/optimize", category: 1 },
   { route: "/talent", category: 1 },
   { route: "/work", category: 1 },
+  // EX-E007: the public Jobs page — Posted on Panameer and External jobs.
+  { route: "/jobs", category: 5 },
   { route: "/status", category: 1 },
   { route: "/marketplace", category: 1 },
   { route: "/integrate", category: 1 },
