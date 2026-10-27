@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { connectLearn } from "@/lib/dashboard/progress";
 import { connectDonut } from "@/lib/dashboard/connect";
 import { C, type Donut, type ChecklistItem } from "@/lib/dashboard/types";
 
@@ -70,18 +69,30 @@ export async function accountChecklist(personId: string): Promise<ChecklistItem[
 export const profileDonut = (items: ChecklistItem[]) => ring("profile", "Profile", "What buyers see", items, "/profile", "Edit Profile");
 export const accountDonut = (items: ChecklistItem[]) => ring("account", "Account", "What providers see", items, "/company", "Finish Set-Up");
 
-/** Learn: Matched to You isn't tracked yet (no course ↔ profile-skill mapping). */
+/** Scott 10-27: the Learn tile, six lines (pairs "a / b"); the ring is your learning (finished · in progress · matched). */
 export async function learnDonut(personId: string, side: "buyer" | "provider"): Promise<Donut> {
-  const c = (await connectLearn([personId], new Date(0), new Date())).get(personId);
-  const howTo = side === "buyer" ? await prisma.learningPath.count({ where: { status: "PUBLISHED", audience: "END_USER" } }) : 0;
+  const person = await prisma.person.findUnique({ where: { id: personId }, select: { user_id: true } });
+  const { learnCatalog } = await import("@/lib/learn-catalog");
+  const { recommendNext } = await import("@/lib/learn-next");
+  const catalog = await learnCatalog(person?.user_id ?? null);
+  const matched = person?.user_id ? (await recommendNext(person.user_id, { paths: catalog, limit: 50 })).picks.filter((p) => !p.path.mine?.enrolled).length : 0;
+  const enrolled = catalog.filter((p) => p.mine?.enrolled);
+  const finished = enrolled.filter((p) => p.mine && p.mine.total > 0 && p.mine.done >= p.mine.total).length;
+  const courses = catalog.flatMap((p) => p.courses);
+  const taken = courses.filter((c) => { const n = c.lessons.filter((l) => l.playable).length; return n > 0 && c.done >= n; }).length;
+  const certified = catalog.filter((p) => p.certificate).length;
+  const instructors = new Set(catalog.map((p) => p.teacher?.personId).filter(Boolean)).size;
+  const lpGroups = new Set(catalog.map((p) => p.group).filter(Boolean)).size;
   return {
     key: "learn", title: "Learn", sub: side === "buyer" ? "How Panameer works" : "Courses and certifications", href: "/learn",
-    ...(side === "buyer" ? { lead: { text: `${howTo} buyer how-to path${howTo === 1 ? "" : "s"}`, href: "/learn", label: "Browse" } } : {}),
+    ring: [{ label: "Finished", n: finished, color: C.ok }, { label: "In Progress", n: enrolled.length - finished, color: C.steel }, { label: "Matched", n: matched, color: C.grey }],
     slices: [
-      { label: "Matched to You", n: 0, color: C.grey, untracked: true },
-      { label: "Enrolled", n: c?.enrolled ?? 0, color: C.steel, href: "/learn" },
-      { label: side === "buyer" ? "Finished" : "Taken", n: c?.taken ?? 0, color: C.ink, href: "/learn" },
-      ...(side === "provider" ? [{ label: "Certified", n: c?.certified ?? 0, color: C.ok, href: "/learn" }] : []),
+      { label: "Learning Paths", n: catalog.length, color: C.ink, href: "/learn/paths" },
+      { label: "Matched to You", n: matched, color: C.grey, mine: true, href: "/learn/paths" },
+      { label: "Enrolled / Finished", n: enrolled.length, value: `${enrolled.length} / ${finished}`, color: C.steel, href: "/learn/my" },
+      { label: "Courses Taken / Total Courses", n: taken, value: `${taken} / ${courses.length}`, color: C.pendSoft, href: "/learn/courses" },
+      { label: "Certified", n: certified, color: C.ok, href: "/learn/certificates" },
+      { label: "Instructors / LP Groups", n: instructors, value: `${instructors} / ${lpGroups}`, color: C.okSoft, href: "/learn/paths" },
     ],
   };
 }

@@ -12,10 +12,11 @@ const DAY = 86_400_000;
 import { txHref } from "@/lib/dashboard/tx-href";
 
 function Ring({ d, size }: { d: Donut; size: number }) {
-  const total = d.slices.reduce((n, s) => n + s.n, 0);
+  const parts = d.ring ?? d.slices;
+  const total = parts.reduce((n, s) => n + s.n, 0);
   const sw = size > 70 ? 13 : 10, r = size / 2 - sw / 2 - 1, c = size / 2;
   let a = -Math.PI / 2;
-  const arcs = total ? d.slices.filter((s) => s.n > 0).map((s) => {
+  const arcs = total ? parts.filter((s) => s.n > 0).map((s) => {
     const f = s.n / total;
     if (f >= 0.999) return <circle key={s.label} cx={c} cy={c} r={r} stroke={s.color} strokeWidth={sw} fill="none" />;
     const b = a + f * 2 * Math.PI, large = f > 0.5 ? 1 : 0;
@@ -59,7 +60,7 @@ export function DashPies({ donuts, side, size = 88, cols = "sm:grid-cols-2 lg:gr
               ) : (
                 <Link key={s.label} href={s.href ?? txHref(side, { donut: d.key, slice: s.label })} className={`flex w-full items-center gap-1.5 text-left hover:underline ${s.mine && s.n ? `font-bold text-state-pending ${compact ? "-mx-1 rounded bg-state-pending-bg px-1" : ""}` : "text-ink-2"}`}>
                   <i className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
-                  <span className="min-w-0 flex-1 truncate">{s.label}</span><em className="not-italic tabular-nums">{s.n}</em>
+                  <span className="min-w-0 flex-1 truncate">{s.label}</span><em className="not-italic tabular-nums">{s.value ?? s.n}</em>
                 </Link>
               ))}
               {!compact && d.slices.some((s) => s.untracked) && <p className="pt-0.5 text-[10.5px] text-ink-3">— Not tracked yet</p>}

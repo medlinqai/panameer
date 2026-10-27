@@ -76,6 +76,8 @@ export async function sellerDashboard(personId: string, viewer: { userId: string
     { label: "Estimates Asked", n: estimatesAsked, color: C.pendSoft, mine: true, href: "/work/estimates" },
     { label: "Interviews & Tests", n: fitCount, color: C.ink, mine: true, href: "/work/jobs?stage=You%20Interviewed" },
     { label: "Product Orders", n: productOrders, color: C.steel, href: "/work/product-orders" },
+    // 10-27: the Job Agent doesn't exist yet — "—" until it does.
+    { label: "Job Agent: New Today", n: 0, color: C.grey, untracked: true },
   ] };
   const servicesListed = rows.filter((r) => r.key.startsWith("s-")).length;
   const productsLive = rows.filter((r) => r.key.startsWith("p-") && r.slice === "Listed").length;
