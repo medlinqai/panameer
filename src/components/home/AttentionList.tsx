@@ -18,6 +18,7 @@ function tier(i: AttentionItem, now: number): number {
 const STATE = (ms: number | null) => (ms == null ? "text-ink-2" : ms < HOUR ? "text-state-declined font-semibold" : ms < 8 * HOUR ? "text-state-pending font-semibold" : "text-state-accepted font-semibold");
 
 const GO = "inline-flex min-h-9 items-center bg-ink px-3.5 text-[13px] font-bold text-surface hover:bg-ink-hover";
+const GO_OUT = "inline-flex min-h-9 items-center border border-ink px-3.5 text-[13px] font-bold text-ink hover:bg-bg-soft";
 /** Today · Tomorrow · Wed · Ends in 52 min · Passed. */
 function dueShort(at: string, now: number): string {
   const t = Date.parse(at);
@@ -78,7 +79,7 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
                       <b className="block truncate text-[14px]" title={l.detail || undefined}>{l.what}</b>
                     </span>
                     {l.dueAt && <span className={`text-[12.5px] ${STATE(lm)}`}>{dueShort(l.dueAt, now)}</span>}
-                    <Link href={l.href} className={GO}>{l.action}</Link>
+                    {l.action.split("|").map((v, k, all) => <Link key={v} href={all.length > 1 ? `${l.href}${l.href.includes("?") ? "&" : "?"}act=${v.toLowerCase()}` : l.href} className={k ? GO_OUT : GO}>{v}</Link>)}
                   </div>
                 );
               })}

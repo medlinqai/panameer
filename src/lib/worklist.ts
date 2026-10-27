@@ -1,6 +1,8 @@
 import type { Prisma } from "@prisma/client";
 import { displayTitle } from "@/lib/notification-events";
 import { prisma } from "@/lib/prisma";
+import { ACTION_EVENTS } from "@/lib/action-rule";
+import { plainTitle } from "@/lib/todo";
 
 export function isWorklistItem(n: {
   requires_action: boolean;
@@ -72,6 +74,7 @@ export async function countWorklist(personId: string): Promise<number> {
     where: {
       person_id: personId,
       requires_action: true,
+      event_key: { in: [...ACTION_EVENTS] },
       resolved_at: null,
       delivered_in_app_at: { not: null },
     },
@@ -101,6 +104,7 @@ export function actWhere(personId: string) {
   return {
     person_id: personId,
     requires_action: true,
+    event_key: { in: [...ACTION_EVENTS] },
     resolved_at: null,
     delivered_in_app_at: { not: null },
   };
@@ -151,7 +155,7 @@ function toTriage(n: {
 }): TriageRow {
   return {
     id: n.id,
-    title: displayTitle(n.title),
+    title: plainTitle(displayTitle(n.title)),
     body: n.body,
     href: n.href,
     category: n.category,
@@ -246,6 +250,7 @@ export async function getActList(
   const where: Record<string, unknown> = {
     person_id: personId,
     requires_action: true,
+    event_key: { in: [...ACTION_EVENTS] },
     delivered_in_app_at: { not: null },
   };
   if (status === "open") where.resolved_at = null;

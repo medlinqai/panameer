@@ -65,7 +65,13 @@ export async function actionsFor(rows: Row[]): Promise<Record<string, RowAction>
 /** HP-E002: the buttons on a work row (undefined = not a work row). */
 function workAction(r: Row): RowAction | undefined {
   // WK-E008: a Things You Need to Do line — same words, same button as on the panel.
-  if (r.eventKey === "todo.item") return r.resolved || !r.href ? null : { kind: "work", primary: { label: r.action || "Open", href: r.href } };
+  if (r.eventKey === "todo.item") {
+    if (r.resolved || !r.href) return null;
+    // NC-E002: two verbs on one line ("Extend|Close") open the record with that action ready.
+    const [a, b] = (r.action || "Open").split("|");
+    const act = (v: string) => `${r.href}${r.href!.includes("?") ? "&" : "?"}act=${v.toLowerCase()}`;
+    return b ? { kind: "work", primary: { label: a, href: act(a) }, secondary: { label: b, href: act(b) } } : { kind: "work", primary: { label: a, href: r.href } };
+  }
   if (r.resolved) return ["work.invited_to_propose", "work.sourcing_event_invited", "work.order_offered", "work.order_created", "buyer.sourcing.notify_others", "work.interview_requested", "work.questions_asked", "work.request_po_check"].includes(r.eventKey) ? null : undefined;
   // JR-E004: No PO Yet — Still Waiting · It Was Declined, both on the Request.
   if (r.eventKey === "work.request_po_check" && r.href) return { kind: "work", primary: { label: "Still Waiting", href: `${r.href}&po=wait` }, secondary: { label: "It Was Declined", href: `${r.href}&po=declined` } };

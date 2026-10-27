@@ -61,11 +61,11 @@ export async function workLines(personId: string, profileId: string | null): Pro
   const who = (pid: string) => { const p = requesters.find((x) => x.id === pid); return p ? p.company?.name ?? `${p.first_name} ${p.last_name}`.trim() : "A buyer"; };
   const touched = new Set((await prisma.proposalRequest.findMany({ where: { provider_person_id: personId }, select: { job_id: true } })).map((r) => r.job_id).concat((await prisma.proposal.findMany({ where: { provider_person_id: personId }, select: { job_id: true } })).map((p) => p.job_id)));
   const { getWorkFeed } = await import("@/lib/work-feed");
-  const feed = profileId ? (await getWorkFeed({ tab: "best", profileId }).catch(() => [])).filter((c) => c.matched > 0 && !touched.has(c.id)).slice(0, 10) : [];
+  const feed = profileId ? (await getWorkFeed({ tab: "best", profileId }).catch(() => [])).filter((c) => c.matched > 0 && !touched.has(c.id)).sort((a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? "")).slice(0, 3) : [];
   const group = (title: string, app: "request" | "estimate", lines: AttentionLine[], href: string): AttentionItem[] => (lines.length ? [{ id: `work:${title}`, title, n: lines.length, what: title, app, appLabel: "Work", due: null, dueAt: null, href, action: "Open", lines }] : []);
   return [
-    ...group("Estimates", "estimate", asked.map((r) => ({ key: r.id, what: `${who(r.requester_person_id)} Asked for an Estimate`, detail: r.description.slice(0, 80), dueAt: r.start_by?.toISOString() ?? null, href: "/estimate", action: "Send" })), "/work/estimates"),
-    ...group("Tests to Take", "request", testsReq.map((t) => ({ key: t.id, what: "Take the Test", detail: [jobs.find((j) => j.id === t.job_id)?.title, t.request_number].filter(Boolean).join(" · "), dueAt: t.responds_by?.toISOString() ?? null, href: "/work/interviews?stage=tests", action: "Start" })), "/work/interviews?stage=tests"),
-    ...group("Jobs for You", "request", feed.map((c) => ({ key: c.id, what: c.title, detail: ["You matched", c.budgetLabel].filter(Boolean).join(" · "), dueAt: null, href: `/find-work/${c.id}`, action: "Apply" })), jobsHref("You Matched")),
+    ...group("Estimates", "estimate", asked.map((r) => ({ key: r.id, what: `Send Estimate · ${who(r.requester_person_id)} · ${r.description.slice(0, 50)}`, detail: "", dueAt: r.start_by?.toISOString() ?? null, href: "/estimate", action: "Send" })), "/work/estimates"),
+    ...group("Tests to Take", "request", testsReq.map((t) => ({ key: t.id, what: ["Take the Requested Test", jobs.find((j) => j.id === t.job_id)?.title].filter(Boolean).join(" · "), detail: "", dueAt: t.responds_by?.toISOString() ?? null, href: "/work/interviews?stage=tests", action: "Start" })), "/work/interviews?stage=tests"),
+    ...group("Jobs for You", "request", feed.map((c) => ({ key: c.id, what: ["Apply", c.title, c.budgetLabel].filter(Boolean).join(" · "), detail: "", dueAt: null, href: `/find-work/${c.id}`, action: "Apply" })), jobsHref("You Matched")),
   ];
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BTN, BTN_OUT, LABEL } from "@/components/hire/HireUI";
 
 // JS-E003 / JR-E001: the Actions menu fits the job's status; Close and Hold ask for a reason, Resume/Reopen/Extend run in place.
@@ -33,6 +33,14 @@ export function JobActionsMenu({ jobId, items }: { jobId: string; items: JobMenu
     if (!j) return;
     if (i.act === "duplicate" && j.jobId) router.push(`/hire?job=${j.jobId}&step=0`); else router.refresh();
   };
+  // NC-E002: the Worklist's Extend / Close buttons land here with ?act= — open that action at once.
+  const sp = useSearchParams();
+  const asked = sp?.get("act");
+  useEffect(() => {
+    const it = items.find((i) => i.act === asked);
+    if (it) void run(it);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asked]);
   if (!items.length) return null;
   return (
     <>

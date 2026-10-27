@@ -291,8 +291,10 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     return (pid: string) => { const p = profiles.find((x) => x.person_id === pid); return p ? (seen.has(pid) ? `${p.person.first_name} ${p.person.last_name}`.trim() : providerLabel(nums.get(p.id)).replace(/^Provider /, "")) : ""; };
   };
   const orderLines = async (os: { id: string; order_number: string; description: string | null; not_to_exceed_cents: number | null; period_start: Date | null; provider_person_id: string; buyer_person_id: string; created_at: Date }[], side2: "buyer" | "provider") => {
+    // NC-E002: "Accept Order from Lopez Holdings · $92,880" — P-number until released, never the order's system number.
     const who = side2 === "buyer" ? await whoOf(os.map((o) => o.provider_person_id)) : null;
-    return os.map((o) => ({ key: o.id, what: `${o.order_number} · ${o.description || "Order"}`, detail: [who ? who(o.provider_person_id) : null, money(o.not_to_exceed_cents), startText(o.period_start)].filter(Boolean).join(" · "), dueAt: null, href: `/orders/${o.id}`, action: "Review" }));
+    const buyers = side2 === "provider" ? new Map((await prisma.person.findMany({ where: { id: { in: os.map((o) => o.buyer_person_id) } }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } } } })).map((p) => [p.id, p.company?.name ?? `${p.first_name} ${p.last_name}`.trim()])) : null;
+    return os.map((o) => ({ key: o.id, what: [`Accept Order from ${who ? who(o.provider_person_id) || "the Provider" : buyers?.get(o.buyer_person_id) ?? "the Buyer"}`, money(o.not_to_exceed_cents)].filter(Boolean).join(" · "), detail: [o.description, startText(o.period_start)].filter(Boolean).join(" · "), dueAt: null, href: `/orders/${o.id}`, action: "Review" }));
   };
   // HT-E006: Profile (seller) or Set-Up (buyer) and Connect — high before the first released Order, below Orders after.
   const stageGroups = async () => {
@@ -305,32 +307,11 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     if (missing.length) items.push({ id: `setup:${groupName}`, title: groupName, n: missing.length, what: groupName, app: "profile", appLabel: groupName, due: null, dueAt: null, href: side === "buyer" ? "/company" : "/profile", action: "Open", tier: tierOf,
       lines: missing.map((i) => ({ key: i.label, what: i.action === "Ask" ? "Ask for a Recommendation" : i.action === "Connect" ? `Connect Your ${i.label.replace(" Connection", "")}` : `Add Your ${i.label}`, detail: i.why, dueAt: null, href: i.href, action: i.action })) });
     const cl = await connectLines(viewer.userId, id);
+    // NC-E001: accept a connection, write a requested recommendation, answer a mentor request (group invites are news).
     for (const g of ["Requests to Connect", "Recommendations", "Mentors & Groups"] as const) {
-      const ls = cl.filter((x) => x.group === g).map((x) => x.line);
+      const ls = cl.filter((x) => x.group === g && x.line.action !== "Join").map((x) => x.line);
       if (ls.length) items.push({ id: `connect:${g}`, title: g, n: ls.length, what: g, app: "connect", appLabel: "Connect", due: null, dueAt: null, href: ls[0].href, action: "Open", tier: tierOf + 0.1, lines: ls });
     }
-  };
-  // WK-E007: a Completed Order (last 30 days) — the buyer recommends the seller; the seller asks the buyer for a recommendation.
-  const afterCompleted = async () => {
-    const since = new Date(now.getTime() - 30 * DAY_MS);
-    const done = await prisma.workOrder.findMany({ where: { ...(side === "buyer" ? { buyer_person_id: id } : { provider_person_id: id }), status: { in: ["CLOSED", "FINALLY_CLOSED"] }, updated_at: { gte: since } }, orderBy: { updated_at: "desc" }, take: 10, select: { id: true, order_number: true, provider_person_id: true, buyer_person_id: true } });
-    if (!done.length) return;
-    const people = new Map((await prisma.person.findMany({ where: { id: { in: done.flatMap((o) => [o.provider_person_id, o.buyer_person_id]) } }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } }, user: { select: { email: true } }, providerProfile: { select: { id: true } } } })).map((p) => [p.id, p]));
-    const me = people.get(id) ?? (await prisma.person.findUnique({ where: { id }, select: { id: true, first_name: true, last_name: true, company: { select: { name: true } }, user: { select: { email: true } }, providerProfile: { select: { id: true } } } }));
-    const lines: AttentionLine[] = [];
-    for (const o of done) {
-      const other = people.get(side === "buyer" ? o.provider_person_id : o.buyer_person_id);
-      if (!other) continue;
-      const name = `${other.first_name} ${other.last_name}`.trim();
-      // Skip when it already happened: the buyer gave one to this seller, or the seller already asked this buyer.
-      const ppId = side === "buyer" ? other.providerProfile?.id : me?.providerProfile?.id;
-      const email = side === "buyer" ? me?.user?.email : other.user?.email;
-      if (ppId && email && (await prisma.recommendationRequest.count({ where: { provider_profile_id: ppId, contact_email: { equals: email, mode: "insensitive" }, status: side === "buyer" ? "SUBMITTED" : { in: ["SENT", "SUBMITTED"] } } }))) continue;
-      lines.push(side === "buyer"
-        ? { key: o.id, what: `Recommend ${name}`, detail: `${o.order_number} is complete`, dueAt: null, href: "/connect/recommendations", action: "Recommend" }
-        : { key: o.id, what: `Ask ${other.company?.name ?? name} for a Recommendation`, detail: `${o.order_number} is complete`, dueAt: null, href: "/connect/recommendations", action: "Ask" });
-    }
-    if (lines.length) items.push({ id: "order:recommend", title: side === "buyer" ? "Recommend Your Provider" : "Ask for a Recommendation", n: lines.length, what: "Recommendations", app: "order", appLabel: "Orders", due: null, dueAt: null, href: "/connect/recommendations", action: "Open", tier: 3, lines });
   };
   const ORDER_SEL = { id: true, order_number: true, description: true, not_to_exceed_cents: true, period_start: true, provider_person_id: true, buyer_person_id: true, created_at: true } as const;
   // Name the job(s) each item is about — one query for all of them.
@@ -346,7 +327,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
       prisma.proposal.findMany({ where: { status: "SUBMITTED", job: { buyer_person_id: id }, proposalRequest: { sourcingEvent: { status: { in: ["OPEN", "CLOSED"] } } } }, orderBy: { submitted_at: "desc" }, select: { proposalRequest: { select: { sourcingEvent: { select: { id: true, job_id: true, deadline_at: true } } } } } }),
       prisma.sourcingEvent.findMany({ where: { created_by_person_id: id, status: "OPEN", deadline_at: { gt: now, lte: soon } }, select: { id: true, job_id: true, deadline_at: true } }),
       prisma.sourcingEvent.findMany({ where: { created_by_person_id: id, status: "OPEN", deadline_at: { lte: now } }, orderBy: { deadline_at: "asc" }, select: { id: true, job_id: true, deadline_at: true } }),
-      prisma.interviewRequest.count({ where: { requested_by_person_id: id, status: "SLOTS_OFFERED" } }),
+      prisma.interviewRequest.findMany({ where: { requested_by_person_id: id, status: "SLOTS_OFFERED" }, select: { id: true, job_id: true } }),
       prisma.interviewRequest.count({ where: { requested_by_person_id: id, status: "SCHEDULED", response: { lines: { some: { starts_at: today } } } } }),
       prisma.testRequest.count({ where: { requested_by_person_id: id, status: "COMPLETED", updated_at: { gte: new Date(now.getTime() - 7 * DAY_MS) } } }),
       prisma.workRequest.findMany({ where: { job: { buyer_person_id: id }, status: "PENDING_APPROVAL", NOT: { approval_channel: "ERP" } }, orderBy: { submitted_at: "asc" }, select: { id: true, wr_number: true, job_id: true, title: true, submitted_at: true } }),
@@ -354,35 +335,37 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
       prisma.workOrder.findMany({ where: { buyer_person_id: id }, select: { id: true } }).then((os) => prisma.paymentRequest.count({ where: { status: "SUBMITTED", work_order_id: { in: os.map((o) => o.id) } } })),
       prisma.workOrder.findMany({ where: { buyer_person_id: id }, select: { id: true } }).then((os) => prisma.paymentRequest.count({ where: { status: "APPROVED", work_order_id: { in: os.map((o) => o.id) } } })),
     ]);
-    const ev = toReview[0]?.proposalRequest?.sourcingEvent;
-    const jobs = add("request", toReview.length, "Responses to Review", ev ? `/work-requests/${ev.job_id}?tab=responses` : "/hire/overview?tab=jobs", "Review", ev?.deadline_at, toReview.map((x) => x.proposalRequest?.sourcingEvent?.job_id))
-      + add("request", closing.length, "Answers Due in 24 h", closing[0] ? `/work-requests/${closing[0].job_id}?tab=responses` : "/hire/overview?tab=jobs", "Open", closing[0]?.deadline_at, closing.map((x) => x.job_id))
-      + add("request", expired.length, "Deadline Passed — Pick or Extend", "/hire/overview?tab=jobs", "Decide");
+    // NC-E001/E002: only actions, one line each — Compare once all answers are in; Answer Date Passed → Extend · Close.
+    const askedBy = new Map((await prisma.proposalRequest.groupBy({ by: ["sourcing_event_id"], where: { sourcing_event_id: { in: [...new Set([...toReview.map((x) => x.proposalRequest?.sourcingEvent?.id), ...expired.map((e) => e.id)].filter((x): x is string => !!x))] }, status: { not: "DRAFT" } }, _count: { _all: true } })).map((g) => [g.sourcing_event_id, g._count._all]));
+    const inBy = new Map((await prisma.proposal.groupBy({ by: ["job_id"], where: { job_id: { in: expired.map((e) => e.job_id) }, status: { notIn: ["DRAFT", "WITHDRAWN"] } }, _count: { _all: true } })).map((g) => [g.job_id, g._count._all]));
+    const jobs = toReview.length + closing.length + expired.length;
+    add("request", 1, "Compare Answers", "/hire/overview?tab=jobs&slice=comparing", "Compare");
+    add("request", expired.length, "Answer Date Passed", "/hire/overview?tab=jobs", "Extend|Close");
     {
-      const t = await jobTitles([...toReview.map((x) => x.proposalRequest?.sourcingEvent?.job_id), ...closing.map((x) => x.job_id), ...expired.map((x) => x.job_id), ...approvals.map((x) => x.job_id)]);
-      const byJob = new Map<string, { n: number; due: Date | null }>();
-      for (const x of toReview) { const e = x.proposalRequest?.sourcingEvent; if (!e) continue; const c = byJob.get(e.job_id) ?? { n: 0, due: e.deadline_at }; c.n++; byJob.set(e.job_id, c); }
+      const t = await jobTitles([...toReview.map((x) => x.proposalRequest?.sourcingEvent?.job_id), ...expired.map((x) => x.job_id), ...approvals.map((x) => x.job_id), ...confirm.map((x) => x.job_id)]);
+      lined("request", "Interview Times to Confirm", confirm.map((i) => ({ key: i.id, what: `Pick an Interview Time · ${t.get(i.job_id)?.title || "Job"}`, detail: "", dueAt: null, href: `/work-requests/${i.job_id}?tab=interviews`, action: "Pick" })));
+      const byEv = new Map<string, { job: string; n: number; due: Date | null }>();
+      for (const x of toReview) { const e = x.proposalRequest?.sourcingEvent; if (!e) continue; const c = byEv.get(e.id) ?? { job: e.job_id, n: 0, due: e.deadline_at }; c.n++; byEv.set(e.id, c); }
       const jl = (jobId: string) => t.get(jobId)?.title || "Job";
-      lined("request", "Responses to Review", [...byJob].map(([jobId, c]) => ({ key: jobId, what: jl(jobId), detail: `${c.n} said Available`, dueAt: iso(c.due), href: `/work-requests/${jobId}?tab=responses`, action: "Compare" })));
-      lined("request", "Answers Due in 24 h", closing.map((e) => ({ key: e.id, what: jl(e.job_id), detail: t.get(e.job_id)?.job_number ?? "", dueAt: iso(e.deadline_at), href: `/work-requests/${e.job_id}?tab=responses`, action: "Open" })));
-      lined("request", "Deadline Passed — Pick or Extend", expired.map((e) => ({ key: e.id, what: jl(e.job_id), detail: t.get(e.job_id)?.job_number ?? "", dueAt: iso(e.deadline_at), href: `/work-requests/${e.job_id}?tab=responses`, action: "Decide" })));
-      lined("request", "Request Approvals", approvals.map((w) => ({ key: w.id, what: `${w.wr_number ?? "Request"} · ${w.job_id ? jl(w.job_id) : w.title || "Request"}`, detail: w.job_id ? `for ${t.get(w.job_id)?.job_number ?? "Job"}` : "", dueAt: null, href: w.job_id ? `/work-requests/${w.job_id}?tab=work-order` : "/orders", action: "Approve" })));
+      const all = [...byEv].filter(([ev, c]) => c.n >= (askedBy.get(ev) ?? Infinity));
+      lined("request", "Compare Answers", all.map(([ev, c]) => ({ key: ev, what: `Compare Answers · ${jl(c.job)} · All ${c.n} In`, detail: "", dueAt: iso(c.due), href: `/work-requests/${c.job}?tab=responses`, action: "Compare" })));
+      const cmp = items.find((i) => i.id === "request:Compare Answers");
+      if (cmp && !all.length) items.splice(items.indexOf(cmp), 1); else if (cmp) { cmp.n = all.length; cmp.what = "Compare Answers"; }
+      lined("request", "Answer Date Passed", expired.map((e) => ({ key: e.id, what: `Answer Date Passed · ${jl(e.job_id)} · ${inBy.get(e.job_id) ?? 0} of ${askedBy.get(e.id) ?? 0} Answered`, detail: "", dueAt: iso(e.deadline_at), href: `/work-requests/${e.job_id}`, action: "Extend|Close" })));
+      lined("request", "Request Approvals", approvals.map((w) => ({ key: w.id, what: `Approve Request · ${w.job_id ? jl(w.job_id) : w.title || "Request"}`, detail: "", dueAt: null, href: w.job_id ? `/work-requests/${w.job_id}?tab=work-order` : "/orders", action: "Approve" })));
     }
     // HB-E006: each app lists only its own tasks — Work Orders (accept, release, changes) belong to Orders.
     const requests = add("request", approvals.length, "Request Approvals", "/hire/overview?tab=requests", "Approve");
     add("order", woAccept.length, "Orders to Accept", "/orders/overview", "Accept");
     lined("order", "Orders to Accept", await orderLines(woAccept, "buyer"));
-    const interviews = add("request", confirm, "Interview Times to Confirm", "/hire/overview?tab=interviews", "Confirm") + add("request", todays, "Interviews Today", "/hire/overview?tab=interviews", "Join");
-    const tests = add("request", testsIn, "Test Results In", "/hire/overview?tab=tests", "See Results");
-    add("shop", sc.offers, "Counter-Offers Waiting on You", "/shop?tab=offers", "Answer");
-    add("shop", sc.purchases, "Purchases Needing You", "/shop?tab=purchases", "Open");
-    add("estimate", ec.toReview, "Estimates In to Review", "/estimate", "Review");
-    add("settlement", settle, "Settlements to Approve", APP_HOME.buyer.settlement, "Approve");
-    add("payment", pay, "Payments Due", APP_HOME.buyer.payment, "Pay");
-    add("connect", connect, "Unread Messages", "/messages", "Read");
+    const interviews = add("request", confirm.length, "Interview Times to Confirm", "/hire/overview?tab=interviews", "Pick") + todays;
+    const tests = testsIn;
+    add("shop", sc.offers, "Answer Counter-Offers", "/shop?tab=offers", "Answer");
+    add("estimate", ec.toReview, "Compare Estimates", "/estimate", "Compare");
+    add("settlement", settle, "Approve Invoices", APP_HOME.buyer.settlement, "Approve");
+    // Purchases, payments due, messages, learning and "Recommend" after an Order are news or live elsewhere (NC-E001).
+    void pay;
     await stageGroups();
-    await afterCompleted();
-    items.push(...(await (await import("@/lib/learn-todo")).learnLines(viewer.userId, null).catch(() => [])));
     await titled();
     // WK-E008: the Worklist is the one source — write these lines into it, then read the panel back from it.
     const { syncTodo, todoGroups } = await import("@/lib/todo");
@@ -405,35 +388,31 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     prisma.paymentRequest.count({ where: { provider_person_id: id, status: { in: ["DRAFT", "REJECTED"] } } }),
     prisma.paymentRequest.count({ where: { provider_person_id: id, status: "APPROVED" } }),
   ]);
-  const requests = add("request", dueSoon.length, "Someone Wants to Buy Your Services — Are You Available?", dueSoon[0] ? `/find-work/${dueSoon[0].job_id}` : "/find-work?tab=invitations", "Respond", dueSoon[0]?.responds_by, dueSoon.map((x) => x.job_id));
-  const interviews = add("request", toOffer.length, toOffer.some((i) => i.slot_minutes) ? "A Buyer Wants to Interview You — Pick a Time" : "Interview Times to Offer", toOffer[0] ? `/find-work/${toOffer[0].job_id}#interview` : "/find-work?tab=interviews", toOffer.some((i) => i.slot_minutes) ? "Pick a Time" : "Offer Times", null, toOffer.map((x) => x.job_id)) + add("request", todays, "Interviews Today", "/find-work?tab=interviews", "Join");
-  const tests = add("request", testsToTake, "Tests to Take", "/find-work?tab=tests", "Take");
+  const requests = add("request", dueSoon.length, "Availability Requests", "/work/jobs?stage=They%20Requested", "Respond", dueSoon[0]?.responds_by, dueSoon.map((x) => x.job_id));
+  const interviews = add("request", toOffer.length, "Interview Times to Pick", "/work/interviews", "Pick", null, toOffer.map((x) => x.job_id)) + todays;
+  const tests = testsToTake;
   // Scott 10-23: written questions from a buyer wait on the provider too.
   const qs = await prisma.questionAnswer.findMany({ where: { provider_person_id: id, submitted_at: null }, orderBy: { created_at: "asc" }, select: { id: true, questionSet: { select: { job_id: true, due_at: true } } } });
-  const questions = add("request", qs.length, "A Buyer Has Questions for You", qs[0] ? `/find-work/${qs[0].questionSet.job_id}#questions` : "/find-work", "Answer", qs[0]?.questionSet.due_at, qs.map((x) => x.questionSet.job_id));
+  const questions = add("request", qs.length, "Questions to Answer", qs[0] ? `/find-work/${qs[0].questionSet.job_id}#questions` : "/find-work", "Answer", qs[0]?.questionSet.due_at, qs.map((x) => x.questionSet.job_id));
   {
     const t = await jobTitles([...dueSoon.map((x) => x.job_id), ...toOffer.map((x) => x.job_id), ...qs.map((x) => x.questionSet.job_id)]);
     const jl = (jobId: string) => t.get(jobId)?.title || "Job";
-    lined("request", "Someone Wants to Buy Your Services — Are You Available?", dueSoon.map((r) => ({ key: r.id, what: jl(r.job_id), detail: t.get(r.job_id)?.job_number ?? "", dueAt: iso(r.responds_by), href: `/find-work/${r.job_id}`, action: "Respond" })));
-    const ivTitle = toOffer.some((i) => i.slot_minutes) ? "A Buyer Wants to Interview You — Pick a Time" : "Interview Times to Offer";
-    lined("request", ivTitle, toOffer.map((i) => ({ key: i.id, what: jl(i.job_id), detail: i.slot_minutes ? `${i.slot_minutes} min` : "", dueAt: null, href: `/find-work/${i.job_id}#interview`, action: i.slot_minutes ? "Pick a Time" : "Offer Times" })));
-    lined("request", "A Buyer Has Questions for You", qs.map((q) => ({ key: q.id, what: jl(q.questionSet.job_id), detail: t.get(q.questionSet.job_id)?.job_number ?? "", dueAt: iso(q.questionSet.due_at), href: `/find-work/${q.questionSet.job_id}#questions`, action: "Answer" })));
+    const buyerOf = new Map((await prisma.job.findMany({ where: { id: { in: dueSoon.map((r) => r.job_id) } }, select: { id: true, buyer: { select: { company: { select: { name: true } } } } } })).map((j) => [j.id, j.buyer?.company?.name ?? null]));
+    lined("request", "Availability Requests", dueSoon.map((r) => ({ key: r.id, what: ["Answer Availability Request", jl(r.job_id), buyerOf.get(r.job_id)].filter(Boolean).join(" · "), detail: "", dueAt: iso(r.responds_by), href: `/find-work/${r.job_id}`, action: "Respond" })));
+    lined("request", "Interview Times to Pick", toOffer.map((i) => ({ key: i.id, what: `Pick an Interview Time · ${jl(i.job_id)}`, detail: "", dueAt: null, href: `/find-work/${i.job_id}#interview`, action: "Pick" })));
+    lined("request", "Questions to Answer", qs.map((q) => ({ key: q.id, what: `Answer the Buyer's Questions · ${jl(q.questionSet.job_id)}`, detail: "", dueAt: iso(q.questionSet.due_at), href: `/find-work/${q.questionSet.job_id}#questions`, action: "Answer" })));
   }
   const myOrders = (await prisma.workOrder.findMany({ where: { provider_person_id: id }, select: { id: true } })).map((o) => o.id);
   const changes = myOrders.length ? await prisma.workOrderRevision.count({ where: { status: "PENDING", work_order_id: { in: myOrders } } }) : 0;
-  const order = add("order", woAccept.length, "Orders to Accept", "/orders/overview", "Accept") + add("order", changes, "Change Orders to Answer", "/orders/overview", "Answer");
+  const order = add("order", woAccept.length, "Orders to Accept", "/orders/overview", "Review") + add("order", changes, "Review Change Orders", "/orders/overview", "Review");
   lined("order", "Orders to Accept", await orderLines(woAccept, "provider"));
-  add("shop", sc.offers, "Offers to Answer", "/shop?tab=offers", "Answer");
-  add("shop", sc.sales, "Product Sales Needing You", "/shop?tab=sales", "Open");
-  add("estimate", ec.toPrice, "Estimates to Price", "/estimate", "Price");
-  add("settlement", drafts, "Payment Requests to Submit", APP_HOME.provider.settlement, "Submit");
-  add("payment", paidIn, "Payments on the Way", APP_HOME.provider.payment, "See");
-  add("connect", connect, "Unread Messages", "/messages", "Read");
+  add("shop", sc.offers, "Respond to Offers", "/shop?tab=offers", "Respond");
+  add("shop", sc.sales, "Accept Product Orders", "/shop?tab=sales", "Review");
+  // Estimates and tests are one line each in workLines; drafts to submit, payouts and messages aren't on the action list (NC-E001).
+  void ec; void paidIn;
   await stageGroups();
-  await afterCompleted();
   const pp = await prisma.providerProfile.findUnique({ where: { person_id: id }, select: { id: true } });
   items.push(...(await (await import("@/lib/work-app")).workLines(id, pp?.id ?? null).catch(() => [])));
-  items.push(...(await (await import("@/lib/learn-todo")).learnLines(viewer.userId, pp?.id ?? null).catch(() => [])));
   await titled();
   // WK-E008: the Worklist is the one source — write these lines into it, then read the panel back from it.
   const { syncTodo, todoGroups } = await import("@/lib/todo");
