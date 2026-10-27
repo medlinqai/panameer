@@ -127,6 +127,10 @@ export type TriageRow = {
   dismissed: boolean;
   /** WK-E008: a Things You Need to Do line's own button word. */
   action?: string | null;
+  /** NC-E005: which app and group the row belongs to, and when it's due. */
+  app?: string | null;
+  group?: string | null;
+  dueAt?: Date | null;
 };
 
 const TRIAGE_SELECT = {
@@ -145,13 +149,16 @@ const TRIAGE_SELECT = {
   dedupe_key: true,
   dismissed_at: true,
   todo_action: true,
+  todo_app: true,
+  todo_group: true,
+  due_at: true,
 } as const;
 
 function toTriage(n: {
   id: string; title: string; body: string | null; href: string | null;
   category: string; event_key: string; created_at: Date; read_at: Date | null;
   requires_action: boolean; resolved_at: Date | null; delivered_in_app_at: Date | null;
-  entity_id: string | null; dedupe_key: string | null; dismissed_at: Date | null; todo_action?: string | null;
+  entity_id: string | null; dedupe_key: string | null; dismissed_at: Date | null; todo_action?: string | null; todo_app?: string | null; todo_group?: string | null; due_at?: Date | null;
 }): TriageRow {
   return {
     id: n.id,
@@ -168,6 +175,9 @@ function toTriage(n: {
     resolved: n.resolved_at !== null,
     dismissed: n.dismissed_at !== null,
     action: n.todo_action ?? null,
+    app: n.todo_app ?? null,
+    group: n.todo_group ?? null,
+    dueAt: n.due_at ?? null,
   };
 }
 
