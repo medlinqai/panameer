@@ -1000,6 +1000,18 @@ export const NOTIFICATION_EVENTS = {
     body: (v) => str(v, "reason", "") || null,
     href: (v) => (str(v, "jobId", "") ? `/work-requests/${str(v, "jobId", "")}?tab=work-order` : "/orders"),
   },
+  // EX-E005: an external job a seller was interested in is now posted on Panameer — they hear first.
+  "work.external_claimed": {
+    event: "work.external_claimed",
+    recipient: "a seller who said I'm Interested on the external job",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `${str(v, "company", "The company")} Posted This Job on Panameer — Apply Now`,
+    body: (v) => str(v, "title", "") || null,
+    href: (v) => `/find-work/${str(v, "jobId", "")}`,
+  },
   "work.order_created": {
     event: "work.order_created",
     recipient: "the buyer who created the order",

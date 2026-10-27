@@ -38,6 +38,9 @@ export async function POST(request: Request) {
     case "contacted":
       await prisma.externalJob.update({ where: { id }, data: { contacted_at: new Date() } });
       return NextResponse.json({ ok: true });
+    case "approve-claim":
+      await (await import("@/lib/external-claim")).approveClaim(id);
+      return NextResponse.json({ ok: true });
     case "create-key":
       return NextResponse.json({ ok: true, key: await createKey(b.label ?? "Agent") });
     case "revoke-key":

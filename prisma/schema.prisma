@@ -9975,3 +9975,22 @@ model JobAgentPref {
 
   @@map("job_agent_prefs")
 }
+
+/// EX-E005: Claim This Job — the claimant's work email (verified by a link), name and role. When the email's domain can't
+/// be matched to the company, an admin approves the match.
+model ExternalJobClaim {
+  id                String    @id @default(uuid()) @db.Uuid
+  external_job_id   String    @db.Uuid
+  email             String
+  name              String
+  role              String?
+  verify_hash       String    @unique
+  verified_at       DateTime?
+  needs_admin       Boolean   @default(false)
+  admin_approved_at DateTime?
+  published_job_id  String?   @db.Uuid
+  created_at        DateTime  @default(now())
+
+  @@index([external_job_id])
+  @@map("external_job_claims")
+}

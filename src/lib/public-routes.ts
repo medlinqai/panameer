@@ -60,6 +60,8 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/forgot-password", category: 4 },
   { route: "/reset-password", category: 4 },
   { route: "/assess/claim/[token]", category: 4 },
+  // EX-E005: Claim This Job — addressed by the listing's claim token.
+  { route: "/claim/[token]", category: 4 },
   { route: "/assess/r/[token]", category: 4 },
   { route: "/assess/r/[token]/deck", category: 4 },
   // CAT-E006: signed out, an estimate link shows only a Join / Sign In landing; the estimate itself needs the customer's session.
