@@ -2,6 +2,7 @@ import type { Viewer } from "@/lib/access";
 import { buyerDashboard } from "@/lib/dashboard/buyer";
 import { sellerDashboard } from "@/lib/dashboard/seller";
 import { DashboardTop } from "@/components/dashboard/DashboardTop";
+import { JobAgentBanner } from "@/components/work/JobAgentBanner";
 import { MyProgress } from "@/components/dashboard/MyProgress";
 import type { PeriodKey } from "@/lib/dashboard/periods";
 import type { DashData } from "@/lib/dashboard/types";
@@ -25,6 +26,7 @@ export function Dashboard({ viewer, side, personId, firstName, period = "quarter
   const data = tilesFor(viewer, side, personId);
   return (
     <div className="mb-10">
+      {side === "provider" && <JobAgentBanner />}
       <DashboardTop viewer={viewer} side={side} firstName={firstName} data={data} personId={personId} />
       <MyProgress side={side} personId={personId} period={period} />
     </div>

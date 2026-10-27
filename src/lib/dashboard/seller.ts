@@ -51,7 +51,7 @@ export async function sellerDashboard(personId: string, viewer: { userId: string
   const earned = prs.filter((p) => p.status === "PAID" && (p.decided_at ?? p.updated_at) >= q).reduce((n, p) => n + p.lines.reduce((m, l) => m + lineTotal(l), 0), 0);
   const { getWorkFeed } = await import("@/lib/work-feed");
   // Speed (10-27): everything below runs together.
-  const [feed, openJobs, { view }, checklist, estimatesAsked, fitCount, productOrders] = await Promise.all([
+  const [feed, openJobs, { view }, checklist, estimatesAsked, fitCount, productOrders, agentNew] = await Promise.all([
     profile ? getWorkFeed({ tab: "best", profileId: profile.id }).catch(() => []) : Promise.resolve([]),
     prisma.job.count({ where: { kind: "JOB", status: "OPEN" } }),
     dashView(personId, "provider"),
@@ -62,6 +62,7 @@ export async function sellerDashboard(personId: string, viewer: { userId: string
       prisma.testRequest.count({ where: { provider_person_id: personId, status: { in: ["ISSUED", "IN_PROGRESS"] } } }),
     ]).then(([a, b]) => a + b),
     prisma.workOrder.count({ where: { provider_person_id: personId, workRequest: { source: "SHOP" }, status: { notIn: ["DRAFT", "CANCELLED", "CLOSED", "FINALLY_CLOSED"] } } }),
+    import("@/lib/job-agent").then((m) => m.newToday()).then((x) => x.n).catch(() => 0),
   ]);
   const matches = feed.length;
   // HT-E003: You Matched = fits your skills, no action yet.
@@ -76,8 +77,8 @@ export async function sellerDashboard(personId: string, viewer: { userId: string
     { label: "Estimates Asked", n: estimatesAsked, color: C.pendSoft, mine: true, href: "/work/estimates" },
     { label: "Interviews & Tests", n: fitCount, color: C.ink, mine: true, href: "/work/jobs?stage=You%20Interviewed" },
     { label: "Product Orders", n: productOrders, color: C.steel, href: "/work/product-orders" },
-    // 10-27: the Job Agent doesn't exist yet — "—" until it does.
-    { label: "Job Agent: New Today", n: 0, color: C.grey, untracked: true },
+    // EX-E004: the Job Agent's real count.
+    { label: "Job Agent: New Today", n: agentNew, color: C.grey, href: "/work/job-agent" },
   ] };
   const servicesListed = rows.filter((r) => r.key.startsWith("s-")).length;
   const productsLive = rows.filter((r) => r.key.startsWith("p-") && r.slice === "Listed").length;

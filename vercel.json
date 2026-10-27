@@ -9,6 +9,10 @@
       "schedule": "0 15 * * *"
     },
     {
+      "path": "/api/cron/job-agent-digest",
+      "schedule": "0 11 * * *"
+    },
+    {
       "path": "/api/cron/po-wait",
       "schedule": "0 13 * * *"
     },

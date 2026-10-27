@@ -6,6 +6,7 @@ import { workApp } from "@/lib/work-app";
 import { appCounts } from "@/lib/attention";
 import { APP_FILTER, countActions, todoGroups } from "@/lib/todo";
 import { HubHome } from "@/components/home/HubHome";
+import { JobAgentBanner } from "@/components/work/JobAgentBanner";
 import { FIXED, areaActions } from "@/lib/area-actions";
 
 export const metadata = { title: "Work · Panameer" };
@@ -25,6 +26,7 @@ export default async function WorkHomePage() {
   const n = (k: number, word: string) => `${k.toLocaleString("en-US")} ${word}${k === 1 ? "" : "s"}`;
   return (
     <div className="px-4 py-6 sm:px-6">
+      <div className="mx-auto w-full max-w-6xl"><JobAgentBanner /></div>
       <HubHome
         eyebrow="WORK" title={`Your Work${first ? `, ${first}` : ""}`}
         summary={`${n(needYou, "thing")} need you · ${n(w.openJobs, "open job")} · ${n(w.estimatesWaiting, "estimate")} waiting`}
