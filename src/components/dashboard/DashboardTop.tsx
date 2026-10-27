@@ -18,7 +18,7 @@ export async function DashboardTop({ viewer, side, firstName, data }: { viewer: 
         <div>
           <p className="text-[12px] font-bold tracking-[0.12em] text-magenta">{date}</p>
           <h1 className="mt-1 text-[28px] font-extrabold leading-tight sm:text-[32px]">Welcome Back{firstName ? `, ${firstName}` : ""}</h1>
-          <p className="mt-1 text-[14px] text-ink-2" data-dash-summary>
+          <div className="mt-1 text-[14px] text-ink-2" data-dash-summary>
             {data.providerNumber && <>
               Provider Number <b className="text-ink">{data.providerNumber}</b>{" "}
               <details className="relative inline-block align-middle [&_summary::-webkit-details-marker]:hidden" data-provider-number-help>
@@ -28,7 +28,7 @@ export async function DashboardTop({ viewer, side, firstName, data }: { viewer: 
               {" · "}
             </>}
             {data.summary}
-          </p>
+          </div>
         </div>
         <div className="flex gap-2.5">
           {/* HT-E004/E005: the main button follows the view. */}
