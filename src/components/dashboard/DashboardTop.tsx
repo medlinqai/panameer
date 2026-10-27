@@ -5,6 +5,7 @@ import { ActionLine } from "@/components/home/AppNav";
 import { HireBand } from "@/components/hire/HireBand";
 import { DealBand } from "@/components/home/DealBand";
 import { countActions } from "@/lib/todo";
+import { dashView } from "@/lib/dashboard/views";
 import { DashPies } from "@/components/dashboard/DashGlance";
 import { GlanceSwitch } from "@/components/dashboard/GlanceSwitch";
 import { txHref } from "@/lib/dashboard/tx-href";
@@ -13,7 +14,9 @@ import type { DashData } from "@/lib/dashboard/types";
 
 // MD-E003 / NC-E003: the dashboard's top half — Welcome Back + summary + two buttons, the action line, then At a Glance.
 export async function DashboardTop({ viewer, side, firstName, data: dataP, personId }: { viewer: Viewer; side: "buyer" | "provider"; firstName: string; data: Promise<DashData>; personId: string }) {
-  const [data, c] = await Promise.all([dataP, appCounts(viewer, side)]);
+  // WA-E006: the selected view is read fresh — the tiles' data is cached for 60 s and would otherwise carry the old pick.
+  const [cached, c, picked] = await Promise.all([dataP, appCounts(viewer, side), dashView(personId, side)]);
+  const data = cached.views ? { ...cached, view: picked.view, donuts: cached.views[picked.view] } : cached;
   const date = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }).toUpperCase();
   return (
     <section className="font-body text-ink" data-dashboard={side}>
