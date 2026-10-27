@@ -38,7 +38,9 @@ export function JobActionsMenu({ jobId, items }: { jobId: string; items: JobMenu
   const asked = sp?.get("act");
   useEffect(() => {
     const it = items.find((i) => i.act === asked);
-    if (it) void run(it);
+    if (!it) return;
+    const t = setTimeout(() => void run(it), 0);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asked]);
   if (!items.length) return null;
