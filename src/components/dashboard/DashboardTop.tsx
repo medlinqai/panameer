@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Viewer } from "@/lib/access";
 import { appCounts } from "@/lib/attention";
 import { ActionLine } from "@/components/home/AppNav";
+import { HireBand } from "@/components/hire/HireBand";
+import { DealBand } from "@/components/home/DealBand";
 import { countActions } from "@/lib/todo";
 import { DashPies } from "@/components/dashboard/DashGlance";
 import { ViewSwitch } from "@/components/dashboard/ViewSwitch";
@@ -10,7 +12,7 @@ import { BTN, BTN_MAGENTA } from "@/components/hire/HireUI";
 import type { DashData } from "@/lib/dashboard/types";
 
 // MD-E003 / NC-E003: the dashboard's top half — Welcome Back + summary + two buttons, the action line, then At a Glance.
-export async function DashboardTop({ viewer, side, firstName, data }: { viewer: Viewer; side: "buyer" | "provider"; firstName: string; data: DashData }) {
+export async function DashboardTop({ viewer, side, firstName, data, personId }: { viewer: Viewer; side: "buyer" | "provider"; firstName: string; data: DashData; personId: string }) {
   const c = await appCounts(viewer, side);
   const date = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }).toUpperCase();
   return (
@@ -43,6 +45,8 @@ export async function DashboardTop({ viewer, side, firstName, data }: { viewer: 
 
       {/* NC-E003: the Things You Need to Do panel is gone — one action line opens the Worklist. */}
       <ActionLine count={countActions(c.items, "/worklist")} />
+      {/* NC-E006: the end-to-end step strip, as a thin band under the header line. */}
+      <div className="mt-4">{side === "buyer" ? <HireBand personId={personId} /> : <DealBand rows={data.rows} />}</div>
       <div className="mt-6">
         <div>
           <div className="flex flex-wrap items-baseline gap-3 border-b border-ink pb-2">

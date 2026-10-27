@@ -10,7 +10,7 @@ export async function Dashboard({ viewer, side, personId, firstName, period = "q
   const data = side === "buyer" ? await buyerDashboard(viewer, personId) : await sellerDashboard(personId, viewer);
   return (
     <div className="mb-10">
-      <DashboardTop viewer={viewer} side={side} firstName={firstName} data={data} />
+      <DashboardTop viewer={viewer} side={side} firstName={firstName} data={data} personId={personId} />
       <MyProgress side={side} personId={personId} period={period} />
     </div>
   );
