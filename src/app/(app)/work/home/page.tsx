@@ -6,6 +6,7 @@ import { workApp } from "@/lib/work-app";
 import { appCounts } from "@/lib/attention";
 import { APP_FILTER, countActions, todoGroups } from "@/lib/todo";
 import { HubHome } from "@/components/home/HubHome";
+import { FIXED, areaActions } from "@/lib/area-actions";
 
 export const metadata = { title: "Work · Panameer" };
 
@@ -29,13 +30,7 @@ export default async function WorkHomePage() {
         summary={`${n(needYou, "thing")} need you · ${n(w.openJobs, "open job")} · ${n(w.estimatesWaiting, "estimate")} waiting`}
         primary={{ label: "Browse the Job Board", href: "/find-work?tab=best" }} secondary={{ label: "Send an Estimate", href: "/estimate" }}
         donuts={w.donuts} actionCount={actionCount} actionGroups={todo} app="work"
-        actions={[
-          { label: "Browse Jobs", href: "/find-work?tab=best", icon: "search" },
-          { label: "Send Estimate", href: "/estimate", icon: "send" },
-          { label: "Set Rates", href: "/catalog#services", icon: "tag" },
-          { label: "Add Product", href: "/catalog#products", icon: "package" },
-          { label: "Take a Test", href: "/learn/certificates", icon: "award" },
-        ]}
+        actions={await areaActions("work", me.id, "provider", FIXED.work, [{ label: "Deliver Product Order", href: "/work/product-orders?stage=In%20Delivery", icon: "package", count: w.products.filter((p) => p.stage === "In Delivery").length }])}
       />
     </div>
   );

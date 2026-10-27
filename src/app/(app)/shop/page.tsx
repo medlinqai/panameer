@@ -17,6 +17,7 @@ import { AppBar, ActionCards, ActionLine } from "@/components/home/AppNav";
 import { APP_FILTER, countActions, todoGroups } from "@/lib/todo";
 import { DashPies } from "@/components/dashboard/DashGlance";
 import { shopTiles } from "@/lib/hire-app";
+import { areaActions } from "@/lib/area-actions";
 import { ShopBar } from "@/components/shop/ShopBar";
 import { ShopResults } from "@/components/shop/ShopResults";
 import { ShopCompare } from "@/components/shop/ShopCompare";
@@ -81,12 +82,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
           <DashPies donuts={await shopTiles(person.id)} side="buyer" compact actions={g} app="shop" />
           </>; })()}
           <h2 className="mb-3 mt-8 text-[20px] font-extrabold">What You Can Do</h2>
-          <ActionCards cards={[
-            { label: "Browse Products", href: "/shop?tab=browse", icon: "search" },
-            { label: "Get an Estimate", href: "/estimate/new", icon: "calc" },
-            { label: "Open Cart", href: "/shop?tab=cart", icon: "cart" },
-            { label: "See Purchases", href: "/shop?tab=purchases", icon: "receipt" },
-          ]} />
+          <ActionCards cards={await areaActions("shop", person.id, "buyer")} />
         </div>}
         {/* NC-E007: the buyer's Shop home is action line → tiles → What You Can Do; the lists are behind the tiles. */}
         {tab === "overview" && person && side !== "buyer" && <Overview viewer={viewer} personId={person.id} side={side} counts={counts!} />}

@@ -1,3 +1,6 @@
+import { ActionCards } from "@/components/home/AppNav";
+import { areaActions } from "@/lib/area-actions";
+import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
@@ -21,7 +24,7 @@ export default async function Page() {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Forders");
 
-  const orders = await listOrders(viewer);
+  const [orders, person] = await Promise.all([listOrders(viewer), prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, providerProfile: { select: { id: true } } } })]);
   const asBuyer = orders.filter((o) => o.party === "BUYER").length;
   const asProvider = orders.filter((o) => o.party === "PROVIDER").length;
 
@@ -32,6 +35,8 @@ export default async function Page() {
   return (
     <div className="mx-auto w-full max-w-5xl">
       <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">Orders</h1>
+      {/* WA-E003: this area's actions — Accept Order, change orders, recommendations — then the fixed ones. */}
+      {person && <div className="mb-6 mt-4" data-area-actions="orders"><ActionCards cards={await areaActions("orders", person.id, person.providerProfile ? "provider" : "buyer")} /></div>}
       {/* SH-E001: Estimates and the open cart left the Shop tabs; they're reached from Orders. */}
       <p className="mt-1 flex flex-wrap gap-4 text-[13.5px] font-semibold" data-orders-shop-links>
         <Link href="/cart" className="text-magenta-dark underline underline-offset-4">Request (Incomplete)</Link>

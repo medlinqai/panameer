@@ -19,6 +19,7 @@ import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
 import { PATH_STEPS } from "@/lib/work-request-path";
 import { AppBar, ActionCards, ActionLine } from "@/components/home/AppNav";
 import { HireBand } from "@/components/hire/HireBand";
+import { areaActions } from "@/lib/area-actions";
 import { APP_FILTER, countActions, todoGroups } from "@/lib/todo";
 import { DashPies } from "@/components/dashboard/DashGlance";
 import { hireTiles } from "@/lib/hire-app";
@@ -57,12 +58,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
           <h2 className="mb-3 text-[20px] font-extrabold">At a Glance</h2>
           <DashPies donuts={await hireTiles(viewer, me.id)} side="buyer" compact actions={hireActions} app="hire" />
           <h2 className="mb-3 mt-8 text-[20px] font-extrabold">What You Can Do</h2>
-          <ActionCards cards={[
-            { label: "Create a Job", href: "/hire", icon: "briefcase" },
-            { label: "Find People", href: "/connect/community", icon: "users" },
-            { label: "Compare Providers", href: "/hire/overview?tab=jobs&slice=comparing", icon: "compare" },
-            { label: "Write Questions", href: "/hire/overview?tab=questions", icon: "list" },
-          ]} />
+          <ActionCards cards={await areaActions("hire", me.id, "buyer")} />
         </>}
         {/* WA-E002/E007: the Job Timeline lives on the Jobs page, above the list. */}
         {tab === "jobs" && <div className="mb-6"><HireBand personId={me.id} actions={await todoGroups(me.id, "buyer")} /></div>}

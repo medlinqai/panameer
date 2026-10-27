@@ -33,14 +33,15 @@ export function AlsoIn({ app, links }: { app: string; links: [string, string][] 
 }
 
 /** What You Can Do — WK-E009: monochrome icon tiles, 2–3 words, no descriptions; they fill their row. */
-const COLS: Record<number, string> = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-2 sm:grid-cols-4", 5: "grid-cols-3 sm:grid-cols-5", 6: "grid-cols-3 sm:grid-cols-6" };
+const COLS: Record<number, string> = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-2 sm:grid-cols-4", 5: "grid-cols-3 sm:grid-cols-5", 6: "grid-cols-3 sm:grid-cols-6", 7: "grid-cols-3 sm:grid-cols-7", 8: "grid-cols-2 sm:grid-cols-4", 9: "grid-cols-3", 10: "grid-cols-2 sm:grid-cols-5", 11: "grid-cols-3 sm:grid-cols-6", 12: "grid-cols-3 sm:grid-cols-6" };
 const ICON: Record<string, LucideIcon> = { search: Search, send: Send, tag: Tag, package: Package, award: Award, userPlus: UserPlus, users: Users, star: Star, group: MessagesSquare, trophy: Trophy, book: BookOpen, play: PlayCircle, teach: GraduationCap, pen: PenLine, eye: Eye, briefcase: Briefcase, compare: Columns3, list: ListChecks, cart: ShoppingCart, receipt: ReceiptText, calc: Calculator };
-export type ActionCard = { label: string; href: string; icon: keyof typeof ICON };
+export type ActionCard = { label: string; href: string; icon: keyof typeof ICON; /** WA-E003: a variable card — something to do now (gold; red when overdue). */ count?: number; overdue?: boolean };
 export function ActionCards({ cards }: { cards: ActionCard[] }) {
   return (
     <div className={`grid gap-3 ${COLS[cards.length] ?? "grid-cols-3"}`} data-action-cards>
       {cards.map((c) => { const I = ICON[c.icon] ?? Briefcase; return (
-        <Link key={c.label} href={c.href} className="flex flex-col items-center gap-2 rounded-[12px] border border-line bg-white px-3 py-4 text-center text-ink hover:border-ink" data-action-card={c.label}>
+        <Link key={c.label} href={c.href} className={`relative flex flex-col items-center gap-2 rounded-[12px] border px-3 py-4 text-center text-ink hover:border-ink ${c.count ? (c.overdue ? "border-state-declined bg-state-declined-bg" : "border-state-pending bg-state-pending-bg") : "border-line bg-white"}`} data-action-card={c.label}>
+          {c.count ? <span className={`absolute right-2 top-2 rounded-full px-1.5 text-[11px] font-bold text-surface ${c.overdue ? "bg-state-declined" : "bg-state-pending"}`} data-action-count>{c.count}</span> : null}
           <I className="h-6 w-6" strokeWidth={1.7} aria-hidden />
           <b className="text-[13.5px] leading-tight">{c.label}</b>
         </Link>

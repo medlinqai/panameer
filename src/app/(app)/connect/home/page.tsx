@@ -7,6 +7,7 @@ import { appCounts } from "@/lib/attention";
 import { APP_FILTER, countActions, todoGroups } from "@/lib/todo";
 import { GROWTH_WEIGHTS, growthBoard, growthScore } from "@/lib/growth-score";
 import { HubHome, RankList, VsGroup } from "@/components/home/HubHome";
+import { areaActions } from "@/lib/area-actions";
 import { C, type Donut } from "@/lib/dashboard/types";
 
 export const metadata = { title: "Connect · Panameer" };
@@ -71,13 +72,7 @@ export default async function ConnectHome() {
         summary={`${connected} connection${connected === 1 ? "" : "s"} · ${waiting} ${waiting === 1 ? "person" : "people"} waiting on you · ${mine && me.points > 0 ? `rank #${mine.rank} this month` : "not ranked yet this month"}`}
         primary={{ label: "Invite to Panameer", href: "/connect/invite" }} secondary={{ label: "Find People", href: "/connect/community" }}
         donuts={donuts} actionCount={actionCount} actionGroups={actionGroups} app="connect" section2Title="How You Rank" section2Right="This Month"
-        actions={[
-          { label: "Invite People", href: "/connect/invite", icon: "userPlus" },
-          { label: "Find People", href: "/connect/community", icon: "users" },
-          { label: "Get Recommended", href: "/connect/recommendations", icon: "star" },
-          { label: "Join a Group", href: "/connect/groups", icon: "group" },
-          { label: "See Leaders", href: "/connect/leaders", icon: "trophy" },
-        ]}
+        actions={await areaActions("connect", pid, side)}
         section2={<>
           <RankList eyebrow="LEADERS" title="Who's Growing the Community" rows={board.slice(0, 3).map((r) => ({ rank: r.rank, name: r.name, photoUrl: r.photoUrl, line: `${r.invited} invited · ${r.joined} joined`, value: r.points, me: r.personId === pid }))}
             me={{ rank: mine && me.points > 0 ? mine.rank : null, name: "You", photoUrl: null, line: `${me.invited} invited · ${me.joined} joined`, value: me.points, me: true }} />
