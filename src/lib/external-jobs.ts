@@ -182,3 +182,30 @@ function csvRows(text: string): string[][] {
   if (f || row.length) { row.push(f); rows.push(row); }
   return rows.filter((r) => r.some((x) => x.trim()));
 }
+
+// ── EX-E002/E003: what a seller sees ─────────────────────────────────────────────────────────────────────────────
+export type ExternalCard = { id: string; title: string; company: string; source: string; url: string; location: string | null; workType: string | null; salary: string | null; receivedAt: string; matched: number; interested: boolean; interestedCount: number };
+const LIVE = () => ({ status: "LISTED", expires_at: { gt: new Date() } });
+
+/** Listed external jobs for a seller — strongest skill match first, then newest. */
+export async function externalForPerson(personId: string | null, take = 300): Promise<ExternalCard[]> {
+  const [jobs, mine, pp] = await Promise.all([
+    prisma.externalJob.findMany({ where: LIVE(), orderBy: { received_at: "desc" }, take, select: { id: true, title: true, source: true, url: true, location: true, work_type: true, salary: true, received_at: true, skill_ids: true, company: { select: { name: true } }, _count: { select: { interests: true } } } }),
+    personId ? prisma.externalJobInterest.findMany({ where: { person_id: personId }, select: { external_job_id: true } }) : [],
+    personId ? prisma.providerProfile.findUnique({ where: { person_id: personId }, select: { skills: { select: { skill_id: true } } } }) : null,
+  ]);
+  const skills = new Set(pp?.skills.map((s) => s.skill_id) ?? []);
+  const liked = new Set(mine.map((m) => m.external_job_id));
+  return jobs.map((j) => ({ id: j.id, title: j.title, company: j.company.name, source: j.source, url: j.url, location: j.location, workType: j.work_type, salary: j.salary, receivedAt: j.received_at.toISOString(), matched: j.skill_ids.filter((s) => skills.has(s)).length, interested: liked.has(j.id), interestedCount: j._count.interests }))
+    .sort((a, b) => b.matched - a.matched || b.receivedAt.localeCompare(a.receivedAt));
+}
+
+export const sourceLabel = (source: string) => `External · via ${source}`;
+
+/** I'm Interested — one click, undoable. The seller's name is never shared with the company. */
+export async function setInterest(personId: string, jobId: string, on: boolean) {
+  const job = await prisma.externalJob.findFirst({ where: { id: jobId, ...LIVE() }, select: { id: true } });
+  if (!job) throw new Error("That job is no longer listed.");
+  if (on) await prisma.externalJobInterest.upsert({ where: { external_job_id_person_id: { external_job_id: jobId, person_id: personId } }, create: { external_job_id: jobId, person_id: personId }, update: {} });
+  else await prisma.externalJobInterest.deleteMany({ where: { external_job_id: jobId, person_id: personId } });
+}
