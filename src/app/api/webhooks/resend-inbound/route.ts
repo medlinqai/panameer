@@ -29,6 +29,17 @@ export async function POST(request: Request) {
   if (event.type !== "email.received") return NextResponse.json({ ok: true, ignored: event.type });
 
   const d = event.data as { email_id: string; from?: string; to?: string[]; received_for?: string[]; subject?: string; attachments?: { id: string; filename?: string; content_type?: string }[] };
+  // EX-E001: job-alert emails forwarded to jobs@ (LinkedIn / Indeed alerts, or an agent's daily report) → the job intake.
+  // Only mail from a Panameer admin's address is read, so nobody else can put jobs in.
+  if ([...(d.to ?? []), ...(d.received_for ?? [])].some((a) => /(^|<)jobs(\+[^@]*)?@/i.test(a))) {
+    const sender = (String(d.from ?? "").match(/<([^>]+)>/)?.[1] ?? String(d.from ?? "")).trim().toLowerCase();
+    const admin = await prisma.user.findFirst({ where: { email: { equals: sender, mode: "insensitive" }, is_system_admin: true }, select: { id: true } });
+    if (!admin) { console.warn(`[resend-inbound] jobs@ mail from a non-admin (${sender}) — dropped`); return NextResponse.json({ ok: true, dropped: true }); }
+    const full = await resend.emails.receiving.get(d.email_id);
+    const { parseAlertEmail, intakeJobs } = await import("@/lib/external-jobs");
+    const jobs = parseAlertEmail(full.data?.html ?? null, full.data?.text ?? null, full.data?.subject ?? d.subject ?? null);
+    return NextResponse.json({ ok: true, ...(await intakeJobs(jobs, "EMAIL")) });
+  }
   if (await prisma.erpPoEmail.findUnique({ where: { resend_email_id: d.email_id }, select: { id: true } })) return NextResponse.json({ ok: true, duplicate: true });
   const conn = await connectionForAddresses([...(d.to ?? []), ...(d.received_for ?? [])]);
   if (!conn) {

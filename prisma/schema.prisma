@@ -9838,3 +9838,140 @@ enum PerformanceRole {
   BUYER
   SELLER
 }
+
+// ===========================================================================
+// EX (2026-10-27): External Jobs and the Panameer Job Agent. Jobs arrive only through the intake routes (forwarded
+// alert email, CSV/XLSX, the Job Clipper, an agent key) — never by logging into LinkedIn or Indeed. Each is labelled with
+// its source and links to the original (a clean link: tracking parts stripped). Panameer is never the buyer.
+// ===========================================================================
+
+/// An unclaimed company record — who posted an external job. Linked to a real Company when someone claims a job.
+model ExternalCompany {
+  id                 String        @id @default(uuid()) @db.Uuid
+  name               String
+  /// Normalised name for matching ("acme health inc" → "acme health").
+  name_key           String        @unique
+  domain             String?
+  /// "Remove on request": blocks this company (and its domain) from future listings.
+  blocked_at         DateTime?
+  block_reason       String?
+  claimed_company_id String?       @db.Uuid
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
+  jobs               ExternalJob[]
+
+  @@map("external_companies")
+}
+
+model ExternalJob {
+  id                  String                @id @default(uuid()) @db.Uuid
+  external_company_id String                @db.Uuid
+  /// LinkedIn · Indeed · or the source host (dice.com).
+  source              String
+  source_job_id       String?
+  /// The clean link to the original — no personal tracking parts.
+  url                 String
+  title               String
+  location            String?
+  /// Remote · Hybrid · Onsite
+  work_type           String?
+  salary              String?
+  tags                String[]              @default([])
+  alert_name          String?
+  description         String?
+  hiring_name         String?
+  hiring_url          String?
+  /// EMAIL · CSV · CLIPPER · AGENT
+  came_in_via         String
+  /// LISTED · NEEDS_REVIEW · NOT_ORACLE · REMOVED · CLAIMED
+  status              String                @default("LISTED")
+  remove_reason       String?
+  skill_ids           String[]              @default([])
+  /// Title + company + location, normalised — the second duplicate check.
+  dedupe_key          String
+  claim_token         String                @unique
+  contacted_at        DateTime?
+  claimed_job_id      String?               @db.Uuid
+  claimed_at          DateTime?
+  received_at         DateTime              @default(now())
+  expires_at          DateTime
+  created_at          DateTime              @default(now())
+  updated_at          DateTime              @updatedAt
+  company             ExternalCompany       @relation(fields: [external_company_id], references: [id], onDelete: Cascade)
+  interests           ExternalJobInterest[]
+  views               ExternalJobView[]
+
+  @@index([source, source_job_id])
+  @@index([dedupe_key])
+  @@index([status, expires_at])
+  @@map("external_jobs")
+}
+
+/// One row per job that came in, with what happened to it — the intake page's counts and table.
+model ExternalJobIntakeItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  came_in_via     String
+  title           String
+  company_name    String?
+  source          String?
+  /// LISTED · DUPLICATE · NOT_ORACLE · NEEDS_REVIEW · BLOCKED
+  result          String
+  external_job_id String?  @db.Uuid
+  created_at      DateTime @default(now())
+
+  @@index([created_at])
+  @@map("external_job_intake_items")
+}
+
+/// Private keys for an agent (and the Job Clipper) to post jobs in. Only the hash is stored.
+model ExternalJobKey {
+  id         String    @id @default(uuid()) @db.Uuid
+  label      String
+  key_hash   String    @unique
+  key_hint   String
+  created_at DateTime  @default(now())
+  revoked_at DateTime?
+
+  @@map("external_job_keys")
+}
+
+/// I'm Interested — one per seller per job; undoable. The seller's name is never shared with the company.
+model ExternalJobInterest {
+  id              String      @id @default(uuid()) @db.Uuid
+  external_job_id String      @db.Uuid
+  person_id       String      @db.Uuid
+  created_at      DateTime    @default(now())
+  job             ExternalJob @relation(fields: [external_job_id], references: [id], onDelete: Cascade)
+
+  @@unique([external_job_id, person_id])
+  @@map("external_job_interests")
+}
+
+model ExternalJobView {
+  id              String      @id @default(uuid()) @db.Uuid
+  external_job_id String      @db.Uuid
+  person_id       String?     @db.Uuid
+  created_at      DateTime    @default(now())
+  job             ExternalJob @relation(fields: [external_job_id], references: [id], onDelete: Cascade)
+
+  @@index([external_job_id, created_at])
+  @@map("external_job_views")
+}
+
+/// The seller's Panameer Job Agent — What I Want, the daily digest switch, and when they last looked.
+model JobAgentPref {
+  id               String    @id @default(uuid()) @db.Uuid
+  person_id        String    @unique @db.Uuid
+  skills           String[]  @default([])
+  modules          String[]  @default([])
+  rate_floor_cents Int?
+  work_types       String[]  @default([])
+  contract_types   String[]  @default([])
+  countries        String[]  @default([])
+  digest           Boolean   @default(false)
+  last_seen_at     DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  @@map("job_agent_prefs")
+}

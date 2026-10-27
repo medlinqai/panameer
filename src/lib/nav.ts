@@ -341,6 +341,8 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: "Areas & Skills", href: "/admin/skill-catalog", icon: "FolderTree" },
       { label: "Specializations", href: "/admin/specializations", icon: "Award" },
       { label: "Glossary", href: "/admin/glossary", icon: "BookOpen" },
+      // EX-E008: external jobs — intake, listings, outreach.
+      { label: "External Jobs", href: "/admin/external-jobs", icon: "Briefcase" },
       { label: "Settings", href: "/admin/settings", icon: "ShieldCheck" },
       { label: "Payout Requirements", href: "/admin/payout-requirements", icon: "ShieldCheck" },
       { label: "Assessment Rate", href: "/admin/tax-rates", icon: "Percent" },

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 
 // GT-E001: platform switches (Admin › Settings). A missing row = the default.
 export const SETTINGS = {
+  // EX-E006: off until outreach is automated — real counts, a Remove My Listing link, Unsubscribe, once a week per company.
+  external_jobs_company_emails: { label: "External Jobs: Email Companies Automatically", help: "Off = outreach is manual (Admin › External Jobs › Ready to Contact). On is reserved for the weekly company email; nothing sends yet.", default: false },
   taxonomy_v2: { label: "Global Taxonomy (v2)", help: "Off = today's screens exactly. On = the seller skills step asks How you work · What you know · In which system, and Shop › Services filters by them.", default: false },
 } as const;
 export type SettingKey = keyof typeof SETTINGS;
