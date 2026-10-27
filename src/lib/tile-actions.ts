@@ -3,7 +3,8 @@ import type { AttentionItem } from "@/lib/attention";
 // NC-E004: which Worklist groups belong to which tile, so each tile can say "2 Actions Required →" (or "1 Overdue →").
 export const TILE_GROUPS: Record<string, string[]> = {
   work: ["Availability Requests", "Questions to Answer", "Jobs for You", "Estimates", "Interview Times to Pick", "Tests to Take", "Accept Product Orders"],
-  jobs: ["Compare Answers", "Answer Date Passed", "Availability Requests", "Questions to Answer", "Jobs for You"],
+  jobs: ["Compare Answers", "Answer Date Passed", "Availability Requests", "Questions to Answer", "Jobs for You", "Interview Times to Pick", "Tests to Take"],
+  products: ["Accept Product Orders"],
   requests: ["Request Approvals"],
   orders: ["Orders to Accept", "Review Change Orders", "Recommend Your Provider", "Ask for a Recommendation"],
   payments: ["Approve Invoices"],
@@ -17,7 +18,7 @@ export const TILE_GROUPS: Record<string, string[]> = {
   fit: ["Interview Times to Pick", "Interview Times to Confirm", "Tests to Take"],
   providers: ["Compare Answers"],
   catalog: ["Respond to Offers"],
-  products: ["Answer Counter-Offers"],
+  shopproducts: ["Answer Counter-Offers"],
 };
 
 export type ActionCount = { n: number; overdue: number; href: string };

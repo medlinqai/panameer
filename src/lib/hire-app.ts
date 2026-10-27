@@ -50,7 +50,7 @@ export async function shopTiles(personId: string): Promise<Donut[]> {
   const rs = wrs.map((w) => requestStatus(w)).filter(Boolean);
   const done = orders.filter((o) => ["CLOSED", "FINALLY_CLOSED"].includes(o.status)).length;
   return [
-    { key: "products", title: "Products", sub: "Service products", href: "/shop?tab=browse", seeAllLabel: "Browse", lead: { text: `${live.toLocaleString("en-US")} on Panameer`, href: "/shop?tab=browse", label: "Browse" }, slices: [
+    { key: "shopproducts", title: "Products", sub: "Service products", href: "/shop?tab=browse", seeAllLabel: "Browse", lead: { text: `${live.toLocaleString("en-US")} on Panameer`, href: "/shop?tab=browse", label: "Browse" }, slices: [
       { label: "In Your Cart", n: cart, color: C.pend, mine: true, href: "/shop?tab=cart" }] },
     { key: "estimates", title: "Estimates", sub: "Get an Estimate", href: "/estimate", seeAllLabel: "Open Estimates", slices: [
       { label: "Requested", n: events, color: C.steel, href: "/estimate?tab=requests" }, { label: "Estimates In", n: estIn, color: C.pend, mine: true, href: "/estimate?tab=in" }, { label: "Awarded", n: awarded, color: C.ok, href: "/estimate?tab=awarded" }] },

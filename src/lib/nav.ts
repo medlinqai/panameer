@@ -43,7 +43,7 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   // MD-E001 / WK-E001: Estimate lives inside Shop (Get an Estimate); Work = Jobs for You, Estimates, Interviews & Tests, Catalog.
   "/shop": ["/estimate", "/cart"],
   "/estimate": ["/estimates", "/catalog/estimates"],
-  "/work/home": ["/work/jobs", "/work/estimates", "/work/interviews", "/find-work", "/my-services", "/services", "/catalog"],
+  "/work/home": ["/work/jobs", "/work/estimates", "/work/product-orders", "/work/interviews", "/find-work", "/my-services", "/services", "/catalog"],
   "/payments": ["/pay", "/finances", "/manage-money"],
   "/hire": ["/create-work", "/work-requests", "/search", "/consultations"],
   "/hire/overview": ["/hire", "/create-work", "/work-requests", "/search", "/consultations"],

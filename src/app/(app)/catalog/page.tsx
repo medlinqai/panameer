@@ -81,7 +81,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
       <p className="mt-6 border-l-2 border-magenta py-1.5 pl-3 text-[13.5px] text-ink-2"><b className="text-ink">Skills</b> tell buyers what you do; your catalog tells them what it costs. Edit skills in <Link href="/profile/edit/skills" className="font-bold text-magenta-dark underline">My Profile › Skills</Link>.</p>
       <ServicesSection viewer={viewer} />
       <ProductsSection viewer={viewer} edit={edit} type={type} />
-      <AlsoIn app="Work" links={[["Jobs for You", "/work/jobs"], ["Estimates", "/work/estimates"], ["Interviews & Tests", "/work/interviews"]]} />
+      <AlsoIn app="Work" links={[["Jobs for You", "/work/jobs"], ["Estimates", "/work/estimates"], ["Product Orders", "/work/product-orders"]]} />
     </div>
   );
 }

@@ -437,7 +437,7 @@ async function deriveAppCounts(viewer: { userId: string }, side: "buyer" | "prov
     prisma.paymentRequest.count({ where: { provider_person_id: id, status: "APPROVED" } }),
   ]);
   const requests = add("request", dueSoon.length, "Availability Requests", "/work/jobs?stage=They%20Requested", "Respond", dueSoon[0]?.responds_by, dueSoon.map((x) => x.job_id));
-  const interviews = add("request", toOffer.length, "Interview Times to Pick", "/work/interviews", "Pick", null, toOffer.map((x) => x.job_id)) + todays;
+  const interviews = add("request", toOffer.length, "Interview Times to Pick", "/work/jobs?stage=You%20Interviewed", "Pick", null, toOffer.map((x) => x.job_id)) + todays;
   const tests = testsToTake;
   // Scott 10-23: written questions from a buyer wait on the provider too.
   const qs = await prisma.questionAnswer.findMany({ where: { provider_person_id: id, submitted_at: null }, orderBy: { created_at: "asc" }, select: { id: true, questionSet: { select: { job_id: true, due_at: true } } } });

@@ -11,7 +11,7 @@ export default async function Page() {
   return (
     <>
       <EstimatesBody viewer={viewer} side="seller" tabs={<AppCrumb app="Work" href="/work/home" page="Estimates" />} />
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6"><AlsoIn app="Work" links={[["Jobs for You", "/work/jobs"], ["Interviews & Tests", "/work/interviews"], ["Catalog", "/catalog"]]} /></div>
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6"><AlsoIn app="Work" links={[["Jobs for You", "/work/jobs"], ["Product Orders", "/work/product-orders"], ["Catalog", "/catalog"]]} /></div>
     </>
   );
 }

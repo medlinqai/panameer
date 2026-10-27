@@ -74,8 +74,8 @@ export async function sellerDashboard(personId: string, viewer: { userId: string
     { label: "Jobs Matched", n: jobsAt("You Matched"), color: C.grey, mine: true, href: "/work/jobs?stage=You%20Matched" },
     { label: "Availability Asked", n: jobsAt("They Requested"), color: C.pend, mine: true, href: "/work/jobs?stage=They%20Requested" },
     { label: "Estimates Asked", n: estimatesAsked, color: C.pendSoft, mine: true, href: "/work/estimates" },
-    { label: "Interviews & Tests", n: fitCount, color: C.ink, mine: true, href: "/work/interviews" },
-    { label: "Product Orders", n: productOrders, color: C.steel, href: "/shop?tab=sales" },
+    { label: "Interviews & Tests", n: fitCount, color: C.ink, mine: true, href: "/work/jobs?stage=You%20Interviewed" },
+    { label: "Product Orders", n: productOrders, color: C.steel, href: "/work/product-orders" },
   ] };
   const servicesListed = rows.filter((r) => r.key.startsWith("s-")).length;
   const productsLive = rows.filter((r) => r.key.startsWith("p-") && r.slice === "Listed").length;

@@ -44,7 +44,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
         ))}
         {!list.length && <li className="py-6 text-[14px] text-ink-3">Nothing at this stage.</li>}
       </ul>
-      <AlsoIn app="Work" links={[["Estimates", "/work/estimates"], ["Interviews & Tests", "/work/interviews"], ["Catalog", "/catalog"]]} />
+      <AlsoIn app="Work" links={[["Estimates", "/work/estimates"], ["Product Orders", "/work/product-orders"], ["Catalog", "/catalog"]]} />
     </div>
   );
 }
