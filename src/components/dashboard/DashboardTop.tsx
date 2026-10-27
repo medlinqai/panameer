@@ -6,14 +6,14 @@ import { HireBand } from "@/components/hire/HireBand";
 import { DealBand } from "@/components/home/DealBand";
 import { countActions } from "@/lib/todo";
 import { DashPies } from "@/components/dashboard/DashGlance";
-import { ViewSwitch } from "@/components/dashboard/ViewSwitch";
+import { GlanceSwitch } from "@/components/dashboard/GlanceSwitch";
 import { txHref } from "@/lib/dashboard/tx-href";
 import { BTN, BTN_MAGENTA } from "@/components/hire/HireUI";
 import type { DashData } from "@/lib/dashboard/types";
 
 // MD-E003 / NC-E003: the dashboard's top half — Welcome Back + summary + two buttons, the action line, then At a Glance.
-export async function DashboardTop({ viewer, side, firstName, data, personId }: { viewer: Viewer; side: "buyer" | "provider"; firstName: string; data: DashData; personId: string }) {
-  const c = await appCounts(viewer, side);
+export async function DashboardTop({ viewer, side, firstName, data: dataP, personId }: { viewer: Viewer; side: "buyer" | "provider"; firstName: string; data: Promise<DashData>; personId: string }) {
+  const [data, c] = await Promise.all([dataP, appCounts(viewer, side)]);
   const date = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }).toUpperCase();
   return (
     <section className="font-body text-ink" data-dashboard={side}>
@@ -39,7 +39,7 @@ export async function DashboardTop({ viewer, side, firstName, data, personId }: 
             ? (data.view === "start" && !data.setupDone
               ? <><Link href={data.checklist?.find((i) => i.n === 0)?.href ?? "/company"} className={BTN_MAGENTA}>Finish Set-Up</Link><Link href="/hire" className={BTN}>Create a Job</Link></>
               : <><Link href="/hire" className={BTN_MAGENTA}>Create a Job</Link><Link href="/shop" className={BTN}>Buy Service Products</Link></>)
-            : <>{data.view === "start" && !data.setupDone ? <Link href={data.checklist?.find((i) => i.n === 0)?.href ?? "/profile"} className={BTN_MAGENTA}>Complete My Profile</Link> : <Link href="/catalog" className={BTN_MAGENTA}>Add to My Catalog</Link>}<Link href="/find-work?tab=best" className={BTN}>Jobs for You</Link></>}
+            : <>{data.view === "start" && !data.setupDone ? <Link href={data.checklist?.find((i) => i.n === 0)?.href ?? "/profile"} className={BTN_MAGENTA}>Complete My Profile</Link> : <Link href="/catalog" className={BTN_MAGENTA}>Add to Catalog</Link>}<Link href="/find-work?tab=best" className={BTN}>Jobs for You</Link></>}
         </div>
       </div>
 
@@ -49,13 +49,9 @@ export async function DashboardTop({ viewer, side, firstName, data, personId }: 
       <div className="mt-4">{side === "buyer" ? <HireBand personId={personId} /> : <DealBand rows={data.rows} />}</div>
       <div className="mt-6">
         <div>
-          <div className="flex flex-wrap items-baseline gap-3 border-b border-ink pb-2">
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-ink text-[13px] font-bold text-surface">1</span>
-            <h2 className="text-[20px] font-extrabold">At a Glance</h2>
-            {data.view && data.viewLabels && <ViewSwitch view={data.view} labels={data.viewLabels} />}
-            <Link href={txHref(side)} className="ml-auto text-[13px] font-semibold text-ink-2 hover:text-ink" data-see-all-transactions>{side === "buyer" ? "See All My Transactions →" : "See All My Work →"}</Link>
-          </div>
-          <div className="mt-3"><DashPies donuts={data.donuts} side={side} compact actions={c.items} /></div>
+          {data.views && data.view && data.viewLabels ? (
+            <GlanceSwitch views={data.views} view={data.view} labels={data.viewLabels} side={side} actions={c.items} seeAll={{ href: txHref(side), label: side === "buyer" ? "See All Transactions →" : "See All Work →" }} />
+          ) : <DashPies donuts={data.donuts} side={side} compact actions={c.items} />}
         </div>
       </div>
     </section>

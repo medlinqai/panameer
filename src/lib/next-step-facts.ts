@@ -119,3 +119,9 @@ async function buyerFacts(personId: string): Promise<BuyerFacts> {
   ]);
   return { openRequest: { id: wr.id, title: wr.title, matches: match ? match.providers.length : null, invited } };
 }
+
+/** Speed (10-27): what the dashboard page needs — first name and whether the member sells and/or buys — in one light read. */
+export async function memberKind(viewer: Viewer): Promise<{ firstName: string; seller: boolean; buyer: boolean }> {
+  const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { first_name: true, buyerProfile: { select: { id: true } }, requesterProfile: { select: { completed_at: true } }, providerProfile: { select: { id: true } } } });
+  return { firstName: displayFirstName(person?.first_name ?? ""), seller: !!person?.providerProfile, buyer: !!person?.buyerProfile || !!person?.requesterProfile?.completed_at };
+}

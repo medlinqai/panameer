@@ -52,7 +52,13 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
   const committed = orders.filter((o) => o.created_at >= q).reduce((n, o) => n + (o.not_to_exceed_cents ?? 0), 0);
   const open = rows.filter((r) => r.type === "Job" && ["Active", "Comparing", "Request to Hire"].includes(r.status)).length;
   const active = orders.filter((o) => RELEASED.has(o.status)).length;
-  const paid = await prisma.paymentRequest.count({ where: { work_order_id: { in: orders.map((o) => o.id) }, status: "PAID" } });
+  // Speed (10-27): the remaining reads run together.
+  const [paid, { view }, checklist, providers] = await Promise.all([
+    prisma.paymentRequest.count({ where: { work_order_id: { in: orders.map((o) => o.id) }, status: "PAID" } }),
+    dashView(personId, "buyer"),
+    accountChecklist(personId),
+    prisma.providerProfile.count(),
+  ]);
   const work: Donut[] = [
       { key: "jobs", title: "Jobs", sub: "Hire", slices: slicesFrom(rows, "jobs", [{ label: "Draft", color: C.grey, mine: true }, { label: "Active", color: C.ink }, { label: "Comparing", color: C.steel, mine: true }, { label: "Request to Hire", color: C.pendSoft }, { label: "On Hold", color: C.grey }, { label: "Filled", color: C.ok }, { label: "Closed", color: "#c9cddc" }]) },
       { key: "requests", title: "Requests", sub: "Approval before an Order", slices: slicesFrom(rows, "requests", [{ label: "Pending Approval", color: C.pend }, { label: "Waiting on ERP", color: C.pendSoft }, { label: "Approved", color: C.ok }, { label: "Declined", color: C.no }]) },
@@ -60,14 +66,14 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
       { key: "payments", title: "Payments", sub: "From you", href: "/payments", slices: [{ label: "Invoices to Approve", n: toApprove.size, color: C.pend, mine: true }, { label: "Paid", n: paid, color: C.ok }] },
   ];
   // HT-E005: Get Started (Account · Connect · Learn · Jobs) until the first Order is released; Get Work Done after. The person's pick wins.
-  const { view } = await dashView(personId, "buyer");
-  const checklist = await accountChecklist(personId);
   const done = checklist.filter((i) => i.n > 0).length;
-  const providers = view === "start" ? await prisma.providerProfile.count() : 0;
+  // Both views load; the switch flips in place (10-27).
+  const start = await getStartedDonuts(viewer, personId, "buyer", work.find((d) => d.key === "jobs"), checklist);
   return {
     summary: view === "start" ? `Account set-up ${done} of ${checklist.length} · ${providers.toLocaleString("en-US")} providers on Panameer` : `${open} job${open === 1 ? "" : "s"} open · ${active} Order${active === 1 ? "" : "s"} active · ${usd(committed)} committed this quarter`,
     view, viewLabels: ["Get Started", "Get Work Done"], setupDone: done === checklist.length, checklist,
-    donuts: view === "start" ? await getStartedDonuts(viewer, personId, "buyer", work.find((d) => d.key === "jobs"), checklist) : work,
+    donuts: view === "start" ? start : work,
+    views: { start, work },
     rows,
     filters: [["active", "Active"], ["mine", "Waiting on Me"], ["Job", "Jobs"], ["Request", "Requests"], ["Order", "Orders"], ["closed", "Closed"]],
   };

@@ -84,10 +84,14 @@ function Money({ you, grp, rows }: { you: number; grp: number; rows: [string, nu
 export async function MyProgress({ side, personId, period }: { side: "buyer" | "provider"; personId: string; period: PeriodKey }) {
   const { from, to } = periodRange(period);
   const role = side === "buyer" ? "BUYER" : "SELLER";
-  const [youMap, group, extras] = await Promise.all([
+  // Speed (10-27): every tile's query starts at once.
+  const [youMap, group, extras, svcDemand, prodDemand, productsOffered] = await Promise.all([
     side === "buyer" ? buyerMetrics([personId], from, to) : sellerMetrics([personId], from, to),
     groupMarkers(role, from, to),
     moneyExtras(personId, role, from, to),
+    side === "provider" ? serviceDemand(personId) : Promise.resolve([] as DemandRow[]),
+    side === "provider" ? productDemand(personId) : Promise.resolve([] as DemandRow[]),
+    side === "buyer" ? prisma.serviceProduct.count({ where: { status: "PUBLISHED" } }) : Promise.resolve(0),
   ]);
   const you = youMap.get(personId) ?? {};
   const g = group.values;
@@ -111,8 +115,8 @@ export async function MyProgress({ side, personId, period }: { side: "buyer" | "
           <>
             <Tile app="CONNECT" title="Connections" period={label} foot="Find People" footHref="/connect/community" group={foot}><Funnel you={you} grp={g} stages={[["Invited", "seller.connect.invited"], ["Connected", "seller.connect.connected"], ["Mentoring", "seller.connect.mentoring"], ["Introduced You", "seller.connect.introduced"]]} /></Tile>
             <Tile app="LEARN" title="Courses" period="All Time" foot="Take a Test" footHref="/learn" group={foot}><Funnel you={you} grp={g} stages={[["Published", "seller.courses.published"], ["Matched to You", "seller.courses.matched"], ["Enrolled", "seller.courses.enrolled"], ["Taken", "seller.courses.taken"], ["Certified", "seller.courses.certified"]]} /></Tile>
-            <Tile app="SELL" title="Services" period="Last 30 Days" foot="Jobs for You" footHref="/find-work?tab=best"><Demand rows={await serviceDemand(personId)} empty="List a service to see its demand." /></Tile>
-            <Tile app="SELL" title="Service Products" period="Last 30 Days" foot="My Catalog" footHref="/catalog/products"><Demand rows={await productDemand(personId)} empty="List a service product to see its demand." /></Tile>
+            <Tile app="SELL" title="Services" period="Last 30 Days" foot="Jobs for You" footHref="/find-work?tab=best"><Demand rows={svcDemand} empty="List a service to see its demand." /></Tile>
+            <Tile app="SELL" title="Service Products" period="Last 30 Days" foot="Catalog" footHref="/catalog/products"><Demand rows={prodDemand} empty="List a service product to see its demand." /></Tile>
             <Tile app="ORDERS" title="Orders" period={label} foot="See Orders" footHref="/orders" group={foot}><Funnel you={you} grp={g} stages={[["Offered", "seller.orders.offered"], ["Accepted", "seller.orders.accepted"], ["Delivered", "seller.orders.delivered"], ["On Time", "seller.orders.on_time"]]} /></Tile>
             <Tile app="PAYMENTS" title="Earned" period={label} foot="See Payments" footHref="/payments" group={foot}><Money you={you["seller.payments.earned"] ?? 0} grp={g["seller.payments.earned"] ?? 0} rows={[["Billed, Not Yet Paid", extras.a], ["Paid to You", extras.b]]} /></Tile>
           </>
@@ -120,7 +124,7 @@ export async function MyProgress({ side, personId, period }: { side: "buyer" | "
           <>
             <Tile app="CONNECT" title="Connections" period={label} foot="Find People" footHref="/connect/community" group={foot}><Funnel you={you} grp={g} stages={[["Invited", "buyer.connect.invited"], ["Connected", "buyer.connect.connected"], ["Mentors", "buyer.connect.mentors"]]} /></Tile>
             <Tile app="HIRE" title="Jobs" period={label} foot="Create a Job" footHref="/hire" group={foot}><Funnel you={you} grp={g} stages={[["Published", "buyer.jobs.published"], ["Availability Requested", "buyer.jobs.availability"], ["Interviewed", "buyer.jobs.interviewed"], ["Filled", "buyer.jobs.hired"]]} /></Tile>
-            <Tile app="SHOP" title="Shop" period={label} foot="Shop" footHref="/shop" group={foot}><Funnel you={you} grp={g} stages={[["Viewed", "buyer.shop.viewed"], ["Ordered", "buyer.shop.ordered"], ["Delivered", "buyer.shop.delivered"]]} /><p className="mt-1 text-[12px] text-ink-3">{(await prisma.serviceProduct.count({ where: { status: "PUBLISHED" } })).toLocaleString("en-US")} products offered</p></Tile>
+            <Tile app="SHOP" title="Shop" period={label} foot="Shop" footHref="/shop" group={foot}><Funnel you={you} grp={g} stages={[["Viewed", "buyer.shop.viewed"], ["Ordered", "buyer.shop.ordered"], ["Delivered", "buyer.shop.delivered"]]} /><p className="mt-1 text-[12px] text-ink-3">{productsOffered.toLocaleString("en-US")} products offered</p></Tile>
             <Tile app="ORDERS" title="Orders" period={label} foot="See Orders" footHref="/orders" group={foot}><Funnel you={you} grp={g} stages={[["Created", "buyer.orders.created"], ["Active", "buyer.orders.active"], ["Approved Delivery", "buyer.orders.approved"], ["On Time", "buyer.orders.on_time"]]} /></Tile>
             <Tile app="PAYMENTS" title="Paid" period={label} foot="See Payments" footHref="/payments" group={foot}><Money you={you["buyer.payments.paid"] ?? 0} grp={g["buyer.payments.paid"] ?? 0} rows={[["Invoices to Approve", extras.a], ["Savings on Hires", extras.b]]} /></Tile>
           </>

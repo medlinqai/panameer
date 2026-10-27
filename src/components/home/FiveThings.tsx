@@ -47,19 +47,24 @@ function Card({ t, i }: { t: Thing; i: number }) {
   );
 }
 
-export async function FiveThings({ viewer, firstName, firstVisit = false, step = null, view = null, period = null }: { viewer: Viewer; firstName: string; firstVisit?: boolean; step?: string | null; view?: string | null; period?: string | null }) {
+export async function FiveThings({ viewer, firstName, firstVisit = false, step = null, view = null, period = null, path: pathP }: { viewer: Viewer; firstName: string; firstVisit?: boolean; step?: string | null; view?: string | null; period?: string | null; /** Speed (10-27): fetched alongside the page's first reads. */ path?: ReturnType<typeof lifecycleForUser> }) {
   const per = (["quarter", "90d", "year"] as const).find((p) => p === period) ?? "quarter";
   void step; void view;
-  const path = await lifecycleForUser(viewer.userId);
+  // Speed (10-27): the person (and a seller's registration) load alongside the road.
+  const meP = prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+  const regP = meP.then((m) => (m ? sellerRegistration(m.id) : null));
+  regP.catch(() => null);
+  const path = await (pathP ?? lifecycleForUser(viewer.userId));
   // BD-E002/E005: a buyer's dashboard = greeting · their road · the five cards. Nothing else.
   if (path?.road === "buyer") {
-    const bc = await appCounts(viewer, "buyer");
     const setUp = path.current >= 2 && !path.waiting;
     // MD-E003: a set-up buyer gets the dashboard (Things You Need to Do + My Progress) instead of the road.
     if (setUp) {
-      const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+      const me = await meP;
       if (me) return <Dashboard viewer={viewer} side="buyer" personId={me.id} firstName={firstName} period={per} />;
     }
+    // Speed (10-27): the road's counts only when the road is shown.
+    const bc = await appCounts(viewer, "buyer");
     return (
       <section data-five-things data-buyer-dashboard className="mb-8 font-body text-ink">
         <h1 className="text-[28px] font-extrabold leading-tight sm:text-[32px]">Welcome{firstName ? `, ${firstName}` : ""}.</h1>
@@ -94,10 +99,11 @@ export async function FiveThings({ viewer, firstName, firstVisit = false, step =
       </section>
     );
   }
-  const { things } = await fiveThings(viewer);
   // SO-E004: a registered seller who isn't live yet gets one wide Get Found card above the cards.
-  const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
-  const reg = me ? await sellerRegistration(me.id) : null;
+  const [me, reg] = await Promise.all([meP, regP]);
+  // MD-E003: a live seller gets the dashboard — nothing below is needed then (speed, 10-27).
+  if (reg?.live && me) return <Dashboard viewer={viewer} side="provider" personId={me.id} firstName={firstName} period={per} />;
+  const { things } = await fiveThings(viewer);
   // While on the provider road (before Request Payment), the cards become one question with four directions.
   // DB-E005: once live, the provider's live work replaces the onboarding strip.
   const live = !!reg?.live;

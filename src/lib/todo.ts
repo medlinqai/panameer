@@ -16,10 +16,10 @@ export const CATEGORY_APP: Record<string, AppKey> = { "work_request.matched": "r
 const key = (side: string, l: AttentionLine) => `todo:${side}:${l.href}|${l.what}`.slice(0, 480);
 const last = new Map<string, number>();
 
-/** Write the derived lines into the Worklist and resolve the ones that no longer apply (this side only). Throttled to once per 30 s. */
+/** Write the derived lines into the Worklist and resolve the ones that no longer apply (this side only). Throttled to once per 5 minutes. */
 export async function syncTodo(personId: string, side: "buyer" | "provider", items: AttentionItem[]) {
   const now = Date.now();
-  if ((last.get(`${personId}:${side}`) ?? 0) > now - 30_000) return;
+  if ((last.get(`${personId}:${side}`) ?? 0) > now - 5 * 60_000) return;
   last.set(`${personId}:${side}`, now);
   const open = await prisma.notification.findMany({ where: { person_id: personId, requires_action: true, resolved_at: null }, select: { id: true, dedupe_key: true, href: true } });
   const want = new Map<string, { app: string; group: string; l: AttentionLine }>();

@@ -93,5 +93,6 @@ export async function getStartedDonuts(viewer: { userId: string }, personId: str
     const providers = await prisma.providerProfile.count();
     j = { ...jobs, lead: { text: `${providers.toLocaleString("en-US")} providers on Panameer`, href: "/connect/community", label: "Find People" } };
   }
-  return [first, await connectDonut(viewer.userId, personId), await learnDonut(personId, side), ...(j ? [j] : [])];
+  const [connect, learn] = await Promise.all([connectDonut(viewer.userId, personId), learnDonut(personId, side)]);
+  return [first, connect, learn, ...(j ? [j] : [])];
 }

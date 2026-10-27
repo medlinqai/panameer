@@ -1,3 +1,4 @@
+import { lifecycleForUser } from "@/lib/your-path";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getSessionViewer } from "@/lib/session";
@@ -7,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { displayFirstName } from "@/lib/display";
 import { RequesterHome } from "@/components/home/RequesterHome";
 import { listMentors } from "@/lib/mentors";
-import { loadMemberFacts } from "@/lib/next-step-facts";
+import { memberKind } from "@/lib/next-step-facts";
 import { FiveThings } from "@/components/home/FiveThings";
 import { CompanyLink } from "@/components/company/CompanyLink";
 
@@ -32,19 +33,25 @@ export default async function DashboardPage({
   }
 
   // First page: everyone lands here; the next-step card reads the member's facts before the visit is marked.
-  const facts = await loadMemberFacts(viewer);
-  // "5 things you can do today" replaces the single next-step card and its "Why" / "Then" lists.
-  const providerProfile = await prisma.providerProfile.findFirst({
-    where: { person: { user_id: viewer.userId } },
-    select: { id: true, person_id: true, completeness: true, dashboard_seen_at: true, onboarding_completed_at: true },
-  });
-  // BD-E001: buyers' first visit comes from requesterProfile.dashboard_seen_at, read before it's stamped below.
-  const requesterSeen = providerProfile ? null : await prisma.requesterProfile.findFirst({ where: { person: { user_id: viewer.userId } }, select: { dashboard_seen_at: true, completed_at: true } });
+  // Speed (10-27): the opening reads run together.
+  const pathP = lifecycleForUser(viewer.userId);
+  pathP.catch(() => null);
+  const [facts, providerProfile, requesterProfileSeen] = await Promise.all([
+    memberKind(viewer),
+    // "5 things you can do today" replaces the single next-step card and its "Why" / "Then" lists.
+    prisma.providerProfile.findFirst({
+      where: { person: { user_id: viewer.userId } },
+      select: { id: true, person_id: true, completeness: true, dashboard_seen_at: true, onboarding_completed_at: true },
+    }),
+    // BD-E001: buyers' first visit comes from requesterProfile.dashboard_seen_at, read before it's stamped below.
+    prisma.requesterProfile.findFirst({ where: { person: { user_id: viewer.userId } }, select: { dashboard_seen_at: true, completed_at: true } }),
+  ]);
+  const requesterSeen = providerProfile ? null : requesterProfileSeen;
   const firstVisit = providerProfile
     ? !providerProfile.dashboard_seen_at || (!!providerProfile.onboarding_completed_at && providerProfile.dashboard_seen_at < providerProfile.onboarding_completed_at)
     : !!requesterSeen && (!requesterSeen.dashboard_seen_at || (!!requesterSeen.completed_at && requesterSeen.dashboard_seen_at < requesterSeen.completed_at));
   const sp0 = await searchParams;
-  const first = facts.seller || facts.buyer ? <FiveThings viewer={viewer} firstName={facts.firstName} firstVisit={firstVisit} step={sp0.step ?? null} view={sp0.view ?? null} period={sp0.period ?? null} /> : null;
+  const first = facts.seller || facts.buyer ? <FiveThings path={pathP} viewer={viewer} firstName={facts.firstName} firstVisit={firstVisit} step={sp0.step ?? null} view={sp0.view ?? null} period={sp0.period ?? null} /> : null;
 
   if (providerProfile) {
     await prisma.providerProfile.update({

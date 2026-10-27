@@ -255,7 +255,26 @@ const APP_LABEL: Record<AppKey, string> = { request: "Hire", shop: "Shop", estim
 const DAY_MS = 86_400_000;
 const dueText = (d: Date | null | undefined) => (d ? d.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null);
 
+// Speed (10-27): working out every line costs ~2–3 s, so it runs at most once per person per side every 5 minutes
+// (that's also when the Worklist sync runs); the Worklist itself is re-read on every call, so done items clear at once.
+const DERIVE_TTL_MS = 5 * 60_000;
+const derived = new Map<string, { at: number; c: AppCounts }>();
 export async function appCounts(viewer: { userId: string }, side: "buyer" | "provider"): Promise<AppCounts> {
+  const key = `${viewer.userId}:${side}`;
+  const hit = derived.get(key);
+  if (hit && hit.at > Date.now() - DERIVE_TTL_MS) {
+    const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+    if (!me) return hit.c;
+    const items = await (await import("@/lib/todo")).todoGroups(me.id, side);
+    const p = side === "buyer" ? hit.c.items.find((i) => i.id === "punchin:cart") : null;
+    return { ...hit.c, items: p ? [p, ...items] : items };
+  }
+  const c = await deriveAppCounts(viewer, side);
+  derived.set(key, { at: Date.now(), c });
+  return c;
+}
+
+async function deriveAppCounts(viewer: { userId: string }, side: "buyer" | "provider"): Promise<AppCounts> {
   const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
   const zero = { total: 0 };
   const empty: AppCounts = { side, request: { total: 0, jobs: 0, requests: 0, interviews: 0, tests: 0 }, shop: { total: 0, offers: 0, purchases: 0, sales: 0 }, estimate: zero, order: zero, settlement: zero, payment: zero, connect: zero, learn: zero, items: [] };

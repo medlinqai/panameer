@@ -4,8 +4,19 @@ import { PathBand, type BandStep } from "@/components/hire/HireUI";
 
 // NC-E006: the buyer's end-to-end step strip (1 Create Job → … → 6 Request to Hire → Order Created) — on Hire and the dashboard.
 // Each step shows its count and opens its list; steps waiting on you carry a red dot.
-export async function HireBand({ personId }: { personId: string }) {
+// Speed (10-27): the job data behind the band costs ~3–4 s, so it's kept per buyer for 5 minutes (the Worklist's cadence).
+const BAND_TTL_MS = 5 * 60_000;
+const bandData = new Map<string, { at: number; d: Awaited<ReturnType<typeof hireOverviewData>> }>();
+async function overviewFor(personId: string) {
+  const hit = bandData.get(personId);
+  if (hit && hit.at > Date.now() - BAND_TTL_MS) return hit.d;
   const d = await hireOverviewData(personId);
+  bandData.set(personId, { at: Date.now(), d });
+  return d;
+}
+
+export async function HireBand({ personId }: { personId: string }) {
+  const d = await overviewFor(personId);
   // MD-E006: the six Job Timeline steps (+ Order Created) — each job counted once, at its current step.
   const asked = new Set((await prisma.questionSet.findMany({ where: { job_id: { in: d.jobRows.map((j) => j.id) } }, select: { job_id: true } })).map((q) => q.job_id));
   const TIMELINE: { key: string; label: string; steps: string[]; step: string }[] = [
