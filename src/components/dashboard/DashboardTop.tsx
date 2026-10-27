@@ -2,8 +2,6 @@ import Link from "next/link";
 import type { Viewer } from "@/lib/access";
 import { appCounts } from "@/lib/attention";
 import { ActionLine } from "@/components/home/AppNav";
-import { HireBand } from "@/components/hire/HireBand";
-import { DealBand } from "@/components/home/DealBand";
 import { countActions } from "@/lib/todo";
 import { dashView } from "@/lib/dashboard/views";
 import { DashPies } from "@/components/dashboard/DashGlance";
@@ -48,8 +46,6 @@ export async function DashboardTop({ viewer, side, firstName, data: dataP, perso
 
       {/* NC-E003: the Things You Need to Do panel is gone — one action line opens the Worklist. */}
       <ActionLine count={countActions(c.items, "/worklist")} />
-      {/* NC-E006: the end-to-end step strip, as a thin band under the header line. */}
-      <div className="mt-4">{side === "buyer" ? <HireBand personId={personId} /> : <DealBand rows={data.rows} />}</div>
       <div className="mt-6">
         <div>
           {data.views && data.view && data.viewLabels ? (
