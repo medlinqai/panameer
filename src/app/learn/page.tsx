@@ -45,7 +45,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
   const covered = mySkills.filter((s) => taught.has(s)).length;
 
   const learning: Donut[] = [
-    { key: "my-learning", title: "My Learning", sub: "Paths you take", href: "/learn/my", lead: { text: `${catalog.length} learning paths on Panameer`, href: "/learn/paths", label: "Browse" }, slices: [
+    { key: "my-learning", title: "Learning", sub: "Paths you take", href: "/learn/my", lead: { text: `${catalog.length} learning paths on Panameer`, href: "/learn/paths", label: "Browse" }, slices: [
       { label: "Matched to You", n: matched.length, color: C.grey, mine: true, href: "/learn/paths" }, { label: "Enrolled", n: enrolled.length - inProgress.length - finished.length, color: C.steel, href: "/learn/my" },
       { label: "In Progress", n: inProgress.length, color: C.pend, href: "/learn/my" }, { label: "Finished", n: finished.length, color: C.ok, href: "/learn/my" }] },
     { key: "certificates", title: "Certificates", sub: "What buyers see", href: "/learn/certificates", slices: [
@@ -63,7 +63,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
   const myPathIds = new Set(myPaths.map((p) => p.id));
   const [myLearners, fin] = myPaths.length ? await Promise.all([prisma.enrollment.count({ where: { learning_path_id: { in: [...myPathIds] } } }), finishes()]) : [0, null];
   const myFinished = fin ? fin.finished.filter((f) => myPathIds.has(f.pathId)).length : 0;
-  const teaching: Donut[] = [{ key: "teaching", title: "My Teaching", sub: "Paths you teach", href: "/learn/teaching", slices: [
+  const teaching: Donut[] = [{ key: "teaching", title: "Teaching", sub: "Paths you teach", href: "/learn/teaching", slices: [
     { label: "Paths I Teach", n: myPaths.length, color: C.ink, href: "/learn/teaching" }, { label: "Learners", n: myLearners, color: C.steel, href: "/learn/teaching" },
     { label: "Finished", n: myFinished, color: C.ok, href: "/learn/teaching" }, { label: "Rating", n: 0, color: C.grey, untracked: true }] }];
 

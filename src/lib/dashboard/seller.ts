@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { dashView, getStartedDonuts, profileChecklist } from "@/lib/dashboard/views";
 import { C, quarterStart, slicesFrom, usd, type DashData, type DashRow, type Donut } from "@/lib/dashboard/types";
 
-// MD-E003: the seller's Things You Need to Do — Jobs, Orders, My Catalog and Payments from one set of rows.
+// MD-E003: the seller's Things You Need to Do — Jobs, Orders, Catalog and Payments from one set of rows.
 const RELEASED = new Set(["RELEASED", "ACTIVE", "ON_HOLD"]);
 const DONE = new Set(["CLOSED", "FINALLY_CLOSED"]);
 const lineTotal = (l: { amount_cents: number | null; quantity: unknown; unit_price_cents: number | null }) => l.amount_cents ?? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0));
@@ -50,28 +50,52 @@ export async function sellerDashboard(personId: string, viewer: { userId: string
   const q = quarterStart();
   const earned = prs.filter((p) => p.status === "PAID" && (p.decided_at ?? p.updated_at) >= q).reduce((n, p) => n + p.lines.reduce((m, l) => m + lineTotal(l), 0), 0);
   const { getWorkFeed } = await import("@/lib/work-feed");
-  const feed = profile ? await getWorkFeed({ tab: "best", profileId: profile.id }).catch(() => []) : [];
+  // Speed (10-27): everything below runs together.
+  const [feed, openJobs, { view }, checklist, estimatesAsked, fitCount, productOrders] = await Promise.all([
+    profile ? getWorkFeed({ tab: "best", profileId: profile.id }).catch(() => []) : Promise.resolve([]),
+    prisma.job.count({ where: { kind: "JOB", status: "OPEN" } }),
+    dashView(personId, "provider"),
+    profileChecklist(personId),
+    prisma.estimateRequest.count({ where: { provider_person_id: personId, status: "OPEN" } }),
+    Promise.all([
+      prisma.interviewRequest.count({ where: { provider_person_id: personId, status: { in: ["REQUESTED", "SLOTS_OFFERED", "SCHEDULED"] } } }),
+      prisma.testRequest.count({ where: { provider_person_id: personId, status: { in: ["ISSUED", "IN_PROGRESS"] } } }),
+    ]).then(([a, b]) => a + b),
+    prisma.workOrder.count({ where: { provider_person_id: personId, workRequest: { source: "SHOP" }, status: { notIn: ["DRAFT", "CANCELLED", "CLOSED", "FINALLY_CLOSED"] } } }),
+  ]);
   const matches = feed.length;
   // HT-E003: You Matched = fits your skills, no action yet.
   for (const c of feed.filter((c) => c.matched > 0 && !jobIds.includes(c.id))) rows.push({ key: `m-${c.id}`, type: "Job", what: c.title, number: null, who: c.identity.companyName ?? "Buyer", status: "You Matched", tone: "pend", next: "Say I Want This Job", waitingOnYou: true, waitingOn: "You", amount: c.budgetLabel ?? "—", updatedAt: c.postedAt ?? new Date(0).toISOString(), href: `/find-work/${c.id}`, donut: "jobs", slice: "You Matched", done: false });
   rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  const openJobs = await prisma.job.count({ where: { kind: "JOB", status: "OPEN" } });
   const active = orders.filter((o) => RELEASED.has(o.status)).length;
+  const jobsAt = (stage: string) => rows.filter((r) => r.type === "Job" && r.slice === stage).length;
+  // 10-27: the Work tile, by type — each line opens that list in Work; the title opens the Work home.
+  const workTile: Donut = { key: "work", title: "Work", sub: "Jobs, estimates, interviews", href: "/work/home", total: `${openJobs.toLocaleString("en-US")} open`, slices: [
+    { label: "Jobs Matched", n: jobsAt("You Matched"), color: C.grey, mine: true, href: "/work/jobs?stage=You%20Matched" },
+    { label: "Availability Asked", n: jobsAt("They Requested"), color: C.pend, mine: true, href: "/work/jobs?stage=They%20Requested" },
+    { label: "Estimates Asked", n: estimatesAsked, color: C.pendSoft, mine: true, href: "/work/estimates" },
+    { label: "Interviews & Tests", n: fitCount, color: C.ink, mine: true, href: "/work/interviews" },
+    { label: "Product Orders", n: productOrders, color: C.steel, href: "/shop?tab=sales" },
+  ] };
+  const servicesListed = rows.filter((r) => r.key.startsWith("s-")).length;
+  const productsLive = rows.filter((r) => r.key.startsWith("p-") && r.slice === "Listed").length;
+  const drafts = rows.filter((r) => r.key.startsWith("p-") && r.slice === "Draft").length;
   const work: Donut[] = [
-      { key: "jobs", title: "Jobs", sub: "Matched, applied, chosen", total: `${openJobs.toLocaleString("en-US")} open`, lead: { text: `${openJobs.toLocaleString("en-US")} open job${openJobs === 1 ? "" : "s"} on Panameer`, href: "/find-work?tab=best", label: "Browse the Job Board" }, slices: slicesFrom(rows, "jobs", [{ label: "You Matched", color: C.grey, mine: true }, { label: "You Applied", color: C.steel }, { label: "They Requested", color: C.pend, mine: true }, { label: "You Answered", color: C.pendSoft }, { label: "You Interviewed", color: C.ink }, { label: "They Chose You", color: C.ok }]) },
-      { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "Order Coming", color: C.grey }, { label: "To Accept", color: C.pend, mine: true }, { label: "Active", color: C.ok }, { label: "Delivered", color: C.okSoft }]) },
-      { key: "catalog", title: "My Catalog", sub: "What you list", href: "/catalog", slices: slicesFrom(rows, "catalog", [{ label: "Listed", color: C.ok }, { label: "Draft", color: C.grey, mine: true }]) },
-      { key: "payments", title: "Payments", sub: "To you", href: "/payments", slices: [{ label: "Billed", n: billed, color: C.pend }, { label: "Paid", n: paid, color: C.ok }], ...(billed + paid === 0 ? { note: "Comes With Settlement" } : {}) },
+    workTile,
+    { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "Order Coming", color: C.grey }, { label: "To Accept", color: C.pend, mine: true }, { label: "Active", color: C.ok }, { label: "Delivered", color: C.okSoft }]) },
+    { key: "payments", title: "Payments", sub: "To you", href: "/payments", slices: [{ label: "Billed", n: billed, color: C.pend }, { label: "Paid", n: paid, color: C.ok }], ...(billed + paid === 0 ? { note: "Comes With Settlement" } : {}) },
+    { key: "catalog", title: "Catalog", sub: "What you list", href: "/catalog", slices: [
+      { label: "Services Listed", n: servicesListed, color: C.ok, href: "/catalog#services" }, { label: "Service Products Listed", n: productsLive, color: C.ink, href: "/catalog#products" }, { label: "Draft", n: drafts, color: C.grey, mine: true, href: "/catalog#products" }] },
   ];
-  // HT-E004: Get Sold (Profile · Connect · Learn · Jobs) until the first Order is released; Make Money after. The person's pick wins.
-  const { view } = await dashView(personId, "provider");
-  const checklist = await profileChecklist(personId);
+  // HT-E004 / 10-27: Get Sold = Profile · Connect · Learn · Work; Make Money = Work · Orders · Payments · Catalog. Both load; the switch flips in place.
+  const start = await getStartedDonuts(viewer, personId, "provider", workTile, checklist);
   const done = checklist.filter((i) => i.n > 0).length;
   return {
     providerNumber: profile?.provider_number ?? null,
     summary: view === "start" ? [`${matches} job${matches === 1 ? "" : "s"} match you`, `Profile ${done} of ${checklist.length} complete`].join(" · ") : [`${matches} job${matches === 1 ? "" : "s"} match you`, `${active} Order${active === 1 ? "" : "s"} active`, `${usd(earned)} earned this quarter`].filter(Boolean).join(" · "),
     view, viewLabels: ["Get Sold", "Make Money"], setupDone: done === checklist.length, checklist,
-    donuts: view === "start" ? await getStartedDonuts(viewer, personId, "provider", work.find((d) => d.key === "jobs"), checklist) : work,
+    donuts: view === "start" ? start : work,
+    views: { start, work },
     rows,
     filters: [["active", "Active"], ["mine", "Waiting on Me"], ["Job", "Jobs"], ["Order", "Orders"], ["Product", "Products"], ["closed", "Closed"]],
   };

@@ -3,7 +3,7 @@ import { sellerDashboard } from "@/lib/dashboard/seller";
 import { C, type DashRow, type Donut } from "@/lib/dashboard/types";
 import type { AttentionItem, AttentionLine } from "@/lib/attention";
 
-// WK-E002: the Work home's tiles and to-dos — Jobs for You · Estimates · Interviews & Tests · My Catalog.
+// WK-E002: the Work home's tiles and to-dos — Jobs for You · Estimates · Interviews & Tests · Catalog.
 export const JOB_STAGES = ["You Matched", "You Applied", "They Requested", "You Answered", "You Interviewed", "They Chose You"] as const;
 export const jobsHref = (stage?: string) => (stage ? `/work/jobs?stage=${encodeURIComponent(stage)}` : "/work/jobs");
 
@@ -41,8 +41,8 @@ export async function workApp(personId: string, viewer: { userId: string }) {
     { key: "fit", title: "Interviews & Tests", sub: "Buyers checking fit", href: "/work/interviews", seeAllLabel: "Open Interviews & Tests", slices: [
       { label: "Interviews to Schedule", n: toSchedule.length, color: C.pend, mine: true, href: "/work/interviews" }, { label: "Interviews Booked", n: booked, color: C.ink, href: "/work/interviews" },
       { label: "Tests Requested", n: testsReq.length, color: C.pendSoft, mine: true, href: "/work/interviews?stage=tests" }, { label: "Tests Passed", n: testsPassed, color: C.ok, href: "/work/interviews?stage=tests" }] },
-    { key: "catalog", title: "My Catalog", sub: "What you offer", href: "/catalog", seeAllLabel: "Open My Catalog", slices: [
-      { label: "Rates Live", n: ratesLive, color: C.ok, href: "/catalog#services" }, { label: "Products Live", n: productsLive, color: C.ink, href: "/catalog#products" },
+    { key: "catalog", title: "Catalog", sub: "What you offer", href: "/catalog", seeAllLabel: "Open Catalog", slices: [
+      { label: "Services Listed", n: ratesLive, color: C.ok, href: "/catalog#services" }, { label: "Service Products Listed", n: productsLive, color: C.ink, href: "/catalog#products" },
       { label: "Draft", n: drafts, color: C.grey, mine: true, href: "/catalog#products" }] },
   ];
   return { donuts, openJobs, estimatesWaiting: asked.length, rows };
