@@ -1,3 +1,4 @@
+import { markLink } from "@/lib/login-return";
 import { NEWS_DAYS } from "@/lib/action-rule";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -47,7 +48,8 @@ export async function GET() {
     rows: rows.map((n) => ({
       id: n.id,
       title: displayTitle(n.title),
-      href: n.href,
+      // Scott 10-27: a notification link carries from=notification (a sign-in from it returns there).
+      href: n.href ? markLink(n.href, "notification") : n.href,
       unread: n.read_at === null,
       needsAction: n.requires_action && n.resolved_at === null,
       at: n.created_at,

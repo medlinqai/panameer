@@ -27,14 +27,15 @@ export async function proxy(request: NextRequest) {
   });
 
   if (!token?.sub) {
+    // Scott 10-27: only links from an email or notification (from=email / from=notification) keep where they were going.
     const url = new URL("/login", request.url);
-    url.searchParams.set("callbackUrl", pathname);
+    const from = request.nextUrl.searchParams.get("from");
+    if (from === "email" || from === "notification") url.searchParams.set("callbackUrl", pathname + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
   // PI-E001: a punch-in sign-in can't open admin pages — they need a password sign-in.
   if (token.punchoutSessionId && (pathname.startsWith("/admin") || pathname.startsWith("/settings"))) {
     const url = new URL("/login", request.url);
-    url.searchParams.set("callbackUrl", pathname);
     url.searchParams.set("reauth", "1");
     return NextResponse.redirect(url);
   }

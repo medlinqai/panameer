@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { displayTitle } from "@/lib/notification-events";
 import { prisma } from "@/lib/prisma";
 import { ACTION_EVENTS } from "@/lib/action-rule";
+import { markLink } from "@/lib/login-return";
 import { plainTitle } from "@/lib/todo";
 
 export function isWorklistItem(n: {
@@ -164,7 +165,7 @@ function toTriage(n: {
     id: n.id,
     title: plainTitle(displayTitle(n.title)),
     body: n.body,
-    href: n.href,
+    href: n.href ? markLink(n.href, "notification") : n.href,
     category: n.category,
     eventKey: n.event_key,
     at: n.created_at,

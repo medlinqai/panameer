@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { undeliverableRule } from "@/lib/email/undeliverable-domains";
 import { PANAMEER_URL, UNSUBSCRIBE_PLACEHOLDER } from "@/lib/email/shell";
+import { markLink } from "@/lib/login-return";
 
 let _resend: Resend | null = null;
 function getResend(): Resend {
@@ -157,20 +158,24 @@ export async function sendEmail({
     return { id: "suppressed" };
   }
 
+  // Scott 10-27: every app link in an email carries from=email, so signing in from it returns to that page.
+  const origins = [PANAMEER_URL, "https://app.panameer.com", process.env.NEXT_PUBLIC_APP_URL ?? ""].filter(Boolean).map((o) => o.replace(/\/$/, ""));
+  const markedText = text?.replace(/https?:\/\/[^\s<>")]+/g, (u) => (u.includes("/unsubscribe") ? u : markLink(u, "email", origins)));
+  const marked = html.replace(/href="([^"]+)"/g, (m, href: string) => (href.includes("/unsubscribe") ? m : `href="${markLink(href, "email", origins)}"`));
   // THE UNSUBSCRIBE LINK IS INJECTED HERE TOO, AND FOR THE SAME REASON.
   const withUnsubscribe =
     allowed.length === 1
-      ? html.replaceAll(
+      ? marked.replaceAll(
           UNSUBSCRIBE_PLACEHOLDER,
           unsubscribeUrl(PANAMEER_URL, allowed[0], category ?? null)
         )
-      : html.replaceAll(UNSUBSCRIBE_PLACEHOLDER, `${PANAMEER_URL}/settings/notifications`);
+      : marked.replaceAll(UNSUBSCRIBE_PLACEHOLDER, `${PANAMEER_URL}/settings/notifications`);
 
   // THE CAPTURE BRANCH IS THE ONLY OTHER EARLY RETURN. It must come before
   if (mailCaptureEnabled()) {
     // CAPTURED, NOT SENT — a distinct status so a test run can never be read
     await record(allowed.map((email) => ({ email, status: "captured" })));
-    return captureEmail({ to: allowed, subject, html: withUnsubscribe, text, replyTo });
+    return captureEmail({ to: allowed, subject, html: withUnsubscribe, text: markedText, replyTo });
   }
 
   const { data, error } = await getResend().emails.send({
@@ -178,7 +183,7 @@ export async function sendEmail({
     to: allowed,
     subject,
     html: withUnsubscribe,
-    text,
+    text: markedText,
     replyTo,
   });
 

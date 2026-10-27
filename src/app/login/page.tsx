@@ -1,5 +1,6 @@
 "use client";
 
+import { afterSignIn } from "@/lib/login-return";
 import { Suspense, useState } from "react";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
@@ -23,7 +24,8 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // No default here — where "home" is depends on WHO signed in, and that isn't
-  const callbackUrl = searchParams.get("callbackUrl");
+  // Scott 10-27: only a sign-in from an email or notification link returns there; everyone else goes to /dashboard.
+  const callbackUrl = afterSignIn(searchParams.get("callbackUrl"));
   const oauthError = searchParams.get("error");
 
   const [email, setEmail] = useState("");
@@ -47,15 +49,7 @@ function LoginForm() {
       setError("Invalid email or password.");
       return;
     }
-    if (callbackUrl) {
-      router.push(callbackUrl);
-    } else {
-      const home = await fetch("/api/home")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => d?.home ?? "/dashboard")
-        .catch(() => "/dashboard");
-      router.push(home);
-    }
+    router.push(callbackUrl);
   }
 
   return (
@@ -75,7 +69,7 @@ function LoginForm() {
             <p className="pt-1 text-sm text-ink-2">Sign in to continue</p>
           </div>
 
-          <SocialSignIn callbackUrl={callbackUrl ?? "/dashboard"} divider={<div className="mt-4 flex items-center gap-4">
+          <SocialSignIn callbackUrl={callbackUrl} divider={<div className="mt-4 flex items-center gap-4">
             <span className="h-px flex-1 bg-line" />
             <span className="text-xs font-semibold text-ink-2">or</span>
             <span className="h-px flex-1 bg-line" />

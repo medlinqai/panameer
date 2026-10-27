@@ -10,7 +10,7 @@ const EXTRA = ["next-auth.csrf-token", "__Host-next-auth.csrf-token", "next-auth
 export async function POST(request: Request) {
   const host = (request.headers.get("host") ?? "").split(":")[0].toLowerCase();
   const domains: (string | null)[] = [null, ...(host === "panameer.com" || host.endsWith(".panameer.com") ? [".panameer.com"] : [])];
-  const res = NextResponse.json({ ok: true, to: "/login" }, { headers: { "Cache-Control": "no-store" } });
+  const res = NextResponse.json({ ok: true, to: "/" }, { headers: { "Cache-Control": "no-store" } });
   const expire = (name: string, domain: string | null) =>
     res.headers.append(
       "Set-Cookie",
