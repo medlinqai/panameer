@@ -265,7 +265,7 @@ export function LearnPublic() {
           </p>
           {}
           {}
-          <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-[#272334] min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
+          <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-ink min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
             {LEARN_SPINE_TAGLINE}
           </h2>
         </div>

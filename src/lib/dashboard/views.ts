@@ -19,7 +19,7 @@ export async function dashView(personId: string, side: "buyer" | "provider"): Pr
 
 const ring = (key: string, title: string, sub: string, items: ChecklistItem[], href: string, cta: string): Donut => {
   const done = items.filter((i) => i.n > 0).length;
-  return { key, title, sub, href, seeAllLabel: cta, center: `${done}/${items.length}`, checklist: items, slices: [{ label: "Complete", n: done, color: C.ink }, { label: "To Do", n: items.length - done, color: "#C9CDDC" }] };
+  return { key, title, sub, href, seeAllLabel: cta, center: `${done}/${items.length}`, checklist: items, slices: [{ label: "Complete", n: done, color: C.ink }, { label: "To Do", n: items.length - done, color: C.empty }] };
 };
 
 /** Seller Profile: 6 elements, each with its count or Add / Ask. */

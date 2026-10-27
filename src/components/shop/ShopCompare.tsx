@@ -16,7 +16,7 @@ export function ShopCompare({ products, signedIn }: { products: ResultProduct[];
   const leads = shown.map((p) => p.leadDays).filter((d): d is number => d != null);
   const cheapest = prices.length > 1 ? Math.min(...prices) : null;
   const fastest = leads.length > 1 ? Math.min(...leads) : null;
-  const HL = "rounded-full bg-[#fbeafb] px-2 py-0.5 font-bold text-magenta-dark";
+  const HL = "rounded-full bg-magenta/10 px-2 py-0.5 font-bold text-magenta-dark";
   const rows: [string, (p: ResultProduct) => ReactNode][] = [
     ["Price", (p) => <span className={p.priceCents != null && p.priceCents === cheapest ? HL : "font-bold"}>{priceLabel(p)}{p.priceCents != null && p.priceCents === cheapest ? " · cheapest" : ""}</span>],
     ["Delivery", (p) => <span className={p.leadDays != null && p.leadDays === fastest ? HL : ""}>{deliveryLabel(p)}{p.leadDays != null && p.leadDays === fastest ? " · fastest" : ""}</span>],

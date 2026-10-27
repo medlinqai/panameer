@@ -119,7 +119,7 @@ export function RatesTable({ types, rows, registration, gate, multiProvider = fa
           const see = on ? buyersSee({ rateCents: n > 0 ? Math.round(n * 100) : null, unit, delivery: t.delivery, expenses: s.expenses, hoursIncluded: Number(hrs[t.id]) || null }) : null;
           return (
             <li key={t.id} data-rate-type={t.name} data-on={on ? "1" : "0"} className={`grid grid-cols-[48px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-[#ECEEF4] py-3 md:gap-3 ${COLS}`}>
-              <button type="button" role="switch" aria-checked={on} aria-label={`Offer ${t.name}`} onClick={() => save(t, !on)} className={on ? "relative h-[22px] w-[38px] rounded-full bg-ink" : "relative h-[22px] w-[38px] rounded-full bg-[#C9CDDC]"}>
+              <button type="button" role="switch" aria-checked={on} aria-label={`Offer ${t.name}`} onClick={() => save(t, !on)} className={on ? "relative h-[22px] w-[38px] rounded-full bg-ink" : "relative h-[22px] w-[38px] rounded-full bg-state-border"}>
                 <span className={on ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-[left]" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-[left]"} />
               </button>
               <span className={on ? "min-w-0" : "min-w-0 text-ink-3"}>

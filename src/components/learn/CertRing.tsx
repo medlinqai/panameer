@@ -32,7 +32,7 @@ export function CertRing({ certified, total, badges }: { certified: number; tota
                 href={`/learn/${b.slug}`}
                 title={b.title}
                 aria-label={`${b.title} certificate`}
-                className={"grid h-[38px] w-[34px] place-items-center text-[9.5px] font-bold text-white transition hover:opacity-85 " + (b === newest ? "bg-[#d72cd6]" : "bg-[#272334]")}
+                className={"grid h-[38px] w-[34px] place-items-center text-[9.5px] font-bold text-white transition hover:opacity-85 " + (b === newest ? "bg-[#d72cd6]" : "bg-ink")}
                 style={{ clipPath: "polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)" }}
               >
                 {shortCode(b.title)}

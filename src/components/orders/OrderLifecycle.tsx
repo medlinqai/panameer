@@ -47,7 +47,7 @@ export async function OrderLifecycle({ workRequestId, focusOrderId }: { workRequ
           const next = i === current;
           const body = (
             <>
-              <span className={done ? "mx-auto grid h-8 w-8 place-items-center rounded-full bg-magenta text-[14px] font-bold text-white" : next ? "mx-auto grid h-8 w-8 place-items-center rounded-full border-2 border-magenta text-[13px] font-bold text-magenta-dark" : "mx-auto grid h-8 w-8 place-items-center rounded-full border-2 border-[#C9CDDC] text-[13px] font-bold text-ink-3"} aria-hidden>{done ? "✓" : i + 1}</span>
+              <span className={done ? "mx-auto grid h-8 w-8 place-items-center rounded-full bg-magenta text-[14px] font-bold text-white" : next ? "mx-auto grid h-8 w-8 place-items-center rounded-full border-2 border-magenta text-[13px] font-bold text-magenta-dark" : "mx-auto grid h-8 w-8 place-items-center rounded-full border-2 border-state-border text-[13px] font-bold text-ink-3"} aria-hidden>{done ? "✓" : i + 1}</span>
               <span className={done || next ? "mt-1.5 block text-[13.5px] font-bold" : "mt-1.5 block text-[13.5px] font-bold text-ink-3"}>{s.label}</span>
               <span className="block text-[12.5px] tabular-nums text-ink-2">{s.cents == null ? "—" : formatCents(s.cents, currency)}</span>
               <span className="block text-[11.5px] text-ink-3">{s.date ?? ""}</span>
@@ -55,7 +55,7 @@ export async function OrderLifecycle({ workRequestId, focusOrderId }: { workRequ
           );
           return (
             <li key={s.key} className="relative text-center" data-stage={s.key} data-done={done ? "yes" : "no"}>
-              {i > 0 && <span aria-hidden className={done ? "absolute left-[-50%] right-[50%] top-4 -z-0 h-0.5 bg-magenta" : "absolute left-[-50%] right-[50%] top-4 -z-0 h-0.5 bg-[#C9CDDC]"} />}
+              {i > 0 && <span aria-hidden className={done ? "absolute left-[-50%] right-[50%] top-4 -z-0 h-0.5 bg-magenta" : "absolute left-[-50%] right-[50%] top-4 -z-0 h-0.5 bg-state-border"} />}
               <span className="relative z-10 block">{s.href ? <Link href={s.href} className="block hover:underline">{body}</Link> : body}</span>
             </li>
           );

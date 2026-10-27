@@ -22,7 +22,7 @@ function Ring({ d, size }: { d: Donut; size: number }) {
     const path = `M${c + r * Math.cos(a)} ${c + r * Math.sin(a)} A${r} ${r} 0 ${large} 1 ${c + r * Math.cos(b)} ${c + r * Math.sin(b)}`;
     a = b;
     return <path key={s.label} d={path} stroke={s.color} strokeWidth={sw} fill="none"><title>{`${s.label}: ${s.n}`}</title></path>;
-  }) : [<circle key="none" cx={c} cy={c} r={r} stroke="#C9CDDC" strokeWidth={sw} fill="none" />];
+  }) : [<circle key="none" cx={c} cy={c} r={r} stroke="var(--color-state-border)" strokeWidth={sw} fill="none" />];
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label={`${d.title}: ${total}`} className="shrink-0">
       {arcs}
@@ -47,7 +47,7 @@ export function DashPies({ donuts, side, size = 88, cols = "sm:grid-cols-2 lg:gr
             <div className="min-w-0 flex-1 space-y-0.5 text-[12px]">
               {d.checklist?.map((i) => (
                 <Link key={i.label} href={i.href} className="flex w-full items-center gap-1.5 text-ink-2 hover:underline" data-checklist-item={i.label}>
-                  <i className={`inline-block h-2 w-2 shrink-0 rounded-full ${i.n > 0 ? "bg-ink" : "bg-[#C9CDDC]"}`} />
+                  <i className={`inline-block h-2 w-2 shrink-0 rounded-full ${i.n > 0 ? "bg-ink" : "bg-state-border"}`} />
                   <span className="min-w-0 flex-1 truncate">{i.label}</span>{i.n > 0 ? <em className="not-italic tabular-nums">{i.n}</em> : <em className="not-italic font-semibold text-ink">{i.action}</em>}
                 </Link>
               ))}
@@ -90,7 +90,7 @@ export function DashTable({ rows, filters, title, whoLabel, side, initial, pick:
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-[16px] font-extrabold">{title}{seeAll && <Link href={txHref(side)} className="ml-3 text-[12.5px] font-semibold text-ink-2 hover:text-ink">See All →</Link>}</h3>
         <div className="flex flex-wrap gap-1.5 text-[12.5px]" data-dash-filters>
-          {pick && <button type="button" onClick={() => setPick(null)} className="rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark">{pick.slice ?? pick.donut} ×</button>}
+          {pick && <button type="button" onClick={() => setPick(null)} className="rounded-full border border-magenta-dark bg-magenta/10 px-3 py-1 font-semibold text-magenta-dark">{pick.slice ?? pick.donut} ×</button>}
           {filters.map(([k, l]) => <button key={k} type="button" onClick={() => { setFilter(k); setPick(null); setCount(5); }} className={!pick && filter === k ? "rounded-full border border-ink bg-ink px-3 py-1 font-semibold text-surface" : "rounded-full border border-line px-3 py-1 font-semibold"}>{l}</button>)}
         </div>
       </div>

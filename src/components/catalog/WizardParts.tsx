@@ -16,7 +16,7 @@ export function Steps({ labels, at, onPick }: { labels: string[]; at: number; on
       {labels.map((l, i) => (
         <li key={l}>
           <button type="button" onClick={() => onPick(i)} aria-current={i === at ? "step" : undefined} className={"flex w-full min-w-0 items-center gap-2 border-b-2 py-2.5 text-left text-[13px] font-semibold " + (i === at ? "border-magenta text-magenta-dark" : i < at ? "border-ink text-ink" : "border-transparent text-ink-3")}>
-            <span className={"grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11.5px] font-bold " + (i < at ? "bg-ink text-surface" : i === at ? "bg-magenta text-white" : "border-2 border-[#C9CDDC] text-ink-3")}>{i < at ? "✓" : i + 1}</span>
+            <span className={"grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11.5px] font-bold " + (i < at ? "bg-ink text-surface" : i === at ? "bg-magenta text-white" : "border-2 border-state-border text-ink-3")}>{i < at ? "✓" : i + 1}</span>
             <span className="truncate max-[420px]:sr-only">{l}</span>
           </button>
         </li>

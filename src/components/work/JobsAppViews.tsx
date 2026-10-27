@@ -97,7 +97,7 @@ export function FindJobsFilters({ tab }: { tab: string }) {
   const chips = [["best", "Best Matches"], ["recent", "All Jobs"], ["saved", "Saved"]] as const;
   return (
     <nav aria-label="Find Jobs" className="mx-auto mb-3 flex w-full max-w-6xl flex-wrap gap-2 text-[13px]" data-find-jobs-filters>
-      {chips.map(([k, l]) => <Link key={k} href={`/find-work?tab=${k}`} aria-current={tab === k ? "page" : undefined} className={tab === k ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold hover:border-magenta"}>{l}</Link>)}
+      {chips.map(([k, l]) => <Link key={k} href={`/find-work?tab=${k}`} aria-current={tab === k ? "page" : undefined} className={tab === k ? "rounded-full border border-magenta-dark bg-magenta/10 px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold hover:border-magenta"}>{l}</Link>)}
     </nav>
   );
 }

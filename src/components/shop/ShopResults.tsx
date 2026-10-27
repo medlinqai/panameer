@@ -44,7 +44,7 @@ export function ShopResults({ products, compare, signedIn }: { products: ResultP
         {products.map((p) => {
           const on = list.some((x) => x.id === p.id);
           return (
-            <li key={p.id} className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3 sm:flex-nowrap ${active === p.id ? "bg-[#fbeafb]/40" : ""}`} data-shop-row>
+            <li key={p.id} className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3 sm:flex-nowrap ${active === p.id ? "bg-magenta/10/40" : ""}`} data-shop-row>
               {/* PA-E002: rows always use the Product Type art; the seller's own image shows only in the pane. */}
               <TypeArt typeName={p.typeName} category={p.category} />
               <button type="button" onClick={() => setActive(p.id)} className="min-w-0 flex-1 basis-[calc(100%-68px)] text-left sm:basis-auto" data-shop-row-open>

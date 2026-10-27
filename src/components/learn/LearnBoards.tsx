@@ -41,7 +41,7 @@ function Board({ rows, meUserId, empty, unit }: { rows: BoardRow[]; meUserId: st
         <li key={`spot-${k}`} data-empty-spot className="flex items-center justify-between gap-2.5 border-b border-line py-2.5 text-[13px] text-ink-3">
           <span className="flex items-center gap-2.5">
             <span className="w-5 flex-none tabular-nums">{rows.length + k + 1}</span>
-            <span className="grid h-[30px] w-[30px] place-items-center rounded-full border-2 border-dashed border-[#C9CDDC]">+</span>
+            <span className="grid h-[30px] w-[30px] place-items-center rounded-full border-2 border-dashed border-state-border">+</span>
             {empty}
           </span>
           <span>—</span>

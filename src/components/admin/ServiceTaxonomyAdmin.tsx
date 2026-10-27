@@ -96,7 +96,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
           <td className={TD}><select aria-label="Delivery" value={t.delivery ?? ""} onChange={(e) => update(t.id, { delivery: e.target.value || null })} className={SEL}><option value="">—</option>{DELIVERY.map(([x, l]) => <option key={x} value={x}>{l}</option>)}</select></td>
           <td className={TD}><input defaultValue={t.commodity_code ?? ""} aria-label="Commodity code" maxLength={8} onBlur={(e) => e.target.value !== (t.commodity_code ?? "") && update(t.id, { commodity_code: e.target.value.trim() || null })} className={`${SEL} w-24 font-mono`} /></td>
           <td className={TD}>
-            <button type="button" role="switch" aria-checked={t.default_on} aria-label={`${t.name} on by default`} data-default-on={t.default_on ? "1" : "0"} onClick={() => call({ action: "defaultOn", id: t.id, on: !t.default_on })} className={t.default_on ? "relative h-[22px] w-[38px] rounded-full bg-ink" : "relative h-[22px] w-[38px] rounded-full bg-[#C9CDDC]"}>
+            <button type="button" role="switch" aria-checked={t.default_on} aria-label={`${t.name} on by default`} data-default-on={t.default_on ? "1" : "0"} onClick={() => call({ action: "defaultOn", id: t.id, on: !t.default_on })} className={t.default_on ? "relative h-[22px] w-[38px] rounded-full bg-ink" : "relative h-[22px] w-[38px] rounded-full bg-state-border"}>
               <span className={t.default_on ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white"} />
             </button>
           </td>
@@ -150,7 +150,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
             </select>
             {edit?.key === `tl:${g.id}` ? inline({ k: `tl:${g.id}`, initial: g.tileLine ?? "", placeholder: "One line under the name", onSave: (v) => call({ action: "tile", id: g.id, tile_line: v }) }) : <span className="text-ink-2">{g.tileLine ?? "No line yet"}</span>}
             <button type="button" onClick={() => open(`tl:${g.id}`, g.tileLine ?? "")} className={LNK}>Edit Line</button>
-            <button type="button" role="switch" aria-checked={g.showInShop} aria-label={`${g.name} shows in Shop`} onClick={() => call({ action: "tile", id: g.id, show_in_shop: !g.showInShop })} className={g.showInShop ? "relative ml-2 h-[22px] w-[38px] rounded-full bg-ink" : "relative ml-2 h-[22px] w-[38px] rounded-full bg-[#C9CDDC]"}>
+            <button type="button" role="switch" aria-checked={g.showInShop} aria-label={`${g.name} shows in Shop`} onClick={() => call({ action: "tile", id: g.id, show_in_shop: !g.showInShop })} className={g.showInShop ? "relative ml-2 h-[22px] w-[38px] rounded-full bg-ink" : "relative ml-2 h-[22px] w-[38px] rounded-full bg-state-border"}>
               <span className={g.showInShop ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white"} />
             </button>
             <span className="text-ink-2">Show in Shop and Hire</span>

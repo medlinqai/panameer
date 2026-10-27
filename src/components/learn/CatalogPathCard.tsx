@@ -15,7 +15,7 @@ export function CatalogPathCard({ p, areaLabel, notify }: { p: CatPath; areaLabe
   return (
     <li data-path-card={p.slug} data-tag={p.tag ?? "none"} className="flex flex-col border border-line bg-white p-4">
       <p className="flex flex-wrap items-center gap-2 text-[10.5px] font-bold tracking-[0.08em]">
-        {p.tag && <span className={"px-1.5 py-0.5 " + (p.tag === "CERTIFIED" ? "bg-ink text-surface" : p.tag === "IN_PROGRESS" || p.tag === "READY_TO_TEST" ? "border border-magenta text-magenta-dark" : "border border-[#C9CDDC] text-ink-3")}>{TAG[p.tag]}</span>}
+        {p.tag && <span className={"px-1.5 py-0.5 " + (p.tag === "CERTIFIED" ? "bg-ink text-surface" : p.tag === "IN_PROGRESS" || p.tag === "READY_TO_TEST" ? "border border-magenta text-magenta-dark" : "border border-state-border text-ink-3")}>{TAG[p.tag]}</span>}
         <span className="text-ink-3">{[areaLabel, p.group].filter(Boolean).join(" · ").toUpperCase()}</span>
       </p>
       <Link href={`/learn/${p.slug}`} className="mt-2 text-[15.5px] font-bold leading-snug hover:underline">{p.title}</Link>
@@ -25,7 +25,7 @@ export function CatalogPathCard({ p, areaLabel, notify }: { p: CatPath; areaLabe
       ) : p.mine ? (
         <div className="mt-2.5">
           <p className="text-[12px] font-semibold text-ink-2">You: {p.mine.done} of {p.mine.total} lessons</p>
-          <span aria-hidden className="mt-1 block h-[6px] w-full bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${pct}%` }} /></span>
+          <span aria-hidden className="mt-1 block h-[6px] w-full bg-state-border"><span className="block h-full bg-ink" style={{ width: `${pct}%` }} /></span>
         </div>
       ) : null}
       <dl className="mt-3 grid grid-cols-2 gap-2 border-t border-line pt-3">

@@ -44,7 +44,7 @@ export async function ServiceDescriptionView({ jobId, editable, bare = false }: 
         <p>{[sd.worksite ? WORKSITE[sd.worksite] : "Not set", [sd.city, sd.state, sd.country].filter(Boolean).join(", "), sd.onsiteDays ? `${sd.onsiteDays} day${sd.onsiteDays === 1 ? "" : "s"} a week onsite` : null].filter(Boolean).join(" · ")}</p>
       </Section>
       <Section n={3} title="Type" step={2} jobId={jobId} editable={editable}>
-        {sd.contractTypes.length ? <p className="flex flex-wrap items-center gap-1.5">Contract: {sd.contractTypes.map((c) => <span key={c} className="rounded-full border border-magenta-dark bg-[#fbeafb] px-2 text-[12.5px] font-semibold text-magenta-dark">{c}</span>)}</p> : <p className="text-ink-3">Not set</p>}
+        {sd.contractTypes.length ? <p className="flex flex-wrap items-center gap-1.5">Contract: {sd.contractTypes.map((c) => <span key={c} className="rounded-full border border-magenta-dark bg-magenta/10 px-2 text-[12.5px] font-semibold text-magenta-dark">{c}</span>)}</p> : <p className="text-ink-3">Not set</p>}
       </Section>
       <Section n={4} title="Who" step={3} jobId={jobId} editable={editable}>
         <Row label="Role" value={sd.specificRole || (role ? role.display || role.name : null)} />

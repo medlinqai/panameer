@@ -60,7 +60,7 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
     prisma.providerProfile.count(),
   ]);
   const work: Donut[] = [
-      { key: "jobs", title: "Jobs", sub: "Hire", slices: slicesFrom(rows, "jobs", [{ label: "Draft", color: C.grey, mine: true }, { label: "Active", color: C.ink }, { label: "Comparing", color: C.steel, mine: true }, { label: "Request to Hire", color: C.pendSoft }, { label: "On Hold", color: C.grey }, { label: "Filled", color: C.ok }, { label: "Closed", color: "#c9cddc" }]) },
+      { key: "jobs", title: "Jobs", sub: "Hire", slices: slicesFrom(rows, "jobs", [{ label: "Draft", color: C.grey, mine: true }, { label: "Active", color: C.ink }, { label: "Comparing", color: C.steel, mine: true }, { label: "Request to Hire", color: C.pendSoft }, { label: "On Hold", color: C.grey }, { label: "Filled", color: C.ok }, { label: "Closed", color: C.empty }]) },
       { key: "requests", title: "Requests", sub: "Approval before an Order", slices: slicesFrom(rows, "requests", [{ label: "Pending Approval", color: C.pend }, { label: "Waiting on ERP", color: C.pendSoft }, { label: "Approved", color: C.ok }, { label: "Declined", color: C.no }]) },
       { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "Waiting on You", color: C.pend, mine: true }, { label: "Waiting on Provider", color: C.pendSoft }, { label: "Active", color: C.ok }, { label: "Approve Delivery", color: C.no, mine: true }, { label: "Completed", color: C.okSoft }]) },
       { key: "payments", title: "Payments", sub: "From you", href: "/payments", slices: [{ label: "Invoices to Approve", n: toApprove.size, color: C.pend, mine: true }, { label: "Paid", n: paid, color: C.ok }] },

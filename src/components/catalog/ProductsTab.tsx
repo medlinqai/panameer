@@ -208,7 +208,7 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
           </div>
           {/* MO-E001: Open to Offers, with an optional private floor. */}
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2" data-open-to-offers>
-            <button type="button" role="switch" aria-checked={!!f.openToOffers} aria-label="Open to Offers" onClick={() => set("openToOffers", !f.openToOffers)} className={f.openToOffers ? "relative h-[22px] w-[38px] rounded-full bg-ink" : "relative h-[22px] w-[38px] rounded-full bg-[#C9CDDC]"}>
+            <button type="button" role="switch" aria-checked={!!f.openToOffers} aria-label="Open to Offers" onClick={() => set("openToOffers", !f.openToOffers)} className={f.openToOffers ? "relative h-[22px] w-[38px] rounded-full bg-ink" : "relative h-[22px] w-[38px] rounded-full bg-state-border"}>
               <span className={f.openToOffers ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white"} />
             </button>
             <span className="text-[13px] font-bold">Open to Offers <span className="font-normal text-ink-3">· buyers can Make an Offer</span></span>

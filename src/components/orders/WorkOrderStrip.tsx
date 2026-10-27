@@ -39,7 +39,7 @@ export async function WorkOrderStrip({ orderId }: { orderId: string }) {
         <ol className="mt-3 flex min-w-max gap-x-1 px-1">
           {steps.map((s) => {
             const on = s.key === current;
-            const dot = s.done ? "grid h-8 w-8 place-items-center rounded-full bg-ink text-[14px] font-bold text-white" : on ? "grid h-8 w-8 place-items-center rounded-full border-2 border-magenta bg-white ring-2 ring-magenta/30" : "grid h-8 w-8 place-items-center rounded-full border-2 border-[#C9CDDC] bg-white";
+            const dot = s.done ? "grid h-8 w-8 place-items-center rounded-full bg-ink text-[14px] font-bold text-white" : on ? "grid h-8 w-8 place-items-center rounded-full border-2 border-magenta bg-white ring-2 ring-magenta/30" : "grid h-8 w-8 place-items-center rounded-full border-2 border-state-border bg-white";
             const body = (
               <>
                 <span className={dot} aria-hidden>{s.done ? "✓" : ""}</span>

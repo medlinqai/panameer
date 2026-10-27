@@ -19,7 +19,7 @@ export function OmniChannel() {
             >
               <span
                 aria-hidden
-                className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-[12px] bg-[#fbeafb] font-display text-[20px] font-bold text-magenta"
+                className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-[12px] bg-magenta/10 font-display text-[20px] font-bold text-magenta"
               >
                 {card.icon}
               </span>

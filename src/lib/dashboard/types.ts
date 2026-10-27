@@ -13,7 +13,8 @@ export type Donut = { key: string; title: string; sub: string; slices: DonutSlic
 export type ChecklistItem = { label: string; n: number; href: string; action: string; why: string };
 export type DashData = { summary: string; /** HT-E004/E005 */ view?: "start" | "work"; /** 10-27: both sets of tiles, so the switch flips without a reload. */ views?: { start: Donut[]; work: Donut[] }; viewLabels?: [string, string]; setupDone?: boolean; checklist?: ChecklistItem[]; /** HT-E002: shown as "Provider Number P-… (?)" before the summary. */ providerNumber?: string | null; donuts: Donut[]; rows: DashRow[]; filters: [string, string][] };
 
-export const C = { ok: "#1F7A4D", okSoft: "#9bc4ad", pend: "#C98A00", pendSoft: "#e0b44d", no: "#B3261E", steel: "#5C6485", grey: "#9aa0b8", ink: "#272334" };
+// WA-E005: tile colours are theme tokens (a company theme is a token swap); the soft tints are mixed from them.
+export const C = { ok: "var(--color-state-accepted)", okSoft: "color-mix(in srgb, var(--color-state-accepted) 45%, white)", pend: "var(--color-state-pending)", pendSoft: "color-mix(in srgb, var(--color-state-pending) 65%, white)", no: "var(--color-state-declined)", steel: "var(--color-state-inactive)", grey: "color-mix(in srgb, var(--color-state-inactive) 55%, white)", ink: "var(--color-ink)", empty: "var(--color-state-border)" };
 export const usd = (c: number | null | undefined) => (c == null ? "—" : `$${Math.round(c / 100).toLocaleString("en-US")}`);
 export const quarterStart = (d = new Date()) => new Date(Date.UTC(d.getUTCFullYear(), Math.floor(d.getUTCMonth() / 3) * 3, 1));
 /** Count rows into slices, in the slice order given. */

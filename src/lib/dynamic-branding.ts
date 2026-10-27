@@ -26,7 +26,7 @@ export type BrandTokens = {
 };
 
 /** Darken (lower lightness) until `text` on it reaches the minimum, or give up at black. */
-function darkenFor(hex: string, against: string, min = MIN_CONTRAST): string {
+export function darkenFor(hex: string, against: string, min = MIN_CONTRAST): string {
   const { h, s, l } = hexToHsl(hex);
   for (let L = l; L >= 0; L -= 1) {
     const c = hslToHex(h, s, L);

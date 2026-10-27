@@ -106,7 +106,7 @@ export default async function Page({
         </dl>
 
         {pending && (
-          <div data-pending-change className="mt-4 flex flex-wrap items-center justify-between gap-3 border-l-2 border-magenta bg-[#fbeafb] px-4 py-3 text-[14px]">
+          <div data-pending-change className="mt-4 flex flex-wrap items-center justify-between gap-3 border-l-2 border-magenta bg-magenta/10 px-4 py-3 text-[14px]">
             <p className="min-w-0">
               <b>Change order {pending.changeOrderNumber ?? `#${pending.number}`} pending approval</b>
               <span className="text-ink-2"> — {describeChanges(pending.changes, money).slice(0, 3).join("; ")}</span>

@@ -76,7 +76,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
       <p className="mt-3 text-[13.5px] text-state-inactive" data-next-line><b className="text-ink">Next:</b> {nextLine}</p>
 
       {ev.notifyOthers && (
-        <section className="mt-5 rounded-brand border border-magenta-dark bg-[#fbeafb]/40 p-5" data-notify-others>
+        <section className="mt-5 rounded-brand border border-magenta-dark bg-magenta/10/40 p-5" data-notify-others>
           <h2 className="text-[16px] font-extrabold">Let the Other Candidates Know</h2>
           <p className="mt-1 text-[13.5px] text-ink-2">The Order is Released. This goes to the {ev.notifyOthers.count} provider{ev.notifyOthers.count === 1 ? "" : "s"} you didn&apos;t award (bell + email).</p>
           <textarea value={notice} onChange={(e) => setNotice(e.target.value)} rows={4} maxLength={2000} aria-label="Message to the other candidates" className="mt-2 block w-full rounded-[8px] border border-line bg-white px-3 py-2.5 text-[14px]" />
@@ -126,7 +126,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                     </details>
                   )}
                   <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]">
-                    {p.match.why.map((k) => <span key={k} className="rounded-full border border-magenta-dark bg-[#fbeafb] px-2 font-semibold text-magenta-dark">{k}</span>)}
+                    {p.match.why.map((k) => <span key={k} className="rounded-full border border-magenta-dark bg-magenta/10 px-2 font-semibold text-magenta-dark">{k}</span>)}
                     {p.match.matched.map((k) => <span key={k} className="rounded-full border border-line bg-bg-soft px-2">{k}</span>)}
                   </p>
                 </div>

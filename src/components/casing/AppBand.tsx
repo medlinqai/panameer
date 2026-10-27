@@ -23,7 +23,7 @@ import {
 import "./app-band.css";
 
 /** `locked` (Scott 10-17): registration shows the casing, but the menu isn't clickable until sign-up is finished. */
-export function AppBand({ locked = false }: { locked?: boolean } = {}) {
+export function AppBand({ locked = false, brandLogo = null }: { locked?: boolean; /** WA-E005: the company's own logo (Your Theme), with a small Powered by Panameer mark. */ brandLogo?: string | null } = {}) {
   const { me } = useMe();
   const pathname = usePathname();
 
@@ -67,6 +67,10 @@ export function AppBand({ locked = false }: { locked?: boolean } = {}) {
         aria-current={isActive(HOME_BAND_HREF) ? "page" : undefined}
         className="pm-band-brand block px-2 py-1 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
+        {brandLogo ? <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={brandLogo} alt="Company logo" className="h-6 w-auto max-w-[180px] object-contain" data-theme-logo />
+        </> : <>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/brand/panameer-lockup-white.png"
@@ -76,11 +80,12 @@ export function AppBand({ locked = false }: { locked?: boolean } = {}) {
         {/* Light rail (Dynamic Branding) swaps in the ink lockup; see globals.css. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/panameer-lockup-ink.png" alt="" aria-hidden className="pm-band-logo-ink hidden h-6 w-auto" />
+        </>}
         {/* THE CONSOLE LABEL SITS UNDER THE WORDMARK (WS-A 6), as it did in the */}
         {/* THE SLOT KEEPS ITS LINE BOX AND SAYS NOTHING. `" "` holds the */}
         {/* HIDDEN BELOW 930px ( WS-E 3). Scott: *"the mark alone */}
         <span className="pm-band-console mt-0.5 block text-[11px] font-medium tracking-wide text-white/45">
-          {consoleLabel ?? " "}
+          {brandLogo ? "Powered by Panameer" : consoleLabel ?? " "}
         </span>
       </Link>
 

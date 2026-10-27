@@ -65,7 +65,7 @@ export default async function TeachingPage() {
                           <span className="min-w-0 flex-1">
                             <b className="block truncate text-[14px]">{l.name}</b>
                             <span className="block text-[12px] text-ink-3">{l.pct}% of lessons out{l.lastActive ? ` · active ${day(l.lastActive)}` : " · not started"}</span>
-                            <span aria-hidden className="mt-1 block h-[4px] w-full max-w-[200px] bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${l.pct}%` }} /></span>
+                            <span aria-hidden className="mt-1 block h-[4px] w-full max-w-[200px] bg-state-border"><span className="block h-full bg-ink" style={{ width: `${l.pct}%` }} /></span>
                           </span>
                           {p.canMessage && <Link href={`/messages?with=${l.userId}`} className={BTN}>Message</Link>}
                         </li>

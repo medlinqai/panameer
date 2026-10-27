@@ -57,7 +57,7 @@ export function PathSteps(p: Props) {
         return (
           <li key={s.n} data-step={s.n} data-state={state} aria-current={state === "now" ? "step" : undefined} className={"min-w-0 bg-white p-3 " + (state === "now" ? "shadow-[inset_0_3px_0_var(--color-magenta)]" : "")}>
             <p className="flex items-center gap-2 text-[13px] font-bold">
-              <span className={"grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11.5px] " + (state === "done" ? "bg-ink text-surface" : state === "now" ? "bg-magenta text-white" : "border-2 border-[#C9CDDC] text-ink-3")}>{state === "done" ? "✓" : s.n}</span>
+              <span className={"grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11.5px] " + (state === "done" ? "bg-ink text-surface" : state === "now" ? "bg-magenta text-white" : "border-2 border-state-border text-ink-3")}>{state === "done" ? "✓" : s.n}</span>
               <span className={state === "todo" ? "text-ink-2" : ""}>{s.title}</span>
             </p>
             {s.body}

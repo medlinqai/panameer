@@ -11,7 +11,7 @@ import type { Question } from "@/lib/question-types";
 // SE-E002/E003: one match list for Hire and the Job page — star (Shortlist), quick view, Compare, Request Proposals by a deadline.
 const GHOST = "inline-flex min-h-9 items-center justify-center border border-ink bg-white px-3.5 text-[13px] font-semibold text-ink hover:bg-bg-soft disabled:opacity-40";
 const CHIP = "rounded-full border border-line bg-bg-soft px-2";
-const WHY = "rounded-full border border-magenta-dark bg-[#fbeafb] px-2 font-semibold text-magenta-dark";
+const WHY = "rounded-full border border-magenta-dark bg-magenta/10 px-2 font-semibold text-magenta-dark";
 
 async function post(body: object) {
   const r = await fetch("/api/hire", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
@@ -130,8 +130,8 @@ export function MatchList({ jobId, matches: initial, state, empty, chosen = true
         </div>
       </div>
       {open && <div className="mt-8 flex flex-wrap items-center gap-2 text-[13px]">
-        <button type="button" aria-pressed={!starredOnly} onClick={() => setStarredOnly(false)} className={!starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>All ({list.filter((m) => !m.hidden).length})</button>
-        <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({allStarred.length})</button>
+        <button type="button" aria-pressed={!starredOnly} onClick={() => setStarredOnly(false)} className={!starredOnly ? "rounded-full border border-magenta-dark bg-magenta/10 px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>All ({list.filter((m) => !m.hidden).length})</button>
+        <button type="button" aria-pressed={starredOnly} onClick={() => setStarredOnly(true)} data-filter-shortlisted className={starredOnly ? "rounded-full border border-magenta-dark bg-magenta/10 px-3 py-1 font-semibold text-magenta-dark" : "rounded-full border border-line px-3 py-1 font-semibold"}>Shortlisted ({allStarred.length})</button>
         <button type="button" disabled={starred.length < 2 || starred.length > 4} onClick={() => setComparing(true)} className={GHOST} data-compare title="Star 2 to 4 providers to compare them">Compare{starred.length >= 2 ? ` ${Math.min(starred.length, 4)}` : ""}</button>
         <MinChip label="Min Oracle Cloud Years" value={minYears} options={[2, 5, 8, 10]} onChange={setMinYears} />
         <MinChip label="Min Implementations" value={minImpl} options={[1, 3, 5, 10]} onChange={setMinImpl} />
@@ -140,7 +140,7 @@ export function MatchList({ jobId, matches: initial, state, empty, chosen = true
 
       <ul className="mt-4 divide-y divide-line border-y border-line">
         {(open ? visible : visible.slice(0, 3)).map((m) => (
-          <li key={m.personId} className={`flex items-start gap-3 py-4 ${active === m.personId ? "bg-[#fbeafb]/40" : ""}`} data-hire-match={m.name}>
+          <li key={m.personId} className={`flex items-start gap-3 py-4 ${active === m.personId ? "bg-magenta/10/40" : ""}`} data-hire-match={m.name}>
             <Star on={m.starred} onClick={() => star(m)} name={m.name} />
             {(isMaskedName(m.name) || m.photoUrl) && <NeutralAvatar size={36} photoUrl={m.photoUrl} />}
             <button type="button" onClick={() => setActive(m.personId)} className="min-w-0 flex-1 text-left" data-quick-view-open>
@@ -253,7 +253,7 @@ export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: Hi
   const bestSkills = best(rows.map((r) => skillsN(r.m)), "max");
   const bestOc = best(rows.map((r) => r.m.detail.ocYears), "max");
   const bestImpl = best(rows.map((r) => r.m.detail.implementations), "max");
-  const HL = "rounded-full bg-[#fbeafb] px-2 py-0.5 font-bold text-magenta-dark";
+  const HL = "rounded-full bg-magenta/10 px-2 py-0.5 font-bold text-magenta-dark";
   const lines: [string, (r: (typeof rows)[number]) => ReactNode][] = [
     ...(withProposal ? ([["Their Rate", (r) => <span className={num(r.proposed) != null && num(r.proposed) === bestRate ? HL : ""}>{r.proposed ?? "—"}</span>], ["Earliest Start", (r) => r.start ?? "—"]] as [string, (r: (typeof rows)[number]) => ReactNode][]) : []),
     ["Rate", (r) => <span><span className={!withProposal && num(r.m.rate) != null && num(r.m.rate) === bestRate ? HL : ""}>{r.m.rate ?? "—"}</span>{r.m.rate && <span className="ml-1.5 text-[12px] text-ink-2">{r.m.inBudget ? "in budget" : "over budget"}</span>}</span>],
@@ -304,7 +304,7 @@ export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: Hi
 /** MR-E004: a "minimum" filter chip — Any, or one of a few thresholds. */
 function MinChip({ label, value, options, onChange }: { label: string; value: number; options: number[]; onChange: (n: number) => void }) {
   return (
-    <label className={value ? "inline-flex items-center gap-1 rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "inline-flex items-center gap-1 rounded-full border border-line px-3 py-1 font-semibold"} data-min-chip={label}>
+    <label className={value ? "inline-flex items-center gap-1 rounded-full border border-magenta-dark bg-magenta/10 px-3 py-1 font-semibold text-magenta-dark" : "inline-flex items-center gap-1 rounded-full border border-line px-3 py-1 font-semibold"} data-min-chip={label}>
       {label}
       <select value={value} onChange={(e) => onChange(Number(e.target.value))} aria-label={label} className="bg-transparent font-semibold outline-none">
         <option value={0}>Any</option>

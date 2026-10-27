@@ -152,7 +152,7 @@ function ProductLine({ row, typeName, onChange, onRemove }: { row: Row; typeName
       {/* Line 1 — slider · Name · Price · Per · Lead time · More */}
       <div className="grid grid-cols-[minmax(0,1.6fr)_96px_104px_72px_52px] items-end gap-2 max-[700px]:grid-cols-3 min-[1151px]:contents">
         <div className="flex items-end gap-2 max-[700px]:col-span-3 min-[1151px]:order-1">
-          <button type="button" role="switch" aria-checked={row.offered} aria-label={`Offer ${row.name || typeName}`} onClick={() => set({ offered: !row.offered }, true)} className={row.offered ? "relative mb-1 h-[22px] w-[38px] shrink-0 rounded-full bg-ink" : "relative mb-1 h-[22px] w-[38px] shrink-0 rounded-full bg-[#C9CDDC]"}>
+          <button type="button" role="switch" aria-checked={row.offered} aria-label={`Offer ${row.name || typeName}`} onClick={() => set({ offered: !row.offered }, true)} className={row.offered ? "relative mb-1 h-[22px] w-[38px] shrink-0 rounded-full bg-ink" : "relative mb-1 h-[22px] w-[38px] shrink-0 rounded-full bg-state-border"}>
             <span className={row.offered ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white"} />
           </button>
           <label className="block min-w-0 flex-1">

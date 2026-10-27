@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SETUP_IDENTITY, setupSecret } from "@/lib/erp/setup";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +45,10 @@ export default async function Page() {
         <li>Back in Manage Punchout Catalogs, replace the Identity and Password with those values, Save, and press <b className="text-ink">Test Connection</b>.</li>
         <li>Make sure the catalog is in the <b className="text-ink">Content Zone</b> your requesters use, then shop.</li>
       </ol>
+
+      {/* WA-E005: the theme step — Panameer looks like your own Oracle pages for your people and punch-out shoppers. */}
+      <h2 className="mt-8 text-[19px] font-extrabold">3. Your Theme</h2>
+      <p className="mt-2 text-[15px] text-ink-2">Upload a screenshot of your Oracle home page and we&apos;ll read your header, accent and background colours and your logo — or enter them yourself. Approve the preview and your people (and punch-out shoppers) see it, with a small &quot;Powered by Panameer&quot; mark. <Link href="/company/theme" className="font-semibold underline">Set Your Theme →</Link></p>
 
       <h2 className="mt-8 text-[19px] font-extrabold">Watch How</h2>
       <div className="mt-3 grid gap-4 sm:grid-cols-3" data-video-slots>

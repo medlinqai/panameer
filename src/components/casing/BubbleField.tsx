@@ -164,7 +164,7 @@ export function BubbleField({ bubbles, me, caption, legend, center }: { bubbles:
       <p className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px] text-ink-2">
         {legend.map((l) => (
           <span key={l.label} className="inline-flex items-center gap-1">
-            <i aria-hidden className={"inline-block h-2.5 w-2.5 rounded-full " + (l.swatch === "ink" || l.swatch === "check" ? "bg-ink" : l.swatch === "half" ? "border-2 border-ink bg-[linear-gradient(to_top,#272334_50%,#fff_50%)]" : l.swatch === "ring" ? "border-2 border-magenta" : "border-2 border-dashed border-[#C9CDDC]")} />
+            <i aria-hidden className={"inline-block h-2.5 w-2.5 rounded-full " + (l.swatch === "ink" || l.swatch === "check" ? "bg-ink" : l.swatch === "half" ? "border-2 border-ink bg-[linear-gradient(to_top,#272334_50%,#fff_50%)]" : l.swatch === "ring" ? "border-2 border-magenta" : "border-2 border-dashed border-state-border")} />
             {l.label}
           </span>
         ))}

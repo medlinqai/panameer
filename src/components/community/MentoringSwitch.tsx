@@ -26,7 +26,7 @@ export function MentoringSwitch({ initial }: { initial: boolean }) {
   return (
     <span data-mentoring-switch className="inline-flex flex-col">
       <button type="button" role="switch" aria-checked={on} disabled={busy} onClick={flip} className="inline-flex min-h-11 items-center gap-2.5 border border-ink bg-surface px-4 text-[14px] font-semibold">
-        <span aria-hidden className={"relative inline-block h-[20px] w-[36px] rounded-full transition-colors " + (on ? "bg-ink" : "bg-[#C9CDDC]")}>
+        <span aria-hidden className={"relative inline-block h-[20px] w-[36px] rounded-full transition-colors " + (on ? "bg-ink" : "bg-state-border")}>
           <span className={"absolute top-[2px] h-[16px] w-[16px] rounded-full bg-white transition-all " + (on ? "left-[18px]" : "left-[2px]")} />
         </span>
         Open for Mentoring

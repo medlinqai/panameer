@@ -116,7 +116,7 @@ export default async function MyLearningPage() {
                   <span className="min-w-0 flex-1">
                     <Link href={`/learn/${p.slug}`} className="block truncate text-[14px] font-bold hover:underline">{p.title}</Link>
                     <span className="block text-[12px] text-ink-3">{p.mine!.done} of {p.mine!.total} lessons{p.mine!.soon ? ` · ${p.mine!.soon} coming soon` : ""}{lastBy.get(p.id) ? ` · last watched ${day(lastBy.get(p.id)!)}` : ""}</span>
-                    <span aria-hidden className="mt-1 block h-[5px] w-full max-w-[260px] bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${Math.round((p.mine!.done / p.mine!.total) * 100)}%` }} /></span>
+                    <span aria-hidden className="mt-1 block h-[5px] w-full max-w-[260px] bg-state-border"><span className="block h-full bg-ink" style={{ width: `${Math.round((p.mine!.done / p.mine!.total) * 100)}%` }} /></span>
                   </span>
                   <Link href={p.mine!.next ? `/learn/${p.slug}/${p.mine!.next.id}` : `/learn/${p.slug}`} className={BTN_K}>Continue</Link>
                 </li>

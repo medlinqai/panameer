@@ -58,7 +58,7 @@ export function EstimateEventView({ ev }: { ev: Ev }) {
               const on = s.key === current;
               const body = (
                 <>
-                  <span className={s.done ? "grid h-8 w-8 place-items-center rounded-full bg-ink text-[14px] font-bold text-white" : on ? "grid h-8 w-8 place-items-center rounded-full border-2 border-magenta bg-white ring-2 ring-magenta/30" : "grid h-8 w-8 place-items-center rounded-full border-2 border-[#C9CDDC] bg-white"} aria-hidden>{s.done ? "✓" : ""}</span>
+                  <span className={s.done ? "grid h-8 w-8 place-items-center rounded-full bg-ink text-[14px] font-bold text-white" : on ? "grid h-8 w-8 place-items-center rounded-full border-2 border-magenta bg-white ring-2 ring-magenta/30" : "grid h-8 w-8 place-items-center rounded-full border-2 border-state-border bg-white"} aria-hidden>{s.done ? "✓" : ""}</span>
                   <span className={s.done || on ? "mt-1.5 block text-[13px] font-bold leading-tight" : "mt-1.5 block text-[13px] font-bold leading-tight text-ink-3"}>{s.label}</span>
                   {s.note && <span className="block text-[11.5px] text-ink-2">{s.note}</span>}
                 </>
@@ -80,7 +80,7 @@ export function EstimateEventView({ ev }: { ev: Ev }) {
                   <p className="flex items-center gap-2 text-[14px] font-bold"><NeutralAvatar size={28} />{x.who}{e?.status === "ACCEPTED" && <span className="rounded-full bg-ink px-2 text-[11px] text-surface">Awarded</span>}</p>
                   {e ? (
                     <>
-                      <p className="mt-2 text-[22px] font-extrabold tabular-nums">{usd(e.totalCents)}{lowest != null && e.totalCents === lowest && <span className="ml-2 rounded-full bg-[#fbeafb] px-2 align-middle text-[11px] font-bold text-magenta-dark">lowest</span>}</p>
+                      <p className="mt-2 text-[22px] font-extrabold tabular-nums">{usd(e.totalCents)}{lowest != null && e.totalCents === lowest && <span className="ml-2 rounded-full bg-magenta/10 px-2 align-middle text-[11px] font-bold text-magenta-dark">lowest</span>}</p>
                       <p className="text-[12.5px] text-ink-2">{e.number} · valid until {e.validUntil}{e.status === "CHANGES_REQUESTED" ? " · changes requested" : ""}</p>
                       <ul className="mt-2 grid gap-1 text-[13px]">{e.lines.map((l) => <li key={l.n} className="flex justify-between gap-2"><span className="min-w-0"><span className="text-ink-3">{KIND[l.kind] ?? l.kind} · </span>{l.description}</span><b className="shrink-0 tabular-nums">{l.amountCents != null ? usd(l.amountCents) : l.rateCents != null ? `${usd(l.rateCents)}/${(l.uom ?? "unit").toLowerCase()}` : "—"}</b></li>)}</ul>
                       {e.scope && <p className="mt-2 text-[12.5px]"><b>Scope:</b> {e.scope}</p>}

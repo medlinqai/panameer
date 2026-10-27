@@ -12,11 +12,11 @@ import { defaultDates, howLongText } from "@/lib/job-dates";
 // SD-E003: Hire follows the Service Description standard. Step 1 can start from an uploaded posting (read like a résumé);
 // every step is then prefilled with "From AI" hints; Next saves the draft Job.
 const STEPS = ["What", "Where", "How", "Who", "When & Rate", "Request Availability"];
-const CHIP_ON = "rounded-full border border-magenta-dark bg-[#fbeafb] px-3.5 py-1.5 text-[13px] font-semibold text-magenta-dark";
+const CHIP_ON = "rounded-full border border-magenta-dark bg-magenta/10 px-3.5 py-1.5 text-[13px] font-semibold text-magenta-dark";
 const CHIP_OFF = "rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink hover:border-magenta-dark";
 const OPT_ON = "flex flex-col items-start rounded-[10px] border border-magenta-dark bg-white p-3 text-left ring-1 ring-magenta-dark";
 const OPT_OFF = "flex flex-col items-start rounded-[10px] border border-line bg-white p-3 text-left hover:border-magenta-dark";
-const RATE_ON = "flex flex-col items-start rounded-[10px] border-2 border-magenta-dark bg-[#fbeafb] p-3 text-left";
+const RATE_ON = "flex flex-col items-start rounded-[10px] border-2 border-magenta-dark bg-magenta/10 p-3 text-left";
 const FIELD = "mt-1 block w-full rounded-[8px] border border-line bg-white px-3 py-2.5 text-[14.5px] font-normal text-ink";
 const LABEL = "mt-4 block text-[13px] font-bold";
 const BTN = "inline-flex min-h-10 items-center justify-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover disabled:opacity-40";
@@ -78,7 +78,7 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
   const [error, setError] = useState<string | null>(null);
   const [matches, setMatches] = useState<HireMatch[] | null>(null);
   const set = (patch: Partial<ServiceDescription>) => { setF((x) => ({ ...x, ...patch })); setFromLast((l) => l.filter((k) => !(k in patch))); };
-  const from = (k: string) => (f.fromPosting.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-posting>From AI</span> : fromLast.includes(k) ? <span className="ml-2 rounded-full bg-[#fbeafb] px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-last-job>From Your Last Job</span> : null);
+  const from = (k: string) => (f.fromPosting.includes(k) ? <span className="ml-2 rounded-full bg-magenta/10 px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-posting>From AI</span> : fromLast.includes(k) ? <span className="ml-2 rounded-full bg-magenta/10 px-2 py-0.5 text-[11px] font-semibold text-magenta-dark" data-from-last-job>From Your Last Job</span> : null);
 
   const call = async (body: object) => {
     setBusy(true);
@@ -202,7 +202,7 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
         {STEPS.map((s, i) => (
           <li key={s}>
             <button type="button" disabled={i === step || i > furthest || busy || (i > 0 && !jobId)} onClick={() => { setError(null); setStep(i); if (i === 5) void loadMatches(); }} aria-current={i === step ? "step" : undefined}
-              className={"flex w-full items-center gap-2.5 whitespace-nowrap rounded-[8px] px-2.5 py-2 text-left font-semibold enabled:cursor-pointer enabled:hover:bg-[#f6f5f9] " + (i === step ? "bg-[#fbeafb] text-magenta-dark" : i < step ? "text-ink" : "text-ink-2")}>
+              className={"flex w-full items-center gap-2.5 whitespace-nowrap rounded-[8px] px-2.5 py-2 text-left font-semibold enabled:cursor-pointer enabled:hover:bg-[#f6f5f9] " + (i === step ? "bg-magenta/10 text-magenta-dark" : i < step ? "text-ink" : "text-ink-2")}>
             <span aria-hidden className={"inline-grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full text-[11.5px] " + (i < step ? "bg-magenta-dark text-white" : i === step ? "border-[1.5px] border-magenta-dark" : "border-[1.5px] border-line")}>{i < step ? "✓" : i + 1}</span>
             {s}
             </button>

@@ -160,7 +160,7 @@ async function Browse({ viewer, f, browsing, compareIds }: { viewer: Viewer; f: 
   const base: StoreQuery = { ...f, tab: "browse" };
   const chip = (key: keyof StoreQuery, value: string, label: string) => (
     <Link key={`${key}${value}`} href={storeHref("/shop", base, key, value)} aria-current={f[key] === value ? "true" : undefined}
-      className={f[key] === value ? "shrink-0 rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "shrink-0 rounded-full border border-line px-3 py-1 font-semibold hover:border-magenta"}>{label}</Link>
+      className={f[key] === value ? "shrink-0 rounded-full border border-magenta-dark bg-magenta/10 px-3 py-1 font-semibold text-magenta-dark" : "shrink-0 rounded-full border border-line px-3 py-1 font-semibold hover:border-magenta"}>{label}</Link>
   );
   const compare = all.filter((p) => compareIds.includes(p.id)).map((p) => ({ id: p.id, productTypeId: p.productTypeId }));
   return (

@@ -66,7 +66,7 @@ const STEPS = ["Browse", "Offer", "Cart", "Order", "Delivered", "Paid"];
 function StepDots({ at }: { at: number }) {
   return (
     <span className="inline-flex items-center gap-1" aria-label={`Step ${at + 1} of 6: ${STEPS[at]}`} data-step-dots={at}>
-      {STEPS.map((l, i) => <span key={l} title={l} className={i < at ? "h-2 w-2 rounded-full bg-ink" : i === at ? "h-2.5 w-2.5 rounded-full bg-magenta ring-2 ring-magenta/25" : "h-2 w-2 rounded-full bg-[#C9CDDC]"} />)}
+      {STEPS.map((l, i) => <span key={l} title={l} className={i < at ? "h-2 w-2 rounded-full bg-ink" : i === at ? "h-2.5 w-2.5 rounded-full bg-magenta ring-2 ring-magenta/25" : "h-2 w-2 rounded-full bg-state-border"} />)}
     </span>
   );
 }

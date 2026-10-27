@@ -83,7 +83,7 @@ export default async function CoursesPage({ searchParams }: { searchParams: Prom
                     <td className="px-3 py-2.5 text-right tabular-nums">{total}</td>
                     <td className="px-3 py-2.5 text-ink-2">{timeLabel(c.minutes) ?? "—"}</td>
                     <td className="w-[120px] px-3 py-2.5">
-                      {all ? <span className="text-[12.5px] font-bold">✓ Done</span> : c.done > 0 ? <span aria-label={k.label} className="block h-[6px] w-full bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${Math.round((c.done / total) * 100)}%` }} /></span> : <span className="text-ink-3">—</span>}
+                      {all ? <span className="text-[12.5px] font-bold">✓ Done</span> : c.done > 0 ? <span aria-label={k.label} className="block h-[6px] w-full bg-state-border"><span className="block h-full bg-ink" style={{ width: `${Math.round((c.done / total) * 100)}%` }} /></span> : <span className="text-ink-3">—</span>}
                     </td>
                     <td className="px-3 py-2.5 text-right">
                       {!c.lessons.some((l) => l.playable) ? <span className="text-[12px] font-semibold text-ink-3">Coming Soon</span> : <Link href={all ? `/learn/${p.slug}#course-${c.slug}` : go} className={c.done > 0 && !all ? BTN_K : BTN}>{all ? "Review" : c.done > 0 ? "Continue" : "Start"}</Link>}

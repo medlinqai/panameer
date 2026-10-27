@@ -30,7 +30,7 @@ export function SliceChips({ tabKey, counts, base, extra = [], labels = {}, chip
     <nav aria-label="Show" className="-mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 text-[12.5px]" data-slice-chips>
       {list.map(([k, l0]) => { const l = labels[k] ?? l0; return (
         <Link key={k} href={href(k)} scroll={false} onClick={() => { try { localStorage.setItem(key, k); } catch {} }} aria-current={current === k ? "true" : undefined}
-          className={current === k ? "shrink-0 rounded-full border border-magenta-dark bg-[#fbeafb] px-3 py-1 font-semibold text-magenta-dark" : "shrink-0 rounded-full border border-line px-3 py-1 font-semibold hover:border-magenta"}>
+          className={current === k ? "shrink-0 rounded-full border border-magenta-dark bg-magenta/10 px-3 py-1 font-semibold text-magenta-dark" : "shrink-0 rounded-full border border-line px-3 py-1 font-semibold hover:border-magenta"}>
           {l} <span className="tabular-nums text-ink-3">{counts[k] ?? 0}</span>
         </Link>
       ); })}

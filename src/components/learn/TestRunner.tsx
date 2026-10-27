@@ -315,7 +315,7 @@ function ResultPanel({
                     className={
                       "rounded-[8px] px-3 py-1.5 " +
                       (isRight
-                        ? "bg-[#C9CDDC]/45 font-semibold text-ink"
+                        ? "bg-state-border/45 font-semibold text-ink"
                         : isMine
                           ? "bg-red-500/10 text-red-800"
                           : "text-ink-2")

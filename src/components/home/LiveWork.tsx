@@ -83,7 +83,7 @@ export function WeekSchedule({ start, rows, side, backHref }: { start: Date; row
             <div key={d.toISOString()} className="min-w-0 rounded-[8px] border border-line p-2">
               <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-3">{d.toLocaleDateString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" })}</p>
               {list.length ? list.map((r) => (
-                <Link key={r.id} href={side === "buyer" ? `/work-requests/${r.jobId}?tab=interviews` : `/find-work/${r.jobId}#interview`} className="mt-1.5 block rounded-[6px] bg-[#fbeafb] px-2 py-1 text-[12px] hover:underline">
+                <Link key={r.id} href={side === "buyer" ? `/work-requests/${r.jobId}?tab=interviews` : `/find-work/${r.jobId}#interview`} className="mt-1.5 block rounded-[6px] bg-magenta/10 px-2 py-1 text-[12px] hover:underline">
                   <b>{r.startsAt ? time(r.startsAt) : ""}</b> {side === "buyer" ? r.providerLabel : r.buyerCompany}
                 </Link>
               )) : <p className="mt-1 text-[12px] text-ink-3">—</p>}
@@ -103,10 +103,10 @@ export function ProcessStrip({ steps, active, base }: { steps: StripStep[]; acti
           const on = s.key === active;
           return (
             <li key={s.key} className="flex items-center">
-              {i > 0 && <span aria-hidden className="mx-0.5 h-0.5 w-3 bg-[#C9CDDC]" />}
+              {i > 0 && <span aria-hidden className="mx-0.5 h-0.5 w-3 bg-state-border" />}
               <Link href={on ? `${base}#live-work` : `${base}?step=${s.key}#live-work`} aria-current={on ? "step" : undefined} data-strip-step={s.key}
-                className={on ? "flex w-[92px] flex-col items-center rounded-[10px] border-2 border-magenta bg-[#fbeafb] px-1.5 py-2 text-center" : "flex w-[92px] flex-col items-center rounded-[10px] border border-line bg-white px-1.5 py-2 text-center hover:border-magenta"}>
-                <b className={s.count ? "text-[20px] leading-none text-ink tabular-nums" : "text-[20px] leading-none text-[#C9CDDC] tabular-nums"}>{s.count}</b>
+                className={on ? "flex w-[92px] flex-col items-center rounded-[10px] border-2 border-magenta bg-magenta/10 px-1.5 py-2 text-center" : "flex w-[92px] flex-col items-center rounded-[10px] border border-line bg-white px-1.5 py-2 text-center hover:border-magenta"}>
+                <b className={s.count ? "text-[20px] leading-none text-ink tabular-nums" : "text-[20px] leading-none text-state-border tabular-nums"}>{s.count}</b>
                 <span className="mt-1 text-[11.5px] font-semibold leading-tight">{s.label}</span>
               </Link>
             </li>

@@ -192,7 +192,7 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
                           {ok ? (
                             <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full text-[11px] text-white" style={{ background: DONE }}>✓</span>
                           ) : (
-                            <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none rounded-full border-2 border-[#C9CDDC]" />
+                            <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none rounded-full border-2 border-state-border" />
                           )}
                           <span className="min-w-0">
                             {l.label}

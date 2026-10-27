@@ -28,7 +28,7 @@ export function Milestones({ orderId, rows, canReport }: { orderId: string; rows
         {rows.map((m) => (
           <li key={m.id} data-milestone={m.reportedAt ? "reported" : "open"} className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2 text-[13.5px] last:border-0">
             <span className="flex min-w-0 items-center gap-2">
-              <span aria-hidden className={"grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold " + (m.reportedAt ? "bg-ink text-surface" : "border-2 border-[#C9CDDC]")}>{m.reportedAt ? "✓" : m.sequence}</span>
+              <span aria-hidden className={"grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold " + (m.reportedAt ? "bg-ink text-surface" : "border-2 border-state-border")}>{m.reportedAt ? "✓" : m.sequence}</span>
               <span className="min-w-0 truncate"><b>{m.label}</b> · {m.percent}% · {fmt(m.amountCents)}</span>
             </span>
             {m.settlementId ? (

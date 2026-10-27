@@ -17,7 +17,7 @@ export function AiStrip({ audience }: { audience: "buyer" | "provider" }) {
               className={
                 "rounded-full px-3.5 py-[7px] text-[13px] " +
                 (tag.soon
-                  ? "border border-magenta bg-[#fbeafb] text-magenta"
+                  ? "border border-magenta bg-magenta/10 text-magenta"
                   : "border border-line bg-white text-[#3a4266]")
               }
             >

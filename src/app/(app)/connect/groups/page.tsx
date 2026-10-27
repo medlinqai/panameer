@@ -185,7 +185,7 @@ function RunRow({ c, waiting }: { c: GroupCard; waiting: number }) {
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-2">
           <b className="truncate text-[14px]">{c.title}</b>
-          {waiting > 0 ? <span className={TAG + " border-magenta text-magenta-dark"}>{waiting} WAITING</span> : c.posts === 0 ? <span className={TAG + " border-[#C9CDDC] text-ink-3"}>QUIET</span> : null}
+          {waiting > 0 ? <span className={TAG + " border-magenta text-magenta-dark"}>{waiting} WAITING</span> : c.posts === 0 ? <span className={TAG + " border-state-border text-ink-3"}>QUIET</span> : null}
         </span>
         <span className="block text-[12.5px] text-ink-3">{c.pathBacked ? "Path group" : "Member group"} · {c.members} {c.members === 1 ? "member" : "members"} · {c.posts === 0 ? "no posts yet" : `${c.posts} ${c.posts === 1 ? "post" : "posts"}`}</span>
       </span>

@@ -166,7 +166,7 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
             <span className="text-[12px]">Learn</span>
             <span className="text-[12px]">Shop</span>
           </div>
-          <div className="space-y-3 bg-white px-4 py-4 text-[#272334]">
+          <div className="space-y-3 bg-white px-4 py-4 text-ink">
             <p className="text-[13.5px]">
               An order from {companyName}. <a className="font-semibold underline" style={{ color: t.link }} data-preview-link>View the Response</a>
             </p>

@@ -78,7 +78,7 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
       <div className="border-b border-line p-4">
         <p className="text-[13.5px] font-bold">{p.title}</p>
         <p className="mt-0.5 flex flex-wrap items-center gap-2 text-[12px] text-ink-3">{count.label}{count.finished && <span data-ready-tag className="border border-magenta px-1.5 text-[10.5px] font-bold tracking-[0.06em] text-magenta-dark">READY TO TEST</span>}</p>
-        <span aria-hidden className="mt-2 block h-[6px] w-full bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${pct}%` }} /></span>
+        <span aria-hidden className="mt-2 block h-[6px] w-full bg-state-border"><span className="block h-full bg-ink" style={{ width: `${pct}%` }} /></span>
         {/* L-E044: Test Out, right where you see how much is left. */}
         {!p.test.passed && (
           <div className="mt-3">

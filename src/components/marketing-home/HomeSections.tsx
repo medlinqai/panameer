@@ -26,7 +26,7 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
   const bandClip = !isHero && dark ? BAND_CLIPS[s.key] : undefined;
 
   const eyebrow = dark ? "text-white" : "text-[#A61AA5]";
-  const head = dark ? "text-white" : "text-[#272334]";
+  const head = dark ? "text-white" : "text-ink";
   const bodyc = dark ? "text-[#DDE0F0]" : "text-[#5B6183]";
 
   const grid = dark
@@ -120,8 +120,8 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
               : "border-2 px-[26px] py-3.5 font-display text-[15px] " +
                 "font-bold transition-colors " +
                 (dark
-                  ? "border-white/60 text-white hover:border-white hover:bg-white hover:text-[#272334]!" + LABEL_WHITE
-                  : "border-[#272334] text-[#272334] hover:bg-[#272334] hover:text-white!"))
+                  ? "border-white/60 text-white hover:border-white hover:bg-white hover:text-ink!" + LABEL_WHITE
+                  : "border-ink text-ink hover:bg-ink hover:text-white!"))
           }
         >
           Learn More
@@ -159,7 +159,7 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
             >
               {n + 1}
             </span>
-            <span className="text-[14px] leading-[1.5] text-[#272334]">{c}</span>
+            <span className="text-[14px] leading-[1.5] text-ink">{c}</span>
           </div>
         ))}
       </div>

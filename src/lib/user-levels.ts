@@ -134,7 +134,7 @@ export const LIFECYCLE: LifecycleStep[] = [
 export const ROAD_TITLE = "From Creating Your Account to Getting Paid";
 export const PROVIDER_ROAD: LifecycleStep[] = [
   { key: "register", phase: "join", step: "Create Your Account", status: "Registered", who: "you", gate: false, desc: "You and your company, in one go. A one-person business is a company too.", href: "/company?join=1#join", next: "Create Your Account", time: "about 3 min · you + your company" },
-  { key: "verify", phase: "join", step: "Validate Your Email", status: "Verified", who: "you", gate: false, desc: "Click the link sent to your email.", unlocks: "Learn, Connect", href: "/join", next: "Validate Your Email", time: "1 min" },
+  { key: "verify", phase: "join", step: "Verify Your Email", status: "Verified", who: "you", gate: false, desc: "Click the link sent to your email.", unlocks: "Learn, Connect", href: "/join", next: "Validate Your Email", time: "1 min" },
   // Scott 10-16: Register swallows the profile — you, your company and its locations. Done when registration is finished.
   { key: "profile", phase: "join", step: "Complete Your Profile", status: "Profiled", who: "you", gate: false, desc: "You, your company and its locations. Done when you finish registering; people can see you and connect.", unlocks: "Connect, Learn", href: "/profile", next: "Complete Your Profile", time: "about 3 min" },
   // Scott 10-16: what you sell — résumé and skills (so buyers find you), rates, products — ends with Go Live.

@@ -168,7 +168,7 @@ export function TypeArt({ typeName, category, size = "row", className = "" }: { 
   const box = size === "band" ? "aspect-video w-full" : "shrink-0";
   const style = typeof size === "number" ? { width: size, height: size } : size === "row" ? { width: 56, height: 56 } : undefined;
   return (
-    <span aria-hidden data-type-art={motifFor(typeName, category)} className={`grid place-items-center overflow-hidden rounded-[10px] bg-[#fbeafb] text-ink dark:bg-magenta/15 dark:text-white ${box} ${className}`} style={style}>
+    <span aria-hidden data-type-art={motifFor(typeName, category)} className={`grid place-items-center overflow-hidden rounded-[10px] bg-magenta/10 text-ink dark:bg-magenta/15 dark:text-white ${box} ${className}`} style={style}>
       <svg viewBox="0 0 64 64" className={size === "band" ? "h-[62%] w-auto" : "h-[70%] w-[70%]"} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         {motif()}
       </svg>

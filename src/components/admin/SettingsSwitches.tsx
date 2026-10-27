@@ -21,7 +21,7 @@ export function SettingsSwitches({ rows }: { rows: { key: string; label: string;
             <b className="text-[15px]">{r.label}</b>
             <span className="block text-[13px] text-ink-2">{r.help}</span>
           </span>
-          <button type="button" role="switch" aria-checked={r.on} aria-label={r.label} disabled={busy === r.key} onClick={() => flip(r.key, !r.on)} className={r.on ? "relative h-[22px] w-[38px] shrink-0 rounded-full bg-ink" : "relative h-[22px] w-[38px] shrink-0 rounded-full bg-[#C9CDDC]"}>
+          <button type="button" role="switch" aria-checked={r.on} aria-label={r.label} disabled={busy === r.key} onClick={() => flip(r.key, !r.on)} className={r.on ? "relative h-[22px] w-[38px] shrink-0 rounded-full bg-ink" : "relative h-[22px] w-[38px] shrink-0 rounded-full bg-state-border"}>
             <span className={r.on ? "absolute left-[18px] top-[2px] h-[18px] w-[18px] rounded-full bg-white" : "absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white"} />
           </button>
         </li>

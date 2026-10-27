@@ -62,7 +62,7 @@ export function LearnPathCard({ p, areaLabel, tag, outcome, level, notify, signe
           {[p.courses.length ? `${p.courses.length} course${p.courses.length === 1 ? "" : "s"}` : null, p.lessons ? `${p.lessons} lessons` : null, timeLabel(p.minutes), now > 0 ? `${now} learning now` : null].filter(Boolean).join(" · ")}
         </p>
         {p.mine && !p.certificate && (
-          <span aria-label={`${p.mine.done} of ${p.mine.total} lessons`} className="mt-2 block h-[5px] w-full bg-[#C9CDDC]"><span className="block h-full bg-ink" style={{ width: `${pct}%` }} /></span>
+          <span aria-label={`${p.mine.done} of ${p.mine.total} lessons`} className="mt-2 block h-[5px] w-full bg-state-border"><span className="block h-full bg-ink" style={{ width: `${pct}%` }} /></span>
         )}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-4">
           {!p.playable ? (

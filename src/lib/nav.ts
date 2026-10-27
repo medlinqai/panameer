@@ -185,6 +185,8 @@ export const WORK_FEED_EXTRA_TITLES: NavItem[] = [
 export const COMPANY_NAV: NavItem[] = [
   { label: "Company", href: "/company" },
   { label: "Branding", href: "/company/branding" },
+  // WA-E005: Your Theme — also a step of ERP / punch-out set-up.
+  { label: "Your Theme", href: "/company/theme" },
   { label: "Company Settings", href: "/company/settings" },
 ];
 

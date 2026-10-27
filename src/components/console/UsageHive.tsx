@@ -68,7 +68,7 @@ export function UsageHive({ cells }: { cells: HiveCell[] }) {
           Activity
         </li>
         <li className="flex items-center">
-          <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 border border-dashed border-[#C9CDDC]" />
+          <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 border border-dashed border-state-border" />
           None yet
         </li>
       </ul>

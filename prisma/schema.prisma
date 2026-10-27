@@ -405,6 +405,13 @@ model Company {
   payee_type           PayeeType?
   payoutMethods        PayoutMethod[]
   theme_enabled        Boolean?
+  /// WA-E005: Your Theme — read from an Oracle home-page screenshot or entered by hand; applied as tokens once approved.
+  theme_header_hex     String?
+  theme_accent_hex     String?
+  theme_background_hex String?
+  theme_logo_url       String?
+  theme_background_url String?
+  theme_approved_at    DateTime?
   /// Same company = same website domain, tax ID digits or email domain (2026-10-05). Normalized copies, indexed.
   website_domain       String?
   tin_digits           String?
