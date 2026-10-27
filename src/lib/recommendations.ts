@@ -326,6 +326,7 @@ export async function submitRecommendation(
       responder_ua: input.ua?.slice(0, 400) ?? null,
     },
   });
+  await clearAsk(row.id);
 
   // Super run 4 lane 4 found 15 registry events nothing fires, and this is
   try {
@@ -358,6 +359,13 @@ export async function declineRecommendation(raw: string): Promise<void> {
     where: { id: row.id },
     data: { status: "DECLINED", responded_at: new Date() },
   });
+  await clearAsk(row.id);
+}
+
+/** 10-27: the ask is done — its Worklist row clears and its bell entry turns read. */
+async function clearAsk(requestId: string) {
+  const { resolveNotifications } = await import("@/lib/notifications");
+  await resolveNotifications({ dedupe_key: { startsWith: `recommendation.request:${requestId}:` } });
 }
 
 /** The public RECOMMENDATIONS for a profile. */

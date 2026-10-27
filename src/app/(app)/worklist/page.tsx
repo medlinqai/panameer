@@ -21,7 +21,7 @@ const VIEWS = [
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; q?: string; status?: string; cat?: string; group?: string; app?: string; tile?: string }>;
+  searchParams: Promise<{ view?: string; q?: string; status?: string; cat?: string; group?: string; app?: string; tile?: string; item?: string }>;
 }) {
   const viewer = await guardPage("authenticated");
   const person = await prisma.person.findUnique({
@@ -32,7 +32,7 @@ export default async function Page({
 
   const sp = await searchParams;
   const view = sp.view ?? "open";
-  const status = (sp.status === "completed" || sp.status === "any" ? sp.status : "open") as
+  const status = (sp.status === "completed" || sp.status === "any" ? sp.status : sp.item ? "any" : "open") as
     | "open"
     | "completed"
     | "any";
@@ -79,6 +79,8 @@ export default async function Page({
     .filter((r) => !sp.app || appOf(r) === sp.app)
     .filter((r) => !tileGroups || tileGroups.includes(r.group ?? ""))
     .filter((r) => !sp.group || sp.group.split(",").includes(r.group ?? ""))
+    // 10-27: a bell entry opens its own Worklist item.
+    .filter((r) => !sp.item || r.id === sp.item)
     .sort((a, b) => Number(overdue(b)) - Number(overdue(a)) || (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || a.at.getTime() - b.at.getTime());
   const byApp = Object.keys(APP_FILTER).map((k) => ({ key: k, label: APP_FILTER[k].label, rows: shown.filter((r) => appOf(r) === k) })).filter((g) => g.rows.length);
   const appCountsAll = Object.keys(APP_FILTER).map((k) => ({ key: k, label: APP_FILTER[k].label, n: rows.filter((r) => (r.eventKey === "todo.item" || !r.href || !derived.has(r.href)) && appOf(r) === k).length })).filter((a) => a.n);

@@ -1,5 +1,5 @@
 import { markLink } from "@/lib/login-return";
-import { NEWS_DAYS } from "@/lib/action-rule";
+import { ACTION_EVENTS, NEWS_DAYS } from "@/lib/action-rule";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -22,10 +22,12 @@ export async function GET() {
   });
   if (!person) return NextResponse.json({ rows: [] });
 
+  // Scott 10-27: a new action also gets one bell entry (linking to its Worklist item); it turns read when the action is done.
+  await prisma.notification.updateMany({ where: { person_id: person.id, requires_action: true, resolved_at: { not: null }, read_at: null }, data: { read_at: new Date() } }).catch(() => null);
   const rows = await prisma.notification.findMany({
-    // N-E001: the quick view shows only what hasn't been dismissed.
-    // NC-E001/E005: the bell is news only, and news expires after 14 days.
-    where: { person_id: person.id, delivered_in_app_at: { not: null }, dismissed_at: null, requires_action: false, created_at: { gte: new Date(Date.now() - NEWS_DAYS * 86_400_000) }, NOT: { event_key: { in: ["todo.item", "message.received"] } } },
+    // N-E001: the quick view shows only what hasn't been dismissed. News expires after 14 days; actions stay until done.
+    where: { person_id: person.id, delivered_in_app_at: { not: null }, dismissed_at: null, NOT: { event_key: { in: ["todo.item", "message.received"] } },
+      OR: [{ requires_action: false, created_at: { gte: new Date(Date.now() - NEWS_DAYS * 86_400_000) } }, { requires_action: true, event_key: { in: [...ACTION_EVENTS] } }] },
     orderBy: { created_at: "desc" },
     take: TAKE,
     select: {
@@ -49,7 +51,7 @@ export async function GET() {
       id: n.id,
       title: displayTitle(n.title),
       // Scott 10-27: a notification link carries from=notification (a sign-in from it returns there).
-      href: n.href ? markLink(n.href, "notification") : n.href,
+      href: n.requires_action ? markLink(`/worklist?item=${n.id}`, "notification") : n.href ? markLink(n.href, "notification") : n.href,
       unread: n.read_at === null,
       needsAction: n.requires_action && n.resolved_at === null,
       at: n.created_at,

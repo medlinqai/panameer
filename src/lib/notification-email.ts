@@ -72,6 +72,9 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "shop.offer_received",
   "shop.offer_accepted",
   "shop.offer_denied",
+  // 10-27: every new action emails — these two had no email of their own.
+  "shop.offer_countered",
+  "work.request_po_check",
 ];
 
 export function notificationEmailAllowed(event: NotificationEventKey): boolean {

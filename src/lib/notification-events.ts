@@ -683,7 +683,7 @@ export const NOTIFICATION_EVENTS = {
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: true,
-    title: (v) => `${str(v, "fromName", "Someone")} Sent You a Recommendation Request`,
+    title: (v) => `${str(v, "fromName", "Someone")} Asked You for a Recommendation`,
     body: () => "A few lines about working together. It shows on their profile.",
     href: (v) => str(v, "respondPath", "/connect/recommendations"),
   },
