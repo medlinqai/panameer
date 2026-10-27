@@ -71,11 +71,11 @@ export default async function ConnectHome() {
         primary={{ label: "Invite to Panameer", href: "/connect/invite" }} secondary={{ label: "Find People", href: "/connect/community" }}
         donuts={donuts} todo={todo} section2Title="How You Rank" section2Right="This Month"
         actions={[
-          { label: "Invite to Panameer", detail: `Every colleague who joins adds ${GROWTH_WEIGHTS.JOINED} points`, href: "/connect/invite" },
-          { label: "Find People", detail: "Buyers and providers you're not connected to yet", href: "/connect/community" },
-          { label: "Ask for a Recommendation", detail: "Profiles with one get picked more often", href: "/connect/recommendations" },
-          { label: "Join a Group", detail: "Talk shop with people in your field", href: "/connect/groups" },
-          { label: "See the Leaders", detail: "Who's growing the community this month", href: "/connect/leaders" },
+          { label: "Invite People", href: "/connect/invite", icon: "userPlus" },
+          { label: "Find People", href: "/connect/community", icon: "users" },
+          { label: "Get Recommended", href: "/connect/recommendations", icon: "star" },
+          { label: "Join a Group", href: "/connect/groups", icon: "group" },
+          { label: "See Leaders", href: "/connect/leaders", icon: "trophy" },
         ]}
         section2={<>
           <RankList eyebrow="LEADERS" title="Who's Growing the Community" rows={board.slice(0, 3).map((r) => ({ rank: r.rank, name: r.name, photoUrl: r.photoUrl, line: `${r.invited} invited · ${r.joined} joined`, value: r.points, me: r.personId === pid }))}

@@ -96,10 +96,10 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
           donuts={view === "teaching" ? teaching : learning} viewSwitch={switcher} todo={todo}
           section2Title="Who's Learning Most" section2Right="This Month"
           actions={[
-            { label: "Browse Learning Paths", detail: `${catalog.length} paths on Panameer`, href: "/learn/paths" },
-            { label: "Continue Learning", detail: inProgress[0] ? `${inProgress[0].title} · lesson ${(inProgress[0].mine?.done ?? 0) + 1} of ${inProgress[0].mine?.total ?? 0}` : "Pick up where you left off", href: inProgress[0]?.mine?.next ? `/learn/${inProgress[0].slug}/${inProgress[0].mine.next.id}` : "/learn/my" },
-            { label: "Take a Test", detail: readyToTest.length ? `${readyToTest.length} ready for you` : "Prove a skill and earn a certificate", href: readyToTest[0] ? `/learn/${readyToTest[0].slug}/test` : "/learn/certificates" },
-            { label: "Teach on Panameer", detail: teaches ? "Your paths, learners and finishes" : "Share what you know as a learning path", href: teaches ? "/learn/teaching" : "/support" },
+            { label: "Browse Paths", href: "/learn/paths", icon: "book" },
+            { label: "Keep Learning", href: inProgress[0]?.mine?.next ? `/learn/${inProgress[0].slug}/${inProgress[0].mine.next.id}` : "/learn/my", icon: "play" },
+            { label: "Take a Test", href: readyToTest[0] ? `/learn/${readyToTest[0].slug}/test` : "/learn/certificates", icon: "award" },
+            { label: "Teach", href: teaches ? "/learn/teaching" : "/support", icon: "teach" },
           ]}
           section2={<>
             <RankList eyebrow="PATHS FINISHED" title="Top Learners" rows={month.slice(0, 3).map((r, i) => rr(r, i, r.userId === viewer.userId))}

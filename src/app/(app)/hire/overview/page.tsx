@@ -50,13 +50,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
       <div className="mx-auto w-full max-w-[1120px] pb-14 pt-8">
         {tab === "overview" && <>
           <h2 className="mb-3 text-[20px] font-extrabold">At a Glance</h2>
-          <DashPies donuts={await hireTiles(viewer, me.id)} side="buyer" size={64} />
+          <DashPies donuts={await hireTiles(viewer, me.id)} side="buyer" size={64} compact />
           <h2 className="mb-3 mt-8 text-[20px] font-extrabold">What You Can Do</h2>
           <ActionCards cards={[
-            { label: "Create a Job", detail: "Describe the work; matches show at once", href: "/hire" },
-            { label: "Find People", detail: "Providers on Panameer, masked until an Order is released", href: "/connect/community" },
-            { label: "Compare Providers", detail: "Jobs with answers to compare", href: "/hire/overview?tab=jobs&slice=comparing" },
-            { label: "Write Interview Questions", detail: "Question banks you can reuse", href: "/hire/overview?tab=questions" },
+            { label: "Create a Job", href: "/hire", icon: "briefcase" },
+            { label: "Find People", href: "/connect/community", icon: "users" },
+            { label: "Compare Providers", href: "/hire/overview?tab=jobs&slice=comparing", icon: "compare" },
+            { label: "Write Questions", href: "/hire/overview?tab=questions", icon: "list" },
           ]} />
           <div className="mt-10"><Overview personId={me.id} slice={sp.slice} /></div>
         </>}

@@ -29,7 +29,7 @@ export function HubHome({ eyebrow, title, summary, primary, secondary, donuts, v
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div>
           <div className="flex flex-wrap items-baseline gap-3 border-b border-ink pb-2"><span className={NUM}>1</span><h2 className="text-[20px] font-extrabold">At a Glance</h2>{viewSwitch}{glanceHint && <span className="text-[12px] text-ink-3">{glanceHint}</span>}</div>
-          <div className="mt-3"><DashPies donuts={donuts} side="home" size={64} cols="sm:grid-cols-2" /></div>
+          <div className="mt-3"><DashPies donuts={donuts} side="home" size={64} cols="sm:grid-cols-2" compact /></div>
         </div>
         <div>
           <div className="flex items-baseline gap-3 border-b border-ink pb-2"><span className="grid h-7 w-7 place-items-center rounded-full bg-state-declined text-[13px] font-bold text-surface">!</span><h2 className="text-[20px] font-extrabold">Things You Need to Do</h2></div>

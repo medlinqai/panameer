@@ -27,13 +27,13 @@ export default async function WorkHomePage() {
         eyebrow="WORK" title={`Your Work${first ? `, ${first}` : ""}`}
         summary={`${n(needYou, "thing")} need you · ${n(w.openJobs, "open job")} · ${n(w.estimatesWaiting, "estimate")} waiting`}
         primary={{ label: "Browse the Job Board", href: "/find-work?tab=best" }} secondary={{ label: "Send an Estimate", href: "/estimate" }}
-        donuts={w.donuts} todo={todo} glanceHint="Click a tile to open it, or a line to jump to that stage"
+        donuts={w.donuts} todo={todo}
         actions={[
-          { label: "Browse the Job Board", detail: `${n(w.openJobs, "open job")}, filter by skill and rate`, href: "/find-work?tab=best" },
-          { label: "Send an Estimate", detail: "Quote a buyer without waiting to be asked", href: "/estimate" },
-          { label: "Set Your Rates", detail: "Onsite, offsite, retainer, mentoring", href: "/catalog/services" },
-          { label: "Add a Service Product", detail: "A fixed-price offer buyers can order in Shop", href: "/catalog/products" },
-          { label: "Take a Test", detail: "Prove a skill before a buyer asks", href: "/learn/certificates" },
+          { label: "Browse Jobs", href: "/find-work?tab=best", icon: "search" },
+          { label: "Send Estimate", href: "/estimate", icon: "send" },
+          { label: "Set Rates", href: "/catalog#services", icon: "tag" },
+          { label: "Add Product", href: "/catalog#products", icon: "package" },
+          { label: "Take a Test", href: "/learn/certificates", icon: "award" },
         ]}
       />
     </div>

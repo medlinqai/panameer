@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Award, BookOpen, Briefcase, Calculator, Columns3, Eye, GraduationCap, ListChecks, MessagesSquare, Package, PenLine, PlayCircle, ReceiptText, Search, Send, ShoppingCart, Star, Tag, Trophy, UserPlus, Users, type LucideIcon } from "lucide-react";
 
 // WK-E003: no second row of tabs — "← {App}" at the top, stage chips across a list, "Also in {App}" at the bottom.
 export function AppCrumb({ app, href, page }: { app: string; href: string; page?: string }) {
@@ -31,18 +32,19 @@ export function AlsoIn({ app, links }: { app: string; links: [string, string][] 
   );
 }
 
-/** What You Can Do — the column count fits the number of cards, so none sits alone in a row. */
-const COLS: Record<number, string> = { 1: "sm:grid-cols-1", 2: "sm:grid-cols-2", 3: "sm:grid-cols-3", 4: "sm:grid-cols-2 lg:grid-cols-4", 5: "sm:grid-cols-5", 6: "sm:grid-cols-3" };
-export type ActionCard = { label: string; detail: string; href: string };
+/** What You Can Do — WK-E009: monochrome icon tiles, 2–3 words, no descriptions; they fill their row. */
+const COLS: Record<number, string> = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-2 sm:grid-cols-4", 5: "grid-cols-3 sm:grid-cols-5", 6: "grid-cols-3 sm:grid-cols-6" };
+const ICON: Record<string, LucideIcon> = { search: Search, send: Send, tag: Tag, package: Package, award: Award, userPlus: UserPlus, users: Users, star: Star, group: MessagesSquare, trophy: Trophy, book: BookOpen, play: PlayCircle, teach: GraduationCap, pen: PenLine, eye: Eye, briefcase: Briefcase, compare: Columns3, list: ListChecks, cart: ShoppingCart, receipt: ReceiptText, calc: Calculator };
+export type ActionCard = { label: string; href: string; icon: keyof typeof ICON };
 export function ActionCards({ cards }: { cards: ActionCard[] }) {
   return (
-    <div className={`grid gap-3 ${COLS[cards.length] ?? "sm:grid-cols-3"}`} data-action-cards>
-      {cards.map((c) => (
-        <Link key={c.label} href={c.href} className="rounded-[12px] border border-line bg-white p-4 hover:border-ink" data-action-card={c.label}>
-          <b className="block text-[14.5px]">{c.label}</b>
-          <span className="mt-1 block text-[12.5px] text-ink-2">{c.detail}</span>
+    <div className={`grid gap-3 ${COLS[cards.length] ?? "grid-cols-3"}`} data-action-cards>
+      {cards.map((c) => { const I = ICON[c.icon] ?? Briefcase; return (
+        <Link key={c.label} href={c.href} className="flex flex-col items-center gap-2 rounded-[12px] border border-line bg-white px-3 py-4 text-center text-ink hover:border-ink" data-action-card={c.label}>
+          <I className="h-6 w-6" strokeWidth={1.7} aria-hidden />
+          <b className="text-[13.5px] leading-tight">{c.label}</b>
         </Link>
-      ))}
+      ); })}
     </div>
   );
 }

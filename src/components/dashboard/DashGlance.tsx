@@ -30,15 +30,15 @@ function Ring({ d, size }: { d: Donut; size: number }) {
 }
 
 /** The pies; a slice or See All opens My Transactions filtered (or the slice's own page). */
-export function DashPies({ donuts, side, size = 88, cols = "sm:grid-cols-2 lg:grid-cols-4" }: { donuts: Donut[]; side: string; size?: number; cols?: string }) {
+export function DashPies({ donuts, side, size = 88, cols = "sm:grid-cols-2 lg:grid-cols-4", compact = false }: { donuts: Donut[]; side: string; size?: number; cols?: string; /** WK-E009: home pages — title, ring and numbers only; the title opens the tile. */ compact?: boolean }) {
   return (
     <div className={`grid gap-3 ${cols}`} data-donuts>
       {donuts.map((d) => (
         <div key={d.key} className="flex flex-col rounded-[12px] border border-line bg-white p-3.5" data-donut={d.key}>
-          <h4 className="flex flex-wrap items-baseline gap-x-1.5 text-[14px] font-extrabold">{d.title}<span className="text-[11.5px] font-medium text-ink-3">{d.sub}</span>
+          <h4 className="flex flex-wrap items-baseline gap-x-1.5 text-[14px] font-extrabold">{compact ? <Link href={d.href ?? txHref(side, { donut: d.key })} className="hover:underline">{d.title}</Link> : <>{d.title}<span className="text-[11.5px] font-medium text-ink-3">{d.sub}</span></>}
             {(() => { const need = d.checklist ? d.checklist.filter((i) => i.n === 0).length : d.slices.reduce((n, s) => n + (s.mine && !s.untracked ? s.n : 0), 0); return need > 0 ? <span className="ml-auto rounded-full bg-state-pending-bg px-2 py-0.5 text-[11px] font-bold text-state-pending" data-need-you>{need} need you</span> : null; })()}
           </h4>
-          {d.lead && <p className="mt-0.5 text-[11.5px] text-ink-2" data-donut-lead>{d.lead.text} · <Link href={d.lead.href} className="font-semibold text-ink hover:underline">{d.lead.label} →</Link></p>}
+          {d.lead && !compact && <p className="mt-0.5 text-[11.5px] text-ink-2" data-donut-lead>{d.lead.text} · <Link href={d.lead.href} className="font-semibold text-ink hover:underline">{d.lead.label} →</Link></p>}
           <div className="mt-2 flex items-center gap-3">
             <Ring d={d} size={size} />
             <div className="min-w-0 flex-1 space-y-0.5 text-[12px]">
@@ -54,16 +54,16 @@ export function DashPies({ donuts, side, size = 88, cols = "sm:grid-cols-2 lg:gr
                   <span className="min-w-0 flex-1 truncate">{s.label}</span><em className="not-italic">—</em>
                 </span>
               ) : (
-                <Link key={s.label} href={s.href ?? txHref(side, { donut: d.key, slice: s.label })} className={`flex w-full items-center gap-1.5 text-left hover:underline ${s.mine && s.n ? "font-bold text-state-pending" : "text-ink-2"}`}>
+                <Link key={s.label} href={s.href ?? txHref(side, { donut: d.key, slice: s.label })} className={`flex w-full items-center gap-1.5 text-left hover:underline ${s.mine && s.n ? `font-bold text-state-pending ${compact ? "-mx-1 rounded bg-state-pending-bg px-1" : ""}` : "text-ink-2"}`}>
                   <i className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
                   <span className="min-w-0 flex-1 truncate">{s.label}</span><em className="not-italic tabular-nums">{s.n}</em>
                 </Link>
               ))}
-              {d.slices.some((s) => s.untracked) && <p className="pt-0.5 text-[10.5px] text-ink-3">— Not tracked yet</p>}
-              {d.note && <p className="pt-1 text-[11px] text-ink-3">{d.note}</p>}
+              {!compact && d.slices.some((s) => s.untracked) && <p className="pt-0.5 text-[10.5px] text-ink-3">— Not tracked yet</p>}
+              {d.note && !compact && <p className="pt-1 text-[11px] text-ink-3">{d.note}</p>}
             </div>
           </div>
-          <Link href={d.href ?? txHref(side, { donut: d.key })} className="mt-auto self-end pt-1.5 text-[12px] font-semibold text-ink-2 hover:text-ink" data-see-all>{d.seeAllLabel ?? "See All"} →</Link>
+          {!compact && <Link href={d.href ?? txHref(side, { donut: d.key })} className="mt-auto self-end pt-1.5 text-[12px] font-semibold text-ink-2 hover:text-ink" data-see-all>{d.seeAllLabel ?? "See All"} →</Link>}
         </div>
       ))}
     </div>

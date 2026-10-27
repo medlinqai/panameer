@@ -28,10 +28,10 @@ export async function ProfileHome({ personId, profileId }: { personId: string; p
       </div>
       <h2 className="mt-6 text-[16px] font-extrabold">What You Can Do</h2>
       <div className="mt-2"><ActionCards cards={[
-        { label: "Edit Profile", detail: "Title, overview, photo and contact", href: "/profile/edit/bio" },
-        { label: "Add a Skill", detail: "Matches come from your skills", href: "/profile/edit/skills" },
-        { label: "Ask for a Recommendation", detail: "Profiles with one get picked more often", href: "/connect/recommendations" },
-        { label: "View as a Buyer", detail: "Your profile the way buyers see it", href: `/providers/${profileId}` },
+        { label: "Edit Profile", href: "/profile/edit/bio", icon: "pen" },
+        { label: "Add a Skill", href: "/profile/edit/skills", icon: "tag" },
+        { label: "Get Recommended", href: "/connect/recommendations", icon: "star" },
+        { label: "View as Buyer", href: `/providers/${profileId}`, icon: "eye" },
       ]} /></div>
     </section>
   );

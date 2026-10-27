@@ -49,7 +49,7 @@ export async function DashboardTop({ viewer, side, firstName, data }: { viewer: 
             {data.view && data.viewLabels && <ViewSwitch view={data.view} labels={data.viewLabels} />}
             <Link href={txHref(side)} className="ml-auto text-[13px] font-semibold text-ink-2 hover:text-ink" data-see-all-transactions>{side === "buyer" ? "See All My Transactions →" : "See All My Work →"}</Link>
           </div>
-          <div className="mt-3"><DashPies donuts={data.donuts} side={side} size={64} cols="sm:grid-cols-2" /></div>
+          <div className="mt-3"><DashPies donuts={data.donuts} side={side} size={64} cols="sm:grid-cols-2" compact /></div>
         </div>
         <div>
           <div className="flex items-baseline gap-3 border-b border-ink pb-2">

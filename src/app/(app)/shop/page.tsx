@@ -75,13 +75,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
       <div className="mx-auto w-full max-w-[1010px]">
         {tab === "overview" && person && side === "buyer" && <div className="mb-8 mt-4">
           <h2 className="mb-3 text-[20px] font-extrabold">At a Glance</h2>
-          <DashPies donuts={await shopTiles(person.id)} side="buyer" size={64} />
+          <DashPies donuts={await shopTiles(person.id)} side="buyer" size={64} compact />
           <h2 className="mb-3 mt-8 text-[20px] font-extrabold">What You Can Do</h2>
           <ActionCards cards={[
-            { label: "Browse Service Products", detail: "Fixed-price offers you can order now", href: "/shop?tab=browse" },
-            { label: "Get an Estimate", detail: "Ask sellers to price your work", href: "/estimate/new" },
-            { label: "Open Your Cart", detail: `${counts?.cart ?? 0} in your cart · Request to Buy`, href: "/shop?tab=cart" },
-            { label: "See Your Purchases", detail: "What you bought and where it stands", href: "/shop?tab=purchases" },
+            { label: "Browse Products", href: "/shop?tab=browse", icon: "search" },
+            { label: "Get an Estimate", href: "/estimate/new", icon: "calc" },
+            { label: "Open Cart", href: "/shop?tab=cart", icon: "cart" },
+            { label: "See Purchases", href: "/shop?tab=purchases", icon: "receipt" },
           ]} />
         </div>}
         {tab === "overview" && person && <Overview viewer={viewer} personId={person.id} side={side} counts={counts!} />}

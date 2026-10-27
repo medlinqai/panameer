@@ -60,8 +60,7 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
           if (!lines && n <= 1) return (
             <div key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-line py-2.5" data-attention-line>
               <span className="min-w-0 flex-1">
-                <b className="block text-[14px]">{i.title ?? i.what}</b>
-                <span className="text-[12.5px] text-ink-2">{i.appLabel}{i.sub ? <> · <span className="font-semibold text-ink">{i.sub}</span></> : null}</span>
+                <b className="block truncate text-[14px]">{i.title ?? i.what}</b>
               </span>
               {i.dueAt && <span className={`text-[12.5px] ${STATE(ms)}`}>{dueShort(i.dueAt, now)}</span>}
               <Link href={i.href} className={GO}>{i.action}</Link>
@@ -75,8 +74,8 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
                 return (
                   <div key={l.key} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5" data-attention-line>
                     <span className="min-w-0 flex-1">
-                      <b className="block truncate text-[14px]">{l.what}</b>
-                      {l.detail && <span className="block truncate text-[12.5px] text-ink-2">{l.detail}</span>}
+                      {/* WK-E009: what + button only on a home page; the detail lives on the Worklist and the record. */}
+                      <b className="block truncate text-[14px]" title={l.detail || undefined}>{l.what}</b>
                     </span>
                     {l.dueAt && <span className={`text-[12.5px] ${STATE(lm)}`}>{dueShort(l.dueAt, now)}</span>}
                     <Link href={l.href} className={GO}>{l.action}</Link>
