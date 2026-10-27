@@ -2,8 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
-import { JOB_STAGES, jobsHref, workJobRows } from "@/lib/work-app";
-import { AppCrumb, AlsoIn, StageChips } from "@/components/home/AppNav";
+import { JOB_STAGES, jobsHref } from "@/lib/work-app";
+import { sellerDashboard } from "@/lib/dashboard/seller";
+import { todoGroups } from "@/lib/todo";
+import { StageBand } from "@/components/home/StageBand";
+
+const STEP_GROUPS: Record<string, string[]> = { "You Matched": ["Jobs for You"], "They Requested": ["Availability Requests", "Questions to Answer"], "You Interviewed": ["Interview Times to Pick", "Tests to Take"] };
+import { AppCrumb, AlsoIn } from "@/components/home/AppNav";
 import { BTN, BTN_OUT } from "@/components/hire/HireUI";
 
 export const metadata = { title: "Jobs for You · Work · Panameer" };
@@ -17,7 +22,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   const me = await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true } });
   if (!me) redirect("/dashboard");
   const { stage: raw } = await searchParams;
-  const rows = (await workJobRows(me.id, viewer)).filter((r) => r.donut === "jobs");
+  const [all, actions] = await Promise.all([sellerDashboard(me.id, viewer).then((d) => d.rows), todoGroups(me.id, "provider")]);
+  const rows = all.filter((r) => r.type === "Job" && r.donut === "jobs");
+  const orderN = (slice: string) => all.filter((r) => r.type === "Order" && r.slice === slice).length;
   const stage = JOB_STAGES.find((s) => s === raw) ?? "all";
   const list = stage === "all" ? rows : rows.filter((r) => r.slice === stage);
   const open = await prisma.job.count({ where: { kind: "JOB", status: "OPEN" } });
@@ -31,7 +38,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
         </div>
         <Link href="/find-work?tab=best" className={BTN}>Browse the Job Board</Link>
       </div>
-      <div className="mt-4"><StageChips base={jobsHref()} current={stage} stages={[["all", "All", rows.length], ...JOB_STAGES.map((s) => [s, s, rows.filter((r) => r.slice === s).length] as [string, string, number])]} /></div>
+      {/* WA-E002: the flow's strip — a step filters the list; "n Actions →" opens the Worklist for that step. */}
+      <div className="mt-4"><StageBand label="Jobs for You" current={stage === "all" ? undefined : stage} actions={actions} steps={[
+        ...JOB_STAGES.map((s) => ({ key: s, label: s, n: rows.filter((r) => r.slice === s).length, href: jobsHref(s), groups: STEP_GROUPS[s] })),
+        { key: "Order to Accept", label: "Order to Accept", n: orderN("To Accept"), href: "/orders/overview", groups: ["Orders to Accept"] },
+        { key: "Order Active", label: "Order Active", n: orderN("Active"), href: "/orders/overview" },
+      ]} />{stage !== "all" && <Link href={jobsHref()} className="mb-3 mt-2 inline-block text-[12.5px] font-semibold text-ink-2 underline">Show All</Link>}</div>
       <ul className="divide-y divide-line border-y border-line">
         {list.map((r) => (
           <li key={r.key} className="flex flex-wrap items-center gap-3 py-3" data-work-job={r.slice}>

@@ -54,7 +54,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
           {/* NC-E003: one action line instead of the Things Need Attention block. */}
           {/* NC-E007: header + action line → step strip → 4 tiles → What You Can Do. My Jobs is behind the Jobs tile. */}
           <div className="mb-4"><ActionLine count={countActions(hireActions, "/worklist?app=hire")} /></div>
-          <div className="mb-6"><HireBand personId={me.id} /></div>
           <h2 className="mb-3 text-[20px] font-extrabold">At a Glance</h2>
           <DashPies donuts={await hireTiles(viewer, me.id)} side="buyer" compact actions={hireActions} app="hire" />
           <h2 className="mb-3 mt-8 text-[20px] font-extrabold">What You Can Do</h2>
@@ -65,6 +64,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
             { label: "Write Questions", href: "/hire/overview?tab=questions", icon: "list" },
           ]} />
         </>}
+        {/* WA-E002/E007: the Job Timeline lives on the Jobs page, above the list. */}
+        {tab === "jobs" && <div className="mb-6"><HireBand personId={me.id} actions={await todoGroups(me.id, "buyer")} /></div>}
         {tab === "jobs" && <JobsTab personId={me.id} step={sp.step ?? null} slice={sp.slice} q={sp.q ?? ""} />}
         {tab === "requests" && <RequestsTab personId={me.id} slice={sp.slice} />}
         {tab === "interviews" && <InterviewsTab personId={me.id} userId={viewer.userId} view={sp.view ?? null} show={sp.show ?? null} date={sp.date ?? null} />}

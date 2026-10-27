@@ -1,6 +1,8 @@
 import { offersForBuyer, openOffersForSeller } from "@/lib/service-product-offers";
 import { OffersList } from "@/components/catalog/OffersList";
 import Link from "next/link";
+import { StageBand } from "@/components/home/StageBand";
+import type { AttentionItem } from "@/lib/attention";
 import type { Viewer } from "@/lib/access";
 import { estimatesPage, type EstimateListRow } from "@/lib/estimate-requests";
 import { formatCents } from "@/lib/display";
@@ -38,9 +40,15 @@ function Rows({ rows, withdraw = false }: { rows: EstimateListRow[]; withdraw?: 
 
 // Scott 2026-10-12: one side per page. Catalog › Estimates = the seller's (requests waiting on you + estimates you sent);
 // My Estimates (Shop / My menu) = the buyer's (estimates and requests you've received or made). Private to the two parties of each.
-export async function EstimatesBody({ viewer, side, tabs, seller = false }: { viewer: Viewer; side: "seller" | "buyer"; tabs: React.ReactNode; seller?: boolean }) {
+export async function EstimatesBody({ viewer, side, tabs, seller = false, stage, actions }: { viewer: Viewer; side: "seller" | "buyer"; tabs: React.ReactNode; seller?: boolean; /** WA-E002: asked · sent · accepted · expired */ stage?: string; actions?: AttentionItem[] }) {
   const [d, offers] = await Promise.all([estimatesPage(viewer), side === "seller" ? openOffersForSeller(viewer).catch(() => []) : offersForBuyer(viewer).catch(() => [])]);
   if (side === "seller") {
+    // WA-E002: the Estimates strip (Asked of You → Sent → Accepted); a step filters the list.
+    const SENT = new Set(["SENT", "CHANGES_REQUESTED"]);
+    const sentRows = d.sent.filter((r) => SENT.has(r.status)), acceptedRows = d.sent.filter((r) => r.status === "ACCEPTED"), expiredRows = d.sent.filter((r) => r.status === "EXPIRED");
+    const shownSent = stage === "sent" ? sentRows : stage === "accepted" ? acceptedRows : stage === "expired" ? expiredRows : d.sent;
+    const showAsked = !stage || stage === "asked";
+    const showSent = !stage || stage !== "asked";
     return (
       <div className="pm-white-page mx-auto w-full max-w-5xl" data-estimates-side="seller">
         {tabs}
@@ -49,18 +57,23 @@ export async function EstimatesBody({ viewer, side, tabs, seller = false }: { vi
           <p className="text-[14px] text-ink-2">Quotes you send to one customer, private to the two of you.</p>
           <Link href="/catalog/estimates/new" data-create-estimate className="inline-flex min-h-10 shrink-0 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover">Create an Estimate</Link>
         </div>
-        <section id="offers" data-offers-waiting className="mt-6 scroll-mt-24">
+        {actions && <div className="mt-5"><StageBand label="Estimates" current={stage} actions={actions} steps={[
+          { key: "asked", label: "Asked of You", n: d.waiting.length, href: "/work/estimates?stage=asked", groups: ["Estimates"] },
+          { key: "sent", label: "Sent", n: sentRows.length, href: "/work/estimates?stage=sent" },
+          { key: "accepted", label: "Accepted", n: acceptedRows.length, href: "/work/estimates?stage=accepted" },
+        ]} />{stage && <Link href="/work/estimates" className="mt-2 inline-block text-[12.5px] font-semibold text-ink-2 underline">Show All</Link>}</div>}
+        {!stage && <section id="offers" data-offers-waiting className="mt-6 scroll-mt-24">
           <h2 className="mb-2 text-[17px] font-bold">Offers Waiting on You{offers.length > 0 && <small className="ml-1.5 text-[12px] font-medium text-ink-3">{offers.length}</small>}</h2>
           <OffersList offers={offers} side="seller" />
-        </section>
-        <section data-requests-waiting className="mt-8">
+        </section>}
+        {showAsked && <section data-requests-waiting className="mt-8">
           <h2 className="mb-2 text-[17px] font-bold">Requests Waiting on You{d.waiting.length > 0 && <small className="ml-1.5 text-[12px] font-medium text-ink-3">{d.waiting.length}</small>}</h2>
           {d.waiting.length ? <Rows rows={d.waiting} /> : <p className="border-t border-line pt-3 text-[14px] text-ink-2">No requests right now. Buyers ask from your profile, your services and your Service Products.</p>}
-        </section>
-        <section data-estimates-sent className="mt-8">
-          <h2 className="mb-2 text-[17px] font-bold">Sent Estimates{d.sent.length > 0 && <small className="ml-1.5 text-[12px] font-medium text-ink-3">{d.sent.length}</small>}</h2>
-          {d.sent.length ? <Rows rows={d.sent} /> : <p className="border-t border-line pt-3 text-[14px] text-ink-2">None yet.</p>}
-        </section>
+        </section>}
+        {showSent && <section data-estimates-sent className="mt-8">
+          <h2 className="mb-2 text-[17px] font-bold">Sent Estimates{shownSent.length > 0 && <small className="ml-1.5 text-[12px] font-medium text-ink-3">{shownSent.length}</small>}</h2>
+          {shownSent.length ? <Rows rows={shownSent} /> : <p className="border-t border-line pt-3 text-[14px] text-ink-2">None yet.</p>}
+        </section>}
       </div>
     );
   }

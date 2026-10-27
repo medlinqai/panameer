@@ -1,15 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { sellerDashboard } from "@/lib/dashboard/seller";
-import { C, type DashRow, type Donut } from "@/lib/dashboard/types";
+import { C, type Donut } from "@/lib/dashboard/types";
 import type { AttentionItem, AttentionLine } from "@/lib/attention";
 
 // WK-E002 / WA-E001: the Work home's tiles — Jobs for You · Estimates · Product Orders · Catalog.
 export const JOB_STAGES = ["You Matched", "You Applied", "They Requested", "You Answered", "You Interviewed", "They Chose You"] as const;
 export const jobsHref = (stage?: string) => (stage ? `/work/jobs?stage=${encodeURIComponent(stage)}` : "/work/jobs");
 
-export async function workJobRows(personId: string, viewer: { userId: string }): Promise<DashRow[]> {
-  return (await sellerDashboard(personId, viewer)).rows.filter((r) => r.type === "Job");
-}
 
 // WA-E001: Product Orders — buyers who ordered your Service Products in Shop, through delivery.
 export const PRODUCT_STAGES = ["Requested to Buy", "To Accept", "In Delivery", "Delivered"] as const;

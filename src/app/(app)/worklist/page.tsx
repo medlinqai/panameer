@@ -78,6 +78,7 @@ export default async function Page({
     .filter((r) => r.eventKey === "todo.item" || !r.href || !derived.has(r.href))
     .filter((r) => !sp.app || appOf(r) === sp.app)
     .filter((r) => !tileGroups || tileGroups.includes(r.group ?? ""))
+    .filter((r) => !sp.group || sp.group.split(",").includes(r.group ?? ""))
     .sort((a, b) => Number(overdue(b)) - Number(overdue(a)) || (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || a.at.getTime() - b.at.getTime());
   const byApp = Object.keys(APP_FILTER).map((k) => ({ key: k, label: APP_FILTER[k].label, rows: shown.filter((r) => appOf(r) === k) })).filter((g) => g.rows.length);
   const appCountsAll = Object.keys(APP_FILTER).map((k) => ({ key: k, label: APP_FILTER[k].label, n: rows.filter((r) => (r.eventKey === "todo.item" || !r.href || !derived.has(r.href)) && appOf(r) === k).length })).filter((a) => a.n);

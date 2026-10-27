@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { hireOverviewData } from "@/lib/live-work";
 import { PathBand, type BandStep } from "@/components/hire/HireUI";
+import type { AttentionItem } from "@/lib/attention";
+import { countActions } from "@/lib/tile-actions";
 
 // NC-E006: the buyer's end-to-end step strip (1 Create Job → … → 6 Request to Hire → Order Created) — on Hire and the dashboard.
 // Each step shows its count and opens its list; steps waiting on you carry a red dot.
@@ -15,7 +17,10 @@ async function overviewFor(personId: string) {
   return d;
 }
 
-export async function HireBand({ personId }: { personId: string }) {
+// WA-E002: a step's Worklist groups → "n Actions →" under it (no red dots).
+const STEP_GROUPS: Record<string, string[]> = { availability: ["Compare Answers", "Answer Date Passed"], interview: ["Interview Times to Confirm"], hire: ["Request Approvals"], wo: ["Orders to Accept"] };
+
+export async function HireBand({ personId, actions = [] }: { personId: string; actions?: AttentionItem[] }) {
   const d = await overviewFor(personId);
   // MD-E006: the six Job Timeline steps (+ Order Created) — each job counted once, at its current step.
   const asked = new Set((await prisma.questionSet.findMany({ where: { job_id: { in: d.jobRows.map((j) => j.id) } }, select: { job_id: true } })).map((q) => q.job_id));
@@ -40,7 +45,7 @@ export async function HireBand({ personId }: { personId: string }) {
   const band: BandStep[] = TIMELINE.map((t, i) => {
     const c = counts[i];
     const label = t.key === "wo" ? <>Order Created · <span className="text-magenta-dark">Orders →</span></> : t.label;
-    return { key: t.key, label, top: <span className={`text-[22px] font-extrabold ${c ? (i === active ? "text-magenta" : "text-ink") : "text-state-border"}`}>{c}</span>, bar: i <= active ? "done" : "todo", current: i === active, needs: c > 0 && !!needs[t.key], href: t.key === "wo" ? "/orders/overview" : `/hire/overview?tab=jobs&step=${t.step}`, muted: !c && i !== active };
+    return { key: t.key, label, top: <span className={`text-[22px] font-extrabold ${c ? "text-ink" : "text-state-border"}`}>{c}</span>, bar: i <= active ? "done" : "todo", current: i === active, actions: STEP_GROUPS[t.key] ? countActions(actions, `/worklist?group=${encodeURIComponent(STEP_GROUPS[t.key].join(","))}`, (g) => STEP_GROUPS[t.key].includes(g.title ?? g.what)) : undefined, href: t.key === "wo" ? "/orders/overview" : `/hire/overview?tab=jobs&step=${t.step}`, muted: !c && i !== active };
   });
   return <PathBand steps={band} label="Job Timeline" />;
 }

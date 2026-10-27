@@ -266,7 +266,7 @@ export async function getActList(
   if (status === "open") where.resolved_at = null;
   else if (status === "completed") where.resolved_at = { not: null };
   if (opts.category) where.category = opts.category;
-  if (opts.group) where.todo_group = opts.group;
+  if (opts.group) where.todo_group = { in: opts.group.split(",") };
   const term = opts.q?.trim();
   if (term && term.length >= 2) {
     where.OR = [

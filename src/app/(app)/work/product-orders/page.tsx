@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { PRODUCT_STAGES, productOrderRows } from "@/lib/work-app";
-import { AppCrumb, AlsoIn, StageChips } from "@/components/home/AppNav";
+import { AppCrumb, AlsoIn } from "@/components/home/AppNav";
+import { StageBand } from "@/components/home/StageBand";
+import { todoGroups } from "@/lib/todo";
 import { BTN_OUT } from "@/components/hire/HireUI";
 
 export const metadata = { title: "Product Orders · Work · Panameer" };
@@ -14,14 +16,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   const me = await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true } });
   if (!me) redirect("/dashboard");
   const { stage: raw } = await searchParams;
-  const rows = await productOrderRows(me.id);
+  const [rows, actions] = await Promise.all([productOrderRows(me.id), todoGroups(me.id, "provider")]);
   const stage = PRODUCT_STAGES.find((s) => s === raw) ?? "all";
   const list = stage === "all" ? rows : rows.filter((r) => r.stage === stage);
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6" data-work-product-orders>
       <AppCrumb app="Work" href="/work/home" page="Product Orders" />
       <h1 className="text-[28px] font-extrabold">Product Orders</h1>
-      <div className="mt-4"><StageChips base="/work/product-orders" current={stage} stages={[["all", "All", rows.length], ...PRODUCT_STAGES.map((s) => [s, s, rows.filter((r) => r.stage === s).length] as [string, string, number])]} /></div>
+      <div className="mt-4"><StageBand label="Product Orders" current={stage === "all" ? undefined : stage} actions={actions} steps={PRODUCT_STAGES.map((s) => ({ key: s, label: s, n: rows.filter((r) => r.stage === s).length, href: `/work/product-orders?stage=${encodeURIComponent(s)}`, groups: s === "To Accept" ? ["Accept Product Orders"] : undefined }))} />{stage !== "all" && <Link href="/work/product-orders" className="mb-3 mt-2 inline-block text-[12.5px] font-semibold text-ink-2 underline">Show All</Link>}</div>
       <ul className="divide-y divide-line border-y border-line">
         {list.map((r) => (
           <li key={r.key} className="flex flex-wrap items-center gap-3 py-3" data-product-order={r.stage}>

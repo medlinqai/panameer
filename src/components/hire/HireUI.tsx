@@ -63,24 +63,26 @@ export function HeadRow({ title, children }: { title: string; children?: ReactNo
   );
 }
 
-export type BandStep = { key: string; label: ReactNode; top: ReactNode; bar: "done" | "todo" | "dashed"; current?: boolean; needs?: boolean; href?: string; muted?: boolean };
+export type BandStep = { key: string; label: ReactNode; top: ReactNode; bar: "done" | "todo" | "dashed"; current?: boolean; needs?: boolean; href?: string; muted?: boolean; /** WA-E002: "n Actions →" under the step (red when any is overdue) — replaces the red dot. */ actions?: { n: number; overdue: number; href: string } };
 /** The thin path band: something above each step, a 4 px bar, the label under; scrolls inside its box on phones. */
 export function PathBand({ steps, label = "Path" }: { steps: BandStep[]; label?: string }) {
   return (
     <section aria-label={label} className="overflow-x-auto rounded-[12px] border border-state-border px-5 py-5 sm:px-6" data-path-band>
       <div className="grid items-start text-center" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(92px, 1fr))`, minWidth: steps.length * 94 }}>
         {steps.map((s) => {
+          const act = s.actions && s.actions.n > 0 ? <Link href={s.actions.href} className={`mt-1 text-[11.5px] font-bold hover:underline ${s.actions.overdue ? "text-state-declined" : "text-state-pending"}`} data-step-actions>{s.actions.n} Action{s.actions.n === 1 ? "" : "s"} →</Link> : null;
           const body = (
             <>
-              <span className="flex min-h-[26px] items-center justify-center gap-1.5">{s.top}{s.needs && <RedDot size={8} />}</span>
-              <span className="h-1 w-full" style={{ background: s.bar === "done" ? "#b324b2" : s.bar === "dashed" ? "repeating-linear-gradient(90deg, var(--color-state-border) 0 6px, transparent 6px 10px)" : "var(--color-state-sunken)" }} />
+              <span className="flex min-h-[26px] items-center justify-center gap-1.5">{s.top}</span>
+              <span className="h-1 w-full" style={{ background: s.bar === "done" ? "var(--color-magenta-dark)" : s.bar === "dashed" ? "repeating-linear-gradient(90deg, var(--color-state-border) 0 6px, transparent 6px 10px)" : "var(--color-state-sunken)" }} />
               <span className={`text-[12px] ${s.current ? "font-extrabold" : "font-semibold"} ${s.muted ? "text-state-disabled" : ""}`}>{s.label}</span>
             </>
           );
-          return s.href ? (
-            <Link key={s.key} href={s.href} className="flex flex-col items-center gap-2 px-0.5 text-ink no-underline hover:underline" data-band-step={s.key}>{body}</Link>
-          ) : (
-            <div key={s.key} className="flex flex-col items-center gap-2 px-0.5" data-band-step={s.key}>{body}</div>
+          return (
+            <div key={s.key} className="flex flex-col items-center px-0.5" data-band-step={s.key}>
+              {s.href ? <Link href={s.href} className="flex w-full flex-col items-center gap-2 text-ink no-underline hover:underline">{body}</Link> : <div className="flex w-full flex-col items-center gap-2">{body}</div>}
+              {act}
+            </div>
           );
         })}
       </div>
