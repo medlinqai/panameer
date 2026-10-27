@@ -30,10 +30,12 @@ export async function POST(request: Request) {
 
   const d = event.data as { email_id: string; from?: string; to?: string[]; received_for?: string[]; subject?: string; attachments?: { id: string; filename?: string; content_type?: string }[] };
   // EX-E001: job-alert emails forwarded to jobs@ (LinkedIn / Indeed alerts, or an agent's daily report) → the job intake.
-  // Only mail from a Panameer admin's address is read, so nobody else can put jobs in.
+  // Only mail from a Panameer admin's address (or EXTERNAL_JOBS_SENDERS) is read, so nobody else can put jobs in.
   if ([...(d.to ?? []), ...(d.received_for ?? [])].some((a) => /(^|<)jobs(\+[^@]*)?@/i.test(a))) {
     const sender = (String(d.from ?? "").match(/<([^>]+)>/)?.[1] ?? String(d.from ?? "")).trim().toLowerCase();
-    const admin = await prisma.user.findFirst({ where: { email: { equals: sender, mode: "insensitive" }, is_system_admin: true }, select: { id: true } });
+    // Allowed senders: Panameer system admins, plus any address in EXTERNAL_JOBS_SENDERS (comma-separated, any case).
+    const listed = (process.env.EXTERNAL_JOBS_SENDERS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean).includes(sender);
+    const admin = listed || (await prisma.user.findFirst({ where: { email: { equals: sender, mode: "insensitive" }, is_system_admin: true }, select: { id: true } }));
     if (!admin) { console.warn(`[resend-inbound] jobs@ mail from a non-admin (${sender}) — dropped`); return NextResponse.json({ ok: true, dropped: true }); }
     const full = await resend.emails.receiving.get(d.email_id);
     const { parseAlertEmail, intakeJobs } = await import("@/lib/external-jobs");
