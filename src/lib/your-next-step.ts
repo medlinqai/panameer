@@ -9,7 +9,7 @@ export function orderStep(o: { id: string; status: string; party: "BUYER" | "PRO
     if (o.status === "ISSUED" && !o.buyerAcceptedAt) return { next: { text: "Review and Accept the Order", ...review } };
     if (o.status === "ISSUED") return { waiting: `Waiting on ${o.providerName} to accept` };
     if (RELEASED.has(o.status)) return { waiting: `Order active · ${o.providerName} is working; approve invoices as they come` };
-    if (DONE.has(o.status)) return { next: { text: `Recommend ${o.providerName}`, label: "Recommend", href: "/connect/recommendations" } };
+    if (DONE.has(o.status)) return { next: { text: `Recommend ${o.providerName}`, label: "Recommend", href: `/recommend-order/${o.id}` } };
   }
   if (o.party === "PROVIDER") {
     // The buyer accepts first, then the provider.

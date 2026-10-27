@@ -388,3 +388,24 @@ export async function publicTestimonials(profileId: string) {
 
 /** One published recommendation, as the profile renders it. */
 export type Testimonial = Awaited<ReturnType<typeof publicTestimonials>>[number];
+
+/**
+ * Scott 10-27: "Recommend {seller}" on the buyer's Worklist after a Completed Order. Recommendations are written through a
+ * request link, so the buyer's click makes that request (addressed to the buyer, from the Order's provider — no email) and
+ * returns the link to write it. Owner-scoped: only the buyer on that Completed Order.
+ */
+export async function offerRecommendation(viewer: Viewer, orderId: string): Promise<string> {
+  const me = await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true, first_name: true, last_name: true, user: { select: { email: true } } } });
+  const order = await prisma.workOrder.findUnique({ where: { id: orderId }, select: { buyer_person_id: true, provider_person_id: true, status: true } });
+  if (!me?.user?.email || !order || order.buyer_person_id !== me.id || !["CLOSED", "FINALLY_CLOSED"].includes(order.status)) throw new RecommendationError("That Order isn't yours to recommend from.", "INVALID");
+  const profile = await prisma.providerProfile.findUnique({ where: { person_id: order.provider_person_id }, select: { id: true } });
+  if (!profile) throw new RecommendationError("That provider has no profile to recommend.", "INVALID");
+  const email = normalizeEmail(me.user.email);
+  if (await prisma.recommendationRequest.count({ where: { provider_profile_id: profile.id, contact_email: email, status: "SUBMITTED" } })) throw new RecommendationError("You've already recommended them.", "ALREADY_ANSWERED");
+  const raw = randomBytes(32).toString("hex");
+  const fields = { contact_name: displayFullName(me.first_name, me.last_name).slice(0, 120), contact_off_platform: false, message: "Recommendation offered after your Order together.", token_hash: hashToken(raw), status: "SENT" as const, expires_at: new Date(Date.now() + TOKEN_TTL_MS), sent_at: new Date() };
+  const live = await prisma.recommendationRequest.findFirst({ where: { provider_profile_id: profile.id, contact_email: email, status: "SENT" }, select: { id: true } });
+  if (live) await prisma.recommendationRequest.update({ where: { id: live.id }, data: fields });
+  else await prisma.recommendationRequest.create({ data: { provider_profile_id: profile.id, contact_email: email, ...fields } });
+  return `/recommend/${raw}`;
+}

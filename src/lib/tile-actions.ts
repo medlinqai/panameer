@@ -4,7 +4,7 @@ import type { AttentionItem } from "@/lib/attention";
 export const TILE_GROUPS: Record<string, string[]> = {
   jobs: ["Compare Answers", "Answer Date Passed", "Availability Requests", "Questions to Answer", "Jobs for You"],
   requests: ["Request Approvals"],
-  orders: ["Orders to Accept", "Review Change Orders"],
+  orders: ["Orders to Accept", "Review Change Orders", "Recommend Your Provider", "Ask for a Recommendation"],
   payments: ["Approve Invoices"],
   account: ["Set-Up"],
   profile: ["Profile"],

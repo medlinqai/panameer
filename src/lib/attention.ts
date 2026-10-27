@@ -313,6 +313,34 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
       if (ls.length) items.push({ id: `connect:${g}`, title: g, n: ls.length, what: g, app: "connect", appLabel: "Connect", due: null, dueAt: null, href: ls[0].href, action: "Open", tier: tierOf + 0.1, lines: ls });
     }
   };
+  // Scott 10-27: a Completed Order puts "Recommend {seller}" on the buyer's Worklist and "Ask {buyer} for a Recommendation"
+  // on the seller's; each clears when done (the buyer's recommendation is submitted / the seller's request is sent).
+  const afterCompleted = async () => {
+    const done = await prisma.workOrder.findMany({ where: { ...(side === "buyer" ? { buyer_person_id: id } : { provider_person_id: id }), status: { in: ["CLOSED", "FINALLY_CLOSED"] } }, orderBy: { updated_at: "desc" }, take: 20, select: { id: true, provider_person_id: true, buyer_person_id: true } });
+    if (!done.length) return;
+    const sel = { id: true, first_name: true, last_name: true, company: { select: { name: true } }, user: { select: { email: true } }, providerProfile: { select: { id: true } } } as const;
+    const people = new Map((await prisma.person.findMany({ where: { id: { in: [id, ...done.flatMap((o) => [o.provider_person_id, o.buyer_person_id])] } }, select: sel })).map((p) => [p.id, p]));
+    const me = people.get(id);
+    const seen = new Set<string>();
+    const lines: AttentionLine[] = [];
+    for (const o of done) {
+      const otherId = side === "buyer" ? o.provider_person_id : o.buyer_person_id;
+      const other = people.get(otherId);
+      if (!other || seen.has(otherId)) continue;
+      seen.add(otherId);
+      const ppId = side === "buyer" ? other.providerProfile?.id : me?.providerProfile?.id;
+      const email = side === "buyer" ? me?.user?.email : other.user?.email;
+      if (!ppId || !email) continue;
+      const already = await prisma.recommendationRequest.count({ where: { provider_profile_id: ppId, contact_email: { equals: email, mode: "insensitive" }, status: side === "buyer" ? "SUBMITTED" : { in: ["SENT", "SUBMITTED"] } } });
+      if (already) continue;
+      const name = `${other.first_name} ${other.last_name}`.trim();
+      lines.push(side === "buyer"
+        ? { key: o.id, what: `Recommend ${name}`, detail: "", dueAt: null, href: `/recommend-order/${o.id}`, action: "Recommend" }
+        : { key: o.id, what: `Ask ${other.company?.name ?? name} for a Recommendation`, detail: "", dueAt: null, href: "/connect/recommendations", action: "Ask" });
+    }
+    const title = side === "buyer" ? "Recommend Your Provider" : "Ask for a Recommendation";
+    if (lines.length) items.push({ id: `order:${title}`, title, n: lines.length, what: title, app: "order", appLabel: "Orders", due: null, dueAt: null, href: "/connect/recommendations", action: "Open", tier: 3, lines });
+  };
   const ORDER_SEL = { id: true, order_number: true, description: true, not_to_exceed_cents: true, period_start: true, provider_person_id: true, buyer_person_id: true, created_at: true } as const;
   // Name the job(s) each item is about — one query for all of them.
   const titled = async () => {
@@ -366,6 +394,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
     // Purchases, payments due, messages, learning and "Recommend" after an Order are news or live elsewhere (NC-E001).
     void pay;
     await stageGroups();
+    await afterCompleted();
     await titled();
     // WK-E008: the Worklist is the one source — write these lines into it, then read the panel back from it.
     const { syncTodo, todoGroups } = await import("@/lib/todo");
@@ -411,6 +440,7 @@ export async function appCounts(viewer: { userId: string }, side: "buyer" | "pro
   // Estimates and tests are one line each in workLines; drafts to submit, payouts and messages aren't on the action list (NC-E001).
   void ec; void paidIn;
   await stageGroups();
+  await afterCompleted();
   const pp = await prisma.providerProfile.findUnique({ where: { person_id: id }, select: { id: true } });
   items.push(...(await (await import("@/lib/work-app")).workLines(id, pp?.id ?? null).catch(() => [])));
   await titled();
