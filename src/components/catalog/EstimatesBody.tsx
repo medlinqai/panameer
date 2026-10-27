@@ -36,7 +36,7 @@ function Rows({ rows, withdraw = false }: { rows: EstimateListRow[]; withdraw?: 
   );
 }
 
-// Scott 2026-10-12: one side per page. My Catalog › Estimates = the seller's (requests waiting on you + estimates you sent);
+// Scott 2026-10-12: one side per page. Catalog › Estimates = the seller's (requests waiting on you + estimates you sent);
 // My Estimates (Shop / My menu) = the buyer's (estimates and requests you've received or made). Private to the two parties of each.
 export async function EstimatesBody({ viewer, side, tabs, seller = false }: { viewer: Viewer; side: "seller" | "buyer"; tabs: React.ReactNode; seller?: boolean }) {
   const [d, offers] = await Promise.all([estimatesPage(viewer), side === "seller" ? openOffersForSeller(viewer).catch(() => []) : offersForBuyer(viewer).catch(() => [])]);
@@ -76,7 +76,7 @@ export async function EstimatesBody({ viewer, side, tabs, seller = false }: { vi
         <h2 className="mb-2 text-[17px] font-bold">My Offers{offers.length > 0 && <small className="ml-1.5 text-[12px] font-medium text-ink-3">{offers.length}</small>}</h2>
         <OffersList offers={offers} side="buyer" />
       </section>
-      {seller && <p className="mt-6 text-[13.5px] text-ink-2">Estimates you send to customers are in <Link href="/catalog/estimates" className="font-bold text-magenta-dark underline underline-offset-4">My Catalog › Estimates</Link>.</p>}
+      {seller && <p className="mt-6 text-[13.5px] text-ink-2">Estimates you send to customers are in <Link href="/catalog/estimates" className="font-bold text-magenta-dark underline underline-offset-4">Catalog › Estimates</Link>.</p>}
     </div>
   );
 }

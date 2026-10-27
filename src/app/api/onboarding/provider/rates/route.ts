@@ -5,7 +5,7 @@ import { ownedProviderProfile } from "@/lib/access";
 import { buildCatalogData, ensureDefaultRates } from "@/lib/build-catalog";
 import { companyIdForProfile, companyProviderCount } from "@/lib/company-catalog";
 
-// SO-E004 Get Found › Your Rates: the My Catalog › Services rates table, embedded (same data, default rate types on first).
+// SO-E004 Get Found › Your Rates: the Catalog › Services rates table, embedded (same data, default rate types on first).
 export async function GET() {
   const viewer = await guardApi("authenticated");
   if (viewer instanceof NextResponse) return viewer;

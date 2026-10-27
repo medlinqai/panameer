@@ -6,11 +6,11 @@ import { AppCrumb, AlsoIn } from "@/components/home/AppNav";
 import { ServicesSection, ProductsSection } from "@/components/catalog/CatalogSections";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "My Catalog · Panameer" };
+export const metadata = { title: "Catalog · Panameer" };
 
 const K = "text-[11px] font-bold tracking-[0.14em]";
 
-// MC-E003 / WK-E003: My Catalog — overview, then Services and Service Products as sections (no tabs).
+// MC-E003 / WK-E003: Catalog — overview, then Services and Service Products as sections (no tabs).
 export default async function Page({ searchParams }: { searchParams: Promise<{ edit?: string; type?: string }> }) {
   const { edit, type } = await searchParams;
   const viewer = await guardPage("canProvideServices");
@@ -19,7 +19,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
   const done = h.steps.filter((s) => s.done).length;
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl" data-catalog-home>
-      <AppCrumb app="Work" href="/work/home" page="My Catalog" />
+      <AppCrumb app="Work" href="/work/home" page="Catalog" />
       {h.eyebrow && <p className={`${K} text-magenta`}>{h.eyebrow}</p>}
       <h1 className="mt-2 text-[28px] font-extrabold">Your Catalog</h1>
       <p className="max-w-[760px] text-[14px] leading-relaxed text-ink-2">The rates for the services you offer and the prices for the service products you provide.</p>

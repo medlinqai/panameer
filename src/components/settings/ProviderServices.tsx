@@ -6,7 +6,7 @@ import { termsLine } from "@/lib/billing-terms";
 
 const BTN = "inline-flex min-h-11 items-center border border-ink bg-surface px-4 text-[14px] font-semibold text-ink hover:bg-surface-hover disabled:opacity-40";
 
-/** O-E004 list; creating and editing happen in My Catalog's Create a Service (CAT-E002). */
+/** O-E004 list; creating and editing happen in Catalog's Create a Service (CAT-E002). */
 export function ProviderServices({ initial }: { initial: ProviderServiceRow[] }) {
   const [rows, setRows] = useState(initial);
   const [busy, setBusy] = useState(false);

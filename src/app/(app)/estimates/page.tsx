@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 export const metadata = { title: "Estimates · Panameer" };
 export const dynamic = "force-dynamic";
 
-// My Estimates = the buyer side (Scott 2026-10-12). Sellers' sent estimates live in My Catalog › Estimates; old ?tab=sent links go there.
+// My Estimates = the buyer side (Scott 2026-10-12). Sellers' sent estimates live in Catalog › Estimates; old ?tab=sent links go there.
 export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const viewer = await guardPage("authenticated");
   const seller = canProvideServices(viewer);

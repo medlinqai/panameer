@@ -19,7 +19,7 @@ const SELLER_THINGS: Thing[] = [
   { key: "learn", icon: BookOpen, cue: "book", title: "Learn", line: "Free courses and certification tests.", cta: "Go to Learn", href: "/learn", menu: "/learn" },
   { key: "connect", icon: Users, cue: "people", title: "Connect", line: "Find colleagues and mentors.", cta: "Go to Connect", href: "/connect/community", menu: "/connect/community" },
   { key: "services", icon: Briefcase, cue: "brief", title: "Sell My Services", line: "Browse open work and get asked for your availability.", cta: "Go to Jobs", href: "/find-work", menu: "/find-work" },
-  { key: "products", icon: Tag, cue: "tag", title: "Sell Service Products", line: "List a fixed-price package buyers can order.", cta: "Go to My Catalog", href: "/catalog/products", menu: "/catalog/products" },
+  { key: "products", icon: Tag, cue: "tag", title: "Sell Service Products", line: "List a fixed-price package buyers can order.", cta: "Go to Catalog", href: "/catalog/products", menu: "/catalog/products" },
 ];
 
 /** Small line drawings in brand ink and magenta — decorative, hidden from screen readers. */

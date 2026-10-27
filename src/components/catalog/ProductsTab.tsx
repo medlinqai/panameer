@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import { formatCents } from "@/lib/display";
 import type { PayPlan, Pricing, ProductForm } from "@/lib/catalog-products";
 
-// MC-E006: My Catalog › Service Products — list + the Create card (mockup D). Saves as Draft; Publish checks the six must-haves.
+// MC-E006: Catalog › Service Products — list + the Create card (mockup D). Saves as Draft; Publish checks the six must-haves.
 type PType = { id: string; name: string; pricing_model: string | null; units: string[]; delivery: string | null; lead_time_days: number | null; serviceCategory: { name: string } | null; /** Business type heading (Scott 10-16: all types, yours first). */ group?: string };
 type Product = { id: string; status: string; typeName: string | null; form: ProductForm };
 type Domain = { id: string; process: string; name: string };
@@ -22,7 +22,7 @@ const INPUT = "w-full border border-line bg-surface px-2.5 py-2 text-[13px] font
 const SEC = "border-b border-[#ECEEF4] p-4";
 const N = "mb-2.5 text-[11px] font-extrabold tracking-[0.14em] text-magenta";
 
-export function ProductsTab({ types, products, domains, skills, sellGaps, editId, typeId = null, onSaved }: { types: PType[]; products: Product[]; domains: Domain[]; skills: { id: string; name: string }[]; sellGaps: unknown[]; editId: string | null; typeId?: string | null; /** Embedded (Create What You Sell): reload in place instead of navigating to My Catalog. */ onSaved?: (editId: string | null) => void }) {
+export function ProductsTab({ types, products, domains, skills, sellGaps, editId, typeId = null, onSaved }: { types: PType[]; products: Product[]; domains: Domain[]; skills: { id: string; name: string }[]; sellGaps: unknown[]; editId: string | null; typeId?: string | null; /** Embedded (Create What You Sell): reload in place instead of navigating to Catalog. */ onSaved?: (editId: string | null) => void }) {
   const router = useRouter();
   const start = products.find((p) => p.id === editId);
   const [id, setId] = useState<string | null>(start?.id ?? null);

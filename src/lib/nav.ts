@@ -40,7 +40,7 @@ export const BAND_CONTROL_HREFS = [
 
 const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   "/connect": ["/connect/community", "/providers", "/companies", "/connect/invite", "/coordinator"],
-  // MD-E001 / WK-E001: Estimate lives inside Shop (Get an Estimate); Work = Jobs for You, Estimates, Interviews & Tests, My Catalog.
+  // MD-E001 / WK-E001: Estimate lives inside Shop (Get an Estimate); Work = Jobs for You, Estimates, Interviews & Tests, Catalog.
   "/shop": ["/estimate", "/cart"],
   "/estimate": ["/estimates", "/catalog/estimates"],
   "/work/home": ["/work/jobs", "/work/estimates", "/work/interviews", "/find-work", "/my-services", "/services", "/catalog"],
@@ -61,7 +61,7 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
     "/messages",
     "/notifications",
     "/worklist",
-    // My Estimates stays in the My menu; My Catalog moved to Sell (MD-E001).
+    // My Estimates stays in the My menu; Catalog moved to Sell (MD-E001).
     "/estimates",
   ],
   [MESSAGES_BAND_HREF]: [],
@@ -206,8 +206,8 @@ export const PERSONA_NAV: NavItem[] = [
 ];
 export const COMPANY_PERSONA_ITEM: NavItem = { label: "My Company", heading: "Company", href: "/company" };
 /** Providers' catalog in the My menu, after Profile and Company (Scott 2026-10-10). */
-// MC-E001: sellers get one My Catalog (Home · Services · Service Products · Estimates) in place of three rows.
-// MD-E001: My Catalog left the My menu — it is Sell now.
+// MC-E001: sellers get one Catalog (Home · Services · Service Products · Estimates) in place of three rows.
+// MD-E001: Catalog left the My menu — it is Sell now.
 export const SELLER_PERSONA_ITEMS: NavItem[] = [];
 /** EST-E004: every member — buyers ask for estimates, providers send them. */
 export const ESTIMATES_PERSONA_ITEM: NavItem = { label: "My Estimates", heading: "Estimates", href: "/estimates" };

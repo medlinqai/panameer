@@ -4,7 +4,7 @@ import { sellerCategoryWhere, sellerTypeByName } from "@/lib/business-types";
 import { effectiveRates } from "@/lib/company-catalog";
 import { termsLine } from "@/lib/billing-terms";
 
-// My Catalog (2026-10-09): what a provider sells — services, service products, estimates.
+// Catalog (2026-10-09): what a provider sells — services, service products, estimates.
 
 /** CAT-E004 / RD-E003: publishing needs no Panameer review, only a linked company (validation waits until payment). */
 export async function publishGate(personId: string): Promise<{ ok: boolean; href: string; reason: string | null }> {

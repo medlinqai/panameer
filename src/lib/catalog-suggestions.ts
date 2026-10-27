@@ -7,7 +7,7 @@ import { personBusinessTypes } from "@/lib/business-types";
 import { LIVE_TYPE, saveCatalogService } from "@/lib/build-catalog";
 import { callExtractionModel } from "@/lib/resume/ai-provider";
 
-// BT-E003: Résumé → draft My Catalog items. The AI picks from the business type's stock types (services: a rate only
+// BT-E003: Résumé → draft Catalog items. The AI picks from the business type's stock types (services: a rate only
 // when the résumé states one; service products: only when it names a deliverable). Fallback rules when no AI is
 // configured or the call fails. Each proposal and the provider's Keep / Remove is stored — the tuning log.
 type StockType = { id: string; name: string; kind: ServiceKind; units: ServiceUnit[] };

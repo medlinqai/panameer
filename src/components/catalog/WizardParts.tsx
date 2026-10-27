@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-// Shared pieces of the My Catalog create flows (services, service products, estimates).
+// Shared pieces of the Catalog create flows (services, service products, estimates).
 export const INPUT = "mt-1 h-11 w-full border border-line bg-surface px-3 text-[14px] font-normal focus:border-ink focus:outline-none";
 export const AREA = "mt-1 w-full border border-line bg-surface px-3 py-2 text-[14px] font-normal focus:border-ink focus:outline-none";
 export const LABEL = "block text-[12.5px] font-bold";

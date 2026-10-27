@@ -1,6 +1,6 @@
 import { permanentRedirect } from "next/navigation";
 
-// MO-E004: offers live on My Catalog › Estimates.
+// MO-E004: offers live on Catalog › Estimates.
 export default function Page() {
   permanentRedirect("/catalog/estimates#offers");
 }

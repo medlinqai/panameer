@@ -287,14 +287,14 @@ const emptyAddress = (country = "United States"): AddressDraft => ({
 
 // Scott 10-16: Create What You Sell runs in five parts — Define Skills (résumé, roles) · Get Found (skills
 // buyers search on) · Rates · Products · Go Live (title, review). Going live needs a rate OR a product.
-// Scott 10-16: the Enable My Catalog review shows what the run made; the full profile stays on /profile.
+// Scott 10-16: the Enable Catalog review shows what the run made; the full profile stays on /profile.
 const SHOW_FULL_PROFILE_ON_REVIEW = Boolean(process.env.NEXT_PUBLIC_FULL_REVIEW);
 const SELL_RUN = [
   { key: "define", label: "Define Skills" },
   { key: "found", label: "Get Found" },
   { key: "rates", label: "Rates" },
   { key: "products", label: "Products" },
-  { key: "live", label: "Enable My Catalog" },
+  { key: "live", label: "Enable Catalog" },
 ];
 // The pages under each stop, in order, and what the button calls the next page within a stop.
 const PHASE_PAGES: string[][] = [["tell_us", "roles"], ["skills"], ["rate"], ["products"], ["title", "finish"]];
@@ -1147,7 +1147,7 @@ setScreen(target);
   const upcoming = screen === "rate" ? ("products" as Step) : screen === "products" ? ("title" as Step) : stepIndex >= 0 ? steps[stepIndex + 1] : screen === "tell_us" ? steps[0] : undefined;
   const nextLabel =
     screen === "finish"
-      ? "Enable My Catalog"
+      ? "Enable Catalog"
       : upcoming && phaseOf(upcoming) !== railIndex
         ? `Next: ${GET_FOUND[phaseOf(upcoming)].label}`
         : upcoming && SCREEN_NAME[upcoming]
@@ -2021,7 +2021,7 @@ setScreen(target);
 
     // ---- 11/12 — Rate (E018, "You'll Get") -----------------------------
     case "rate": {
-      // SO-E004: Your Rates = My Catalog › Services' rates table; Next needs at least one rate.
+      // SO-E004: Your Rates = Catalog › Services' rates table; Next needs at least one rate.
       const saveRates = async () => {
         setError(null);
         const r = await fetch("/api/onboarding/provider/rates", { method: "POST" }).catch(() => null);
@@ -2044,7 +2044,7 @@ setScreen(target);
       );
     }
 
-    // Scott 10-16: optional products screen — My Catalog's Service Products inside the run.
+    // Scott 10-16: optional products screen — Catalog's Service Products inside the run.
     case "products": {
       return (
         <WizardShell
@@ -2339,7 +2339,7 @@ setScreen(target);
       return (
         <WizardShell
           {...shell({
-            title: "Enable My Catalog",
+            title: "Enable Catalog",
             subtitle: "Your profile, rates and products as buyers see them. Edit any line, then enable your catalog.",
             wide: true,
             onContinue: publish,

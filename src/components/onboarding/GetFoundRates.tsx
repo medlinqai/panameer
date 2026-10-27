@@ -6,7 +6,7 @@ import { ProductsTab } from "@/components/catalog/ProductsTab";
 
 type Data = { businessTypes: string[]; types: RateType[]; rows: RateRow[]; registration: { ONSITE: number | null; OFFSITE: number | null }; gate: { ok: boolean; reason: string | null; href: string }; multiProvider: boolean; openToOffers: boolean };
 
-// SO-E004 Get Found › Your Rates: My Catalog › Services' rates table, the same component and data.
+// SO-E004 Get Found › Your Rates: Catalog › Services' rates table, the same component and data.
 export function GetFoundRates() {
   const [d, setD] = useState<Data | null>(null);
   useEffect(() => {
@@ -47,7 +47,7 @@ export function GoLiveRates({ onEdit }: { onEdit: () => void }) {
   );
 }
 
-/** Scott 10-16: Create What You Sell › Products — My Catalog's Service Products, kept inside the run. Optional. */
+/** Scott 10-16: Create What You Sell › Products — Catalog's Service Products, kept inside the run. Optional. */
 export function GetFoundProducts() {
   type P = Parameters<typeof ProductsTab>[0];
   const [d, setD] = useState<Omit<P, "editId" | "onSaved"> | null>(null);
@@ -64,7 +64,7 @@ export function GetFoundProducts() {
   );
 }
 
-/** Enable My Catalog: the products buyers will see, with Edit back to Products. */
+/** Enable Catalog: the products buyers will see, with Edit back to Products. */
 export function GoLiveProducts({ onEdit }: { onEdit: () => void }) {
   const [d, setD] = useState<{ products: { id: string; status: string; form: { title: string; priceCents: number | null } }[] } | null>(null);
   useEffect(() => {

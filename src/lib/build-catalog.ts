@@ -94,7 +94,7 @@ export function registrationRate(prof: { onsite_rate_cents: number | null; remot
   return delivery === "ONSITE" ? prof.onsite_rate_cents : delivery === "OFFSITE" ? prof.remote_rate_cents ?? prof.hourly_rate_cents : null;
 }
 
-/** Publish My Catalog: every active, priced service goes live (needs a linked company). */
+/** Publish Catalog: every active, priced service goes live (needs a linked company). */
 export async function publishCatalog(viewer: Viewer) {
   const p = await me(viewer);
   const gate = await publishGate(p.person_id);

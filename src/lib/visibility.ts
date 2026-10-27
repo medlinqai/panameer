@@ -82,7 +82,7 @@ export async function missingForBuyers(profileId: string): Promise<Missing[]> {
   return out.map((key) => ({ key, ...FIX[key] }));
 }
 
-/** Enable My Catalog checks the same rule — except the offer, which Enable itself is about to publish. */
+/** Enable Catalog checks the same rule — except the offer, which Enable itself is about to publish. */
 export async function missingBeforeEnable(profileId: string): Promise<Missing[]> {
   return (await missingForBuyers(profileId)).filter((m) => m.key !== "offer");
 }

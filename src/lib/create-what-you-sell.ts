@@ -6,7 +6,7 @@ import { publishCatalogProduct, productTypes } from "@/lib/catalog-products";
 import { publishProfile } from "@/lib/onboarding";
 import { missingBeforeEnable } from "@/lib/visibility";
 
-// CWS-E002–E005: Create What You Sell, slimmed — What You Do · What You Charge · Enable My Catalog. Owner-scoped from the session.
+// CWS-E002–E005: Create What You Sell, slimmed — What You Do · What You Charge · Enable Catalog. Owner-scoped from the session.
 export class CwsError extends Error {}
 
 async function me(viewer: Viewer) {

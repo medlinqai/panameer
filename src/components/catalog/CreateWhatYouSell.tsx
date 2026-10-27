@@ -122,6 +122,6 @@ export function CreateWhatYouSell() {
         </p>
       )}
     </div>,
-    { label: "Enable My Catalog", disabled: !ready, onClick: async () => { if (await post({ stop: "enable" })) { refreshMe(); router.push("/dashboard"); router.refresh(); } } },
+    { label: "Enable Catalog", disabled: !ready, onClick: async () => { if (await post({ stop: "enable" })) { refreshMe(); router.push("/dashboard"); router.refresh(); } } },
   );
 }

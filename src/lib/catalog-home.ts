@@ -5,7 +5,7 @@ import { estimatesPage } from "@/lib/estimate-requests";
 import { buyersSee } from "@/lib/rate-display";
 import { formatCents } from "@/lib/display";
 
-// MC-E003: My Catalog › Home — what's live and the next step (rates → a Service Product → publish).
+// MC-E003: Catalog › Home — what's live and the next step (rates → a Service Product → publish).
 export async function catalogHome(viewer: Viewer) {
   const [d, est, p] = await Promise.all([
     buildCatalogData(viewer),

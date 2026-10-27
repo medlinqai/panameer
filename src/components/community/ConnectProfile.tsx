@@ -250,7 +250,7 @@ export function ConnectProfile({
     </CleanSection>
   );
 
-  // CAT-E001: My Catalog — services (type · rate / UOM) and, for the owner only, estimates.
+  // CAT-E001: Catalog — services (type · rate / UOM) and, for the owner only, estimates.
   const shownServices = owner ? catalogServices : catalogServices.filter((s) => s.published);
   const servicesSection = (owner || shownServices.length > 0) && (
     <CleanSection title={owner ? "My Services" : "Services"} id="my-services" count={shownServices.length} showWhenEmpty={owner}

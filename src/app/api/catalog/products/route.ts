@@ -20,7 +20,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("addType"), name: z.string().trim().min(3).max(60) }),
 ]);
 
-// MC-E006: My Catalog › Service Products — save (draft or publish) and publish from the list. Owner-scoped in the lib.
+// MC-E006: Catalog › Service Products — save (draft or publish) and publish from the list. Owner-scoped in the lib.
 export async function POST(req: Request) {
   const viewer = await guardApi("canProvideServices");
   if (viewer instanceof NextResponse) return viewer;

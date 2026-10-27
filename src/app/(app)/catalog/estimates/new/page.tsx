@@ -65,7 +65,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
   ];
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <BackLink href="/profile#my-cost-estimates" label="My Catalog" />
+      <BackLink href="/profile#my-cost-estimates" label="Catalog" />
       <div className="mt-2">
         <EstimateWizard
           initial={initial}

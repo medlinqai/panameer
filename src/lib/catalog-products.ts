@@ -9,7 +9,7 @@ const OWN_PRODUCT_TYPE = { merged_into_id: null, hidden: false, status: "SUGGEST
 import { personBusinessTypes } from "@/lib/business-types";
 import { companyIdForProfile } from "@/lib/company-catalog";
 
-// MC-E006: My Catalog › Service Products — the list and the Create card (mockup D). Owner-scoped from the session.
+// MC-E006: Catalog › Service Products — the list and the Create card (mockup D). Owner-scoped from the session.
 export type Pricing = "FIXED" | "MONTHLY" | "HOURLY";
 export type PayPlan = "ON_DELIVERY" | "SPLIT" | "MONTHLY_ADVANCE";
 export type ProductForm = {

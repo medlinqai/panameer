@@ -1529,7 +1529,7 @@ export async function applyProviderSection(
           currency: typeof data.currency === "string" ? data.currency : undefined,
         },
       });
-      // Scott 10-15: the wizard's rates feed My Catalog › Services — fill hourly rate types still without a rate
+      // Scott 10-15: the wizard's rates feed Catalog › Services — fill hourly rate types still without a rate
       // (onsite → ONSITE types, offsite → OFFSITE types). Rates the seller already set in the catalog are left alone.
       for (const [delivery, cents] of [["ONSITE", onsite], ["OFFSITE", remote ?? hourly]] as const) {
         if (cents == null || cents <= 0) continue;

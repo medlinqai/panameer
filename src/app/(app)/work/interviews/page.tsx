@@ -22,7 +22,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
       <AppCrumb app="Work" href="/work/home" page="Interviews & Tests" />
       <StageChips base="/work/interviews" current={tests ? "tests" : "all"} stages={[["all", "Interviews", ivs], ["tests", "Tests", tst]]} />
       {tests ? <JobsTests personId={me.id} slice={sp.slice} /> : <JobsInterviews personId={me.id} userId={viewer.userId} view={sp.view ?? null} show={sp.show ?? null} date={sp.date ?? null} />}
-      <AlsoIn app="Work" links={[["Jobs for You", "/work/jobs"], ["Estimates", "/work/estimates"], ["My Catalog", "/catalog"]]} />
+      <AlsoIn app="Work" links={[["Jobs for You", "/work/jobs"], ["Estimates", "/work/estimates"], ["Catalog", "/catalog"]]} />
     </div>
   );
 }

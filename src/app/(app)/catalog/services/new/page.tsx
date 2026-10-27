@@ -8,7 +8,7 @@ import { BackLink } from "@/components/console/BackLink";
 export const metadata = { title: "Create a Service · Panameer" };
 export const dynamic = "force-dynamic";
 
-// CAT-E002: Create (or edit, ?id=) a service in My Catalog.
+// CAT-E002: Create (or edit, ?id=) a service in Catalog.
 export default async function Page({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
   const viewer = await guardPage("canProvideServices");
   const { id } = await searchParams;
@@ -30,7 +30,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
   };
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <BackLink href="/profile#my-services" label="My Catalog" />
+      <BackLink href="/profile#my-services" label="Catalog" />
       <div className="mt-2">
         <ServiceWizard initial={initial} types={types.map((t) => ({ id: t.id, name: t.name, is_baseline: t.is_baseline }))} gate={gate} providerName={[person?.first_name, person?.last_name].filter(Boolean).join(" ")} />
       </div>

@@ -241,7 +241,7 @@ export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; 
       <section data-suggested className="mb-8 border border-line bg-white p-4">
         <h2 className="text-[17px] font-bold">Member Suggestions ({suggested.length})</h2>
         {suggested.length === 0 ? (
-          <p className="mt-1 text-[13.5px] text-ink-2">Nothing waiting. Members suggest types from My Catalog and the Shop filter.</p>
+          <p className="mt-1 text-[13.5px] text-ink-2">Nothing waiting. Members suggest types from Catalog and the Shop filter.</p>
         ) : (
           <ul className="mt-2">
             {suggested.map((s) => (

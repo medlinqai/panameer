@@ -12,7 +12,7 @@ import { companyIdForProfile, companyProviderCount } from "@/lib/company-catalog
 import { catalogProductsPage } from "@/lib/catalog-products";
 import { ProductsTab } from "@/components/catalog/ProductsTab";
 
-/** WK-E003: My Catalog › Services is a section of the one My Catalog page. */
+/** WK-E003: Catalog › Services is a section of the one Catalog page. */
 export async function ServicesSection({ viewer }: { viewer: Viewer }) {
   await ensureDefaultRates(viewer).catch(() => null);
   const d = await buildCatalogData(viewer);
@@ -68,7 +68,7 @@ export async function ServicesSection({ viewer }: { viewer: Viewer }) {
   );
 }
 
-/** WK-E003: My Catalog › Service Products is a section of the one My Catalog page. */
+/** WK-E003: Catalog › Service Products is a section of the one Catalog page. */
 export async function ProductsSection({ viewer, edit, type }: { viewer: Viewer; edit?: string; type?: string }) {
   const d = await catalogProductsPage(viewer);
   return (

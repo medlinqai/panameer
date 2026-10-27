@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { buyersSee, EXPENSES_LABEL } from "@/lib/rate-display";
 
-// MC-E005: My Catalog › Services — the business type's rate types; toggle, rate, expenses. Saves as you go; draft until published.
+// MC-E005: Catalog › Services — the business type's rate types; toggle, rate, expenses. Saves as you go; draft until published.
 type Unit = "HOUR" | "DAY" | "WEEK" | "MONTH" | "SESSION" | "VISIT" | "EACH";
 export type RateType = { id: string; name: string; description: string | null; units: Unit[]; delivery: string | null; custom?: boolean };
 export type RateRow = { id: string; serviceTypeId: string; rateCents: number | null; unit: string | null; published: boolean; expenses: string | null; hoursIncluded: number | null; offersOverride?: boolean | null; overrideCents?: number | null };
