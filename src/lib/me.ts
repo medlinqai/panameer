@@ -65,10 +65,11 @@ export async function getMe(viewer: Viewer) {
 
   // Messages have their own count, so message notifications are left out of the notification counts.
   // Same rule as the Notifications list (allWhere): an action item that's been done no longer counts, read or not.
-  const notMessages = { person_id: person.id, delivered_in_app_at: { not: null }, read_at: null, dismissed_at: null, AND: [{ NOT: { event_key: "message.received" } }, { NOT: { event_key: "todo.item" } }, { NOT: { requires_action: true, resolved_at: { not: null } } }] };
+  // NC-E001: the bell counts news only (14 days); actions are the Worklist's count.
+  const notMessages = { person_id: person.id, delivered_in_app_at: { not: null }, read_at: null, dismissed_at: null, requires_action: false, created_at: { gte: new Date(Date.now() - 14 * 86_400_000) }, AND: [{ NOT: { event_key: "message.received" } }, { NOT: { event_key: "todo.item" } }] };
   const [notificationsUnread, notificationsNeedAction, messagesUnread, cartCount] = await Promise.all([
     prisma.notification.count({ where: notMessages }),
-    prisma.notification.count({ where: { ...notMessages, requires_action: true, resolved_at: null } }),
+    prisma.notification.count({ where: { person_id: person.id, delivered_in_app_at: { not: null }, requires_action: true, resolved_at: null } }),
     prisma.message.count({ where: { to_user_id: viewer.userId, read_at: null } }),
     prisma.workRequestLine.aggregate({ where: { workRequest: { buyer_person_id: person.id, source: "SHOP", status: "INCOMPLETE" } }, _sum: { quantity: true } }).then((r) => Number(r._sum.quantity ?? 0)),
   ]);

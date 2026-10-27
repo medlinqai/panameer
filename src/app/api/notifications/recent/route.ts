@@ -1,3 +1,4 @@
+import { NEWS_DAYS } from "@/lib/action-rule";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -22,7 +23,8 @@ export async function GET() {
 
   const rows = await prisma.notification.findMany({
     // N-E001: the quick view shows only what hasn't been dismissed.
-    where: { person_id: person.id, delivered_in_app_at: { not: null }, dismissed_at: null, NOT: { event_key: "todo.item" } },
+    // NC-E001/E005: the bell is news only, and news expires after 14 days.
+    where: { person_id: person.id, delivered_in_app_at: { not: null }, dismissed_at: null, requires_action: false, created_at: { gte: new Date(Date.now() - NEWS_DAYS * 86_400_000) }, NOT: { event_key: { in: ["todo.item", "message.received"] } } },
     orderBy: { created_at: "desc" },
     take: TAKE,
     select: {

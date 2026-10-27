@@ -1,3 +1,4 @@
+import { isAction } from "@/lib/action-rule";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { emailConfigured } from "@/lib/email-status";
@@ -78,7 +79,8 @@ export async function notify(input: {
       entity_id: input.entityId ?? null,
       ai_mode: spec.aiMode,
       visibility: spec.visibility,
-      requires_action: spec.requiresAction,
+      // NC-E001: only the action events reach the Worklist.
+      requires_action: spec.requiresAction && isAction(input.event),
       dedupe_key: input.dedupeKey ?? null,
       delivered_in_app_at: deliveredInApp,
       suppressed_reason: suppressed,
