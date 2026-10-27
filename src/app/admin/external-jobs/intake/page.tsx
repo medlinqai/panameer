@@ -18,14 +18,16 @@ export default async function Page() {
     prisma.externalJobKey.findMany({ orderBy: { created_at: "desc" }, select: { id: true, label: true, key_hint: true, created_at: true, revoked_at: true } }),
   ]);
   const n = (r: string) => items.filter((i) => i.result === r).length;
-  const inbound = process.env.EXTERNAL_JOBS_INBOUND_ADDRESS ?? "jobs@in.panameer.com";
+  // EX-E001 (updated): no in.panameer.com — the root panameer.com MX is Scott's mailbox and never changes. Until a jobs
+  // subdomain has its own MX, use Resend's ready-made receiving address; the webhook takes jobs@ at any domain.
+  const inbound = process.env.EXTERNAL_JOBS_INBOUND_ADDRESS ?? null;
   return (
     <div className="mx-auto max-w-6xl" data-ext-intake>
       <p className="text-[13px] font-semibold text-ink-2"><Link href="/admin/external-jobs">← External Jobs</Link> › Bring Jobs In</p>
       <h1 className="mt-1 text-[26px] font-extrabold">Bring Jobs In</h1>
       <p className="text-[14px] text-ink-2">Every route lands in one intake that reads the job, removes duplicates, checks it&apos;s Oracle work and matches it to consultants.</p>
       <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <section className={card}><h2 className="text-[15px] font-extrabold">1. Forward Emails</h2><p className="mt-1 text-[12.5px] text-ink-2">Forward LinkedIn or Indeed job-alert emails (or your agent&apos;s daily report) from your admin address.</p><p className="mt-2 font-mono text-[13px] font-bold">{inbound}</p></section>
+        <section className={card}><h2 className="text-[15px] font-extrabold">1. Forward Emails</h2><p className="mt-1 text-[12.5px] text-ink-2">Forward LinkedIn or Indeed job-alert emails (or your agent&apos;s daily report) from your admin address.</p>{inbound ? <p className="mt-2 font-mono text-[13px] font-bold" data-ext-inbound>{inbound}</p> : <p className="mt-2 text-[12.5px] font-semibold text-state-pending" data-ext-inbound-missing>Not set up yet: in Resend › Receiving, use the ready-made address jobs@…resend.app (webhook → /api/webhooks/resend-inbound), then set EXTERNAL_JOBS_INBOUND_ADDRESS in Vercel.</p>}</section>
         <section className={card}><h2 className="text-[15px] font-extrabold">2. Agent or Spreadsheet Upload</h2><p className="mt-1 text-[12.5px] text-ink-2">CSV or XLSX with title, company, location, link, description, salary — columns matched for you.</p><div className="mt-2"><UploadSheet /></div></section>
         <section className={card}><h2 className="text-[15px] font-extrabold">3. Job Clipper</h2><p className="mt-1 text-[12.5px] text-ink-2">Send to Panameer from the Chrome Job Clipper — paste a key below into its settings.</p></section>
         <section className={card}><h2 className="text-[15px] font-extrabold">4. Connection for an Agent</h2><p className="mt-1 font-mono text-[12px]">POST /api/external-jobs</p><p className="text-[12.5px] text-ink-2">Header X-Api-Key with a key from Keys.</p></section>
