@@ -33,7 +33,7 @@ export async function workApp(personId: string, viewer: { userId: string }) {
   const MINE = new Set(["You Matched", "They Requested"]);
   const COLOR: Record<string, string> = { "You Matched": C.grey, "You Applied": C.steel, "They Requested": C.pend, "You Answered": C.pendSoft, "You Interviewed": C.ink, "They Chose You": C.ok };
   const donuts: Donut[] = [
-    { key: "jobs", title: "Jobs for You", sub: "Matched to your skills", href: jobsHref(), seeAllLabel: "Open Jobs for You", lead: { text: `${openJobs.toLocaleString("en-US")} open jobs on Panameer`, href: "/find-work?tab=best", label: "Browse" },
+    { key: "jobs", title: "Jobs for You", sub: "Matched to your skills", total: `${openJobs.toLocaleString("en-US")} open`, href: jobsHref(), seeAllLabel: "Open Jobs for You", lead: { text: `${openJobs.toLocaleString("en-US")} open jobs on Panameer`, href: "/find-work?tab=best", label: "Browse" },
       slices: JOB_STAGES.map((s) => ({ label: s, n: n(s), color: COLOR[s], mine: MINE.has(s), href: jobsHref(s) })) },
     { key: "estimates", title: "Estimates", sub: "Buyers asking your price", href: "/work/estimates", seeAllLabel: "Open Estimates", slices: [
       { label: "Asked of You", n: asked.length, color: C.pend, mine: true, href: "/estimate" }, { label: "Sent", n: sent, color: C.steel, href: "/work/estimates" },

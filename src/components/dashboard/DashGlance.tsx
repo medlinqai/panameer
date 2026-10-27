@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { DashRow, Donut } from "@/lib/dashboard/types";
+import type { AttentionItem } from "@/lib/attention";
+import { tileCount } from "@/lib/tile-actions";
 
 // MD-E003 / JR-E007/E009: At a Glance pies (each with See All →) on the dashboard; the table on My Transactions (Active by default, 5 rows, Show 10 More).
 const PILL: Record<DashRow["tone"], string> = { ok: "bg-state-accepted-bg text-state-accepted", pend: "bg-state-pending-bg text-state-pending", no: "bg-state-declined-bg text-state-declined", st: "bg-state-inactive-bg text-state-inactive" };
@@ -30,13 +32,14 @@ function Ring({ d, size }: { d: Donut; size: number }) {
 }
 
 /** The pies; a slice or See All opens My Transactions filtered (or the slice's own page). */
-export function DashPies({ donuts, side, size = 88, cols = "sm:grid-cols-2 lg:grid-cols-4", compact = false }: { donuts: Donut[]; side: string; size?: number; cols?: string; /** WK-E009: home pages — title, ring and numbers only; the title opens the tile. */ compact?: boolean }) {
+export function DashPies({ donuts, side, size = 88, cols = "sm:grid-cols-2 lg:grid-cols-4", compact = false, actions, app }: { donuts: Donut[]; side: string; size?: number; cols?: string; /** WK-E009: home pages — title, ring and numbers only; the title opens the tile. */ compact?: boolean; /** NC-E004: the Worklist groups, for each tile's "n Actions Required →". */ actions?: AttentionItem[]; app?: string }) {
   return (
     <div className={`grid gap-3 ${cols}`} data-donuts>
       {donuts.map((d) => (
         <div key={d.key} className="flex flex-col rounded-[12px] border border-line bg-white p-3.5" data-donut={d.key}>
           <h4 className="flex flex-wrap items-baseline gap-x-1.5 text-[14px] font-extrabold">{compact ? <Link href={d.href ?? txHref(side, { donut: d.key })} className="hover:underline">{d.title}</Link> : <>{d.title}<span className="text-[11.5px] font-medium text-ink-3">{d.sub}</span></>}
-            {(() => { const need = d.checklist ? d.checklist.filter((i) => i.n === 0).length : d.slices.reduce((n, s) => n + (s.mine && !s.untracked ? s.n : 0), 0); return need > 0 ? <span className="ml-auto rounded-full bg-state-pending-bg px-2 py-0.5 text-[11px] font-bold text-state-pending" data-need-you>{need} need you</span> : null; })()}
+            {d.total && <span className="text-[12px] font-semibold text-ink-3" data-tile-total>{d.total}</span>}
+            {actions && (() => { const c = tileCount(actions, d.key, app); return c.n > 0 ? <Link href={c.href} className={`ml-auto rounded-full px-2.5 py-0.5 text-[11.5px] font-bold hover:underline ${c.overdue ? "bg-state-declined-bg text-state-declined" : "bg-state-pending-bg text-state-pending"}`} data-tile-actions>{c.overdue ? `${c.overdue} Overdue →` : `${c.n} Action${c.n === 1 ? "" : "s"} Required →`}</Link> : null; })()}
           </h4>
           {d.lead && !compact && <p className="mt-0.5 text-[11.5px] text-ink-2" data-donut-lead>{d.lead.text} · <Link href={d.lead.href} className="font-semibold text-ink hover:underline">{d.lead.label} →</Link></p>}
           <div className="mt-2 flex items-center gap-3">

@@ -28,7 +28,7 @@ export default async function WorkHomePage() {
         eyebrow="WORK" title={`Your Work${first ? `, ${first}` : ""}`}
         summary={`${n(needYou, "thing")} need you · ${n(w.openJobs, "open job")} · ${n(w.estimatesWaiting, "estimate")} waiting`}
         primary={{ label: "Browse the Job Board", href: "/find-work?tab=best" }} secondary={{ label: "Send an Estimate", href: "/estimate" }}
-        donuts={w.donuts} actionCount={actionCount}
+        donuts={w.donuts} actionCount={actionCount} actionGroups={todo} app="work"
         actions={[
           { label: "Browse Jobs", href: "/find-work?tab=best", icon: "search" },
           { label: "Send Estimate", href: "/estimate", icon: "send" },

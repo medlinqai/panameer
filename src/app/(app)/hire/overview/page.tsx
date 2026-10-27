@@ -39,6 +39,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
   if (!me) return null;
   // WK-E006: no tab row — the home has tiles + What You Can Do; inner pages say ← Hire and Also in Hire.
   const pages: [string, string, string][] = [["jobs", "Jobs", "/hire/overview?tab=jobs"], ["requests", "Requests to Hire", "/hire/overview?tab=requests"], ["interviews", "Interviews", "/hire/overview?tab=interviews"], ["tests", "Tests", "/hire/overview?tab=tests"], ["questions", "Questions", "/hire/overview?tab=questions"]];
+  const hireActions = tab === "overview" ? await todoGroups(me.id, "buyer", APP_FILTER.hire.apps) : [];
   return (
     <div className="pm-white-page">
       <LiveRefresh />
@@ -50,9 +51,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
       <div className="mx-auto w-full max-w-[1120px] pb-14 pt-8">
         {tab === "overview" && <>
           {/* NC-E003: one action line instead of the Things Need Attention block. */}
-          <div className="mb-4"><ActionLine count={countActions(await todoGroups(me.id, "buyer", APP_FILTER.hire.apps), "/worklist?app=hire")} /></div>
+          <div className="mb-4"><ActionLine count={countActions(hireActions, "/worklist?app=hire")} /></div>
           <h2 className="mb-3 text-[20px] font-extrabold">At a Glance</h2>
-          <DashPies donuts={await hireTiles(viewer, me.id)} side="buyer" size={64} compact />
+          <DashPies donuts={await hireTiles(viewer, me.id)} side="buyer" compact actions={hireActions} app="hire" />
           <h2 className="mb-3 mt-8 text-[20px] font-extrabold">What You Can Do</h2>
           <ActionCards cards={[
             { label: "Create a Job", href: "/hire", icon: "briefcase" },

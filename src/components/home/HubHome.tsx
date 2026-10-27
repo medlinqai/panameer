@@ -6,13 +6,14 @@ import { BTN, BTN_MAGENTA } from "@/components/hire/HireUI";
 import { singular } from "@/components/dashboard/MyProgress";
 import { ActionCards, ActionLine, type ActionCard } from "@/components/home/AppNav";
 import type { ActionCount } from "@/lib/todo";
+import type { AttentionItem } from "@/lib/attention";
 import type { Donut } from "@/lib/dashboard/types";
 
 // HT-E007/E008: the Connect and Learn homes follow the dashboard — 1 · At a Glance beside Things You Need to Do, then section 2.
 const NUM = "grid h-7 w-7 place-items-center rounded-full bg-ink text-[13px] font-bold text-surface";
-export function HubHome({ eyebrow, title, summary, primary, secondary, donuts, viewSwitch, actionCount, strip, actions, section2, section2Title, section2Right }: {
+export function HubHome({ eyebrow, title, summary, primary, secondary, donuts, viewSwitch, actionGroups, app, actionCount, strip, actions, section2, section2Title, section2Right }: {
   eyebrow: string; title: string; summary: string; primary: { label: string; href: string }; secondary: { label: string; href: string };
-  donuts: Donut[]; viewSwitch?: ReactNode; /** NC-E003: "n Actions Required → Open Worklist" replaces the Things You Need to Do panel. */ actionCount?: ActionCount | null; /** NC-E006 */ strip?: ReactNode;
+  donuts: Donut[]; viewSwitch?: ReactNode; /** NC-E004: Worklist groups for the tiles' action links, and the ?app= they open. */ actionGroups?: AttentionItem[]; app?: string; /** NC-E003: "n Actions Required → Open Worklist" replaces the Things You Need to Do panel. */ actionCount?: ActionCount | null; /** NC-E006 */ strip?: ReactNode;
   /** WK-E002: 2 · What You Can Do. */ actions?: ActionCard[]; section2?: ReactNode; section2Title?: string; section2Right?: ReactNode;
 }) {
   const rankNo = actions?.length ? "3" : "2";
@@ -30,7 +31,7 @@ export function HubHome({ eyebrow, title, summary, primary, secondary, donuts, v
       {strip}
       <div className="mt-6">
         <div className="flex flex-wrap items-baseline gap-3 border-b border-ink pb-2"><span className={NUM}>1</span><h2 className="text-[20px] font-extrabold">At a Glance</h2>{viewSwitch}</div>
-        <div className="mt-3"><DashPies donuts={donuts} side="home" size={64} cols="sm:grid-cols-2" compact /></div>
+        <div className="mt-3"><DashPies donuts={donuts} side="home" compact actions={actionGroups} app={app} /></div>
       </div>
       {actions?.length ? <>
         <div className="mt-8 flex items-baseline gap-3 border-b border-ink pb-2"><span className={NUM}>2</span><h2 className="text-[20px] font-extrabold">What You Can Do</h2></div>

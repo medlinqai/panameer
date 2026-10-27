@@ -65,13 +65,7 @@ export async function todoGroups(personId: string, side: "buyer" | "provider", a
   return [...groups.values()];
 }
 
-/** NC-E003/E004: "7 Actions Required · 2 Overdue" — overdue = past due or due within 24 h. Per tile when tile apps/groups are given. */
-export type ActionCount = { n: number; overdue: number; href: string };
-export function countActions(groups: AttentionItem[], href: string, match?: (g: AttentionItem) => boolean): ActionCount {
-  const soon = Date.now() + 86_400_000;
-  const lines = groups.filter((g) => !match || match(g)).flatMap((g) => g.lines ?? []);
-  return { n: lines.length, overdue: lines.filter((l) => l.dueAt && Date.parse(l.dueAt) < soon).length, href };
-}
+export { countActions, type ActionCount } from "@/lib/tile-actions";
 
 /** NC-E005: the Worklist's ?app= filter → the app keys it covers. */
 export const APP_FILTER: Record<string, { label: string; apps: string[] }> = {
