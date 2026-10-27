@@ -15,7 +15,7 @@ export async function workApp(personId: string, viewer: { userId: string }) {
   const now = new Date();
   const pp = await prisma.providerProfile.findUnique({ where: { person_id: personId }, select: { id: true } });
   const [rows, openJobs, asked, sent, accepted, expired, toSchedule, booked, testsReq, testsPassed, ratesLive, productsLive, drafts] = await Promise.all([
-    workJobRows(personId, viewer),
+    sellerDashboard(personId, viewer).then((d) => d.rows),
     prisma.job.count({ where: { kind: "JOB", status: "OPEN" } }),
     prisma.estimateRequest.findMany({ where: { provider_person_id: personId, status: "OPEN" }, orderBy: { created_at: "asc" }, take: 50, select: { id: true, description: true, start_by: true, requester_person_id: true } }),
     prisma.estimate.count({ where: { provider_person_id: personId, status: { in: ["SENT", "CHANGES_REQUESTED"] } } }),
@@ -29,7 +29,7 @@ export async function workApp(personId: string, viewer: { userId: string }) {
     pp ? prisma.serviceProduct.count({ where: { provider_profile_id: pp.id, status: "PUBLISHED" } }) : 0,
     pp ? prisma.serviceProduct.count({ where: { provider_profile_id: pp.id, status: { not: "PUBLISHED" } } }) : 0,
   ]);
-  const n = (stage: string) => rows.filter((r) => r.slice === stage).length;
+  const n = (stage: string) => rows.filter((r) => r.type === "Job" && r.slice === stage).length;
   const MINE = new Set(["You Matched", "They Requested"]);
   const COLOR: Record<string, string> = { "You Matched": C.grey, "You Applied": C.steel, "They Requested": C.pend, "You Answered": C.pendSoft, "You Interviewed": C.ink, "They Chose You": C.ok };
   const donuts: Donut[] = [

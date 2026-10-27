@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ProposalActions } from "@/components/work/ProposalActions";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
-import { buyerHireTabs, buyerLiveWork, buyerTests, hireOverviewData, type JobTabRow } from "@/lib/live-work";
+import { buyerHireTabs, buyerTests, type JobTabRow } from "@/lib/live-work";
 import { DiscardDraft } from "@/components/hire/DiscardDraft";
 import { InterviewWorkday, WorkdayWeek } from "@/components/work/InterviewWorkday";
 import { gridDay, interviewGrid, rowsOn } from "@/lib/interview-grid";
@@ -22,7 +22,7 @@ import { HireBand } from "@/components/hire/HireBand";
 import { APP_FILTER, countActions, todoGroups } from "@/lib/todo";
 import { DashPies } from "@/components/dashboard/DashGlance";
 import { hireTiles } from "@/lib/hire-app";
-import { BTN, BTN_OUT, Fact, GREEN, HeadRow, STATE_TEXT, stepState, LABEL, RedDot, shortDate, shortWhen } from "@/components/hire/HireUI";
+import { BTN, BTN_OUT, Fact, GREEN, STATE_TEXT, RedDot, shortWhen } from "@/components/hire/HireUI";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Hire · Panameer" };
@@ -52,7 +52,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
       <div className="mx-auto w-full max-w-[1120px] pb-14 pt-8">
         {tab === "overview" && <>
           {/* NC-E003: one action line instead of the Things Need Attention block. */}
+          {/* NC-E007: header + action line → step strip → 4 tiles → What You Can Do. My Jobs is behind the Jobs tile. */}
           <div className="mb-4"><ActionLine count={countActions(hireActions, "/worklist?app=hire")} /></div>
+          <div className="mb-6"><HireBand personId={me.id} /></div>
           <h2 className="mb-3 text-[20px] font-extrabold">At a Glance</h2>
           <DashPies donuts={await hireTiles(viewer, me.id)} side="buyer" compact actions={hireActions} app="hire" />
           <h2 className="mb-3 mt-8 text-[20px] font-extrabold">What You Can Do</h2>
@@ -62,7 +64,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
             { label: "Compare Providers", href: "/hire/overview?tab=jobs&slice=comparing", icon: "compare" },
             { label: "Write Questions", href: "/hire/overview?tab=questions", icon: "list" },
           ]} />
-          <div className="mt-10"><Overview personId={me.id} slice={sp.slice} /></div>
         </>}
         {tab === "jobs" && <JobsTab personId={me.id} step={sp.step ?? null} slice={sp.slice} q={sp.q ?? ""} />}
         {tab === "requests" && <RequestsTab personId={me.id} slice={sp.slice} />}
@@ -86,29 +87,6 @@ const jobSlice = (rows: JobTabRow[], slice?: string) => {
 };
 const jobSliceCounts = (rows: JobTabRow[]) => ({ ...Object.fromEntries(Object.entries(CHIP_STAGE).map(([k, st]) => [k, rows.filter((j) => j.stage === st).length])), all: rows.length });
 
-async function Overview({ personId, slice }: { personId: string; slice?: string }) {
-  const [d, w] = await Promise.all([hireOverviewData(personId), buyerLiveWork(personId)]);
-  const rows = jobSlice(d.jobRows, slice);
-  const recent = rows.filter((j) => !j.old || j.draft).slice(0, 8);
-  const older = rows.filter((j) => j.old && !j.draft).length;
-  return (
-    <div className="flex flex-col gap-10">
-      <HireBand personId={personId} />
-
-      {/* IW-E004: My Jobs takes the full width; Today's Interviews moved to the Interviews tab (the attention group links there). */}
-      <section className="min-w-0" data-my-jobs>
-        <HeadRow title="My Jobs"><SliceChips chips={STAGE_CHIPS} defaultKey="all" tabKey="hire-overview-jobs-stage" counts={jobSliceCounts(d.jobRows)} base="/hire/overview" /></HeadRow>
-        {recent.length ? recent.map((j) => <CompactJob key={j.id} j={j} />) : <p className="py-5 text-[14px] text-state-inactive">No jobs here. <Link href="/hire">Create a Job</Link> and it shows here with its next step.</p>}
-        <p className="mt-3.5 text-[13px] text-state-inactive">Older than 5 days ({older}) · <Link href="/hire/overview?tab=jobs" className="font-semibold">See All Jobs</Link></p>
-      </section>
-      <footer className="flex flex-wrap gap-x-10 gap-y-2 border-t border-state-border pt-4 text-[13px] text-state-inactive" data-hire-footer>
-        <span><b className="text-[15px] font-extrabold text-ink">{d.openJobs}</b> Open Jobs</span>
-        <span><b className="text-[15px] font-extrabold text-ink">{w.footer.monthOrders}</b> Orders This Month</span>
-      </footer>
-    </div>
-  );
-}
-
 /** JS-E001: the status word, then the step while the job is live (or the reason it was closed). */
 const stageLine = (j: JobTabRow) => j.stage === "ACTIVE" || j.stage === "COMPARING" ? `${JOB_STAGE_LABEL[j.stage]} · ${stepLabel(j)}` : (j.stage === "CLOSED" || j.stage === "ON_HOLD") && j.closedReason ? `${JOB_STAGE_LABEL[j.stage]} · ${j.closedReason}` : JOB_STAGE_LABEL[j.stage];
 const stepLabel = (j: JobTabRow) => {
@@ -118,27 +96,6 @@ const stepLabel = (j: JobTabRow) => {
   if (j.step === "wo") return `Order ${j.wo?.number ?? ""} created`.replace("  ", " ");
   return base;
 };
-
-function CompactJob({ j }: { j: JobTabRow }) {
-  return (
-    <div className={`flex flex-wrap items-center gap-4 border-b border-state-border py-[18px] sm:flex-nowrap ${DONE.includes(j.stage) ? "opacity-60" : ""}`} data-compact-job>
-      <TypeArt category={j.category} size={52} />
-      <div className="min-w-0 flex-1">
-        <Link href={`/work-requests/${j.id}`} className="block text-[15px] font-bold text-ink hover:underline">{j.title}</Link>
-        <div className="mt-0.5 text-[13px] text-state-inactive">{[j.posted ? `Posted ${shortDate(j.posted)}` : null, j.facts.split(" · ").find((x) => x.startsWith("$")), j.origin].filter(Boolean).join(" · ")}</div>
-        <div className="mt-1.5 flex flex-wrap items-center gap-2.5 text-[13px]">
-          <span className={`font-bold ${STATE_TEXT[JOB_STAGE_STATE[j.stage]]}`} data-job-stage={j.stage}>{stageLine(j)}</span>
-          {(j.rates || j.due) && j.step === "proposals" && <span className="text-state-inactive">{[j.rates, j.due ? `due ${j.due}` : null].filter(Boolean).join(" · ")}</span>}
-        </div>
-        {j.recurring && <RecurringLine r={j.recurring} />}
-      </div>
-      <span className="flex w-full gap-2 sm:w-auto">
-        {j.action && <Link href={j.action.href} className={`${j.needsAction ? BTN : BTN_OUT} flex-1 sm:flex-none`}>{j.action.label}</Link>}
-        {j.draft && <DiscardDraft jobId={j.id} />}
-      </span>
-    </div>
-  );
-}
 
 // ── HL-E002 ──────────────────────────────────────────────────────────────────────────────────────────────────
 async function JobsTab({ personId, step, slice, q }: { personId: string; step: string | null; slice?: string; q: string }) {

@@ -6,6 +6,7 @@ import { workApp } from "@/lib/work-app";
 import { appCounts } from "@/lib/attention";
 import { APP_FILTER, countActions, todoGroups } from "@/lib/todo";
 import { HubHome } from "@/components/home/HubHome";
+import { DealBand } from "@/components/home/DealBand";
 
 export const metadata = { title: "Work · Panameer" };
 
@@ -28,7 +29,7 @@ export default async function WorkHomePage() {
         eyebrow="WORK" title={`Your Work${first ? `, ${first}` : ""}`}
         summary={`${n(needYou, "thing")} need you · ${n(w.openJobs, "open job")} · ${n(w.estimatesWaiting, "estimate")} waiting`}
         primary={{ label: "Browse the Job Board", href: "/find-work?tab=best" }} secondary={{ label: "Send an Estimate", href: "/estimate" }}
-        donuts={w.donuts} actionCount={actionCount} actionGroups={todo} app="work"
+        strip={<div className="mt-4"><DealBand rows={w.rows} /></div>} donuts={w.donuts} actionCount={actionCount} actionGroups={todo} app="work"
         actions={[
           { label: "Browse Jobs", href: "/find-work?tab=best", icon: "search" },
           { label: "Send Estimate", href: "/estimate", icon: "send" },

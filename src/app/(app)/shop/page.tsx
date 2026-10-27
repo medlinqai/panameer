@@ -88,7 +88,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
             { label: "See Purchases", href: "/shop?tab=purchases", icon: "receipt" },
           ]} />
         </div>}
-        {tab === "overview" && person && <Overview viewer={viewer} personId={person.id} side={side} counts={counts!} />}
+        {/* NC-E007: the buyer's Shop home is action line → tiles → What You Can Do; the lists are behind the tiles. */}
+        {tab === "overview" && person && side !== "buyer" && <Overview viewer={viewer} personId={person.id} side={side} counts={counts!} />}
         {tab === "browse" && <Browse viewer={viewer} f={f} browsing={browsing} compareIds={compareIds} />}
         {tab === "compare" && <CompareTab viewer={viewer} ids={compareIds} />}
         {tab === "cart" && <CartTab viewer={viewer} />}
