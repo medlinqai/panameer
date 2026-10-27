@@ -64,3 +64,20 @@ export async function todoGroups(personId: string, side: "buyer" | "provider", a
   }
   return [...groups.values()];
 }
+
+/** NC-E003/E004: "7 Actions Required · 2 Overdue" — overdue = past due or due within 24 h. Per tile when tile apps/groups are given. */
+export type ActionCount = { n: number; overdue: number; href: string };
+export function countActions(groups: AttentionItem[], href: string, match?: (g: AttentionItem) => boolean): ActionCount {
+  const soon = Date.now() + 86_400_000;
+  const lines = groups.filter((g) => !match || match(g)).flatMap((g) => g.lines ?? []);
+  return { n: lines.length, overdue: lines.filter((l) => l.dueAt && Date.parse(l.dueAt) < soon).length, href };
+}
+
+/** NC-E005: the Worklist's ?app= filter → the app keys it covers. */
+export const APP_FILTER: Record<string, { label: string; apps: string[] }> = {
+  hire: { label: "Hire", apps: ["request"] }, work: { label: "Work", apps: ["request", "estimate"] }, shop: { label: "Shop", apps: ["shop", "estimate"] },
+  orders: { label: "Orders", apps: ["order"] }, payments: { label: "Payments", apps: ["settlement", "payment"] }, connect: { label: "Connect", apps: ["connect"] },
+  learn: { label: "Learn", apps: ["learn"] }, profile: { label: "Profile", apps: ["profile"] },
+};
+/** The app filter key an app key shows under, for the viewer's side. */
+export const filterFor = (app: string, side: "buyer" | "provider") => (app === "request" ? (side === "buyer" ? "hire" : "work") : app === "estimate" ? (side === "buyer" ? "shop" : "work") : app === "order" ? "orders" : app === "settlement" || app === "payment" ? "payments" : app);

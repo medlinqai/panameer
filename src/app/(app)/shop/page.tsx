@@ -13,7 +13,8 @@ import { shopCategories } from "@/lib/shop-category-list";
 import { byPopular, filterStore, storeHref, STORE_DELIVERY, STORE_LEAD, STORE_PRICE, type StoreQuery } from "@/lib/shop-filters";
 import { HELP_TYPES, searchHelpLinks } from "@/lib/help-links";
 import { HelpTypeIcon } from "@/components/help/HelpTypeIcon";
-import { AppBar, ActionCards } from "@/components/home/AppNav";
+import { AppBar, ActionCards, ActionLine } from "@/components/home/AppNav";
+import { APP_FILTER, countActions, todoGroups } from "@/lib/todo";
 import { DashPies } from "@/components/dashboard/DashGlance";
 import { shopTiles } from "@/lib/hire-app";
 import { ShopBar } from "@/components/shop/ShopBar";
@@ -74,6 +75,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Q> 
       <AppBar app="Shop" home="/shop" current={tab === "overview" ? null : tab} pages={tabs.filter((t) => t.href !== "/shop").map((t) => [t.href.includes("tab=") ? t.href.split("tab=")[1] : t.href, t.label, t.href] as [string, string, string])} right={<span className="hidden shrink-0 sm:block"><SellOnPanameer /></span>} />
       <div className="mx-auto w-full max-w-[1010px]">
         {tab === "overview" && person && side === "buyer" && <div className="mb-8 mt-4">
+          <div className="mb-4"><ActionLine count={countActions(await todoGroups(person.id, "buyer", APP_FILTER.shop.apps), "/worklist?app=shop")} /></div>
           <h2 className="mb-3 text-[20px] font-extrabold">At a Glance</h2>
           <DashPies donuts={await shopTiles(person.id)} side="buyer" size={64} compact />
           <h2 className="mb-3 mt-8 text-[20px] font-extrabold">What You Can Do</h2>

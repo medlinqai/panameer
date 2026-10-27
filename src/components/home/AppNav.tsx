@@ -65,3 +65,15 @@ export function AppBar({ app, home, current, pages, right }: { app: string; home
     </div>
   );
 }
+
+/** NC-E003: one line under every home header — gold when there are actions, red Overdue when any is due within 24 h. */
+export function ActionLine({ count }: { count: { n: number; overdue: number; href: string } | null }) {
+  if (!count || !count.n) return null;
+  return (
+    <Link href={count.href} className="mt-2 inline-flex flex-wrap items-center gap-x-2 rounded-full bg-state-pending-bg px-3 py-1 text-[13.5px] font-bold text-state-pending hover:underline" data-action-line>
+      {count.n} Action{count.n === 1 ? "" : "s"} Required
+      {count.overdue > 0 && <span className="text-state-declined">· {count.overdue} Overdue</span>}
+      <span className="text-ink">→ Open Worklist</span>
+    </Link>
+  );
+}

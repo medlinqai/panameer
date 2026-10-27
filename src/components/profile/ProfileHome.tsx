@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { profileChecklist } from "@/lib/dashboard/views";
-import { ActionCards } from "@/components/home/AppNav";
+import { ActionCards, ActionLine } from "@/components/home/AppNav";
 
 // WK-E005: Profile without a tab row — tiles (each a count or Add) and What You Can Do above the profile itself.
 export async function ProfileHome({ personId, profileId }: { personId: string; profileId: string }) {
@@ -12,8 +12,10 @@ export async function ProfileHome({ personId, profileId }: { personId: string; p
     { title: "Credentials & Education", lines: [["Credentials", n("Credentials"), "/profile/edit/certifications", "Add"], ["Education", n("Education"), "/profile/edit/education", "Add"]] },
     { title: "Recommendations", lines: [["Received", n("Recommendations"), "/connect/recommendations", "Ask"]] },
   ];
+  const { todoGroups, countActions, APP_FILTER } = await import("@/lib/todo");
   return (
     <section className="mx-auto mb-6 w-full max-w-6xl" data-profile-home>
+      <div className="mb-3"><ActionLine count={countActions(await todoGroups(personId, "provider", APP_FILTER.profile.apps), "/worklist?app=profile")} /></div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {tiles.map((t) => (
           <div key={t.title} className="rounded-[12px] border border-line bg-white p-3.5" data-profile-tile={t.title}>

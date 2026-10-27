@@ -4,7 +4,6 @@ import { ProposalActions } from "@/components/work/ProposalActions";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { buyerHireTabs, buyerLiveWork, buyerTests, hireOverviewData, type JobTabRow } from "@/lib/live-work";
-import { AttentionGroups } from "@/components/hire/AttentionGroups";
 import { DiscardDraft } from "@/components/hire/DiscardDraft";
 import { InterviewWorkday, WorkdayWeek } from "@/components/work/InterviewWorkday";
 import { gridDay, interviewGrid, rowsOn } from "@/lib/interview-grid";
@@ -18,7 +17,8 @@ import { TypeArt } from "@/components/shop/TypeArt";
 import { RecurringLine, SliceChips } from "@/components/casing/SliceChips";
 import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
 import { PATH_STEPS } from "@/lib/work-request-path";
-import { AppBar, ActionCards } from "@/components/home/AppNav";
+import { AppBar, ActionCards, ActionLine } from "@/components/home/AppNav";
+import { APP_FILTER, countActions, todoGroups } from "@/lib/todo";
 import { DashPies } from "@/components/dashboard/DashGlance";
 import { hireTiles } from "@/lib/hire-app";
 import { BTN, BTN_OUT, Fact, GREEN, HeadRow, STATE_TEXT, stepState, LABEL, PathBand, RedDot, shortDate, shortWhen, type BandStep } from "@/components/hire/HireUI";
@@ -49,6 +49,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<SP>
       } />
       <div className="mx-auto w-full max-w-[1120px] pb-14 pt-8">
         {tab === "overview" && <>
+          {/* NC-E003: one action line instead of the Things Need Attention block. */}
+          <div className="mb-4"><ActionLine count={countActions(await todoGroups(me.id, "buyer", APP_FILTER.hire.apps), "/worklist?app=hire")} /></div>
           <h2 className="mb-3 text-[20px] font-extrabold">At a Glance</h2>
           <DashPies donuts={await hireTiles(viewer, me.id)} side="buyer" size={64} compact />
           <h2 className="mb-3 mt-8 text-[20px] font-extrabold">What You Can Do</h2>
@@ -113,19 +115,8 @@ async function Overview({ personId, slice }: { personId: string; slice?: string 
   const rows = jobSlice(d.jobRows, slice);
   const recent = rows.filter((j) => !j.old || j.draft).slice(0, 8);
   const older = rows.filter((j) => j.old && !j.draft).length;
-  const dateLabel = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }).toUpperCase();
   return (
     <div className="flex flex-col gap-10">
-      <section className="flex flex-wrap items-start gap-10" data-hire-today>
-        <div className="min-w-0 flex-[1_1_300px]">
-          <span className="text-[12px] font-bold tracking-[0.12em] text-magenta">{dateLabel}</span>
-          <h1 className="mb-2.5 mt-2 text-[28px] font-extrabold leading-[1.15] sm:text-[34px]">{n ? `${n} ${n === 1 ? "Thing Needs" : "Things Need"} Attention` : "Nothing Needs Attention"}</h1>
-          <p className="text-[14px] leading-[1.7] text-state-inactive" data-hire-summary>{d.summary}</p>
-          <p className="mt-[18px] text-[13px] leading-relaxed text-state-inactive">Orders to accept are in <Link href="/orders/overview">Orders</Link>.</p>
-        </div>
-        <AttentionGroups groups={d.groups} />
-      </section>
-
       <PathBand steps={band} label="Job Timeline" />
 
       {/* IW-E004: My Jobs takes the full width; Today's Interviews moved to the Interviews tab (the attention group links there). */}

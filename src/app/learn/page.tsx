@@ -9,7 +9,7 @@ import { HubHome, RankList, VsGroup, type RankRow } from "@/components/home/HubH
 import { displayFirstName } from "@/lib/display";
 import { C, type Donut } from "@/lib/dashboard/types";
 import { appCounts } from "@/lib/attention";
-import { todoGroups } from "@/lib/todo";
+import { APP_FILTER, countActions, todoGroups } from "@/lib/todo";
 
 export const metadata = {
   title: "Learn — Panameer",
@@ -70,7 +70,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
   // WK-E008: Things You Need to Do = the Worklist's Learn items (appCounts keeps it current).
   const side = me?.providerProfile ? "provider" : "buyer";
   if (me) await appCounts(viewer, side);
-  const todo = me ? await todoGroups(me.id, side, ["learn"]) : [];
+  const actionCount = me ? countActions(await todoGroups(me.id, side, APP_FILTER.learn.apps), "/worklist?app=learn") : null;
   // 2 · Who's Learning Most: top 3 + your row; you vs the group.
   const myIdx = month.findIndex((r) => r.userId === viewer.userId);
   const tIdx = me ? teachers.findIndex((r) => r.personId === me.id) : -1;
@@ -93,7 +93,7 @@ export default async function LearnHomePage({ searchParams }: { searchParams: Pr
           summary={`${plural(matched.length, "path")} matched to you · ${plural(earned.length, "certificate")} · ${myIdx >= 0 ? `rank #${myIdx + 1} this month` : "not ranked yet this month"}`}
           primary={next ? { label: inProgress.length ? "Continue Learning" : "Start Learning", href: next.mine?.next ? `/learn/${next.slug}/${next.mine.next.id}` : `/learn/${next.slug}` } : { label: "Browse Learning Paths", href: "/learn/paths" }}
           secondary={next ? { label: "Browse Learning Paths", href: "/learn/paths" } : { label: "My Learning", href: "/learn/my" }}
-          donuts={view === "teaching" ? teaching : learning} viewSwitch={switcher} todo={todo}
+          donuts={view === "teaching" ? teaching : learning} viewSwitch={switcher} actionCount={actionCount}
           section2Title="Who's Learning Most" section2Right="This Month"
           actions={[
             { label: "Browse Paths", href: "/learn/paths", icon: "book" },

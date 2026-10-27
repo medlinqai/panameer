@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
 import { displayFirstName } from "@/lib/display";
 import { appCounts } from "@/lib/attention";
-import { todoGroups } from "@/lib/todo";
+import { APP_FILTER, countActions, todoGroups } from "@/lib/todo";
 import { GROWTH_WEIGHTS, growthBoard, growthScore } from "@/lib/growth-score";
 import { HubHome, RankList, VsGroup } from "@/components/home/HubHome";
 import { C, type Donut } from "@/lib/dashboard/types";
@@ -55,7 +55,7 @@ export default async function ConnectHome() {
   // WK-E008: Things You Need to Do = the Worklist's Connect items (appCounts keeps it current).
   const side = ppId ? "provider" : "buyer";
   await appCounts(viewer, side);
-  const todo = await todoGroups(pid, side, ["connect"]);
+  const actionCount = countActions(await todoGroups(pid, side, APP_FILTER.connect.apps), "/worklist?app=connect");
   // 2 · How You Rank: Leaders top 3 + your row, How It Adds Up, you vs the group.
   const [me, board, groupAvg] = await Promise.all([growthScore(pid, "month"), growthBoard("month"), groupAverages()]);
   const mine = board.find((r) => r.personId === pid);
@@ -69,7 +69,7 @@ export default async function ConnectHome() {
         eyebrow="CONNECT" title={`Your Network${first ? `, ${first}` : ""}`}
         summary={`${connected} connection${connected === 1 ? "" : "s"} · ${waiting} ${waiting === 1 ? "person" : "people"} waiting on you · ${mine && me.points > 0 ? `rank #${mine.rank} this month` : "not ranked yet this month"}`}
         primary={{ label: "Invite to Panameer", href: "/connect/invite" }} secondary={{ label: "Find People", href: "/connect/community" }}
-        donuts={donuts} todo={todo} section2Title="How You Rank" section2Right="This Month"
+        donuts={donuts} actionCount={actionCount} section2Title="How You Rank" section2Right="This Month"
         actions={[
           { label: "Invite People", href: "/connect/invite", icon: "userPlus" },
           { label: "Find People", href: "/connect/community", icon: "users" },

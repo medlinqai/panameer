@@ -1,19 +1,19 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
-import { AttentionList } from "@/components/home/AttentionList";
 import { DashPies } from "@/components/dashboard/DashGlance";
 import { BTN, BTN_MAGENTA } from "@/components/hire/HireUI";
 import { singular } from "@/components/dashboard/MyProgress";
-import { ActionCards, type ActionCard } from "@/components/home/AppNav";
-import type { AttentionItem } from "@/lib/attention";
+import { ActionCards, ActionLine, type ActionCard } from "@/components/home/AppNav";
+import type { ActionCount } from "@/lib/todo";
 import type { Donut } from "@/lib/dashboard/types";
 
 // HT-E007/E008: the Connect and Learn homes follow the dashboard — 1 · At a Glance beside Things You Need to Do, then section 2.
 const NUM = "grid h-7 w-7 place-items-center rounded-full bg-ink text-[13px] font-bold text-surface";
-export function HubHome({ eyebrow, title, summary, primary, secondary, donuts, viewSwitch, todo, actions, section2, section2Title, section2Right, glanceHint }: {
+export function HubHome({ eyebrow, title, summary, primary, secondary, donuts, viewSwitch, actionCount, strip, actions, section2, section2Title, section2Right }: {
   eyebrow: string; title: string; summary: string; primary: { label: string; href: string }; secondary: { label: string; href: string };
-  donuts: Donut[]; viewSwitch?: ReactNode; todo: AttentionItem[]; /** WK-E002: 2 · What You Can Do. */ actions?: ActionCard[]; section2?: ReactNode; section2Title?: string; section2Right?: ReactNode; glanceHint?: string;
+  donuts: Donut[]; viewSwitch?: ReactNode; /** NC-E003: "n Actions Required → Open Worklist" replaces the Things You Need to Do panel. */ actionCount?: ActionCount | null; /** NC-E006 */ strip?: ReactNode;
+  /** WK-E002: 2 · What You Can Do. */ actions?: ActionCard[]; section2?: ReactNode; section2Title?: string; section2Right?: ReactNode;
 }) {
   const rankNo = actions?.length ? "3" : "2";
   return (
@@ -23,18 +23,14 @@ export function HubHome({ eyebrow, title, summary, primary, secondary, donuts, v
           <p className="text-[12px] font-bold tracking-[0.12em] text-magenta">{eyebrow}</p>
           <h1 className="mt-1 text-[28px] font-extrabold leading-tight sm:text-[32px]">{title}</h1>
           <p className="mt-1 text-[14px] text-ink-2">{summary}</p>
+          <ActionLine count={actionCount ?? null} />
         </div>
         <div className="flex gap-2.5"><Link href={primary.href} className={BTN_MAGENTA}>{primary.label}</Link><Link href={secondary.href} className={BTN}>{secondary.label}</Link></div>
       </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div>
-          <div className="flex flex-wrap items-baseline gap-3 border-b border-ink pb-2"><span className={NUM}>1</span><h2 className="text-[20px] font-extrabold">At a Glance</h2>{viewSwitch}{glanceHint && <span className="text-[12px] text-ink-3">{glanceHint}</span>}</div>
-          <div className="mt-3"><DashPies donuts={donuts} side="home" size={64} cols="sm:grid-cols-2" compact /></div>
-        </div>
-        <div>
-          <div className="flex items-baseline gap-3 border-b border-ink pb-2"><span className="grid h-7 w-7 place-items-center rounded-full bg-state-declined text-[13px] font-bold text-surface">!</span><h2 className="text-[20px] font-extrabold">Things You Need to Do</h2></div>
-          <div className="mt-2">{todo.length ? <AttentionList items={todo} /> : <p className="py-3 text-[14px] text-ink-3">Nothing is waiting on you right now.</p>}</div>
-        </div>
+      {strip}
+      <div className="mt-6">
+        <div className="flex flex-wrap items-baseline gap-3 border-b border-ink pb-2"><span className={NUM}>1</span><h2 className="text-[20px] font-extrabold">At a Glance</h2>{viewSwitch}</div>
+        <div className="mt-3"><DashPies donuts={donuts} side="home" size={64} cols="sm:grid-cols-2" compact /></div>
       </div>
       {actions?.length ? <>
         <div className="mt-8 flex items-baseline gap-3 border-b border-ink pb-2"><span className={NUM}>2</span><h2 className="text-[20px] font-extrabold">What You Can Do</h2></div>
