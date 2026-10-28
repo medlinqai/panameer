@@ -102,7 +102,8 @@ export async function MyProgress({ side, personId, period }: { side: "buyer" | "
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-ink pb-2">
         <div className="flex items-baseline gap-3">
           <span className="grid h-7 w-7 place-items-center rounded-full bg-ink text-[13px] font-bold text-surface">2</span>
-          <h2 className="text-[20px] font-extrabold">My Progress</h2>
+          {/* RM-E004: who you're compared with, for the picked period. */}
+          <div><h2 className="text-[20px] font-extrabold">My Progress</h2><p className="text-[13px] text-ink-3" data-progress-subtitle>You compared with the most active {side === "buyer" ? "buyers" : "sellers"} on Panameer {period === "quarter" ? "this quarter" : period === "90d" ? "the last 90 days" : "this year"}</p></div>
         </div>
         <div className="flex items-center gap-4 text-[12px] text-ink-2">
           <span className="flex items-center gap-1.5"><i className="inline-block h-2 w-4 rounded-full bg-ink" />You</span>
