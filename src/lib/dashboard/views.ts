@@ -32,7 +32,11 @@ export async function profileChecklist(personId: string): Promise<ChecklistItem[
     prisma.credential.count({ where: { provider_profile_id: id } }),
     prisma.providerProfileSpecialization.count({ where: { provider_profile_id: id } }),
     prisma.education.count({ where: { provider_profile_id: id } }),
-    prisma.recommendationRequest.count({ where: { provider_profile_id: id, status: "SUBMITTED" } }),
+    // OR-E004: an Order Review counts as well as a recommendation.
+    Promise.all([
+      prisma.recommendationRequest.count({ where: { provider_profile_id: id, status: "SUBMITTED" } }),
+      prisma.orderReview.count({ where: { side: "BUYER", reviewee_person_id: personId } }),
+    ]).then(([a, b]) => a + b),
   ]);
   return [
     { label: "Companies", n: employers, href: "/profile/edit/work-history", action: "Add", why: "Buyers look for where you've worked" },

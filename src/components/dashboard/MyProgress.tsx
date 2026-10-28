@@ -24,6 +24,18 @@ function Tile({ app, title, period, children, foot, footHref, group }: { app: st
   );
 }
 
+/** OR-E004: Reviews — your average rating and review count against the group (or the Panameer Target). */
+function ReviewsLine({ you, grp, k, target }: { you: Record<string, number>; grp: Record<string, number>; k: "seller" | "buyer"; target: boolean }) {
+  const n = you[`${k}.reviews.count`] ?? 0, r = you[`${k}.reviews.rating`] ?? 0;
+  const gn = grp[`${k}.reviews.count`] ?? 0, gr = grp[`${k}.reviews.rating`] ?? 0;
+  return (
+    <p className="mt-2 flex flex-wrap justify-between gap-x-2 border-t border-line pt-2 text-[12.5px]" data-progress-reviews>
+      <span><b>Reviews</b> {n ? `★ ${r.toFixed(1)} · ${n}` : "No Reviews Yet"}</span>
+      <span className="text-ink-3">{target ? "Target" : "Group"} {gn || gr ? `★ ${gr.toFixed(1)} · ${gn}` : "—"}</span>
+    </p>
+  );
+}
+
 function Funnel({ stages, you, grp }: { stages: Stage[]; you: Record<string, number>; grp: Record<string, number> }) {
   const max = Math.max(1, ...stages.flatMap(([, k]) => [you[k] ?? 0, grp[k] ?? 0]));
   const [lastLabel, lastKey] = stages[stages.length - 1];
@@ -118,7 +130,7 @@ export async function MyProgress({ side, personId, period }: { side: "buyer" | "
             <Tile app="LEARN" title="Courses" period="All Time" foot="Take a Test" footHref="/learn" group={foot}><Funnel you={you} grp={g} stages={[["Matched to You", "seller.courses.matched"], ["Enrolled", "seller.courses.enrolled"], ["Taken", "seller.courses.taken"], ["Certified", "seller.courses.certified"]]} /></Tile>
             <Tile app="SELL" title="Services" period="Last 30 Days" foot="Jobs for You" footHref="/find-work?tab=best"><Demand rows={svcDemand} empty="List a service to see its demand." /></Tile>
             <Tile app="SELL" title="Service Products" period="Last 30 Days" foot="Catalog" footHref="/catalog/products"><Demand rows={prodDemand} empty="List a service product to see its demand." /></Tile>
-            <Tile app="ORDERS" title="Orders" period={label} foot="See Orders" footHref="/orders" group={foot}><Funnel you={you} grp={g} stages={[["Offered", "seller.orders.offered"], ["Accepted", "seller.orders.accepted"], ["Delivered", "seller.orders.delivered"], ["On Time", "seller.orders.on_time"]]} /></Tile>
+            <Tile app="ORDERS" title="Orders" period={label} foot="See Orders" footHref="/orders" group={foot}><Funnel you={you} grp={g} stages={[["Offered", "seller.orders.offered"], ["Accepted", "seller.orders.accepted"], ["Delivered", "seller.orders.delivered"], ["On Time", "seller.orders.on_time"]]} /><ReviewsLine you={you} grp={g} k="seller" target={group.usesTarget} /></Tile>
             <Tile app="PAYMENTS" title="Earned" period={label} foot="See Payments" footHref="/payments" group={foot}><Money you={you["seller.payments.earned"] ?? 0} grp={g["seller.payments.earned"] ?? 0} rows={[["Billed, Not Yet Paid", extras.a], ["Paid to You", extras.b]]} /></Tile>
           </>
         ) : (
@@ -126,7 +138,7 @@ export async function MyProgress({ side, personId, period }: { side: "buyer" | "
             <Tile app="CONNECT" title="Connections" period={label} foot="Find People" footHref="/connect/community" group={foot}><Funnel you={you} grp={g} stages={[["Invited", "buyer.connect.invited"], ["Connected", "buyer.connect.connected"], ["Mentors", "buyer.connect.mentors"]]} /></Tile>
             <Tile app="HIRE" title="Jobs" period={label} foot="Create a Job" footHref="/hire" group={foot}><Funnel you={you} grp={g} stages={[["Published", "buyer.jobs.published"], ["Availability Requested", "buyer.jobs.availability"], ["Interviewed", "buyer.jobs.interviewed"], ["Filled", "buyer.jobs.hired"]]} /></Tile>
             <Tile app="SHOP" title="Shop" period={label} foot="Shop" footHref="/shop" group={foot}><Funnel you={you} grp={g} stages={[["Viewed", "buyer.shop.viewed"], ["Ordered", "buyer.shop.ordered"], ["Delivered", "buyer.shop.delivered"]]} /><p className="mt-1 text-[12px] text-ink-3">{productsOffered.toLocaleString("en-US")} products offered</p></Tile>
-            <Tile app="ORDERS" title="Orders" period={label} foot="See Orders" footHref="/orders" group={foot}><Funnel you={you} grp={g} stages={[["Created", "buyer.orders.created"], ["Active", "buyer.orders.active"], ["Approved Delivery", "buyer.orders.approved"], ["On Time", "buyer.orders.on_time"]]} /></Tile>
+            <Tile app="ORDERS" title="Orders" period={label} foot="See Orders" footHref="/orders" group={foot}><Funnel you={you} grp={g} stages={[["Created", "buyer.orders.created"], ["Active", "buyer.orders.active"], ["Approved Delivery", "buyer.orders.approved"], ["On Time", "buyer.orders.on_time"]]} /><ReviewsLine you={you} grp={g} k="buyer" target={group.usesTarget} /></Tile>
             <Tile app="PAYMENTS" title="Paid" period={label} foot="See Payments" footHref="/payments" group={foot}><Money you={you["buyer.payments.paid"] ?? 0} grp={g["buyer.payments.paid"] ?? 0} rows={[["Invoices to Approve", extras.a], ["Savings on Hires", extras.b]]} /></Tile>
           </>
         )}

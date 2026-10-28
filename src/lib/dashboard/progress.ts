@@ -7,8 +7,8 @@ export { PERIODS, periodRange, type PeriodKey };
 export const GROUP_MIN = 20;
 
 // Every metric key — Admin › Performance Targets edits one row per key (MD-E005).
-export const SELLER_KEYS = ["seller.connect.invited", "seller.connect.connected", "seller.connect.mentoring", "seller.connect.introduced", "seller.courses.published", "seller.courses.matched", "seller.courses.enrolled", "seller.courses.taken", "seller.courses.certified", "seller.orders.offered", "seller.orders.accepted", "seller.orders.delivered", "seller.orders.on_time", "seller.payments.earned"] as const;
-export const BUYER_KEYS = ["buyer.connect.invited", "buyer.connect.connected", "buyer.connect.mentors", "buyer.jobs.published", "buyer.jobs.availability", "buyer.jobs.interviewed", "buyer.jobs.hired", "buyer.shop.viewed", "buyer.shop.ordered", "buyer.shop.delivered", "buyer.orders.created", "buyer.orders.active", "buyer.orders.approved", "buyer.orders.on_time", "buyer.payments.paid"] as const;
+export const SELLER_KEYS = ["seller.connect.invited", "seller.connect.connected", "seller.connect.mentoring", "seller.connect.introduced", "seller.courses.published", "seller.courses.matched", "seller.courses.enrolled", "seller.courses.taken", "seller.courses.certified", "seller.orders.offered", "seller.orders.accepted", "seller.orders.delivered", "seller.orders.on_time", "seller.payments.earned", "seller.reviews.rating", "seller.reviews.count"] as const;
+export const BUYER_KEYS = ["buyer.connect.invited", "buyer.connect.connected", "buyer.connect.mentors", "buyer.jobs.published", "buyer.jobs.availability", "buyer.jobs.interviewed", "buyer.jobs.hired", "buyer.shop.viewed", "buyer.shop.ordered", "buyer.shop.delivered", "buyer.orders.created", "buyer.orders.active", "buyer.orders.approved", "buyer.orders.on_time", "buyer.payments.paid", "buyer.reviews.rating", "buyer.reviews.count"] as const;
 /** Metrics with no data source yet — always 0 (listed in the report). */
 export const NO_SOURCE = new Set(["seller.connect.introduced", "seller.courses.matched"]);
 type M = Record<string, number>;
@@ -54,9 +54,10 @@ export async function connectLearn(personIds: string[], from: Date, to: Date) {
 }
 
 export async function sellerMetrics(personIds: string[], from: Date, to: Date): Promise<Map<string, M>> {
-  const cl = await connectLearn(personIds, from, to);
   const inPeriod = { gte: from, lte: to };
-  const [orders, prs] = await Promise.all([
+  const [cl, rated, orders, prs] = await Promise.all([
+    connectLearn(personIds, from, to),
+    import("@/lib/order-reviews").then((m) => m.ratingsByPerson("BUYER", personIds)),
     prisma.workOrder.findMany({ where: { provider_person_id: { in: personIds }, created_at: inPeriod, status: { notIn: ["DRAFT", "CANCELLED"] } }, select: { provider_person_id: true, provider_accepted_at: true, status: true, period_end: true, updated_at: true } }),
     prisma.paymentRequest.findMany({ where: { provider_person_id: { in: personIds }, status: "PAID", OR: [{ decided_at: inPeriod }, { decided_at: null, updated_at: inPeriod }] }, select: { provider_person_id: true, lines: { select: { amount_cents: true, quantity: true, unit_price_cents: true } } } }),
   ]);
@@ -71,14 +72,15 @@ export async function sellerMetrics(personIds: string[], from: Date, to: Date): 
       "seller.orders.offered": mine.length, "seller.orders.accepted": mine.filter((o) => o.provider_accepted_at).length, "seller.orders.delivered": delivered.length,
       "seller.orders.on_time": delivered.filter((o) => !o.period_end || o.updated_at <= new Date(o.period_end.getTime() + 86_400_000)).length,
       "seller.payments.earned": Math.round(prs.filter((p) => p.provider_person_id === pid).reduce((n, p) => n + prTotal(p.lines), 0) / 100),
+      // OR-E004: all-time Order Reviews about this seller.
+      "seller.reviews.rating": Math.round((rated.get(pid)?.avg ?? 0) * 10) / 10, "seller.reviews.count": rated.get(pid)?.n ?? 0,
     });
   }
   return out;
 }
 
 export async function buyerMetrics(personIds: string[], from: Date, to: Date): Promise<Map<string, M>> {
-  const cl = await connectLearn(personIds, from, to);
-  const users = await usersOf(personIds);
+  const [cl, users, rated] = await Promise.all([connectLearn(personIds, from, to), usersOf(personIds), import("@/lib/order-reviews").then((m) => m.ratingsByPerson("SELLER", personIds))]);
   const inPeriod = { gte: from, lte: to };
   const [jobs, events, ivs, orders, views] = await Promise.all([
     prisma.job.findMany({ where: { buyer_person_id: { in: personIds }, posted_at: inPeriod }, select: { buyer_person_id: true } }),
@@ -104,6 +106,7 @@ export async function buyerMetrics(personIds: string[], from: Date, to: Date): P
       "buyer.orders.approved": prs.filter((p) => ids.has(p.work_order_id)).length,
       "buyer.orders.on_time": mine.filter((o) => done(o) && (!o.period_end || o.updated_at <= new Date(o.period_end.getTime() + 86_400_000))).length,
       "buyer.payments.paid": Math.round(prs.filter((p) => ids.has(p.work_order_id) && p.status === "PAID").reduce((n, p) => n + prTotal(p.lines), 0) / 100),
+      "buyer.reviews.rating": Math.round((rated.get(pid)?.avg ?? 0) * 10) / 10, "buyer.reviews.count": rated.get(pid)?.n ?? 0,
     });
   }
   return out;
@@ -127,7 +130,11 @@ export async function groupMarkers(role: "BUYER" | "SELLER", from: Date, to: Dat
   const per = role === "SELLER" ? await sellerMetrics(members, from, to) : await buyerMetrics(members, from, to);
   const keys = role === "SELLER" ? SELLER_KEYS : BUYER_KEYS;
   const values: M = {};
-  for (const k of keys) values[k] = Math.round(([...per.values()].reduce((n, m) => n + (m[k] ?? 0), 0) / members.length) * 10) / 10;
+  for (const k of keys) {
+    // A rating averages only the people who have one.
+    const ms = k.endsWith(".reviews.rating") ? [...per.values()].filter((m) => (m[k] ?? 0) > 0) : [...per.values()];
+    values[k] = ms.length ? Math.round((ms.reduce((n, m) => n + (m[k] ?? 0), 0) / (k.endsWith(".reviews.rating") ? ms.length : members.length)) * 10) / 10 : 0;
+  }
   return { size: members.length, usesTarget: false, values };
 }
 

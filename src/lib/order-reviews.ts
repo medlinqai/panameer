@@ -124,13 +124,16 @@ function roll<T extends { overall: number } & Record<string, unknown>>(rows: T[]
   return { avg: rows.reduce((n, r) => n + r.overall, 0) / (rows.length || 1), n: rows.length, parts };
 }
 
-/** Seller ratings by person id (what buyers said about them). */
-export async function sellerRatings(personIds: string[]): Promise<Map<string, Rating>> {
+/** Ratings by reviewed person: side BUYER = what buyers said about these sellers; SELLER = what sellers said about these buyers. */
+export async function ratingsByPerson(side: OrderReviewSide, personIds: string[]): Promise<Map<string, Rating>> {
   const ids = [...new Set(personIds)].filter(Boolean);
   if (!ids.length) return new Map();
-  const rows = await visibleReviews({ side: "BUYER", reviewee_person_id: { in: ids } });
-  return new Map(ids.map((id) => [id, roll(rows.filter((r) => r.reviewee_person_id === id), "BUYER")] as const).filter(([, r]) => r.n > 0));
+  const rows = await visibleReviews({ side, reviewee_person_id: { in: ids } });
+  return new Map(ids.map((id) => [id, roll(rows.filter((r) => r.reviewee_person_id === id), side)] as const).filter(([, r]) => r.n > 0));
 }
+
+/** Seller ratings by person id (what buyers said about them). */
+export const sellerRatings = (personIds: string[]) => ratingsByPerson("BUYER", personIds);
 
 /** Buyer ratings by company id (what sellers said about that company). */
 export async function buyerRatings(companyIds: string[]): Promise<Map<string, Rating>> {
