@@ -3,12 +3,12 @@ import { BUYER_ROAD, BUYER_PHASE_LABELS, PROVIDER_ROAD, ROAD_PHASES, roadLabelTh
 
 // Provider road v6.1 (mockup provider_road_v6_1_mockup_2026-10-13): built from boxes and text, not a scaled SVG,
 // so labels stay ≥12px at any width. Every label is exactly three lines (Scott 10-13). Phones use RoadStepper.
-const OFF = "#C9CDDC";
+const OFF = "var(--color-state-border)";
 
 function Lock({ color }: { color: string }) {
   return (
     <svg width="20" height="22" viewBox="0 0 20 22" aria-hidden>
-      <rect x="2" y="9" width="16" height="12" rx="2" fill="#fff" stroke={color} strokeWidth="2" />
+      <rect x="2" y="9" width="16" height="12" rx="2" fill="var(--color-surface)" stroke={color} strokeWidth="2" />
       <path d="M6 9V6a4 4 0 0 1 8 0v3" fill="none" stroke={color} strokeWidth="2" />
     </svg>
   );
@@ -45,7 +45,7 @@ export function RoadGraphic({ current, road = PROVIDER_ROAD, label = "Provider r
               )}
               <span
                 className={"relative z-[1] grid place-items-center rounded-full font-extrabold " + (now ? "-mt-[3px] h-[38px] w-[38px] border-4 text-[13px]" : "h-8 w-8 border-[3px] text-[13px]")}
-                style={{ borderColor: C, background: done && !wait ? C : "#fff", color: done && !wait ? "#fff" : C }}
+                style={{ borderColor: C, background: done && !wait ? C : "var(--color-surface)", color: done && !wait ? "white" : C }}
               >
                 {wait ? "…" : done ? "✓" : i + 1}
                 {/* HB-E008: one red count per app on its step (e.g. Hire + Shop, and Estimate beside it). */}

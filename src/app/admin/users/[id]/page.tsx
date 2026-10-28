@@ -37,7 +37,7 @@ function Step({ n, title, tag, tone, actions, children }: { n: string; title: st
         <h2 className="text-[17px] font-bold">
           {n} {title}
         </h2>
-        <span className={"border px-1.5 text-[10.5px] font-bold tracking-[0.06em] " + (tone === "done" ? "border-[#5C6485] bg-[#5C6485] text-white" : tone === "wait" ? "border-[#b26b00] text-[#b26b00]" : "border-line text-ink-3")}>{tag}</span>
+        <span className={"border px-1.5 text-[10.5px] font-bold tracking-[0.06em] " + (tone === "done" ? "border-state-inactive bg-state-inactive text-white" : tone === "wait" ? "border-state-pending text-state-pending" : "border-line text-ink-3")}>{tag}</span>
         {actions && <span className="ml-auto flex flex-wrap items-center gap-2">{actions}</span>}
       </div>
       <div className="mt-2">{children}</div>
@@ -156,7 +156,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
       <div className="mt-5"><LifecycleStrip steps={steps.length ? steps : undefined} current={cur - 1} intro="they" hereLabel="Here now" /></div>
 
       {blocked && (
-        <div data-blocked className="mt-4 flex flex-wrap items-center justify-between gap-3 border-2 border-[#b26b00] p-4">
+        <div data-blocked className="mt-4 flex flex-wrap items-center justify-between gap-3 border-2 border-state-pending p-4">
           <div className="min-w-0">
             <b className="block text-[15px]">Blocked by: {blocked.text}</b>
             {blocked.sub && <span className="text-[13px] text-ink-2">{blocked.sub}</span>}
@@ -200,7 +200,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
                 {CHECK.map(([label, phrase]) => {
                   const ok = !missing.includes(phrase);
                   return (
-                    <li key={label} className={ok ? "" : "text-[#b26b00]"}>
+                    <li key={label} className={ok ? "" : "text-state-pending"}>
                       {ok ? "✓" : "✗"} {label}
                     </li>
                   );

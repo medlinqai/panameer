@@ -1,10 +1,10 @@
 import { LIFECYCLE, type LifecycleStep } from "@/lib/user-levels";
 
 // Brand neutrals (Panameer brand guide): done = secondary, now = ink, ahead = borders/disabled.
-const DONE = "#5C6485";
-const AHEAD_RING = "#C9CDDC";
-const AHEAD_NUM = "#8A90A8";
-const TRACK = "#E8EAF1";
+const DONE = "var(--color-state-inactive)";
+const AHEAD_RING = "var(--color-state-border)";
+const AHEAD_NUM = "var(--color-state-disabled)";
+const TRACK = "var(--color-state-sunken)";
 
 const WORDS: Record<number, string> = { 7: "seven", 8: "eight", 9: "nine" };
 
@@ -39,10 +39,10 @@ export function LifecycleStrip({ current, intro = "you", hereLabel = "You are he
                 className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full text-[16px] font-extrabold sm:mx-auto"
                 style={
                   done
-                    ? { background: DONE, color: "#fff", border: `3px solid ${DONE}` }
+                    ? { background: DONE, color: "white", border: `3px solid ${DONE}` }
                     : here
-                      ? { background: "var(--color-ink)", color: "#fff", border: "3px solid var(--color-ink)", boxShadow: "0 0 0 5px rgba(39,35,52,.12)" }
-                      : { background: "#fff", color: AHEAD_NUM, border: `3px solid ${AHEAD_RING}` }
+                      ? { background: "var(--color-ink)", color: "var(--color-surface)", border: "3px solid var(--color-ink)", boxShadow: "0 0 0 5px rgba(39,35,52,.12)" }
+                      : { background: "var(--color-surface)", color: AHEAD_NUM, border: `3px solid ${AHEAD_RING}` }
                 }
               >
                 {done ? "✓" : i + 1}

@@ -11,7 +11,7 @@ const COLS: Record<GridSide, string> = {
   buyer: "64px 12px 36px minmax(180px,1fr) 104px 30px 30px 30px 72px 88px",
   provider: "64px 12px minmax(200px,1fr) 104px 30px 30px 88px",
 };
-const GREY = "#C9CDDC";
+const GREY = "var(--color-state-border)";
 const DOT: Record<GridStatus, string> = { Scheduled: "bg-state-accepted", "To Confirm": "bg-state-pending", Done: "bg-state-inactive", Declined: "bg-state-declined" };
 const PILL: Record<GridStatus, UiState> = { Scheduled: "accepted", "To Confirm": "pending", Done: "inactive", Declined: "declined" };
 const TEST: Record<GridRow["test"], { color: string; label: string }> = {
@@ -112,7 +112,7 @@ function Grid({ side, rows }: { side: GridSide; rows: GridRow[] }) {
                 </Link>
               )}
               {r.messagesHref ? (
-                <Link href={r.messagesHref} className="flex justify-center" title={r.unread ? "Unread messages" : "Messages"}><MessageSquare size={17} strokeWidth={1.8} style={{ color: r.unread ? "#B3261E" : GREY }} /></Link>
+                <Link href={r.messagesHref} className="flex justify-center" title={r.unread ? "Unread messages" : "Messages"}><MessageSquare size={17} strokeWidth={1.8} style={{ color: r.unread ? "var(--color-state-declined)" : GREY }} /></Link>
               ) : <span className="flex justify-center"><MessageSquare size={17} strokeWidth={1.8} style={{ color: GREY }} /></span>}
               {side === "buyer" && <span className="text-right text-[13px] font-semibold tabular-nums">{r.rate ?? <span className="text-state-border">—</span>}</span>}
               <span className="flex justify-end">

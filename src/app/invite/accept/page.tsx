@@ -128,7 +128,7 @@ async function ValidState({
         </p>
         <Link
           href={`/login?callbackUrl=${encodeURIComponent(acceptUrl)}`}
-          className="mt-4 inline-flex border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
+          className="mt-4 inline-flex border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-state-border"
         >
           Switch Account
         </Link>

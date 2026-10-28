@@ -19,7 +19,7 @@ export function SignGateModal({ gate, onClose }: { gate: SignGate | null; onClos
                 <span>
                   {i.company} · {i.href && !i.done && gate.isAdmin ? <Link href={i.href} className="font-semibold text-magenta-dark underline underline-offset-2">{i.item.toLowerCase()}</Link> : i.item.toLowerCase()}
                 </span>
-                <span className={"text-[12px] font-bold " + (i.done ? "text-[#1f8a5b]" : "text-[#b26b00]")}>{i.done ? "✓ Done" : "Needed"}</span>
+                <span className={"text-[12px] font-bold " + (i.done ? "text-state-accepted" : "text-state-pending")}>{i.done ? "✓ Done" : "Needed"}</span>
               </li>
             ))}
           </ul>

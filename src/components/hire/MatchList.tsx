@@ -151,7 +151,7 @@ export function MatchList({ jobId, matches: initial, state, empty, chosen = true
                 {m.why.map((k) => <span key={k} className={WHY}>{k}</span>)}
                 {m.matched.map((k) => <span key={k} className={CHIP}>{k}</span>)}
                 {m.inBudget && <span className="rounded-full border border-line px-2">In Budget</span>}
-                {m.aboveRange && <span className="rounded-full bg-[#FAF0DA] px-2 font-semibold text-[#8a5a00]">Above Your Range</span>}
+                {m.aboveRange && <span className="rounded-full bg-state-pending-bg px-2 font-semibold text-state-pending">Above Your Range</span>}
               </p>
               {m.requested && <span className="mt-1 block text-[12.5px] font-semibold text-state-pending" data-requested>Requested · due {new Date(m.requested.due).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>}
             </button>

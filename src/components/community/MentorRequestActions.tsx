@@ -18,7 +18,7 @@ export function MentorRequestActions({ connectionId }: { connectionId: string })
     setDone(accept ? "Accepted" : "Declined");
     router.refresh();
   };
-  if (done) return <span className="text-[12.5px] font-bold text-[#1f8a5b]">✓ {done}</span>;
+  if (done) return <span className="text-[12.5px] font-bold text-state-accepted">✓ {done}</span>;
   return (
     <span className="inline-flex flex-wrap items-center gap-2">
       <button type="button" data-mentor-accept disabled={busy} onClick={() => act(true)} className="bg-ink px-3 py-1.5 text-[13px] font-semibold text-surface disabled:opacity-50">Accept</button>

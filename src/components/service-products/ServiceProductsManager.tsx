@@ -682,7 +682,7 @@ export function ServiceProductsManager({
           <button
             type="button"
             onClick={() => setModal(null)}
-            className="border-[1.5px] border-line px-5 py-2.5 font-bold text-ink hover:border-[#d9d4e2]"
+            className="border-[1.5px] border-line px-5 py-2.5 font-bold text-ink hover:border-state-border"
           >
             Cancel
           </button>

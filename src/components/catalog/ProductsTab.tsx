@@ -19,7 +19,7 @@ const SHORT: Record<string, string> = { "Procure-to-Pay": "P2P", "Order-to-Cash"
 const pricingFor = (m: string | null): Pricing => (m === "RECURRING" ? "MONTHLY" : m === "TIME" ? "HOURLY" : "FIXED");
 const LBL = "flex flex-col gap-1.5 text-[12px] font-bold text-ink-2";
 const INPUT = "w-full border border-line bg-surface px-2.5 py-2 text-[13px] font-normal text-ink";
-const SEC = "border-b border-[#ECEEF4] p-4";
+const SEC = "border-b border-state-sunken p-4";
 const N = "mb-2.5 text-[11px] font-extrabold tracking-[0.14em] text-magenta";
 
 export function ProductsTab({ types, products, domains, skills, sellGaps, editId, typeId = null, onSaved }: { types: PType[]; products: Product[]; domains: Domain[]; skills: { id: string; name: string }[]; sellGaps: unknown[]; editId: string | null; typeId?: string | null; /** Embedded (Create What You Sell): reload in place instead of navigating to Catalog. */ onSaved?: (editId: string | null) => void }) {
@@ -133,7 +133,7 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
       {showForm && <div ref={formRef} id="create" className="mt-5 scroll-mt-24 border-2 border-ink" data-product-form>
         <div className="flex flex-wrap items-center justify-between gap-2 bg-ink px-4 py-3 text-white">
           <b className="text-[15px]">{id ? `Edit ${f.title || "Service Product"}` : "Create a Service Product"}</b>
-          <span className="text-[12px] text-[#B9BDD0]">Saves as Draft · nothing goes live until you publish</span>
+          <span className="text-[12px] text-state-border">Saves as Draft · nothing goes live until you publish</span>
         </div>
 
         <section className={SEC}>
@@ -204,7 +204,7 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
             <label className={LBL}>Price
               <span className="inline-flex items-center border border-line bg-surface"><span className="px-2 text-ink-3">$</span><input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full border-0 px-1 py-2 text-[13px] font-normal outline-none" aria-label="Price" /></span>
             </label>
-            <label className={LBL}>Unit<input readOnly value={PRICING.find(([k]) => k === f.pricing)![2]} className={`${INPUT} bg-[#FAFAFC]`} aria-label="Unit" /></label>
+            <label className={LBL}>Unit<input readOnly value={PRICING.find(([k]) => k === f.pricing)![2]} className={`${INPUT} bg-bg-soft`} aria-label="Unit" /></label>
           </div>
           {/* MO-E001: Open to Offers, with an optional private floor. */}
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2" data-open-to-offers>
@@ -265,12 +265,12 @@ export function ProductsTab({ types, products, domains, skills, sellGaps, editId
               </select>
             </label>
           </div>
-          <div className="mt-3 border border-dashed border-line bg-[#FAFAFC] p-3 text-[13px] text-ink-3" data-r2-value-factors>
+          <div className="mt-3 border border-dashed border-line bg-bg-soft p-3 text-[13px] text-ink-3" data-r2-value-factors>
             <b className="text-ink-2">R2 · VALUE FACTORS</b><br />Coming after launch: how much this product saves (e.g. % of invoice processing time) so the Optimization assessment can recommend and price it automatically. Process Area above is captured now so nothing has to be re-entered.
           </div>
         </section>
 
-        <div className="flex flex-wrap items-center justify-between gap-2.5 bg-[#FAFAFC] px-4 py-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 bg-bg-soft px-4 py-3.5">
           <span className="text-[12.5px] text-ink-2">Publish needs: name, type, description, a cover, price, delivery.</span>
           <span className="flex gap-2">
             <button type="button" disabled={!!busy} onClick={() => save(false)} className="inline-flex min-h-10 items-center border border-ink px-4 text-[13.5px] font-bold disabled:opacity-40">{busy === "save" ? "Saving…" : "Save Draft"}</button>

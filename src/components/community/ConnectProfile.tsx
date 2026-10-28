@@ -317,7 +317,7 @@ export function ConnectProfile({
             {/* SVG ring: one stroke width all the way round (a CSS conic ring rendered uneven). */}
             <span className="relative inline-grid h-[78px] w-[78px] flex-none place-items-center" data-score-ring>
               <svg viewBox="0 0 78 78" className="absolute inset-0 h-full w-full -rotate-90" aria-hidden>
-                <circle cx="39" cy="39" r="35" fill="none" stroke="#C9CDDC" strokeWidth="6" />
+                <circle cx="39" cy="39" r="35" fill="none" stroke="var(--color-state-border)" strokeWidth="6" />
                 <circle cx="39" cy="39" r="35" fill="none" stroke="var(--color-ink)" strokeWidth="6"
                   strokeDasharray={`${(Math.min(100, Math.max(0, score.total)) / 100) * 2 * Math.PI * 35} ${2 * Math.PI * 35}`} />
               </svg>
@@ -523,7 +523,7 @@ export function ConnectProfile({
                     <span className="text-magenta">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Validated by Panameer">
                         <path d="M12 2l2.4 1.8 3-.3 1 2.8 2.6 1.5-.9 2.9.9 2.9-2.6 1.5-1 2.8-3-.3L12 22l-2.4-1.8-3 .3-1-2.8L3 16.2l.9-2.9L3 10.4l2.6-1.5 1-2.8 3 .3z" />
-                        <path d="M10.6 15.2l-2.8-2.8 1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff" />
+                        <path d="M10.6 15.2l-2.8-2.8 1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="white" />
                       </svg>
                     </span>
                     <b className="text-[14px]">Validated by Panameer</b>
@@ -699,7 +699,7 @@ export function ConnectProfile({
               <span title="Validated by Panameer" className="text-magenta">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-label="Validated by Panameer" role="img">
                   <path d="M12 2l2.4 1.8 3-.3 1 2.8 2.6 1.5-.9 2.9.9 2.9-2.6 1.5-1 2.8-3-.3L12 22l-2.4-1.8-3 .3-1-2.8L3 16.2l.9-2.9L3 10.4l2.6-1.5 1-2.8 3 .3z" />
-                  <path d="M10.6 15.2l-2.8-2.8 1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff" />
+                  <path d="M10.6 15.2l-2.8-2.8 1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="white" />
                 </svg>
               </span>
             )}

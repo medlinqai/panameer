@@ -172,11 +172,11 @@ export function ValidationAnswers({
         {/* TWO TICKBOXES, NOT ONE. "Show what I wrote" and "use my name" are */}
         <div className="space-y-2 rounded-brand border border-line bg-bg-soft/40 p-4">
           <label className="flex items-start gap-2 text-[14px]">
-            <input type="checkbox" checked={showPublic} onChange={(e) => setShowPublic(e.target.checked)} className="mt-1 h-4 w-4 accent-[#d72cd6]" />
+            <input type="checkbox" checked={showPublic} onChange={(e) => setShowPublic(e.target.checked)} className="mt-1 h-4 w-4 accent-magenta" />
             <span>Panameer may show what I wrote on {providerName}&apos;s profile.</span>
           </label>
           <label className="flex items-start gap-2 text-[14px]">
-            <input type="checkbox" checked={namePublic} onChange={(e) => setNamePublic(e.target.checked)} className="mt-1 h-4 w-4 accent-[#d72cd6]" />
+            <input type="checkbox" checked={namePublic} onChange={(e) => setNamePublic(e.target.checked)} className="mt-1 h-4 w-4 accent-magenta" />
             <span>Panameer may show my name and job title alongside it.</span>
           </label>
         </div>

@@ -322,7 +322,7 @@ export default async function Page({
         {u?.email ?? "—"}
       </span>,
       u?.email_verified ? d(u.email_verified) : "No",
-      <span key="level" className="inline-block border border-[#5C6485] bg-[#5C6485] text-white px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.06em]" title={blocking.join(", ") || undefined}>{LIFECYCLE[pathIndex.get(p.id) ?? 0].status}</span>,
+      <span key="level" className="inline-block border border-state-inactive bg-state-inactive text-white px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.06em]" title={blocking.join(", ") || undefined}>{LIFECYCLE[pathIndex.get(p.id) ?? 0].status}</span>,
       <input
         key="lock"
         type="checkbox"
@@ -456,7 +456,7 @@ export default async function Page({
                 label: bx.label,
                 href: `?stage=${bx.key}`,
                 sub: i === 0
-                  ? <span className={oldestWaiting > 7 ? "font-semibold text-[#b26b00]" : ""}>Oldest: {oldestWaiting} days</span>
+                  ? <span className={oldestWaiting > 7 ? "font-semibold text-state-pending" : ""}>Oldest: {oldestWaiting} days</span>
                   : rates[i - 1] === null ? "—" : `${rates[i - 1]}% got here`,
               }))}
             />
@@ -493,7 +493,7 @@ export default async function Page({
                         </Link>
                       </td>
                       <td className="px-3 py-2">{d(p.created_at)}</td>
-                      <td className={"px-3 py-2 font-semibold " + (daysStuck(p) > 7 ? "text-[#b26b00]" : "")} data-days-stuck>{daysStuck(p)}</td>
+                      <td className={"px-3 py-2 font-semibold " + (daysStuck(p) > 7 ? "text-state-pending" : "")} data-days-stuck>{daysStuck(p)}</td>
                       <td className="px-3 py-2">{d(p.user?.last_login)}</td>
                       <td className="px-3 py-2 text-ink-2">{leftOff || "—"}</td>
                       <td className="px-3 py-2 text-right">{stageTile?.level === "1" && p.user_id ? <ResendVerification userId={p.user_id} /> : null}</td>

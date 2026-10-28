@@ -20,7 +20,7 @@ export function BoardRefresh({ readAt }: { readAt: string }) {
         type="button"
         onClick={() => startTransition(() => router.refresh())}
         disabled={pending}
-        className="border-[1.5px] border-line px-4 py-1.5 text-[13.5px] font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
+        className="border-[1.5px] border-line px-4 py-1.5 text-[13.5px] font-bold text-ink transition-colors hover:border-state-border disabled:opacity-50"
       >
         {pending ? "Refreshing…" : "Refresh"}
       </button>
@@ -29,7 +29,7 @@ export function BoardRefresh({ readAt }: { readAt: string }) {
           type="checkbox"
           checked={auto}
           onChange={(e) => setAuto(e.target.checked)}
-          className="h-3.5 w-3.5 accent-[#d72cd6]"
+          className="h-3.5 w-3.5 accent-magenta"
         />
         Auto-refresh every 30s
       </label>

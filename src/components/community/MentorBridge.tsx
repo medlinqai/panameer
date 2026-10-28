@@ -1,8 +1,8 @@
 // Mentors hero picture: your mentors → you → your mentees. Solid = accepted, dashed = open spot, you in magenta.
 type P = { name: string; photoUrl: string | null };
-const INK = "#272334";
-const OFF = "#C9CDDC";
-const MAG = "#d72cd6";
+const INK = "var(--color-ink)";
+const OFF = "var(--color-state-border)";
+const MAG = "var(--color-magenta)";
 const ini = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("") || "?";
 const YS = [60, 140, 220];
 
@@ -11,14 +11,14 @@ function Node({ x, y, p, id }: { x: number; y: number; p: P | null; id: string }
   return (
     <g>
       <title>{p.name}</title>
-      <circle cx={x} cy={y} r={22} fill="#f6f5f9" />
+      <circle cx={x} cy={y} r={22} fill="var(--color-surface-hover)" />
       {p.photoUrl ? (
         <>
           <clipPath id={id}><circle cx={x} cy={y} r={22} /></clipPath>
           <image href={p.photoUrl} x={x - 22} y={y - 22} width={44} height={44} clipPath={`url(#${id})`} preserveAspectRatio="xMidYMid slice" />
         </>
       ) : (
-        <text x={x} y={y + 5} textAnchor="middle" fontSize={13} fontWeight={700} fill="#4a4658">{ini(p.name)}</text>
+        <text x={x} y={y + 5} textAnchor="middle" fontSize={13} fontWeight={700} fill="var(--color-ink-2)">{ini(p.name)}</text>
       )}
       <circle cx={x} cy={y} r={22} fill="none" stroke={INK} strokeWidth={2} />
     </g>
@@ -31,13 +31,13 @@ export function MentorBridge({ mentors, mentees, me }: { mentors: P[]; mentees: 
   return (
     <div data-mentor-bridge>
       <svg viewBox="0 0 340 280" width="100%" className="mx-auto block max-w-[320px]" role="img" aria-label={`${mentors.length} mentors, ${mentees.length} mentees`}>
-        <text x={52} y={20} textAnchor="middle" fontSize={10} fontWeight={700} letterSpacing={1.2} fill="#4a4658">YOUR MENTORS</text>
-        <text x={288} y={20} textAnchor="middle" fontSize={10} fontWeight={700} letterSpacing={1.2} fill="#4a4658">YOUR MENTEES</text>
+        <text x={52} y={20} textAnchor="middle" fontSize={10} fontWeight={700} letterSpacing={1.2} fill="var(--color-ink-2)">YOUR MENTORS</text>
+        <text x={288} y={20} textAnchor="middle" fontSize={10} fontWeight={700} letterSpacing={1.2} fill="var(--color-ink-2)">YOUR MENTEES</text>
         {left.map((p, i) => <line key={`l${i}`} x1={74} y1={YS[i]} x2={138} y2={140} stroke={p ? INK : OFF} strokeWidth={2} strokeDasharray={p ? undefined : "5 5"} />)}
         {right.map((p, i) => <line key={`r${i}`} x1={202} y1={140} x2={266} y2={YS[i]} stroke={p ? INK : OFF} strokeWidth={2} strokeDasharray={p ? undefined : "5 5"} />)}
         {left.map((p, i) => <Node key={`ml${i}`} x={52} y={YS[i]} p={p} id={`mb-l${i}`} />)}
         {right.map((p, i) => <Node key={`mr${i}`} x={288} y={YS[i]} p={p} id={`mb-r${i}`} />)}
-        <circle cx={170} cy={140} r={32} fill="#f6f5f9" />
+        <circle cx={170} cy={140} r={32} fill="var(--color-surface-hover)" />
         {me.photoUrl ? (
           <>
             <clipPath id="mb-me"><circle cx={170} cy={140} r={32} /></clipPath>
@@ -48,8 +48,8 @@ export function MentorBridge({ mentors, mentees, me }: { mentors: P[]; mentees: 
         )}
         <circle cx={170} cy={140} r={32} fill="none" stroke={MAG} strokeWidth={4} />
         <text x={170} y={194} textAnchor="middle" fontSize={11} fontWeight={700} letterSpacing={1.5} fill={MAG}>YOU</text>
-        {mentors.length > 3 && <text x={52} y={262} textAnchor="middle" fontSize={11} fill="#4a4658">+{mentors.length - 3} more</text>}
-        {mentees.length > 3 && <text x={288} y={262} textAnchor="middle" fontSize={11} fill="#4a4658">+{mentees.length - 3} more</text>}
+        {mentors.length > 3 && <text x={52} y={262} textAnchor="middle" fontSize={11} fill="var(--color-ink-2)">+{mentors.length - 3} more</text>}
+        {mentees.length > 3 && <text x={288} y={262} textAnchor="middle" fontSize={11} fill="var(--color-ink-2)">+{mentees.length - 3} more</text>}
       </svg>
       <p className="mt-2 text-center text-[11px] text-ink-2">Solid = connected · dashed = open spot</p>
     </div>

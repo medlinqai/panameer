@@ -500,7 +500,7 @@ export function ProjectModal({
                   endDate: e.target.checked ? "" : draft.endDate,
                 })
               }
-              className="h-4 w-4 accent-[#D72CD6]"
+              className="h-4 w-4 accent-magenta"
             />
             <span className="text-[14px]">I currently work on this</span>
           </label>

@@ -162,7 +162,7 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
         <div className="mt-5 border border-line" data-theme-preview aria-label="Preview">
           <div className="flex items-center gap-4 px-4 py-2.5" style={{ background: t.rail, color: t.railText }} data-preview-band>
             <b className="text-[14px]">Panameer</b>
-            <span className="px-2.5 py-1 text-[12px] font-semibold" style={{ background: t.railActive, color: "#fff" }} data-preview-active>Work</span>
+            <span className="px-2.5 py-1 text-[12px] font-semibold" style={{ background: t.railActive, color: "white" }} data-preview-active>Work</span>
             <span className="text-[12px]">Learn</span>
             <span className="text-[12px]">Shop</span>
           </div>

@@ -115,7 +115,7 @@ export function AssessmentReview({
           <span
             className={
               "ml-auto rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.08em] " +
-              (published ? "bg-[#eaf7f1] text-[#137a51]" : "bg-[#fff4e0] text-[#8a5a00]")
+              (published ? "bg-state-accepted-bg text-state-accepted" : "bg-state-pending-bg text-state-pending")
             }
           >
             {status ?? "—"}
@@ -266,7 +266,7 @@ export function AssessmentReview({
                     className={
                       "flex gap-2.5 rounded-[8px] px-3 py-2 text-[14px] " +
                       (oi === q.correctIndex
-                        ? "bg-[#eaf7f1] font-semibold text-[#137a51]"
+                        ? "bg-state-accepted-bg font-semibold text-state-accepted"
                         : "text-ink-2")
                     }
                   >
@@ -296,14 +296,14 @@ export function AssessmentReview({
                   className={
                     "ml-auto rounded-full px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.08em] " +
                     (q.described
-                      ? "bg-[#eaf7f1] text-[#137a51]"
+                      ? "bg-state-accepted-bg text-state-accepted"
                       : "bg-magenta/10 text-magenta-dark")
                   }
                 >
                   {q.described ? "Lesson described" : "Title only"}
                 </span>
                 {q.sourceKind === "LESSON_PLUS_DOCS" && (
-                  <span className="rounded-full bg-[#fff4e0] px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#8a5a00]">
+                  <span className="rounded-full bg-state-pending-bg px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-state-pending">
                     Used vendor docs
                   </span>
                 )}

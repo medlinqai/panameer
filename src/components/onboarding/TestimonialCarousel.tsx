@@ -54,7 +54,7 @@ function Stars({ rating }: { rating: number }) {
   const filled = Math.round(rating);
   return (
     <span className="inline-flex items-center gap-1.5 text-[15px]">
-      <span aria-hidden className="tracking-[1px] text-[#22C55E]">
+      <span aria-hidden className="tracking-[1px] text-state-accepted">
         {"★".repeat(filled)}
         <span className="text-line">{"★".repeat(5 - filled)}</span>
       </span>
@@ -71,7 +71,7 @@ function MailIcon() {
     <svg
       aria-hidden
       viewBox="0 0 24 24"
-      className="h-[18px] w-[18px] flex-none text-[#22C55E]"
+      className="h-[18px] w-[18px] flex-none text-state-accepted"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.8"

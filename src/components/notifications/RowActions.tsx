@@ -23,7 +23,7 @@ export function RowActions({ id, action, href, onDone }: { id: string; action: R
     if (onDone) onDone(label);
     else router.refresh();
   };
-  if (done) return <span data-row-done className="text-[12.5px] font-bold text-[#1f8a5b]">✓ {done}</span>;
+  if (done) return <span data-row-done className="text-[12.5px] font-bold text-state-accepted">✓ {done}</span>;
   const open = href && <Link href={href} className="pm-triage-btn pm-triage-btn-s">Open</Link>;
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5" data-row-actions={action?.kind ?? "open"} onClick={(e) => e.stopPropagation()}>

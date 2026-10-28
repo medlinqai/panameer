@@ -202,7 +202,7 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
         {STEPS.map((s, i) => (
           <li key={s}>
             <button type="button" disabled={i === step || i > furthest || busy || (i > 0 && !jobId)} onClick={() => { setError(null); setStep(i); if (i === 5) void loadMatches(); }} aria-current={i === step ? "step" : undefined}
-              className={"flex w-full items-center gap-2.5 whitespace-nowrap rounded-[8px] px-2.5 py-2 text-left font-semibold enabled:cursor-pointer enabled:hover:bg-[#f6f5f9] " + (i === step ? "bg-magenta/10 text-magenta-dark" : i < step ? "text-ink" : "text-ink-2")}>
+              className={"flex w-full items-center gap-2.5 whitespace-nowrap rounded-[8px] px-2.5 py-2 text-left font-semibold enabled:cursor-pointer enabled:hover:bg-surface-hover " + (i === step ? "bg-magenta/10 text-magenta-dark" : i < step ? "text-ink" : "text-ink-2")}>
             <span aria-hidden className={"inline-grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full text-[11.5px] " + (i < step ? "bg-magenta-dark text-white" : i === step ? "border-[1.5px] border-magenta-dark" : "border-[1.5px] border-line")}>{i < step ? "✓" : i + 1}</span>
             {s}
             </button>
@@ -360,7 +360,7 @@ export function HireQuestionnaire({ hierarchy, roles, defaults, initial, initial
               <label className="text-[13px] font-bold">{f.budgetType === "FIXED" ? "To ($)" : "To ($/hour)"}<input inputMode="numeric" value={f.budgetMax ?? ""} onChange={(e) => set({ budgetMax: e.target.value ? Number(e.target.value.replace(/[^0-9.]/g, "")) : null })} className={FIELD} /></label>
             </div>
             {f.budgetMin != null && f.budgetMax != null && f.budgetMin > f.budgetMax ? (
-              <p role="alert" className="mt-1 text-[12.5px] font-semibold text-[#B3261E]">&quot;From&quot; is higher than &quot;To&quot;. <button type="button" className="underline underline-offset-2" onClick={() => set({ budgetMin: f.budgetMax, budgetMax: f.budgetMin })}>Swap them</button></p>
+              <p role="alert" className="mt-1 text-[12.5px] font-semibold text-state-declined">&quot;From&quot; is higher than &quot;To&quot;. <button type="button" className="underline underline-offset-2" onClick={() => set({ budgetMin: f.budgetMax, budgetMax: f.budgetMin })}>Swap them</button></p>
             ) : (<p className="mt-1 text-[12.5px] text-ink-3">{(f.budgetType === "FIXED" ? "Required. For the whole job." : "Required. Per hour; providers see this range.") + (rangeHint ? ` ${rangeHint}` : "")}</p>)}
             <label className="mt-5 flex items-center gap-2 text-[14px] font-semibold" data-publish-locked>
               <input type="checkbox" checked disabled readOnly className="accent-ink" />

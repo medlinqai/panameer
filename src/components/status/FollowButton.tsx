@@ -25,7 +25,7 @@ export function FollowButton({
   const cls =
     "inline-flex min-h-[48px] items-center px-6 text-[15px] font-bold transition-opacity disabled:opacity-50 " +
     (variant === "onInk"
-      ? "bg-[#fff] text-rail hover:opacity-85"
+      ? "bg-surface text-rail hover:opacity-85"
       : "border border-ink bg-surface text-ink hover:bg-ink/5");
 
   const button = (
@@ -78,7 +78,7 @@ export function FollowButton({
             else start(() => router.refresh());
           }}
         />
-        <span className={variant === "onInk" ? "text-[#fff]" : "text-ink-2"}>
+        <span className={variant === "onInk" ? "text-surface" : "text-ink-2"}>
           Email me the weekly update
         </span>
       </label>

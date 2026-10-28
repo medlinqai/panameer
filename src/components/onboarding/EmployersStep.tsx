@@ -1271,7 +1271,7 @@ export function EmployersStep({
                   endDate: e.target.checked ? "" : employerForm.endDate,
                 })
               }
-              className="h-4 w-4 accent-[#D72CD6]"
+              className="h-4 w-4 accent-magenta"
             />
             <span className="text-[14px]">I currently work here</span>
           </label>

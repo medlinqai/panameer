@@ -36,7 +36,7 @@ export function PayReadyBox({ c }: { c: NonNullable<CompanyView> }) {
       <div>
         <p className="text-[15px] font-bold">
           Before {c.name} can be validated{" "}
-          <span className="ml-1 inline-block border border-current px-[7px] align-[2px] text-[10.5px] font-bold tracking-[0.06em] text-[#b26b00]">
+          <span className="ml-1 inline-block border border-current px-[7px] align-[2px] text-[10.5px] font-bold tracking-[0.06em] text-state-pending">
             {missing.length} LEFT
           </span>
         </p>
@@ -91,8 +91,8 @@ export function CompanyVerification({ c, buyer = false, acceptTerms }: { c: NonN
                 {v.status ? LABEL[v.status] ?? v.status : "Not checked yet"}
                 {v.detail && ` — ${v.detail}`}
                 {v.checkedAt && ` · ${v.checkedAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`}
-                {!buyer && !v.status && needs && <span className="ml-2 inline-block border border-current px-[7px] align-[1px] text-[10.5px] font-bold tracking-[0.06em] text-[#b26b00]">NEEDS {needs}</span>}
-                {ok && <span className="ml-2 inline-block border border-current px-[7px] align-[1px] text-[10.5px] font-bold tracking-[0.06em] text-[#1f8a5b]">VERIFIED</span>}
+                {!buyer && !v.status && needs && <span className="ml-2 inline-block border border-current px-[7px] align-[1px] text-[10.5px] font-bold tracking-[0.06em] text-state-pending">NEEDS {needs}</span>}
+                {ok && <span className="ml-2 inline-block border border-current px-[7px] align-[1px] text-[10.5px] font-bold tracking-[0.06em] text-state-accepted">VERIFIED</span>}
               </>
             ),
           },

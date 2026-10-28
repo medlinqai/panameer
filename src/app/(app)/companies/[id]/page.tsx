@@ -48,7 +48,7 @@ export default async function CompanyPublicPage({ params, searchParams }: { para
           ) : (
             people.map((m) => (
               <Link key={m.id} href={`/providers/${m.person.providerProfile!.id}`} data-member className="grid grid-cols-[40px_1fr] items-center gap-3 border-b border-line/60 py-3 hover:bg-surface-hover">
-                <span className="grid h-10 w-10 place-items-center rounded-full bg-[#cfc9db] text-[13px] font-bold text-ink">{initials(m.person.first_name, m.person.last_name)}</span>
+                <span className="grid h-10 w-10 place-items-center rounded-full bg-state-border text-[13px] font-bold text-ink">{initials(m.person.first_name, m.person.last_name)}</span>
                 <span className="min-w-0">
                   <b className="text-[14.5px]">{`${m.person.first_name ?? ""} ${m.person.last_name ?? ""}`.trim()}</b>
                   {m.person.title && <span className="block truncate text-[12.5px] text-ink-3">{m.person.title}</span>}

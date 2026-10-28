@@ -97,7 +97,7 @@ export async function CompanyPeople({ viewer, binding }: { viewer: Viewer; bindi
             const canStepDown = admin && self && m.role === "ADMIN" && members.filter((x) => x.role === "ADMIN").length > 1;
             return (
               <div key={m.id} data-member={m.role} className="grid grid-cols-[40px_1fr_auto] items-center gap-x-3 gap-y-2 border-b border-line/60 py-3">
-                <span className={"grid h-10 w-10 place-items-center rounded-full text-[13px] font-bold " + (m.role === "ADMIN" ? "bg-ink text-surface" : "bg-[#cfc9db] text-ink")}>
+                <span className={"grid h-10 w-10 place-items-center rounded-full text-[13px] font-bold " + (m.role === "ADMIN" ? "bg-ink text-surface" : "bg-state-border text-ink")}>
                   {initials(m.person.first_name, m.person.last_name)}
                 </span>
                 <span className="min-w-0">

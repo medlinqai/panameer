@@ -9,7 +9,7 @@ type Domain = { id: string; process: string; name: string; gt: boolean; skills: 
 type Item = { id: string; name: string; kind: string; hidden: boolean; domainId: string | null; product: string; vendor: string };
 type Role = { id: string; mode: string; name: string; hidden: boolean };
 const TH = "border-b border-line px-2 py-2 text-left text-[10.5px] font-bold tracking-[0.1em] text-ink-3";
-const TD = "border-b border-[#ECEEF4] px-2 py-2 text-[13px] align-middle";
+const TD = "border-b border-state-sunken px-2 py-2 text-[13px] align-middle";
 const MODE: Record<string, string> = { IMPLEMENT: "Implement", SUPPORT: "Support", OPERATE: "Do the Work" };
 
 type Attr = { id: string; name: string; choices: string[]; list: string | null; hidden: boolean; businessType: string; commodity: string };

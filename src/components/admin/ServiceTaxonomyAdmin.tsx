@@ -19,9 +19,9 @@ export type TGroup = { id: string; name: string; segments: string[]; hidden: boo
 const SEL = "h-8 border border-line bg-white px-1.5 text-[12.5px]";
 const BTN = "border border-line bg-white px-2 py-0.5 text-[12px] font-semibold hover:border-ink";
 const LNK = "ml-2 text-[12px] font-bold text-magenta-dark underline";
-const RED = "ml-2 text-[12px] font-bold text-[#C0392B] underline";
+const RED = "ml-2 text-[12px] font-bold text-state-declined underline";
 const TH = "border-b border-line px-2 py-2 text-left text-[10.5px] font-bold tracking-[0.1em] text-ink-3";
-const TD = "border-b border-[#ECEEF4] px-2 py-2.5 align-middle text-[13px]";
+const TD = "border-b border-state-sunken px-2 py-2.5 align-middle text-[13px]";
 const unitLabel = (u: string) => u[0] + u.slice(1).toLowerCase();
 
 export function ServiceTaxonomyAdmin({ groups, suggested }: { groups: TGroup[]; suggested: { id: string; name: string; kind: string }[] }) {

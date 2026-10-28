@@ -88,7 +88,7 @@ export function ResumeFirst({ hasResume, onState }: { hasResume: boolean; onStat
   const list = (rows: { k: string; main: string; sub: string }[], edit: string, empty: string) => (
     <>
       {rows.length ? (
-        <ul>{rows.map((r) => <li key={r.k} className="flex flex-wrap justify-between gap-2 border-b border-[#ECEEF4] py-1.5 text-[14.5px] last:border-0"><span className="font-semibold">{r.main}</span><span className="text-[13px] text-ink-2">{r.sub}</span></li>)}</ul>
+        <ul>{rows.map((r) => <li key={r.k} className="flex flex-wrap justify-between gap-2 border-b border-state-sunken py-1.5 text-[14.5px] last:border-0"><span className="font-semibold">{r.main}</span><span className="text-[13px] text-ink-2">{r.sub}</span></li>)}</ul>
       ) : (
         <p className="text-[14px] text-ink-3">{empty}</p>
       )}
@@ -115,7 +115,7 @@ export function ResumeFirst({ hasResume, onState }: { hasResume: boolean; onStat
               const on = picked.includes(r.id);
               return (
                 <label key={r.id} className="flex cursor-pointer items-start gap-3 border-b border-line px-1 py-2.5">
-                  <input type="checkbox" checked={on} onChange={() => void saveRoles(on ? picked.filter((x) => x !== r.id) : [...picked, r.id])} className="mt-1 h-4 w-4 accent-[var(--color-ink,#272334)]" />
+                  <input type="checkbox" checked={on} onChange={() => void saveRoles(on ? picked.filter((x) => x !== r.id) : [...picked, r.id])} className="mt-1 h-4 w-4 accent-ink" />
                   <span className="min-w-0">
                     <span className="text-[15px] font-bold">{roleLong(`${(r.display || r.name).replace(/\s*Roles\s*$/i, "")} Roles`)}</span>
                     {on && derived.has(r.id) && <span className="ml-2 border border-line px-1.5 py-px text-[11px] font-semibold text-ink-2">from your résumé</span>}

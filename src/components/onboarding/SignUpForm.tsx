@@ -190,7 +190,7 @@ export function SignUpForm({
             type="checkbox"
             checked={values.marketingOptIn}
             onChange={(e) => onChange({ marketingOptIn: e.target.checked })}
-            className="mt-1 h-4 w-4 accent-[#D72CD6]"
+            className="mt-1 h-4 w-4 accent-magenta"
           />
           <span className="text-[14px] text-ink-2">
             Send me helpful emails to find rewarding work and be successful on
@@ -203,7 +203,7 @@ export function SignUpForm({
             type="checkbox"
             checked={values.tosAccepted}
             onChange={(e) => onChange({ tosAccepted: e.target.checked })}
-            className="mt-1 h-4 w-4 accent-[#D72CD6]"
+            className="mt-1 h-4 w-4 accent-magenta"
           />
           <span className="text-[14px] text-ink-2">
             Yes, I agree to the Panameer{" "}

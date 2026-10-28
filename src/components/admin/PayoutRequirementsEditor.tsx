@@ -6,7 +6,7 @@ import type { PayoutRule } from "@/lib/payout-requirements";
 
 // RV-E004: one row per country ("*" = everyone else). Changes save at once.
 const TH = "border-b border-line px-2 py-2 text-left text-[10.5px] font-bold tracking-[0.1em] text-ink-3";
-const TD = "border-b border-[#ECEEF4] px-2 py-2.5 text-[13.5px]";
+const TD = "border-b border-state-sunken px-2 py-2.5 text-[13.5px]";
 
 export function PayoutRequirementsEditor({ rules }: { rules: PayoutRule[] }) {
   const router = useRouter();
@@ -34,7 +34,7 @@ export function PayoutRequirementsEditor({ rules }: { rules: PayoutRule[] }) {
               <td className={TD}><input type="checkbox" aria-label={`${r.country_code} tax ID`} checked={r.needs_tax_id} onChange={(e) => save(r, { needs_tax_id: e.target.checked })} /></td>
               <td className={TD}><input type="checkbox" aria-label={`${r.country_code} tax form`} checked={r.needs_tax_form} onChange={(e) => save(r, { needs_tax_form: e.target.checked })} /></td>
               <td className={TD}><input defaultValue={r.tax_form_label ?? ""} aria-label={`${r.country_code} form name`} placeholder="e.g. W-9" onBlur={(e) => e.target.value !== (r.tax_form_label ?? "") && save(r, { tax_form_label: e.target.value.trim() || null })} className="h-8 w-28 border border-line px-2 text-[13px]" /></td>
-              <td className={`${TD} text-right`}>{r.country_code !== "*" && <button type="button" onClick={() => window.confirm(`Remove the ${r.country_code} rule? It falls back to Everyone else.`) && call({ action: "delete", country_code: r.country_code })} className="text-[12px] font-bold text-[#C0392B] underline">Remove</button>}</td>
+              <td className={`${TD} text-right`}>{r.country_code !== "*" && <button type="button" onClick={() => window.confirm(`Remove the ${r.country_code} rule? It falls back to Everyone else.`) && call({ action: "delete", country_code: r.country_code })} className="text-[12px] font-bold text-state-declined underline">Remove</button>}</td>
             </tr>
           ))}
         </tbody>

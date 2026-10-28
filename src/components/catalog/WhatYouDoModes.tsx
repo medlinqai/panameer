@@ -101,7 +101,7 @@ export function WhatYouDoModes({ skills, isAdmin, onSkip, allOnly = false, legen
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             {MODES.map((m) => (
               <label key={m.mode} className="flex cursor-pointer items-center gap-2 text-[14.5px] font-semibold">
-                <input type="checkbox" className="h-4 w-4 accent-[var(--color-ink,#272334)]" checked={allHave(m.mode)} onChange={(e) => void setAll(m.mode, e.target.checked)} />
+                <input type="checkbox" className="h-4 w-4 accent-ink" checked={allHave(m.mode)} onChange={(e) => void setAll(m.mode, e.target.checked)} />
                 {m.label}
               </label>
             ))}

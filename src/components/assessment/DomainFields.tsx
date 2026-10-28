@@ -123,7 +123,7 @@ export function DomainFields({
           role="status"
           className={
             "mt-4 text-[14px] font-bold " +
-            (groupTotal === 100 ? "text-[#137a51]" : "text-magenta")
+            (groupTotal === 100 ? "text-state-accepted" : "text-magenta")
           }
         >
           {groupTotal === 100

@@ -24,17 +24,17 @@ const SELLER_THINGS: Thing[] = [
 
 /** Small line drawings in brand ink and magenta — decorative, hidden from screen readers. */
 function Cue({ kind }: { kind: Cue }) {
-  const ink = "#272334";
-  const mg = "#d72cd6";
+  const ink = "var(--color-ink)";
+  const mg = "var(--color-magenta)";
   const common = { width: 72, height: 44, viewBox: "0 0 72 44", "aria-hidden": true, className: "shrink-0" } as const;
   if (kind === "people")
     return (
       <svg {...common}>
         {[0, 1, 2].map((i) => (
           <g key={i} transform={`translate(${8 + i * 18} 6)`}>
-            <circle cx="12" cy="12" r="12" fill={i === 1 ? mg : "#fff"} stroke={ink} strokeWidth="1.5" />
-            <circle cx="12" cy="9.5" r="4" fill={i === 1 ? "#fff" : ink} />
-            <path d="M5 20c1.6-3.6 4-5 7-5s5.4 1.4 7 5" fill="none" stroke={i === 1 ? "#fff" : ink} strokeWidth="1.5" />
+            <circle cx="12" cy="12" r="12" fill={i === 1 ? mg : "var(--color-surface)"} stroke={ink} strokeWidth="1.5" />
+            <circle cx="12" cy="9.5" r="4" fill={i === 1 ? "white" : ink} />
+            <path d="M5 20c1.6-3.6 4-5 7-5s5.4 1.4 7 5" fill="none" stroke={i === 1 ? "white" : ink} strokeWidth="1.5" />
           </g>
         ))}
       </svg>
@@ -42,15 +42,15 @@ function Cue({ kind }: { kind: Cue }) {
   if (kind === "book")
     return (
       <svg {...common}>
-        <path d="M14 10c7-3 14-3 22 1v26c-8-4-15-4-22-1z" fill="#fff" stroke={ink} strokeWidth="1.5" />
-        <path d="M58 10c-7-3-14-3-22 1v26c8-4 15-4 22-1z" fill="#fff" stroke={ink} strokeWidth="1.5" />
+        <path d="M14 10c7-3 14-3 22 1v26c-8-4-15-4-22-1z" fill="var(--color-surface)" stroke={ink} strokeWidth="1.5" />
+        <path d="M58 10c-7-3-14-3-22 1v26c8-4 15-4 22-1z" fill="var(--color-surface)" stroke={ink} strokeWidth="1.5" />
         <path d="M19 17h11M19 22h11M41 17h12M41 22h8" stroke={mg} strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     );
   if (kind === "brief")
     return (
       <svg {...common}>
-        <rect x="14" y="13" width="44" height="26" rx="3" fill="#fff" stroke={ink} strokeWidth="1.5" />
+        <rect x="14" y="13" width="44" height="26" rx="3" fill="var(--color-surface)" stroke={ink} strokeWidth="1.5" />
         <path d="M28 13V9a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v4" fill="none" stroke={ink} strokeWidth="1.5" />
         <path d="M14 23h44" stroke={ink} strokeWidth="1.5" />
         <rect x="32" y="20" width="8" height="6" rx="1.5" fill={mg} />
@@ -59,14 +59,14 @@ function Cue({ kind }: { kind: Cue }) {
   if (kind === "tag")
     return (
       <svg {...common}>
-        <path d="M14 8h22l20 20-16 16-20-20z" fill="#fff" stroke={ink} strokeWidth="1.5" strokeLinejoin="round" />
+        <path d="M14 8h22l20 20-16 16-20-20z" fill="var(--color-surface)" stroke={ink} strokeWidth="1.5" strokeLinejoin="round" />
         <circle cx="24" cy="18" r="3.5" fill={mg} />
         <path d="M33 30l6-6M37 34l6-6" stroke={ink} strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     );
   return (
     <svg {...common}>
-      <path d="M10 8h40a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H26l-9 7v-7h-7a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4z" fill="#fff" stroke={ink} strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M10 8h40a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H26l-9 7v-7h-7a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4z" fill="var(--color-surface)" stroke={ink} strokeWidth="1.5" strokeLinejoin="round" />
       <text x="30" y="25" textAnchor="middle" fontSize="12" fontWeight="800" fill={mg}>$ ?</text>
     </svg>
   );

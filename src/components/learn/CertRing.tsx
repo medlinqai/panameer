@@ -16,12 +16,12 @@ export function CertRing({ certified, total, badges }: { certified: number; tota
     <div data-cert-ring>
       <svg viewBox="0 0 280 260" width="100%" className="mx-auto block max-w-[260px]" role="img" aria-label={`${certified} of ${total} learning paths certified`}>
         <style>{`@keyframes pm-ring{from{stroke-dashoffset:${C}}}.pm-ring-arc{animation:pm-ring 1s cubic-bezier(.2,.7,.3,1) both}@media(prefers-reduced-motion:reduce){.pm-ring-arc{animation:none}}`}</style>
-        <circle cx={140} cy={130} r={R} fill="none" stroke="#ECEEF4" strokeWidth={16} />
+        <circle cx={140} cy={130} r={R} fill="none" stroke="var(--color-state-sunken)" strokeWidth={16} />
         {pct > 0 && (
-          <circle className="pm-ring-arc" cx={140} cy={130} r={R} fill="none" stroke="#d72cd6" strokeWidth={16} strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct)} transform="rotate(-90 140 130)" />
+          <circle className="pm-ring-arc" cx={140} cy={130} r={R} fill="none" stroke="var(--color-magenta)" strokeWidth={16} strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct)} transform="rotate(-90 140 130)" />
         )}
-        <text x={140} y={136} textAnchor="middle" fontSize={50} fontWeight={700} fill="#272334">{certified}</text>
-        <text x={140} y={164} textAnchor="middle" fontSize={13} fontWeight={600} fill="#4a4658">of {total} paths certified</text>
+        <text x={140} y={136} textAnchor="middle" fontSize={50} fontWeight={700} fill="var(--color-ink)">{certified}</text>
+        <text x={140} y={164} textAnchor="middle" fontSize={13} fontWeight={600} fill="var(--color-ink-2)">of {total} paths certified</text>
       </svg>
       {shown.length > 0 && (
         <>
@@ -32,7 +32,7 @@ export function CertRing({ certified, total, badges }: { certified: number; tota
                 href={`/learn/${b.slug}`}
                 title={b.title}
                 aria-label={`${b.title} certificate`}
-                className={"grid h-[38px] w-[34px] place-items-center text-[9.5px] font-bold text-white transition hover:opacity-85 " + (b === newest ? "bg-[#d72cd6]" : "bg-ink")}
+                className={"grid h-[38px] w-[34px] place-items-center text-[9.5px] font-bold text-white transition hover:opacity-85 " + (b === newest ? "bg-magenta" : "bg-ink")}
                 style={{ clipPath: "polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)" }}
               >
                 {shortCode(b.title)}

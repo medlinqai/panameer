@@ -129,7 +129,7 @@ export function ValidateActions({
           type="button"
           onClick={() => respond("decline")}
           disabled={busy !== null}
-          className="border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
+          className="border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-state-border disabled:opacity-50"
         >
           {busy === "decline" ? "Sending…" : "This Isn't Right"}
         </button>

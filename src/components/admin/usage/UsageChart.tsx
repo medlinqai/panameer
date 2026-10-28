@@ -44,12 +44,12 @@ export function UsageChart({ title, subtitle, points, tabs, unit = "" }: { title
               const i = Math.round(((px - PAD.l) / (W - PAD.l - PAD.r)) * (points.length - 1));
               setHover(Math.max(0, Math.min(points.length - 1, i)));
             }}>
-            {[0, 0.5, 1].map((f) => <g key={f}><line x1={PAD.l} x2={W - PAD.r} y1={y(max * f)} y2={y(max * f)} stroke="#ECEEF4" /><text x={PAD.l - 6} y={y(max * f) + 4} textAnchor="end" fontSize={10} fill="#8A90A8">{Math.round(max * f)}</text></g>)}
+            {[0, 0.5, 1].map((f) => <g key={f}><line x1={PAD.l} x2={W - PAD.r} y1={y(max * f)} y2={y(max * f)} stroke="var(--color-state-sunken)" /><text x={PAD.l - 6} y={y(max * f) + 4} textAnchor="end" fontSize={10} fill="var(--color-state-disabled)">{Math.round(max * f)}</text></g>)}
             <path d={area} fill="rgba(201,59,208,0.10)" />
-            <path d={line} fill="none" stroke="#C93BD0" strokeWidth={2.2} strokeLinejoin="round" />
-            {points.length > 0 && <text x={PAD.l} y={H - 8} fontSize={10} fill="#8A90A8">{fmt(points[0].day)}</text>}
-            {points.length > 1 && <text x={W - PAD.r} y={H - 8} textAnchor="end" fontSize={10} fill="#8A90A8">{fmt(points[points.length - 1].day)}</text>}
-            {h && hover != null && <g><line x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={H - PAD.b} stroke="#272334" strokeDasharray="3 3" /><circle cx={x(hover)} cy={y(h.n)} r={4} fill="#C93BD0" /></g>}
+            <path d={line} fill="none" stroke="var(--color-magenta)" strokeWidth={2.2} strokeLinejoin="round" />
+            {points.length > 0 && <text x={PAD.l} y={H - 8} fontSize={10} fill="var(--color-state-disabled)">{fmt(points[0].day)}</text>}
+            {points.length > 1 && <text x={W - PAD.r} y={H - 8} textAnchor="end" fontSize={10} fill="var(--color-state-disabled)">{fmt(points[points.length - 1].day)}</text>}
+            {h && hover != null && <g><line x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={H - PAD.b} stroke="var(--color-ink)" strokeDasharray="3 3" /><circle cx={x(hover)} cy={y(h.n)} r={4} fill="var(--color-magenta)" /></g>}
           </svg>
           {h && hover != null && (
             <div className="pointer-events-none absolute top-0 border border-line bg-white px-2 py-1 text-[12px] shadow" style={{ left: `${(x(hover) / W) * 100}%`, transform: "translateX(-50%)" }}>

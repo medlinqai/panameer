@@ -6,8 +6,8 @@ export const metadata = { title: "The Detailed Road · Panameer" };
 
 // RD-E005: the detailed provider road (mockup detailed_road_v5): 1–4 in one row, stop 5 splits into three lanes that merge at
 // "Work Order Signed", then 6–8. Each phase has its own color on the road, rings, label and band.
-const NUM = "#8A90A8";
-const INK = "#272334";
+const NUM = "var(--color-state-disabled)";
+const INK = "var(--color-ink)";
 const INK2 = "#5b5870";
 const J = ROAD_PHASES.join, W = ROAD_PHASES.win, P = ROAD_PHASES.paid;
 const by = (k: string) => PROVIDER_ROAD.find((s) => s.key === k)!;
@@ -32,7 +32,7 @@ function Road({ d, color, w = 28 }: { d: string; color: string; w?: number }) {
   return (
     <>
       <path d={d} fill="none" stroke={color} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" />
-      <path d={d} fill="none" stroke="#fff" strokeWidth={w > 20 ? 2 : 1.5} strokeDasharray={w > 20 ? "10 12" : "6 8"} />
+      <path d={d} fill="none" stroke="white" strokeWidth={w > 20 ? 2 : 1.5} strokeDasharray={w > 20 ? "10 12" : "6 8"} />
     </>
   );
 }
@@ -65,7 +65,7 @@ export default function DetailedRoadPage() {
             {ROAD_LANES.flatMap((l, i) =>
               l.steps.map((t, j) => (
                 <g key={`${l.id}.${j}`} data-lane-step={`${l.id}.${j + 1}`}>
-                  <circle cx={LANE_X[j]} cy={LANE_Y[i]} r={7} fill="#fff" stroke="#D98ED8" strokeWidth={2.5} />
+                  <circle cx={LANE_X[j]} cy={LANE_Y[i]} r={7} fill="var(--color-surface)" stroke="#D98ED8" strokeWidth={2.5} />
                   <text x={LANE_X[j]} y={LANE_Y[i] + 22} textAnchor="middle" fill={INK2} fontWeight={700} fontSize={11.5}>{t}</text>
                   <text x={LANE_X[j]} y={LANE_Y[i] + 35} textAnchor="middle" fill={NUM} fontWeight={700} fontSize={9}>{l.id}.{j + 1}</text>
                 </g>
@@ -74,11 +74,11 @@ export default function DetailedRoadPage() {
             {/* Stop 5 splits; the lanes merge at Work Order Signed. */}
             <g data-stop="5">
               <circle cx={930} cy={330} r={22} fill={W.color} stroke={W.color} strokeWidth={3} />
-              <text x={930} y={336} textAnchor="middle" fill="#fff" fontWeight={800} fontSize={16}>5</text>
+              <text x={930} y={336} textAnchor="middle" fill="white" fontWeight={800} fontSize={16}>5</text>
               <text x={964} y={335} fill={INK} fontWeight={700} fontSize={13}>{by("sell").step}</text>
             </g>
             <g data-stop="signed">
-              <circle cx={200} cy={330} r={22} fill="#fff" stroke={W.color} strokeWidth={3} />
+              <circle cx={200} cy={330} r={22} fill="var(--color-surface)" stroke={W.color} strokeWidth={3} />
               <text x={200} y={336} textAnchor="middle" fill={W.color} fontWeight={800} fontSize={16}>✓</text>
               <text x={166} y={329} textAnchor="end" fill={INK} fontWeight={700} fontSize={13}>Order Signed</text>
               <text x={166} y={345} textAnchor="end" fill={NUM} fontWeight={700} fontSize={9.5} letterSpacing=".08em">{by("sell").status.toUpperCase()}</text>
@@ -88,7 +88,7 @@ export default function DetailedRoadPage() {
               const last = s.key === "paid";
               return (
                 <g key={s.key} data-stop={n}>
-                  <circle cx={x} cy={y} r={last ? 26 : 22} fill="#fff" stroke={C} strokeWidth={3} />
+                  <circle cx={x} cy={y} r={last ? 26 : 22} fill="var(--color-surface)" stroke={C} strokeWidth={3} />
                   <text x={x} y={y + 6} textAnchor="middle" fill={C} fontWeight={800} fontSize={16}>{n}</text>
                   {s.gate && <text x={x} y={y - 36} textAnchor="middle" fontSize={10} fontWeight={800} fill={INK}>{s.admin ? "GATE · BEFORE PAYMENT" : "GATE"}</text>}
                   <text x={x} y={y + 46} textAnchor="middle" fill={last ? INK : INK2} fontWeight={700} fontSize={13}>{s.step}</text>
@@ -99,7 +99,7 @@ export default function DetailedRoadPage() {
             })}
             {/* RV-E003: payout details are a gate before Get Paid, if required. */}
             <g data-road-lock transform="translate(770 538)">
-              <rect x={2} y={9} width={16} height={12} rx={2} fill="#fff" stroke={P.color} strokeWidth={2} />
+              <rect x={2} y={9} width={16} height={12} rx={2} fill="var(--color-surface)" stroke={P.color} strokeWidth={2} />
               <path d="M6 9V6a4 4 0 0 1 8 0v3" fill="none" stroke={P.color} strokeWidth={2} />
               <text x={10} y={-2} textAnchor="middle" fill={P.color} fontWeight={700} fontSize={10.5}>if required</text>
             </g>

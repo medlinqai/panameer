@@ -26,7 +26,7 @@ export function Bars({ title, subtitle, rows }: { title: string; subtitle?: stri
         {rows.map((r) => (
           <li key={r.label} className="grid grid-cols-[120px_1fr_44px] items-center gap-2 text-[13px]">
             <span className="truncate">{r.label}</span>
-            <span className="h-3.5 bg-[#ECEEF4]"><span className="block h-full bg-[#C93BD0]" style={{ width: `${(r.n / max) * 100}%` }} /></span>
+            <span className="h-3.5 bg-state-sunken"><span className="block h-full bg-magenta" style={{ width: `${(r.n / max) * 100}%` }} /></span>
             {r.href ? <Link href={r.href} className="text-right font-semibold tabular-nums underline underline-offset-2">{r.n}</Link> : <span className="text-right tabular-nums">{r.n}</span>}
           </li>
         ))}
@@ -45,7 +45,7 @@ export function Funnel({ title, subtitle, steps }: { title: string; subtitle?: s
         {steps.map((s) => (
           <li key={s.label} className="grid grid-cols-[150px_1fr_80px] items-center gap-2 text-[13px]">
             <span className="truncate">{s.label}</span>
-            <span className="h-3.5 bg-[#ECEEF4]"><span className="block h-full bg-ink" style={{ width: `${(s.n / top) * 100}%` }} /></span>
+            <span className="h-3.5 bg-state-sunken"><span className="block h-full bg-ink" style={{ width: `${(s.n / top) * 100}%` }} /></span>
             <span className="text-right tabular-nums">{s.href ? <Link href={s.href} className="font-semibold underline underline-offset-2">{s.n}</Link> : s.n} <span className="text-ink-3">{Math.round((s.n / top) * 100)}%</span></span>
           </li>
         ))}

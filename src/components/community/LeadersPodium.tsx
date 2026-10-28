@@ -1,9 +1,9 @@
 import type { GrowthRow } from "@/lib/growth-score";
 
 // Leaders hero picture: this month's top three as a podium (1 centre and tallest); the viewer's column is marked in magenta.
-const INK = "#272334";
-const OFF = "#C9CDDC";
-const MAG = "#d72cd6";
+const INK = "var(--color-ink)";
+const OFF = "var(--color-state-border)";
+const MAG = "var(--color-magenta)";
 // [slot centre x, column top y, column height, avatar radius, number size] for ranks 1, 2, 3.
 const SLOT: Record<1 | 2 | 3, { x: number; top: number; r: number; num: number }> = {
   1: { x: 170, top: 94, r: 32, num: 40 },
@@ -35,19 +35,19 @@ export function LeadersPodium({ top, viewerId, scorers, viewerRank, unit = (n) =
           return (
             <g key={rank} data-podium-rank={rank} data-you={you || undefined}>
               {you && <text x={s.x} y={cy - s.r - 8} textAnchor="middle" fontSize={11} fontWeight={700} letterSpacing={1.5} fill={MAG}>YOU</text>}
-              <circle cx={s.x} cy={cy} r={s.r} fill="#f6f5f9" />
+              <circle cx={s.x} cy={cy} r={s.r} fill="var(--color-surface-hover)" />
               {row.photoUrl ? (
                 <>
                   <clipPath id={clip}><circle cx={s.x} cy={cy} r={s.r} /></clipPath>
                   <image href={row.photoUrl} x={s.x - s.r} y={cy - s.r} width={s.r * 2} height={s.r * 2} clipPath={`url(#${clip})`} preserveAspectRatio="xMidYMid slice" />
                 </>
               ) : (
-                <text x={s.x} y={cy + 5} textAnchor="middle" fontSize={rank === 1 ? 15 : 13} fontWeight={700} fill="#4a4658">{initials(row.name)}</text>
+                <text x={s.x} y={cy + 5} textAnchor="middle" fontSize={rank === 1 ? 15 : 13} fontWeight={700} fill="var(--color-ink-2)">{initials(row.name)}</text>
               )}
               <circle cx={s.x} cy={cy} r={s.r} fill="none" stroke={you ? MAG : INK} strokeWidth={you ? 4 : 2} />
               <rect x={s.x - w / 2} y={s.top} width={w} height={BASE - s.top} fill={INK} />
               {you && <rect x={s.x - w / 2} y={s.top} width={w} height={6} fill={MAG} />}
-              <text x={s.x} y={s.top + (BASE - s.top) / 2 + (rank === 1 ? 4 : 2)} textAnchor="middle" fontSize={s.num} fontWeight={800} fill="#fff">{rank}</text>
+              <text x={s.x} y={s.top + (BASE - s.top) / 2 + (rank === 1 ? 4 : 2)} textAnchor="middle" fontSize={s.num} fontWeight={800} fill="white">{rank}</text>
               <text x={s.x} y={s.top + (BASE - s.top) / 2 + (rank === 1 ? 32 : 26)} textAnchor="middle" fontSize={12} fontWeight={600} fill={OFF}>{unit(row.points)}</text>
               <title>{`${row.name} · ${unit(row.points)}`}</title>
             </g>

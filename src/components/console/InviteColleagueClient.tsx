@@ -21,7 +21,7 @@ function ResendInvitation({ id }: { id: string }) {
     const r = await fetch(`/api/community/invites/${id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "resend" }) }).catch(() => null);
     setState(r?.ok ? "sent" : "error");
   };
-  if (state === "sent") return <span className="text-[12.5px] font-bold text-[#1f8a5b]">✓ Sent again</span>;
+  if (state === "sent") return <span className="text-[12.5px] font-bold text-state-accepted">✓ Sent again</span>;
   return (
     <button type="button" disabled={state === "busy"} onClick={resend} className="border border-ink px-3 py-1 text-[12.5px] font-semibold disabled:opacity-50">
       {state === "error" ? "Try Again" : "Resend"}

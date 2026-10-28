@@ -51,12 +51,12 @@ export function UsageHive({ cells }: { cells: HiveCell[] }) {
               <g style={{ transform: `translate(${x}px, ${y}px)`, transition: still ? "none" : "transform 1s cubic-bezier(.4,.1,.2,1)" }}>
                 <path
                   d={HEX}
-                  style={{ fill: active ? "var(--color-ink)" : "var(--color-surface)", stroke: active ? "var(--color-ink)" : "#C9CDDC" }}
+                  style={{ fill: active ? "var(--color-ink)" : "var(--color-surface)", stroke: active ? "var(--color-ink)" : "var(--color-state-border)" }}
                   strokeWidth={active ? 2 : 1.6}
                   strokeDasharray={active ? undefined : "5 4"}
                 />
-                <text y={3} textAnchor="middle" fontSize={18} fontWeight={700} style={{ fill: active ? "#fff" : "var(--color-ink-3)" }}>{value}</text>
-                <text y={17} textAnchor="middle" fontSize={8.5} fontWeight={600} style={{ fill: active ? "#fff" : "var(--color-ink-3)" }}>{c.label}</text>
+                <text y={3} textAnchor="middle" fontSize={18} fontWeight={700} style={{ fill: active ? "var(--color-surface)" : "var(--color-ink-3)" }}>{value}</text>
+                <text y={17} textAnchor="middle" fontSize={8.5} fontWeight={600} style={{ fill: active ? "var(--color-surface)" : "var(--color-ink-3)" }}>{c.label}</text>
               </g>
             </a>
           );

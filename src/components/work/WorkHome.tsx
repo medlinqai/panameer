@@ -20,7 +20,7 @@ function Funnel({ f, invitations }: { f: Home["funnel"]; invitations: number }) 
       {rows.map((r) => (
         <div key={r.label} className="my-2.5 grid grid-cols-[84px_1fr_28px] items-center gap-2 text-[12px] font-semibold">
           <span>{r.label}</span>
-          <span className="h-4 bg-[#ECEEF4]">
+          <span className="h-4 bg-state-sunken">
             <span className={"block h-full " + (r.needsYou ? "bg-magenta" : "bg-ink")} style={{ width: `${(r.n / max) * 100}%` }} />
           </span>
           <span className="text-right tabular-nums">{r.n}</span>

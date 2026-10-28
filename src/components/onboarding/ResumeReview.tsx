@@ -118,7 +118,7 @@ export function ResumeReview({ onContinue, onChanged }: { onContinue?: () => voi
                   <span className="font-semibold">
                     {c.label} {c.key !== "about" && <span className="font-normal opacity-70">{st.count[c.key]}</span>}
                   </span>
-                  {s ? <span className="bg-amber-100 px-1.5 text-[11.5px] font-bold text-amber-800">{s}</span> : <span className="text-[13px] font-bold text-[#1f8a5b]">✓</span>}
+                  {s ? <span className="bg-amber-100 px-1.5 text-[11.5px] font-bold text-amber-800">{s}</span> : <span className="text-[13px] font-bold text-state-accepted">✓</span>}
                 </button>
               </li>
             );
@@ -454,10 +454,10 @@ function Source({ text, offsets, src, className }: { text: string; offsets: Reco
 // ── Part 1 + 2: the document in its own order, each piece colored by its type; "This is a…" moves it.
 const TYPES: { key: Target; label: string; bucket: string; c: string; bg: string }[] = [
   { key: "employer", label: "Employer", bucket: "Employers", c: "#2f6fb0", bg: "#eaf2fb" },
-  { key: "project", label: "Project", bucket: "Projects", c: "#1f8a5b", bg: "#eaf6f0" },
+  { key: "project", label: "Project", bucket: "Projects", c: "var(--color-state-accepted)", bg: "#eaf6f0" },
   { key: "edu", label: "Education", bucket: "Education", c: "#7a4fc0", bg: "#f2ecfb" },
-  { key: "cert", label: "Certification", bucket: "Certifications", c: "#b26b00", bg: "#fff4e0" },
-  { key: "skill", label: "Skill or expertise", bucket: "Skills & expertise", c: "#4a4658", bg: "#f1f0f4" },
+  { key: "cert", label: "Certification", bucket: "Certifications", c: "var(--color-state-pending)", bg: "var(--color-state-pending-bg)" },
+  { key: "skill", label: "Skill or expertise", bucket: "Skills & expertise", c: "var(--color-ink-2)", bg: "#f1f0f4" },
   { key: "hidden", label: "Not needed", bucket: "Not needed", c: "#a0a0ad", bg: "#f7f7f9" },
 ];
 const TYPE = Object.fromEntries(TYPES.map((t) => [t.key, t])) as Record<Target, (typeof TYPES)[number]>;

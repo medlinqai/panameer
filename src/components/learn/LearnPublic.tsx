@@ -105,7 +105,7 @@ function Panel({
 const TIERS = [
   {
     tag: "Free",
-    tagClass: "text-[#137a51]",
+    tagClass: "text-state-accepted",
     title: "Ask the group",
     marker: null,
     // BUILDABLE TODAY — `ForumThread` / `ForumPost` exist in the schema. This is
@@ -113,7 +113,7 @@ const TIERS = [
   },
   {
     tag: "Free",
-    tagClass: "text-[#137a51]",
+    tagClass: "text-state-accepted",
     title: "Read what was asked of the instructor",
     marker: null,
     // NOBODY ANSWERS — THIS IS A READ, and saying so is the point. It is the

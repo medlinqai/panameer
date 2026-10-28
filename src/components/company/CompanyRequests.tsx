@@ -50,7 +50,7 @@ export function CompanyRequests({
       <ul>
         {requests.map((r) => (
           <li key={r.id} data-join-request className="grid grid-cols-[40px_1fr] items-center gap-3 border-b border-line/60 py-3 sm:grid-cols-[40px_1fr_auto]">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#cfc9db] text-[13px] font-bold text-ink">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-state-border text-[13px] font-bold text-ink">
               {r.name.split(/\s+/).map((w) => w[0] ?? "").join("").slice(0, 2).toUpperCase() || "?"}
             </span>
             <span className="min-w-0">

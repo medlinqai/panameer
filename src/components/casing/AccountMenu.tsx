@@ -267,7 +267,7 @@ export function AccountMenu({
               onDark={onDark}
             />
             {attention > 0 && (
-              <span data-avatar-count aria-label={`${attention} need you`} className="absolute -right-2 -top-2 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-magenta px-1 text-[11px] font-bold text-white ring-2 ring-[var(--color-rail,#272334)]">
+              <span data-avatar-count aria-label={`${attention} need you`} className="absolute -right-2 -top-2 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-magenta px-1 text-[11px] font-bold text-white ring-2 ring-rail">
                 {attention > 99 ? "99+" : attention}
               </span>
             )}

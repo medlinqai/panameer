@@ -71,7 +71,7 @@ function Row({ r, tab }: { r: RequestItem; tab: "received" | "sent" }) {
       </span>
       <span className="flex flex-wrap items-center gap-2">
         {done ? (
-          <span className="text-[12.5px] font-bold text-[#1f8a5b]">✓ {done}</span>
+          <span className="text-[12.5px] font-bold text-state-accepted">✓ {done}</span>
         ) : tab === "sent" ? (
           <>
             <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">Requested</span>

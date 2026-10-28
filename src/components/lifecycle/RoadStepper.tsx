@@ -26,7 +26,7 @@ export function RoadStepper({ current, road = PROVIDER_ROAD, waiting }: { curren
             <span className="flex flex-col items-center">
               <span
                 className={"grid h-7 w-7 shrink-0 place-items-center rounded-full text-[12px] font-extrabold " + (now ? "bg-magenta text-white" : "")}
-                style={now ? undefined : done ? { background: ph.color, color: "#fff" } : { border: `2px solid ${ph.color}`, color: ph.color, background: "#fff" }}
+                style={now ? undefined : done ? { background: ph.color, color: "white" } : { border: `2px solid ${ph.color}`, color: ph.color, background: "var(--color-surface)" }}
               >
                 {wait ? "…" : done ? "✓" : i + 1}
               </span>

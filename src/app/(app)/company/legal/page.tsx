@@ -56,7 +56,7 @@ export default async function CompanyLegalPage({ searchParams }: { searchParams:
           <li key={x.n}>
             <a href={x.href} data-step-done={x.done} className={"block border p-3 " + (x.done ? "border-line" : "border-ink")}>
               <span className="block text-[11px] font-bold tracking-[0.08em] text-ink-2">{x.n}</span>
-              <span className={"text-[14px] font-semibold " + (x.done ? "text-[#1f8a5b]" : "text-[#b26b00]")}>{x.v}</span>
+              <span className={"text-[14px] font-semibold " + (x.done ? "text-state-accepted" : "text-state-pending")}>{x.v}</span>
             </a>
           </li>
         ))}
