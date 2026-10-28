@@ -11,18 +11,28 @@ const RELEASED = new Set(["RELEASED", "ACTIVE", "ON_HOLD"]);
 const DONE = new Set(["CLOSED", "FINALLY_CLOSED"]);
 
 export async function buyerDashboard(viewer: Viewer, personId: string): Promise<DashData> {
+  // Speed (RM-E005): the reads that don't need the rows start first; Get Started takes the Jobs tile once it's built.
+  const restP = Promise.all([dashView(personId, "buyer"), accountChecklist(personId), prisma.providerProfile.count()]);
+  restP.catch(() => null);
+  let giveJobs: (d: Donut | undefined) => void = () => {};
+  const startP = getStartedDonuts(viewer, personId, "buyer", new Promise<Donut | undefined>((r) => { giveJobs = r; }), restP.then((r) => r[1]));
+  startP.catch(() => null);
   const [jobs, wrs, orders] = await Promise.all([
     prisma.job.findMany({ where: { buyer_person_id: personId, kind: "JOB", status: { not: "CANCELED" } }, orderBy: { updated_at: "desc" }, take: 200, select: { id: true, title: true, job_number: true, updated_at: true, budget_min_cents: true, budget_max_cents: true, budget_type: true } }),
     prisma.workRequest.findMany({ where: { buyer_person_id: personId, status: { not: "INCOMPLETE" } }, orderBy: { updated_at: "desc" }, take: 200, select: { id: true, wr_number: true, title: true, description: true, status: true, source: true, erp_connection_id: true, erp_returned_at: true, approval_status: true, approval_channel: true, erp_wait_started_at: true, erp_wait_reset_at: true, submitted_at: true, job_id: true, updated_at: true, lines: { select: { unit_price_cents: true, quantity: true, amount_cents: true } } } }),
     prisma.workOrder.findMany({ where: { buyer_person_id: personId, status: { notIn: ["CANCELLED", "DRAFT"] } }, orderBy: { updated_at: "desc" }, take: 200, select: { id: true, order_number: true, description: true, status: true, provider_accepted_at: true, buyer_accepted_at: true, not_to_exceed_cents: true, provider_person_id: true, created_at: true, updated_at: true, workRequest: { select: { source: true } } } }),
   ]);
-  const toApprove = new Set((await prisma.paymentRequest.findMany({ where: { work_order_id: { in: orders.map((o) => o.id) }, status: "SUBMITTED" }, select: { work_order_id: true } })).map((p) => p.work_order_id));
-  const stages = await jobStages(jobs.map((j) => j.id));
   const { identityVisibleTo, providerLabel, providerNumbers } = await import("@/lib/provider-number");
   const provIds = [...new Set(orders.map((o) => o.provider_person_id))];
-  const profiles = await prisma.providerProfile.findMany({ where: { person_id: { in: provIds } }, select: { id: true, person_id: true, person: { select: { first_name: true, last_name: true } } } });
-  const nums = await providerNumbers(profiles.map((p) => p.id));
-  const seen = await identityVisibleTo(viewer, provIds).catch(() => new Set<string>());
+  const woIds = orders.map((o) => o.id);
+  const [toApproveRows, stages, [profiles, nums], seen, paid] = await Promise.all([
+    prisma.paymentRequest.findMany({ where: { work_order_id: { in: woIds }, status: "SUBMITTED" }, select: { work_order_id: true } }),
+    jobStages(jobs.map((j) => j.id)),
+    prisma.providerProfile.findMany({ where: { person_id: { in: provIds } }, select: { id: true, person_id: true, person: { select: { first_name: true, last_name: true } } } }).then(async (ps) => [ps, await providerNumbers(ps.map((p) => p.id))] as const),
+    identityVisibleTo(viewer, provIds).catch(() => new Set<string>()),
+    prisma.paymentRequest.count({ where: { work_order_id: { in: woIds }, status: "PAID" } }),
+  ]);
+  const toApprove = new Set(toApproveRows.map((p) => p.work_order_id));
   const who = (pid: string) => { const p = profiles.find((x) => x.person_id === pid); return p ? (seen.has(pid) ? `${p.person.first_name} ${p.person.last_name}`.trim() : providerLabel(nums.get(p.id)).replace(/^Provider /, "")) : "—"; };
 
   const rows: DashRow[] = [];
@@ -52,13 +62,7 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
   const committed = orders.filter((o) => o.created_at >= q).reduce((n, o) => n + (o.not_to_exceed_cents ?? 0), 0);
   const open = rows.filter((r) => r.type === "Job" && ["Active", "Comparing", "Request to Hire"].includes(r.status)).length;
   const active = orders.filter((o) => RELEASED.has(o.status)).length;
-  // Speed (10-27): the remaining reads run together.
-  const [paid, { view }, checklist, providers] = await Promise.all([
-    prisma.paymentRequest.count({ where: { work_order_id: { in: orders.map((o) => o.id) }, status: "PAID" } }),
-    dashView(personId, "buyer"),
-    accountChecklist(personId),
-    prisma.providerProfile.count(),
-  ]);
+  const [{ view }, checklist, providers] = await restP;
   const work: Donut[] = [
       { key: "jobs", title: "Jobs", sub: "Hire", slices: slicesFrom(rows, "jobs", [{ label: "Draft", color: C.grey, mine: true }, { label: "Active", color: C.ink }, { label: "Comparing", color: C.steel, mine: true }, { label: "Request to Hire", color: C.pendSoft }, { label: "Filled", color: C.ok }, { label: "On Hold", color: C.grey }, { label: "Closed", color: C.empty }]).reduce<DonutSlice[]>((out, sl) => { const hold = out.find((x) => x.label === "On Hold / Closed"); if (sl.label === "On Hold") out.push({ ...sl, label: "On Hold / Closed", value: `${sl.n}`, href: "/hire/overview?tab=jobs&slice=on_hold" }); else if (sl.label === "Closed" && hold) { hold.value = `${hold.n} / ${sl.n}`; hold.n += sl.n; } else out.push(sl); return out; }, []) },
       { key: "requests", title: "Requests", sub: "Approval before an Order", slices: slicesFrom(rows, "requests", [{ label: "Pending Approval", color: C.pend }, { label: "Waiting on ERP", color: C.pendSoft }, { label: "Approved", color: C.ok }, { label: "Declined", color: C.no }]) },
@@ -68,7 +72,8 @@ export async function buyerDashboard(viewer: Viewer, personId: string): Promise<
   // HT-E005: Get Started (Account · Connect · Learn · Jobs) until the first Order is released; Get Work Done after. The person's pick wins.
   const done = checklist.filter((i) => i.n > 0).length;
   // Both views load; the switch flips in place (10-27).
-  const start = await getStartedDonuts(viewer, personId, "buyer", work.find((d) => d.key === "jobs"), checklist);
+  giveJobs(work.find((d) => d.key === "jobs"));
+  const start = await startP;
   return {
     summary: view === "start" ? `Account set-up ${done} of ${checklist.length} · ${providers.toLocaleString("en-US")} providers on Panameer` : `${open} job${open === 1 ? "" : "s"} open · ${active} Order${active === 1 ? "" : "s"} active · ${usd(committed)} committed this quarter`,
     view, viewLabels: ["Get Started", "Get Work Done"], setupDone: done === checklist.length, checklist,

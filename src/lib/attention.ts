@@ -259,10 +259,18 @@ const dueText = (d: Date | null | undefined) => (d ? d.toLocaleString("en-US", {
 // (that's also when the Worklist sync runs); the Worklist itself is re-read on every call, so done items clear at once.
 const DERIVE_TTL_MS = 5 * 60_000;
 const derived = new Map<string, { at: number; c: AppCounts }>();
+const refreshing = new Set<string>();
 export async function appCounts(viewer: { userId: string }, side: "buyer" | "provider"): Promise<AppCounts> {
   const key = `${viewer.userId}:${side}`;
   const hit = derived.get(key);
-  if (hit && hit.at > Date.now() - DERIVE_TTL_MS) {
+  // RM-E005: an expired entry still serves (with fresh Worklist items) while a new one derives in the background.
+  if (hit && hit.at <= Date.now() - DERIVE_TTL_MS && hit.at > Date.now() - 4 * DERIVE_TTL_MS && !refreshing.has(key)) {
+    refreshing.add(key);
+    const run = () => deriveAppCounts(viewer, side).then((c) => { derived.set(key, { at: Date.now(), c }); }).catch(() => null).finally(() => refreshing.delete(key));
+    // After the page is sent when inside a request; straight away elsewhere.
+    import("next/server").then(({ after }) => after(run)).catch(() => void run());
+  }
+  if (hit && hit.at > Date.now() - 4 * DERIVE_TTL_MS) {
     const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
     if (!me) return hit.c;
     const items = await (await import("@/lib/todo")).todoGroups(me.id, side);

@@ -124,20 +124,15 @@ export async function learnDonut(personId: string, side: "buyer" | "provider"): 
   };
 }
 
-export async function getStartedDonuts(viewer: { userId: string }, personId: string, side: "buyer" | "provider", jobs: Donut | undefined, checklist: ChecklistItem[]): Promise<Donut[]> {
-  const first = side === "buyer" ? accountDonut(checklist) : profileDonut(checklist);
-  let j = jobs;
-  if (side === "buyer" && jobs) {
-    const providers = await prisma.providerProfile.count();
-    j = { ...jobs, lead: { text: `${providers.toLocaleString("en-US")} providers on Panameer`, href: "/connect/community", label: "Find People" } };
+export async function getStartedDonuts(viewer: { userId: string }, personId: string, side: "buyer" | "provider", jobsIn: Donut | undefined | Promise<Donut | undefined>, checklistIn: ChecklistItem[] | Promise<ChecklistItem[]>): Promise<Donut[]> {
+  if (side === "provider") {
+    const [connect, learn, jobs, checklist] = await Promise.all([connectDonut(viewer.userId, personId), learnDonut(personId, side), jobsIn, checklistIn]);
+    return [profileDonut(checklist), connect, learn, ...(jobs ? [jobs] : [])];
   }
-  // RM-E003: buyers see Account · Connect · Jobs · Shop (Learn stays reachable from Connect); sellers Profile · Connect · Learn · Work.
-  if (side === "buyer") {
-    const [connect, shop] = await Promise.all([connectDonut(viewer.userId, personId), shopDonut(viewer.userId, personId)]);
-    return [first, connect, ...(j ? [j] : []), shop];
-  }
-  const [connect, learn] = await Promise.all([connectDonut(viewer.userId, personId), learnDonut(personId, side)]);
-  return [first, connect, learn, ...(j ? [j] : [])];
+  // RM-E003: buyers see Account · Connect · Jobs · Shop (Learn stays reachable from Connect).
+  const [jobs, checklist, providers, connect, shop] = await Promise.all([jobsIn, checklistIn, prisma.providerProfile.count(), connectDonut(viewer.userId, personId), shopDonut(viewer.userId, personId)]);
+  const j = jobs && { ...jobs, lead: { text: `${providers.toLocaleString("en-US")} providers on Panameer`, href: "/connect/community", label: "Find People" } };
+  return [accountDonut(checklist), connect, ...(j ? [j] : []), shop];
 }
 
 /** RM-E003: the buyer's Shop tile — Viewed · In Cart · Requested to Buy · Delivered, plus how many products are offered. */

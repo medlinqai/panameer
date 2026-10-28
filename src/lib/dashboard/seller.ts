@@ -9,6 +9,26 @@ const lineTotal = (l: { amount_cents: number | null; quantity: unknown; unit_pri
 
 export async function sellerDashboard(personId: string, viewer: { userId: string }): Promise<DashData> {
   const profile = await prisma.providerProfile.findUnique({ where: { person_id: personId }, select: { id: true, provider_number: true } });
+  // Speed (RM-E005): started with the rows' reads, awaited after them.
+  const checklistP = profileChecklist(personId);
+  const restP = Promise.all([
+    profile ? import("@/lib/work-feed").then(({ getWorkFeed }) => getWorkFeed({ tab: "best", profileId: profile.id }).catch(() => [])) : Promise.resolve([]),
+    prisma.job.count({ where: { kind: "JOB", status: "OPEN" } }),
+    dashView(personId, "provider"),
+    checklistP,
+    prisma.estimateRequest.count({ where: { provider_person_id: personId, status: "OPEN" } }),
+    Promise.all([
+      prisma.interviewRequest.count({ where: { provider_person_id: personId, status: { in: ["REQUESTED", "SLOTS_OFFERED", "SCHEDULED"] } } }),
+      prisma.testRequest.count({ where: { provider_person_id: personId, status: { in: ["ISSUED", "IN_PROGRESS"] } } }),
+    ]).then(([a, b]) => a + b),
+    prisma.workOrder.count({ where: { provider_person_id: personId, workRequest: { source: "SHOP" }, status: { notIn: ["DRAFT", "CANCELLED", "CLOSED", "FINALLY_CLOSED"] } } }),
+    import("@/lib/job-agent").then((m) => m.newToday()).then((x) => x.n).catch(() => 0),
+  ]);
+  restP.catch(() => null);
+  // Get Started's Connect and Learn load now; the Work tile joins them once the rows are built.
+  let giveWork: (d: Donut) => void = () => {};
+  const startP = getStartedDonuts(viewer, personId, "provider", new Promise<Donut>((r) => { giveWork = r; }), checklistP);
+  startP.catch(() => null);
   const [reqs, props, ivs, orders, services, products, prs] = await Promise.all([
     prisma.proposalRequest.findMany({ where: { provider_person_id: personId }, select: { job_id: true, status: true, updated_at: true } }),
     prisma.proposal.findMany({ where: { provider_person_id: personId, status: { notIn: ["DRAFT", "WITHDRAWN"] } }, select: { job_id: true, status: true, updated_at: true, lines: { take: 1, select: { unit_price_cents: true } } } }),
@@ -19,10 +39,12 @@ export async function sellerDashboard(personId: string, viewer: { userId: string
     prisma.paymentRequest.findMany({ where: { provider_person_id: personId, status: { in: ["SUBMITTED", "APPROVED", "PAID"] } }, select: { status: true, decided_at: true, updated_at: true, lines: { select: { amount_cents: true, quantity: true, unit_price_cents: true } } } }),
   ]);
   const jobIds = [...new Set([...reqs, ...props, ...ivs].map((x) => x.job_id))];
-  const jobs = await prisma.job.findMany({ where: { id: { in: jobIds } }, select: { id: true, title: true, budget_min_cents: true, budget_max_cents: true, buyer: { select: { company: { select: { name: true } } } } } });
-  const buyers = await prisma.person.findMany({ where: { id: { in: orders.map((o) => o.buyer_person_id) } }, select: { id: true, company: { select: { name: true } } } });
-
-  const awaiting = new Set((await prisma.workRequest.findMany({ where: { job_id: { in: jobIds }, status: { in: ["SUBMITTED", "PENDING_APPROVAL", "INCOMPLETE"] }, lines: { some: { provider_person_id: personId } } }, select: { job_id: true } })).map((w) => w.job_id));
+  const [jobs, buyers, awaitingRows] = await Promise.all([
+    prisma.job.findMany({ where: { id: { in: jobIds } }, select: { id: true, title: true, budget_min_cents: true, budget_max_cents: true, buyer: { select: { company: { select: { name: true } } } } } }),
+    prisma.person.findMany({ where: { id: { in: orders.map((o) => o.buyer_person_id) } }, select: { id: true, company: { select: { name: true } } } }),
+    prisma.workRequest.findMany({ where: { job_id: { in: jobIds }, status: { in: ["SUBMITTED", "PENDING_APPROVAL", "INCOMPLETE"] }, lines: { some: { provider_person_id: personId } } }, select: { job_id: true } }),
+  ]);
+  const awaiting = new Set(awaitingRows.map((w) => w.job_id));
   const rows: DashRow[] = [];
   for (const id of jobIds) {
     const j = jobs.find((x) => x.id === id);
@@ -48,22 +70,8 @@ export async function sellerDashboard(personId: string, viewer: { userId: string
 
   const billed = prs.filter((p) => p.status !== "PAID").length, paid = prs.filter((p) => p.status === "PAID").length;
   const q = quarterStart();
+  const [feed, openJobs, { view }, checklist, estimatesAsked, fitCount, productOrders, agentNew] = await restP;
   const earned = prs.filter((p) => p.status === "PAID" && (p.decided_at ?? p.updated_at) >= q).reduce((n, p) => n + p.lines.reduce((m, l) => m + lineTotal(l), 0), 0);
-  const { getWorkFeed } = await import("@/lib/work-feed");
-  // Speed (10-27): everything below runs together.
-  const [feed, openJobs, { view }, checklist, estimatesAsked, fitCount, productOrders, agentNew] = await Promise.all([
-    profile ? getWorkFeed({ tab: "best", profileId: profile.id }).catch(() => []) : Promise.resolve([]),
-    prisma.job.count({ where: { kind: "JOB", status: "OPEN" } }),
-    dashView(personId, "provider"),
-    profileChecklist(personId),
-    prisma.estimateRequest.count({ where: { provider_person_id: personId, status: "OPEN" } }),
-    Promise.all([
-      prisma.interviewRequest.count({ where: { provider_person_id: personId, status: { in: ["REQUESTED", "SLOTS_OFFERED", "SCHEDULED"] } } }),
-      prisma.testRequest.count({ where: { provider_person_id: personId, status: { in: ["ISSUED", "IN_PROGRESS"] } } }),
-    ]).then(([a, b]) => a + b),
-    prisma.workOrder.count({ where: { provider_person_id: personId, workRequest: { source: "SHOP" }, status: { notIn: ["DRAFT", "CANCELLED", "CLOSED", "FINALLY_CLOSED"] } } }),
-    import("@/lib/job-agent").then((m) => m.newToday()).then((x) => x.n).catch(() => 0),
-  ]);
   const matches = feed.length;
   // HT-E003: You Matched = fits your skills, no action yet.
   for (const c of feed.filter((c) => c.matched > 0 && !jobIds.includes(c.id))) rows.push({ key: `m-${c.id}`, type: "Job", what: c.title, number: null, who: c.identity.companyName ?? "Buyer", status: "You Matched", tone: "pend", next: "Say I Want This Job", waitingOnYou: true, waitingOn: "You", amount: c.budgetLabel ?? "—", updatedAt: c.postedAt ?? new Date(0).toISOString(), href: `/find-work/${c.id}`, donut: "jobs", slice: "You Matched", done: false });
@@ -91,7 +99,8 @@ export async function sellerDashboard(personId: string, viewer: { userId: string
       { label: "Services Listed", n: servicesListed, color: C.ok, href: "/catalog#services" }, { label: "Service Products Listed", n: productsLive, color: C.ink, href: "/catalog#products" }, { label: "Draft", n: drafts, color: C.grey, mine: true, href: "/catalog#products" }] },
   ];
   // HT-E004 / 10-27: Get Started = Profile · Connect · Learn · Work; Make Money = Work · Orders · Payments · Catalog. Both load; the switch flips in place.
-  const start = await getStartedDonuts(viewer, personId, "provider", workTile, checklist);
+  giveWork(workTile);
+  const start = await startP;
   const done = checklist.filter((i) => i.n > 0).length;
   return {
     providerNumber: profile?.provider_number ?? null,

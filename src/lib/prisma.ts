@@ -7,7 +7,8 @@ declare global {
 }
 
 function createPrismaClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+  // RM-E005: keep idle connections 5 min (pg's 10 s default made the first page after a pause reconnect, +0.5–0.8 s).
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL!, idleTimeoutMillis: 5 * 60_000 });
   return new PrismaClient({ adapter });
 }
 

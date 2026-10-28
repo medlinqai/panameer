@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import type { Viewer } from "@/lib/access";
 import { buyerDashboard } from "@/lib/dashboard/buyer";
 import { sellerDashboard } from "@/lib/dashboard/seller";
@@ -9,13 +10,24 @@ import type { DashData } from "@/lib/dashboard/types";
 
 // MD-E003/E004: the dashboard — 1 · Things You Need to Do, then 2 · My Progress.
 // Speed (10-27): the tiles' numbers are kept for 60 s per person (the action counts beside them are always fresh).
+// RM-E005: after 60 s the last numbers show while new ones load in the background (up to 10 min old).
 const TILE_TTL_MS = 60_000;
-const tiles = new Map<string, { at: number; p: Promise<DashData> }>();
+const TILE_STALE_MS = 10 * 60_000;
+const tiles = new Map<string, { at: number; p: Promise<DashData>; refreshing?: boolean }>();
 function tilesFor(viewer: Viewer, side: "buyer" | "provider", personId: string): Promise<DashData> {
   const key = `${personId}:${side}`;
+  const load = () => (side === "buyer" ? buyerDashboard(viewer, personId) : sellerDashboard(personId, viewer));
   const hit = tiles.get(key);
   if (hit && hit.at > Date.now() - TILE_TTL_MS) return hit.p;
-  const p = side === "buyer" ? buyerDashboard(viewer, personId) : sellerDashboard(personId, viewer);
+  if (hit && hit.at > Date.now() - TILE_STALE_MS) {
+    if (!hit.refreshing) {
+      hit.refreshing = true;
+      // After the page is sent, so the refresh doesn't compete with it for connections.
+      after(async () => { const np = load(); await np.then(() => tiles.set(key, { at: Date.now(), p: np }), () => { hit.refreshing = false; }); });
+    }
+    return hit.p;
+  }
+  const p = load();
   tiles.set(key, { at: Date.now(), p });
   p.catch(() => tiles.delete(key));
   return p;
