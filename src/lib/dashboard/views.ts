@@ -69,30 +69,57 @@ export async function accountChecklist(personId: string): Promise<ChecklistItem[
 export const profileDonut = (items: ChecklistItem[]) => ring("profile", "Profile", "What buyers see", items, "/profile", "Edit Profile");
 export const accountDonut = (items: ChecklistItem[]) => ring("account", "Account", "What providers see", items, "/company", "Finish Set-Up");
 
+// RM-E005: the Learn tile from database counts — the platform totals are cached for 10 minutes (apart from the
+// per-person tile cache); the person's own counts are a few small queries. No full catalog read.
+const LEARN_TTL_MS = 10 * 60_000;
+let learnTotals: { at: number; paths: number; courses: number; instructors: number; groups: number; lessonPath: Map<string, string>; lessonCourse: Map<string, string>; perPath: Map<string, number>; perCourse: Map<string, number> } | null = null;
+async function catalogTotals() {
+  if (learnTotals && learnTotals.at > Date.now() - LEARN_TTL_MS) return learnTotals;
+  const { isPlayable } = await import("@/lib/learn");
+  const paths = await prisma.learningPath.findMany({ where: { status: "PUBLISHED" }, select: { id: true, group: true, instructor_person_id: true, courses: { select: { id: true, sections: { select: { lessons: { where: { retired_at: null }, select: { id: true, vimeo_ref: true, production_status: true } } } } } } } });
+  const lessonPath = new Map<string, string>(), lessonCourse = new Map<string, string>(), perPath = new Map<string, number>(), perCourse = new Map<string, number>();
+  for (const p of paths) for (const c of p.courses) for (const l of c.sections.flatMap((x) => x.lessons).filter(isPlayable)) {
+    lessonPath.set(l.id, p.id); lessonCourse.set(l.id, c.id);
+    perPath.set(p.id, (perPath.get(p.id) ?? 0) + 1); perCourse.set(c.id, (perCourse.get(c.id) ?? 0) + 1);
+  }
+  learnTotals = { at: Date.now(), paths: paths.length, courses: paths.reduce((n, p) => n + p.courses.length, 0), instructors: new Set(paths.map((p) => p.instructor_person_id).filter(Boolean)).size, groups: new Set(paths.map((p) => p.group).filter(Boolean)).size, lessonPath, lessonCourse, perPath, perCourse };
+  return learnTotals;
+}
+
 /** Scott 10-27: the Learn tile, six lines (pairs "a / b"); the ring is your learning (finished · in progress · matched). */
 export async function learnDonut(personId: string, side: "buyer" | "provider"): Promise<Donut> {
-  const person = await prisma.person.findUnique({ where: { id: personId }, select: { user_id: true } });
-  const { learnCatalog } = await import("@/lib/learn-catalog");
-  const { recommendNext } = await import("@/lib/learn-next");
-  const catalog = await learnCatalog(person?.user_id ?? null);
-  const matched = person?.user_id ? (await recommendNext(person.user_id, { paths: catalog, limit: 50 })).picks.filter((p) => !p.path.mine?.enrolled).length : 0;
-  const enrolled = catalog.filter((p) => p.mine?.enrolled);
-  const finished = enrolled.filter((p) => p.mine && p.mine.total > 0 && p.mine.done >= p.mine.total).length;
-  const courses = catalog.flatMap((p) => p.courses);
-  const taken = courses.filter((c) => { const n = c.lessons.filter((l) => l.playable).length; return n > 0 && c.done >= n; }).length;
-  const certified = catalog.filter((p) => p.certificate).length;
-  const instructors = new Set(catalog.map((p) => p.teacher?.personId).filter(Boolean)).size;
-  const lpGroups = new Set(catalog.map((p) => p.group).filter(Boolean)).size;
+  const person = await prisma.person.findUnique({ where: { id: personId }, select: { user_id: true, providerProfile: { select: { skills: { select: { skill_id: true } } } } } });
+  const uid = person?.user_id ?? null;
+  const skillIds = person?.providerProfile?.skills.map((s) => s.skill_id) ?? [];
+  const [t, enrollments, progress, certified, skillPaths] = await Promise.all([
+    catalogTotals(),
+    uid ? prisma.enrollment.findMany({ where: { user_id: uid, learningPath: { status: "PUBLISHED" } }, select: { learning_path_id: true } }) : [],
+    uid ? prisma.lessonProgress.findMany({ where: { user_id: uid }, select: { lesson_id: true } }) : [],
+    uid ? prisma.certificationAttempt.findMany({ where: { user_id: uid, passed: true, is_preview: false }, distinct: ["learning_path_id"], select: { learning_path_id: true } }) : [],
+    skillIds.length ? prisma.learningPathSkill.findMany({ where: { skill_id: { in: skillIds }, learningPath: { status: "PUBLISHED" } }, distinct: ["learning_path_id"], select: { learning_path_id: true } }) : [],
+  ]);
+  const doneByPath = new Map<string, number>(), doneByCourse = new Map<string, number>();
+  for (const p of progress) {
+    const path = t.lessonPath.get(p.lesson_id), course = t.lessonCourse.get(p.lesson_id);
+    if (path) doneByPath.set(path, (doneByPath.get(path) ?? 0) + 1);
+    if (course) doneByCourse.set(course, (doneByCourse.get(course) ?? 0) + 1);
+  }
+  const enrolledIds = new Set(enrollments.map((e) => e.learning_path_id));
+  const finished = [...enrolledIds].filter((id) => (t.perPath.get(id) ?? 0) > 0 && (doneByPath.get(id) ?? 0) >= t.perPath.get(id)!).length;
+  const taken = [...doneByCourse].filter(([id, n]) => n >= (t.perCourse.get(id) ?? Infinity)).length;
+  // Matched to You: published paths that teach one of your profile skills and that you haven't enrolled in.
+  const matched = skillPaths.filter((p) => !enrolledIds.has(p.learning_path_id)).length;
+  const enrolled = enrolledIds.size;
   return {
     key: "learn", title: "Learn", sub: side === "buyer" ? "How Panameer works" : "Courses and certifications", href: "/learn",
-    ring: [{ label: "Finished", n: finished, color: C.ok }, { label: "In Progress", n: enrolled.length - finished, color: C.steel }, { label: "Matched", n: matched, color: C.grey }],
+    ring: [{ label: "Finished", n: finished, color: C.ok }, { label: "In Progress", n: enrolled - finished, color: C.steel }, { label: "Matched", n: matched, color: C.grey }],
     slices: [
-      { label: "Learning Paths", n: catalog.length, color: C.ink, href: "/learn/paths" },
+      { label: "Learning Paths", n: t.paths, color: C.ink, href: "/learn/paths" },
       { label: "Matched to You", n: matched, color: C.grey, mine: true, href: "/learn/paths" },
-      { label: "Enrolled / Finished", n: enrolled.length, value: `${enrolled.length} / ${finished}`, color: C.steel, href: "/learn/my" },
-      { label: "Courses Taken / Total Courses", n: taken, value: `${taken} / ${courses.length}`, color: C.pendSoft, href: "/learn/courses" },
-      { label: "Certified", n: certified, color: C.ok, href: "/learn/certificates" },
-      { label: "Instructors / LP Groups", n: instructors, value: `${instructors} / ${lpGroups}`, color: C.okSoft, href: "/learn/paths" },
+      { label: "Enrolled / Finished", n: enrolled, value: `${enrolled} / ${finished}`, color: C.steel, href: "/learn/my" },
+      { label: "Courses Taken / Total Courses", n: taken, value: `${taken} / ${t.courses}`, color: C.pendSoft, href: "/learn/courses" },
+      { label: "Certified", n: certified.length, color: C.ok, href: "/learn/certificates" },
+      { label: "Instructors / LP Groups", n: t.instructors, value: `${t.instructors} / ${t.groups}`, color: C.okSoft, href: "/learn/paths" },
     ],
   };
 }
