@@ -340,33 +340,13 @@ async function deriveAppCounts(viewer: { userId: string }, side: "buyer" | "prov
       if (ls.length) items.push({ id: `connect:${g}`, title: g, n: ls.length, what: g, app: "connect", appLabel: "Connect", due: null, dueAt: null, href: ls[0].href, action: "Open", tier: tierOf + 0.1, lines: ls });
     }
   };
-  // Scott 10-27: a Completed Order puts "Recommend {seller}" on the buyer's Worklist and "Ask {buyer} for a Recommendation"
-  // on the seller's; each clears when done (the buyer's recommendation is submitted / the seller's request is sent).
+  // OR-E001: a Completed Order puts one "Review …" line per Order on each side's Worklist, due in 14 days; it clears when the review is submitted.
   const afterCompleted = async () => {
-    const done = await prisma.workOrder.findMany({ where: { ...(side === "buyer" ? { buyer_person_id: id } : { provider_person_id: id }), status: { in: ["CLOSED", "FINALLY_CLOSED"] } }, orderBy: { updated_at: "desc" }, take: 20, select: { id: true, provider_person_id: true, buyer_person_id: true } });
-    if (!done.length) return;
-    const sel = { id: true, first_name: true, last_name: true, company: { select: { name: true } }, user: { select: { email: true } }, providerProfile: { select: { id: true } } } as const;
-    const people = new Map((await prisma.person.findMany({ where: { id: { in: [id, ...done.flatMap((o) => [o.provider_person_id, o.buyer_person_id])] } }, select: sel })).map((p) => [p.id, p]));
-    const me = people.get(id);
-    const seen = new Set<string>();
-    const lines: AttentionLine[] = [];
-    for (const o of done) {
-      const otherId = side === "buyer" ? o.provider_person_id : o.buyer_person_id;
-      const other = people.get(otherId);
-      if (!other || seen.has(otherId)) continue;
-      seen.add(otherId);
-      const ppId = side === "buyer" ? other.providerProfile?.id : me?.providerProfile?.id;
-      const email = side === "buyer" ? me?.user?.email : other.user?.email;
-      if (!ppId || !email) continue;
-      const already = await prisma.recommendationRequest.count({ where: { provider_profile_id: ppId, contact_email: { equals: email, mode: "insensitive" }, status: side === "buyer" ? "SUBMITTED" : { in: ["SENT", "SUBMITTED"] } } });
-      if (already) continue;
-      const name = `${other.first_name} ${other.last_name}`.trim();
-      lines.push(side === "buyer"
-        ? { key: o.id, what: `Recommend ${name}`, detail: "", dueAt: null, href: `/recommend-order/${o.id}`, action: "Recommend" }
-        : { key: o.id, what: `Ask ${other.company?.name ?? name} for a Recommendation`, detail: "", dueAt: null, href: "/connect/recommendations", action: "Ask" });
-    }
-    const title = side === "buyer" ? "Recommend Your Provider" : "Ask for a Recommendation";
-    if (lines.length) items.push({ id: `order:${title}`, title, n: lines.length, what: title, app: "order", appLabel: "Orders", due: null, dueAt: null, href: "/connect/recommendations", action: "Open", tier: 3, lines });
+    const { reviewLines } = await import("@/lib/order-reviews");
+    const lines: AttentionLine[] = await reviewLines(viewer as Parameters<typeof reviewLines>[0], id, side);
+    const title = "Order Reviews";
+    const due = lines.map((l) => l.dueAt).filter((d): d is string => !!d).sort()[0] ?? null;
+    if (lines.length) items.push({ id: `order:${title}`, title, n: lines.length, what: title, app: "order", appLabel: "Orders", due: due ? dueText(new Date(due)) : null, dueAt: due, href: lines[0].href, action: "Review", tier: 3, lines });
   };
   const ORDER_SEL = { id: true, order_number: true, description: true, not_to_exceed_cents: true, period_start: true, provider_person_id: true, buyer_person_id: true, created_at: true } as const;
   // Name the job(s) each item is about — one query for all of them.

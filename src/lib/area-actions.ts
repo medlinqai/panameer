@@ -33,8 +33,7 @@ const VARIABLE: Record<string, Variable[]> = {
   orders: [
     { label: "Accept Order", groups: ["Orders to Accept"], href: "/orders/overview", icon: "receipt" },
     { label: "Review Change Order", groups: ["Review Change Orders"], href: "/orders/overview", icon: "pen" },
-    { label: "Recommend Provider", groups: ["Recommend Your Provider"], href: "/worklist?group=Recommend%20Your%20Provider", icon: "star" },
-    { label: "Ask for Recommendation", groups: ["Ask for a Recommendation"], href: "/connect/recommendations", icon: "star" },
+    { label: "Review Order", groups: ["Order Reviews"], href: "/worklist?group=Order%20Reviews", icon: "star" },
   ],
   payments: [
     { label: "Approve Invoice", groups: ["Approve Invoices"], href: "/payments/payment-requests", icon: "receipt" },

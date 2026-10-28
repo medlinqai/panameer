@@ -3,20 +3,20 @@ export type Step = { next: { text: string; label: string; href: string } } | { w
 const RELEASED = new Set(["RELEASED", "ACTIVE", "ON_HOLD"]);
 const DONE = new Set(["CLOSED", "FINALLY_CLOSED"]);
 
-export function orderStep(o: { id: string; status: string; party: "BUYER" | "PROVIDER" | "NONE"; buyerAcceptedAt: string | Date | null; providerAcceptedAt: string | Date | null; providerName: string; buyerName: string }): Step {
+export function orderStep(o: { id: string; status: string; party: "BUYER" | "PROVIDER" | "NONE"; buyerAcceptedAt: string | Date | null; providerAcceptedAt: string | Date | null; providerName: string; buyerName: string; /** OR-E001: this side has submitted its Order Review. */ reviewed?: boolean }): Step {
   const review = { label: "Review", href: `/orders/${o.id}#accept` };
   if (o.party === "BUYER") {
     if (o.status === "ISSUED" && !o.buyerAcceptedAt) return { next: { text: "Review and Accept the Order", ...review } };
     if (o.status === "ISSUED") return { waiting: `Waiting on ${o.providerName} to accept` };
     if (RELEASED.has(o.status)) return { waiting: `Order active · ${o.providerName} is working; approve invoices as they come` };
-    if (DONE.has(o.status)) return { next: { text: `Recommend ${o.providerName}`, label: "Recommend", href: `/recommend-order/${o.id}` } };
+    if (DONE.has(o.status)) return o.reviewed ? { waiting: `Review submitted · thanks for reviewing ${o.providerName}` } : { next: { text: `Review ${o.providerName}`, label: "Review", href: `/orders/${o.id}/review` } };
   }
   if (o.party === "PROVIDER") {
     // The buyer accepts first, then the provider.
     if (o.status === "ISSUED" && !o.buyerAcceptedAt) return { waiting: "Order coming · the buyer is reviewing it" };
     if (o.status === "ISSUED" && !o.providerAcceptedAt) return { next: { text: "Review and Accept the Order", ...review } };
     if (RELEASED.has(o.status)) return { next: { text: "Start the Work, Then Bill", label: "Bill", href: "/payments/payment-requests" } };
-    if (DONE.has(o.status)) return { next: { text: `Ask ${o.buyerName} for a Recommendation`, label: "Ask", href: "/connect/recommendations" } };
+    if (DONE.has(o.status)) return o.reviewed ? { waiting: `Review submitted · thanks for reviewing ${o.buyerName}` } : { next: { text: `Review ${o.buyerName}`, label: "Review", href: `/orders/${o.id}/review` } };
   }
   return null;
 }

@@ -6332,11 +6332,14 @@ model WorkOrder {
   revision_number   Int              @default(0)
   /// X-E001: set when the order came from a customer's ERP (cXML OrderRequest). Controls then live in the ERP.
   erp_connection_id String?          @db.Uuid
+  /// OR-E001: when the Order was Completed (CLOSED); the Order Review window runs 14 days from here.
+  completed_at      DateTime?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   lines            WorkOrderLine[]
+  orderReviews     OrderReview[]
   /// ⚠ `E621` ruling 37c — the requisition lines this order was built from.
   requisitionLines WorkRequestLine[] @relation("WorkRequestLineOrder")
 
@@ -8394,6 +8397,47 @@ model BuildDigest {
 }
 
 /// Work Order Plan (R2): who changed what on a work order, for its History. Additive.
+/// OR-E001: Order Review — the 360 review both sides give at the end of every Order. One per Order per side.
+/// BUYER = the buyer reviews the seller (quality_of_work · on_time · communication · value);
+/// SELLER = the seller reviews the buyer's company (clear_scope · pays_on_time · communication · would_work_again).
+/// Hidden until both sides submit or 14 days after the first one; editable for 7 days after it shows.
+model OrderReview {
+  id                    String          @id @default(uuid()) @db.Uuid
+  work_order_id         String          @db.Uuid
+  side                  OrderReviewSide
+  reviewer_person_id    String          @db.Uuid
+  /// The person reviewed (the seller, or the buyer who placed the Order).
+  reviewee_person_id    String          @db.Uuid
+  /// The buyer's company when the seller reviews the buyer.
+  reviewee_company_id   String?         @db.Uuid
+  quality_of_work       Int?
+  on_time               Int?
+  communication         Int
+  value                 Int?
+  clear_scope           Int?
+  pays_on_time          Int?
+  would_work_again      Int?
+  /// Average of the four, 1–5.
+  overall               Float
+  comment               String?
+  comment_hidden_at     DateTime?
+  comment_hidden_reason String?
+  submitted_at          DateTime        @default(now())
+  updated_at            DateTime        @updatedAt
+
+  workOrder WorkOrder @relation(fields: [work_order_id], references: [id], onDelete: Cascade)
+
+  @@unique([work_order_id, side])
+  @@index([reviewee_person_id])
+  @@index([reviewee_company_id])
+  @@map("order_reviews")
+}
+
+enum OrderReviewSide {
+  BUYER
+  SELLER
+}
+
 model WorkOrderEvent {
   id            String   @id @default(uuid()) @db.Uuid
   work_order_id String   @db.Uuid

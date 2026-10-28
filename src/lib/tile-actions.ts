@@ -6,7 +6,7 @@ export const TILE_GROUPS: Record<string, string[]> = {
   jobs: ["Compare Answers", "Answer Date Passed", "Availability Requests", "Questions to Answer", "Jobs for You", "Interview Times to Pick", "Tests to Take"],
   products: ["Accept Product Orders"],
   requests: ["Request Approvals"],
-  orders: ["Orders to Accept", "Review Change Orders", "Recommend Your Provider", "Ask for a Recommendation"],
+  orders: ["Orders to Accept", "Review Change Orders", "Order Reviews"],
   payments: ["Approve Invoices"],
   account: ["Set-Up"],
   profile: ["Profile"],

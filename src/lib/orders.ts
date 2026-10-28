@@ -818,12 +818,12 @@ export async function controlOrder(viewer: Viewer, id: string, action: OrderCont
     case "RELEASE_HOLD": data = { status: o.held_from_status ?? "RELEASED", held_from_status: null }; break;
     case "FREEZE": data = { frozen_at: new Date() }; break;
     case "UNFREEZE": data = { frozen_at: null }; break;
-    case "CLOSE": data = { status: "CLOSED" }; break;
-    case "REOPEN": data = { status: "RELEASED" }; break;
+    case "CLOSE": data = { status: "CLOSED", completed_at: new Date() }; break;
+    case "REOPEN": data = { status: "RELEASED", completed_at: null }; break;
     case "FINALLY_CLOSE": {
       const pending = await prisma.paymentRequest.count({ where: { work_order_id: id, status: "SUBMITTED" } });
       if (pending > 0) throw new OrderError("Approve or reject the pending payment request first.", "INVALID");
-      data = { status: "FINALLY_CLOSED", frozen_at: null };
+      data = { status: "FINALLY_CLOSED", frozen_at: null, ...(o.status === "CLOSED" ? {} : { completed_at: new Date() }) };
       break;
     }
   }
@@ -860,7 +860,7 @@ export async function closeIfFullyPaid(orderId: string): Promise<boolean> {
   if (requests.some((r) => r.status === "SUBMITTED" || r.status === "APPROVED")) return false;
   const paid = await prisma.paymentLine.aggregate({ where: { payment_request_id: { in: requests.map((r) => r.id) } }, _sum: { amount_cents: true } });
   if ((paid._sum.amount_cents ?? 0) < cap || cap <= 0) return false;
-  const done = await prisma.workOrder.updateMany({ where: { id: orderId, status: { in: ["RELEASED", "ACTIVE"] } }, data: { status: "CLOSED" } });
+  const done = await prisma.workOrder.updateMany({ where: { id: orderId, status: { in: ["RELEASED", "ACTIVE"] } }, data: { status: "CLOSED", completed_at: new Date() } });
   return done.count === 1;
 }
 
