@@ -104,6 +104,31 @@ export async function getStartedDonuts(viewer: { userId: string }, personId: str
     const providers = await prisma.providerProfile.count();
     j = { ...jobs, lead: { text: `${providers.toLocaleString("en-US")} providers on Panameer`, href: "/connect/community", label: "Find People" } };
   }
+  // RM-E003: buyers see Account · Connect · Jobs · Shop (Learn stays reachable from Connect); sellers Profile · Connect · Learn · Work.
+  if (side === "buyer") {
+    const [connect, shop] = await Promise.all([connectDonut(viewer.userId, personId), shopDonut(viewer.userId, personId)]);
+    return [first, connect, ...(j ? [j] : []), shop];
+  }
   const [connect, learn] = await Promise.all([connectDonut(viewer.userId, personId), learnDonut(personId, side)]);
   return [first, connect, learn, ...(j ? [j] : [])];
+}
+
+/** RM-E003: the buyer's Shop tile — Viewed · In Cart · Requested to Buy · Delivered, plus how many products are offered. */
+export async function shopDonut(userId: string, personId: string): Promise<Donut> {
+  const [viewed, cart, requested, delivered, offered] = await Promise.all([
+    prisma.usageEvent.count({ where: { user_id: userId, app: "SHOP" } }),
+    prisma.workRequestLine.count({ where: { workRequest: { buyer_person_id: personId, source: "SHOP", status: "INCOMPLETE" } } }),
+    prisma.workRequest.count({ where: { buyer_person_id: personId, source: "SHOP", status: { notIn: ["INCOMPLETE", "CANCELLED", "WITHDRAWN"] } } }),
+    prisma.workOrder.count({ where: { buyer_person_id: personId, workRequest: { source: "SHOP" }, status: { in: ["CLOSED", "FINALLY_CLOSED"] } } }),
+    prisma.serviceProduct.count({ where: { status: "PUBLISHED" } }),
+  ]);
+  return {
+    key: "shop", title: "Shop", sub: "Service products", href: "/shop", total: `${offered.toLocaleString("en-US")} products offered`,
+    slices: [
+      { label: "Viewed", n: viewed, color: C.steel, href: "/shop?tab=browse" },
+      { label: "In Cart", n: cart, color: C.pend, mine: true, href: "/shop?tab=cart" },
+      { label: "Requested to Buy", n: requested, color: C.ink, href: "/shop?tab=purchases" },
+      { label: "Delivered", n: delivered, color: C.ok, href: "/shop?tab=purchases" },
+    ],
+  };
 }
