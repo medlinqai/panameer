@@ -90,13 +90,13 @@ export async function sellerDashboard(personId: string, viewer: { userId: string
     { key: "catalog", title: "Catalog", sub: "What you list", href: "/catalog", slices: [
       { label: "Services Listed", n: servicesListed, color: C.ok, href: "/catalog#services" }, { label: "Service Products Listed", n: productsLive, color: C.ink, href: "/catalog#products" }, { label: "Draft", n: drafts, color: C.grey, mine: true, href: "/catalog#products" }] },
   ];
-  // HT-E004 / 10-27: Get Sold = Profile · Connect · Learn · Work; Make Money = Work · Orders · Payments · Catalog. Both load; the switch flips in place.
+  // HT-E004 / 10-27: Get Started = Profile · Connect · Learn · Work; Make Money = Work · Orders · Payments · Catalog. Both load; the switch flips in place.
   const start = await getStartedDonuts(viewer, personId, "provider", workTile, checklist);
   const done = checklist.filter((i) => i.n > 0).length;
   return {
     providerNumber: profile?.provider_number ?? null,
     summary: view === "start" ? [`${matches} job${matches === 1 ? "" : "s"} match you`, `Profile ${done} of ${checklist.length} complete`].join(" · ") : [`${matches} job${matches === 1 ? "" : "s"} match you`, `${active} Order${active === 1 ? "" : "s"} active`, `${usd(earned)} earned this quarter`].filter(Boolean).join(" · "),
-    view, viewLabels: ["Get Sold", "Make Money"], setupDone: done === checklist.length, checklist,
+    view, viewLabels: ["Get Started", "Make Money"], setupDone: done === checklist.length, checklist,
     donuts: view === "start" ? start : work,
     views: { start, work },
     rows,

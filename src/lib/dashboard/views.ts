@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { connectDonut } from "@/lib/dashboard/connect";
 import { C, type Donut, type ChecklistItem } from "@/lib/dashboard/types";
 
-// HT-E004/E005: At a Glance has two views — "start" (Get Sold / Get Started) and "work" (Make Money / Get Work Done).
+// HT-E004/E005: At a Glance has two views — "start" (Get Started) and "work" (Make Money / Get Work Done).
 export type DashView = "start" | "work";
 const RELEASED = ["RELEASED", "ACTIVE", "ON_HOLD", "CLOSED", "FINALLY_CLOSED"] as const;
 
