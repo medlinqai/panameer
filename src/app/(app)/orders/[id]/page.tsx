@@ -32,6 +32,8 @@ import { WORK_ORDER_LINE_LABEL } from "@/lib/oracle-status";
 import { termsLine } from "@/lib/billing-terms";
 import { providerPayReady } from "@/lib/your-path";
 import { prisma } from "@/lib/prisma";
+import { reviewContext } from "@/lib/order-reviews";
+import { OrderReviews } from "@/components/orders/OrderReviews";
 
 export const metadata = { title: "Order · Panameer" };
 
@@ -63,6 +65,8 @@ export default async function Page({
   const pendingChange = !!pending;
   const blockedReason = changeBlocked({ status: o.status, frozen_at: o.frozen ? new Date() : null }, pendingChange);
   const money = (c: number) => formatCents(c, o.currency);
+  // OR-E001/E003: this side's Order Review once the Order is Completed.
+  const review = (o.status === "CLOSED" || o.status === "FINALLY_CLOSED") && o.party !== "NONE" ? await reviewContext(viewer, o.id).catch(() => null) : null;
 
   return (
     <div className="pm-white-page mx-auto w-full max-w-5xl">
@@ -115,7 +119,7 @@ export default async function Page({
           </div>
         )}
       </header>
-      <NextStep step={orderStep(o)} />
+      <NextStep step={orderStep({ ...o, reviewed: !!review?.mine })} />
 
       {/* DB-E007: the Work Order's progress strip, directly under the header. */}
       <WorkOrderStrip orderId={o.id} />
@@ -141,6 +145,8 @@ export default async function Page({
           {o.externalRef && <> The buyer&apos;s reference is <span className="font-mono font-semibold text-ink">{o.externalRef}</span>.</>}
         </p>
       )}
+
+      {review && <OrderReviews mine={review.mine} theirs={review.theirs} otherName={review.otherName} />}
 
       <OrderTabs id={o.id} current={tab} />
 
