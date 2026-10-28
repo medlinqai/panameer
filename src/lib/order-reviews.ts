@@ -176,3 +176,17 @@ export async function askBuyerForRecommendation(viewer: Viewer, orderId: string,
     throw e;
   }
 }
+
+/** Admin › Users / Companies: every review about this person or company (visible or not), plus the visible averages. */
+export async function adminReviews(q: { personId?: string; companyId?: string }) {
+  const where = q.companyId ? { reviewee_company_id: q.companyId } : { reviewee_person_id: q.personId ?? "" };
+  const [rows, asSeller, asBuyer] = await Promise.all([
+    prisma.orderReview.findMany({ where, orderBy: { submitted_at: "desc" }, take: 100, include: { workOrder: { select: { order_number: true } } } }),
+    q.personId ? ratingsByPerson("BUYER", [q.personId]).then((m) => m.get(q.personId!) ?? null) : null,
+    q.companyId ? buyerRatings([q.companyId]).then((m) => m.get(q.companyId!) ?? null) : q.personId ? ratingsByPerson("SELLER", [q.personId]).then((m) => m.get(q.personId!) ?? null) : null,
+  ]);
+  return {
+    asSeller, asBuyer,
+    reviews: rows.map((r) => ({ id: r.id, side: r.side, order: r.workOrder.order_number, overall: r.overall, comment: r.comment, hidden: !!r.comment_hidden_at, hiddenReason: r.comment_hidden_reason, at: r.submitted_at.toISOString() })),
+  };
+}

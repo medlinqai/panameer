@@ -1,3 +1,4 @@
+import { AdminOrderReviews } from "@/components/admin/AdminOrderReviews";
 import { RegistrationFollowup } from "@/components/admin/RegistrationFollowup";
 import { stoppedPartway } from "@/lib/registration-followup";
 import Link from "next/link";
@@ -245,6 +246,8 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
           <Row label="Connections" value={connections} />
           <Row label="Learn" value={`${enrollments} enrollments · ${credentials} credentials`} />
         </section>
+
+        <AdminOrderReviews personId={person.id} />
 
         <section className="border-t border-line pt-4" data-admin-changes>
           <h2 className="text-[17px] font-bold">Admin Changes</h2>

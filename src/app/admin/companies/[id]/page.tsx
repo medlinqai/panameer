@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminOrderReviews } from "@/components/admin/AdminOrderReviews";
 import { CompanyCodeEditor } from "@/components/company/CompanyCodeEditor";
 import { use } from "react";
 import { Badge } from "@/components/Badge";
@@ -128,6 +129,7 @@ export default function AdminCompanyDetailPage({
               </tbody>
             </table>
           </div>
+          {data.companyId && <div className="mt-6"><AdminOrderReviews companyId={data.companyId} /></div>}
         </>
       )}
     </div>
