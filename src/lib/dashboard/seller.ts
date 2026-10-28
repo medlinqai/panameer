@@ -94,7 +94,7 @@ export async function sellerDashboard(personId: string, viewer: { userId: string
   const work: Donut[] = [
     workTile,
     { key: "orders", title: "Orders", sub: "The work under contract", slices: slicesFrom(rows, "orders", [{ label: "Order Coming", color: C.grey }, { label: "To Accept", color: C.pend, mine: true }, { label: "Active", color: C.ok }, { label: "Delivered", color: C.okSoft }]) },
-    { key: "payments", title: "Payments", sub: "To you", href: "/payments", slices: [{ label: "Billed", n: billed, color: C.pend }, { label: "Paid", n: paid, color: C.ok }], ...(billed + paid === 0 ? { note: "Comes With Settlement" } : {}) },
+    { key: "payments", title: "Payments", sub: "To you", href: "/payments", slices: [{ label: "Billed", n: billed, color: C.pend }, { label: "Paid", n: paid, color: C.ok }], ...(billed + paid === 0 ? { note: "Payments show here once an Order is billed." } : {}) },
     { key: "catalog", title: "Catalog", sub: "What you list", href: "/catalog", slices: [
       { label: "Services Listed", n: servicesListed, color: C.ok, href: "/catalog#services" }, { label: "Service Products Listed", n: productsLive, color: C.ink, href: "/catalog#products" }, { label: "Draft", n: drafts, color: C.grey, mine: true, href: "/catalog#products" }] },
   ];
