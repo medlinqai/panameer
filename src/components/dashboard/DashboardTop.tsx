@@ -34,12 +34,13 @@ export async function DashboardTop({ viewer, side, firstName, data: dataP, perso
             {data.summary}
           </div>
         </div>
-        <div className="flex gap-2.5">
+        <div className="flex flex-wrap gap-2.5">
           {/* HT-E004/E005: the main button follows the view. */}
           {side === "buyer"
-            ? (data.view === "start" && !data.setupDone
-              ? <><Link href={data.checklist?.find((i) => i.n === 0)?.href ?? "/company"} className={BTN_MAGENTA}>Finish Set-Up</Link><Link href="/hire" className={BTN}>Create a Job</Link></>
-              : <><Link href="/hire" className={BTN_MAGENTA}>Create a Job</Link><Link href="/shop" className={BTN}>Buy Service Products</Link></>)
+            // RM-E002: during set-up (Account not 6/6) Finish Set-Up leads; after it, Create a Job. One magenta button.
+            ? (!data.setupDone
+              ? <><Link href={data.checklist?.find((i) => i.n === 0)?.href ?? "/company"} className={BTN_MAGENTA}>Finish Set-Up</Link><Link href="/hire" className={BTN}>Create a Job</Link><Link href="/shop?tab=browse" className={BTN}>Shop Service Products</Link></>
+              : <><Link href="/hire" className={BTN_MAGENTA}>Create a Job</Link><Link href="/shop?tab=browse" className={BTN}>Shop Service Products</Link><Link href="/estimate/new" className={BTN}>Get an Estimate</Link></>)
             : <>{data.view === "start" && !data.setupDone ? <Link href={data.checklist?.find((i) => i.n === 0)?.href ?? "/profile"} className={BTN_MAGENTA}>Complete My Profile</Link> : <Link href="/catalog" className={BTN_MAGENTA}>Add to Catalog</Link>}<Link href="/find-work?tab=best" className={BTN}>Jobs for You</Link></>}
         </div>
       </div>
