@@ -244,7 +244,11 @@ export async function getWorkFeed(input: {
 
   // THE FEED IS A PROVIDER SURFACE, so the viewer is never the owner, never an
   const companyIds = [...new Set(rows.map((w) => w.buyer.company?.id).filter((x): x is string => !!x))];
-  const tracks = new Map(await Promise.all(companyIds.map(async (id) => [id, await buyerTrackRecord(id)] as const)));
+  const [tracks, rated] = await Promise.all([
+    Promise.all(companyIds.map(async (id) => [id, await buyerTrackRecord(id)] as const)).then((t) => new Map(t)),
+    import("@/lib/order-reviews").then((m) => m.buyerRatings(companyIds)),
+  ]);
+  const { buyerRatingText } = await import("@/lib/order-reviews");
   const identityFor = (w: (typeof rows)[number]) => {
     const id = buildBuyerIdentity({
       person: w.buyer,
@@ -257,6 +261,7 @@ export async function getWorkFeed(input: {
       viewer: { isOwner: false, isAdmin: false, isPlus: false },
     });
     id.track = w.buyer.company ? scrubTrack(tracks.get(w.buyer.company.id) ?? null, id.companyConfidential) : null;
+    id.reviews = w.buyer.company && !id.companyConfidential ? buyerRatingText(rated.get(w.buyer.company.id)) : null;
     return id;
   };
 

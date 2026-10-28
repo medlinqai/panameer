@@ -145,7 +145,7 @@ export function MatchList({ jobId, matches: initial, state, empty, chosen = true
             {(isMaskedName(m.name) || m.photoUrl) && <NeutralAvatar size={36} photoUrl={m.photoUrl} />}
             <button type="button" onClick={() => setActive(m.personId)} className="min-w-0 flex-1 text-left" data-quick-view-open>
               <p className="text-[15px] font-bold hover:underline">{m.company ? `${m.company} · ` : ""}{m.name}</p>
-              <p className="text-[13px] text-ink-2">{m.line}</p>
+              <p className="text-[13px] text-ink-2">{m.line}{m.reviews && <> · <b className="text-ink" data-reviews>{m.reviews}</b></>}</p>
               <MatchBadges badges={m.badges} className="mt-1" />
               <p className="mt-1 flex flex-wrap gap-1.5 text-[11.5px]" data-why>
                 {m.why.map((k) => <span key={k} className={WHY}>{k}</span>)}
@@ -284,6 +284,7 @@ export function CompareTable({ rows, onClose, jobId, onRemove }: { rows: { m: Hi
                 {rows.map((r) => (
                   <th key={r.m.personId} className="border-b border-line p-2 text-left align-bottom">
                     <span className="flex items-center gap-2">{isMaskedName(r.m.name) || r.m.photoUrl ? <NeutralAvatar size={32} photoUrl={r.m.photoUrl} /> : null}<span className="min-w-0 truncate text-[14px] font-extrabold">{r.m.name}</span></span>
+                    {r.m.reviews && <span className="mt-1 block text-[12.5px] font-semibold" data-reviews>{r.m.reviews}</span>}
                     <MatchBadges badges={r.m.badges} className="mt-1.5 font-normal" />
                     <span className="mt-2 flex flex-wrap gap-1.5">
                       {jobId && <Link href={`/hire/terms?job=${jobId}&provider=${r.m.personId}`} className="inline-flex min-h-8 items-center bg-ink px-3 text-[12.5px] font-bold text-surface hover:bg-ink-hover">Request to Hire</Link>}

@@ -1,3 +1,4 @@
+import { buyerRatingText, buyerRatings } from "@/lib/order-reviews";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
@@ -38,7 +39,7 @@ export default async function CompanyPublicPage({ params, searchParams }: { para
           <Link href="/company" className="font-semibold text-magenta-dark underline">Back to Company</Link>
         </p>
       )}
-      <CompanyShell c={view} role="buyer">
+      <CompanyShell c={view} role="buyer" reviews={buyerRatingText((await buyerRatings([view.id])).get(view.id))}>
         <CompanyDetailsRead c={view} role="buyer" />
         <CompanyVerification c={view} buyer />
         {track && <BuyerTrackRecord t={track} />}

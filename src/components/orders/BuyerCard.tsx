@@ -2,12 +2,15 @@ import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { BuyerTrackRecord } from "@/components/company/BuyerTrackRecord";
 import { buyerProfileFor } from "@/lib/buyer-profile";
+import { buyerRatingText, buyerRatings } from "@/lib/order-reviews";
 import { trackRecordForPerson } from "@/lib/buyer-track-record";
 
 // What a provider sees of the buyer on a work order: the person, their company, and the Buyer Track Record.
 export async function BuyerCard({ personId }: { personId: string }) {
   const [p, track] = await Promise.all([buyerProfileFor(personId), trackRecordForPerson(personId)]);
   if (!p) return null;
+  // OR-E003: what sellers said about this buyer's company.
+  const reviews = p.company ? buyerRatingText((await buyerRatings([p.company.id])).get(p.company.id)) : null;
   const [first, ...rest] = p.name.split(" ");
   return (
     <section data-buyer-card className="mt-6 border border-line p-4">
@@ -20,6 +23,7 @@ export async function BuyerCard({ personId }: { personId: string }) {
             {[p.title, p.company?.name].filter(Boolean).join(" · ")}
             {p.company && <> · <Link href={`/companies/${p.company.id}`} className="font-semibold underline">Company page</Link></>}
           </p>
+          {reviews && <p className="text-[13px] font-semibold" data-reviews>{reviews}</p>}
         </div>
       </div>
       {p.overview && <p className="mt-2 line-clamp-3 text-[13.5px] text-ink-2">{p.overview}</p>}

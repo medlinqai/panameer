@@ -1,3 +1,4 @@
+import { sellerComments, sellerRatings } from "@/lib/order-reviews";
 import { catalogServicesFor } from "@/lib/my-catalog";
 import { CapabilityLines } from "@/components/profile/CapabilityLines";
 import { taxonomyV2 } from "@/lib/platform-settings";
@@ -132,10 +133,12 @@ export default async function PublicProviderPage({
   if (!profile) notFound();
   const previewAsPeer = profile.isOwner && wantsPeerPreview;
 
-  const [taughtPaths, takenPaths, testimonials] = await Promise.all([
+  const [taughtPaths, takenPaths, testimonials, rated, reviewComments] = await Promise.all([
     getPathsTaughtByProfile(profile.id),
     getPathsTakenBy(profile.person.userId ?? null),
     publicTestimonials(profile.id),
+    sellerRatings([profile.person.personId]),
+    sellerComments(profile.person.personId),
   ]);
 
   await recordProfileView({
@@ -218,6 +221,7 @@ export default async function PublicProviderPage({
           taughtPaths={taughtPaths}
           takenPaths={takenPaths}
           testimonials={testimonials}
+          reviews={{ rating: rated.get(profile.person.personId) ?? null, comments: reviewComments }}
           community={await getCommunitySignalForProfile(profile.id)}
           youBothKnow={youBothKnow}
           messagePermission={messagePermission}

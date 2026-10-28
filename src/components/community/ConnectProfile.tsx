@@ -1,3 +1,4 @@
+import type { Rating } from "@/lib/order-reviews";
 import { CredentialsBody } from "@/components/profile/CredentialsBody";
 import { VisibleSwitch } from "@/components/profile/VisibleSwitch";
 import Link from "next/link";
@@ -71,6 +72,7 @@ export function ConnectProfile({
   takenPaths = [],
   // HERE WS-B), and that is THE PAGE RULE, not an omission.
   testimonials = [],
+  reviews,
   community = null,
   score = null,
   // COUNT now and nothing renders the avatars.
@@ -101,6 +103,8 @@ export function ConnectProfile({
   /** `LearnEnrollment` rows — paths TAKEN, not taught (`E593` WS-B 17). */
   takenPaths?: TakenPath[];
   testimonials?: Testimonial[];
+  /** OR-E003: Order Reviews from buyers — overall, the four averages and the newest comments. */
+  reviews?: { rating: Rating | null; comments: { id: string; overall: number; comment: string; company: string | null; at: Date }[] };
   /** FORUM INVOLVEMENT — CARRIED OVER DELIBERATELY, NOT IN THE MOCKUP. */
   community?: CommunitySignal | null;
   /** THE PER-LINE BREAKDOWN, for the completion card WS-C). */
@@ -1012,6 +1016,26 @@ export function ConnectProfile({
           )}
         </CleanSection>
 
+        {reviews && (
+          <CleanSection title="Order Reviews" count={reviews.rating?.n ?? 0} showWhenEmpty>
+            {!reviews.rating ? (
+              <p className="text-[13.5px] text-ink-2">No Reviews Yet</p>
+            ) : (
+              <div data-order-reviews-summary>
+                <p className="text-[15px] font-bold">★ {reviews.rating.avg.toFixed(1)} · {reviews.rating.n} Review{reviews.rating.n === 1 ? "" : "s"}</p>
+                <p className="mt-1 text-[13px] text-ink-2">{Object.entries(reviews.rating.parts).map(([k, v]) => `${k} ${v.toFixed(1)}`).join(" · ")}</p>
+                {reviews.comments.slice(0, 3).map((c) => <ReviewComment key={c.id} c={c} />)}
+                {reviews.comments.length > 3 && (
+                  <details className="mt-1">
+                    <summary className="cursor-pointer text-[13px] font-bold text-magenta-ink">See All</summary>
+                    {reviews.comments.slice(3).map((c) => <ReviewComment key={c.id} c={c} />)}
+                  </details>
+                )}
+              </div>
+            )}
+          </CleanSection>
+        )}
+
         <CleanSection
           title="Recommendations"
           count={testimonials.length}
@@ -1199,4 +1223,13 @@ function money(cents: number, currency: string): string {
     style: "currency",
     currency: currency || "USD",
   }).format(cents / 100);
+}
+
+function ReviewComment({ c }: { c: { overall: number; comment: string; company: string | null; at: Date } }) {
+  return (
+    <div className="border-b border-line py-2.5 last:border-0">
+      <p className="text-[13.5px]">&ldquo;{c.comment}&rdquo;</p>
+      <p className="mt-0.5 text-[12px] text-ink-3">★ {c.overall.toFixed(1)}{c.company ? ` · ${c.company}` : ""} · {c.at.toLocaleDateString("en-US", { month: "short", year: "numeric" })}</p>
+    </div>
+  );
 }

@@ -40,6 +40,8 @@ export type BuyerIdentity = {
   /** The alias shown in its place. Null falls back to a neutral phrase in the UI. */
   companyCodeName: string | null;
   companyConfidential: boolean;
+  /** OR-E003: what sellers said about this company ("★ 4.6 · 9 Reviews · Pays On Time 4.9"); never for a confidential buyer. */
+  reviews?: string | null;
   companyCountry: string | null;
   companyVertical: string | null;
   companyLogoUrl: string | null;

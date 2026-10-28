@@ -54,6 +54,7 @@ export function WhoIsAsking({ identity }: { identity: BuyerIdentity }) {
             {companyLabel && !companyConfidential ? <CompanyLink id={companyId} name={companyLabel} /> : (companyLabel ?? "—")}
             {!companyConfidential && <VerifiedTag companyId={companyId} />}
           </p>
+          {identity.reviews && <p className="text-[12.5px] font-semibold" data-reviews>{identity.reviews}</p>}
           {}
           {companyConfidential && (
             <p className="text-[12.5px] leading-snug text-ink-2">

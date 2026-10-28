@@ -18,7 +18,7 @@ export const EditLink = ({ href, label = "Edit" }: { href: string; label?: strin
   </Link>
 );
 
-export function CompanyShell({ c, role, visibility, children }: { c: NonNullable<CompanyView>; role: CompanyRole; visibility?: ReactNode; children: ReactNode }) {
+export function CompanyShell({ c, role, visibility, reviews, children }: { c: NonNullable<CompanyView>; role: CompanyRole; visibility?: ReactNode; /** OR-E003: what sellers said about this company. */ reviews?: string | null; children: ReactNode }) {
   const admin = role === "admin";
   const buyer = role === "buyer";
   const site = c.website?.replace(/^https?:\/\//, "").replace(/\/$/, "");
@@ -56,6 +56,7 @@ export function CompanyShell({ c, role, visibility, children }: { c: NonNullable
             {c.name}
             <VerifiedTag companyId={c.id} />
           </h1>
+          {buyer && reviews && <p className="mt-1 text-[14px] font-semibold" data-reviews>{reviews}</p>}
           <p className="mt-1.5 flex flex-wrap gap-x-2 text-[14px] text-ink-2" data-company-meta>
             {site ? (
               <a href={`https://${site}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-magenta-dark hover:underline">

@@ -1,3 +1,4 @@
+import { ratingText, sellerRatings } from "@/lib/order-reviews";
 import { NextStep } from "@/components/home/NextStep";
 import { jobStep } from "@/lib/your-next-step";
 import { LiveRefresh } from "@/components/LiveRefresh";
@@ -89,7 +90,7 @@ export default async function Page({
   const event = sourcing ? await eventForBuyer(viewer, sourcing.id).catch(() => null) : null;
   const inEvent = new Set(event?.proposals.map((p) => p.personId) ?? []);
   const shownProps = proposals.filter((p) => !inEvent.has(p.providerPersonId));
-  const photos = await providerPhotos(proposals.map((p) => p.providerPersonId));
+  const [photos, rated] = await Promise.all([providerPhotos(proposals.map((p) => p.providerPersonId)), sellerRatings(proposals.map((p) => p.providerPersonId))]);
   // CA-E004: providers who answered Not This Time (reason shown).
   const notNow = sec.requestRows.filter((r) => r.status.startsWith("Not This Time")).map((r) => ({ who: r.who, number: r.number, reason: /“(.*)”/.exec(r.status)?.[1] ?? null }));
   const orders = await jobOrders(detail.id);
@@ -185,7 +186,7 @@ export default async function Page({
                 <div key={p.id} className={`flex flex-wrap items-center gap-3.5 py-3.5 ${ROW_RULE}`} data-proposal-row>
                   <NeutralAvatar size={36} photoUrl={photos.get(p.providerPersonId)} />
                   <div className="min-w-0 flex-[1_1_260px]">
-                    <div className="text-[15px] font-bold" data-response-line>{p.providerName.replace(/^Provider /, "")} · {p.status === "DECLINED" ? <span className="text-state-declined">Declined</span> : <span className="text-state-accepted">Available</span>} · {p.rate ? `${formatCents(p.rate.unitPriceCents)}${p.rate.basis === "RATE" ? "/hr" : " fixed"}` : "no rate"}{x.start ? ` · start ${x.start}` : ""}</div>
+                    <div className="text-[15px] font-bold" data-response-line>{p.providerName.replace(/^Provider /, "")} · {p.status === "DECLINED" ? <span className="text-state-declined">Declined</span> : <span className="text-state-accepted">Available</span>} · {p.rate ? `${formatCents(p.rate.unitPriceCents)}${p.rate.basis === "RATE" ? "/hr" : " fixed"}` : "no rate"}{x.start ? ` · start ${x.start}` : ""}{ratingText(rated.get(p.providerPersonId)) ? ` · ${ratingText(rated.get(p.providerPersonId))}` : ""}</div>
                     <div className="mt-0.5 text-[13px] text-state-inactive">{[x.summary || null, p.coverNote ? `“${p.coverNote.slice(0, 120)}”` : "no note"].filter(Boolean).join(" · ")}</div>
                   </div>
                   <ProposalActions jobId={detail.id} providerPersonId={p.providerPersonId} testId={testId} awarded={p.status === "AWARDED"} interviewStatus={p.interviewStatus} testStatus={p.testStatus} primary={primary} proposalId={p.id} status={p.status} />

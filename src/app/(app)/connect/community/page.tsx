@@ -1,3 +1,4 @@
+import { ratingText, sellerRatings } from "@/lib/order-reviews";
 import { companyBesidesName } from "@/lib/display";
 import Link from "next/link";
 import { guardPage } from "@/lib/guard";
@@ -26,6 +27,8 @@ export default async function CommunityPage({ searchParams }: { searchParams: Pr
     getProviderFieldTree(),
     prisma.skill.findMany({ where: { status: "ACTIVE", visible_to_members: true, pillar_id: { not: null }, review_pending: false, merged_into_id: null }, orderBy: { name: "asc" }, select: { id: true, name: true, role_id: true, pillar_id: true } }),
   ]);
+  // OR-E003: "★ 4.8 · 12 Reviews" on provider cards.
+  const rated = await sellerRatings(view.rows.slice(0, 60).map((p) => p.personId));
   const tree: PickerTree = fieldTree.map((r) => ({
     id: r.id,
     label: r.display || r.name,
@@ -70,6 +73,7 @@ export default async function CommunityPage({ searchParams }: { searchParams: Pr
                     <Avatar firstName={first ?? ""} lastName={rest.join(" ")} photoUrl={p.photoUrl} size={48} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[15px] font-bold">{p.name}</p>
+                      {ratingText(rated.get(p.personId)) && <p className="text-[12.5px] font-semibold" data-reviews>{ratingText(rated.get(p.personId))}</p>}
                       <p className="truncate text-[12.5px] text-ink-2">{[p.title, companyBesidesName(p.company, p.name)].filter(Boolean).join(" · ") || "Member"}</p>
                     </div>
                   </div>

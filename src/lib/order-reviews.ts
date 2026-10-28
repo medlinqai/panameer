@@ -153,6 +153,9 @@ export async function sellerComments(personId: string, take?: number) {
 /** "★ 4.8 · 12 Reviews" — or nothing when there are none. */
 export const ratingText = (r: Rating | undefined | null) => (r && r.n ? `★ ${r.avg.toFixed(1)} · ${r.n} Review${r.n === 1 ? "" : "s"}` : null);
 
+/** A buyer company: "★ 4.6 · 9 Reviews · Pays On Time 4.9" — or nothing when there are none. */
+export const buyerRatingText = (r: Rating | undefined | null) => (r && r.n ? `${ratingText(r)} · Pays On Time ${(r.parts["Pays On Time"] ?? 0).toFixed(1)}` : null);
+
 /** Admin: hide one comment, with a reason (audited). The stars stay. */
 export async function hideReviewComment(viewer: Viewer, reviewId: string, reason: string) {
   if (!viewer.isSystemAdmin) throw new ReviewError("Admins only.");

@@ -110,7 +110,7 @@ export function SourcingEventView({ ev }: { ev: Ev }) {
                 {isMaskedName(p.match.name) && <NeutralAvatar size={36} photoUrl={p.match.photoUrl} />}
                 <div className="min-w-0 flex-1">
                   <p className="text-[15px] font-bold">{p.match.name}{pr && pr.status !== "DECLINED" && !awarded ? <button type="button" disabled={busy} onClick={() => act("/api/sourcing", { action: pr.status === "SHORTLISTED" ? "unshortlist" : "shortlist", eventId: ev.id, proposalId: pr.id })} aria-label={pr.status === "SHORTLISTED" ? "Remove from Shortlist" : "Shortlist"} className={`ml-2 ${pr.status === "SHORTLISTED" ? "text-magenta-dark" : "text-state-border"}`} data-star>{pr.status === "SHORTLISTED" ? "★" : "☆"}</button> : pr?.status === "SHORTLISTED" && <span className="ml-2 text-magenta-dark">★</span>}{pr?.status === "AWARDED" && <span className="ml-2 rounded-full bg-ink px-2 py-0.5 text-[11px] text-surface">Awarded</span>}</p>
-                  <p className="text-[13px] text-ink-2">{p.match.line}</p>
+                  <p className="text-[13px] text-ink-2">{p.match.line}{p.match.reviews && <> · <b className="text-ink" data-reviews>{p.match.reviews}</b></>}</p>
                   {pr ? (
                     <p className="mt-1 text-[13.5px]" data-response-line>{pr.status === "DECLINED" ? <b className="text-state-declined">Declined</b> : <b className="text-state-accepted">Available</b>} · <b className={over ? "text-state-declined" : ""}>{usd(pr.rateCents)}{per}</b>{range && <span className="text-ink-2"> vs {range}</span>}{pr.start && <span className="text-ink-2"> · start {pr.start}</span>}</p>
                   ) : (

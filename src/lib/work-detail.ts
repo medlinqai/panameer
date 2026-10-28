@@ -104,6 +104,10 @@ export async function getWorkDetailForProvider(input: {
     viewer: { isOwner: false, isAdmin: false, isPlus: false },
   });
   identity.track = w.buyer.company ? scrubTrack(await buyerTrackRecord(w.buyer.company.id), identity.companyConfidential) : null;
+  if (w.buyer.company && !identity.companyConfidential) {
+    const { buyerRatings, buyerRatingText } = await import("@/lib/order-reviews");
+    identity.reviews = buyerRatingText((await buyerRatings([w.buyer.company.id])).get(w.buyer.company.id));
+  }
 
   const stage = input.providerPersonId
     ? await sourcingStageForProvider(w.id, input.providerPersonId)

@@ -113,7 +113,9 @@ export type HireMatch = { personId: string; profileId: string; name: string; com
   /** HP-E004: no domain and no skill in common (product only) — listed under "Weaker matches". */
   weak: boolean;
   /** SE-E002: the quick-view panel. */
-  detail: MatchDetail };
+  detail: MatchDetail;
+  /** OR-E003: "★ 4.8 · 12 Reviews", or null before the first review. */
+  reviews?: string | null };
 export type MatchDetail = { summary: string; role: string | null; skillsMatched: string; years: number | null;
   /** MR-E004: Oracle Cloud years / Implementations (labels carry ≈ when derived). */
   ocYears: number | null; ocYearsLabel: string | null; implementations: number | null; implementationsLabel: string | null; certifications: string[]; location: string | null; rates: { name: string; rate: string }[]; products: { title: string; price: string | null }[] };
@@ -237,8 +239,9 @@ export async function hireMatches(input: HireInput, seesTest: boolean, jobId?: s
   const badges = await matchBadges(top.map((m) => ({ profileId: m.profileId, personId: m.personId, certifications: m.detail.certifications })), ocNums);
   for (const m of top) m.badges = badges.get(m.profileId) ?? [];
   // AN-E003: no name or company until a Work Order exists (MR-E001: the photo shows) — "Provider P-1038" (title, city, rate and skills stay).
-  const [seen, numbers] = await Promise.all([identityVisibleTo(viewer ?? null, top.map((m) => m.personId)), providerNumbers(top.map((m) => m.profileId))]);
-  return top.map((m) => (seen.has(m.personId) ? m : { ...m, name: providerLabel(numbers.get(m.profileId)), company: null }));
+  const [seen, numbers, rated] = await Promise.all([identityVisibleTo(viewer ?? null, top.map((m) => m.personId)), providerNumbers(top.map((m) => m.profileId)), import("@/lib/order-reviews").then((r) => r.sellerRatings(top.map((m) => m.personId)))]);
+  const { ratingText } = await import("@/lib/order-reviews");
+  return top.map((m) => ({ ...(seen.has(m.personId) ? m : { ...m, name: providerLabel(numbers.get(m.profileId)), company: null }), reviews: ratingText(rated.get(m.personId)) }));
 }
 
 /** HB-E004: discard a draft job (closed, never deleted — it stays readable). */
