@@ -200,23 +200,31 @@ function csvRows(text: string): string[][] {
 }
 
 // ── EX-E002/E003: what a seller sees ─────────────────────────────────────────────────────────────────────────────
-export type ExternalCard = { id: string; title: string; company: string; source: string; url: string; location: string | null; workType: string | null; salary: string | null; receivedAt: string; matched: number; interested: boolean; interestedCount: number };
+export type ExternalCard = { id: string; title: string; company: string; source: string; url: string; location: string | null; workType: string | null; salary: string | null; receivedAt: string; matched: number; interested: boolean; interestedCount: number;
+  /** XA-E002: your application's stage label (Applied … Chosen, Not Selected, Closed), or null before you apply. */ stage: string | null; stageKey: string | null; claimedJobId: string | null };
 const LIVE = () => ({ status: "LISTED", expires_at: { gt: new Date() } });
 
-/** Listed external jobs for a seller — strongest skill match first, then newest. */
+/** Listed external jobs for a seller — strongest skill match first, then newest — plus any job they applied to (Closed once it's gone). */
 export async function externalForPerson(personId: string | null, take = 300): Promise<ExternalCard[]> {
-  const [jobs, mine, pp] = await Promise.all([
-    prisma.externalJob.findMany({ where: LIVE(), orderBy: { received_at: "desc" }, take, select: { id: true, title: true, source: true, url: true, location: true, work_type: true, salary: true, received_at: true, skill_ids: true, company: { select: { name: true } }, _count: { select: { interests: true } } } }),
-    personId ? prisma.externalJobInterest.findMany({ where: { person_id: personId }, select: { external_job_id: true } }) : [],
+  const mine = personId ? await prisma.externalJobInterest.findMany({ where: { person_id: personId }, select: { external_job_id: true, stage: true } }) : [];
+  const [jobs, pp] = await Promise.all([
+    prisma.externalJob.findMany({ where: { OR: [LIVE(), { id: { in: mine.map((m) => m.external_job_id) }, status: { not: "NOT_ORACLE" } }] }, orderBy: { received_at: "desc" }, take, select: { id: true, title: true, status: true, expires_at: true, claimed_job_id: true, source: true, url: true, location: true, work_type: true, salary: true, received_at: true, skill_ids: true, company: { select: { name: true } }, _count: { select: { interests: true } } } }),
     personId ? prisma.providerProfile.findUnique({ where: { person_id: personId }, select: { skills: { select: { skill_id: true } } } }) : null,
   ]);
+  const { EXT_STAGE_LABEL } = await import("@/lib/external-apply");
   const skills = new Set(pp?.skills.map((s) => s.skill_id) ?? []);
-  const liked = new Set(mine.map((m) => m.external_job_id));
-  return jobs.map((j) => ({ id: j.id, title: j.title, company: j.company.name, source: j.source, url: j.url, location: j.location, workType: j.work_type, salary: j.salary, receivedAt: j.received_at.toISOString(), matched: j.skill_ids.filter((s) => skills.has(s)).length, interested: liked.has(j.id), interestedCount: j._count.interests }))
-    .sort((a, b) => b.matched - a.matched || b.receivedAt.localeCompare(a.receivedAt));
+  const stageOf = new Map(mine.map((m) => [m.external_job_id, m.stage]));
+  return jobs.map((j) => {
+    const raw = stageOf.get(j.id) ?? null;
+    const gone = j.status === "REMOVED" || (j.status === "LISTED" && j.expires_at <= new Date());
+    const key = raw && gone && !["CHOSEN", "NOT_SELECTED"].includes(raw) ? "CLOSED" : raw;
+    return { id: j.id, title: j.title, company: j.company.name, source: j.source, url: j.url, location: j.location, workType: j.work_type, salary: j.salary, receivedAt: j.received_at.toISOString(), matched: j.skill_ids.filter((s) => skills.has(s)).length, interested: !!raw, interestedCount: j._count.interests, stageKey: key, stage: key ? EXT_STAGE_LABEL[key as keyof typeof EXT_STAGE_LABEL] ?? key : null, claimedJobId: j.claimed_job_id };
+  }).sort((a, b) => b.matched - a.matched || b.receivedAt.localeCompare(a.receivedAt));
 }
 
-export const sourceLabel = (source: string) => `External · via ${source}`;
+/** XA-E006: "via LinkedIn" — a host like dice.com reads "Dice". */
+export const sourceName = (source: string) => (/\./.test(source) ? source.replace(/^www\./, "").split(".")[0].replace(/^./, (c) => c.toUpperCase()) : source);
+export const sourceLabel = (source: string) => `External · via ${sourceName(source)}`;
 
 /** I'm Interested — one click, undoable. The seller's name is never shared with the company. */
 export async function setInterest(personId: string, jobId: string, on: boolean) {

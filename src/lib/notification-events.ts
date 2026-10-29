@@ -1012,6 +1012,18 @@ export const NOTIFICATION_EVENTS = {
     body: (v) => str(v, "title", "") || null,
     href: (v) => `/work/jobs/${str(v, "jobId", "")}`,
   },
+  // XA-E002: an external job you applied to moved on — Sent to Employer · Employer Viewing · Interview · Chosen.
+  "work.external_stage": {
+    event: "work.external_stage",
+    recipient: "a seller who applied on Panameer to an external job",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `${str(v, "title", "Your Application")} · ${str(v, "stage", "Updated")}`,
+    body: (v) => str(v, "company", "") || null,
+    href: (v) => str(v, "href", "/work/jobs?kind=external"),
+  },
   "work.order_created": {
     event: "work.order_created",
     recipient: "the buyer who created the order",

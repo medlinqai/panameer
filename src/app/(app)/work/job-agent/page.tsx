@@ -5,9 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { agentSources, markSeen, todaysFinds } from "@/lib/job-agent";
 import { sourceLabel } from "@/lib/external-jobs";
 import { AppCrumb, AlsoIn } from "@/components/home/AppNav";
-import { InterestButton } from "@/components/work/InterestButton";
+import { ExternalRowAction } from "@/components/work/ExternalRowAction";
 import { WantForm } from "@/components/work/WantForm";
-import { BTN_OUT } from "@/components/hire/HireUI";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Job Agent · Work · Panameer" };
@@ -34,8 +33,7 @@ export default async function Page() {
                   <Link href={`/work/external/${e.id}`} className="block truncate text-[15px] font-bold hover:underline">{e.title}</Link>
                   <span className="text-[12.5px] text-ink-2"><b className="font-semibold text-state-inactive">{sourceLabel(e.source)}</b> · {[e.company, e.workType ?? e.location, e.salary].filter(Boolean).join(" · ")}{e.matched ? ` · matches ${e.matched} of your skills` : ""}</span>
                 </span>
-                <InterestButton id={e.id} on={e.interested} />
-                <a href={e.url} target="_blank" rel="noreferrer nofollow" className={BTN_OUT}>Open Original ↗</a>
+                <ExternalRowAction e={e} admin={viewer.isSystemAdmin} />
               </li>
             ))}
             {!finds.length && <li className="py-6 text-[14px] text-ink-3">Nothing new since your last visit.</li>}

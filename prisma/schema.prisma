@@ -9944,6 +9944,9 @@ model ExternalJob {
   company             ExternalCompany       @relation(fields: [external_company_id], references: [id], onDelete: Cascade)
   interests           ExternalJobInterest[]
   views               ExternalJobView[]
+  contacts            ExternalJobContact[]
+  /// XA-E003: Mark Contacted — LINKEDIN · EMAIL
+  contacted_channel   String?
 
   @@index([source, source_job_id])
   @@index([dedupe_key])
@@ -9979,16 +9982,45 @@ model ExternalJobKey {
   @@map("external_job_keys")
 }
 
-/// I'm Interested — one per seller per job; undoable. The seller's name is never shared with the company.
+/// XA-E002: Apply on Panameer — one application per seller per job (rows from the old I'm Interested are applicants
+/// without a rate). The seller's name is never shared until a Work Order.
 model ExternalJobInterest {
   id              String      @id @default(uuid()) @db.Uuid
   external_job_id String      @db.Uuid
   person_id       String      @db.Uuid
+  /// Availability: the date they can start.
+  start_date      DateTime?
+  rate_cents      Int?
+  note            String?
+  /// APPLIED · SENT_TO_EMPLOYER · EMPLOYER_VIEWING · INTERVIEW · CHOSEN · NOT_SELECTED · CLOSED
+  stage           String      @default("APPLIED")
+  stage_at        DateTime?
+  /// XA-E004: the response this became on the claimed Panameer job.
+  proposal_id     String?     @db.Uuid
   created_at      DateTime    @default(now())
   job             ExternalJob @relation(fields: [external_job_id], references: [id], onDelete: Cascade)
 
   @@unique([external_job_id, person_id])
   @@map("external_job_interests")
+}
+
+/// XA-E003/E004: a recruiter contact on an external job (from the Clipper or added by an admin), with its own tracked
+/// link /r/{token} so we know who opened it.
+model ExternalJobContact {
+  id              String      @id @default(uuid()) @db.Uuid
+  external_job_id String      @db.Uuid
+  name            String?
+  linkedin_url    String?
+  email           String?
+  /// CLIPPER · MANUAL
+  source          String      @default("MANUAL")
+  token           String      @unique
+  opened_at       DateTime?
+  created_at      DateTime    @default(now())
+  job             ExternalJob @relation(fields: [external_job_id], references: [id], onDelete: Cascade)
+
+  @@index([external_job_id])
+  @@map("external_job_contacts")
 }
 
 model ExternalJobView {
