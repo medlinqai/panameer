@@ -105,7 +105,7 @@ export async function getAttentionCards(input: {
       id: "invites",
       label: "Availability Requests Awaiting You",
       detail: "buyers want your rate",
-      href: "/find-work/invitations",
+      href: "/work/jobs?stage=They%20Requested",
       icon: "Briefcase",
     },
     null,
@@ -429,14 +429,14 @@ async function deriveAppCounts(viewer: { userId: string }, side: "buyer" | "prov
   const tests = testsToTake;
   // Scott 10-23: written questions from a buyer wait on the provider too.
   const qs = await prisma.questionAnswer.findMany({ where: { provider_person_id: id, submitted_at: null }, orderBy: { created_at: "asc" }, select: { id: true, questionSet: { select: { job_id: true, due_at: true } } } });
-  const questions = add("request", qs.length, "Questions to Answer", qs[0] ? `/find-work/${qs[0].questionSet.job_id}#questions` : "/find-work", "Answer", qs[0]?.questionSet.due_at, qs.map((x) => x.questionSet.job_id));
+  const questions = add("request", qs.length, "Questions to Answer", qs[0] ? `/work/jobs/${qs[0].questionSet.job_id}#questions` : "/work/jobs", "Answer", qs[0]?.questionSet.due_at, qs.map((x) => x.questionSet.job_id));
   {
     const t = await jobTitles([...dueSoon.map((x) => x.job_id), ...toOffer.map((x) => x.job_id), ...qs.map((x) => x.questionSet.job_id)]);
     const jl = (jobId: string) => t.get(jobId)?.title || "Job";
     const buyerOf = new Map((await prisma.job.findMany({ where: { id: { in: dueSoon.map((r) => r.job_id) } }, select: { id: true, buyer: { select: { company: { select: { name: true } } } } } })).map((j) => [j.id, j.buyer?.company?.name ?? null]));
-    lined("request", "Availability Requests", dueSoon.map((r) => ({ key: r.id, what: ["Answer Availability Request", jl(r.job_id), buyerOf.get(r.job_id)].filter(Boolean).join(" · "), detail: "", dueAt: iso(r.responds_by), href: `/find-work/${r.job_id}`, action: "Respond" })));
-    lined("request", "Interview Times to Pick", toOffer.map((i) => ({ key: i.id, what: `Pick an Interview Time · ${jl(i.job_id)}`, detail: "", dueAt: null, href: `/find-work/${i.job_id}#interview`, action: "Pick" })));
-    lined("request", "Questions to Answer", qs.map((q) => ({ key: q.id, what: `Answer the Buyer's Questions · ${jl(q.questionSet.job_id)}`, detail: "", dueAt: iso(q.questionSet.due_at), href: `/find-work/${q.questionSet.job_id}#questions`, action: "Answer" })));
+    lined("request", "Availability Requests", dueSoon.map((r) => ({ key: r.id, what: ["Answer Availability Request", jl(r.job_id), buyerOf.get(r.job_id)].filter(Boolean).join(" · "), detail: "", dueAt: iso(r.responds_by), href: `/work/jobs/${r.job_id}`, action: "Respond" })));
+    lined("request", "Interview Times to Pick", toOffer.map((i) => ({ key: i.id, what: `Pick an Interview Time · ${jl(i.job_id)}`, detail: "", dueAt: null, href: `/work/jobs/${i.job_id}#interview`, action: "Pick" })));
+    lined("request", "Questions to Answer", qs.map((q) => ({ key: q.id, what: `Answer the Buyer's Questions · ${jl(q.questionSet.job_id)}`, detail: "", dueAt: iso(q.questionSet.due_at), href: `/work/jobs/${q.questionSet.job_id}#questions`, action: "Answer" })));
   }
   const myOrders = (await prisma.workOrder.findMany({ where: { provider_person_id: id }, select: { id: true } })).map((o) => o.id);
   const changes = myOrders.length ? await prisma.workOrderRevision.count({ where: { status: "PENDING", work_order_id: { in: myOrders } } }) : 0;

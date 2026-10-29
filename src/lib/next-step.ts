@@ -137,7 +137,7 @@ const RULES: Rule[] = [
         rule: 4,
         title: "Find work",
         line: n ? `${plural(n, "open request")} ${n === 1 ? "matches" : "match"} your skills. Say I Want This Job on the ones that fit.` : "See what buyers are asking for and say I Want This Job on the ones that fit.",
-        cta: { label: "Find Work", href: "/find-work" },
+        cta: { label: "Find Work", href: "/work/jobs" },
         why: `Your profile is published and you have ${plural(s.colleagues, "colleague")}.${n !== null ? ` ${plural(n, "open request")} ${n === 1 ? "matches" : "match"} your skills.` : ""}`,
         ticks: [
           { label: "Profile published", done: true },
@@ -150,7 +150,7 @@ const RULES: Rule[] = [
       const s = m.seller!;
       const n = s.matchingRequests;
       return [
-        { rule: 4, title: "Browse open work", line: n ? `${plural(n, "open request")} ${n === 1 ? "matches" : "match"} your skills.` : "See what buyers are asking for.", link: "Find Work", href: "/find-work" },
+        { rule: 4, title: "Browse open work", line: n ? `${plural(n, "open request")} ${n === 1 ? "matches" : "match"} your skills.` : "See what buyers are asking for.", link: "Find Work", href: "/work/jobs" },
         ...(s.sellsPackages ? [{ rule: 4, title: "List a service you sell", line: "Package your expertise at a fixed price.", link: "Shop", href: "/catalog/products" }] : []),
       ];
     },

@@ -155,7 +155,7 @@ export function usageAreas(u: UsageInput): UsageArea[] {
     {
       key: "work",
       // SCOTT'S *"HIRE"* IS THIS ITEM. `Hire` is the buyer's label for the same
-      eyebrow: navLabel("/find-work"),
+      eyebrow: navLabel("/work/jobs"),
       label: "Requests",
       figure: u.workRequests,
       goal: USAGE_GOALS.work,
@@ -163,8 +163,8 @@ export function usageAreas(u: UsageInput): UsageArea[] {
         { label: "Responses Sent", figure: u.proposalsSent },
         { label: "Interviews", figure: u.interviews },
       ],
-      href: "/find-work",
-      go: navLabel("/find-work"),
+      href: "/work/jobs",
+      go: navLabel("/work/jobs"),
       tip: tipFor(u.workRequests, "request received", "requests received"),
       counts: "requests",
     },

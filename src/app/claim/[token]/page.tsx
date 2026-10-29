@@ -33,7 +33,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           {["Confirm You're " + job.company.name, "Check the Job", "Publish Free"].map((l, i) => <li key={l} className={i + 1 === step ? "rounded-full bg-ink px-3 py-1 text-surface" : i + 1 < step ? "rounded-full border border-ink px-3 py-1" : "rounded-full border border-line px-3 py-1 text-ink-3"}>{i + 1} {l}</li>)}
         </ol>
         <div className="mt-6">
-          {step === 3 && <p className="text-[15px]">This job is posted on Panameer. {job.claimed_job_id && <Link href={`/find-work/${job.claimed_job_id}`} className="font-semibold underline">See the Job →</Link>}</p>}
+          {step === 3 && <p className="text-[15px]">This job is posted on Panameer. {job.claimed_job_id && <Link href={`/work/jobs/${job.claimed_job_id}`} className="font-semibold underline">See the Job →</Link>}</p>}
           {step === 2 && <ClaimPublish token={token} initial={{ title: job.title, description: job.description ?? "", location: job.location ?? "", workType: job.work_type ?? "" }} />}
           {step === 1 && (verified ? (
             verified.needs_admin && !verified.admin_approved_at

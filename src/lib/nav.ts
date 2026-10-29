@@ -43,7 +43,7 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   // MD-E001 / WK-E001: Estimate lives inside Shop (Get an Estimate); Work = Jobs for You, Estimates, Interviews & Tests, Catalog.
   "/shop": ["/estimate", "/cart"],
   "/estimate": ["/estimates", "/catalog/estimates"],
-  "/work/home": ["/work/jobs", "/work/estimates", "/work/product-orders", "/work/interviews", "/find-work", "/my-services", "/services", "/catalog"],
+  "/work/home": ["/work/jobs", "/work/estimates", "/work/product-orders", "/work/interviews", "/my-services", "/services", "/catalog"],
   "/payments": ["/pay", "/finances", "/manage-money"],
   "/hire": ["/create-work", "/work-requests", "/search", "/consultations"],
   "/hire/overview": ["/hire", "/create-work", "/work-requests", "/search", "/consultations"],
@@ -145,10 +145,10 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Offers for My Services", href: "/services/offers", requires: "canProvideServices" },
   ],
   "/hire": [
-    { label: "Find Jobs", href: "/find-work", requires: "canProvideServices" },
+    { label: "Find Jobs", href: "/work/jobs", requires: "canProvideServices" },
     { label: "My Jobs", href: "/hire/jobs", requires: "canHireTalent" },
     { label: "Create a Job", href: "/create-work", requires: "canHireTalent" },
-    { label: "My Responses", href: "/find-work?tab=proposals", requires: "canProvideServices" },
+    { label: "My Responses", href: "/work/jobs?stage=You%20Applied", requires: "canProvideServices" },
   ],
   "/payments": [
     { label: "Payments", href: "/payments" },
@@ -175,11 +175,11 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
 };
 
 export const WORK_FEED_EXTRA_TITLES: NavItem[] = [
-  { label: "Find Work", href: "/find-work" },
-  { label: "Best Matches", href: "/find-work/for-my-skills" },
-  { label: "My Requests (Saved)", href: "/find-work/saved" },
-  { label: "Availability Requests", href: "/find-work/invitations" },
-  { label: "My Responses", href: "/find-work/proposals" },
+  { label: "Find Work", href: "/work/jobs" },
+  { label: "Best Matches", href: "/work/jobs?kind=matched" },
+  { label: "My Requests (Saved)", href: "/work/jobs?kind=interested" },
+  { label: "Availability Requests", href: "/work/jobs?stage=They%20Requested" },
+  { label: "My Responses", href: "/work/jobs?stage=You%20Applied" },
 ];
 
 export const COMPANY_NAV: NavItem[] = [

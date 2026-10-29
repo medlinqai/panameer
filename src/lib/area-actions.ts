@@ -43,8 +43,7 @@ const VARIABLE: Record<string, Variable[]> = {
 
 export const FIXED: Record<string, ActionCard[]> = {
   work: [
-    { label: "Browse Jobs", href: "/find-work?tab=recent", icon: "search" },
-    { label: "Jobs Matching Your Skills", href: "/find-work?tab=best", icon: "briefcase" },
+    { label: "Browse Jobs", href: "/work/jobs?kind=matched", icon: "search" },
     { label: "Shop Products", href: "/shop?tab=browse", icon: "cart" },
     { label: "Update Services & Rates", href: "/catalog#services", icon: "tag" },
     { label: "Update Service Products", href: "/catalog#products", icon: "package" },

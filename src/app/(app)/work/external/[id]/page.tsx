@@ -18,7 +18,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, providerProfile: { select: { skills: { select: { skill_id: true } } } } } }),
   ]);
   if (!job || job.status === "REMOVED" || job.status === "NOT_ORACLE") notFound();
-  if (job.status === "CLAIMED" && job.claimed_job_id) return <div className="mx-auto max-w-3xl py-8"><p className="text-[15px]">{job.company.name} posted this job on Panameer. <Link href={`/find-work/${job.claimed_job_id}`} className="font-semibold underline">Apply now →</Link></p></div>;
+  if (job.status === "CLAIMED" && job.claimed_job_id) return <div className="mx-auto max-w-3xl py-8"><p className="text-[15px]">{job.company.name} posted this job on Panameer. <Link href={`/work/jobs/${job.claimed_job_id}`} className="font-semibold underline">Apply now →</Link></p></div>;
   await prisma.externalJobView.create({ data: { external_job_id: job.id, person_id: me?.id ?? null } }).catch(() => null);
   const mine = new Set(me?.providerProfile?.skills.map((s) => s.skill_id) ?? []);
   const skills = job.skill_ids.length ? await prisma.skill.findMany({ where: { id: { in: job.skill_ids } }, select: { id: true, name: true } }) : [];

@@ -111,20 +111,20 @@ export async function providerLiveWork(personId: string) {
     rows.push({ id: jobId, step, title: j?.title ?? "Job", ref: ref ?? j?.job_number ?? null, who: null, posted: (j?.posted_at ?? j?.created_at)?.toISOString() ?? null, days: daysSince(since), due: due ? short(due) : null, action, old: false });
   };
   for (const o of toAccept) if (o.workRequest.job_id) push(o.workRequest.job_id, "accept", o.created_at, null, { label: "Accept", href: `/orders/${o.id}` }, o.order_number);
-  for (const p of proposals.filter((x) => x.status === "AWARDED")) push(p.job_id, "awarded", p.updated_at, null, { label: "Open", href: `/find-work/${p.job_id}` });
-  for (const i of interviews) push(i.job_id, "interview", i.created_at, null, { label: "Interview", href: `/find-work/${i.job_id}#interview` });
-  for (const p of proposals.filter((x) => x.status === "SHORTLISTED")) push(p.job_id, "shortlisted", p.updated_at, null, { label: "Open", href: `/find-work/${p.job_id}` });
-  for (const p of proposals.filter((x) => x.status === "SUBMITTED")) push(p.job_id, "submitted", p.submitted_at, requests.find((r) => r.job_id === p.job_id)?.responds_by ?? null, { label: "Update", href: `/find-work/${p.job_id}` });
-  for (const r of requests) push(r.job_id, "requested", r.created_at, r.responds_by, { label: "Respond", href: `/find-work/${r.job_id}` });
+  for (const p of proposals.filter((x) => x.status === "AWARDED")) push(p.job_id, "awarded", p.updated_at, null, { label: "Open", href: `/work/jobs/${p.job_id}` });
+  for (const i of interviews) push(i.job_id, "interview", i.created_at, null, { label: "Interview", href: `/work/jobs/${i.job_id}#interview` });
+  for (const p of proposals.filter((x) => x.status === "SHORTLISTED")) push(p.job_id, "shortlisted", p.updated_at, null, { label: "Open", href: `/work/jobs/${p.job_id}` });
+  for (const p of proposals.filter((x) => x.status === "SUBMITTED")) push(p.job_id, "submitted", p.submitted_at, requests.find((r) => r.job_id === p.job_id)?.responds_by ?? null, { label: "Update", href: `/work/jobs/${p.job_id}` });
+  for (const r of requests) push(r.job_id, "requested", r.created_at, r.responds_by, { label: "Respond", href: `/work/jobs/${r.job_id}` });
 
   const strip: StripStep[] = PROVIDER_STRIP.map((s) => ({ key: s.key, label: s.label, count: rows.filter((r) => r.step === s.key).length }));
   const dueSoon = requests.filter((r) => r.responds_by && r.responds_by > now && r.responds_by <= soon && !proposals.some((p) => p.job_id === r.job_id)).length;
   const tiles: Tile[] = [
     { id: "due", label: "Availability Requests due < 24 h", count: dueSoon, href: "/dashboard?step=requested#live-work" },
     { id: "interviews", label: "Interviews today", count: todays.length, href: "#todays-interviews" },
-    { id: "tests", label: "Test requests", count: testReqs, href: "/find-work?tab=invitations" },
+    { id: "tests", label: "Test requests", count: testReqs, href: "/work/jobs?stage=They%20Requested" },
     { id: "accept", label: "Orders to accept", count: toAccept.length, href: "/dashboard?step=accept#live-work" },
-    { id: "not-selected", label: "Not selected (recent)", count: notSelected, href: "/find-work?tab=proposals" },
+    { id: "not-selected", label: "Not selected (recent)", count: notSelected, href: "/work/jobs?stage=You%20Applied" },
   ].filter((t) => t.count > 0);
   return { tiles, todays, strip, rows };
 }

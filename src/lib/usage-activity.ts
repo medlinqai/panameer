@@ -71,7 +71,7 @@ export async function usageActivity(input: {
       ],
     },
     {
-      key: "work", title: "Work", go: "Go to Work", href: "/find-work", sub: "As a provider",
+      key: "work", title: "Work", go: "Go to Work", href: "/work/jobs", sub: "As a provider",
       metrics: [
         { label: "Responses Sent", value: s.work.proposalsSent, goal: 10 },
         { label: "Interviews", value: s.work.interviews, goal: 5 },

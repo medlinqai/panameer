@@ -79,7 +79,7 @@ function workAction(r: Row): RowAction | undefined {
     const jobId = r.dedupeKey?.split(":")[1];
     if (!jobId) return undefined;
     // Decline (with a reason) lives on the Sourcing Event proposal form.
-    return { kind: "work", primary: { label: "View & Respond", href: `/find-work/${jobId}` }, ...(r.eventKey === "work.sourcing_event_invited" ? { secondary: { label: "Decline", href: `/find-work/${jobId}?decline=1` } } : {}) };
+    return { kind: "work", primary: { label: "View & Respond", href: `/work/jobs/${jobId}` }, ...(r.eventKey === "work.sourcing_event_invited" ? { secondary: { label: "Decline", href: `/work/jobs/${jobId}?decline=1` } } : {}) };
   }
   if ((r.eventKey === "work.order_offered" || r.eventKey === "work.order_created") && r.entityId) return { kind: "work", primary: { label: "Review & Accept", href: `/orders/${r.entityId}` } };
   // Scott 10-22: the interview invitation needs a button to the booking.

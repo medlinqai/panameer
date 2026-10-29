@@ -218,7 +218,7 @@ export function StatisticsCards({
                 remainderLabel="Still in progress"
                 note="An invitation counts whether or not you bid — a buyer asking you directly is the signal."
                 links={[
-                  { label: "Find Work", href: "/find-work" },
+                  { label: "Find Work", href: "/work/jobs" },
                   { label: "Manage Service Products", href: "/catalog/products" },
                   { label: "See Your Orders", href: "/orders" },
                 ]}
@@ -290,7 +290,7 @@ export function honeyCells(s: Statistics): HoneyCell[] {
       label: "Your Work",
       figure: s.work.workOrders,
       counts: "orders",
-      href: "/find-work",
+      href: "/work/jobs",
     },
   ];
   if (s.teaching.teaches) {

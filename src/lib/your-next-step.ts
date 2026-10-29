@@ -54,7 +54,7 @@ export function jobStep(j: { id: string; stage: string; asked: number; answered:
 
 /** The seller's side of a Job, by its Jobs for You stage. */
 export function sellerJobStep(stage: string, jobId: string): Step {
-  const href = `/find-work/${jobId}`;
+  const href = `/work/jobs/${jobId}`;
   switch (stage) {
     case "You Matched": return { next: { text: "Apply, or Wait to Be Asked", label: "Apply", href } };
     case "They Requested": return { next: { text: "Say If You're Available, With Your Rate", label: "Respond", href } };

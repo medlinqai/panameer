@@ -83,8 +83,8 @@ function H({ children, center = false, right = false }: { children?: ReactNode; 
 
 function Grid({ side, rows }: { side: GridSide; rows: GridRow[] }) {
   const cols = COLS[side];
-  const open = (r: GridRow) => (side === "buyer" ? `/work-requests/${r.jobId}?tab=interviews` : `/find-work/${r.jobId}#interview`);
-  const job = (r: GridRow) => (side === "buyer" ? `/work-requests/${r.jobId}` : `/find-work/${r.jobId}`);
+  const open = (r: GridRow) => (side === "buyer" ? `/work-requests/${r.jobId}?tab=interviews` : `/work/jobs/${r.jobId}#interview`);
+  const job = (r: GridRow) => (side === "buyer" ? `/work-requests/${r.jobId}` : `/work/jobs/${r.jobId}`);
   return (
     <div className="overflow-x-auto">
       <div className={side === "buyer" ? "min-w-[820px]" : "min-w-[620px]"}>
@@ -136,7 +136,7 @@ export function WorkdayWeek({ side, rows, weekStart, base }: { side: GridSide; r
   const days = Array.from({ length: 7 }, (_, i) => new Date(weekStart.getTime() + (i + 0.5) * 86_400_000))
     .map((d) => ({ d, k: key(d), list: rows.filter((r) => r.startsAt && key(new Date(r.startsAt)) === key(d) && r.status !== "Declined").sort((a, b) => a.startsAt!.localeCompare(b.startsAt!)) }))
     .filter((x, i) => i < 5 || x.list.length > 0);
-  const open = (r: GridRow) => (side === "buyer" ? `/work-requests/${r.jobId}?tab=interviews` : `/find-work/${r.jobId}#interview`);
+  const open = (r: GridRow) => (side === "buyer" ? `/work-requests/${r.jobId}?tab=interviews` : `/work/jobs/${r.jobId}#interview`);
   return (
     <section className="flex flex-col gap-4" data-workday-week>
       <div className="flex flex-wrap items-end justify-between gap-3">

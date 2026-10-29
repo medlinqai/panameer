@@ -108,7 +108,7 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
             <div className="min-w-0 flex-1">
               {/* THE DETAIL ROUTE EXISTS NOW */}
               <h3 className="text-[16.5px] font-bold">
-                <Link href={`/find-work/${card.id}`} className="hover:text-magenta">
+                <Link href={`/work/jobs/${card.id}`} className="hover:text-magenta">
                   {card.title}
                 </Link>
               </h3>
@@ -117,7 +117,7 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
                 <p className="mt-1 text-[13px] text-ink-2">{meta.join(" · ")}</p>
               )}
               {card.myProposal && (
-                <Link href={`/find-work/${card.id}`} data-my-proposal className="mt-2 inline-flex rounded-full bg-state-pending-bg px-2.5 py-0.5 text-[12.5px] font-semibold text-state-pending hover:underline">
+                <Link href={`/work/jobs/${card.id}`} data-my-proposal className="mt-2 inline-flex rounded-full bg-state-pending-bg px-2.5 py-0.5 text-[12.5px] font-semibold text-state-pending hover:underline">
                   {card.myProposal}
                 </Link>
               )}

@@ -45,7 +45,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
           <h1 className="text-[28px] font-extrabold">Jobs for You</h1>
           <p className="text-[14px] text-ink-2">Jobs that match your skills, and every job you&apos;ve touched. {open.toLocaleString("en-US")} open jobs on Panameer.</p>
         </div>
-        <Link href="/find-work?tab=best" className={BTN}>Browse the Job Board</Link>
+        <Link href="/work/jobs?kind=matched" className={BTN}>Browse the Job Board</Link>
       </div>
       {/* WA-E002: the flow's strip — a step filters the list; "n Actions →" opens the Worklist for that step. */}
       <div className="mt-4"><StageBand label="Jobs for You" current={stage === "all" ? undefined : stage} actions={actions} steps={[

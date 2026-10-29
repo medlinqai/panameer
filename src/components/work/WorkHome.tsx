@@ -53,8 +53,8 @@ export function WorkHome({ home, best }: { home: Home; best: WorkCard[] }) {
         paragraph={<p>{waiting}</p>}
         actions={
           <>
-            {home.invitations > 0 && <Link href="/find-work?tab=invitations" className={HERO_BTN}>Answer Availability Requests</Link>}
-            <Link href="/find-work?tab=best" className={home.invitations > 0 ? HERO_BTN_W : HERO_BTN}>See Best Matches</Link>
+            {home.invitations > 0 && <Link href="/work/jobs?stage=They%20Requested" className={HERO_BTN}>Answer Availability Requests</Link>}
+            <Link href="/work/jobs?kind=matched" className={home.invitations > 0 ? HERO_BTN_W : HERO_BTN}>See Best Matches</Link>
           </>
         }
       />
@@ -68,18 +68,18 @@ export function WorkHome({ home, best }: { home: Home; best: WorkCard[] }) {
               <span className="flex min-w-0 items-center gap-3">
                 <Avatar firstName={c.identity.personFirstName} lastName={c.identity.personLastName} photoUrl={c.identity.personPhotoUrl} size={40} />
                 <span className="min-w-0">
-                  <Link href={`/find-work/${c.id}`} className="block truncate text-[14.5px] font-bold hover:text-magenta">{c.title}</Link>
+                  <Link href={`/work/jobs/${c.id}`} className="block truncate text-[14.5px] font-bold hover:text-magenta">{c.title}</Link>
                   <span className="block text-[12px] text-ink-3">
                     {[c.identity.companyName ?? c.identity.personName, c.worksite, c.duration, `matches ${c.matched} of your skills`, c.budgetLabel, c.activity ? `${c.activity.asked} asked · ${c.activity.available} available` : null].filter(Boolean).join(" · ")}
                   </span>
                 </span>
               </span>
-              <Link href={`/find-work/${c.id}`} className="inline-flex min-h-10 items-center border border-ink px-4 text-[13px] font-semibold hover:bg-surface-hover">I Want This Job</Link>
+              <Link href={`/work/jobs/${c.id}`} className="inline-flex min-h-10 items-center border border-ink px-4 text-[13px] font-semibold hover:bg-surface-hover">I Want This Job</Link>
             </li>
           ))}
         </ul>
       )}
-      <Link href="/find-work?tab=recent" className="mt-3 inline-block border-t border-line pt-3 text-[14px] font-bold text-magenta-dark">See All Requests →</Link>
+      <Link href="/work/jobs?kind=posted" className="mt-3 inline-block border-t border-line pt-3 text-[14px] font-bold text-magenta-dark">See All Requests →</Link>
     </div>
   );
 }

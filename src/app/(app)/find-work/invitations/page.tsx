@@ -1,7 +1,5 @@
-import { guardPage } from "@/lib/guard";
 import { redirect } from "next/navigation";
 
-export default async function Page() {
-  await guardPage("canProvideServices");
-  redirect("/find-work?tab=invitations");
+export default function Page() {
+  redirect("/work/jobs?stage=They%20Requested");
 }

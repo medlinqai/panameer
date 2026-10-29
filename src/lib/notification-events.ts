@@ -792,7 +792,7 @@ export const NOTIFICATION_EVENTS = {
     // The work's own title, or null — never a filler sentence built from
     body: (v) => (str(v, "workTitle") ? str(v, "workTitle") : null),
     href: (v) =>
-      str(v, "requestId") ? `/find-work/${str(v, "requestId")}` : "/find-work",
+      str(v, "requestId") ? `/work/jobs/${str(v, "requestId")}` : "/work/jobs",
   },
   // DB-E008/E010: interview times offered / confirmed — provider number only, guidelines included.
   "work.interview_slots_offered": {
@@ -828,7 +828,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: true,
     title: (v) => `Availability Request: ${str(v, "workTitle", "a job")}`,
     body: (v) => `Due ${str(v, "due", "soon")} (${str(v, "hours", "48")} hours)`,
-    href: (v) => (str(v, "requestId") ? `/find-work/${str(v, "requestId")}` : "/find-work"),
+    href: (v) => (str(v, "requestId") ? `/work/jobs/${str(v, "requestId")}` : "/work/jobs"),
   },
   // SE-E006: sent only once the awarded Work Order is Released.
   // AQ-E002: a buyer sent written questions — the provider answers on the job page.
@@ -841,7 +841,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: true,
     title: (v) => `${str(v, "buyerName", "A Buyer")} Has ${str(v, "count", "")} Questions About ${str(v, "workTitle", "a Job")} — Answer by ${str(v, "due", "Soon")}`.replace("Has  Questions", "Has Questions"),
     body: () => `Answer Questions on the job page. Interview guidelines: ${INTERVIEW_GUIDELINES}`,
-    href: (v) => `/find-work/${str(v, "jobId", "")}#questions`,
+    href: (v) => `/work/jobs/${str(v, "jobId", "")}#questions`,
   },
   // AQ-E004: the buyer hears when a provider sends their answers.
   "work.questions_answered": {
@@ -865,7 +865,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: true,
     title: (v) => `${str(v, "workTitle", "A Job")} Was Amended — Review and Re-Confirm`,
     body: (v) => `Amendment ${str(v, "number", "1")}: see what changed, then Re-Confirm My Answer or change it.`,
-    href: (v) => `/find-work/${str(v, "jobId", "")}#amendment`,
+    href: (v) => `/work/jobs/${str(v, "jobId", "")}#amendment`,
   },
   // JS-E004: the buyer closed, paused or reopened a job — everyone asked is told.
   "work.job_update": {
@@ -877,7 +877,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: false,
     title: (v) => `${str(v, "label", "Job Update")}: ${str(v, "workTitle", "a Job")}`,
     body: (v) => (str(v, "message", "") ? str(v, "message", "") : null),
-    href: (v) => `/find-work/${str(v, "jobId", "")}`,
+    href: (v) => `/work/jobs/${str(v, "jobId", "")}`,
   },
   // IW-E006: an interview called off — the other side is told and the slot is free again.
   "work.interview_cancelled": {
@@ -900,7 +900,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: false,
     title: (v) => `Not Awarded: ${str(v, "workTitle", "a Job You Wanted")}`,
     body: (v) => (str(v, "message") ? str(v, "message") : null),
-    href: () => "/find-work?tab=proposals",
+    href: () => "/work/jobs?stage=You%20Applied",
   },
   "buyer.sourcing.notify_others": {
     event: "buyer.sourcing.notify_others",
@@ -925,7 +925,7 @@ export const NOTIFICATION_EVENTS = {
     // DB-E008: offer times on the job page; the guidelines travel with the notice.
     body: (v) => (str(v, "pick", "") ? `Book one of their open times (${str(v, "minutes", "30")} min) on the job page. Interview guidelines: ${INTERVIEW_GUIDELINES}` : `Offer a few times on the job page. Interview guidelines: ${INTERVIEW_GUIDELINES}`),
     // THE RECIPIENT IS THE PROVIDER — `recipient` says so one line up, and
-    href: (v) => `/find-work/${str(v, "requestId", "")}`,
+    href: (v) => `/work/jobs/${str(v, "requestId", "")}`,
   },
   /** THE PROVIDER IS TOLD A TEST WAS SENT WS-E) */
   "work.test_requested": {
@@ -942,7 +942,7 @@ export const NOTIFICATION_EVENTS = {
       return t ? `${t} · Reply in Messages to agree the next step.` : "Reply in Messages to agree the next step.";
     },
     // The provider's own route, for the reason recorded on the interview
-    href: (v) => `/find-work/${str(v, "requestId", "")}`,
+    href: (v) => `/work/jobs/${str(v, "requestId", "")}`,
   },
   "work.tax_banking_needed": {
     event: "work.tax_banking_needed",
@@ -1010,7 +1010,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: false,
     title: (v) => `${str(v, "company", "The company")} Posted This Job on Panameer — Apply Now`,
     body: (v) => str(v, "title", "") || null,
-    href: (v) => `/find-work/${str(v, "jobId", "")}`,
+    href: (v) => `/work/jobs/${str(v, "jobId", "")}`,
   },
   "work.order_created": {
     event: "work.order_created",

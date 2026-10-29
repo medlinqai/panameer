@@ -27,7 +27,14 @@ function Ring({ d, size }: { d: Donut; size: number }) {
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label={`${d.title}: ${total}`} className="shrink-0">
       {arcs}
-      <text x={c} y={c + (total ? 5 : 3)} textAnchor="middle" className="fill-ink" style={{ fontWeight: 700, fontSize: total ? (size > 70 ? 16 : 14) : 8.5 }}>{d.center ?? (total || "None Yet")}</text>
+      {d.centerSub ? (
+        <>
+          <text x={c} y={c + 1} textAnchor="middle" className="fill-ink" style={{ fontWeight: 700, fontSize: size > 70 ? 16 : 14 }}>{d.center}</text>
+          <text x={c} y={c + 12} textAnchor="middle" className="fill-ink-2" style={{ fontWeight: 600, fontSize: 7.5 }}>{d.centerSub}</text>
+        </>
+      ) : (
+        <text x={c} y={c + (total ? 5 : 3)} textAnchor="middle" className="fill-ink" style={{ fontWeight: 700, fontSize: total ? (size > 70 ? 16 : 14) : 8.5 }}>{d.center ?? (total || "None Yet")}</text>
+      )}
     </svg>
   );
 }

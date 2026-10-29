@@ -133,7 +133,7 @@ export default function JoinBuyerPage() {
       }
       // Hand off into the first Work Request (brief_L). It's skippable — the
       // wizard's "Skip for now" lands on /dashboard.
-      router.push("/find-work/new");
+      router.push("/create-work");
     } finally {
       setBusy(false);
     }

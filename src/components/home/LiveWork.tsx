@@ -46,7 +46,7 @@ function InterviewLine({ r, side }: { r: InterviewRow; side: "buyer" | "provider
       {side === "buyer" ? <NeutralAvatar size={36} /> : null}
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14.5px] font-bold">{side === "buyer" ? r.providerLabel : r.buyerCompany}</p>
-        <p className="truncate text-[12.5px] text-ink-2"><Link href={side === "buyer" ? `/work-requests/${r.jobId}` : `/find-work/${r.jobId}`} className="hover:underline">{r.jobTitle}</Link></p>
+        <p className="truncate text-[12.5px] text-ink-2"><Link href={side === "buyer" ? `/work-requests/${r.jobId}` : `/work/jobs/${r.jobId}`} className="hover:underline">{r.jobTitle}</Link></p>
         {r.skills.length > 0 && (
           <p className="mt-1 flex flex-wrap gap-1 text-[11px]">
             {r.skills.slice(0, 4).map((s) => <Link key={s.id} href={`/search?q=${encodeURIComponent(s.name)}`} className="rounded-full border border-line px-2 hover:border-magenta" title={s.name}>◆ {s.name}</Link>)}
@@ -83,7 +83,7 @@ export function WeekSchedule({ start, rows, side, backHref }: { start: Date; row
             <div key={d.toISOString()} className="min-w-0 rounded-[8px] border border-line p-2">
               <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-3">{d.toLocaleDateString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" })}</p>
               {list.length ? list.map((r) => (
-                <Link key={r.id} href={side === "buyer" ? `/work-requests/${r.jobId}?tab=interviews` : `/find-work/${r.jobId}#interview`} className="mt-1.5 block rounded-[6px] bg-magenta/10 px-2 py-1 text-[12px] hover:underline">
+                <Link key={r.id} href={side === "buyer" ? `/work-requests/${r.jobId}?tab=interviews` : `/work/jobs/${r.jobId}#interview`} className="mt-1.5 block rounded-[6px] bg-magenta/10 px-2 py-1 text-[12px] hover:underline">
                   <b>{r.startsAt ? time(r.startsAt) : ""}</b> {side === "buyer" ? r.providerLabel : r.buyerCompany}
                 </Link>
               )) : <p className="mt-1 text-[12px] text-ink-3">—</p>}

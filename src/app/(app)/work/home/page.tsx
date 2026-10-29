@@ -26,11 +26,11 @@ export default async function WorkHomePage() {
   const n = (k: number, word: string) => `${k.toLocaleString("en-US")} ${word}${k === 1 ? "" : "s"}`;
   return (
     <div className="px-4 py-6 sm:px-6">
-      <div className="mx-auto w-full max-w-6xl"><JobAgentBanner /></div>
+      <div className="mx-auto w-full max-w-6xl"><JobAgentBanner href="/work/jobs?kind=external" /></div>
       <HubHome
         eyebrow="WORK" title={`Your Work${first ? `, ${first}` : ""}`}
-        summary={`${n(needYou, "thing")} need you · ${n(w.openJobs, "open job")} · ${n(w.estimatesWaiting, "estimate")} waiting`}
-        primary={{ label: "Browse the Job Board", href: "/find-work?tab=best" }} secondary={{ label: "Send an Estimate", href: "/estimate" }}
+        summary={`${n(needYou, "thing")} need you · ${w.jobsLine} · ${n(w.estimatesWaiting, "estimate")} waiting`}
+        primary={{ label: "Browse the Job Board", href: "/work/jobs?kind=matched" }} secondary={{ label: "Send an Estimate", href: "/estimate" }}
         donuts={w.donuts} actionCount={actionCount} actionGroups={todo} app="work"
         actions={await areaActions("work", me.id, "provider", FIXED.work, [{ label: "Deliver Product Order", href: "/work/product-orders?stage=In%20Delivery", icon: "package", count: w.products.filter((p) => p.stage === "In Delivery").length }])}
       />

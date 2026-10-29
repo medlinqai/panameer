@@ -7,10 +7,8 @@ export function FindWorkHero({ chips }: { chips: string[] }) {
   const router = useRouter();
   const [q, setQ] = useState("");
 
-  const go = (query: string) => {
-    const trimmed = query.trim();
-    router.push(trimmed ? `/find-work?q=${encodeURIComponent(trimmed)}` : "/find-work");
-  };
+  // Search lives in Work › Jobs for You now (the old job board is gone).
+  const go = (_query?: string) => { void _query; router.push("/work/jobs"); };
 
   return (
     <section className="min-w-0">

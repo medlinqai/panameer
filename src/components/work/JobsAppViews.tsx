@@ -10,7 +10,7 @@ import { SliceChips } from "@/components/casing/SliceChips";
 import { inSlice, sliceCounts, sliceOf } from "@/lib/slices";
 
 // RA-E006: the provider's JOBS app home — Overview, Interviews, Tests (Find Jobs / Proposal Requests / My Proposals stay the feed).
-const STEP_HREF: Record<string, string> = { requested: "/find-work?tab=invitations", submitted: "/find-work?tab=proposals", shortlisted: "/find-work?tab=proposals", interview: "/find-work?tab=interviews", awarded: "/find-work?tab=proposals", accept: "/orders" };
+const STEP_HREF: Record<string, string> = { requested: "/work/jobs?stage=They%20Requested", submitted: "/work/jobs?stage=You%20Applied", shortlisted: "/work/jobs?stage=You%20Applied", interview: "/work/interviews", awarded: "/work/jobs?stage=You%20Applied", accept: "/orders" };
 
 export async function JobsOverview({ personId, view }: { personId: string; view: string | null }) {
   const w = await providerLiveWork(personId);
@@ -22,7 +22,7 @@ export async function JobsOverview({ personId, view }: { personId: string; view:
       <AccountHero
         testId="jobs-overview-hero"
         stackKpis
-        picture={<StripColumn steps={w.strip} href={(k) => STEP_HREF[k] ?? "/find-work"} />}
+        picture={<StripColumn steps={w.strip} href={(k) => STEP_HREF[k] ?? "/work/jobs"} />}
         eyebrow="Jobs"
         title="What Needs Attention"
         kpis={[
@@ -30,7 +30,7 @@ export async function JobsOverview({ personId, view }: { personId: string; view:
           { value: w.todays.length, label: "INTERVIEWS TODAY" },
           { value: stat("accept"), label: "ORDERS TO ACCEPT" },
         ]}
-        actions={<><Link href="/find-work?tab=best" className={HERO_BTN}>Find Jobs</Link><Link href="/find-work?tab=proposals" className={HERO_BTN_W}>My Responses</Link></>}
+        actions={<><Link href="/work/jobs?kind=matched" className={HERO_BTN}>Find Jobs</Link><Link href="/work/jobs?stage=You%20Applied" className={HERO_BTN_W}>My Responses</Link></>}
       />
       <div className="grid md:grid-cols-2">
         <section className="min-w-0 py-6 md:border-r md:border-line md:pr-7" data-requests-due>
@@ -48,7 +48,7 @@ export async function JobsOverview({ personId, view }: { personId: string; view:
           ) : <p className="mt-2 text-[13.5px] text-ink-3">No open availability requests.</p>}
         </section>
         <section className="min-w-0 py-6 md:pl-7">
-          {week ? <WeekSchedule start={week.start} rows={week.rows} side="provider" backHref="/find-work" /> : <TodaysInterviews rows={w.todays} side="provider" weekHref="/find-work?view=week" />}
+          {week ? <WeekSchedule start={week.start} rows={week.rows} side="provider" backHref="/work/jobs" /> : <TodaysInterviews rows={w.todays} side="provider" weekHref="/work/interviews?view=week" />}
         </section>
       </div>
     </div>
@@ -58,13 +58,13 @@ export async function JobsOverview({ personId, view }: { personId: string; view:
 export async function JobsInterviews({ personId, userId, view, show, date }: { personId: string; userId: string; view: string | null; show: string | null; date: string | null }) {
   // IW-E003: the provider's twin of the buyer Workday — the hiring company shows; tiles Today · To Confirm · This Week · Tests to Take.
   const { rows, tiles, weekStart } = await interviewGrid("provider", personId, userId);
-  const base = "/find-work?tab=interviews";
+  const base = "/work/interviews";
   if (view === "week") return <div className="mx-auto w-full max-w-6xl py-2"><WorkdayWeek side="provider" rows={rows} weekStart={weekStart} base={base} /></div>;
   const day = gridDay(date);
   const list = show === "confirm" ? rows.filter((r) => r.status === "To Confirm") : rowsOn(rows, day.key);
   return (
     <div className="mx-auto w-full max-w-6xl py-2" data-jobs-interviews>
-      <InterviewWorkday side="provider" rows={list} tiles={tiles} show={show === "confirm" ? show : null} base={base} testsHref="/find-work?tab=tests"
+      <InterviewWorkday side="provider" rows={list} tiles={tiles} show={show === "confirm" ? show : null} base={base} testsHref="/work/interviews?stage=tests"
         day={{ ...day, label: day.start.toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" }) }} />
     </div>
   );
@@ -76,13 +76,13 @@ export async function JobsTests({ personId, slice }: { personId: string; slice?:
   return (
     <section className="mx-auto w-full max-w-6xl py-2" data-jobs-tests>
       <h1 className="font-display text-[22px] font-bold">Tests</h1>
-      <SliceChips tabKey="jobs-tests" counts={sliceCounts(all)} base="/find-work?tab=tests" />
+      <SliceChips tabKey="jobs-tests" counts={sliceCounts(all)} base="/work/interviews?stage=tests" />
       {rows.length ? (
         <ul className="mt-2 divide-y divide-line border-y border-line text-[13.5px]">
           {rows.map((t) => (
             <li key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5">
               {t.open ? <RedDot /> : <span className="w-2.5" />}
-              <span className="min-w-0 flex-1"><b>{t.skill}</b> · <Link href={`/find-work/${t.jobId}`} className="hover:underline">{t.job}</Link><span className="block text-[12.5px] text-ink-2">sent {t.sent}{t.due ? ` · due ${t.due}` : ""}</span></span>
+              <span className="min-w-0 flex-1"><b>{t.skill}</b> · <Link href={`/work/jobs/${t.jobId}`} className="hover:underline">{t.job}</Link><span className="block text-[12.5px] text-ink-2">sent {t.sent}{t.due ? ` · due ${t.due}` : ""}</span></span>
               <span className="text-ink-2">{t.score != null ? `${t.score}% · ` : ""}<b className="text-ink">{t.result}</b></span>
             </li>
           ))}

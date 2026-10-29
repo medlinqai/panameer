@@ -41,7 +41,7 @@ export async function DashboardTop({ viewer, side, firstName, data: dataP, perso
             ? (!data.setupDone
               ? <><Link href={data.checklist?.find((i) => i.n === 0)?.href ?? "/company"} className={BTN_MAGENTA}>Finish Set-Up</Link><Link href="/hire" className={BTN}>Create a Job</Link><Link href="/shop?tab=browse" className={BTN}>Shop Service Products</Link></>
               : <><Link href="/hire" className={BTN_MAGENTA}>Create a Job</Link><Link href="/shop?tab=browse" className={BTN}>Shop Service Products</Link><Link href="/estimate/new" className={BTN}>Get an Estimate</Link></>)
-            : <>{data.view === "start" && !data.setupDone ? <Link href={data.checklist?.find((i) => i.n === 0)?.href ?? "/profile"} className={BTN_MAGENTA}>Complete My Profile</Link> : <Link href="/catalog" className={BTN_MAGENTA}>Add to Catalog</Link>}<Link href="/find-work?tab=best" className={BTN}>Jobs for You</Link></>}
+            : <>{data.view === "start" && !data.setupDone ? <Link href={data.checklist?.find((i) => i.n === 0)?.href ?? "/profile"} className={BTN_MAGENTA}>Complete My Profile</Link> : <Link href="/catalog" className={BTN_MAGENTA}>Add to Catalog</Link>}<Link href="/work/jobs?kind=matched" className={BTN}>Jobs for You</Link></>}
         </div>
       </div>
 
