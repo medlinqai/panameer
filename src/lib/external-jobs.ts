@@ -242,10 +242,3 @@ export async function externalForPerson(personId: string | null, take = 300): Pr
 export const sourceName = (source: string) => (/\./.test(source) ? source.replace(/^www\./, "").split(".")[0].replace(/^./, (c) => c.toUpperCase()) : source);
 export const sourceLabel = (source: string) => `External · via ${sourceName(source)}`;
 
-/** I'm Interested — one click, undoable. The seller's name is never shared with the company. */
-export async function setInterest(personId: string, jobId: string, on: boolean) {
-  const job = await prisma.externalJob.findFirst({ where: { id: jobId, ...LIVE() }, select: { id: true } });
-  if (!job) throw new Error("That job is no longer listed.");
-  if (on) await prisma.externalJobInterest.upsert({ where: { external_job_id_person_id: { external_job_id: jobId, person_id: personId } }, create: { external_job_id: jobId, person_id: personId }, update: {} });
-  else await prisma.externalJobInterest.deleteMany({ where: { external_job_id: jobId, person_id: personId } });
-}

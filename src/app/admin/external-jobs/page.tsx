@@ -13,18 +13,17 @@ const app = (process.env.NEXT_PUBLIC_APP_URL ?? "https://app.panameer.com").repl
 // EX-E006/E008: Admin › External Jobs — outreach (manual for now), claims to approve, totals and every listing.
 export default async function Page() {
   const now = new Date();
-  const week = new Date(now.getTime() - 7 * 86_400_000);
-  const [ready, claims, autoEmail, listed, views7, interested, contacted, claimed, removed, all] = await Promise.all([
+  const [ready, claims, autoEmail, listed, interested, contacted, claimed, removed, all, opened] = await Promise.all([
     prisma.externalJob.findMany({ where: { status: "LISTED", expires_at: { gt: now }, interests: { some: {} } }, orderBy: { received_at: "desc" }, take: 200, select: { id: true, title: true, claim_token: true, contacted_at: true, contacted_channel: true, source: true, company: { select: { name: true } }, interests: { select: { rate_cents: true } }, contacts: { orderBy: { created_at: "asc" }, select: { id: true, name: true, linkedin_url: true, email: true, source: true, token: true, opened_at: true } }, _count: { select: { interests: true, views: true } } } }),
     prisma.externalJobClaim.findMany({ where: { needs_admin: true, admin_approved_at: null, verified_at: { not: null } }, orderBy: { created_at: "desc" }, take: 50 }),
     getSetting("external_jobs_company_emails"),
     prisma.externalJob.count({ where: { status: "LISTED", expires_at: { gt: now } } }),
-    prisma.externalJobView.count({ where: { created_at: { gte: week } } }),
     prisma.externalJobInterest.count(),
     prisma.externalJob.count({ where: { contacted_at: { not: null } } }),
     prisma.externalJob.count({ where: { status: "CLAIMED" } }),
     prisma.externalJob.count({ where: { status: "REMOVED" } }),
     prisma.externalJob.findMany({ where: { status: { in: ["LISTED", "CLAIMED", "REMOVED"] } }, orderBy: { received_at: "desc" }, take: 300, select: { id: true, title: true, source: true, url: true, status: true, remove_reason: true, expires_at: true, contacted_at: true, company: { select: { name: true, blocked_at: true } }, _count: { select: { interests: true, views: true } } } }),
+    prisma.externalJob.count({ where: { contacts: { some: { opened_at: { not: null } } } } }),
   ]);
   const toContact = ready.filter((r) => r._count.interests >= 3);
   const claimJobs = new Map((await prisma.externalJob.findMany({ where: { id: { in: claims.map((c) => c.external_job_id) } }, select: { id: true, title: true, company: { select: { name: true } } } })).map((j) => [j.id, j]));
@@ -35,12 +34,12 @@ export default async function Page() {
         <Link href="/admin/external-jobs/intake" className="inline-flex min-h-10 items-center bg-ink px-4 text-[14px] font-semibold text-surface">Bring Jobs In</Link>
       </div>
 
-      {/* EX-E008: totals. */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-6" data-ext-totals>
-        {([["Listed", listed], ["Views (7 Days)", views7], ["Interested", interested], ["Contacted", contacted], ["Claimed", claimed], ["Removed", removed]] as const).map(([l, v]) => <div key={l} className={card}><b className="block text-[24px] font-extrabold">{v.toLocaleString("en-US")}</b><span className="text-[12px] text-ink-2">{l}</span></div>)}
+      {/* XA-E007: totals. */}
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-7" data-ext-totals>
+        {([["Listed", listed], ["Applicants", interested], ["Ready to Contact", toContact.length], ["Contacted", contacted], ["Opened", opened], ["Claimed", claimed], ["Removed", removed]] as const).map(([l, v]) => <div key={l} className={card}><b className="block text-[24px] font-extrabold">{v.toLocaleString("en-US")}</b><span className="text-[12px] text-ink-2">{l}</span></div>)}
       </div>
 
-      {/* EX-E006: Ready to Contact — 3+ Interested. Outreach is manual; Panameer emails no company yet. */}
+      {/* EX-E006: Ready to Contact — 3+ applicants. Outreach is manual; Panameer emails no company yet. */}
       <section className="mt-8" data-ext-ready>
         <h2 className="text-[18px] font-extrabold">Ready to Contact <span className="text-[13px] font-semibold text-ink-3">{toContact.length}</span></h2>
         <p className="text-[13px] text-ink-2">Jobs with 3 or more applicants. Copy a contact&apos;s message, send it yourself, then Mark Contacted. Each contact&apos;s link shows when they open it. Automated company emails: <b>{autoEmail ? "On" : "Off"}</b> (<Link href="/admin/settings" className="underline">Settings</Link>).</p>
@@ -87,7 +86,7 @@ export default async function Page() {
       <section className="mt-8">
         <h2 className="text-[18px] font-extrabold">Listings</h2>
         <table className="mt-2 w-full text-left text-[13px]" data-ext-table>
-          <thead><tr className="border-b border-ink text-[11px] uppercase tracking-[0.08em] text-ink-3"><th className="py-2">Job</th><th>Company</th><th>Source</th><th className="text-right">Views</th><th className="text-right">Interested</th><th>Contacted</th><th>Status</th><th /></tr></thead>
+          <thead><tr className="border-b border-ink text-[11px] uppercase tracking-[0.08em] text-ink-3"><th className="py-2">Job</th><th>Company</th><th>Source</th><th className="text-right">Views</th><th className="text-right">Applicants</th><th>Contacted</th><th>Status</th><th /></tr></thead>
           <tbody>{all.map((j) => {
             const expired = j.status === "LISTED" && j.expires_at < now;
             return (

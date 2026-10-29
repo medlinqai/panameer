@@ -1003,7 +1003,7 @@ export const NOTIFICATION_EVENTS = {
   // EX-E005: an external job a seller was interested in is now posted on Panameer — they hear first.
   "work.external_claimed": {
     event: "work.external_claimed",
-    recipient: "a seller who said I'm Interested on the external job",
+    recipient: "a seller who applied on Panameer to the external job",
     category: "work_request.matched",
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",

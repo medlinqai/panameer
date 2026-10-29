@@ -36,7 +36,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   const filters = parseFilters(sp);
   const external = hasFilters(sp) ? applyFilters(externalAll, filters) : externalAll;
   const sources = [...new Set(externalAll.map((e) => e.source))];
-  // EX-E002: Panameer jobs and External jobs in one list — All · Posted on Panameer · External · You Matched · Interested.
+  // EX-E002: Panameer jobs and External jobs in one list — All · Posted on Panameer · External · You Matched · Applied.
   const kind = KINDS.find(([k]) => k === (rawKind === "interested" ? "applied" : rawKind))?.[0] ?? "all";
   const rows = all.filter((r) => r.type === "Job" && r.donut === "jobs" && (!filters.q || filters.q.toLowerCase().split(/\s+/).every((w) => `${r.what} ${r.who}`.toLowerCase().includes(w))));
   const orderN = (slice: string) => all.filter((r) => r.type === "Order" && r.slice === slice).length;
