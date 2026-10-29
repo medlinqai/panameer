@@ -72,10 +72,18 @@ export async function publishClaim(viewer: Viewer, token: string, input: { title
     prisma.externalCompany.update({ where: { id: ext.external_company_id }, data: { claimed_company_id: job.buyer?.company_id ?? null } }),
     prisma.externalJobClaim.update({ where: { id: claim.id }, data: { published_job_id: job.id } }),
   ]);
-  // Interested sellers hear first.
+  // XA-E004: every applicant carries over as a response on the new job (Compare / Responses), stage Sent to Employer.
   const { notify } = await import("@/lib/notifications");
-  const interested = await prisma.externalJobInterest.findMany({ where: { external_job_id: ext.id }, select: { person_id: true } });
-  for (const i of interested) await notify({ event: "work.external_claimed", personId: i.person_id, entityType: "job", entityId: job.id, dedupeKey: `work.external_claimed:${ext.id}:${i.person_id}`, vars: { company: ext.company.name, title: input.title.trim(), jobId: job.id } });
+  const applicants = await prisma.externalJobInterest.findMany({ where: { external_job_id: ext.id }, select: { id: true, person_id: true, rate_cents: true, start_date: true, note: true, proposal_id: true } });
+  const now = new Date();
+  for (const a of applicants) {
+    if (!a.proposal_id) {
+      const p = await prisma.proposal.create({ data: { proposal_number: `PRO-${now.getTime().toString(36).toUpperCase()}-${a.person_id.slice(0, 4)}-${a.id.slice(0, 3)}`, job_id: job.id, provider_person_id: a.person_id, cover_note: a.note, status: "SUBMITTED", submitted_at: now, ...(a.rate_cents || a.start_date ? { lines: { create: { line_number: 1, basis: "RATE", uom: "HOUR", unit_price_cents: a.rate_cents, available_from: a.start_date } } } : {}) }, select: { id: true } }).catch(() => null);
+      if (p) await prisma.externalJobInterest.update({ where: { id: a.id }, data: { proposal_id: p.id } });
+    }
+    await notify({ event: "work.external_claimed", personId: a.person_id, entityType: "job", entityId: job.id, dedupeKey: `work.external_claimed:${ext.id}:${a.person_id}`, vars: { company: ext.company.name, title: input.title.trim(), jobId: job.id } });
+  }
+  await prisma.externalJobInterest.updateMany({ where: { external_job_id: ext.id, stage: { in: ["APPLIED", "EMPLOYER_VIEWING"] } }, data: { stage: "SENT_TO_EMPLOYER", stage_at: now } });
   return job.id;
 }
 

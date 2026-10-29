@@ -214,7 +214,15 @@ const LIVE = () => ({ status: "LISTED", expires_at: { gt: new Date() } });
 
 /** Listed external jobs for a seller — strongest skill match first, then newest — plus any job they applied to (Closed once it's gone). */
 export async function externalForPerson(personId: string | null, take = 300): Promise<ExternalCard[]> {
-  const mine = personId ? await prisma.externalJobInterest.findMany({ where: { person_id: personId }, select: { external_job_id: true, stage: true } }) : [];
+  const mine0 = personId ? await prisma.externalJobInterest.findMany({ where: { person_id: personId }, select: { external_job_id: true, stage: true, proposal_id: true } }) : [];
+  // XA-E004: once claimed, the buyer's actions on the response move the stage on (Interview · Chosen · Not Selected).
+  const props = await prisma.proposal.findMany({ where: { id: { in: mine0.map((m) => m.proposal_id).filter((x): x is string => !!x) } }, select: { id: true, status: true, job_id: true } });
+  const ivJobs = new Set(props.length && personId ? (await prisma.interviewRequest.findMany({ where: { provider_person_id: personId, job_id: { in: props.map((p) => p.job_id) } }, select: { job_id: true } })).map((i) => i.job_id) : []);
+  const mine = mine0.map((m) => {
+    const p = props.find((x) => x.id === m.proposal_id);
+    const stage = !p ? m.stage : p.status === "AWARDED" ? "CHOSEN" : ["NOT_SELECTED", "DECLINED", "WITHDRAWN"].includes(p.status) ? "NOT_SELECTED" : ivJobs.has(p.job_id) ? "INTERVIEW" : m.stage;
+    return { external_job_id: m.external_job_id, stage };
+  });
   const [jobs, pp] = await Promise.all([
     prisma.externalJob.findMany({ where: { OR: [LIVE(), { id: { in: mine.map((m) => m.external_job_id) }, status: { not: "NOT_ORACLE" } }] }, orderBy: { received_at: "desc" }, take, select: { id: true, title: true, status: true, expires_at: true, claimed_job_id: true, source: true, url: true, location: true, work_type: true, salary: true, received_at: true, skill_ids: true, company: { select: { name: true } }, _count: { select: { interests: true } } } }),
     personId ? prisma.providerProfile.findUnique({ where: { person_id: personId }, select: { skills: { select: { skill_id: true } } } }) : null,
