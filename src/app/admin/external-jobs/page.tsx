@@ -43,7 +43,7 @@ export default async function Page() {
       {/* EX-E006: Ready to Contact — 3+ Interested. Outreach is manual; Panameer emails no company yet. */}
       <section className="mt-8" data-ext-ready>
         <h2 className="text-[18px] font-extrabold">Ready to Contact <span className="text-[13px] font-semibold text-ink-3">{toContact.length}</span></h2>
-        <p className="text-[13px] text-ink-2">Jobs with 3 or more applicants. Copy a contact's message, send it yourself, then Mark Contacted. Each contact's link shows when they open it. Automated company emails: <b>{autoEmail ? "On" : "Off"}</b> (<Link href="/admin/settings" className="underline">Settings</Link>).</p>
+        <p className="text-[13px] text-ink-2">Jobs with 3 or more applicants. Copy a contact&apos;s message, send it yourself, then Mark Contacted. Each contact&apos;s link shows when they open it. Automated company emails: <b>{autoEmail ? "On" : "Off"}</b> (<Link href="/admin/settings" className="underline">Settings</Link>).</p>
         <ul className="mt-2 divide-y divide-line border-y border-line">
           {toContact.map((r) => {
             const rates = r.interests.map((x) => x.rate_cents).filter((c): c is number => !!c);
