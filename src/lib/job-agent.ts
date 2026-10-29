@@ -22,13 +22,16 @@ function fits(j: ExternalCard, w: Want) {
 const score = (j: ExternalCard, w: Want) => j.matched * 2 + [...w.skills, ...w.modules].filter((k) => k && j.title.toLowerCase().includes(k.toLowerCase())).length;
 
 /** Today's Finds: new since the last visit (or the last 24 h), fitting What I Want, strongest first. */
-export async function todaysFinds(personId: string) {
+export async function todaysFinds(personId: string, filters?: import("@/lib/job-filters").JobFilters) {
   const { want, lastSeen } = await wantFor(personId);
   // Everything since the last visit — but never less than today's, so a refresh doesn't empty the list.
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const since = lastSeen && lastSeen < today ? lastSeen : today;
   const all = await externalForPerson(personId);
-  const finds = all.filter((j) => new Date(j.receivedAt) > since && fits(j, want)).sort((a, b) => score(b, want) - score(a, want) || b.receivedAt.localeCompare(a.receivedAt));
+  // XA-E005: the bar's filters when given (they start from the saved criteria).
+  const { applyFilters } = await import("@/lib/job-filters");
+  const fresh = all.filter((j) => new Date(j.receivedAt) > since);
+  const finds = (filters ? applyFilters(fresh, filters) : fresh.filter((j) => fits(j, want))).sort((a, b) => score(b, want) - score(a, want) || b.receivedAt.localeCompare(a.receivedAt));
   return { finds, want, since };
 }
 
