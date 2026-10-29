@@ -33,7 +33,7 @@ export function cleanLink(raw: string | null | undefined): { url: string; source
 
 const norm = (s: string | null | undefined) => (s ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 export const companyKey = (name: string) => norm(name).replace(/\b(the|inc|llc|ltd|limited|corp|corporation|co|company|plc|gmbh|group)\b/g, " ").replace(/\s+/g, " ").trim() || norm(name);
-const dedupeKey = (j: RawJob) => [norm(j.title), companyKey(j.company ?? ""), norm(j.location).split(" ").slice(0, 3).join(" ")].join("|");
+export const dedupeKey = (j: RawJob) => [norm(j.title), companyKey(j.company ?? ""), norm(j.location).split(" ").slice(0, 3).join(" ")].join("|");
 const workTypeOf = (j: RawJob) => j.workType ?? (/\bremote\b/i.test(j.location ?? "") ? "Remote" : /\bhybrid\b/i.test(j.location ?? "") ? "Hybrid" : /on-?site/i.test(j.location ?? "") ? "Onsite" : null);
 
 export function oracleCheck(j: RawJob): "YES" | "NO" | "UNSURE" {
@@ -123,30 +123,46 @@ export function parseAlertEmail(html: string | null, text: string | null, subjec
   const marked = body.replace(/<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, (_m, href: string, inner: string) => {
     const l = cleanLink(decode(href));
     const label = decode(inner.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
-    return l && (l.source === "LinkedIn" || l.source === "Indeed") ? `\n@@JOB ${l.url}@@ ${label}\n` : ` ${label} `;
+    // XA-E001: a logo link has no text — its alt is the company.
+    const alt = !label ? decode(inner.match(/\balt="([^"]*)"/i)?.[1] ?? "").trim() : "";
+    return l && (l.source === "LinkedIn" || l.source === "Indeed") ? `\n@@JOB ${l.url}@@ ${label}${alt ? `\n@@LOGO ${alt}` : ""}\n` : ` ${label} `;
   });
   const lines = decode(marked.replace(/<br\s*\/?>|<\/(p|div|tr|td|li|h\d|table)>/gi, "\n").replace(/<[^>]+>/g, " ")).split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean);
-  const out = new Map<string, RawJob>();
-  let cur: RawJob | null = null;
-  const NOISE = /^(view job|apply|see all jobs|unsubscribe|manage|job alert|linkedin|indeed|easy apply$|promoted|new$|\d+ (company )?alumni|see more|sponsored)/i;
-  for (const line of lines) {
+  const out = new Map<string, RawJob & { logo?: string }>();
+  let cur: (RawJob & { logo?: string }) | null = null;
+  const NOISE = /^(view job|apply|see all jobs|unsubscribe|manage|job alert|linkedin|indeed|easy apply$|promoted|new$|\d+ (company )?alumni|see more|sponsored|\d+ (applicants?|connections?)|viewed|reposted)/i;
+  // XA-E001: LinkedIn's footer and promos — parsing stops at the first one.
+  const FOOTER = /job search smarter with premium|get the new linkedin|try premium|this email was intended for|learn why we included this|you are receiving|unsubscribe|help:|©\s*\d{4}|linkedin corporation|see all jobs on linkedin|manage alerts|search other jobs/i;
+  for (let line of lines) {
+    if (FOOTER.test(line)) { cur = null; if (out.size) break; continue; }
     const m = line.match(/^@@JOB (\S+)@@\s*(.*)$/);
     if (m) {
       const existing = out.get(m[1]);
-      if (existing) { cur = existing; if (!existing.title && m[2]) existing.title = m[2]; continue; }
-      cur = { title: m[2], url: m[1], tags: [], alertName, company: null, location: null };
-      out.set(m[1], cur);
-      continue;
+      if (!existing) { cur = { title: m[2], url: m[1], tags: [], alertName, company: null, location: null }; out.set(m[1], cur); continue; }
+      cur = existing;
+      if (!existing.title) { existing.title = m[2]; continue; }
+      // The "Company · Location" line links to the same job — read it as a line.
+      line = m[2];
+      if (!line) continue;
     }
+    const logo = line.match(/^@@LOGO (.*)$/);
+    if (logo) { if (cur) cur.logo = logo[1]; continue; }
     if (!cur) continue;
     if (/actively recruiting|easy apply|be an early applicant|urgently hiring|responsive employer/i.test(line)) { for (const t of ["Actively Recruiting", "Easy Apply", "Early Applicant", "Urgently Hiring"]) if (new RegExp(t.split(" ")[0], "i").test(line) && !cur.tags!.includes(t)) cur.tags!.push(t); continue; }
     if (/\$\s?\d/.test(line) && !cur.salary) { cur.salary = line.slice(0, 120); continue; }
     if (NOISE.test(line) || line.length > 160) continue;
     if (!cur.title) { cur.title = line; continue; }
-    if (!cur.company) { const [c, loc] = line.split(/\s+·\s+/); cur.company = c; if (loc) cur.location = loc; continue; }
+    if (!cur.company && /\s·\s/.test(line)) {
+      const [c, ...rest] = line.split(/\s+·\s+/);
+      cur.company = c;
+      const loc = rest.join(" · ");
+      if (loc) { cur.location = loc; const wt = loc.match(/\((remote|hybrid|on-?site)\)/i)?.[1]; if (wt) cur.workType = /remote/i.test(wt) ? "Remote" : /hybrid/i.test(wt) ? "Hybrid" : "Onsite"; }
+      continue;
+    }
+    if (!cur.company) { cur.company = line; continue; }
     if (!cur.location) { cur.location = line; continue; }
   }
-  return [...out.values()].filter((j) => j.title).map((j) => ({ ...j, workType: workTypeOf(j) }));
+  return [...out.values()].filter((j) => j.title).map(({ logo, ...j }) => ({ ...j, company: j.company ?? logo ?? null, description: null, workType: j.workType ?? workTypeOf(j) }));
 }
 
 const HEADERS: Record<keyof Pick<RawJob, "title" | "company" | "location" | "url" | "description" | "salary" | "source">, RegExp> = {
