@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { externalForPerson, type ExternalCard } from "@/lib/external-jobs";
+import { externalForPerson, sourceLabel, type ExternalCard } from "@/lib/external-jobs";
 
 // EX-E004: the Panameer Job Agent — What I Want (pre-filled from the profile), Today's Finds (new since the last visit,
 // by match strength), the counts for the banner and the Work tile, and the optional morning digest.
@@ -74,7 +74,7 @@ export async function runDigest(opts: { dry?: boolean } = {}) {
     if (!top.length) continue;
     sent++;
     if (opts.dry) continue;
-    const list = top.map((j) => `<p style="margin:0 0 12px"><a href="${app}/work/external/${j.id}"><b>${escapeHtml(j.title)}</b></a><br><span style="color:#5C6485">${escapeHtml(["External · via " + j.source, j.company, j.workType ?? j.location, j.salary].filter(Boolean).join(" · "))}</span></p>`).join("");
+    const list = top.map((j) => `<p style="margin:0 0 12px"><a href="${app}/work/external/${j.id}"><b>${escapeHtml(j.title)}</b></a><br><span style="color:#5C6485">${escapeHtml([sourceLabel(j.source), j.company, j.workType ?? j.location, j.salary].filter(Boolean).join(" · "))}</span></p>`).join("");
     await sendEmail({ to, subject: `Your Job Agent: ${top.length} new Oracle job${top.length === 1 ? "" : "s"}`, template: "job-agent-digest", category: "work_request.matched", userId: p.person?.user?.id,
       html: emailShell({ bodyHtml: greeting(p.person?.first_name ?? "") + paragraph("Your top finds since yesterday:") + list + primaryButton(`${app}/work/job-agent`, "See Today's Finds") }),
       text: top.map((j) => `${j.title} — ${app}/work/external/${j.id}`).join("\n") }).catch(() => null);

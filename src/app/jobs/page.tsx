@@ -17,7 +17,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   const like = (v: string) => ({ contains: v, mode: "insensitive" as const });
   const [posted, external, today] = await Promise.all([
     prisma.job.findMany({ where: { kind: "JOB", status: "OPEN", buyer: { user: { is: { is_test: false } } }, ...(skill ? { OR: [{ title: like(skill) }, { description: like(skill) }, { skills: { some: { skill: { name: like(skill) } } } }] } : {}), ...(loc ? { OR: [{ city: like(loc) }, { state: like(loc) }, { location_country: like(loc) }] } : {}), ...(rate ? { budget_max_cents: { gte: Math.round(rate * 100) } } : {}) }, orderBy: { posted_at: "desc" }, take: 60, select: { id: true, title: true, description: true, posted_at: true, worksite: true, city: true, state: true, location_country: true, budget_min_cents: true, budget_max_cents: true, budget_type: true, buyer: { select: { company: { select: { name: true } } } } } }),
-    rate ? Promise.resolve([]) : prisma.externalJob.findMany({ where: { status: "LISTED", expires_at: { gt: new Date() }, ...(skill ? { OR: [{ title: like(skill) }, { description: like(skill) }] } : {}), ...(loc ? { location: like(loc) } : {}) }, orderBy: { received_at: "desc" }, take: 120, select: { id: true, title: true, source: true, url: true, location: true, work_type: true, salary: true, received_at: true, company: { select: { name: true } } } }),
+    rate ? Promise.resolve([]) : prisma.externalJob.findMany({ where: { status: "LISTED", expires_at: { gt: new Date() }, ...(skill ? { OR: [{ title: like(skill) }, { description: like(skill) }] } : {}), ...(loc ? { location: like(loc) } : {}) }, orderBy: { received_at: "desc" }, take: 120, select: { id: true, title: true, source: true, location: true, work_type: true, salary: true, received_at: true, company: { select: { name: true } } } }),
     newToday(),
   ]);
   const where = (j: (typeof posted)[number]) => [j.worksite === "OFFSITE" ? "Remote" : j.worksite === "HYBRID" ? "Hybrid" : j.worksite === "ONSITE" ? "Onsite" : null, [j.city, j.state].filter(Boolean).join(", ") || j.location_country].filter(Boolean).join(", ");
@@ -47,8 +47,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
           {external.map((e) => (
             <li key={e.id} className="flex flex-wrap items-center gap-3 py-3" data-public-external>
               <span className="min-w-0 flex-1"><b className="block text-[15px]">{e.title}</b><span className="text-[12.5px] text-ink-2"><b className="font-semibold text-state-inactive">{sourceLabel(e.source)}</b> · {[e.company.name, e.work_type ?? e.location, e.salary].filter(Boolean).join(" · ")}</span></span>
-              <Link href="/join" className="inline-flex min-h-9 items-center border border-ink px-4 text-[13px] font-bold">Sign Up · I&apos;m Interested</Link>
-              <a href={e.url} target="_blank" rel="noreferrer nofollow" className="inline-flex min-h-9 items-center border border-line px-4 text-[13px] font-semibold">Open Original ↗</a>
+              <Link href="/join" className="inline-flex min-h-9 items-center border border-ink px-4 text-[13px] font-bold">Sign Up to Apply on Panameer</Link>
             </li>
           ))}
           {!posted.length && !external.length && <li className="py-6 text-[14px] text-ink-3">No jobs match those filters.</li>}
