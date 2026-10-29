@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const gate = await guardApi("canAdminister");
   if (gate instanceof NextResponse) return gate;
-  const b = (await request.json().catch(() => ({}))) as { action?: string; id?: string; reason?: string; label?: string };
+  const b = (await request.json().catch(() => ({}))) as { action?: string; id?: string; reason?: string; label?: string; name?: string; linkedinUrl?: string; email?: string; channel?: string };
   const id = String(b.id ?? "");
   switch (b.action) {
     case "list": {
@@ -35,9 +35,20 @@ export async function POST(request: Request) {
       ]);
       return NextResponse.json({ ok: true });
     }
-    case "contacted":
-      await prisma.externalJob.update({ where: { id }, data: { contacted_at: new Date() } });
+    case "contacted": {
+      // XA-E003: Mark Contacted with the channel used (LinkedIn / Email). Panameer sends nothing itself.
+      const channel = b.channel === "EMAIL" ? "EMAIL" : b.channel === "LINKEDIN" ? "LINKEDIN" : null;
+      if (!channel) return NextResponse.json({ error: "Pick LinkedIn or Email." }, { status: 400 });
+      await prisma.externalJob.update({ where: { id }, data: { contacted_at: new Date(), contacted_channel: channel } });
       return NextResponse.json({ ok: true });
+    }
+    case "add-contact":
+      try {
+        await (await import("@/lib/external-contacts")).addContact(id, { name: b.name, linkedinUrl: b.linkedinUrl, email: b.email, source: "MANUAL" });
+        return NextResponse.json({ ok: true });
+      } catch (e) {
+        return NextResponse.json({ error: (e as Error).message }, { status: 400 });
+      }
     case "approve-claim":
       await (await import("@/lib/external-claim")).approveClaim(id);
       return NextResponse.json({ ok: true });

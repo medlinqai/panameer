@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSetting } from "@/lib/platform-settings";
-import { CopyMessage, ExtAction } from "@/components/admin/ExternalJobsTools";
+import { AddContact, CopyMessage, ExtAction, MarkContacted } from "@/components/admin/ExternalJobsTools";
+import { outreachMessage } from "@/lib/external-contacts";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "External Jobs · Admin · Panameer" };
@@ -14,7 +15,7 @@ export default async function Page() {
   const now = new Date();
   const week = new Date(now.getTime() - 7 * 86_400_000);
   const [ready, claims, autoEmail, listed, views7, interested, contacted, claimed, removed, all] = await Promise.all([
-    prisma.externalJob.findMany({ where: { status: "LISTED", expires_at: { gt: now }, interests: { some: {} } }, orderBy: { received_at: "desc" }, take: 200, select: { id: true, title: true, claim_token: true, hiring_name: true, hiring_url: true, contacted_at: true, source: true, company: { select: { name: true } }, _count: { select: { interests: true, views: true } } } }),
+    prisma.externalJob.findMany({ where: { status: "LISTED", expires_at: { gt: now }, interests: { some: {} } }, orderBy: { received_at: "desc" }, take: 200, select: { id: true, title: true, claim_token: true, contacted_at: true, contacted_channel: true, source: true, company: { select: { name: true } }, interests: { select: { rate_cents: true } }, contacts: { orderBy: { created_at: "asc" }, select: { id: true, name: true, linkedin_url: true, email: true, source: true, token: true, opened_at: true } }, _count: { select: { interests: true, views: true } } } }),
     prisma.externalJobClaim.findMany({ where: { needs_admin: true, admin_approved_at: null, verified_at: { not: null } }, orderBy: { created_at: "desc" }, take: 50 }),
     getSetting("external_jobs_company_emails"),
     prisma.externalJob.count({ where: { status: "LISTED", expires_at: { gt: now } } }),
@@ -42,20 +43,33 @@ export default async function Page() {
       {/* EX-E006: Ready to Contact — 3+ Interested. Outreach is manual; Panameer emails no company yet. */}
       <section className="mt-8" data-ext-ready>
         <h2 className="text-[18px] font-extrabold">Ready to Contact <span className="text-[13px] font-semibold text-ink-3">{toContact.length}</span></h2>
-        <p className="text-[13px] text-ink-2">Jobs with 3 or more interested consultants. Copy the note, send it yourself, then Mark Contacted. Automated company emails: <b>{autoEmail ? "On" : "Off"}</b> (<Link href="/admin/settings" className="underline">Settings</Link>).</p>
+        <p className="text-[13px] text-ink-2">Jobs with 3 or more applicants. Copy a contact's message, send it yourself, then Mark Contacted. Each contact's link shows when they open it. Automated company emails: <b>{autoEmail ? "On" : "Off"}</b> (<Link href="/admin/settings" className="underline">Settings</Link>).</p>
         <ul className="mt-2 divide-y divide-line border-y border-line">
           {toContact.map((r) => {
-            const link = `${app}/claim/${r.claim_token}`;
-            const msg = `Your public Oracle job '${r.title}' has ${r._count.interests} interested Oracle consultants on Panameer. Post it free and get their responses directly: ${link}`;
+            const rates = r.interests.map((x) => x.rate_cents).filter((c): c is number => !!c);
+            const usd = (c: number) => `$${Math.round(c / 100).toLocaleString("en-US")}`;
             return (
-              <li key={r.id} className="flex flex-wrap items-center gap-3 py-3 text-[13.5px]" data-ext-ready-row>
-                <span className="min-w-0 flex-1">
-                  <b className="block">{r.company.name} · {r.title}</b>
-                  <span className="text-ink-2">{r.hiring_name ? <>{r.hiring_url ? <a href={r.hiring_url} target="_blank" rel="noreferrer" className="underline">{r.hiring_name} ↗</a> : r.hiring_name} · </> : null}{r._count.interests} interested · {r._count.views} views · via {r.source} · <span className="font-mono text-[12px]">{link}</span></span>
-                </span>
-                {r.contacted_at ? <span className="text-[12.5px] text-state-accepted">Contacted {r.contacted_at.toISOString().slice(0, 10)}</span> : null}
-                <CopyMessage text={msg} />
-                <ExtAction action="contacted" id={r.id} label={r.contacted_at ? "Contacted Again" : "Mark Contacted"} />
+              <li key={r.id} className="py-3 text-[13.5px]" data-ext-ready-row>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="min-w-0 flex-1">
+                    <b className="block">{r.company.name} · {r.title}</b>
+                    <span className="text-ink-2">{r._count.interests} applicants · {rates.length ? `${usd(Math.min(...rates))}–${usd(Math.max(...rates))}/hr` : "no rates yet"} · {r.contacts.length} contact{r.contacts.length === 1 ? "" : "s"} · via {r.source}</span>
+                  </span>
+                  {r.contacted_at ? <span className="text-[12.5px] text-state-accepted">Contacted {r.contacted_at.toISOString().slice(0, 10)}{r.contacted_channel ? ` · ${r.contacted_channel === "EMAIL" ? "Email" : "LinkedIn"}` : ""}</span> : null}
+                  <MarkContacted id={r.id} again={!!r.contacted_at} />
+                </div>
+                <ul className="mt-2 space-y-1.5 pl-3" data-ext-contacts>
+                  {r.contacts.map((c) => {
+                    const link = `${app}/r/${c.token}`;
+                    return (
+                      <li key={c.id} className="flex flex-wrap items-center gap-2 text-[13px]">
+                        <span className="min-w-0 flex-1">{c.linkedin_url ? <a href={c.linkedin_url} target="_blank" rel="noreferrer" className="font-semibold underline">{c.name ?? "LinkedIn Profile"} ↗</a> : <b>{c.name ?? c.email}</b>}{c.email && c.linkedin_url ? ` · ${c.email}` : ""} <span className="text-ink-3">· {c.source === "CLIPPER" ? "Clipper" : "Manual"}{c.opened_at ? ` · Opened ${c.opened_at.toISOString().slice(0, 10)}` : ""} · <span className="font-mono text-[12px]">{link}</span></span></span>
+                        <CopyMessage text={outreachMessage(r._count.interests, r.title, rates, link)} />
+                      </li>
+                    );
+                  })}
+                  <li><AddContact id={r.id} /></li>
+                </ul>
               </li>
             );
           })}

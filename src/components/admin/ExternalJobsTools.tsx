@@ -63,3 +63,45 @@ export function CopyMessage({ text }: { text: string }) {
   const [done, setDone] = useState(false);
   return <button type="button" className={B} data-ext-copy onClick={async () => { await navigator.clipboard.writeText(text).catch(() => null); setDone(true); setTimeout(() => setDone(false), 1500); }}>{done ? "Copied" : "Copy Message"}</button>;
 }
+
+/** XA-E003: Add Contact inline — name, LinkedIn profile, email (all optional, one needed). */
+export function AddContact({ id }: { id: string }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ name: "", linkedinUrl: "", email: "" });
+  const [busy, setBusy] = useState(false);
+  if (!open) return <button type="button" className={B} onClick={() => setOpen(true)} data-ext-add-contact>Add Contact</button>;
+  const field = (k: keyof typeof f, label: string) => <input aria-label={label} placeholder={label} value={f[k]} onChange={(e) => setF((x) => ({ ...x, [k]: e.target.value }))} className="min-h-8 w-40 border border-state-border bg-surface px-2 text-[12.5px]" />;
+  return (
+    <span className="flex flex-wrap items-center gap-1.5" data-ext-contact-form>
+      {field("name", "Name")}{field("linkedinUrl", "LinkedIn Profile URL")}{field("email", "Email")}
+      <button type="button" className={B} disabled={busy} onClick={async () => {
+        setBusy(true);
+        const r = await post({ action: "add-contact", id, ...f });
+        setBusy(false);
+        if (!r.ok) window.alert(r.j.error ?? "Couldn't add that contact.");
+        else { setOpen(false); setF({ name: "", linkedinUrl: "", email: "" }); router.refresh(); }
+      }}>Save</button>
+      <button type="button" className={B} onClick={() => setOpen(false)}>Cancel</button>
+    </span>
+  );
+}
+
+/** XA-E003: Mark Contacted — the date is today; the channel is the one you used. */
+export function MarkContacted({ id, again }: { id: string; again: boolean }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const mark = async (channel: "LINKEDIN" | "EMAIL") => {
+    setBusy(true);
+    const r = await post({ action: "contacted", id, channel });
+    setBusy(false);
+    if (!r.ok) window.alert(r.j.error ?? "That didn't work."); else router.refresh();
+  };
+  return (
+    <span className="flex items-center gap-1.5" data-ext-mark-contacted>
+      <span className="text-[12px] text-ink-2">{again ? "Contacted Again:" : "Mark Contacted:"}</span>
+      <button type="button" className={B} disabled={busy} onClick={() => mark("LINKEDIN")}>LinkedIn</button>
+      <button type="button" className={B} disabled={busy} onClick={() => mark("EMAIL")}>Email</button>
+    </span>
+  );
+}

@@ -58,6 +58,12 @@ async function companyFor(name: string) {
   return prisma.externalCompany.upsert({ where: { name_key: key }, create: { name: name.trim() || "Unknown Company", name_key: key }, update: {}, select: { id: true, blocked_at: true } });
 }
 
+/** XA-E003: the Clipper's "Meet the hiring team" person becomes a recruiter contact on the matching job. */
+async function attachHirer(jobId: string, j: RawJob, via: Via) {
+  const { addContact } = await import("@/lib/external-contacts");
+  await addContact(jobId, { name: j.hiringName, linkedinUrl: cleanLink(j.hiringUrl)?.url ?? j.hiringUrl ?? null, source: via === "CLIPPER" ? "CLIPPER" : "MANUAL" }).catch(() => null);
+}
+
 /** Run jobs through the intake. Returns the counts for this batch; every job is logged on the intake page. */
 export async function intakeJobs(jobs: RawJob[], via: Via): Promise<IntakeResult> {
   const r: IntakeResult = { received: 0, listed: 0, duplicates: 0, notOracle: 0, needsReview: 0, blocked: 0 };
@@ -73,6 +79,7 @@ export async function intakeJobs(jobs: RawJob[], via: Via): Promise<IntakeResult
       ?? await prisma.externalJob.findFirst({ where: { dedupe_key: key }, select: { id: true, description: true, salary: true, hiring_name: true } });
     if (dup) {
       await prisma.externalJob.update({ where: { id: dup.id }, data: { ...(!dup.description && j.description ? { description: j.description.slice(0, 20000) } : {}), ...(!dup.salary && j.salary ? { salary: j.salary } : {}), ...(!dup.hiring_name && j.hiringName ? { hiring_name: j.hiringName, hiring_url: cleanLink(j.hiringUrl)?.url ?? null } : {}) } });
+      if (j.hiringName || j.hiringUrl) await attachHirer(dup.id, j, via);
       r.duplicates++; await log(j, source, "DUPLICATE", dup.id); continue;
     }
     // 2) Oracle check.
@@ -91,6 +98,7 @@ export async function intakeJobs(jobs: RawJob[], via: Via): Promise<IntakeResult
       },
       select: { id: true },
     });
+    if (j.hiringName || j.hiringUrl) await attachHirer(job.id, j, via);
     if (oracle === "YES") r.listed++; else r.needsReview++;
     await log(j, source, oracle === "YES" ? "LISTED" : "NEEDS_REVIEW", job.id);
   }
